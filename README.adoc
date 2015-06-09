@@ -1,0 +1,32 @@
+////
+Copyright 2015 Terracotta, Inc., a Software AG company.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////
+
+= Terracotta Management
+
+Terracotta Management is a set of Java modules for management and monitoring, common to several Terracotta products.
+You will find in those modules common entity classes, and their serializers and deserializers
+
+Licensed under the Apache License, Version 2.0   
+(C) Terracotta, Inc., a Software AG company.
+
+http://www.terracotta.org
+
+See also: http://www.github.com/ehcache/ehcache3
+
+Status of the build: image:https://terracotta-oss.ci.cloudbees.com/buildStatus/icon?job=terracotta-management[Terracotta-OSS@Cloudbees, link="https://terracotta-oss.ci.cloudbees.com/job/terracotta-management/"]
+
+image:https://www.cloudbees.com/sites/default/files/styles/large/public/Button-Powered-by-CB.png?itok=uMDWINfY[Cloudbees, link="http://www.cloudbees.com/resources/foss"]
+
