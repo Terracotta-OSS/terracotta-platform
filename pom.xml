@@ -14,7 +14,7 @@
 
   <name>Terracotta Management</name>
   <description>A set of Java modules for management and monitoring, common to several Terracotta products</description>
-  <url>https://github.com/Terracotta-OSS/offheap-store/</url>
+  <url>https://github.com/Terracotta-OSS/terracotta-management/</url>
 
   <licenses>
     <license>
