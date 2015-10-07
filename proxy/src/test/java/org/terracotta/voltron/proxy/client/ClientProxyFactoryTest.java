@@ -1,0 +1,107 @@
+/*
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at
+ *
+ * http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Connection API.
+ *
+ * The Initial Developer of the Covered Software is
+ * Terracotta, Inc., a Software AG company
+ */
+
+package org.terracotta.voltron.proxy.client;
+
+import org.junit.Test;
+import org.mockito.Matchers;
+import org.terracotta.connection.entity.Entity;
+import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.voltron.proxy.SerializationCodec;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * @author Alex Snaps
+ */
+public class ClientProxyFactoryTest {
+
+  @Test
+  public void addEntityInterfaceToType() {
+    final EntityClientEndpoint clientEndpoint = mock(EntityClientEndpoint.class);
+    final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, clientEndpoint);
+    assertThat(proxy, instanceOf(Entity.class));
+    ((Entity) proxy).close();
+    verify(clientEndpoint).close();
+  }
+
+  @Test
+  public void testFakeOutboundCall() throws ExecutionException, InterruptedException {
+    final SerializationCodec codec = new SerializationCodec();
+    final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
+    final InvocationBuilder builder = mock(InvocationBuilder.class);
+    when(endpoint.beginInvoke()).thenReturn(builder);
+    when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
+    final Future future = mock(Future.class);
+    when(builder.invoke()).thenReturn(future);
+    when(future.get()).thenReturn(codec.encode(Integer.class, 42));
+
+    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, endpoint, codec);
+    assertThat(proxy.sync(), is(42));
+  }
+
+  @Test
+  public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException {
+    final SerializationCodec codec = new SerializationCodec() {
+      @Override
+      public Object decode(final byte[] buffer, final Class<?> type) {
+        assertThat(type == Integer.class, is(true));
+        return super.decode(buffer, type);
+      }
+    };
+    final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
+    final InvocationBuilder builder = mock(InvocationBuilder.class);
+    when(endpoint.beginInvoke()).thenReturn(builder);
+    when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
+    final Future future = mock(Future.class);
+    when(builder.invoke()).thenReturn(future);
+    when(future.get()).thenReturn(codec.encode(Integer.class, 42));
+    when(future.get(1, TimeUnit.SECONDS)).thenReturn(codec.encode(Integer.class, 43))
+        .thenThrow(new TimeoutException("Blah!"));
+
+    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, endpoint, codec);
+    assertThat(proxy.aSync().get(), is(42));
+    assertThat(proxy.aSync().get(1, TimeUnit.SECONDS), is(43));
+    try {
+      proxy.aSync().get(1, TimeUnit.SECONDS);
+      fail();
+    } catch (TimeoutException e) {
+      assertThat(e.getMessage(), is("Blah!"));
+    }
+  }
+
+  public interface PassThrough {
+
+    Integer sync();
+
+    Future<Integer> aSync();
+
+  }
+
+}
