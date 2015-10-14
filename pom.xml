@@ -80,4 +80,14 @@
     </dependencies>
   </dependencyManagement>
 
+  <repositories>
+    <repository>
+      <id>terracotta-snapshots</id>
+      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+    </repository>
+    <repository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </repository>
+  </repositories>
 </project>
