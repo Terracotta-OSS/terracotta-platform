@@ -18,7 +18,7 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>${parent.groupId}</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>voltron-proxy</artifactId>
       <version>${project.version}</version>
     </dependency>

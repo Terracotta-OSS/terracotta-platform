@@ -13,7 +13,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.terracotta</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>voltron-proxy</artifactId>
       <version>${project.version}</version>
     </dependency>
