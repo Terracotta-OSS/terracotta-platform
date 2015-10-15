@@ -20,6 +20,8 @@ package org.terracotta.consensus.entity;
 import org.terracotta.voltron.proxy.ClientId;
 
 /**
+ * Implementations need to make sure methods, at least for a given namespace, can't ever be invoked concurrently!
+ *
  * @author Alex Snaps
  */
 public interface CoordinationEntity {

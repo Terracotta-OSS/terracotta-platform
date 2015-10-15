@@ -24,8 +24,11 @@ import org.terracotta.consensus.entity.CoordinationEntity;
 import org.terracotta.consensus.entity.Nomination;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
+import org.terracotta.consensus.entity.client.DelegatingCoordinationClientEntity;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Convenience service to deal with Leader election and executing code as such
@@ -39,6 +42,8 @@ public class CoordinationService {
 
   private final CoordinationClientEntity entity;
 
+  private ConcurrentMap<String, Object> syncs = new ConcurrentHashMap<String, Object>();
+
   /**
    * Constructor that will also try to create the cluster wide entity should it not yet be present
    *
@@ -46,28 +51,18 @@ public class CoordinationService {
    * @throws AssertionError should the just created entity be deleted when retrieved back
    */
   public CoordinationService(Connection connection) throws AssertionError {
+    this(getCoordinationClientEntity(connection));
+  }
 
-    CoordinationClientEntity entity;
-    final EntityRef<CoordinationClientEntity, Object> entityRef = connection.getEntityRef(CoordinationClientEntity.class, Versions.LATEST
-        .version(), SINGLETON_NAME);
-    try {
-      entity = entityRef.fetchEntity();
-    } catch (IllegalStateException e) {
-      try {
-        entityRef.create(null);
-      } catch (RuntimeException e1) { // todo: pending proper typing
-        if (!(e1.getCause() instanceof IllegalStateException)) {
-          throw e1;
+  CoordinationService(CoordinationClientEntity coordinationClientEntity) {
+    entity = coordinationClientEntity;
+    if (entity instanceof DelegatingCoordinationClientEntity) {
+      ((DelegatingCoordinationClientEntity)entity).registerListener(new DelegatingCoordinationClientEntity.Listener() {
+        public void onElected(final String namespace) {
+          leaderElected(namespace);
         }
-      }
-      try {
-        entity = entityRef.fetchEntity();
-      } catch (IllegalStateException e1) {
-        throw new AssertionError("Entity " + CoordinationEntity.class + " named '" + SINGLETON_NAME
-                                 + "' failed being created - cluster-wide race?!");
-      }
+      });
     }
-    this.entity = entity;
   }
 
   /**
@@ -92,22 +87,52 @@ public class CoordinationService {
 
     final String namespace = toString(entityType, entityName);
 
-    Nomination nomination;
-    if ((nomination = entity.runForElection(namespace, this)) != null) {
-      if (!nomination.awaitsElection()) {
-        try {
-          final T t = callable.call();
-          entity.accept(namespace, nomination);
-          return t;
-        } catch (Throwable t) {
-          entity.delist(namespace, this);
-          throw t;
+    Object sync = new Object();
+    synchronized (sync) {
+      Object actualSync = syncs.putIfAbsent(namespace, sync);
+      if (actualSync == null) {
+        actualSync = sync;
+      }
+      synchronized (actualSync) {
+        Nomination nomination;
+        while ((nomination = entity.runForElection(namespace, Thread.currentThread())) != null && nomination.awaitsElection()) {
+          actualSync.wait();
         }
-      } else {
-        // need to synchonize threads here
+        if (nomination != null) {
+          try {
+            final T t = callable.call();
+            entity.accept(namespace, nomination);
+            return t;
+          } catch (Throwable t) {
+            entity.delist(namespace, this);
+            throw t;
+          } finally {
+            actualSync.notify();
+          }
+        }
+        actualSync.notify();
       }
     }
     return null;
+  }
+
+  void leaderElected(String namespace) {
+    Object sync = new Object();
+    synchronized (sync) {
+      Object actualSync = syncs.putIfAbsent(namespace, sync);
+      if (actualSync == null) {
+        actualSync = sync;
+      }
+      synchronized (actualSync) {
+        try {
+          if (!syncs.remove(namespace, actualSync)) {
+            throw new AssertionError("Broken FSM!");
+          }
+        } finally {
+          actualSync.notify();
+        }
+      }
+    }
   }
 
   static String toString(final Class<? extends Entity> entityType, final String entityName) {
@@ -128,5 +153,29 @@ public class CoordinationService {
    */
   public void close() {
     entity.close();
+  }
+
+  private static CoordinationClientEntity getCoordinationClientEntity(final Connection connection) {
+    CoordinationClientEntity entity;
+    final EntityRef<CoordinationClientEntity, Object> entityRef = connection.getEntityRef(CoordinationClientEntity.class, Versions.LATEST
+        .version(), SINGLETON_NAME);
+    try {
+      entity = entityRef.fetchEntity();
+    } catch (IllegalStateException e) {
+      try {
+        entityRef.create(null);
+      } catch (RuntimeException e1) { // todo: pending proper typing
+        if (!(e1.getCause() instanceof IllegalStateException)) {
+          throw e1;
+        }
+      }
+      try {
+        entity = entityRef.fetchEntity();
+      } catch (IllegalStateException e1) {
+        throw new AssertionError("Entity " + CoordinationEntity.class + " named '" + SINGLETON_NAME
+                                 + "' failed being created - cluster-wide race?!");
+      }
+    }
+    return entity;
   }
 }
