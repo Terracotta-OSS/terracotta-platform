@@ -23,6 +23,7 @@ import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.Async;
+import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
@@ -32,6 +33,7 @@ import com.sun.org.apache.bcel.internal.classfile.Code;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -139,6 +141,16 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     DataOutputStream output = new DataOutputStream(byteOut);
+
+    final Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+    for (int i = 0, parameterAnnotationsLength = parameterAnnotations.length; i < parameterAnnotationsLength; i++) {
+      final Annotation[] parameterAnnotation = parameterAnnotations[i];
+      for (Annotation annotation : parameterAnnotation) {
+        if (annotation.annotationType() == ClientId.class) {
+          args[i] = null;
+        }
+      }
+    }
 
     final Class<?>[] parameterTypes = method.getParameterTypes();
     output.writeByte(methodIdentifier);
