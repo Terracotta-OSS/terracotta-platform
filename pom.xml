@@ -80,6 +80,30 @@
     </dependencies>
   </dependencyManagement>
 
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.1</version>
+          <extensions>true</extensions>
+          <configuration>
+            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
+            <serverId>terracotta-nexus-staging</serverId>
+            <skipNexusStagingDeployMojo>${skipDeploy}</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
   <repositories>
     <repository>
       <id>terracotta-snapshots</id>
@@ -90,4 +114,23 @@
       <url>http://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>terracotta-os-releases</id>
+      <name>Terracotta OS Releases Repository</name>
+      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>terracotta-os-snapshots</id>
+      <uniqueVersion>false</uniqueVersion>
+      <name>Terracotta OS Snapshots Repository</name>
+      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <scm>
+    <connection>scm:git:https://github.com/Terracotta-OSS/terracotta-platform.git</connection>
+    <developerConnection>scm:git:git@github.com:Terracotta-OSS/terracotta-platform.git</developerConnection>
+  </scm>
 </project>
