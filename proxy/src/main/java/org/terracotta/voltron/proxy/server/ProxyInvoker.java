@@ -22,6 +22,8 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.CommonProxyFactory;
+import org.terracotta.voltron.proxy.client.messages.MessageListener;
+import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -36,6 +38,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -49,6 +52,8 @@ public class ProxyInvoker<T> {
   private final Map<Byte, Method> mappings;
   private final Map<Class, Byte> eventMappings;
   private final Set<Class> messageTypes;
+  private volatile ClientCommunicator clientCommunicator;
+  private final Set<ClientDescriptor> clients = new ConcurrentSkipListSet<ClientDescriptor>();
 
   public ProxyInvoker(Class<T> proxyType, T target, Codec codec, Class... messageTypes) {
     this.target = target;
@@ -57,6 +62,14 @@ public class ProxyInvoker<T> {
     this.messageTypes = new HashSet<Class>();
     for (Class eventType : messageTypes) {
       this.messageTypes.add(eventType);
+      if(target instanceof MessageFiring) {
+        ((MessageFiring)target).registerListener(eventType, new MessageListener() {
+          @Override
+          public void onMessage(final Object message) {
+            fireMessage(clientCommunicator, message, clients); // fire to all Clients!
+          }
+        });
+      }
     }
     this.eventMappings = createEventTypeMappings(messageTypes);
   }
@@ -85,7 +98,7 @@ public class ProxyInvoker<T> {
     }
   }
 
-  public void fireMessage(ClientCommunicator clientCommunicator, Object message, ClientDescriptor... clients) {
+  public void fireMessage(ClientCommunicator clientCommunicator, Object message, Set<ClientDescriptor> clients) {
     final Class<?> type = message.getClass();
     if(!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
@@ -165,6 +178,18 @@ public class ProxyInvoker<T> {
       map.put(messageType, index++);
     }
     return map;
+  }
+
+  public void setClientCommunicator(final ClientCommunicator clientCommunicator) {
+    this.clientCommunicator = clientCommunicator;
+  }
+
+  public void addClient(ClientDescriptor descriptor) {
+    clients.add(descriptor);
+  }
+
+  public void removeClient(ClientDescriptor descriptor) {
+    clients.remove(descriptor);
   }
 
 }

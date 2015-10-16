@@ -15,18 +15,23 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.consensus.entity.client;
+package org.terracotta.consensus.entity.messages;
 
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.consensus.entity.CoordinationEntity;
-import org.terracotta.consensus.entity.messages.LeaderElected;
-import org.terracotta.voltron.proxy.client.messages.MessageListener;
-import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
+import java.io.Serializable;
 
 /**
  * @author Alex Snaps
  */
-public interface CoordinationClientEntity extends CoordinationEntity, Entity, ServerMessageAware<LeaderElected> {
+public class LeaderElected implements Serializable {
 
-  void registerListener(MessageListener<LeaderElected> message);
+  private String namespace;
+
+  public LeaderElected(final String namespace) {
+    this.namespace = namespace;
+  }
+
+  public String getNamespace() {
+    return namespace;
+  }
+
 }

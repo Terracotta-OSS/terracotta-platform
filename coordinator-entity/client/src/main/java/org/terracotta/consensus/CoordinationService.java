@@ -24,7 +24,8 @@ import org.terracotta.consensus.entity.CoordinationEntity;
 import org.terracotta.consensus.entity.Nomination;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
-import org.terracotta.consensus.entity.client.DelegatingCoordinationClientEntity;
+import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,13 +57,11 @@ public class CoordinationService {
 
   CoordinationService(CoordinationClientEntity coordinationClientEntity) {
     entity = coordinationClientEntity;
-    if (entity instanceof DelegatingCoordinationClientEntity) {
-      ((DelegatingCoordinationClientEntity)entity).registerListener(new DelegatingCoordinationClientEntity.Listener() {
-        public void onElected(final String namespace) {
-          leaderElected(namespace);
-        }
-      });
-    }
+    entity.registerListener(new MessageListener<LeaderElected>() {
+      public void onMessage(final LeaderElected message) {
+        leaderElected(message.getNamespace());
+      }
+    });
   }
 
   /**

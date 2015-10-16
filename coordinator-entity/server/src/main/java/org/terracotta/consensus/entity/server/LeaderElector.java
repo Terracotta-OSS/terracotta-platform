@@ -25,12 +25,12 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Alex Snaps
  */
-public class LeaderElectorImpl<K, V> implements LeaderElector<K, V> {
+public class LeaderElector<K, V> {
 
   private final PermitFactory<V> factory;
   private final ConcurrentMap<K, BlockingDeque<V>> leaderQueues = new ConcurrentHashMap<K, BlockingDeque<V>>();
 
-  public LeaderElectorImpl(PermitFactory<V> factory) {
+  public LeaderElector(PermitFactory<V> factory) {
     this.factory = factory;
   }
 

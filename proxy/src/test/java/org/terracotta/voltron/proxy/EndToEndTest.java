@@ -30,6 +30,7 @@ import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -127,7 +128,7 @@ public class EndToEndTest {
         delegate.get().handleMessage(bytes);
         return voidFutureTask;
       }
-    }, message, new ClientDescriptor[] { null });
+    }, message, new HashSet<ClientDescriptor>() {{ add(new MyClientDescriptor()); }});
 
     assertThat(messageReceived.get(), equalTo(message));
   }

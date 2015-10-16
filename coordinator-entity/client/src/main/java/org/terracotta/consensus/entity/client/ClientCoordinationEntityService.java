@@ -18,6 +18,7 @@
 package org.terracotta.consensus.entity.client;
 
 import org.terracotta.consensus.entity.CoordinationEntity;
+import org.terracotta.consensus.entity.messages.LeaderElected;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.voltron.proxy.client.ClientProxyFactory;
@@ -40,7 +41,6 @@ public class ClientCoordinationEntityService implements EntityClientService<Coor
   }
 
   public CoordinationClientEntity create(final EntityClientEndpoint entityClientEndpoint) {
-    final CoordinationClientEntity proxy = ClientProxyFactory.createEntityProxy(CoordinationClientEntity.class, CoordinationEntity.class, entityClientEndpoint);
-    return new DelegatingCoordinationClientEntity(proxy, entityClientEndpoint);
+    return ClientProxyFactory.createEntityProxy(CoordinationClientEntity.class, CoordinationEntity.class, entityClientEndpoint, LeaderElected.class);
   }
 }

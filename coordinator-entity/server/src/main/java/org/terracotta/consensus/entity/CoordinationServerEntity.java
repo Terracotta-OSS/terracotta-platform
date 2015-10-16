@@ -17,25 +17,28 @@
 
 package org.terracotta.consensus.entity;
 
-import org.terracotta.consensus.entity.server.LeaderElectorImpl;
-import org.terracotta.consensus.entity.server.PermitFactory;
+import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.NoConcurrencyStrategy;
-import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Alex Snaps
  */
 public class CoordinationServerEntity implements ActiveServerEntity {
 
-  private final LeaderElectorImpl<String, ClientDescriptor> leaderElector = new LeaderElectorImpl<String, ClientDescriptor>(new ClientDescriptorPermitFactory());
-  private final ProxyInvoker target = new ProxyInvoker(CoordinationEntity.class, new CoordinationEntityImpl(), new SerializationCodec());
+  private final LeaderElector<String, ClientDescriptor> leaderElector;
+  private final ProxyInvoker target;
+
+  public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
+    this.leaderElector = leaderElector;
+    this.target = new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(this.leaderElector), new SerializationCodec());
+    this.target.setClientCommunicator(clientCommunicator);
+  }
 
   public byte[] invoke(final ClientDescriptor clientDescriptor, final byte[] arg) {
     return target.invoke(clientDescriptor, arg);
@@ -46,10 +49,11 @@ public class CoordinationServerEntity implements ActiveServerEntity {
   }
 
   public void connected(final ClientDescriptor clientDescriptor) {
-    // no op
+    target.addClient(clientDescriptor);
   }
 
   public void disconnected(final ClientDescriptor clientDescriptor) {
+    target.removeClient(clientDescriptor);
     leaderElector.delistAll(clientDescriptor);
   }
 
@@ -73,26 +77,4 @@ public class CoordinationServerEntity implements ActiveServerEntity {
     // Don't care I think
   }
 
-  private static class CoordinationEntityImpl implements CoordinationEntity {
-    public Nomination runForElection(final String namespace, @ClientId final Object clientId) {
-      throw new UnsupportedOperationException("Implement me!");
-    }
-
-    public void accept(final String namespace, final Nomination permit) {
-      throw new UnsupportedOperationException("Implement me!");
-    }
-
-    public void delist(final String namespace, @ClientId final Object clientId) {
-      throw new UnsupportedOperationException("Implement me!");
-    }
-  }
-
-  private static class ClientDescriptorPermitFactory implements PermitFactory<ClientDescriptor> {
-
-    private AtomicLong counter = new AtomicLong();
-
-    public Object createPermit(final ClientDescriptor clientDescriptor) {
-      return new Nomination(counter.getAndIncrement());
-    }
-  }
 }

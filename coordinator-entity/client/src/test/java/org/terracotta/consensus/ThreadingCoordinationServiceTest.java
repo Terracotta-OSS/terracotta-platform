@@ -21,6 +21,8 @@ import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.consensus.entity.Nomination;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
+import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.ClientId;
 
 import java.util.concurrent.Callable;
@@ -143,6 +145,10 @@ public class ThreadingCoordinationServiceTest {
 
     public void close() {
       throw new UnsupportedOperationException("Implement me!");
+    }
+
+    public void registerListener(final MessageListener<LeaderElected> message) {
+      // no op
     }
   }
 }

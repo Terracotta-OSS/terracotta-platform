@@ -17,6 +17,8 @@
 
 package org.terracotta.consensus.entity;
 
+import org.terracotta.consensus.entity.server.LeaderElector;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
@@ -38,7 +40,8 @@ public class CoordinationServerEntityService implements ServerEntityService<Coor
     if (bytes != null && bytes.length > 0) {
       throw new IllegalArgumentException("No config expected here!");
     }
-    return new CoordinationServerEntity();
+    // TODO Inject Client Communicator here!
+    return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new ClientDescriptorPermitFactory()), null);
   }
 
   public PassiveServerEntity createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
