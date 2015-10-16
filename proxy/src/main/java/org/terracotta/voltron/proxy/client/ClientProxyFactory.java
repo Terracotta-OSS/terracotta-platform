@@ -22,9 +22,11 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.CommonProxyFactory;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
@@ -34,21 +36,35 @@ import java.util.SortedSet;
  */
 public class ClientProxyFactory {
 
-  public static <T, R extends Entity> R createEntityProxy(Class<T> type,
+  public static <T, R extends Entity & ServerMessageAware> R createEntityProxy(Class<T> clientType, Class<? super T> type,
+                                                                               EntityClientEndpoint entityClientEndpoint,
+                                                                               Class<?> messageType, Class<?>... messageTypes) {
+    return (R) createProxy(clientType, type, entityClientEndpoint, new SerializationCodec(), sum(messageType, messageTypes));
+  }
+
+  public static <T, R extends Entity & ServerMessageAware> R createEntityProxy(Class<T> clientType, Class<? super T> type,
+                                                                               EntityClientEndpoint entityClientEndpoint,
+                                                                               final Codec codec, Class<?> messageType,
+                                                                               Class<?>... messageTypes) {
+    return (R) createProxy(clientType, type, entityClientEndpoint, codec, sum(messageType, messageTypes));
+  }
+
+  public static <T, R extends Entity> R createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                        EntityClientEndpoint entityClientEndpoint) {
-    return (R) createProxy(type, entityClientEndpoint);
+    return (R) createProxy(clientType, type, entityClientEndpoint);
   }
 
-  public static <T, R extends Entity> R createEntityProxy(Class<T> type,
+  public static <T, R extends Entity> R createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                        EntityClientEndpoint entityClientEndpoint, final Codec codec) {
-    return (R) createProxy(type, entityClientEndpoint, codec);
+    return (R) createProxy(clientType, type, entityClientEndpoint, codec);
   }
 
-  public static <T> T createProxy(Class<T> type, EntityClientEndpoint entityClientEndpoint) {
-    return createProxy(type, entityClientEndpoint, new SerializationCodec());
+  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint entityClientEndpoint) {
+    return createProxy(clientType, type, entityClientEndpoint, new SerializationCodec());
   }
 
-  public static <T> T createProxy(Class<T> type, EntityClientEndpoint entityClientEndpoint, final Codec codec) {
+  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint entityClientEndpoint,
+                                  final Codec codec, Class... messageTypes) {
 
     if (entityClientEndpoint == null) {
       throw new NullPointerException("EntityClientEndpoint has to be provided!");
@@ -60,8 +76,14 @@ public class ClientProxyFactory {
 
     Map<Method, Byte> mappings = createMethodMappings(type);
 
-    return type.cast(Proxy.newProxyInstance(Entity.class.getClassLoader(), new Class[] { type, Entity.class },
-        new VoltronProxyInvocationHandler(mappings, entityClientEndpoint, codec)));
+    final Class[] interfaces;
+    if (messageTypes.length == 0) {
+      interfaces = new Class[] { clientType, Entity.class };
+    } else {
+      interfaces = new Class[] { clientType, Entity.class, ServerMessageAware.class };
+    }
+    return clientType.cast(Proxy.newProxyInstance(Entity.class.getClassLoader(), interfaces,
+        new VoltronProxyInvocationHandler(mappings, entityClientEndpoint, codec, createEventTypeMappings(messageTypes))));
   }
 
   static Map<Method, Byte> createMethodMappings(final Class type) {
@@ -73,6 +95,23 @@ public class ClientProxyFactory {
       map.put(method, index++);
     }
     return map;
+  }
+
+  static Map<Byte, Class> createEventTypeMappings(final Class... types) {
+    final HashMap<Byte, Class> map = new HashMap<Byte, Class>();
+    byte index = 0;
+    for (Class messageType : types) {
+      map.put(index++, messageType);
+    }
+    return map;
+  }
+
+
+  private static Class[] sum(Class one, Class[] others) {
+    Class[] result = new Class[others.length + 1];
+    result[0] = one;
+    System.arraycopy(others, 0, result, 1, others.length);
+    return result;
   }
 
 }

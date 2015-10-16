@@ -40,7 +40,7 @@ public class ClientCoordinationEntityService implements EntityClientService<Coor
   }
 
   public CoordinationClientEntity create(final EntityClientEndpoint entityClientEndpoint) {
-    final CoordinationClientEntity proxy = ClientProxyFactory.createEntityProxy(CoordinationEntity.class, entityClientEndpoint);
+    final CoordinationClientEntity proxy = ClientProxyFactory.createEntityProxy(CoordinationClientEntity.class, CoordinationEntity.class, entityClientEndpoint);
     return new DelegatingCoordinationClientEntity(proxy, entityClientEndpoint);
   }
 }

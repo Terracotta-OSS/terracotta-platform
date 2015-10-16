@@ -32,6 +32,12 @@ public class CommonProxyFactory {
     }
   };
 
+  public static final Comparator<Class> CLASS_COMPARATOR = new Comparator<Class>() {
+    public int compare(final Class o1, final Class o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
+
   public static SortedSet<Method> getSortedMethods(final Class type) {
     SortedSet<Method> methods = new TreeSet<Method>(METHOD_COMPARATOR);
 
@@ -47,5 +53,13 @@ public class CommonProxyFactory {
       }
     }
     return methods;
+  }
+
+  public static SortedSet<Class> getSortedTypes(Class... types) {
+    final TreeSet<Class> classes = new TreeSet<Class>(CLASS_COMPARATOR);
+    for (Class aClass : classes) {
+      classes.add(aClass);
+    }
+    return classes;
   }
 }

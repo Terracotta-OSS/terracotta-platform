@@ -18,10 +18,15 @@
 package org.terracotta.voltron.proxy;
 
 import org.junit.Test;
+import org.terracotta.connection.entity.Entity;
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.voltron.proxy.client.ClientProxyFactory;
+import org.terracotta.voltron.proxy.client.messages.MessageListener;
+import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
 
 import java.io.Serializable;
@@ -29,7 +34,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -55,8 +62,74 @@ public class EndToEndTest {
     when(endpoint.beginInvoke()).thenReturn(builder);
 
 
-    final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, endpoint, codec);
+    final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, Comparable.class, endpoint, codec);
     assertThat(proxy.compareTo("blah!"), is(42));
+  }
+
+  @Test
+  public void testMessaging() throws ExecutionException, InterruptedException {
+    final Codec codec = new SerializationCodec();
+    final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(Comparable.class, new Comparable() {
+      public int compareTo(final Object o) {
+        return 42;
+      }
+    }, codec, String.class);
+    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker);
+    final AtomicReference<EndpointDelegate> delegate = new AtomicReference<EndpointDelegate>();
+    final EntityClientEndpoint endpoint = new EntityClientEndpoint() {
+      public byte[] getEntityConfiguration() {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+
+      public void setDelegate(final EndpointDelegate endpointDelegate) {
+        delegate.set(endpointDelegate);
+      }
+
+      public InvocationBuilder beginInvoke() {
+        return builder;
+      }
+
+      public byte[] getExtendedReconnectData() {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+
+      public void close() {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+
+      public void didCloseUnexpectedly() {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+    };
+
+    final ComparableEntity proxy = ClientProxyFactory.createEntityProxy(ComparableEntity.class, Comparable.class, endpoint, codec, String.class);
+    final AtomicReference<String> messageReceived = new AtomicReference<String>();
+    proxy.registerListener(new MessageListener<String>() {
+      @Override
+      public void onMessage(final String message) {
+        messageReceived.set(message);
+      }
+    });
+    final String message = "Hello world!";
+    proxyInvoker.fireMessage(new ClientCommunicator() {
+      public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+
+      public Future<Void> send(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+
+        final FutureTask<Void> voidFutureTask = new FutureTask<Void>(new Callable<Void>() {
+          public Void call() throws Exception {
+            return null;
+          }
+        });
+        voidFutureTask.run();
+        delegate.get().handleMessage(bytes);
+        return voidFutureTask;
+      }
+    }, message, new ClientDescriptor[] { null });
+
+    assertThat(messageReceived.get(), equalTo(message));
   }
 
   @Test
@@ -82,7 +155,7 @@ public class EndToEndTest {
     when(endpoint.beginInvoke()).thenReturn(builder);
 
 
-    final ClientIdAware proxy = ClientProxyFactory.createProxy(ClientIdAware.class, endpoint, codec);
+    final ClientIdAware proxy = ClientProxyFactory.createProxy(ClientIdAware.class, ClientIdAware.class, endpoint, codec);
     proxy.nothing();
     proxy.notMuch(null);
     assertThat(proxy.much(12, 12), notNullValue());
@@ -135,6 +208,10 @@ public class EndToEndTest {
     void notMuch(@ClientId Object id);
 
     Serializable much(Serializable foo, @ClientId Object id);
+
+  }
+
+  public interface ComparableEntity extends ServerMessageAware, Entity, Comparable {
 
   }
 }

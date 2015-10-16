@@ -22,7 +22,10 @@ import org.mockito.Matchers;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.client.messages.MessageListener;
+import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -45,7 +48,7 @@ public class ClientProxyFactoryTest {
   @Test
   public void addEntityInterfaceToType() {
     final EntityClientEndpoint clientEndpoint = mock(EntityClientEndpoint.class);
-    final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, clientEndpoint);
+    final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, Comparable.class, clientEndpoint);
     assertThat(proxy, instanceOf(Entity.class));
     ((Entity) proxy).close();
     verify(clientEndpoint).close();
@@ -62,7 +65,7 @@ public class ClientProxyFactoryTest {
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(codec.encode(Integer.class, 42));
 
-    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, endpoint, codec);
+    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
     assertThat(proxy.sync(), is(42));
   }
 
@@ -85,7 +88,7 @@ public class ClientProxyFactoryTest {
     when(future.get(1, TimeUnit.SECONDS)).thenReturn(codec.encode(Integer.class, 43))
         .thenThrow(new TimeoutException("Blah!"));
 
-    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, endpoint, codec);
+    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
     assertThat(proxy.aSync().get(), is(42));
     assertThat(proxy.aSync().get(1, TimeUnit.SECONDS), is(43));
     try {
@@ -93,6 +96,39 @@ public class ClientProxyFactoryTest {
       fail();
     } catch (TimeoutException e) {
       assertThat(e.getMessage(), is("Blah!"));
+    }
+  }
+
+  @Test
+  public void testRegistersListeners() throws ExecutionException, InterruptedException, TimeoutException {
+    final SerializationCodec codec = new SerializationCodec();
+    final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
+    final InvocationBuilder builder = mock(InvocationBuilder.class);
+    when(endpoint.beginInvoke()).thenReturn(builder);
+    when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
+    final Future future = mock(Future.class);
+    when(builder.invoke()).thenReturn(future);
+    when(future.get()).thenReturn(codec.encode(Integer.class, 42));
+
+    final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, codec, String.class, Integer.class);
+    assertThat(proxy.sync(), is(42));
+    proxy.registerListener(new StringMessageListener());
+    proxy.registerListener(new MessageListener<Integer>() {
+      @Override
+      public void onMessage(final Integer message) {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+    });
+    try {
+      proxy.registerListener(new MessageListener<Object>() {
+        @Override
+        public void onMessage(final Object message) {
+          throw new UnsupportedOperationException("Implement me!");
+        }
+      });
+      fail();
+    } catch (IllegalArgumentException e) {
+      // expected
     }
   }
 
@@ -104,4 +140,13 @@ public class ClientProxyFactoryTest {
 
   }
 
+  public interface ListenerAware extends PassThrough, ServerMessageAware, Entity {
+
+  }
+
+  private static class StringMessageListener extends MessageListener<String> {
+    public void onMessage(final String message) {
+      throw new UnsupportedOperationException("Implement me!");
+    }
+  }
 }
