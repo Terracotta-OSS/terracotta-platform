@@ -22,7 +22,8 @@ import org.mockito.Matchers;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.voltron.proxy.Codec;
+import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
@@ -55,13 +56,13 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testFakeOutboundCall() throws ExecutionException, InterruptedException {
+  public void testFakeOutboundCall() throws ExecutionException, InterruptedException, EntityException {
     final SerializationCodec codec = new SerializationCodec();
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
-    final Future future = mock(Future.class);
+    final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(codec.encode(Integer.class, 42));
 
@@ -70,7 +71,7 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException, EntityException {
     final SerializationCodec codec = new SerializationCodec() {
       @Override
       public Object decode(final byte[] buffer, final Class<?> type) {
@@ -82,10 +83,10 @@ public class ClientProxyFactoryTest {
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
-    final Future future = mock(Future.class);
+    final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(codec.encode(Integer.class, 42));
-    when(future.get(1, TimeUnit.SECONDS)).thenReturn(codec.encode(Integer.class, 43))
+    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(codec.encode(Integer.class, 43))
         .thenThrow(new TimeoutException("Blah!"));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
@@ -100,13 +101,13 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testRegistersListeners() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testRegistersListeners() throws ExecutionException, InterruptedException, TimeoutException, EntityException {
     final SerializationCodec codec = new SerializationCodec();
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
-    final Future future = mock(Future.class);
+    final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(codec.encode(Integer.class, 42));
 

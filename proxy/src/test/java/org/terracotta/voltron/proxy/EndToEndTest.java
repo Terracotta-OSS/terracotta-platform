@@ -24,6 +24,8 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.client.ClientProxyFactory;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
@@ -35,6 +37,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -188,14 +192,34 @@ public class EndToEndTest {
       return this;
     }
 
-    public Future<byte[]> invoke() {
+    public InvokeFuture<byte[]> invoke() {
       final FutureTask<byte[]> futureTask = new FutureTask<byte[]>(new Callable<byte[]>() {
         public byte[] call() throws Exception {
           return proxyInvoker.invoke(new MyClientDescriptor(), payload);
         }
       });
       futureTask.run();
-      return futureTask;
+      return new InvokeFuture<byte[]>() {
+        public boolean isDone() {
+          throw new UnsupportedOperationException("Implement me!");
+        }
+
+        public byte[] get() throws InterruptedException, EntityException {
+          try {
+            return futureTask.get();
+          } catch (ExecutionException e) {
+            throw new RuntimeException(e.getCause());
+          }
+        }
+
+        public byte[] getWithTimeout(final long l, final TimeUnit timeUnit) throws InterruptedException, EntityException, TimeoutException {
+          throw new UnsupportedOperationException("Implement me!");
+        }
+
+        public void interrupt() {
+          throw new UnsupportedOperationException("Implement me!");
+        }
+      };
     }
 
   }
