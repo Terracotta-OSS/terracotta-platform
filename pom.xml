@@ -68,6 +68,11 @@
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>standard-cluster-services</artifactId>
+        <version>${terracotta-apis.version}</version>
+      </dependency>
+      <dependency>
         <groupId> org.terracotta</groupId>
         <artifactId>entity-server-api</artifactId>
         <version>${terracotta-apis.version}</version>

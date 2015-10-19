@@ -22,6 +22,8 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.Codec;
+import org.terracotta.voltron.proxy.client.messages.MessageListener;
+import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -31,6 +33,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -42,10 +47,12 @@ import java.util.concurrent.TimeoutException;
 class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private static final Method close;
+  private static final Method registerListener;
 
   static {
     try {
       close = Entity.class.getDeclaredMethod("close");
+      registerListener = ServerMessageAware.class.getDeclaredMethod("registerListener", MessageListener.class);
     } catch (NoSuchMethodException e) {
       throw new AssertionError("Someone changed some method signature here!!!");
     }
@@ -54,19 +61,36 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   private final Map<Method, Byte> mappings;
   private final EntityClientEndpoint entityClientEndpoint;
   private final Codec codec;
+  private final ConcurrentMap<Class, CopyOnWriteArrayList<MessageListener>> listeners;
 
   public VoltronProxyInvocationHandler(final Map<Method, Byte> mappings,
                                        final EntityClientEndpoint entityClientEndpoint,
-                                       final Codec codec) {
+                                       final Codec codec, Map<Byte, Class> eventMappings) {
     this.mappings = mappings;
     this.entityClientEndpoint = entityClientEndpoint;
     this.codec = codec;
+    this.listeners = new ConcurrentHashMap<Class, CopyOnWriteArrayList<MessageListener>>();
+    if (eventMappings.size() > 0) {
+      for (Class aClass : eventMappings.values()) {
+        listeners.put(aClass, new CopyOnWriteArrayList<MessageListener>());
+      }
+      entityClientEndpoint.setDelegate(new ProxyEndpointDelegate(codec, listeners, eventMappings));
+    }
   }
 
   public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
 
     if(close.equals(method)) {
       entityClientEndpoint.close();
+      return null;
+    } else if(registerListener.equals(method)) {
+      final MessageListener arg = (MessageListener) args[0];
+      final Type eventType = ((ParameterizedType)arg.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+      final CopyOnWriteArrayList<MessageListener> messageListeners = listeners.get(eventType);
+      if(messageListeners == null) {
+        throw new IllegalArgumentException("Event type '" + eventType + "' isn't supported");
+      }
+      messageListeners.add(arg);
       return null;
     }
 

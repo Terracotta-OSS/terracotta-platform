@@ -15,18 +15,12 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.consensus.entity.client;
-
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.consensus.entity.CoordinationEntity;
-import org.terracotta.consensus.entity.messages.LeaderElected;
-import org.terracotta.voltron.proxy.client.messages.MessageListener;
-import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
+package org.terracotta.voltron.proxy.client.messages;
 
 /**
  * @author Alex Snaps
  */
-public interface CoordinationClientEntity extends CoordinationEntity, Entity, ServerMessageAware<LeaderElected> {
+public interface ServerMessageAware<T> {
 
-  void registerListener(MessageListener<LeaderElected> message);
+  void registerListener(MessageListener<T> listener);
 }

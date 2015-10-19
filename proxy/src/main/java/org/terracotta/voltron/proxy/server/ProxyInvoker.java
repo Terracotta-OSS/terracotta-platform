@@ -17,18 +17,30 @@
 
 package org.terracotta.voltron.proxy.server;
 
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.CommonProxyFactory;
+import org.terracotta.voltron.proxy.client.messages.MessageListener;
+import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * @author Alex Snaps
@@ -38,11 +50,28 @@ public class ProxyInvoker<T> {
   private final T target;
   private final Codec codec;
   private final Map<Byte, Method> mappings;
+  private final Map<Class, Byte> eventMappings;
+  private final Set<Class> messageTypes;
+  private volatile ClientCommunicator clientCommunicator;
+  private final Set<ClientDescriptor> clients = new ConcurrentSkipListSet<ClientDescriptor>();
 
-  public ProxyInvoker(Class<T> proxyType, T target, Codec codec) {
+  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, Class... messageTypes) {
     this.target = target;
     this.codec = codec;
     this.mappings = createMethodMappings(proxyType);
+    this.messageTypes = new HashSet<Class>();
+    for (Class eventType : messageTypes) {
+      this.messageTypes.add(eventType);
+      if(target instanceof MessageFiring) {
+        ((MessageFiring)target).registerListener(eventType, new MessageListener() {
+          @Override
+          public void onMessage(final Object message) {
+            fireMessage(clientCommunicator, message, clients); // fire to all Clients!
+          }
+        });
+      }
+    }
+    this.eventMappings = createEventTypeMappings(messageTypes);
   }
 
   public byte[] invoke(final ClientDescriptor clientDescriptor, final byte[] arg) {
@@ -69,6 +98,68 @@ public class ProxyInvoker<T> {
     }
   }
 
+  public void fireMessage(ClientCommunicator clientCommunicator, Object message, Set<ClientDescriptor> clients) {
+    final Class<?> type = message.getClass();
+    if(!messageTypes.contains(type)) {
+      throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
+    }
+    Set<Future<Void>> futures = new HashSet<Future<Void>>();
+    for (ClientDescriptor client : clients) {
+      futures.add(clientCommunicator.send(client, encode(type, message)));
+    }
+    boolean interrupted = false;
+    while(!futures.isEmpty()) {
+      for (Iterator<Future<Void>> iterator = futures.iterator(); iterator.hasNext(); ) {
+        final Future<Void> future = iterator.next();
+        try {
+          future.get();
+          iterator.remove();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        } catch (ExecutionException e) {
+          iterator.remove();
+          e.printStackTrace();
+        }
+      }
+    }
+    if(interrupted) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  public void fireAndForgetMessage(ClientCommunicator clientCommunicator, Object message, ClientDescriptor... clients) {
+    final Class<?> type = message.getClass();
+    if(!messageTypes.contains(type)) {
+      throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
+    }
+    for (ClientDescriptor client : clients) {
+      clientCommunicator.sendNoResponse(client, encode(type, message));
+    }
+  }
+
+  private byte[] encode(final Class type, final Object message) {
+
+    final Byte messageTypeIdentifier = eventMappings.get(type);
+
+    if(messageTypeIdentifier == null) {
+      throw new AssertionError("WAT, no mapping for " + type.getName());
+    }
+
+    ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+    DataOutputStream output = new DataOutputStream(byteOut);
+
+    try {
+      output.writeByte(messageTypeIdentifier);
+      output.write(codec.encode(type, message));
+
+      output.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return byteOut.toByteArray();
+  }
+
+
   static Map<Byte, Method> createMethodMappings(final Class type) {
     SortedSet<Method> methods = CommonProxyFactory.getSortedMethods(type);
 
@@ -78,6 +169,27 @@ public class ProxyInvoker<T> {
       map.put(index++, method);
     }
     return map;
+  }
+
+  static Map<Class, Byte> createEventTypeMappings(final Class... types) {
+    final HashMap<Class, Byte> map = new HashMap<Class, Byte>();
+    byte index = 0;
+    for (Class messageType : types) {
+      map.put(messageType, index++);
+    }
+    return map;
+  }
+
+  public void setClientCommunicator(final ClientCommunicator clientCommunicator) {
+    this.clientCommunicator = clientCommunicator;
+  }
+
+  public void addClient(ClientDescriptor descriptor) {
+    clients.add(descriptor);
+  }
+
+  public void removeClient(ClientDescriptor descriptor) {
+    clients.remove(descriptor);
   }
 
 }

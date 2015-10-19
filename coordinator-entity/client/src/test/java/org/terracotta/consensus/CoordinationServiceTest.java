@@ -30,11 +30,11 @@ import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -139,41 +139,44 @@ public class CoordinationServiceTest {
 
   @Test
   public void doesNotAcceptNullCallableAndDoesNotEnlistWhenNull() throws Throwable {
-    final CoordinationClientEntity CoordinationClientEntity = mock(CoordinationClientEntity.class);
-    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(CoordinationClientEntity));
+    final CoordinationClientEntity coordinationClientEntity = mock(CoordinationClientEntity.class);
+    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
+    reset(coordinationClientEntity);
     try {
       coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, null);
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected
     }
-    verifyNoMoreInteractions(CoordinationClientEntity);
+    verifyNoMoreInteractions(coordinationClientEntity);
   }
 
   @Test
   public void doesNotAcceptNullEntityTypeAndDoesNotEnlistWhenNull() throws Throwable {
-    final CoordinationClientEntity CoordinationClientEntity = mock(CoordinationClientEntity.class);
-    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(CoordinationClientEntity));
+    final CoordinationClientEntity coordinationClientEntity = mock(CoordinationClientEntity.class);
+    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
+    reset(coordinationClientEntity);
     try {
       coordinationService.executeIfLeader(null, ENTITY_NAME, mock(Callable.class));
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected
     }
-    verifyNoMoreInteractions(CoordinationClientEntity);
+    verifyNoMoreInteractions(coordinationClientEntity);
   }
 
   @Test
   public void doesNotAcceptNullEntityNameAndDoesNotEnlistWhenNull() throws Throwable {
-    final CoordinationClientEntity CoordinationClientEntity = mock(CoordinationClientEntity.class);
-    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(CoordinationClientEntity));
+    final CoordinationClientEntity coordinationClientEntity = mock(CoordinationClientEntity.class);
+    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
+    reset(coordinationClientEntity);
     try {
       coordinationService.executeIfLeader(ENTITY_TYPE, null, mock(Callable.class));
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected
     }
-    verifyNoMoreInteractions(CoordinationClientEntity);
+    verifyNoMoreInteractions(coordinationClientEntity);
   }
 
   @Test

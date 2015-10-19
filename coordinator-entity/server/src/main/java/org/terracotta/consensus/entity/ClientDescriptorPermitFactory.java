@@ -15,24 +15,21 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.consensus.entity.server;
+package org.terracotta.consensus.entity;
 
-import java.util.List;
+import org.terracotta.consensus.entity.server.PermitFactory;
+import org.terracotta.entity.ClientDescriptor;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Alex Snaps
  */
-public interface LeaderElector<K, V> {
-  Object enlist(K key, V value);
+class ClientDescriptorPermitFactory implements PermitFactory<ClientDescriptor> {
 
-  void releasePermit(K key, Object permit);
+  private static final AtomicLong counter = new AtomicLong();
 
-  void dropPermit(K key);
-
-  void delist(K key, V value);
-
-  boolean isLeader(K key, V participant);
-
-  List<V> getAllWaitingOn(K key);
-
+  public Object createPermit(final ClientDescriptor clientDescriptor) {
+    return new Nomination(counter.getAndIncrement());
+  }
 }
