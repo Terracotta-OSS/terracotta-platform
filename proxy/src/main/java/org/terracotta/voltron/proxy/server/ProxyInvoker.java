@@ -32,6 +32,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -53,7 +54,7 @@ public class ProxyInvoker<T> {
   private final Map<Class, Byte> eventMappings;
   private final Set<Class> messageTypes;
   private volatile ClientCommunicator clientCommunicator;
-  private final Set<ClientDescriptor> clients = new ConcurrentSkipListSet<ClientDescriptor>();
+  private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
   public ProxyInvoker(Class<T> proxyType, T target, Codec codec, Class... messageTypes) {
     this.target = target;

@@ -29,13 +29,15 @@ import org.terracotta.entity.ServiceRegistry;
  * @author Alex Snaps
  */
 public class CoordinationServerEntityService implements ServerEntityService<CoordinationServerEntity, PassiveServerEntity> {
+  
+  private static final String ENTITY_CLASS_NAME = "org.terracotta.consensus.entity.client.CoordinationClientEntity";
 
   public long getVersion() {
     return Versions.LATEST.version();
   }
 
   public boolean handlesEntityType(final String s) {
-    return CoordinationEntity.class.getName().equals(s);
+    return ENTITY_CLASS_NAME.equals(s);
   }
 
   public CoordinationServerEntity createActiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {

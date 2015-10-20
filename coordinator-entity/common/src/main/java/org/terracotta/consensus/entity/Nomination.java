@@ -45,6 +45,11 @@ public class Nomination implements Serializable {
   public boolean awaitsElection() {
     return id == AWAITS_ELECTION;
   }
+  
+  @Override
+  public boolean equals(Object obj) {
+    return id == ((Nomination) obj).id;
+  }
 
   private void writeObject(ObjectOutputStream out) throws IOException {
     out.defaultWriteObject();

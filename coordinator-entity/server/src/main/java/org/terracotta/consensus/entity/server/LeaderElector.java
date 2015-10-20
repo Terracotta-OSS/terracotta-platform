@@ -20,10 +20,10 @@ package org.terracotta.consensus.entity.server;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.terracotta.consensus.entity.Nomination;
@@ -34,8 +34,7 @@ import org.terracotta.consensus.entity.Nomination;
 public class LeaderElector<K, V> {
 
   private final PermitFactory<V> factory;
-  private final ConcurrentMap<K, ElectionQueue<V>> leaderQueues = new ConcurrentHashMap<K, ElectionQueue<V>>();
-  private final ConcurrentMap<K, ReentrantLock> locks = new ConcurrentHashMap<K, ReentrantLock>();
+  private final ConcurrentMap<K, ElectionQueue<K, V>> leaderQueues = new ConcurrentHashMap<K, ElectionQueue<K, V>>();
   private DelistListener<K, V> listener;
 
   public LeaderElector(PermitFactory<V> factory) {
@@ -43,106 +42,31 @@ public class LeaderElector<K, V> {
   }
 
   public Object enlist(K key, V value) {
-    leaderQueues.putIfAbsent(key, new ElectionQueue<V>(
-        new LinkedBlockingQueue<V>(), ElectionState.NOT_ELECTED));
-    locks.putIfAbsent(key, new ReentrantLock());
-    return runElection(key, value);
+    leaderQueues.putIfAbsent(key, new ElectionQueue<K, V>(key, factory,
+        listener));
+    return leaderQueues.get(key).runElectionOrAdd(value);
   }
-  
+
   public void setListener(DelistListener<K, V> listener) {
     this.listener = listener;
   }
 
-  private Object runElection(K key, V value) {
-    Lock lock = locks.get(key);
-    lock.lock();
-    try {
-      ElectionQueue<V> queue = leaderQueues.get(key);
-      switch (queue.getState()) {
-      case ELECTED:
-        addToQueue(queue, key, value);
-        return null;
-      case RUNNING:
-        addToQueue(queue, key, value);
-        return new Nomination();
-      case NOT_ELECTED:
-        addToQueue(queue, key, value);
-        if (isLeader(key, value)) {
-          queue.setState(ElectionState.RUNNING);
-          return factory.createPermit(value);
-        }
-        // this should not happen
-        return null;
-      default:
-        throw new IllegalStateException("Illegal Election state");
-      }
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  private void addToQueue(ElectionQueue<V> queue, K key, V value) {
-    BlockingQueue<V> valueQueue = queue.getQueue();
-    valueQueue.offer(value);
-  }
-
   public void accept(K key, Object permit) {
-    Lock lock = locks.get(key);
-    lock.lock();
-    try {
-      ElectionQueue<V> queue = leaderQueues.get(key);
-      if (queue.getState() == ElectionState.RUNNING) {
-        queue.setState(ElectionState.ELECTED);
-      }
-    } finally {
-      lock.unlock();
-    }
+    leaderQueues.get(key).accept(permit);
   }
 
-  public void delist(K key, V value) {
-    Lock lock = locks.get(key);
-    lock.lock();
-    try {
-      ElectionQueue<V> queue = leaderQueues.get(key);
-      if (isLeader(key, value)) {
-        queue.setState(ElectionState.NOT_ELECTED);
-        queue.getQueue().remove(value);
-        V val = queue.getQueue().peek();
-        if(val != null) {
-          queue.setState(ElectionState.RUNNING);
-          listener.onDelist(key, val, factory.createPermit(val));
-        }
-      }
-      else {
-        queue.getQueue().remove(value);
-      }
-    } finally {
-      lock.unlock();
-    }
-  }
+  public void delist(final K key, V value) {
+    leaderQueues.get(key).remove(value, new Callable() {
 
-  private boolean isLeader(final K key, final V participant) {
-    Lock lock = locks.get(key);
-    lock.lock();
-    try {
-      BlockingQueue<V> vs = leaderQueues.get(key).getQueue();
-      return vs == null ? false : vs.peek().equals(participant);
-    } finally {
-      lock.unlock();
-    }
+      public Object call() throws Exception {
+        leaderQueues.remove(key);
+        return null;
+      }
+    });
   }
 
   public List<V> getAllWaitingOn(final K key) {
-    Lock lock = locks.get(key);
-    lock.lock();
-    try {
-      BlockingQueue<V> queue = leaderQueues.get(key).getQueue();
-      List<V> list = new ArrayList<V>(queue);
-      list.remove(0);
-      return list;
-    } finally {
-      lock.unlock();
-    }
+    return leaderQueues.get(key).tail();
   }
 
   public void delistAll(V value) {
@@ -155,25 +79,102 @@ public class LeaderElector<K, V> {
     RUNNING, ELECTED, NOT_ELECTED;
   }
 
-  private static class ElectionQueue<V> {
-    private final BlockingQueue<V> leaderQueue;
-    private ElectionState state;
+  private static class ElectionQueue<K, V> {
+    private final BlockingQueue<V> leaderQueue = new LinkedBlockingQueue<V>();
+    private final K key;
+    private final PermitFactory<V> factory;
+    private ElectionState state = ElectionState.NOT_ELECTED;
+    private final DelistListener listener;
+    private final ReentrantLock lock = new ReentrantLock();
+    private Object currentPermit;
 
-    public ElectionQueue(BlockingQueue<V> leaderQueue, ElectionState state) {
-      this.leaderQueue = leaderQueue;
-      this.state = state;
+    public ElectionQueue(K key, PermitFactory<V> factory,
+        DelistListener listener) {
+      if (listener == null) {
+        throw new IllegalArgumentException("Listener cannot be null.");
+      }
+      this.key = key;
+      this.listener = listener;
+      this.factory = factory;
     }
 
-    BlockingQueue<V> getQueue() {
-      return this.leaderQueue;
+    private Object runElectionOrAdd(V value) {
+      lock.lock();
+      try {
+        switch (state) {
+        case ELECTED:
+          leaderQueue.offer(value);
+          return null;
+        case RUNNING:
+          leaderQueue.offer(value);
+          return new Nomination();
+        case NOT_ELECTED:
+          leaderQueue.offer(value);
+          if (leaderQueue.peek().equals(value)) {
+            state = ElectionState.RUNNING;
+            return currentPermit = factory.createPermit(value);
+          }
+          // this should not happen
+          return null;
+        default:
+          throw new IllegalStateException("Illegal Election state");
+        }
+      } finally {
+        lock.unlock();
+      }
     }
 
-    ElectionState getState() {
-      return this.state;
+    private List<V> tail() {
+      lock.lock();
+      try {
+        List<V> list = new ArrayList<V>(leaderQueue);
+        list.remove(0);
+        return list;
+      } finally {
+        lock.unlock();
+      }
     }
 
-    void setState(ElectionState state) {
-      this.state = state;
+    private void accept(Object permit) {
+      if (permit == null || !(permit instanceof Nomination)) {
+        throw new IllegalStateException("Null Permits cannot be accepted");
+      }
+      lock.lock();
+      try {
+        if(!currentPermit.equals(permit)) {
+          throw new IllegalArgumentException("Wrong Nomination accepted"); 
+        }
+        if (state == ElectionState.RUNNING) {
+          state = ElectionState.ELECTED;
+        }
+      } finally {
+        lock.unlock();
+      }
+    }
+
+    private void remove(V value, Callable callIfEmpty) {
+      lock.lock();
+      try {
+        if (leaderQueue.peek().equals(value)) {
+          state = ElectionState.NOT_ELECTED;
+          leaderQueue.remove(value);
+          V val = leaderQueue.peek();
+          if (val != null) {
+            state = ElectionState.RUNNING;
+            listener.onDelist(key, val,
+                currentPermit = factory.createPermit(val));
+          }
+        } else {
+          leaderQueue.remove(value);
+        }
+        if(leaderQueue.isEmpty()) {
+          callIfEmpty.call();
+        }
+      } catch (Exception e) {
+        throw new IllegalStateException(e);
+      } finally {
+        lock.unlock();
+      }
     }
   }
 

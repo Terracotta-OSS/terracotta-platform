@@ -27,6 +27,7 @@ import org.terracotta.consensus.entity.Nomination;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.mockito.Mockito.verify;
@@ -75,6 +76,33 @@ public class LeaderElectorTest {
     leaderElector.delist("e1", "c1");
     
     verify(listener).onDelist(any(String.class), any(String.class), any(Object.class));
+    
+    leaderElector.delist("e1", "c3");
+    
+    verify(listener).onDelist(any(String.class), any(String.class), any(Object.class));
+    
+    try {
+      leaderElector.delist("e1", "c4");
+    } catch (Exception expected) {
+      assertThat(expected, instanceOf(NullPointerException.class));
+    }
+    
+    Object newpermit1 = leaderElector.enlist("e1", "c1");
+    assertThat(newpermit1, notNullValue());
+    assertThat((((Nomination)newpermit1).awaitsElection()), is(false));;
+    
+    try {
+      leaderElector.accept("e1", permit1);
+    } catch (Exception expected) {
+      assertThat(expected, instanceOf(IllegalArgumentException.class));
+      assertThat(expected.getMessage(), is("Wrong Nomination accepted"));
+    }
+    
+    leaderElector.accept("e1", newpermit1);
+    
+    Object permit4 = leaderElector.enlist("e1", "c5");
+    
+    assertThat(permit4, nullValue());
 
   }
 
