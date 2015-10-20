@@ -20,11 +20,15 @@ package org.terracotta.consensus;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.consensus.entity.CoordinationEntity;
 import org.terracotta.consensus.entity.Nomination;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
 import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.util.concurrent.Callable;
@@ -156,24 +160,21 @@ public class CoordinationService {
 
   private static CoordinationClientEntity getCoordinationClientEntity(final Connection connection) {
     CoordinationClientEntity entity;
-    final EntityRef<CoordinationClientEntity, Object> entityRef = connection.getEntityRef(CoordinationClientEntity.class, Versions.LATEST
-        .version(), SINGLETON_NAME);
     try {
-      entity = entityRef.fetchEntity();
-    } catch (IllegalStateException e) {
-      try {
-        entityRef.create(null);
-      } catch (RuntimeException e1) { // todo: pending proper typing
-        if (!(e1.getCause() instanceof IllegalStateException)) {
-          throw e1;
-        }
-      }
+      final EntityRef<CoordinationClientEntity, Object> entityRef
+          = connection.getEntityRef(CoordinationClientEntity.class, Versions.LATEST.version(), SINGLETON_NAME);
       try {
         entity = entityRef.fetchEntity();
-      } catch (IllegalStateException e1) {
-        throw new AssertionError("Entity " + CoordinationEntity.class + " named '" + SINGLETON_NAME
-                                 + "' failed being created - cluster-wide race?!");
+      } catch (EntityNotFoundException e) {
+        try {
+          entityRef.create(null);
+        } catch (EntityAlreadyExistsException weLostTheRace) {
+          // Ignore, that's fine!
+        }
+        entity = entityRef.fetchEntity();
       }
+    } catch (EntityException e) {
+      throw new IllegalStateException("Something is definitively wrong with the setup here!", e);
     }
     return entity;
   }

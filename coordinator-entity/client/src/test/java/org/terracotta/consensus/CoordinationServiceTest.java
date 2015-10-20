@@ -25,6 +25,8 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
 import org.terracotta.consensus.entity.Nomination;
 import org.terracotta.consensus.entity.Versions;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
 
 import java.util.concurrent.Callable;
 
@@ -52,33 +54,33 @@ public class CoordinationServiceTest {
   final long version = Versions.LATEST.version();
 
   @Test
-  public void createsSingletonInstanceIfNonExistent() {
+  public void createsSingletonInstanceIfNonExistent() throws EntityException {
     final Connection connection = mock(Connection.class);
     final EntityRef entityRef = mock(EntityRef.class);
     when(connection.getEntityRef(CoordinationClientEntity.class, version, CoordinationService.SINGLETON_NAME)).thenReturn(entityRef);
-    when(entityRef.fetchEntity()).thenThrow(new IllegalStateException()).thenReturn(mock(CoordinationClientEntity.class));
+    when(entityRef.fetchEntity()).thenThrow(new EntityNotFoundException(ENTITY_TYPE.getName(), ENTITY_NAME)).thenReturn(mock(CoordinationClientEntity.class));
     new CoordinationService(connection);
     verify(entityRef, atLeastOnce()).create(null);
     verify(connection, times(1)).getEntityRef(CoordinationClientEntity.class, version, CoordinationService.SINGLETON_NAME);
   }
 
   @Test
-  public void usesExistingEntityIfPresent() {
+  public void usesExistingEntityIfPresent() throws EntityException {
     final Connection connection = mockInitialConnection(mock(CoordinationClientEntity.class));
     new CoordinationService(connection);
     verify(connection, times(1)).getEntityRef(CoordinationClientEntity.class, version, CoordinationService.SINGLETON_NAME);
   }
 
   @Test
-  public void throwsWhenFailingToRetrieveAfterCreate() {
+  public void throwsWhenFailingToRetrieveAfterCreate() throws EntityException {
     final Connection connection = mock(Connection.class);
     final EntityRef entityRef = mock(EntityRef.class);
     when(connection.getEntityRef(CoordinationClientEntity.class, 1L, CoordinationService.SINGLETON_NAME)).thenReturn(entityRef);
-    when(entityRef.fetchEntity()).thenThrow(new IllegalStateException());
+    when(entityRef.fetchEntity()).thenThrow(new EntityNotFoundException(ENTITY_TYPE.getName(), ENTITY_NAME));
     try {
       new CoordinationService(connection);
       fail("this should have thrown!");
-    } catch (AssertionError e) {
+    } catch (IllegalStateException e) {
       // expected
     }
     verify(entityRef, atLeastOnce()).create(null);
@@ -195,7 +197,7 @@ public class CoordinationServiceTest {
     verify(CoordinationClientEntity, times(1)).close();
   }
 
-  private Connection mockInitialConnection(final CoordinationClientEntity CoordinationClientEntity) {
+  private Connection mockInitialConnection(final CoordinationClientEntity CoordinationClientEntity) throws EntityException {
     final Connection connection = mock(Connection.class);
     final EntityRef entityRef = mock(EntityRef.class);
     when(connection.getEntityRef(CoordinationClientEntity.class, version, CoordinationService.SINGLETON_NAME)).thenReturn(entityRef);

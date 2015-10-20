@@ -20,10 +20,14 @@ package org.terracotta.voltron.proxy.client;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
+
+import com.sun.org.apache.bcel.internal.classfile.Code;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -40,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Alex Snaps
@@ -116,29 +121,9 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         }
       }
 
-      final Future<byte[]> future = builder
+      final InvokeFuture<byte[]> future = builder
           .invoke();
-      return new Future() {
-        public boolean cancel(final boolean mayInterruptIfRunning) {
-          return future.cancel(mayInterruptIfRunning);
-        }
-
-        public boolean isCancelled() {
-          return future.isCancelled();
-        }
-
-        public boolean isDone() {
-          return future.isDone();
-        }
-
-        public Object get() throws InterruptedException, ExecutionException {
-          return codec.decode(future.get(), (Class<?>) decodeTo);
-        }
-
-        public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-          return codec.decode(future.get(timeout, unit), (Class<?>) decodeTo);
-        }
-      };
+      return new ProxiedInvokeFuture(future, decodeTo, codec);
     } else {
       return codec.decode(builder.invoke().get(), method.getReturnType());
     }
@@ -163,4 +148,50 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     return byteOut.toByteArray();
   }
 
+  private static class ProxiedInvokeFuture implements Future {
+
+    private final InvokeFuture<byte[]> future;
+    private final Type decodeTo;
+    private final Codec codec;
+
+    private final AtomicBoolean cancelled = new AtomicBoolean(false);
+
+    public ProxiedInvokeFuture(final InvokeFuture<byte[]> future, final Type decodeTo, final Codec codec) {
+      this.future = future;
+      this.decodeTo = decodeTo;
+      this.codec = codec;
+    }
+
+    public boolean cancel(final boolean mayInterruptIfRunning) {
+      if (cancelled.compareAndSet(false, true)) {
+        future.interrupt();
+        return true;
+      }
+      return false;
+    }
+
+    public boolean isCancelled() {
+      return cancelled.get();
+    }
+
+    public boolean isDone() {
+      return future.isDone();
+    }
+
+    public Object get() throws InterruptedException, ExecutionException {
+      try {
+        return codec.decode(future.get(), (Class<?>)decodeTo);
+      } catch (EntityException e) {
+        throw new ExecutionException(e);
+      }
+    }
+
+    public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      try {
+        return codec.decode(future.getWithTimeout(timeout, unit), (Class<?>)decodeTo);
+      } catch (EntityException e) {
+        throw new ExecutionException(e);
+      }
+    }
+  }
 }
