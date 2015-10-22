@@ -17,6 +17,8 @@
 
 package org.terracotta.consensus.entity;
 
+import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.server.DelistListener;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientCommunicator;
@@ -36,8 +38,9 @@ public class CoordinationServerEntity implements ActiveServerEntity {
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
     this.leaderElector = leaderElector;
-    this.target = new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(this.leaderElector), new SerializationCodec());
+    this.target = new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(this.leaderElector, LeaderElected.class), new SerializationCodec(), LeaderElected.class);
     this.target.setClientCommunicator(clientCommunicator);
+    this.leaderElector.setListener(new DelistListenerImpl<String>(target, clientCommunicator));
   }
 
   public byte[] invoke(final ClientDescriptor clientDescriptor, final byte[] arg) {
@@ -45,6 +48,7 @@ public class CoordinationServerEntity implements ActiveServerEntity {
   }
 
   public ConcurrencyStrategy getConcurrencyStrategy() {
+    //TODO: We can implment a PerKeyConcurrencyStrategy
     return new NoConcurrencyStrategy();
   }
 
@@ -75,6 +79,22 @@ public class CoordinationServerEntity implements ActiveServerEntity {
 
   public void destroy() {
     // Don't care I think
+  }
+  
+  private static class DelistListenerImpl<K> implements DelistListener<K, ClientDescriptor> {
+    
+    private final ProxyInvoker target; 
+    private final ClientCommunicator communicator; 
+    
+    public DelistListenerImpl(ProxyInvoker target, ClientCommunicator communicator) {
+      this.target = target;
+      this.communicator = communicator;
+    }
+
+    public void onDelist(K key, ClientDescriptor clientDescriptor, Nomination permit) {
+      target.fireAndForgetMessage(communicator, permit, clientDescriptor);
+    }
+    
   }
 
 }

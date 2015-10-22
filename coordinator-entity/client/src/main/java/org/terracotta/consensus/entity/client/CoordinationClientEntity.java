@@ -20,7 +20,6 @@ package org.terracotta.consensus.entity.client;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.consensus.entity.CoordinationEntity;
 import org.terracotta.consensus.entity.messages.LeaderElected;
-import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
 /**
@@ -28,5 +27,4 @@ import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
  */
 public interface CoordinationClientEntity extends CoordinationEntity, Entity, ServerMessageAware<LeaderElected> {
 
-  void registerListener(MessageListener<LeaderElected> message);
 }

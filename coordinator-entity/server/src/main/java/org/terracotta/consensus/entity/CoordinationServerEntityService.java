@@ -18,6 +18,8 @@
 package org.terracotta.consensus.entity;
 
 import org.terracotta.consensus.entity.server.LeaderElector;
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
@@ -27,21 +29,25 @@ import org.terracotta.entity.ServiceRegistry;
  * @author Alex Snaps
  */
 public class CoordinationServerEntityService implements ServerEntityService<CoordinationServerEntity, PassiveServerEntity> {
+  
+  private static final String ENTITY_CLASS_NAME = "org.terracotta.consensus.entity.client.CoordinationClientEntity";
 
   public long getVersion() {
     return Versions.LATEST.version();
   }
 
   public boolean handlesEntityType(final String s) {
-    return CoordinationEntity.class.getName().equals(s);
+    return ENTITY_CLASS_NAME.equals(s);
   }
 
   public CoordinationServerEntity createActiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
     if (bytes != null && bytes.length > 0) {
       throw new IllegalArgumentException("No config expected here!");
     }
-    // TODO Inject Client Communicator here!
-    return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new ClientDescriptorPermitFactory()), null);
+    
+    ClientCommunicator communicator = serviceRegistry.getService(new BasicServiceConfiguration<ClientCommunicator>(ClientCommunicator.class));
+    
+    return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new ClientDescriptorPermitFactory()), communicator);
   }
 
   public PassiveServerEntity createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
