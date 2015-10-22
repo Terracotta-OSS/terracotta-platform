@@ -53,19 +53,19 @@ public class LeaderElectorTest {
   @Test
   public void testLeaderElectionSingleKey() {
 
-    Object permit1 = leaderElector.enlist("e1", "c1");
-    Object permit2 = leaderElector.enlist("e1", "c2");
+    Nomination permit1 = leaderElector.enlist("e1", "c1");
+    Nomination permit2 = leaderElector.enlist("e1", "c2");
 
     assertThat(permit1, notNullValue());
-    assertThat((((Nomination)permit1).awaitsElection()), is(false));;
-    assertThat((((Nomination)permit2).awaitsElection()), is(true));
+    assertThat(((permit1).awaitsElection()), is(false));;
+    assertThat(((permit2).awaitsElection()), is(true));
 
     assertThat(leaderElector.getAllWaitingOn("e1").size(), is(1));
     assertThat(leaderElector.getAllWaitingOn("e1").get(0), is("c2"));
 
     leaderElector.accept("e1", permit1);
 
-    Object permit3 = leaderElector.enlist("e1", "c3");
+    Nomination permit3 = leaderElector.enlist("e1", "c3");
 
     assertThat(permit3, nullValue());
 
@@ -75,11 +75,11 @@ public class LeaderElectorTest {
     
     leaderElector.delist("e1", "c1");
     
-    verify(listener).onDelist(any(String.class), any(String.class), any(Object.class));
+    verify(listener).onDelist(any(String.class), any(String.class), any(Nomination.class));
     
     leaderElector.delist("e1", "c3");
     
-    verify(listener).onDelist(any(String.class), any(String.class), any(Object.class));
+    verify(listener).onDelist(any(String.class), any(String.class), any(Nomination.class));
     
     try {
       leaderElector.delist("e1", "c4");
@@ -87,9 +87,9 @@ public class LeaderElectorTest {
       assertThat(expected, instanceOf(NullPointerException.class));
     }
     
-    Object newpermit1 = leaderElector.enlist("e1", "c1");
+    Nomination newpermit1 = leaderElector.enlist("e1", "c1");
     assertThat(newpermit1, notNullValue());
-    assertThat((((Nomination)newpermit1).awaitsElection()), is(false));;
+    assertThat(((newpermit1).awaitsElection()), is(false));;
     
     try {
       leaderElector.accept("e1", permit1);
@@ -100,7 +100,7 @@ public class LeaderElectorTest {
     
     leaderElector.accept("e1", newpermit1);
     
-    Object permit4 = leaderElector.enlist("e1", "c5");
+    Nomination permit4 = leaderElector.enlist("e1", "c5");
     
     assertThat(permit4, nullValue());
 
@@ -109,22 +109,22 @@ public class LeaderElectorTest {
   @Test
   public void testLeaderElectionTwoKeys() {
 
-    Object permit1 = leaderElector.enlist("e1", "c1");
-    Object permit2 = leaderElector.enlist("e1", "c2");
+    Nomination permit1 = leaderElector.enlist("e1", "c1");
+    Nomination permit2 = leaderElector.enlist("e1", "c2");
     
-    Object permit1a = leaderElector.enlist("e2", "c1");
-    Object permit2a = leaderElector.enlist("e2", "c2");
+    Nomination permit1a = leaderElector.enlist("e2", "c1");
+    Nomination permit2a = leaderElector.enlist("e2", "c2");
 
     assertThat(permit1, notNullValue());
-    assertThat((((Nomination)permit1).awaitsElection()), is(false));;
-    assertThat((((Nomination)permit2).awaitsElection()), is(true));
+    assertThat(((permit1).awaitsElection()), is(false));;
+    assertThat(((permit2).awaitsElection()), is(true));
 
     assertThat(leaderElector.getAllWaitingOn("e1").size(), is(1));
     assertThat(leaderElector.getAllWaitingOn("e1").get(0), is("c2"));
 
     assertThat(permit1a, notNullValue());
-    assertThat((((Nomination)permit1a).awaitsElection()), is(false));;
-    assertThat((((Nomination)permit2a).awaitsElection()), is(true));
+    assertThat(((permit1a).awaitsElection()), is(false));;
+    assertThat(((permit2a).awaitsElection()), is(true));
 
     assertThat(leaderElector.getAllWaitingOn("e2").size(), is(1));
     assertThat(leaderElector.getAllWaitingOn("e2").get(0), is("c2"));
@@ -133,8 +133,8 @@ public class LeaderElectorTest {
     leaderElector.accept("e1", permit1);
     leaderElector.accept("e2", permit1a);
 
-    Object permit3 = leaderElector.enlist("e1", "c3");
-    Object permit3a = leaderElector.enlist("e2", "c3");
+    Nomination permit3 = leaderElector.enlist("e1", "c3");
+    Nomination permit3a = leaderElector.enlist("e2", "c3");
 
     assertThat(permit3, nullValue());
     assertThat(permit3a, nullValue());
@@ -160,7 +160,7 @@ public class LeaderElectorTest {
     
     private static final AtomicLong counter = new AtomicLong();
 
-    public Object createPermit(String t) {
+    public Nomination createPermit(String t) {
       return new Nomination(counter.getAndIncrement());
     }
     

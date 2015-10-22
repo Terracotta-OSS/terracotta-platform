@@ -29,12 +29,13 @@ import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 class ServerCoordinationImpl extends MessageFiring implements CoordinationEntity {
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
-  public ServerCoordinationImpl(final LeaderElector<String, ClientDescriptor> leaderElector) {
+  public ServerCoordinationImpl(final LeaderElector<String, ClientDescriptor> leaderElector, Class... messageTypes) {
+    super(messageTypes);
     this.leaderElector = leaderElector;
   }
 
   public Nomination runForElection(final String namespace, @ClientId final Object clientId) {
-    return (Nomination)leaderElector.enlist(namespace, (ClientDescriptor)clientId);
+    return leaderElector.enlist(namespace, (ClientDescriptor)clientId);
   }
 
   public void accept(final String namespace, final Nomination permit) {

@@ -41,7 +41,7 @@ public class LeaderElector<K, V> {
     this.factory = factory;
   }
 
-  public Object enlist(K key, V value) {
+  public Nomination enlist(K key, V value) {
     leaderQueues.putIfAbsent(key, new ElectionQueue<K, V>(key, factory,
         listener));
     return leaderQueues.get(key).runElectionOrAdd(value);
@@ -51,7 +51,7 @@ public class LeaderElector<K, V> {
     this.listener = listener;
   }
 
-  public void accept(K key, Object permit) {
+  public void accept(K key, Nomination permit) {
     leaderQueues.get(key).accept(permit);
   }
 
@@ -86,7 +86,7 @@ public class LeaderElector<K, V> {
     private ElectionState state = ElectionState.NOT_ELECTED;
     private final DelistListener listener;
     private final ReentrantLock lock = new ReentrantLock();
-    private Object currentPermit;
+    private Nomination currentPermit;
 
     public ElectionQueue(K key, PermitFactory<V> factory,
         DelistListener listener) {
@@ -98,7 +98,7 @@ public class LeaderElector<K, V> {
       this.factory = factory;
     }
 
-    private Object runElectionOrAdd(V value) {
+    private Nomination runElectionOrAdd(V value) {
       lock.lock();
       try {
         switch (state) {
@@ -117,7 +117,7 @@ public class LeaderElector<K, V> {
           // this should not happen
           return null;
         default:
-          throw new IllegalStateException("Illegal Election state");
+          throw new AssertionError("Illegal Election state");
         }
       } finally {
         lock.unlock();
@@ -136,7 +136,7 @@ public class LeaderElector<K, V> {
     }
 
     private void accept(Object permit) {
-      if (permit == null || !(permit instanceof Nomination)) {
+      if (permit == null ) {
         throw new IllegalStateException("Null Permits cannot be accepted");
       }
       lock.lock();
@@ -146,6 +146,8 @@ public class LeaderElector<K, V> {
         }
         if (state == ElectionState.RUNNING) {
           state = ElectionState.ELECTED;
+        } else {
+          throw new AssertionError("Illegal Election state");
         }
       } finally {
         lock.unlock();

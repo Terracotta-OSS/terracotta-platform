@@ -17,10 +17,12 @@
 
 package org.terracotta.consensus.entity.server;
 
+import org.terracotta.consensus.entity.Nomination;
+
 /**
  * @author Alex Snaps
  */
 public interface PermitFactory<T> {
 
-  Object createPermit(T t);
+  Nomination createPermit(T t);
 }

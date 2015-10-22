@@ -25,11 +25,11 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Alex Snaps
  */
-class ClientDescriptorPermitFactory implements PermitFactory<ClientDescriptor> {
+public class ClientDescriptorPermitFactory implements PermitFactory<ClientDescriptor> {
 
   private static final AtomicLong counter = new AtomicLong();
 
-  public Object createPermit(final ClientDescriptor clientDescriptor) {
+  public Nomination createPermit(final ClientDescriptor clientDescriptor) {
     return new Nomination(counter.getAndIncrement());
   }
 }

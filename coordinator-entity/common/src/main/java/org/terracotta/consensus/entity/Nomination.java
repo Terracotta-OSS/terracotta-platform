@@ -48,9 +48,15 @@ public class Nomination implements Serializable {
   
   @Override
   public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }   
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
     return id == ((Nomination) obj).id;
   }
-
+  
   private void writeObject(ObjectOutputStream out) throws IOException {
     out.defaultWriteObject();
     out.writeLong(this.id);
