@@ -9,7 +9,6 @@
 
   <modules>
     <module>management-model</module>
-    <module>management-model-json</module>
   </modules>
 
   <name>Terracotta Management</name>
