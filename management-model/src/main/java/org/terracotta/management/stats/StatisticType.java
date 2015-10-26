@@ -45,18 +45,27 @@ public enum StatisticType {
   AVERAGE_HISTORY(AverageHistory.class),
 
   ;
-  private final Class<?> clazz;
+  private final Class<? extends Statistic<?>> clazz;
 
-  StatisticType(Class<?> clazz) {
+  StatisticType(Class<? extends Statistic<?>> clazz) {
     this.clazz = clazz;
   }
 
-  public Class<?> getClazz() {
+  public Class<? extends Statistic<?>> getClazz() {
     return clazz;
   }
 
   public String getTypeName() {
     return clazz.getSimpleName();
+  }
+
+  public static StatisticType fromClass(Class<? extends Statistic<?>> clazz) {
+    for (StatisticType type : values()) {
+      if(type.clazz == clazz) {
+        return type;
+      }
+    }
+    throw new IllegalArgumentException("Statistic type not found: " + clazz);
   }
 
 }

@@ -15,13 +15,14 @@
  */
 package org.terracotta.management.stats.primitive;
 
-import org.terracotta.management.stats.AbstractStatistic;
+import org.terracotta.management.stats.AbstractMeasurableStatistic;
+import org.terracotta.management.stats.EntryUnit;
 
 /**
  * @author Ludovic Orban
  */
-public class Counter extends AbstractStatistic<Long> {
-  public Counter(String name, Long value) {
-    super(name, value);
+public class Counter extends AbstractMeasurableStatistic<Long, EntryUnit> {
+  public Counter(String name, Long value, EntryUnit unit) {
+    super(name, value, unit);
   }
 }

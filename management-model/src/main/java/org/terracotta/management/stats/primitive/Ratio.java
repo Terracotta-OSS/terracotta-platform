@@ -15,13 +15,14 @@
  */
 package org.terracotta.management.stats.primitive;
 
-import org.terracotta.management.stats.AbstractStatistic;
+import org.terracotta.management.stats.AbstractMeasurableStatistic;
+import org.terracotta.management.stats.EntryUnit;
 
 /**
  * @author Ludovic Orban
  */
-public class Ratio extends AbstractStatistic<Double> {
-  public Ratio(String name, Double value) {
-    super(name, value);
+public class Ratio extends AbstractMeasurableStatistic<Double, EntryUnit> {
+  public Ratio(String name, Double value, EntryUnit unit) {
+    super(name, value, unit);
   }
 }
