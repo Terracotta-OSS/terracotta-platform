@@ -21,6 +21,8 @@ import org.terracotta.management.stats.primitive.Rate;
 import org.terracotta.management.stats.primitive.Ratio;
 import org.terracotta.management.stats.primitive.Setting;
 import org.terracotta.management.stats.primitive.Size;
+import org.terracotta.management.stats.sampled.SampledAverage;
+
 import org.terracotta.management.stats.sampled.SampledCounter;
 import org.terracotta.management.stats.sampled.SampledDuration;
 import org.terracotta.management.stats.sampled.SampledRate;
@@ -43,6 +45,7 @@ public enum StatisticType {
   SAMPLED_RATE(SampledRate.class),
   SAMPLED_RATIO(SampledRatio.class),
   SAMPLED_SIZE(SampledSize.class),
+  SAMPLED_AVERAGE(SampledAverage.class),
 
   ;
   private final Class<?> clazz;
