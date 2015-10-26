@@ -15,24 +15,22 @@
  */
 package org.terracotta.management.stats;
 
-import org.terracotta.management.stats.primitive.Counter;
-import org.terracotta.management.stats.primitive.Duration;
-import org.terracotta.management.stats.primitive.Rate;
-import org.terracotta.management.stats.primitive.Ratio;
-import org.terracotta.management.stats.primitive.Setting;
-import org.terracotta.management.stats.primitive.Size;
 import org.terracotta.management.stats.history.AverageHistory;
 import org.terracotta.management.stats.history.CounterHistory;
 import org.terracotta.management.stats.history.DurationHistory;
 import org.terracotta.management.stats.history.RateHistory;
 import org.terracotta.management.stats.history.RatioHistory;
 import org.terracotta.management.stats.history.SizeHistory;
+import org.terracotta.management.stats.primitive.Counter;
+import org.terracotta.management.stats.primitive.Duration;
+import org.terracotta.management.stats.primitive.Rate;
+import org.terracotta.management.stats.primitive.Ratio;
+import org.terracotta.management.stats.primitive.Size;
 
 /**
  * @author Ludovic Orban
  */
 public enum StatisticType {
-  SETTING(Setting.class),
   COUNTER(Counter.class),
   DURATION(Duration.class),
   RATE(Rate.class),
