@@ -55,4 +55,9 @@ public abstract class AbstractStatistic<V> implements Statistic<V> {
     result = 31 * result + (value != null ? value.hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "{" + "name='" + name + '\'' + ", value=" + value + '}';
+  }
 }

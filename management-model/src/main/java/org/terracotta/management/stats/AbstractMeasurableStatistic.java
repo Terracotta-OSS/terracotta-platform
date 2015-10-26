@@ -49,4 +49,9 @@ public abstract class AbstractMeasurableStatistic<V, U> extends AbstractStatisti
     result = 31 * result + (unit != null ? unit.hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "{" + "name='" + getName() + '\'' + ", value=" + getValue() + ", unit=" + getUnit() + '}';
+  }
 }
