@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.sampled;
+package org.terracotta.management.stats.history;
 
 import org.terracotta.management.stats.AbstractMeasurableStatistic;
 import org.terracotta.management.stats.Sample;
@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Ludovic Orban
  */
-public class SampledRate extends AbstractMeasurableStatistic<List<Sample<Double>>, TimeUnit> {
-  public SampledRate(String name, List<Sample<Double>> samples, TimeUnit timeUnit) {
+public class DurationHistory extends AbstractMeasurableStatistic<List<Sample<Long>>, TimeUnit> {
+  public DurationHistory(String name, List<Sample<Long>> samples, TimeUnit timeUnit) {
     super(name, samples, timeUnit);
   }
 }

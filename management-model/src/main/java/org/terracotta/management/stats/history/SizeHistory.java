@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.sampled;
+package org.terracotta.management.stats.history;
 
 import org.terracotta.management.stats.AbstractMeasurableStatistic;
+import org.terracotta.management.stats.MemoryUnit;
 import org.terracotta.management.stats.Sample;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
- * @author Mathieu Carbou
+ * @author Ludovic Orban
  */
-public class SampledAverage extends AbstractMeasurableStatistic<List<Sample<Double>>, TimeUnit> {
-  public SampledAverage(String name, List<Sample<Double>> samples, TimeUnit timeUnit) {
-    super(name, samples, timeUnit);
+public class SizeHistory extends AbstractMeasurableStatistic<List<Sample<Long>>, MemoryUnit> {
+  public SizeHistory(String name, List<Sample<Long>> samples, MemoryUnit memoryUnit) {
+    super(name, samples, memoryUnit);
   }
 }

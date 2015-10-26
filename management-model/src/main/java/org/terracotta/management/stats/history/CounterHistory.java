@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.sampled;
+package org.terracotta.management.stats.history;
 
-import org.terracotta.management.stats.AbstractMeasurableStatistic;
-import org.terracotta.management.stats.MemoryUnit;
+import org.terracotta.management.stats.AbstractStatistic;
 import org.terracotta.management.stats.Sample;
 
 import java.util.List;
@@ -24,8 +23,8 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class SampledSize extends AbstractMeasurableStatistic<List<Sample<Long>>, MemoryUnit> {
-  public SampledSize(String name, List<Sample<Long>> samples, MemoryUnit memoryUnit) {
-    super(name, samples, memoryUnit);
+public class CounterHistory extends AbstractStatistic<List<Sample<Long>>> {
+  public CounterHistory(String name, List<Sample<Long>> samples) {
+    super(name, samples);
   }
 }

@@ -21,13 +21,12 @@ import org.terracotta.management.stats.primitive.Rate;
 import org.terracotta.management.stats.primitive.Ratio;
 import org.terracotta.management.stats.primitive.Setting;
 import org.terracotta.management.stats.primitive.Size;
-import org.terracotta.management.stats.sampled.SampledAverage;
-
-import org.terracotta.management.stats.sampled.SampledCounter;
-import org.terracotta.management.stats.sampled.SampledDuration;
-import org.terracotta.management.stats.sampled.SampledRate;
-import org.terracotta.management.stats.sampled.SampledRatio;
-import org.terracotta.management.stats.sampled.SampledSize;
+import org.terracotta.management.stats.history.AverageHistory;
+import org.terracotta.management.stats.history.CounterHistory;
+import org.terracotta.management.stats.history.DurationHistory;
+import org.terracotta.management.stats.history.RateHistory;
+import org.terracotta.management.stats.history.RatioHistory;
+import org.terracotta.management.stats.history.SizeHistory;
 
 /**
  * @author Ludovic Orban
@@ -40,12 +39,12 @@ public enum StatisticType {
   RATIO(Ratio.class),
   SIZE(Size.class),
 
-  SAMPLED_COUNTER(SampledCounter.class),
-  SAMPLED_DURATION(SampledDuration.class),
-  SAMPLED_RATE(SampledRate.class),
-  SAMPLED_RATIO(SampledRatio.class),
-  SAMPLED_SIZE(SampledSize.class),
-  SAMPLED_AVERAGE(SampledAverage.class),
+  COUNTER_HISTORY(CounterHistory.class),
+  DURATION_HISTORY(DurationHistory.class),
+  RATE_HISTORY(RateHistory.class),
+  RATIO_HISTORY(RatioHistory.class),
+  SIZE_HISTORY(SizeHistory .class),
+  AVERAGE_HISTORY(AverageHistory.class),
 
   ;
   private final Class<?> clazz;

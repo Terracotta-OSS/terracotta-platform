@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.sampled;
+package org.terracotta.management.stats.history;
 
 import org.terracotta.management.stats.AbstractStatistic;
 import org.terracotta.management.stats.Sample;
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class SampledRatio extends AbstractStatistic<List<Sample<Double>>> {
-  public SampledRatio(String name, List<Sample<Double>> samples) {
+public class RatioHistory extends AbstractStatistic<List<Sample<Double>>> {
+  public RatioHistory(String name, List<Sample<Double>> samples) {
     super(name, samples);
   }
 }
