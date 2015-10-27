@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.jackson.mixins.stats.primitive;
+package org.terracotta.management.stats.primitive;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.terracotta.management.stats.AbstractStatistic;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public abstract class DurationMixIn {
-
-  DurationMixIn(@JsonProperty("name") String name, @JsonProperty("value") Long value, @JsonProperty("unit") TimeUnit unit) {
+public class Average extends AbstractStatistic<Double, TimeUnit> {
+  public Average(String name, Double value, TimeUnit timeUnit) {
+    super(name, value, timeUnit);
   }
-
 }

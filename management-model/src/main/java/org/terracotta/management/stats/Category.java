@@ -25,18 +25,18 @@ import java.util.List;
 public class Category {
 
   private final String name;
-  private final List<Statistic<?>> statistics;
+  private final List<Statistic<?, ?>> statistics;
 
-  public Category(String name, List<Statistic<?>> statistics) {
+  public Category(String name, List<Statistic<?, ?>> statistics) {
     this.name = name;
-    this.statistics = Collections.unmodifiableList(new ArrayList<Statistic<?>>(statistics));
+    this.statistics = Collections.unmodifiableList(new ArrayList<Statistic<?, ?>>(statistics));
   }
 
   public String getName() {
     return name;
   }
 
-  public List<Statistic<?>> getStatistics() {
+  public List<Statistic<?, ?>> getStatistics() {
     return statistics;
   }
 }

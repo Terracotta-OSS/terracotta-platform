@@ -18,14 +18,21 @@ package org.terracotta.management.stats;
 /**
  * @author Ludovic Orban
  */
-public abstract class AbstractStatistic<V> implements Statistic<V> {
+public abstract class AbstractStatistic<V, U> implements Statistic<V, U> {
 
   private final String name;
   private final V value;
+  private final U unit;
 
-  public AbstractStatistic(String name, V value) {
+  public AbstractStatistic(String name, V value, U unit) {
     this.name = name;
     this.value = value;
+    this.unit = unit;
+  }
+
+  @Override
+  public U getUnit() {
+    return unit;
   }
 
   @Override
@@ -39,20 +46,23 @@ public abstract class AbstractStatistic<V> implements Statistic<V> {
   }
 
   @Override
+  public String toString() {
+    return "{" + "name='" + getName() + '\'' + ", value=" + getValue() + ", unit=" + getUnit() + '}';
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o != null && !o.getClass().equals(getClass())) return false;
-
-    AbstractStatistic<?> that = (AbstractStatistic<?>) o;
-
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    return !(value != null ? !value.equals(that.value) : that.value != null);
+    if (o == null || getClass() != o.getClass()) return false;
+    AbstractStatistic<?, ?> that = (AbstractStatistic<?, ?>) o;
+    return name.equals(that.name) && value.equals(that.value) && unit.equals(that.unit);
   }
 
   @Override
   public int hashCode() {
-    int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (value != null ? value.hashCode() : 0);
+    int result = name.hashCode();
+    result = 31 * result + value.hashCode();
+    result = 31 * result + unit.hashCode();
     return result;
   }
 }

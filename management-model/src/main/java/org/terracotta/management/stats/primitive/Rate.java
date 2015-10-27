@@ -15,14 +15,14 @@
  */
 package org.terracotta.management.stats.primitive;
 
-import org.terracotta.management.stats.AbstractMeasurableStatistic;
+import org.terracotta.management.stats.AbstractStatistic;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ludovic Orban
  */
-public class Rate extends AbstractMeasurableStatistic<Double, TimeUnit> {
+public class Rate extends AbstractStatistic<Double, TimeUnit> {
   public Rate(String name, Double value, TimeUnit timeUnit) {
     super(name, value, timeUnit);
   }

@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.jackson.mixins.stats.sampled;
+package org.terracotta.management.stats.history;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.terracotta.management.stats.AbstractStatisticHistory;
+import org.terracotta.management.stats.MemoryUnit;
 import org.terracotta.management.stats.Sample;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ludovic Orban
  */
-public abstract class SampledRateMixIn {
-
-  SampledRateMixIn(@JsonProperty("name") String name, @JsonProperty("value") List<Sample<Double>> samples, @JsonProperty("unit") TimeUnit unit) {
+public class SizeHistory extends AbstractStatisticHistory<Long, MemoryUnit> {
+  public SizeHistory(String name, List<Sample<Long>> samples, MemoryUnit memoryUnit) {
+    super(name, samples, memoryUnit);
   }
-
 }

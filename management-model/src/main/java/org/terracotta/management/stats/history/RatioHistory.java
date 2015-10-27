@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.primitive;
+package org.terracotta.management.stats.history;
 
-import org.terracotta.management.stats.AbstractStatistic;
+import org.terracotta.management.stats.AbstractStatisticHistory;
+import org.terracotta.management.stats.NumberUnit;
+import org.terracotta.management.stats.Sample;
+
+import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
-public class Setting<V> extends AbstractStatistic<V> {
-  public Setting(String name, V value) {
-    super(name, value);
+public class RatioHistory extends AbstractStatisticHistory<Double, NumberUnit> {
+  public RatioHistory(String name, List<Sample<Double>> samples, NumberUnit unit) {
+    super(name, samples, unit);
   }
-
-
 }

@@ -15,48 +15,59 @@
  */
 package org.terracotta.management.stats;
 
+import org.terracotta.management.stats.history.AverageHistory;
+import org.terracotta.management.stats.history.CounterHistory;
+import org.terracotta.management.stats.history.DurationHistory;
+import org.terracotta.management.stats.history.RateHistory;
+import org.terracotta.management.stats.history.RatioHistory;
+import org.terracotta.management.stats.history.SizeHistory;
+import org.terracotta.management.stats.primitive.Average;
 import org.terracotta.management.stats.primitive.Counter;
 import org.terracotta.management.stats.primitive.Duration;
 import org.terracotta.management.stats.primitive.Rate;
 import org.terracotta.management.stats.primitive.Ratio;
-import org.terracotta.management.stats.primitive.Setting;
 import org.terracotta.management.stats.primitive.Size;
-import org.terracotta.management.stats.sampled.SampledCounter;
-import org.terracotta.management.stats.sampled.SampledDuration;
-import org.terracotta.management.stats.sampled.SampledRate;
-import org.terracotta.management.stats.sampled.SampledRatio;
-import org.terracotta.management.stats.sampled.SampledSize;
 
 /**
  * @author Ludovic Orban
  */
 public enum StatisticType {
-  SETTING(Setting.class),
   COUNTER(Counter.class),
   DURATION(Duration.class),
   RATE(Rate.class),
   RATIO(Ratio.class),
   SIZE(Size.class),
+  AVERAGE(Average.class),
 
-  SAMPLED_COUNTER(SampledCounter.class),
-  SAMPLED_DURATION(SampledDuration.class),
-  SAMPLED_RATE(SampledRate.class),
-  SAMPLED_RATIO(SampledRatio.class),
-  SAMPLED_SIZE(SampledSize.class),
+  COUNTER_HISTORY(CounterHistory.class),
+  DURATION_HISTORY(DurationHistory.class),
+  RATE_HISTORY(RateHistory.class),
+  RATIO_HISTORY(RatioHistory.class),
+  SIZE_HISTORY(SizeHistory .class),
+  AVERAGE_HISTORY(AverageHistory.class),
 
   ;
-  private final Class<?> clazz;
+  private final Class<? extends Statistic<?, ?>> clazz;
 
-  StatisticType(Class<?> clazz) {
+  StatisticType(Class<? extends Statistic<?, ?>> clazz) {
     this.clazz = clazz;
   }
 
-  public Class<?> getClazz() {
+  public Class<? extends Statistic<?, ?>> getClazz() {
     return clazz;
   }
 
   public String getTypeName() {
     return clazz.getSimpleName();
+  }
+
+  public static StatisticType fromClass(Class<? extends Statistic<?, ?>> clazz) {
+    for (StatisticType type : values()) {
+      if(type.clazz == clazz) {
+        return type;
+      }
+    }
+    throw new IllegalArgumentException("Statistic type not found: " + clazz);
   }
 
 }

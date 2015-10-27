@@ -17,7 +17,6 @@ limitations under the License.
 = Terracotta Management
 
 Terracotta Management is a set of Java modules for management and monitoring, common to several Terracotta products.
-You will find in those modules common entity classes, and their serializers and deserializers
 
 Licensed under the Apache License, Version 2.0   
 (C) Terracotta, Inc., a Software AG company.

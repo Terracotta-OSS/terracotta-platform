@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.jackson.mixins.stats.sampled;
+package org.terracotta.management.stats.history;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.terracotta.management.stats.AbstractStatisticHistory;
+import org.terracotta.management.stats.NumberUnit;
 import org.terracotta.management.stats.Sample;
 
 import java.util.List;
@@ -23,9 +24,8 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public abstract class SampledRatioMixIn {
-
-  SampledRatioMixIn(@JsonProperty("name") String name, @JsonProperty("value") List<Sample<Double>> samples) {
+public class CounterHistory extends AbstractStatisticHistory<Long, NumberUnit> {
+  public CounterHistory(String name, List<Sample<Long>> samples, NumberUnit unit) {
+    super(name, samples, unit);
   }
-
 }

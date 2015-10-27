@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.jackson.mixins.context;
+package org.terracotta.management.stats.history;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.terracotta.management.stats.AbstractStatisticHistory;
+import org.terracotta.management.stats.Sample;
 
-import java.util.Map;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ludovic Orban
  */
-public abstract class ContextMixIn {
-
-  ContextMixIn(@JsonProperty("attributes") Map<String, String> attributes) {
+public class RateHistory extends AbstractStatisticHistory<Double, TimeUnit> {
+  public RateHistory(String name, List<Sample<Double>> samples, TimeUnit timeUnit) {
+    super(name, samples, timeUnit);
   }
-
 }

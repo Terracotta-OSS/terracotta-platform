@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.jackson.mixins.stats;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+package org.terracotta.management.stats;
 
 /**
- * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public abstract class SampleMixIn {
+public enum NumberUnit {
 
-  SampleMixIn(@JsonProperty("timestamp") long timestamp, @JsonProperty("value") Object value) {
+  PERCENT {
+    @Override
+    public String toString() {
+      return "percentage";
+    }
+  },
+
+  COUNT {
+    @Override
+    public String toString() {
+      return "counts";
+    }
   }
 
 }
