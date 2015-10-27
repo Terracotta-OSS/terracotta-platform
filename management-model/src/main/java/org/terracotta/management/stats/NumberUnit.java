@@ -18,15 +18,19 @@ package org.terracotta.management.stats;
 /**
  * @author Mathieu Carbou
  */
-public enum EntryUnit {
+public enum NumberUnit {
 
-  /**
-   * The only possible value of {@link EntryUnit}
-   */
-  ENTRIES {
+  PERCENT {
     @Override
     public String toString() {
-      return "entries";
+      return "percentage";
+    }
+  },
+
+  COUNT {
+    @Override
+    public String toString() {
+      return "counts";
     }
   }
 

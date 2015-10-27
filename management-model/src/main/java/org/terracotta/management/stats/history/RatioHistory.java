@@ -15,8 +15,8 @@
  */
 package org.terracotta.management.stats.history;
 
-import org.terracotta.management.stats.AbstractMeasurableStatistic;
-import org.terracotta.management.stats.EntryUnit;
+import org.terracotta.management.stats.AbstractStatisticHistory;
+import org.terracotta.management.stats.NumberUnit;
 import org.terracotta.management.stats.Sample;
 
 import java.util.List;
@@ -24,8 +24,8 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class RatioHistory extends AbstractMeasurableStatistic<List<Sample<Double>>, EntryUnit> {
-  public RatioHistory(String name, List<Sample<Double>> samples, EntryUnit unit) {
+public class RatioHistory extends AbstractStatisticHistory<Double, NumberUnit> {
+  public RatioHistory(String name, List<Sample<Double>> samples, NumberUnit unit) {
     super(name, samples, unit);
   }
 }

@@ -15,14 +15,14 @@
  */
 package org.terracotta.management.stats.primitive;
 
-import org.terracotta.management.stats.AbstractMeasurableStatistic;
+import org.terracotta.management.stats.AbstractStatistic;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
  */
-public class Average extends AbstractMeasurableStatistic<Double, TimeUnit> {
+public class Average extends AbstractStatistic<Double, TimeUnit> {
   public Average(String name, Double value, TimeUnit timeUnit) {
     super(name, value, timeUnit);
   }

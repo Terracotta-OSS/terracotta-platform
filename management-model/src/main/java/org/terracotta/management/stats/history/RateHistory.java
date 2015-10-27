@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.stats.history;
 
-import org.terracotta.management.stats.AbstractMeasurableStatistic;
+import org.terracotta.management.stats.AbstractStatisticHistory;
 import org.terracotta.management.stats.Sample;
 
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Ludovic Orban
  */
-public class RateHistory extends AbstractMeasurableStatistic<List<Sample<Double>>, TimeUnit> {
+public class RateHistory extends AbstractStatisticHistory<Double, TimeUnit> {
   public RateHistory(String name, List<Sample<Double>> samples, TimeUnit timeUnit) {
     super(name, samples, timeUnit);
   }

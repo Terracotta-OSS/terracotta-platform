@@ -21,6 +21,7 @@ import org.terracotta.management.stats.history.DurationHistory;
 import org.terracotta.management.stats.history.RateHistory;
 import org.terracotta.management.stats.history.RatioHistory;
 import org.terracotta.management.stats.history.SizeHistory;
+import org.terracotta.management.stats.primitive.Average;
 import org.terracotta.management.stats.primitive.Counter;
 import org.terracotta.management.stats.primitive.Duration;
 import org.terracotta.management.stats.primitive.Rate;
@@ -36,6 +37,7 @@ public enum StatisticType {
   RATE(Rate.class),
   RATIO(Ratio.class),
   SIZE(Size.class),
+  AVERAGE(Average.class),
 
   COUNTER_HISTORY(CounterHistory.class),
   DURATION_HISTORY(DurationHistory.class),
@@ -45,13 +47,13 @@ public enum StatisticType {
   AVERAGE_HISTORY(AverageHistory.class),
 
   ;
-  private final Class<? extends Statistic<?>> clazz;
+  private final Class<? extends Statistic<?, ?>> clazz;
 
-  StatisticType(Class<? extends Statistic<?>> clazz) {
+  StatisticType(Class<? extends Statistic<?, ?>> clazz) {
     this.clazz = clazz;
   }
 
-  public Class<? extends Statistic<?>> getClazz() {
+  public Class<? extends Statistic<?, ?>> getClazz() {
     return clazz;
   }
 
@@ -59,7 +61,7 @@ public enum StatisticType {
     return clazz.getSimpleName();
   }
 
-  public static StatisticType fromClass(Class<? extends Statistic<?>> clazz) {
+  public static StatisticType fromClass(Class<? extends Statistic<?, ?>> clazz) {
     for (StatisticType type : values()) {
       if(type.clazz == clazz) {
         return type;

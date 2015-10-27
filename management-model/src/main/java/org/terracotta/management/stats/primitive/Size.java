@@ -15,13 +15,13 @@
  */
 package org.terracotta.management.stats.primitive;
 
-import org.terracotta.management.stats.AbstractMeasurableStatistic;
+import org.terracotta.management.stats.AbstractStatistic;
 import org.terracotta.management.stats.MemoryUnit;
 
 /**
  * @author Ludovic Orban
  */
-public class Size extends AbstractMeasurableStatistic<Long, MemoryUnit> {
+public class Size extends AbstractStatistic<Long, MemoryUnit> {
   public Size(String name, Long value, MemoryUnit memoryUnit) {
     super(name, value, memoryUnit);
   }

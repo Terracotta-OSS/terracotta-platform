@@ -15,8 +15,8 @@
  */
 package org.terracotta.management.stats.history;
 
-import org.terracotta.management.stats.AbstractMeasurableStatistic;
-import org.terracotta.management.stats.EntryUnit;
+import org.terracotta.management.stats.AbstractStatisticHistory;
+import org.terracotta.management.stats.NumberUnit;
 import org.terracotta.management.stats.Sample;
 
 import java.util.List;
@@ -24,8 +24,8 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class CounterHistory extends AbstractMeasurableStatistic<List<Sample<Long>>, EntryUnit> {
-  public CounterHistory(String name, List<Sample<Long>> samples, EntryUnit unit) {
+public class CounterHistory extends AbstractStatisticHistory<Long, NumberUnit> {
+  public CounterHistory(String name, List<Sample<Long>> samples, NumberUnit unit) {
     super(name, samples, unit);
   }
 }
