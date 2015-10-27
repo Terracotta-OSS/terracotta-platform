@@ -183,6 +183,10 @@ public class EndToEndTest {
       return this;
     }
 
+    public InvocationBuilder ackSent() {
+      return this;
+    }
+
     public InvocationBuilder replicate(final boolean b) {
       return this;
     }
