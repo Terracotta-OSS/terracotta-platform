@@ -30,15 +30,17 @@ import org.terracotta.voltron.proxy.client.ClientProxyFactory;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
+import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -72,7 +74,7 @@ public class EndToEndTest {
   }
 
   @Test
-  public void testMessaging() throws ExecutionException, InterruptedException {
+  public void testServerInitiatedMessageFiring() throws ExecutionException, InterruptedException {
     final Codec codec = new SerializationCodec();
     final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(Comparable.class, new Comparable() {
       public int compareTo(final Object o) {
@@ -116,6 +118,9 @@ public class EndToEndTest {
       }
     });
     final String message = "Hello world!";
+
+    final ClientDescriptor fakeClient = mock(ClientDescriptor.class);
+    proxyInvoker.addClient(fakeClient);
     proxyInvoker.fireMessage(new ClientCommunicator() {
       public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
         throw new UnsupportedOperationException("Implement me!");
@@ -132,15 +137,60 @@ public class EndToEndTest {
         delegate.get().handleMessage(bytes);
         return voidFutureTask;
       }
-    }, message, new HashSet<ClientDescriptor>() {{ add(new MyClientDescriptor()); }});
+    }, message);
 
     assertThat(messageReceived.get(), equalTo(message));
+  }
+
+  @Test
+  public void testClientInvokeInitiatedMessageFiring() throws ExecutionException, InterruptedException {
+    final Codec codec = new SerializationCodec();
+    final FiringClientIdAware firingClientIdAware = new FiringClientIdAware();
+    final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(ClientIdAware.class, firingClientIdAware, codec, Integer.class);
+    final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
+    final MyClientDescriptor myClient = new MyClientDescriptor();
+    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker, myClient);
+    when(endpoint.beginInvoke()).thenReturn(builder);
+    proxyInvoker.addClient(new MyClientDescriptor());
+    proxyInvoker.addClient(myClient);
+    final MessageListener<Integer> listener = new MessageListener<Integer>() {
+      @Override
+      public void onMessage(final Integer message) {
+      }
+    };
+    proxyInvoker.setClientCommunicator(new ClientCommunicator() {
+      public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+
+      public Future<Void> send(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+        final FutureTask<Void> voidFutureTask = new FutureTask<Void>(new Callable<Void>() {
+          public Void call() throws Exception {
+            listener.onMessage((Integer)codec.decode(Arrays.copyOfRange(bytes, 1, bytes.length), Integer.class));
+            return null;
+          }
+        });
+        voidFutureTask.run();
+        return voidFutureTask;
+      }
+    });
+
+
+    final ClientIdAware proxy = ClientProxyFactory.createProxy(ClientIdAware.class, ClientIdAware.class, endpoint, codec, Integer.class);
+    proxy.registerListener(listener);
+    proxy.nothing();
+    proxy.notMuch(null);
+    assertThat(firingClientIdAware.counter.get(), is(1));
   }
 
   @Test
   public void testClientIdSubstitution() throws ExecutionException, InterruptedException {
     final Codec codec = new SerializationCodec();
     final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(ClientIdAware.class, new ClientIdAware() {
+      public void registerListener(final MessageListener<Integer> listener) {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+
       public void nothing() {
         //
       }
@@ -169,10 +219,16 @@ public class EndToEndTest {
   private static class RecordingInvocationBuilder implements InvocationBuilder {
     private final ProxyInvoker<?> proxyInvoker;
     private byte[] payload;
+    private MyClientDescriptor clientDescriptor;
 
     public RecordingInvocationBuilder(final ProxyInvoker<?> proxyInvoker) {
-
       this.proxyInvoker = proxyInvoker;
+      clientDescriptor = new MyClientDescriptor();
+    }
+
+    public RecordingInvocationBuilder(final ProxyInvoker<?> proxyInvoker, final MyClientDescriptor clientDescriptor) {
+      this.proxyInvoker = proxyInvoker;
+      this.clientDescriptor = clientDescriptor;
     }
 
     public InvocationBuilder ackReceived() {
@@ -199,7 +255,7 @@ public class EndToEndTest {
     public InvokeFuture<byte[]> invoke() {
       final FutureTask<byte[]> futureTask = new FutureTask<byte[]>(new Callable<byte[]>() {
         public byte[] call() throws Exception {
-          return proxyInvoker.invoke(new MyClientDescriptor(), payload);
+          return proxyInvoker.invoke(clientDescriptor, payload);
         }
       });
       futureTask.run();
@@ -230,7 +286,7 @@ public class EndToEndTest {
 
   private static class MyClientDescriptor implements ClientDescriptor {}
 
-  public interface ClientIdAware {
+  public interface ClientIdAware extends ServerMessageAware<Integer> {
 
     void nothing();
 
@@ -242,5 +298,31 @@ public class EndToEndTest {
 
   public interface ComparableEntity extends ServerMessageAware, Entity, Comparable {
 
+  }
+
+  private static class FiringClientIdAware extends MessageFiring implements ClientIdAware {
+
+    private final AtomicInteger counter = new AtomicInteger();
+
+    public FiringClientIdAware() {
+      super(Integer.class);
+    }
+
+    public void nothing() {
+      //
+    }
+
+    public void notMuch(final Object id) {
+      fire(counter.getAndIncrement());
+    }
+
+    public Serializable much(final Serializable foo, final Object id) {
+      notMuch(id);
+      return "YAY!";
+    }
+
+    public void registerListener(final MessageListener<Integer> listener) {
+      // noop
+    }
   }
 }

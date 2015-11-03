@@ -39,7 +39,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -56,6 +55,8 @@ public class ProxyInvoker<T> {
   private volatile ClientCommunicator clientCommunicator;
   private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
+  private final ThreadLocal<InvocationContext> invocationContext = new ThreadLocal<InvocationContext>();
+
   public ProxyInvoker(Class<T> proxyType, T target, Codec codec, Class... messageTypes) {
     this.target = target;
     this.codec = codec;
@@ -67,7 +68,7 @@ public class ProxyInvoker<T> {
         ((MessageFiring)target).registerListener(eventType, new MessageListener() {
           @Override
           public void onMessage(final Object message) {
-            fireMessage(clientCommunicator, message, clients); // fire to all Clients!
+            fireMessage(clientCommunicator, message);
           }
         });
       }
@@ -91,7 +92,12 @@ public class ProxyInvoker<T> {
           }
         }
       }
-      return codec.encode(method.getReturnType(), method.invoke(target, args));
+      try {
+        invocationContext.set(new InvocationContext(clientDescriptor));
+        return codec.encode(method.getReturnType(), method.invoke(target, args));
+      } finally {
+        invocationContext.remove();
+      }
     } catch (IllegalAccessException e) {
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
@@ -99,14 +105,19 @@ public class ProxyInvoker<T> {
     }
   }
 
-  public void fireMessage(ClientCommunicator clientCommunicator, Object message, Set<ClientDescriptor> clients) {
+  public void fireMessage(ClientCommunicator clientCommunicator, Object message) {
     final Class<?> type = message.getClass();
     if(!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
     }
     Set<Future<Void>> futures = new HashSet<Future<Void>>();
+    final InvocationContext invocationContext = this.invocationContext.get();
+    final ClientDescriptor caller = invocationContext == null ? null : invocationContext.caller;
     for (ClientDescriptor client : clients) {
-      futures.add(clientCommunicator.send(client, encode(type, message)));
+      if (!client.equals(caller)) {
+        final Future<Void> send = clientCommunicator.send(client, encode(type, message));
+        futures.add(send);
+      }
     }
     boolean interrupted = false;
     while(!futures.isEmpty()) {
@@ -193,4 +204,12 @@ public class ProxyInvoker<T> {
     clients.remove(descriptor);
   }
 
+  private final class InvocationContext {
+
+    private final ClientDescriptor caller;
+
+    public InvocationContext(final ClientDescriptor caller) {
+      this.caller = caller;
+    }
+  }
 }
