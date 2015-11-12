@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.context;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -22,13 +24,67 @@ import java.util.Map;
  */
 public class Context {
 
-  private final Map<String, String> attributes;
+  private final Map<String, String> back = new LinkedHashMap<String, String>();
 
-  public Context(Map<String, String> attributes) {
-    this.attributes = attributes;
+  private Context(Map<String, String> back) {
+    this.back.putAll(back);
   }
 
-  public Map<String, String> getAttributes() {
-    return attributes;
+  private Context() {
+  }
+
+  public Map<String, String> toMap() {
+    return new LinkedHashMap<String, String>(back);
+  }
+
+  public Context with(String key, String val) {
+    Context context = new Context(back);
+    context.back.put(key, val);
+    return context;
+  }
+
+  public Context with(Map<String, String> props) {
+    Context context = new Context(back);
+    context.back.putAll(props);
+    return context;
+  }
+
+  public String get(String key) {
+    return back.get(key);
+  }
+
+  public int size() {
+    return back.size();
+  }
+
+  public boolean isEmpty() { return back.isEmpty(); }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Context context = (Context) o;
+    return back.equals(context.back);
+  }
+
+  @Override
+  public int hashCode() {
+    return back.hashCode();
+  }
+
+  public static Context create() {
+    return new Context();
+  }
+
+  public static Context create(String key, String val) {
+    return new Context().with(key, val);
+  }
+
+  public static Context create(Map<String, String> map) {
+    return new Context(map);
+  }
+
+  public static Context empty() {
+    return new Context(Collections.<String, String>emptyMap());
   }
 }
