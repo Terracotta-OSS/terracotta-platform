@@ -38,6 +38,7 @@
     <module>coordinator-entity/common</module>
     <module>coordinator-entity/client</module>
     <module>coordinator-entity/server</module>
+    <module>management-api</module>
   </modules>
 
   <dependencyManagement>
