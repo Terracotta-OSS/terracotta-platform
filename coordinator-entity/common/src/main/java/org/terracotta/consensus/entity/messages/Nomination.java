@@ -31,18 +31,21 @@ public class Nomination implements Serializable {
 
   private volatile long id;
   private final String namespace;
+  private final boolean elected;
 
   public Nomination(String namespace) {
     this.id = AWAITS_ELECTION;
     this.namespace = namespace;
+    this.elected = false;
   }
 
-  public Nomination(final String namespace, final long id) {
+  public Nomination(final String namespace, final long id, boolean elected) {
     if (id == AWAITS_ELECTION) {
       throw new IllegalArgumentException();
     }
     this.id = id;
     this.namespace = namespace;
+    this.elected = elected;
   }
 
   public boolean awaitsElection() {
@@ -51,6 +54,10 @@ public class Nomination implements Serializable {
   
   public String getNamespace() {
     return namespace;
+  }
+  
+  public boolean isContinuing() {
+    return !this.elected;
   }
   
   @Override

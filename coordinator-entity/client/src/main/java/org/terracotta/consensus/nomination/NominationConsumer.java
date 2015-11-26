@@ -15,16 +15,18 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.consensus.entity.server;
+package org.terracotta.consensus.nomination;
 
-import org.terracotta.consensus.entity.messages.Nomination;
+import java.util.concurrent.Callable;
 
 /**
- * @author Alex Snaps
+ * 
+ * @author Abhilash
+ *
  */
-public interface PermitFactory<K, V> {
 
-  Nomination createPermit(K k, V v, boolean elected);
-  
-  Nomination createPermit(K k);
+//Horrible name !
+public interface NominationConsumer extends NominationListener {
+
+  Callable consumeNomination();
 }

@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
 import org.terracotta.consensus.entity.messages.Nomination;
+import org.terracotta.consensus.nomination.NominationConsumer;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.ClientId;
 
@@ -83,7 +84,7 @@ public class ThreadingCoordinationServiceTest {
 
     barrier.await();
     coordinationClientEntity.accepted = true;
-    service.leaderElected(CoordinationService.toString(ENTITY_CLASS, ENTITY_NAME));
+    service.onNomination(new Nomination(CoordinationService.toString(ENTITY_CLASS, ENTITY_NAME), 1, true));
 
     t1.join();
     t2.join();
@@ -102,6 +103,17 @@ public class ThreadingCoordinationServiceTest {
           final Object result = service.executeIfLeader(ENTITY_CLASS, ENTITY_NAME, new Callable<Object>() {
             public Object call() throws Exception {
               return new Object();
+            }
+          }, new NominationConsumer() {
+            
+            public void onNominationByServer(Object result) {
+              // TODO Auto-generated method stub
+              
+            }
+            
+            public Callable consumeNomination() {
+              // TODO Auto-generated method stub
+              return null;
             }
           });
           if (result != null) {
@@ -127,7 +139,7 @@ public class ThreadingCoordinationServiceTest {
     public synchronized Nomination runForElection(final String namespace, @ClientId final Object clientId) {
       if (elected == null) {
         elected = clientId;
-        return new Nomination(namespace, 1);
+        return new Nomination(namespace, 1, true);
       } else if (!accepted) {
         return new Nomination(namespace);
       }

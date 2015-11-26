@@ -160,8 +160,8 @@ public class LeaderElectorTest {
     
     private static final AtomicLong counter = new AtomicLong();
 
-    public Nomination createPermit(String k, String v) {
-      return new Nomination(k, counter.getAndIncrement());
+    public Nomination createPermit(String k, String v, boolean elected) {
+      return new Nomination(k, counter.getAndIncrement(), elected);
     }
 
     public Nomination createPermit(String k) {

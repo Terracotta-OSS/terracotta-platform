@@ -30,8 +30,8 @@ public class ClientDescriptorPermitFactory implements PermitFactory<String, Clie
 
   private static final AtomicLong counter = new AtomicLong();
 
-  public Nomination createPermit(final String namespace, final ClientDescriptor clientDescriptor) {
-    return new Nomination(namespace, counter.getAndIncrement());
+  public Nomination createPermit(final String namespace, final ClientDescriptor clientDescriptor, final boolean elected) {
+    return new Nomination(namespace, counter.getAndIncrement(), elected);
   }
   
   public Nomination createPermit(String k) {

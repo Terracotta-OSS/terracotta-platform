@@ -112,7 +112,7 @@ public class LeaderElector<K, V> {
           leaderQueue.offer(value);
           if (leaderQueue.peek().equals(value)) {
             state = ElectionState.RUNNING;
-            return currentPermit = factory.createPermit(this.key, value);
+            return currentPermit = factory.createPermit(this.key, value, true);
           }
           // this should not happen
           return null;
@@ -164,7 +164,7 @@ public class LeaderElector<K, V> {
           if (val != null) {
             state = ElectionState.RUNNING;
             listener.onDelist(key, val,
-                currentPermit = factory.createPermit(this.key, val));
+                currentPermit = factory.createPermit(this.key, val, false));
           }
         } else {
           leaderQueue.remove(value);

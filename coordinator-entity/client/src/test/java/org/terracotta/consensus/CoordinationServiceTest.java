@@ -25,6 +25,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
 import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.consensus.entity.Versions;
+import org.terracotta.consensus.nomination.NominationConsumer;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
@@ -95,7 +96,7 @@ public class CoordinationServiceTest {
     final Nomination nomination = mock(Nomination.class);
     when(CoordinationClientEntity.runForElection(eq(FLAT_NAME), anyObject())).thenReturn(nomination);
     when(nomination.awaitsElection()).thenReturn(false);
-    coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable);
+    coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable, mock(NominationConsumer.class));
 
     InOrder inOrder = Mockito.inOrder(callable, nomination);
 
@@ -114,7 +115,7 @@ public class CoordinationServiceTest {
     when(CoordinationClientEntity.runForElection(eq(FLAT_NAME), anyObject())).thenReturn(nomination);
 
     try {
-      coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable);
+      coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable, mock(NominationConsumer.class));
       fail("this should have thrown");
     } catch (AssertionError throwable) {
       assertSame(throwable, assertionError);
@@ -136,7 +137,7 @@ public class CoordinationServiceTest {
     final Nomination nomination = mock(Nomination.class);
     when(nomination.awaitsElection()).thenReturn(false);
     when(CoordinationClientEntity.runForElection(eq(FLAT_NAME), anyObject())).thenReturn(nomination);
-    assertSame(o, coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable));
+    assertSame(o, coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable, mock(NominationConsumer.class)));
   }
 
   @Test
@@ -145,7 +146,7 @@ public class CoordinationServiceTest {
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
     reset(coordinationClientEntity);
     try {
-      coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, null);
+      coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, null, mock(NominationConsumer.class));
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected
@@ -159,7 +160,7 @@ public class CoordinationServiceTest {
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
     reset(coordinationClientEntity);
     try {
-      coordinationService.executeIfLeader(null, ENTITY_NAME, mock(Callable.class));
+      coordinationService.executeIfLeader(null, ENTITY_NAME, mock(Callable.class), mock(NominationConsumer.class));
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected
@@ -173,12 +174,42 @@ public class CoordinationServiceTest {
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
     reset(coordinationClientEntity);
     try {
-      coordinationService.executeIfLeader(ENTITY_TYPE, null, mock(Callable.class));
+      coordinationService.executeIfLeader(ENTITY_TYPE, null, mock(Callable.class), mock(NominationConsumer.class));
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected
     }
     verifyNoMoreInteractions(coordinationClientEntity);
+  }
+  
+  @Test
+  public void doesNotAcceptNullNominationConsumer() throws Throwable {
+    final CoordinationClientEntity coordinationClientEntity = mock(CoordinationClientEntity.class);
+    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
+    reset(coordinationClientEntity);
+    try {
+      coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, mock(Callable.class), null);
+      fail("this should have thrown");
+    } catch (NullPointerException e) {
+      // expected
+    }
+    verifyNoMoreInteractions(coordinationClientEntity);
+  }
+  
+  @Test
+  public void doesConsumesNomination() throws Throwable {
+    final CoordinationClientEntity coordinationClientEntity = mock(CoordinationClientEntity.class);
+    CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
+    final Callable callable = mock(Callable.class);
+    NominationConsumer consumer = mock(NominationConsumer.class);
+    coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, mock(Callable.class), consumer);
+    reset(consumer);
+    Nomination nomination = mock(Nomination.class);
+    when(nomination.isContinuing()).thenReturn(true);
+    when(nomination.getNamespace()).thenReturn(CoordinationService.toString(ENTITY_TYPE, ENTITY_NAME));
+    coordinationService.onNomination(nomination);
+    verify(consumer, times(1)).consumeNomination();
+    verify(consumer, times(1)).onNominationByServer(anyObject());;
   }
 
   @Test

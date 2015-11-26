@@ -23,6 +23,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
 import org.terracotta.consensus.entity.messages.Nomination;
+import org.terracotta.consensus.nomination.NominationConsumer;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -43,6 +44,7 @@ public class CoordinationService {
   static final String SINGLETON_NAME = CoordinationService.class.getName() + "::__oneToRuleThemAll";
 
   private final CoordinationClientEntity entity;
+  private final ConcurrentMap<String, NominationConsumer> nominationConsumers = new ConcurrentHashMap<String, NominationConsumer>();
 
   private ConcurrentMap<String, Object> syncs = new ConcurrentHashMap<String, Object>();
 
@@ -60,7 +62,7 @@ public class CoordinationService {
     entity = coordinationClientEntity;
     entity.registerListener(new MessageListener<Nomination>() {
       public void onMessage(final Nomination message) {
-        leaderElected(message.getNamespace());
+        onNomination(message);
       }
     });
   }
@@ -75,13 +77,14 @@ public class CoordinationService {
    * @param entityType the type of the entity we're running for election for, can't be null
    * @param entityName the name of the entity we're running for election for, can't be null
    * @param callable the callable to invoke, should we win, can't be null
+   * @param {@link NominationConsumer} which consumes the the continuing nomination, can't be null
    * @param <T> the value to return
    * @return the callable returned {@code T} should the election be won, {@code null} otherwise
    * @throws Throwable whatever the {@code callable} may throw
    */
-  public <T> T executeIfLeader(Class<? extends Entity> entityType, String entityName, Callable<T> callable) throws Throwable {
+  public <T> T executeIfLeader(Class<? extends Entity> entityType, String entityName, Callable<T> callable, NominationConsumer consumer) throws Throwable {
 
-    if(entityType == null || entityName == null || callable == null) {
+    if(entityType == null || entityName == null || callable == null || consumer == null) {
       throw new NullPointerException();
     }
 
@@ -90,6 +93,7 @@ public class CoordinationService {
     Object sync = new Object();
     synchronized (sync) {
       Object actualSync = syncs.putIfAbsent(namespace, sync);
+      nominationConsumers.put(namespace, consumer);
       if (actualSync == null) {
         actualSync = sync;
       }
@@ -102,9 +106,13 @@ public class CoordinationService {
           try {
             final T t = callable.call();
             entity.accept(namespace, nomination);
+            syncs.remove(namespace);
+            nominationConsumers.remove(namespace);
             return t;
           } catch (Throwable t) {
             entity.delist(namespace, this);
+            syncs.remove(namespace);
+            nominationConsumers.remove(namespace);
             throw t;
           } finally {
             actualSync.notify();
@@ -116,7 +124,27 @@ public class CoordinationService {
     return null;
   }
 
-  void leaderElected(String namespace) {
+  void onNomination(Nomination permit) {
+    String namespace = permit.getNamespace();
+    if (permit.isContinuing()) {
+      NominationConsumer consumer = nominationConsumers.get(namespace);
+      if (consumer == null) {
+        throw new AssertionError("Client cannot be nominated if it was never enqueued.");
+      }
+      try {
+        Object result = null;
+        if (consumer.consumeNomination() != null) {
+          result = consumer.consumeNomination().call();
+        }
+        consumer.onNominationByServer(result);
+        entity.accept(namespace, permit);
+        nominationConsumers.remove(namespace);
+      } catch (Exception e) {
+        entity.delist(namespace, this);
+        throw new IllegalStateException("Cannot accept nomination because : ", e);
+      }
+      return;
+    }
     Object sync = new Object();
     synchronized (sync) {
       Object actualSync = syncs.putIfAbsent(namespace, sync);
