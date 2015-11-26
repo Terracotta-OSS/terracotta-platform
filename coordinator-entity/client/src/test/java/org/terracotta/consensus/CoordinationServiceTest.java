@@ -23,7 +23,7 @@ import org.mockito.Mockito;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;

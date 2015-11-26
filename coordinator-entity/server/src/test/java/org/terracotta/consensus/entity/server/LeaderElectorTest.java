@@ -23,7 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.messages.Nomination;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
@@ -156,13 +156,18 @@ public class LeaderElectorTest {
     listener = null;
   }
   
-  private static class TestPermitFactory  implements PermitFactory<String> {
+  private static class TestPermitFactory  implements PermitFactory<String, String> {
     
     private static final AtomicLong counter = new AtomicLong();
 
-    public Nomination createPermit(String t) {
-      return new Nomination(counter.getAndIncrement());
+    public Nomination createPermit(String k, String v) {
+      return new Nomination(k, counter.getAndIncrement());
     }
+
+    public Nomination createPermit(String k) {
+      return new Nomination(k);
+    }
+
     
   }
 

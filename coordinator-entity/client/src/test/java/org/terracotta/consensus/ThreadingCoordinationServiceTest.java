@@ -19,9 +19,8 @@ package org.terracotta.consensus;
 
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
-import org.terracotta.consensus.entity.Nomination;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
-import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.ClientId;
 
@@ -128,9 +127,9 @@ public class ThreadingCoordinationServiceTest {
     public synchronized Nomination runForElection(final String namespace, @ClientId final Object clientId) {
       if (elected == null) {
         elected = clientId;
-        return new Nomination(1);
+        return new Nomination(namespace, 1);
       } else if (!accepted) {
-        return new Nomination();
+        return new Nomination(namespace);
       }
       return null;
     }
@@ -147,7 +146,7 @@ public class ThreadingCoordinationServiceTest {
       throw new UnsupportedOperationException("Implement me!");
     }
 
-    public void registerListener(final MessageListener<LeaderElected> message) {
+    public void registerListener(final MessageListener<Nomination> message) {
       // no op
     }
   }

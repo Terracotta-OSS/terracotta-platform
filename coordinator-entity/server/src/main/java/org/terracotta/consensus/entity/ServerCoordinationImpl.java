@@ -17,7 +17,7 @@
 
 package org.terracotta.consensus.entity;
 
-import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.voltron.proxy.ClientId;
@@ -40,7 +40,7 @@ class ServerCoordinationImpl extends MessageFiring implements CoordinationEntity
 
   public void accept(final String namespace, final Nomination permit) {
     leaderElector.accept(namespace, permit);
-    fire(new LeaderElected(namespace));
+    fire(permit);
   }
 
   public void delist(final String namespace, @ClientId final Object clientId) {

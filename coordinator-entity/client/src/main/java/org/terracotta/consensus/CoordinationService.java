@@ -20,15 +20,12 @@ package org.terracotta.consensus;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.consensus.entity.Nomination;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
-import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.util.concurrent.Callable;
@@ -61,8 +58,8 @@ public class CoordinationService {
 
   CoordinationService(CoordinationClientEntity coordinationClientEntity) {
     entity = coordinationClientEntity;
-    entity.registerListener(new MessageListener<LeaderElected>() {
-      public void onMessage(final LeaderElected message) {
+    entity.registerListener(new MessageListener<Nomination>() {
+      public void onMessage(final Nomination message) {
         leaderElected(message.getNamespace());
       }
     });

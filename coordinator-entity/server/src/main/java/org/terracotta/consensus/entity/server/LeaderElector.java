@@ -26,18 +26,18 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.messages.Nomination;
 
 /**
  * @author Alex Snaps
  */
 public class LeaderElector<K, V> {
 
-  private final PermitFactory<V> factory;
+  private final PermitFactory<K, V> factory;
   private final ConcurrentMap<K, ElectionQueue<K, V>> leaderQueues = new ConcurrentHashMap<K, ElectionQueue<K, V>>();
   private DelistListener<K, V> listener;
 
-  public LeaderElector(PermitFactory<V> factory) {
+  public LeaderElector(PermitFactory<K, V> factory) {
     this.factory = factory;
   }
 
@@ -82,13 +82,13 @@ public class LeaderElector<K, V> {
   private static class ElectionQueue<K, V> {
     private final BlockingQueue<V> leaderQueue = new LinkedBlockingQueue<V>();
     private final K key;
-    private final PermitFactory<V> factory;
+    private final PermitFactory<K, V> factory;
     private ElectionState state = ElectionState.NOT_ELECTED;
     private final DelistListener listener;
     private final ReentrantLock lock = new ReentrantLock();
     private Nomination currentPermit;
 
-    public ElectionQueue(K key, PermitFactory<V> factory,
+    public ElectionQueue(K key, PermitFactory<K, V> factory,
         DelistListener listener) {
       if (listener == null) {
         throw new IllegalArgumentException("Listener cannot be null.");
@@ -107,12 +107,12 @@ public class LeaderElector<K, V> {
           return null;
         case RUNNING:
           leaderQueue.offer(value);
-          return new Nomination();
+          return factory.createPermit(this.key);
         case NOT_ELECTED:
           leaderQueue.offer(value);
           if (leaderQueue.peek().equals(value)) {
             state = ElectionState.RUNNING;
-            return currentPermit = factory.createPermit(value);
+            return currentPermit = factory.createPermit(this.key, value);
           }
           // this should not happen
           return null;
@@ -164,7 +164,7 @@ public class LeaderElector<K, V> {
           if (val != null) {
             state = ElectionState.RUNNING;
             listener.onDelist(key, val,
-                currentPermit = factory.createPermit(val));
+                currentPermit = factory.createPermit(this.key, val));
           }
         } else {
           leaderQueue.remove(value);

@@ -17,7 +17,7 @@
 
 package org.terracotta.consensus.entity;
 
-import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.consensus.entity.server.DelistListener;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ClientCommunicator;
@@ -34,7 +34,7 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
-    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, LeaderElected.class), new SerializationCodec(), clientCommunicator, LeaderElected.class));
+    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, Nomination.class), new SerializationCodec(), clientCommunicator, Nomination.class));
     this.leaderElector = leaderElector;
     this.leaderElector.setListener(new DelistListenerImpl<String>());
   }

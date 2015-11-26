@@ -17,12 +17,14 @@
 
 package org.terracotta.consensus.entity.server;
 
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.messages.Nomination;
 
 /**
  * @author Alex Snaps
  */
-public interface PermitFactory<T> {
+public interface PermitFactory<K, V> {
 
-  Nomination createPermit(T t);
+  Nomination createPermit(K k, V v);
+  
+  Nomination createPermit(K k);
 }

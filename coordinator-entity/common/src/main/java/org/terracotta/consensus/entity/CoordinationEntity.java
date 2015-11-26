@@ -17,6 +17,7 @@
 
 package org.terracotta.consensus.entity;
 
+import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.voltron.proxy.ClientId;
 
 /**
