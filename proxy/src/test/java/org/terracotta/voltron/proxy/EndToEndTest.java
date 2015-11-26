@@ -222,8 +222,7 @@ public class EndToEndTest {
     private MyClientDescriptor clientDescriptor;
 
     public RecordingInvocationBuilder(final ProxyInvoker<?> proxyInvoker) {
-      this.proxyInvoker = proxyInvoker;
-      clientDescriptor = new MyClientDescriptor();
+      this(proxyInvoker, new MyClientDescriptor());
     }
 
     public RecordingInvocationBuilder(final ProxyInvoker<?> proxyInvoker, final MyClientDescriptor clientDescriptor) {
@@ -255,7 +254,7 @@ public class EndToEndTest {
     public InvokeFuture<byte[]> invoke() {
       final FutureTask<byte[]> futureTask = new FutureTask<byte[]>(new Callable<byte[]>() {
         public byte[] call() throws Exception {
-          return proxyInvoker.invoke(clientDescriptor, payload);
+          return proxyInvoker.invoke(clientDescriptor, proxyInvoker.deserialize(payload));
         }
       });
       futureTask.run();

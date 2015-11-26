@@ -19,16 +19,16 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.voltron.proxy.ClientId;
+import org.terracotta.entity.MessageDeserializer;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.CommonProxyFactory;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.server.messages.MessageFiring;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -45,7 +45,7 @@ import java.util.concurrent.Future;
 /**
  * @author Alex Snaps
  */
-public class ProxyInvoker<T> {
+public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> {
 
   private final T target;
   private final Codec codec;
@@ -76,25 +76,11 @@ public class ProxyInvoker<T> {
     this.eventMappings = createEventTypeMappings(messageTypes);
   }
 
-  public byte[] invoke(final ClientDescriptor clientDescriptor, final byte[] arg) {
-    final Method method = mappings.get(arg[0]);
-    if(method == null) {
-      throw new AssertionError();
-    }
-    final Object[] args = codec.decode(Arrays.copyOfRange(arg, 1, arg.length), method.getParameterTypes());
+  public byte[] invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage message) {
     try {
-      final Annotation[][] allAnnotations = method.getParameterAnnotations();
-      for (int i = 0; i < allAnnotations.length; i++) {
-        for (Annotation parameterAnnotation : allAnnotations[i]) {
-          if (parameterAnnotation.annotationType() == ClientId.class) {
-            args[i] = clientDescriptor;
-            break;
-          }
-        }
-      }
       try {
         invocationContext.set(new InvocationContext(clientDescriptor));
-        return codec.encode(method.getReturnType(), method.invoke(target, args));
+        return codec.encode(message.returnType(), message.invoke(target, clientDescriptor));
       } finally {
         invocationContext.remove();
       }
@@ -103,6 +89,18 @@ public class ProxyInvoker<T> {
     } catch (InvocationTargetException e) {
       throw new RuntimeException(e.getCause());
     }
+  }
+
+  private Method decodeMethod(final byte b) {
+    final Method method = mappings.get(b);
+    if(method == null) {
+      throw new AssertionError();
+    }
+    return method;
+  }
+
+  private Object[] decodeArgs(final byte[] arg, final Class<?>[] parameterTypes) {
+    return codec.decode(Arrays.copyOfRange(arg, 1, arg.length), parameterTypes);
   }
 
   public void fireMessage(ClientCommunicator clientCommunicator, Object message) {
@@ -202,6 +200,15 @@ public class ProxyInvoker<T> {
 
   public void removeClient(ClientDescriptor descriptor) {
     clients.remove(descriptor);
+  }
+
+  public ProxyEntityMessage deserialize(final byte[] bytes) {
+    final Method method = decodeMethod(bytes[0]);
+    return new ProxyEntityMessage(method, decodeArgs(bytes, method.getParameterTypes()));
+  }
+
+  public ProxyEntityMessage deserializeForSync(final int i, final byte[] bytes) {
+    throw new UnsupportedOperationException("Implement me!");
   }
 
   private final class InvocationContext {

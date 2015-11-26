@@ -20,85 +20,37 @@ package org.terracotta.consensus.entity;
 import org.terracotta.consensus.entity.messages.LeaderElected;
 import org.terracotta.consensus.entity.server.DelistListener;
 import org.terracotta.consensus.entity.server.LeaderElector;
-import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.MessageDeserializer;
-import org.terracotta.entity.NoConcurrencyStrategy;
-import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
 
 /**
  * @author Alex Snaps
  */
-public class CoordinationServerEntity implements ActiveServerEntity<IncomingCoordinationMessage> {
+public class CoordinationServerEntity extends ProxiedServerEntity {
 
   private final LeaderElector<String, ClientDescriptor> leaderElector;
-  private final ProxyInvoker target;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
+    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, LeaderElected.class), new SerializationCodec(), LeaderElected.class));
     this.leaderElector = leaderElector;
-    this.target = new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(this.leaderElector, LeaderElected.class), new SerializationCodec(), LeaderElected.class);
     this.target.setClientCommunicator(clientCommunicator);
     this.leaderElector.setListener(new DelistListenerImpl<String>(target, clientCommunicator));
   }
 
-  public byte[] invoke(final ClientDescriptor clientDescriptor, final IncomingCoordinationMessage msg) {
-    return target.invoke(clientDescriptor, msg.getPayload());
-  }
-
-  public ConcurrencyStrategy<IncomingCoordinationMessage> getConcurrencyStrategy() {
-    //TODO: We could implement a PerKeyConcurrencyStrategy
-    return new NoConcurrencyStrategy<IncomingCoordinationMessage>();
-  }
-
+  @Override
   public void connected(final ClientDescriptor clientDescriptor) {
     target.addClient(clientDescriptor);
   }
 
+  @Override
   public void disconnected(final ClientDescriptor clientDescriptor) {
     target.removeClient(clientDescriptor);
     leaderElector.delistAll(clientDescriptor);
   }
 
-  public byte[] getConfig() {
-    return null;
-  }
-
-  public void handleReconnect(final ClientDescriptor clientDescriptor, final byte[] bytes) {
-    // Don't care I think
-  }
-
-  public void synchronizeKeyToPassive(final PassiveSynchronizationChannel passiveSynchronizationChannel, final int i) {
-    // no op ... for now?
-  }
-
-  public MessageDeserializer<IncomingCoordinationMessage> getMessageDeserializer() {
-    return new MessageDeserializer<IncomingCoordinationMessage>() {
-      public IncomingCoordinationMessage deserialize(final byte[] bytes) {
-        return new IncomingCoordinationMessage(bytes);
-      }
-
-      public IncomingCoordinationMessage deserializeForSync(final int i, final byte[] bytes) {
-        throw new UnsupportedOperationException("Implement me!");
-      }
-    };
-  }
-
-  public void createNew() {
-    // Don't care I think
-  }
-
-  public void loadExisting() {
-    // Don't care I think
-  }
-
-  public void destroy() {
-    // Don't care I think
-  }
-  
   private static class DelistListenerImpl<K> implements DelistListener<K, ClientDescriptor> {
     
     private final ProxyInvoker target; 
@@ -112,7 +64,6 @@ public class CoordinationServerEntity implements ActiveServerEntity<IncomingCoor
     public void onDelist(K key, ClientDescriptor clientDescriptor, Nomination permit) {
       target.fireAndForgetMessage(communicator, permit, clientDescriptor);
     }
-    
   }
 
 }
