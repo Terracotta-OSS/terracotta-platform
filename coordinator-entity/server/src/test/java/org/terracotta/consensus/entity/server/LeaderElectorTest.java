@@ -147,7 +147,25 @@ public class LeaderElectorTest {
     leaderElector.delist("e1", "c1");
     leaderElector.delist("e2", "c1");
     
-    verify(listener, times(2));
+    verify(listener, times(2)).onDelist(any(String.class), any(String.class), any(Nomination.class));;
+  }
+  
+  @Test
+  public void testLeaderElectionSingleKeyForCarryOverNominationSingleClient() {
+    
+    Nomination permit1 = leaderElector.enlist("e1", "c1");
+    
+    assertThat(permit1, notNullValue());
+    assertThat(((permit1).awaitsElection()), is(false));
+    assertThat(((permit1).isContinuing()), is(false));
+    
+    leaderElector.delist("e1", "c1");
+    
+    Nomination permit2 = leaderElector.enlist("e1", "c2");
+    
+    assertThat(permit2, notNullValue());
+    assertThat(((permit2).awaitsElection()), is(false));
+    assertThat(((permit2).isContinuing()), is(true));
   }
   
   @After

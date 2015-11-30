@@ -42,9 +42,8 @@ public class LeaderElector<K, V> {
   }
 
   public Nomination enlist(K key, V value) {
-    leaderQueues.putIfAbsent(key, new ElectionQueue<K, V>(key, factory,
-        listener));
-    return leaderQueues.get(key).runElectionOrAdd(value);
+    ElectionQueue queue = leaderQueues.putIfAbsent(key, new ElectionQueue<K, V>(key, factory, listener));
+    return leaderQueues.get(key).runElectionOrAdd(value, queue == null);
   }
 
   public void setListener(DelistListener<K, V> listener) {
@@ -56,13 +55,7 @@ public class LeaderElector<K, V> {
   }
 
   public void delist(final K key, V value) {
-    leaderQueues.get(key).remove(value, new Callable() {
-
-      public Object call() throws Exception {
-        leaderQueues.remove(key);
-        return null;
-      }
-    });
+    leaderQueues.get(key).remove(value);
   }
 
   public List<V> getAllWaitingOn(final K key) {
@@ -98,7 +91,7 @@ public class LeaderElector<K, V> {
       this.factory = factory;
     }
 
-    private Nomination runElectionOrAdd(V value) {
+    private Nomination runElectionOrAdd(V value, boolean elected) {
       lock.lock();
       try {
         switch (state) {
@@ -112,7 +105,7 @@ public class LeaderElector<K, V> {
           leaderQueue.offer(value);
           if (leaderQueue.peek().equals(value)) {
             state = ElectionState.RUNNING;
-            return currentPermit = factory.createPermit(this.key, value, true);
+            return currentPermit = factory.createPermit(this.key, value, elected);
           }
           // this should not happen
           return null;
@@ -154,10 +147,11 @@ public class LeaderElector<K, V> {
       }
     }
 
-    private void remove(V value, Callable callIfEmpty) {
+    private void remove(V value) {
       lock.lock();
       try {
-        if (leaderQueue.peek().equals(value)) {
+        V leader = null;
+        if ((leader = leaderQueue.peek()) != null && leader.equals(value)) {
           state = ElectionState.NOT_ELECTED;
           leaderQueue.remove(value);
           V val = leaderQueue.peek();
@@ -168,9 +162,6 @@ public class LeaderElector<K, V> {
           }
         } else {
           leaderQueue.remove(value);
-        }
-        if(leaderQueue.isEmpty()) {
-          callIfEmpty.call();
         }
       } catch (Exception e) {
         throw new IllegalStateException(e);
