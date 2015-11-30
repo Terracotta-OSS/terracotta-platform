@@ -18,11 +18,9 @@
  */
 package org.terracotta.voltron.management.consumer;
 
+import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.management.capabilities.Capability;
 import org.terracotta.management.context.ContextContainer;
-import org.terracotta.management.stats.Statistic;
-
-import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.voltron.management.common.providers.ManagementProvider;
 
 import java.util.Collection;
@@ -107,36 +105,12 @@ public interface ManagementServiceConsumer {
                                                                                                               Class<O> objectType,
                                                                                                               String capabilityName);
 
-  /**
-   *
-   * Get the pushed stats from the buffer. This collection contains statistics of all managed object types and all
-   * entity types.
-   * <p>
-   * This will clear the stats buffered in the management service. Thus the same stats can be received only once.
-   * Use {@link #setupPeriodicStatsCollector(StatisticsCallback)} for periodically and continuously getting stats
-   * from the management service.
-   *
-   * @return Statistics collection collected so far.
-   */
-  Collection<Statistic<?, ?>> getAndClearStats();
 
   /**
-   * Get the pushed stats from the buffer. This collection contains statistics of all managed object types and all
-   * entity types.
-   * <p>
-   * This will <i>NOT</i> clear the stats buffered in the management service. Also, this will clear only once.
-   * Use {@link #setupPeriodicStatsCollector(StatisticsCallback)} for periodically and continuously getting stats
-   * from the management service.
+   * Setup a callback interface, so that the consumer can get stats and other pushed events whenever it arrives at the
+   * management service from the managed objects of different entities running on the stripes and clients.
    *
-   * @return Statistics collection collected so far, without clearing.
+   * @param callback The callback interface that will be issued when stats/events arrives
    */
-  Collection<Statistic<?, ?>> getAllBufferedStats();
-
-  /**
-   * Setup a callback interface, so that the consumer can get stats whenever it arrives at the management service
-   * from the managed objects of different entities running on the stripes and clients.
-   *
-   * @param callback The callback interface that will be issued when stats arrives
-   */
-  void setupPeriodicStatsCollector(StatisticsCallback callback);
+  void setupPeriodicManagementMessageCollector(ManagementMessageCallback callback);
 }

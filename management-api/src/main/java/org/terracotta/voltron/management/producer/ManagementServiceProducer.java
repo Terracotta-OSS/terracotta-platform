@@ -19,15 +19,12 @@
 package org.terracotta.voltron.management.producer;
 
 import org.terracotta.entity.ActiveServerEntity;
-import org.terracotta.management.stats.Statistic;
 import org.terracotta.voltron.management.producer.registry.ManagedEntityRegistry;
-
-import java.util.Collection;
 
 /**
  * Provided Producer interface of the management service. Entities that wishes to become managed entities must use
- * this interface to register with the management service and start pushing metrics and/or register providers for turning
- * statistics on or off or to do some specific action on a managed object within a managed entity.
+ * this interface to register with the management service and start pushing metrics and events and/or register providers
+ * for turning statistics on or off or to do some specific action on a managed object within a managed entity.
  *
  * @author RKAV
  */
@@ -59,12 +56,12 @@ public interface ManagementServiceProducer {
   <E extends ActiveServerEntity<?>> ManagedEntityRegistry<E> removeFromEntityRegistry(Class<E> entityType, String entityName);
 
   /**
-   * Push a collection of statistics periodically.
+   * Push periodic messages (could be statistics or operator events)
    * <p>
-   * It is assumed that the statistic object has sufficient context to identify the entity instance and object instance
-   * for which this statistic is pushed.
+   * It is assumed that the message object has sufficient context to identify the entity instance and object instance
+   * for which this statistic or operator event is pushed.
    *
-   * @param statistics A collection of statistics that is periodically pushed.
+   * @param message A management message that is periodically pushed.
    */
-  void pushStatistics(Collection<Statistic<?, ?>> statistics);
+  void pushManagementMessage(byte[] message);
 }
