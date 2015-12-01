@@ -20,13 +20,13 @@ package org.terracotta.consensus.entity.server;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.terracotta.consensus.entity.messages.Nomination;
+import org.terracotta.entity.ClientDescriptor;
 
 /**
  * @author Alex Snaps
@@ -35,18 +35,18 @@ public class LeaderElector<K, V> {
 
   private final PermitFactory<K, V> factory;
   private final ConcurrentMap<K, ElectionQueue<K, V>> leaderQueues = new ConcurrentHashMap<K, ElectionQueue<K, V>>();
-  private DelistListener<K, V> listener;
+  private LeaderStateChangeListener<V> listener;
 
   public LeaderElector(PermitFactory<K, V> factory) {
     this.factory = factory;
   }
 
   public Nomination enlist(K key, V value) {
-    ElectionQueue queue = leaderQueues.putIfAbsent(key, new ElectionQueue<K, V>(key, factory, listener));
+    ElectionQueue<K, V> queue = leaderQueues.putIfAbsent(key, new ElectionQueue<K, V>(key, factory, listener));
     return leaderQueues.get(key).runElectionOrAdd(value, queue == null);
   }
 
-  public void setListener(DelistListener<K, V> listener) {
+  public void setListener(LeaderStateChangeListener<V> listener) {
     this.listener = listener;
   }
 
@@ -77,12 +77,11 @@ public class LeaderElector<K, V> {
     private final K key;
     private final PermitFactory<K, V> factory;
     private ElectionState state = ElectionState.NOT_ELECTED;
-    private final DelistListener listener;
+    private final LeaderStateChangeListener<V> listener;
     private final ReentrantLock lock = new ReentrantLock();
     private Nomination currentPermit;
 
-    public ElectionQueue(K key, PermitFactory<K, V> factory,
-        DelistListener listener) {
+    public ElectionQueue(K key, PermitFactory<K, V> factory, LeaderStateChangeListener<V> listener) {
       if (listener == null) {
         throw new IllegalArgumentException("Listener cannot be null.");
       }
@@ -142,6 +141,7 @@ public class LeaderElector<K, V> {
         } else {
           throw new AssertionError("Illegal Election state");
         }
+        listener.onAccept(currentPermit, tail());
       } finally {
         lock.unlock();
       }
@@ -157,11 +157,13 @@ public class LeaderElector<K, V> {
           V val = leaderQueue.peek();
           if (val != null) {
             state = ElectionState.RUNNING;
-            listener.onDelist(key, val,
-                currentPermit = factory.createPermit(this.key, val, false));
+            List toSend = null;
+            listener.onDelist((currentPermit = factory.createPermit(this.key, val, false)), val);
           }
         } else {
-          leaderQueue.remove(value);
+          if (leaderQueue.remove(value) == false) {
+            throw new IllegalArgumentException("Non existent value cannot be delisted.");
+          }
         }
       } catch (Exception e) {
         throw new IllegalStateException(e);

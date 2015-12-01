@@ -21,16 +21,14 @@ import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.voltron.proxy.ClientId;
-import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 
 /**
  * @author Alex Snaps
  */
-class ServerCoordinationImpl extends MessageFiring implements CoordinationEntity {
+class ServerCoordinationImpl implements CoordinationEntity {
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public ServerCoordinationImpl(final LeaderElector<String, ClientDescriptor> leaderElector, Class... messageTypes) {
-    super(messageTypes);
     this.leaderElector = leaderElector;
   }
 
@@ -40,7 +38,6 @@ class ServerCoordinationImpl extends MessageFiring implements CoordinationEntity
 
   public void accept(final String namespace, final Nomination permit) {
     leaderElector.accept(namespace, permit);
-    fire(permit);
   }
 
   public void delist(final String namespace, @ClientId final Object clientId) {

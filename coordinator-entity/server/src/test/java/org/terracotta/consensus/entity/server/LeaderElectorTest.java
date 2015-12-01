@@ -17,6 +17,7 @@
 
 package org.terracotta.consensus.entity.server;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.After;
@@ -26,6 +27,7 @@ import org.mockito.Mockito;
 import org.terracotta.consensus.entity.messages.Nomination;
 
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -41,12 +43,12 @@ import static org.mockito.Matchers.any;
 public class LeaderElectorTest {
 
   private LeaderElector<String, String> leaderElector;
-  private DelistListener listener;
+  private LeaderStateChangeListener listener;
   
   @Before
   public void setup() {
     leaderElector = new LeaderElector<String, String>(new TestPermitFactory());
-    listener = Mockito.mock(DelistListener.class);
+    listener = Mockito.mock(LeaderStateChangeListener.class);
     leaderElector.setListener(listener);
   }
   
@@ -64,6 +66,8 @@ public class LeaderElectorTest {
     assertThat(leaderElector.getAllWaitingOn("e1").get(0), is("c2"));
 
     leaderElector.accept("e1", permit1);
+    
+    verify(listener).onAccept(any(Nomination.class), any(List.class));
 
     Nomination permit3 = leaderElector.enlist("e1", "c3");
 
@@ -74,17 +78,15 @@ public class LeaderElectorTest {
     verifyZeroInteractions(listener);
     
     leaderElector.delist("e1", "c1");
-    
-    verify(listener).onDelist(any(String.class), any(String.class), any(Nomination.class));
-    
     leaderElector.delist("e1", "c3");
     
-    verify(listener).onDelist(any(String.class), any(String.class), any(Nomination.class));
+    verify(listener).onDelist(any(Nomination.class), any(String.class));
     
     try {
       leaderElector.delist("e1", "c4");
+      fail();
     } catch (Exception expected) {
-      assertThat(expected, instanceOf(NullPointerException.class));
+      assertThat(expected.getCause(), instanceOf(IllegalArgumentException.class));
     }
     
     Nomination newpermit1 = leaderElector.enlist("e1", "c1");
@@ -132,6 +134,8 @@ public class LeaderElectorTest {
     
     leaderElector.accept("e1", permit1);
     leaderElector.accept("e2", permit1a);
+    
+    verify(listener, times(2)).onAccept(any(Nomination.class), any(List.class));
 
     Nomination permit3 = leaderElector.enlist("e1", "c3");
     Nomination permit3a = leaderElector.enlist("e2", "c3");
@@ -147,7 +151,7 @@ public class LeaderElectorTest {
     leaderElector.delist("e1", "c1");
     leaderElector.delist("e2", "c1");
     
-    verify(listener, times(2)).onDelist(any(String.class), any(String.class), any(Nomination.class));;
+    verify(listener, times(2)).onDelist(any(Nomination.class), any(String.class));;
   }
   
   @Test
