@@ -26,6 +26,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 
 /**
  * @author Alex Snaps
