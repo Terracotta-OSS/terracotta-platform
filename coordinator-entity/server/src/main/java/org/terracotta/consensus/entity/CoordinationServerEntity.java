@@ -34,36 +34,21 @@ public class CoordinationServerEntity extends ProxiedServerEntity {
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
-    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, LeaderElected.class), new SerializationCodec(), LeaderElected.class));
+    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, LeaderElected.class), new SerializationCodec(), clientCommunicator, LeaderElected.class));
     this.leaderElector = leaderElector;
-    this.target.setClientCommunicator(clientCommunicator);
-    this.leaderElector.setListener(new DelistListenerImpl<String>(target, clientCommunicator));
-  }
-
-  @Override
-  public void connected(final ClientDescriptor clientDescriptor) {
-    target.addClient(clientDescriptor);
+    this.leaderElector.setListener(new DelistListenerImpl<String>());
   }
 
   @Override
   public void disconnected(final ClientDescriptor clientDescriptor) {
-    target.removeClient(clientDescriptor);
+    super.disconnected(clientDescriptor);
     leaderElector.delistAll(clientDescriptor);
   }
 
-  private static class DelistListenerImpl<K> implements DelistListener<K, ClientDescriptor> {
+  private class DelistListenerImpl<K> implements DelistListener<K, ClientDescriptor> {
     
-    private final ProxyInvoker target; 
-    private final ClientCommunicator communicator; 
-    
-    public DelistListenerImpl(ProxyInvoker target, ClientCommunicator communicator) {
-      this.target = target;
-      this.communicator = communicator;
-    }
-
     public void onDelist(K key, ClientDescriptor clientDescriptor, Nomination permit) {
-      target.fireAndForgetMessage(communicator, permit, clientDescriptor);
+      fireAndForgetMessage(permit, clientDescriptor);
     }
   }
-
 }

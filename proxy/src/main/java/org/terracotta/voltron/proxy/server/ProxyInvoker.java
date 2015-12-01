@@ -52,12 +52,16 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
   private final Map<Byte, Method> mappings;
   private final Map<Class, Byte> eventMappings;
   private final Set<Class> messageTypes;
-  private volatile ClientCommunicator clientCommunicator;
+  private final ClientCommunicator clientCommunicator;
   private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
   private final ThreadLocal<InvocationContext> invocationContext = new ThreadLocal<InvocationContext>();
+  
+  public ProxyInvoker(Class<T> proxyType, T target, Codec codec) {
+    this(proxyType, target, codec, null);
+  }
 
-  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, Class... messageTypes) {
+  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, ClientCommunicator clientCommunicator, Class... messageTypes) {
     this.target = target;
     this.codec = codec;
     this.mappings = createMethodMappings(proxyType);
@@ -68,12 +72,17 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
         ((MessageFiring)target).registerListener(eventType, new MessageListener() {
           @Override
           public void onMessage(final Object message) {
-            fireMessage(clientCommunicator, message);
+            fireMessage(message);
           }
         });
       }
     }
-    this.eventMappings = createEventTypeMappings(messageTypes);
+    if (messageTypes.length != 0 && clientCommunicator == null) {
+      throw new IllegalArgumentException("Messages cannot be sent using a null ClientCommunicator");
+    } else {
+      this.clientCommunicator = clientCommunicator;
+      this.eventMappings = createEventTypeMappings(messageTypes);
+    }
   }
 
   public byte[] invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage message) {
@@ -103,7 +112,7 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
     return codec.decode(Arrays.copyOfRange(arg, 1, arg.length), parameterTypes);
   }
 
-  public void fireMessage(ClientCommunicator clientCommunicator, Object message) {
+  public void fireMessage(Object message) {
     final Class<?> type = message.getClass();
     if(!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
@@ -137,7 +146,7 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
     }
   }
 
-  public void fireAndForgetMessage(ClientCommunicator clientCommunicator, Object message, ClientDescriptor... clients) {
+  public void fireAndForgetMessage(Object message, ClientDescriptor... clients) {
     final Class<?> type = message.getClass();
     if(!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
@@ -188,10 +197,6 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
       map.put(messageType, index++);
     }
     return map;
-  }
-
-  public void setClientCommunicator(final ClientCommunicator clientCommunicator) {
-    this.clientCommunicator = clientCommunicator;
   }
 
   public void addClient(ClientDescriptor descriptor) {

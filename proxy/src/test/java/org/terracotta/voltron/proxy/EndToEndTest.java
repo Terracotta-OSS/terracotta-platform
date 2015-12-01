@@ -75,14 +75,30 @@ public class EndToEndTest {
 
   @Test
   public void testServerInitiatedMessageFiring() throws ExecutionException, InterruptedException {
+    final AtomicReference<EndpointDelegate> delegate = new AtomicReference<EndpointDelegate>();
     final Codec codec = new SerializationCodec();
     final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(Comparable.class, new Comparable() {
       public int compareTo(final Object o) {
         return 42;
       }
-    }, codec, String.class);
+    }, codec, new ClientCommunicator() {
+      public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+        throw new UnsupportedOperationException("Implement me!");
+      }
+
+      public Future<Void> send(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+
+        final FutureTask<Void> voidFutureTask = new FutureTask<Void>(new Callable<Void>() {
+          public Void call() throws Exception {
+            return null;
+          }
+        });
+        voidFutureTask.run();
+        delegate.get().handleMessage(bytes);
+        return voidFutureTask;
+      }
+    }, String.class);
     final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker);
-    final AtomicReference<EndpointDelegate> delegate = new AtomicReference<EndpointDelegate>();
     final EntityClientEndpoint endpoint = new EntityClientEndpoint() {
       public byte[] getEntityConfiguration() {
         throw new UnsupportedOperationException("Implement me!");
@@ -121,23 +137,7 @@ public class EndToEndTest {
 
     final ClientDescriptor fakeClient = mock(ClientDescriptor.class);
     proxyInvoker.addClient(fakeClient);
-    proxyInvoker.fireMessage(new ClientCommunicator() {
-      public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
-        throw new UnsupportedOperationException("Implement me!");
-      }
-
-      public Future<Void> send(final ClientDescriptor clientDescriptor, final byte[] bytes) {
-
-        final FutureTask<Void> voidFutureTask = new FutureTask<Void>(new Callable<Void>() {
-          public Void call() throws Exception {
-            return null;
-          }
-        });
-        voidFutureTask.run();
-        delegate.get().handleMessage(bytes);
-        return voidFutureTask;
-      }
-    }, message);
+    proxyInvoker.fireMessage(message);
 
     assertThat(messageReceived.get(), equalTo(message));
   }
@@ -145,20 +145,13 @@ public class EndToEndTest {
   @Test
   public void testClientInvokeInitiatedMessageFiring() throws ExecutionException, InterruptedException {
     final Codec codec = new SerializationCodec();
-    final FiringClientIdAware firingClientIdAware = new FiringClientIdAware();
-    final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(ClientIdAware.class, firingClientIdAware, codec, Integer.class);
-    final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
-    final MyClientDescriptor myClient = new MyClientDescriptor();
-    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker, myClient);
-    when(endpoint.beginInvoke()).thenReturn(builder);
-    proxyInvoker.addClient(new MyClientDescriptor());
-    proxyInvoker.addClient(myClient);
     final MessageListener<Integer> listener = new MessageListener<Integer>() {
       @Override
       public void onMessage(final Integer message) {
       }
     };
-    proxyInvoker.setClientCommunicator(new ClientCommunicator() {
+    final FiringClientIdAware firingClientIdAware = new FiringClientIdAware();
+    final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(ClientIdAware.class, firingClientIdAware, codec, new ClientCommunicator() {
       public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
         throw new UnsupportedOperationException("Implement me!");
       }
@@ -173,8 +166,13 @@ public class EndToEndTest {
         voidFutureTask.run();
         return voidFutureTask;
       }
-    });
-
+    }, Integer.class);
+    final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
+    final MyClientDescriptor myClient = new MyClientDescriptor();
+    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker, myClient);
+    when(endpoint.beginInvoke()).thenReturn(builder);
+    proxyInvoker.addClient(new MyClientDescriptor());
+    proxyInvoker.addClient(myClient);
 
     final ClientIdAware proxy = ClientProxyFactory.createProxy(ClientIdAware.class, ClientIdAware.class, endpoint, codec, Integer.class);
     proxy.registerListener(listener);
