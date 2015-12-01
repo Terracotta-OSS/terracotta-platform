@@ -19,16 +19,16 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.voltron.proxy.ClientId;
+import org.terracotta.entity.MessageDeserializer;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.CommonProxyFactory;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.server.messages.MessageFiring;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -45,19 +45,23 @@ import java.util.concurrent.Future;
 /**
  * @author Alex Snaps
  */
-public class ProxyInvoker<T> {
+public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> {
 
   private final T target;
   private final Codec codec;
   private final Map<Byte, Method> mappings;
   private final Map<Class, Byte> eventMappings;
   private final Set<Class> messageTypes;
-  private volatile ClientCommunicator clientCommunicator;
+  private final ClientCommunicator clientCommunicator;
   private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
   private final ThreadLocal<InvocationContext> invocationContext = new ThreadLocal<InvocationContext>();
+  
+  public ProxyInvoker(Class<T> proxyType, T target, Codec codec) {
+    this(proxyType, target, codec, null);
+  }
 
-  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, Class... messageTypes) {
+  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, ClientCommunicator clientCommunicator, Class... messageTypes) {
     this.target = target;
     this.codec = codec;
     this.mappings = createMethodMappings(proxyType);
@@ -68,33 +72,24 @@ public class ProxyInvoker<T> {
         ((MessageFiring)target).registerListener(eventType, new MessageListener() {
           @Override
           public void onMessage(final Object message) {
-            fireMessage(clientCommunicator, message);
+            fireMessage(message);
           }
         });
       }
     }
-    this.eventMappings = createEventTypeMappings(messageTypes);
+    if (messageTypes.length != 0 && clientCommunicator == null) {
+      throw new IllegalArgumentException("Messages cannot be sent using a null ClientCommunicator");
+    } else {
+      this.clientCommunicator = clientCommunicator;
+      this.eventMappings = createEventTypeMappings(messageTypes);
+    }
   }
 
-  public byte[] invoke(final ClientDescriptor clientDescriptor, final byte[] arg) {
-    final Method method = mappings.get(arg[0]);
-    if(method == null) {
-      throw new AssertionError();
-    }
-    final Object[] args = codec.decode(Arrays.copyOfRange(arg, 1, arg.length), method.getParameterTypes());
+  public byte[] invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage message) {
     try {
-      final Annotation[][] allAnnotations = method.getParameterAnnotations();
-      for (int i = 0; i < allAnnotations.length; i++) {
-        for (Annotation parameterAnnotation : allAnnotations[i]) {
-          if (parameterAnnotation.annotationType() == ClientId.class) {
-            args[i] = clientDescriptor;
-            break;
-          }
-        }
-      }
       try {
         invocationContext.set(new InvocationContext(clientDescriptor));
-        return codec.encode(method.getReturnType(), method.invoke(target, args));
+        return codec.encode(message.returnType(), message.invoke(target, clientDescriptor));
       } finally {
         invocationContext.remove();
       }
@@ -105,7 +100,19 @@ public class ProxyInvoker<T> {
     }
   }
 
-  public void fireMessage(ClientCommunicator clientCommunicator, Object message) {
+  private Method decodeMethod(final byte b) {
+    final Method method = mappings.get(b);
+    if(method == null) {
+      throw new AssertionError();
+    }
+    return method;
+  }
+
+  private Object[] decodeArgs(final byte[] arg, final Class<?>[] parameterTypes) {
+    return codec.decode(Arrays.copyOfRange(arg, 1, arg.length), parameterTypes);
+  }
+
+  public void fireMessage(Object message) {
     final Class<?> type = message.getClass();
     if(!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
@@ -139,7 +146,7 @@ public class ProxyInvoker<T> {
     }
   }
 
-  public void fireAndForgetMessage(ClientCommunicator clientCommunicator, Object message, ClientDescriptor... clients) {
+  public void fireAndForgetMessage(Object message, ClientDescriptor... clients) {
     final Class<?> type = message.getClass();
     if(!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
@@ -192,16 +199,21 @@ public class ProxyInvoker<T> {
     return map;
   }
 
-  public void setClientCommunicator(final ClientCommunicator clientCommunicator) {
-    this.clientCommunicator = clientCommunicator;
-  }
-
   public void addClient(ClientDescriptor descriptor) {
     clients.add(descriptor);
   }
 
   public void removeClient(ClientDescriptor descriptor) {
     clients.remove(descriptor);
+  }
+
+  public ProxyEntityMessage deserialize(final byte[] bytes) {
+    final Method method = decodeMethod(bytes[0]);
+    return new ProxyEntityMessage(method, decodeArgs(bytes, method.getParameterTypes()));
+  }
+
+  public ProxyEntityMessage deserializeForSync(final int i, final byte[] bytes) {
+    throw new UnsupportedOperationException("Implement me!");
   }
 
   private final class InvocationContext {
