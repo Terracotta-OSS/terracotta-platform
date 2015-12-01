@@ -30,7 +30,7 @@ import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
  */
 public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<ProxyEntityMessage> {
 
-  protected final ProxyInvoker<T> target;
+  private final ProxyInvoker<T> target;
 
   public ProxiedServerEntity(final ProxyInvoker<T> target) {
     this.target = target;
@@ -45,11 +45,11 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
   }
 
   public void connected(ClientDescriptor clientDescriptor) {
-    // override if needed
+    target.addClient(clientDescriptor);
   }
 
   public void disconnected(ClientDescriptor clientDescriptor) {
-    // override if needed
+    target.removeClient(clientDescriptor);
   }
 
   public byte[] getConfig() {
@@ -78,5 +78,9 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
 
   public void destroy() {
     // Don't care I think
+  }
+
+  protected void fireAndForgetMessage(Object message, ClientDescriptor ... clients) {
+    target.fireAndForgetMessage(message, clients);
   }
 }
