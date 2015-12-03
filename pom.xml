@@ -39,6 +39,7 @@
     <module>coordinator-entity/client</module>
     <module>coordinator-entity/server</module>
     <module>management-api</module>
+    <module>management-service</module>
   </modules>
 
   <dependencyManagement>
