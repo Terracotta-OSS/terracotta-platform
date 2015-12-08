@@ -29,7 +29,7 @@ import org.terracotta.voltron.proxy.server.ProxyInvoker;
 /**
  * @author Alex Snaps
  */
-public class CoordinationServerEntity extends ProxiedServerEntity {
+public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEntity> {
 
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
