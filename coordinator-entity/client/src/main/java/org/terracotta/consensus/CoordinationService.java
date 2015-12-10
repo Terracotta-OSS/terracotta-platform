@@ -84,7 +84,7 @@ public class CoordinationService {
    * @return the callable returned {@code T} should the election be won, {@code null} otherwise
    * @throws Throwable whatever the {@code callable} may throw
    */
-  public <T> T executeIfLeader(Class<? extends Entity> entityType, String entityName, Callable<T> callable) throws Throwable {
+  public <T> T executeIfLeader(Class<? extends Entity> entityType, String entityName, ElectionTask<T> callable) throws Throwable {
 
     if(entityType == null || entityName == null || callable == null) {
       throw new NullPointerException();
@@ -105,8 +105,9 @@ public class CoordinationService {
         }
         if (response instanceof LeaderOffer) {
           try {
-            final T t = callable.call();
-            entity.accept(namespace, (LeaderOffer) response);
+            LeaderOffer offer = (LeaderOffer) response;
+            final T t = callable.call(offer.clean());
+            entity.accept(namespace, offer);
             return t;
           } catch (Throwable t) {
             entity.delist(namespace, this);
@@ -181,5 +182,10 @@ public class CoordinationService {
       throw new IllegalStateException("Something is definitively wrong with the setup here!", e);
     }
     return entity;
+  }
+
+  public interface ElectionTask<T> {
+
+    T call(boolean clean);
   }
 }

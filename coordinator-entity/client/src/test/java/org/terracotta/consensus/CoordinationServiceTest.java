@@ -22,7 +22,9 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
+import org.terracotta.consensus.CoordinationService.ElectionTask;
 import org.terracotta.consensus.entity.ElectionResponse;
+import org.terracotta.consensus.entity.LeaderOffer;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
 import org.terracotta.exception.EntityException;
@@ -41,7 +43,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import org.terracotta.consensus.entity.LeaderOffer;
 
 /**
  * @author Alex Snaps
@@ -92,14 +93,14 @@ public class CoordinationServiceTest {
   public void doesInvokeCallableWhenElectionWonAndAcceptsNomination() throws Throwable {
     final CoordinationClientEntity CoordinationClientEntity = mock(CoordinationClientEntity.class);
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(CoordinationClientEntity));
-    final Callable callable = mock(Callable.class);
-    final ElectionResponse response = mock(LeaderOffer.class);
+    final ElectionTask callable = mock(ElectionTask.class);
+    final LeaderOffer response = mock(LeaderOffer.class);
     when(CoordinationClientEntity.runForElection(eq(FLAT_NAME), anyObject())).thenReturn(response);
     coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable);
 
     InOrder inOrder = Mockito.inOrder(callable, response);
 
-    inOrder.verify(callable, times(1)).call();
+    inOrder.verify(callable, times(1)).call(false);
 //    inOrder.verify(nomination, times(1)).accept();
   }
 
@@ -107,10 +108,10 @@ public class CoordinationServiceTest {
   public void doesInvokeCallableWhenElectionWonAndDeclinesNominationOnCallableThrowing() throws Throwable {
     final CoordinationClientEntity CoordinationClientEntity = mock(CoordinationClientEntity.class);
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(CoordinationClientEntity));
-    final Callable callable = mock(Callable.class);
+    final ElectionTask callable = mock(ElectionTask.class);
     final AssertionError assertionError = new AssertionError();
-    when(callable.call()).thenThrow(assertionError);
-    final ElectionResponse nomination = mock(LeaderOffer.class);
+    when(callable.call(false)).thenThrow(assertionError);
+    final LeaderOffer nomination = mock(LeaderOffer.class);
     when(CoordinationClientEntity.runForElection(eq(FLAT_NAME), anyObject())).thenReturn(nomination);
 
     try {
@@ -122,7 +123,7 @@ public class CoordinationServiceTest {
 
     InOrder inOrder = Mockito.inOrder(callable, nomination);
 
-    inOrder.verify(callable, times(1)).call();
+    inOrder.verify(callable, times(1)).call(false);
 //    inOrder.verify(nomination, times(1)).decline();
   }
 
@@ -130,10 +131,10 @@ public class CoordinationServiceTest {
   public void returnsCallableReturnValue() throws Throwable {
     final CoordinationClientEntity CoordinationClientEntity = mock(CoordinationClientEntity.class);
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(CoordinationClientEntity));
-    final Callable callable = mock(Callable.class);
+    final ElectionTask callable = mock(ElectionTask.class);
     final Object o = new Object();
-    when(callable.call()).thenReturn(o);
-    final ElectionResponse response = mock(LeaderOffer.class);
+    when(callable.call(false)).thenReturn(o);
+    final LeaderOffer response = mock(LeaderOffer.class);
     when(CoordinationClientEntity.runForElection(eq(FLAT_NAME), anyObject())).thenReturn(response);
     assertSame(o, coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable));
   }
@@ -158,7 +159,7 @@ public class CoordinationServiceTest {
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
     reset(coordinationClientEntity);
     try {
-      coordinationService.executeIfLeader(null, ENTITY_NAME, mock(Callable.class));
+      coordinationService.executeIfLeader(null, ENTITY_NAME, mock(ElectionTask.class));
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected
@@ -172,7 +173,7 @@ public class CoordinationServiceTest {
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(coordinationClientEntity));
     reset(coordinationClientEntity);
     try {
-      coordinationService.executeIfLeader(ENTITY_TYPE, null, mock(Callable.class));
+      coordinationService.executeIfLeader(ENTITY_TYPE, null, mock(ElectionTask.class));
       fail("this should have thrown");
     } catch (NullPointerException e) {
       // expected

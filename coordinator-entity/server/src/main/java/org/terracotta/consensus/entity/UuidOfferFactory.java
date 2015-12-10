@@ -27,15 +27,16 @@ import org.terracotta.consensus.entity.server.OfferFactory;
  */
 public class UuidOfferFactory implements OfferFactory<ClientDescriptor> {
 
-  public LeaderOffer createOffer(final ClientDescriptor client) {
-    return new UuidLeaderOffer(UUID.randomUUID());
+  public LeaderOffer createOffer(final ClientDescriptor client, boolean clean) {
+    return new UuidLeaderOffer(clean, UUID.randomUUID());
   }
 
   private static class UuidLeaderOffer extends LeaderOffer {
 
     private final UUID offerId;
 
-    public UuidLeaderOffer(UUID offerId) {
+    public UuidLeaderOffer(boolean clean, UUID offerId) {
+      super(clean);
       this.offerId = offerId;
     }
 

@@ -5,16 +5,20 @@
  */
 package org.terracotta.consensus;
 
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
+import org.terracotta.consensus.CoordinationService.ElectionTask;
 import org.terracotta.passthrough.PassthroughServer;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.terracotta.consensus.TestUtils.createServer;
 import static org.terracotta.consensus.TestUtils.inOtherThread;
@@ -31,16 +35,18 @@ public class DoubleParticipantTest {
 
     CoordinationService serviceA = new CoordinationService(server.connectNewClient());
     try {
-      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-        public Integer call() throws Exception {
+      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+        public Integer call(boolean clean) {
+          assertFalse(clean);
           return 1;
         }
       }), is(1));
       
       CoordinationService serviceB = new CoordinationService(server.connectNewClient());
       try {
-        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-          public Integer call() throws Exception {
+        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+          public Integer call(boolean clean) {
+            assertTrue(clean);
             throw new AssertionError();
           }
         }), nullValue());
@@ -58,8 +64,9 @@ public class DoubleParticipantTest {
 
     CoordinationService serviceA = new CoordinationService(server.connectNewClient());
     try {
-      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-        public Integer call() throws Exception {
+      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+        public Integer call(boolean clean) {
+          assertFalse(clean);
           return 1;
         }
       }), is(1));
@@ -67,8 +74,9 @@ public class DoubleParticipantTest {
       
       CoordinationService serviceB = new CoordinationService(server.connectNewClient());
       try {
-        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-          public Integer call() throws Exception {
+        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+          public Integer call(boolean clean) {
+            assertTrue(clean);
             return 2;
           }
         }), is(2));
@@ -86,24 +94,26 @@ public class DoubleParticipantTest {
 
     CoordinationService serviceA = new CoordinationService(server.connectNewClient());
     try {
-      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-        public Integer call() throws Exception {
+      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+        public Integer call(boolean clean) {
+          assertFalse(clean);
           return 1;
         }
       }), is(1));
       
       CoordinationService serviceB = new CoordinationService(server.connectNewClient());
       try {
-        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-          public Integer call() throws Exception {
+        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+          public Integer call(boolean clean) {
             throw new AssertionError();
           }
         }), nullValue());
         
         serviceA.delist(Entity.class, "foo");
         
-        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-          public Integer call() throws Exception {
+        assertThat(serviceB.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+          public Integer call(boolean clean) {
+            assertTrue(clean);
             return 2;
           }
         }), is(2));
@@ -128,8 +138,9 @@ public class DoubleParticipantTest {
           CoordinationService serviceB = new CoordinationService(server.connectNewClient());
           try {
             barrier.await();
-            return serviceB.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-              public Integer call() {
+            return serviceB.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+              public Integer call(boolean clean) {
+                assertFalse(clean);
                 return 1;
               }
             });
@@ -142,11 +153,18 @@ public class DoubleParticipantTest {
       });
 
       try {
-        serviceA.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-          public Integer call() throws Exception {
-            barrier.await();
-            Thread.sleep(100);
-            throw new IllegalStateException();
+        serviceA.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+          public Integer call(boolean clean) {
+            try {
+              assertFalse(clean);
+              barrier.await();
+              Thread.sleep(100);
+              throw new IllegalStateException();
+            } catch (InterruptedException ex) {
+              throw new AssertionError(ex);
+            } catch (BrokenBarrierException ex) {
+              throw new AssertionError(ex);
+            }
           }
         });
         fail("Expected IllegalStateException");
@@ -166,8 +184,9 @@ public class DoubleParticipantTest {
 
     CoordinationService serviceA = new CoordinationService(server.connectNewClient());
     try {
-      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-        public Integer call() throws Exception {
+      assertThat(serviceA.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+        public Integer call(boolean clean) {
+          assertFalse(clean);
           return 1;
         }
       }), is(1));
@@ -177,8 +196,9 @@ public class DoubleParticipantTest {
       
     CoordinationService serviceB = new CoordinationService(server.connectNewClient());
     try {
-      assertThat(serviceB.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-        public Integer call() throws Exception {
+      assertThat(serviceB.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+        public Integer call(boolean clean) {
+          assertTrue(clean);
           return 2;
         }
       }), is(2));

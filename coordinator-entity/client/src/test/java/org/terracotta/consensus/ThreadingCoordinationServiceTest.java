@@ -19,6 +19,7 @@ package org.terracotta.consensus;
 
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
+import org.terracotta.consensus.CoordinationService.ElectionTask;
 import org.terracotta.consensus.entity.ElectionResponse;
 import org.terracotta.consensus.entity.ElectionResult;
 import org.terracotta.consensus.entity.LeaderOffer;
@@ -27,7 +28,6 @@ import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.ClientId;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CyclicBarrier;
@@ -102,8 +102,8 @@ public class ThreadingCoordinationServiceTest {
       public void run() {
         try {
           barrier.await();
-          final Object result = service.executeIfLeader(ENTITY_CLASS, ENTITY_NAME, new Callable<Object>() {
-            public Object call() throws Exception {
+          final Object result = service.executeIfLeader(ENTITY_CLASS, ENTITY_NAME, new ElectionTask<Object>() {
+            public Object call(boolean clean) {
               return new Object();
             }
           });
@@ -130,7 +130,7 @@ public class ThreadingCoordinationServiceTest {
     public synchronized ElectionResponse runForElection(final String namespace, @ClientId final Object clientId) {
       if (elected == null) {
         elected = clientId;
-        return new LeaderOffer() {};
+        return new LeaderOffer(true) {};
       } else if (!accepted) {
         return ElectionResult.PENDING;
       }

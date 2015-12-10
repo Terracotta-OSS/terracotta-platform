@@ -5,13 +5,14 @@
  */
 package org.terracotta.consensus;
 
-import java.util.concurrent.Callable;
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
+import org.terracotta.consensus.CoordinationService.ElectionTask;
 import org.terracotta.passthrough.PassthroughServer;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.terracotta.consensus.TestUtils.createServer;
 
@@ -27,8 +28,9 @@ public class SingleParticipantTest {
 
     CoordinationService service = new CoordinationService(server.connectNewClient());
     try {
-      assertThat(service.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-        public Integer call() throws Exception {
+      assertThat(service.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+        public Integer call(boolean clean) {
+          assertFalse(clean);
           return 42;
         }
       }), is(42));
@@ -44,8 +46,9 @@ public class SingleParticipantTest {
     CoordinationService service = new CoordinationService(server.connectNewClient());
     try {
       try {
-        service.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-          public Integer call() throws Exception {
+        service.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+          public Integer call(boolean clean) {
+            assertFalse(clean);
             throw new UnsupportedOperationException();
           }
         });
@@ -65,8 +68,9 @@ public class SingleParticipantTest {
     CoordinationService service = new CoordinationService(server.connectNewClient());
     try {
       try {
-        service.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-          public Integer call() throws Exception {
+        service.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+          public Integer call(boolean clean) {
+            assertFalse(clean);
             throw new UnsupportedOperationException();
           }
         });
@@ -75,8 +79,9 @@ public class SingleParticipantTest {
         //expected
       }
 
-      assertThat(service.executeIfLeader(Entity.class, "foo", new Callable<Integer>() {
-        public Integer call() throws Exception {
+      assertThat(service.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {
+        public Integer call(boolean clean) {
+          assertFalse(clean);
           return 42;
         }
       }), is(42));

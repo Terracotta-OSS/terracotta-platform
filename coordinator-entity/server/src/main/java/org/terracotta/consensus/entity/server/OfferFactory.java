@@ -24,5 +24,5 @@ import org.terracotta.consensus.entity.LeaderOffer;
  */
 public interface OfferFactory<T> {
 
-  LeaderOffer createOffer(T t);
+  LeaderOffer createOffer(T t, boolean clean);
 }

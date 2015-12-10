@@ -11,8 +11,17 @@ package org.terracotta.consensus.entity;
  */
 public abstract class LeaderOffer implements ElectionResponse {
 
+  private final boolean clean;
+
+  public LeaderOffer(boolean clean) {
+    this.clean = clean;
+  }
+
   public final boolean isPending() {
     return false;
   }
-  
+
+  public final boolean clean() {
+    return clean;
+  }
 }

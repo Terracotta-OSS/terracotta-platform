@@ -35,6 +35,8 @@ import static java.util.Collections.emptyList;
  */
 public class LeaderElector<K, V> {
 
+  private static final boolean INITIAL_STATE_CLEAN = false;
+  
   private final OfferFactory<V> offerFactory;
   private final ConcurrentMap<K, ElectionQueue> leaderQueues = new ConcurrentHashMap<K, ElectionQueue>();
   private ElectionChangeListener<K, V> listener;
@@ -104,7 +106,8 @@ public class LeaderElector<K, V> {
     private final K key;
     
     private boolean hasLeader = false;
-    private LeaderOffer openOffer = null; //synonym for leaderQueue.peek?
+    private boolean clean = INITIAL_STATE_CLEAN;
+    private LeaderOffer openOffer = null;
 
     ElectionQueue(K key) {
       this.key = key;
@@ -113,7 +116,9 @@ public class LeaderElector<K, V> {
     synchronized ElectionResponse runElectionOrAdd(V value) {
       int position = leaderQueue.indexOf(value);
       if (position == 0) {
-        return openOffer = offerFactory.createOffer(value);
+        openOffer = offerFactory.createOffer(value, clean);
+        clean = false;
+        return openOffer;
       } else if (position > 0) {
         if (hasLeader) {
           return ElectionResult.NOT_ELECTED;
@@ -125,7 +130,9 @@ public class LeaderElector<K, V> {
         if (hasLeader) {
           return ElectionResult.NOT_ELECTED;
         } else if (leaderQueue.size() == 1) {
-          return openOffer = offerFactory.createOffer(value);
+          openOffer = offerFactory.createOffer(value, clean);
+          clean = false;
+          return openOffer;
         } else {
           return ElectionResult.PENDING;
         }
@@ -139,6 +146,7 @@ public class LeaderElector<K, V> {
     synchronized void accept(LeaderOffer offer) {
       if (openOffer.equals(offer)) {
         hasLeader = true;
+        clean = true;
         openOffer = null;
       } else {
         throw new IllegalArgumentException("Leader offer not active");
@@ -146,18 +154,19 @@ public class LeaderElector<K, V> {
     }
 
     synchronized void remove(V departing, Runnable onEmpty) {
-      if (leaderQueue.peek().equals(departing)) {
+      V leader = leaderQueue.peek();
+      if (leader != null && leader.equals(departing)) {
         hasLeader = false;
         openOffer = null;
         leaderQueue.remove(departing);
         V val = leaderQueue.peek();
-          if (val != null) {
-            listener.onDelist(key, val);
+        if (val != null) {
+          listener.onDelist(key, val);
         }
       } else {
         leaderQueue.remove(departing);
       }
-      if (leaderQueue.isEmpty()) {
+      if (clean == INITIAL_STATE_CLEAN && leaderQueue.isEmpty()) {
         onEmpty.run();
       }
     }

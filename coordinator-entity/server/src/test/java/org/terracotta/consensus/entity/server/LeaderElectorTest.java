@@ -157,10 +157,8 @@ public class LeaderElectorTest {
   
   private static class TestPermitFactory  implements OfferFactory<String> {
     
-    private static final AtomicLong counter = new AtomicLong();
-
-    public LeaderOffer createOffer(String t) {
-      return new LeaderOffer() {};
+    public LeaderOffer createOffer(String t, boolean clean) {
+      return new LeaderOffer(clean) {};
     }
     
   }
