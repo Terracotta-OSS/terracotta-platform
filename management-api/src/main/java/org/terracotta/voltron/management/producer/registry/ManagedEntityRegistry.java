@@ -26,7 +26,7 @@ import org.terracotta.entity.ActiveServerEntity;
  *
  * @author RKAV
  */
-public interface ManagedEntityRegistry<E extends ActiveServerEntity<?>> {
+public interface ManagedEntityRegistry<E extends ActiveServerEntity<?, ?>> {
   /**
    * Create or lookup the managed object registry of this entity for the given managedType.
    *

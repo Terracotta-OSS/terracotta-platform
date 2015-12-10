@@ -50,6 +50,9 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 /**
  * @author Alex Snaps
@@ -252,7 +255,8 @@ public class EndToEndTest {
     public InvokeFuture<byte[]> invoke() {
       final FutureTask<byte[]> futureTask = new FutureTask<byte[]>(new Callable<byte[]>() {
         public byte[] call() throws Exception {
-          return proxyInvoker.invoke(clientDescriptor, proxyInvoker.deserialize(payload));
+          MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec = proxyInvoker.getMessageCodec();
+          return messageCodec.serialize(proxyInvoker.invoke(clientDescriptor, messageCodec.deserialize(payload)));
         }
       });
       futureTask.run();

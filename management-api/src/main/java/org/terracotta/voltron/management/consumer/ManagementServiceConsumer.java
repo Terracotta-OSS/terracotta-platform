@@ -74,7 +74,7 @@ public interface ManagementServiceConsumer {
    * @param <E> the entity type.
    * @return A collection of management providers configured for the entity given by {@code entityType} and {@code entityName}.
    */
-  <E extends ActiveServerEntity<?>> Collection<ManagementProvider<?>> getManagementProvidersByEntity(Class<E> entityType,
+  <E extends ActiveServerEntity<?, ?>> Collection<ManagementProvider<?>> getManagementProvidersByEntity(Class<E> entityType,
                                                                                       String entityName);
 
   /**
@@ -86,7 +86,7 @@ public interface ManagementServiceConsumer {
    * @param <E> Entity type
    * @return A collection of management providers configured for the entity and capability.
    */
-  <E extends ActiveServerEntity<?>> Collection<ManagementProvider<?>> getManagementProvidersByEntityAndCapability(Class<E> entityType,
+  <E extends ActiveServerEntity<?, ?>> Collection<ManagementProvider<?>> getManagementProvidersByEntityAndCapability(Class<E> entityType,
                                                                                                    String entityName,
                                                                                                    String capabilityName);
 
@@ -102,7 +102,7 @@ public interface ManagementServiceConsumer {
    * @param <O> Object Type
    * @return A single management provider for the given {@code objectType} and {@code capabilityName}.
    */
-  <E extends ActiveServerEntity<?>, O> ManagementProvider<O> getManagementProvidersByEntityAndCapabilityAndManagedObjectType(Class<E> entityType,
+  <E extends ActiveServerEntity<?, ?>, O> ManagementProvider<O> getManagementProvidersByEntityAndCapabilityAndManagedObjectType(Class<E> entityType,
                                                                                                               String entityName,
                                                                                                               Class<O> objectType,
                                                                                                               String capabilityName);

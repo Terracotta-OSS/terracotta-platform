@@ -45,7 +45,7 @@ public interface ManagementServiceProducer {
    * @param <E> The entity type.
    * @return created or looked up entity registry for the given entity instance.
    */
-  <E extends ActiveServerEntity<?>> ManagedEntityRegistry<E> createOrLookupManagedEntityRegistry(Class<E> entityType, String entityName);
+  <E extends ActiveServerEntity<?, ?>> ManagedEntityRegistry<E> createOrLookupManagedEntityRegistry(Class<E> entityType, String entityName);
 
   /**
    * Given an {@code entityType} and {@code entityName}, atomically remove the corresponding entity registry entry and
@@ -56,7 +56,7 @@ public interface ManagementServiceProducer {
    * @param <E> Managed Entity type.
    * @return Removed entity register.
    */
-  <E extends ActiveServerEntity<?>> ManagedEntityRegistry<E> removeFromEntityRegistry(Class<E> entityType, String entityName);
+  <E extends ActiveServerEntity<?, ?>> ManagedEntityRegistry<E> removeFromEntityRegistry(Class<E> entityType, String entityName);
 
   /**
    * Push a collection of statistics periodically.
