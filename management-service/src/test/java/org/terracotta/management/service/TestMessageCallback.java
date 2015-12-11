@@ -89,7 +89,7 @@ public class TestMessageCallback implements MessageListener<byte[]> {
   }
 
   private byte[] createTestMessage(int start) {
-    byte[] message = new byte[TestConstants.DEFAULT_MESSAGE_SIZE];
+    byte[] message = new byte[DEFAULT_MESSAGE_SIZE];
     for (int i = 0; i < DEFAULT_MESSAGE_SIZE; i++) {
       message[i] = (byte)('A' + (i + start) % 26);
     }

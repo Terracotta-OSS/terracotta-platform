@@ -22,6 +22,8 @@ import org.terracotta.management.service.buffer.BaseStatisticsBufferTest;
 import org.terracotta.management.service.buffer.PartitionedRingBuffer;
 import org.terracotta.management.stats.ContextualStatistics;
 
+import static org.terracotta.management.service.TestConstants.NUM_PARTITIONS_FOR_POOLED;
+
 /**
  * Test the pooled ring buffer with statistics data..
  *
@@ -30,11 +32,11 @@ import org.terracotta.management.stats.ContextualStatistics;
 public class StatisticsPooledRingBufferTest extends BaseStatisticsBufferTest {
   @Override
   protected PartitionedRingBuffer<ContextualStatistics> getBufferUnderTest(int size) {
-    return new MultiPartitionLockFreeRingBuffer<>(10, size);
+    return new MultiPartitionLockFreeRingBuffer<>(NUM_PARTITIONS_FOR_POOLED, size);
   }
 
   @Override
   protected int getNumPartitions() {
-    return 10;
+    return NUM_PARTITIONS_FOR_POOLED;
   }
 }

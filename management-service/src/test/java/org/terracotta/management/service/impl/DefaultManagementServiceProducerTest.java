@@ -25,6 +25,7 @@ import org.terracotta.management.service.buffer.PartitionedRingBuffer;
 import org.terracotta.management.service.buffer.impl.SinglePartitionLockFreeRingBuffer;
 
 import static org.terracotta.management.service.TestConstants.BUFFER_SIZE;
+import static org.terracotta.management.service.TestConstants.DEFAULT_MESSAGE_SIZE;
 
 /**
  *
@@ -42,10 +43,10 @@ public class DefaultManagementServiceProducerTest {
 
   @Test
   public void testMessageProduction() {
-    producerUnderTest.pushManagementMessage(new byte[1024]);
+    producerUnderTest.pushManagementMessage(new byte[DEFAULT_MESSAGE_SIZE]);
     byte[][] bufferedMessageArray = messageCache.toArray(byte[][].class);
     Assert.assertEquals(1, bufferedMessageArray.length);
-    Assert.assertEquals(1024, bufferedMessageArray[0].length);
+    Assert.assertEquals(DEFAULT_MESSAGE_SIZE, bufferedMessageArray[0].length);
     bufferedMessageArray = messageCache.toArray(byte[][].class);
     Assert.assertEquals(0, bufferedMessageArray.length);
   }

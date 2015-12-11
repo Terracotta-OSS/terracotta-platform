@@ -25,6 +25,8 @@ import org.terracotta.management.service.buffer.PartitionedRingBuffer;
 import java.util.Collection;
 import java.util.Objects;
 
+import static org.terracotta.management.service.TestConstants.NUM_PARTITIONS_FOR_POOLED;
+
 /**
  * Test the pooled buffer implementation with byte arrays as content.
  *
@@ -33,12 +35,12 @@ import java.util.Objects;
 public final class ByteArrayPooledRingBufferTest extends BaseByteArrayBufferTest {
   @Override
   protected PartitionedRingBuffer<byte[]> getBufferUnderTest(int size) {
-    return new MultiPartitionLockFreeRingBuffer<>(10, size);
+    return new MultiPartitionLockFreeRingBuffer<>(NUM_PARTITIONS_FOR_POOLED, size);
   }
 
   @Override
   protected int getNumPartitions() {
-    return 10;
+    return NUM_PARTITIONS_FOR_POOLED;
   }
 
   @Test
@@ -50,7 +52,7 @@ public final class ByteArrayPooledRingBufferTest extends BaseByteArrayBufferTest
         return true;
       }
       return false;
-    }, false, Objects::equals, 10);
+    }, false, Objects::equals, NUM_PARTITIONS_FOR_POOLED);
   }
 
   @Test
@@ -62,7 +64,7 @@ public final class ByteArrayPooledRingBufferTest extends BaseByteArrayBufferTest
         return true;
       }
       return false;
-    }, false, Objects::equals, 10);
+    }, false, Objects::equals, NUM_PARTITIONS_FOR_POOLED);
   }
 
   @Test
@@ -78,6 +80,6 @@ public final class ByteArrayPooledRingBufferTest extends BaseByteArrayBufferTest
         },
         true,
         (i, r) -> r <= i,
-        10);
+        NUM_PARTITIONS_FOR_POOLED);
   }
 }

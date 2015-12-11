@@ -24,8 +24,9 @@ package org.terracotta.management.service;
  * @author RKAV
  */
 public final class TestConstants {
-  public static final int BUFFER_SIZE = 1 << 15;
-  public static final int DEFAULT_MESSAGE_SIZE = 1024;
+  public static final int BUFFER_SIZE = 1 << 13;
+  public static final int NUM_PARTITIONS_FOR_POOLED = 8;
+  public static final int DEFAULT_MESSAGE_SIZE = 128;
   public static void PAUSE(long millis) {
     try {
       Thread.sleep(millis);
