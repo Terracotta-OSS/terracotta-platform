@@ -19,37 +19,35 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.MessageDeserializer;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.voltron.proxy.Codec;
-import org.terracotta.voltron.proxy.CommonProxyFactory;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.terracotta.voltron.proxy.ProxyMessageCodec;
 
 /**
  * @author Alex Snaps
  */
-public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> {
+public class ProxyInvoker<T> {
 
   private final T target;
   private final Codec codec;
-  private final Map<Byte, Method> mappings;
+  private final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec;
   private final Map<Class, Byte> eventMappings;
   private final Set<Class> messageTypes;
   private final ClientCommunicator clientCommunicator;
@@ -64,7 +62,7 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
   public ProxyInvoker(Class<T> proxyType, T target, Codec codec, ClientCommunicator clientCommunicator, Class... messageTypes) {
     this.target = target;
     this.codec = codec;
-    this.mappings = createMethodMappings(proxyType);
+    this.messageCodec = new ProxyMessageCodec(codec, proxyType);
     this.messageTypes = new HashSet<Class>();
     for (Class eventType : messageTypes) {
       this.messageTypes.add(eventType);
@@ -85,11 +83,15 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
     }
   }
 
-  public byte[] invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage message) {
+  public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
+    return messageCodec;
+  }
+
+  public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage message) {
     try {
       try {
         invocationContext.set(new InvocationContext(clientDescriptor));
-        return codec.encode(message.returnType(), message.invoke(target, clientDescriptor));
+        return ProxyEntityResponse.response(message.returnType(), message.invoke(target, clientDescriptor));
       } finally {
         invocationContext.remove();
       }
@@ -98,18 +100,6 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
     } catch (InvocationTargetException e) {
       throw new RuntimeException(e.getCause());
     }
-  }
-
-  private Method decodeMethod(final byte b) {
-    final Method method = mappings.get(b);
-    if(method == null) {
-      throw new AssertionError();
-    }
-    return method;
-  }
-
-  private Object[] decodeArgs(final byte[] arg, final Class<?>[] parameterTypes) {
-    return codec.decode(Arrays.copyOfRange(arg, 1, arg.length), parameterTypes);
   }
 
   public void fireMessage(Object message) {
@@ -179,17 +169,6 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
   }
 
 
-  static Map<Byte, Method> createMethodMappings(final Class type) {
-    SortedSet<Method> methods = CommonProxyFactory.getSortedMethods(type);
-
-    final HashMap<Byte, Method> map = new HashMap<Byte, Method>();
-    byte index = 0;
-    for (final Method method : methods) {
-      map.put(index++, method);
-    }
-    return map;
-  }
-
   static Map<Class, Byte> createEventTypeMappings(final Class... types) {
     final HashMap<Class, Byte> map = new HashMap<Class, Byte>();
     byte index = 0;
@@ -205,15 +184,6 @@ public class ProxyInvoker<T> implements MessageDeserializer<ProxyEntityMessage> 
 
   public void removeClient(ClientDescriptor descriptor) {
     clients.remove(descriptor);
-  }
-
-  public ProxyEntityMessage deserialize(final byte[] bytes) {
-    final Method method = decodeMethod(bytes[0]);
-    return new ProxyEntityMessage(method, decodeArgs(bytes, method.getParameterTypes()));
-  }
-
-  public ProxyEntityMessage deserializeForSync(final int i, final byte[] bytes) {
-    throw new UnsupportedOperationException("Implement me!");
   }
 
   private final class InvocationContext {

@@ -20,15 +20,16 @@ package org.terracotta.voltron.proxy.server;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.MessageDeserializer;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.NoConcurrencyStrategy;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 /**
  * @author Alex Snaps
  */
-public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<ProxyEntityMessage> {
+public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final ProxyInvoker<T> target;
 
@@ -36,7 +37,7 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
     this.target = target;
   }
 
-  public byte[] invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
+  public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
     return target.invoke(clientDescriptor, msg);
   }
 
@@ -64,8 +65,8 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
     // no op ... for now?
   }
 
-  public MessageDeserializer<ProxyEntityMessage> getMessageDeserializer() {
-    return target;
+  public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
+    return target.getMessageCodec();
   }
 
   public void createNew() {

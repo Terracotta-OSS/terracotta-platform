@@ -22,6 +22,7 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
@@ -29,7 +30,7 @@ import org.terracotta.entity.ServiceRegistry;
 /**
  * @author Alex Snaps
  */
-public class CoordinationServerEntityService implements ServerEntityService<CoordinationServerEntity, PassiveServerEntity<EntityMessage>> {
+public class CoordinationServerEntityService implements ServerEntityService<CoordinationServerEntity, PassiveServerEntity<EntityMessage, EntityResponse>> {
   
   private static final String ENTITY_CLASS_NAME = "org.terracotta.consensus.entity.client.CoordinationClientEntity";
 
@@ -51,7 +52,7 @@ public class CoordinationServerEntityService implements ServerEntityService<Coor
     return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new ClientDescriptorPermitFactory()), communicator);
   }
 
-  public PassiveServerEntity<EntityMessage> createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
+  public PassiveServerEntity<EntityMessage, EntityResponse> createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
     throw new UnsupportedOperationException("Implement me!");
   }
 }
