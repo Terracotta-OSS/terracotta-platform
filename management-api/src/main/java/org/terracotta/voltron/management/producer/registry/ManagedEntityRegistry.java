@@ -44,4 +44,11 @@ public interface ManagedEntityRegistry<E extends ActiveServerEntity<?, ?>> {
    * @return the removed registry object.
    */
   <O> ManagedObjectRegistry<O> removeManagedObjectRegistry(Class<O> managedType);
+
+  /**
+   * Get Registry index.
+   *
+   * Gets the index of the entity within the registry
+   */
+  int getRegistryIndex();
 }

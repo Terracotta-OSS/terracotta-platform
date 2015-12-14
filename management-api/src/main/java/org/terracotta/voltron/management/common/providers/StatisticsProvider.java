@@ -23,7 +23,7 @@ import java.util.Map;
 
 /**
  * Statistics provider provided by the managed object. This is a required interface that any entity that has
- * managed objects must implement in order to control the amount of statistics being pushed.
+ * managed objects must implement in order to control the statistics that is being pushed by the entity.
  *
  * @author RKAV
  */
@@ -37,14 +37,4 @@ public interface StatisticsProvider<T> extends ManagementProvider<T> {
    * @param statisticNames denotes the statistics that should be pushed by the entity after this call.
    */
   void startCollection(Map<String, String> context, Collection<String> statisticNames);
-
-  /**
-   * Stop pushing the statistics, designated by the collection of statisticNames.
-   * <p>
-   * Once this is called, the provider MUST stop pushing the statistics for these set of stats.
-   *
-   * @param context the {@code context} that describes the managed objects for which statistics collection must stop.
-   * @param statisticNames denotes the currently pushed statistics that should be stopped from being pushed by the entity.
-   */
-  void stopCollection(Map<String, String> context, Collection<String> statisticNames);
 }

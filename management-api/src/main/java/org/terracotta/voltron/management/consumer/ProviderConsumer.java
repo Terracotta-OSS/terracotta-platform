@@ -18,46 +18,23 @@
  */
 package org.terracotta.voltron.management.consumer;
 
-import org.terracotta.management.capabilities.Capability;
-import org.terracotta.management.context.ContextContainer;
-import org.terracotta.management.stats.Statistic;
-
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.voltron.management.common.providers.ManagementProvider;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
- * The consumer interface of management service. The consumer of a management service is assumed to be a management
- * system (For example, <i>TMS</i>).
+ * The consumer interface of management service for obtaining management providers.
+ * The consumer of a management service is assumed to be a management system.
  * <p>
- * Consumers can use this interface to access the management capabilities of multiple entities on a given active
- * stripe. These capabilities include(s) actions on managed objects and getting statistics from managed object(s)
- * of all entities on the stripe (and possibly clients that are connected to the stripe).
- * <p>
- * For statistics, the consumer can either setup a periodic collector that calls a callback periodically when
- * statistics are available in the buffer. Alternatively, the consumer can get the current statistics available
- * in the buffer.
+ * Consumers can use this interface to access the management capabilities of multiple
+ * entities on a given active stripe. These capabilities include(s) actions on managed
+ * objects and getting statistics from managed object(s) of all entities on the stripe
+ * (and possibly clients that are connected to the stripe).
  *
  * @author RKAV
  */
-public interface ManagementServiceConsumer {
-  /**
-   * Get the management contexts of all entities required to make use of the
-   * registered objects' capabilities.
-   *
-   * @return a collection of contexts.
-   */
-  Collection<ContextContainer> getContexts();
-
-  /**
-   * Get the management capabilities of all the registered objects across several entities
-   *
-   * @return a map of capabilities, where the key is the {@code entityName}.
-   */
-  Map<String, Collection<Capability>> getCapabilities();
-
+public interface ProviderConsumer {
   /**
    * List all management providers installed for a specific capability across all entities
    *
@@ -72,7 +49,8 @@ public interface ManagementServiceConsumer {
    * @param entityType Type of entity.
    * @param entityName Name/alias of the entity.
    * @param <E> the entity type.
-   * @return A collection of management providers configured for the entity given by {@code entityType} and {@code entityName}.
+   * @return A collection of management providers configured for the entity given by
+   *         {@code entityType} and {@code entityName}.
    */
   <E extends ActiveServerEntity<?, ?>> Collection<ManagementProvider<?>> getManagementProvidersByEntity(Class<E> entityType,
                                                                                       String entityName);
@@ -91,8 +69,8 @@ public interface ManagementServiceConsumer {
                                                                                                    String capabilityName);
 
   /**
-   * Get all management providers installed for a specific entity and a specific capability and a specific managed object
-   * type.
+   * Get all management providers installed for a specific entity and a specific capability and a
+   * specific managed object type.
    *
    * @param entityType Type of managed entity
    * @param entityName Name of managed entity
@@ -106,37 +84,4 @@ public interface ManagementServiceConsumer {
                                                                                                               String entityName,
                                                                                                               Class<O> objectType,
                                                                                                               String capabilityName);
-
-  /**
-   *
-   * Get the pushed stats from the buffer. This collection contains statistics of all managed object types and all
-   * entity types.
-   * <p>
-   * This will clear the stats buffered in the management service. Thus the same stats can be received only once.
-   * Use {@link #setupPeriodicStatsCollector(StatisticsCallback)} for periodically and continuously getting stats
-   * from the management service.
-   *
-   * @return Statistics collection collected so far.
-   */
-  Collection<Statistic<?, ?>> getAndClearStats();
-
-  /**
-   * Get the pushed stats from the buffer. This collection contains statistics of all managed object types and all
-   * entity types.
-   * <p>
-   * This will <i>NOT</i> clear the stats buffered in the management service. Also, this will clear only once.
-   * Use {@link #setupPeriodicStatsCollector(StatisticsCallback)} for periodically and continuously getting stats
-   * from the management service.
-   *
-   * @return Statistics collection collected so far, without clearing.
-   */
-  Collection<Statistic<?, ?>> getAllBufferedStats();
-
-  /**
-   * Setup a callback interface, so that the consumer can get stats whenever it arrives at the management service
-   * from the managed objects of different entities running on the stripes and clients.
-   *
-   * @param callback The callback interface that will be issued when stats arrives
-   */
-  void setupPeriodicStatsCollector(StatisticsCallback callback);
 }

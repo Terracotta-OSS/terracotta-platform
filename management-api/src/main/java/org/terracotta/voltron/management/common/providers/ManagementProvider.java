@@ -25,15 +25,12 @@ import org.terracotta.management.capabilities.descriptors.Descriptor;
 import java.util.Collection;
 
 /**
- * Required interface that every entity, such as <i>TCStore</i>, <i>EhCache</i> cache managers,  MUST implement
- * for all its managed object type(s) in order to connect the managed object to external management system(s).
+ * Required interface that every managed entity MUST implement for all its managed object
+ * type(s) in order to connect the managed object to external management system(s) through
+ * management entity.
  * <p>
- * Typically, it is assumed that there will be one management provider for each capability per managed object
- * type.
- * <p>
- * NOTE: These interfaces are modeled after the original interface(s) provided by <i>ehcache3</i> standalone with the
- * changes made to remove dependency to ehcache, so that any managed entity which has managed objects can implement
- * this interface.
+ * Typically, it is assumed that there will be one management provider for each capability
+ * per managed object type.
  *
  * @param <O> the managed object
  *
