@@ -26,9 +26,9 @@ import org.terracotta.voltron.proxy.ClientId;
  */
 public interface CoordinationEntity {
 
-  Nomination runForElection(String namespace, @ClientId Object clientId);
+  ElectionResponse runForElection(String namespace, @ClientId Object clientId);
 
-  void accept(String namespace, Nomination permit);
+  void accept(String namespace, LeaderOffer offer);
 
   void delist(String namespace, @ClientId Object clientId);
 }

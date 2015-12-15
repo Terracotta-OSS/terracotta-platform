@@ -19,9 +19,11 @@ package org.terracotta.consensus;
 
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.ElectionResponse;
+import org.terracotta.consensus.entity.ElectionResult;
+import org.terracotta.consensus.entity.LeaderOffer;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
-import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.ClientId;
 
@@ -84,7 +86,7 @@ public class ThreadingCoordinationServiceTest {
 
     barrier.await();
     coordinationClientEntity.accepted = true;
-    service.leaderElected(CoordinationService.toString(ENTITY_CLASS, ENTITY_NAME));
+    service.electionChanged(CoordinationService.toString(ENTITY_CLASS, ENTITY_NAME));
 
     t1.join();
     t2.join();
@@ -125,17 +127,17 @@ public class ThreadingCoordinationServiceTest {
       this.participants = participants;
     }
 
-    public synchronized Nomination runForElection(final String namespace, @ClientId final Object clientId) {
+    public synchronized ElectionResponse runForElection(final String namespace, @ClientId final Object clientId) {
       if (elected == null) {
         elected = clientId;
-        return new Nomination(1);
+        return new LeaderOffer() {};
       } else if (!accepted) {
-        return new Nomination();
+        return ElectionResult.PENDING;
       }
-      return null;
+      return ElectionResult.NOT_ELECTED;
     }
 
-    public synchronized void accept(final String namespace, final Nomination permit) {
+    public synchronized void accept(final String namespace, final LeaderOffer permit) {
       accepted = true;
     }
 
@@ -147,7 +149,7 @@ public class ThreadingCoordinationServiceTest {
       throw new UnsupportedOperationException("Implement me!");
     }
 
-    public void registerListener(final MessageListener<LeaderElected> message) {
+    public void registerListener(final MessageListener<ServerElectionEvent<String>> message) {
       // no op
     }
   }

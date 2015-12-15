@@ -17,19 +17,36 @@
 
 package org.terracotta.consensus.entity;
 
-import org.terracotta.consensus.entity.server.PermitFactory;
-import org.terracotta.entity.ClientDescriptor;
+import java.util.UUID;
 
-import java.util.concurrent.atomic.AtomicLong;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.consensus.entity.server.OfferFactory;
 
 /**
  * @author Alex Snaps
  */
-public class ClientDescriptorPermitFactory implements PermitFactory<ClientDescriptor> {
+public class UuidOfferFactory implements OfferFactory<ClientDescriptor> {
 
-  private static final AtomicLong counter = new AtomicLong();
+  public LeaderOffer createOffer(final ClientDescriptor client) {
+    return new UuidLeaderOffer(UUID.randomUUID());
+  }
 
-  public Nomination createPermit(final ClientDescriptor clientDescriptor) {
-    return new Nomination(counter.getAndIncrement());
+  private static class UuidLeaderOffer extends LeaderOffer {
+
+    private final UUID offerId;
+
+    public UuidLeaderOffer(UUID offerId) {
+      this.offerId = offerId;
+    }
+
+    @Override
+    public int hashCode() {
+      return offerId.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return (obj instanceof UuidLeaderOffer) && offerId.equals(((UuidLeaderOffer) obj).offerId);
+    }
   }
 }

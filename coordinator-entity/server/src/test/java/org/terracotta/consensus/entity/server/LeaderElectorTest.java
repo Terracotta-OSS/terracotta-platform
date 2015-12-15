@@ -19,21 +19,23 @@ package org.terracotta.consensus.entity.server;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.hamcrest.core.Is;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.ElectionResponse;
+import org.terracotta.consensus.entity.ElectionResult;
+import org.terracotta.consensus.entity.LeaderOffer;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.times;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 
 /**
  * @author Alex Snaps
@@ -41,33 +43,32 @@ import static org.mockito.Matchers.any;
 public class LeaderElectorTest {
 
   private LeaderElector<String, String> leaderElector;
-  private DelistListener listener;
+  private ElectionChangeListener listener;
   
   @Before
   public void setup() {
     leaderElector = new LeaderElector<String, String>(new TestPermitFactory());
-    listener = Mockito.mock(DelistListener.class);
+    listener = Mockito.mock(ElectionChangeListener.class);
     leaderElector.setListener(listener);
   }
   
   @Test
   public void testLeaderElectionSingleKey() {
 
-    Nomination permit1 = leaderElector.enlist("e1", "c1");
-    Nomination permit2 = leaderElector.enlist("e1", "c2");
+    ElectionResponse response1 = leaderElector.enlist("e1", "c1");
+    ElectionResponse response2 = leaderElector.enlist("e1", "c2");
 
-    assertThat(permit1, notNullValue());
-    assertThat(((permit1).awaitsElection()), is(false));;
-    assertThat(((permit2).awaitsElection()), is(true));
+    assertThat(((response1).isPending()), is(false));;
+    assertThat(((response2).isPending()), is(true));
 
     assertThat(leaderElector.getAllWaitingOn("e1").size(), is(1));
     assertThat(leaderElector.getAllWaitingOn("e1").get(0), is("c2"));
 
-    leaderElector.accept("e1", permit1);
+    leaderElector.accept("e1", (LeaderOffer) response1);
 
-    Nomination permit3 = leaderElector.enlist("e1", "c3");
+    ElectionResponse response3 = leaderElector.enlist("e1", "c3");
 
-    assertThat(permit3, nullValue());
+    assertThat(response3, Is.<ElectionResponse>is(ElectionResult.NOT_ELECTED));
 
     leaderElector.delist("e1", "c2");
     
@@ -75,11 +76,11 @@ public class LeaderElectorTest {
     
     leaderElector.delist("e1", "c1");
     
-    verify(listener).onDelist(any(String.class), any(String.class), any(Nomination.class));
+    verify(listener).onDelist(eq("e1"), eq("c3"));
     
     leaderElector.delist("e1", "c3");
     
-    verify(listener).onDelist(any(String.class), any(String.class), any(Nomination.class));
+    verifyZeroInteractions(listener);
     
     try {
       leaderElector.delist("e1", "c4");
@@ -87,57 +88,55 @@ public class LeaderElectorTest {
       assertThat(expected, instanceOf(NullPointerException.class));
     }
     
-    Nomination newpermit1 = leaderElector.enlist("e1", "c1");
-    assertThat(newpermit1, notNullValue());
-    assertThat(((newpermit1).awaitsElection()), is(false));;
+    ElectionResponse newresponse1 = leaderElector.enlist("e1", "c1");
+    assertThat(newresponse1.isPending(), is(false));;
     
     try {
-      leaderElector.accept("e1", permit1);
+      leaderElector.accept("e1", (LeaderOffer) response1);
     } catch (Exception expected) {
       assertThat(expected, instanceOf(IllegalArgumentException.class));
-      assertThat(expected.getMessage(), is("Wrong Nomination accepted"));
+      assertThat(expected.getMessage(), is("Leader offer not active"));
     }
     
-    leaderElector.accept("e1", newpermit1);
+    leaderElector.accept("e1", (LeaderOffer) newresponse1);
     
-    Nomination permit4 = leaderElector.enlist("e1", "c5");
+    ElectionResponse response4 = leaderElector.enlist("e1", "c5");
     
-    assertThat(permit4, nullValue());
-
+    assertThat(response4, Is.<ElectionResponse>is(ElectionResult.NOT_ELECTED));
   }
 
   @Test
   public void testLeaderElectionTwoKeys() {
 
-    Nomination permit1 = leaderElector.enlist("e1", "c1");
-    Nomination permit2 = leaderElector.enlist("e1", "c2");
+    ElectionResponse permit1 = leaderElector.enlist("e1", "c1");
+    ElectionResponse permit2 = leaderElector.enlist("e1", "c2");
     
-    Nomination permit1a = leaderElector.enlist("e2", "c1");
-    Nomination permit2a = leaderElector.enlist("e2", "c2");
+    ElectionResponse permit1a = leaderElector.enlist("e2", "c1");
+    ElectionResponse permit2a = leaderElector.enlist("e2", "c2");
 
     assertThat(permit1, notNullValue());
-    assertThat(((permit1).awaitsElection()), is(false));;
-    assertThat(((permit2).awaitsElection()), is(true));
+    assertThat(((permit1).isPending()), is(false));;
+    assertThat(((permit2).isPending()), is(true));
 
     assertThat(leaderElector.getAllWaitingOn("e1").size(), is(1));
     assertThat(leaderElector.getAllWaitingOn("e1").get(0), is("c2"));
 
     assertThat(permit1a, notNullValue());
-    assertThat(((permit1a).awaitsElection()), is(false));;
-    assertThat(((permit2a).awaitsElection()), is(true));
+    assertThat(((permit1a).isPending()), is(false));;
+    assertThat(((permit2a).isPending()), is(true));
 
     assertThat(leaderElector.getAllWaitingOn("e2").size(), is(1));
     assertThat(leaderElector.getAllWaitingOn("e2").get(0), is("c2"));
 
     
-    leaderElector.accept("e1", permit1);
-    leaderElector.accept("e2", permit1a);
+    leaderElector.accept("e1", (LeaderOffer) permit1);
+    leaderElector.accept("e2", (LeaderOffer) permit1a);
 
-    Nomination permit3 = leaderElector.enlist("e1", "c3");
-    Nomination permit3a = leaderElector.enlist("e2", "c3");
+    ElectionResponse permit3 = leaderElector.enlist("e1", "c3");
+    ElectionResponse permit3a = leaderElector.enlist("e2", "c3");
 
-    assertThat(permit3, nullValue());
-    assertThat(permit3a, nullValue());
+    assertThat(permit3, Is.<ElectionResponse>is(ElectionResult.NOT_ELECTED));
+    assertThat(permit3a, Is.<ElectionResponse>is(ElectionResult.NOT_ELECTED));
 
     leaderElector.delist("e1", "c2");
     leaderElector.delist("e2", "c2");
@@ -156,12 +155,12 @@ public class LeaderElectorTest {
     listener = null;
   }
   
-  private static class TestPermitFactory  implements PermitFactory<String> {
+  private static class TestPermitFactory  implements OfferFactory<String> {
     
     private static final AtomicLong counter = new AtomicLong();
 
-    public Nomination createPermit(String t) {
-      return new Nomination(counter.getAndIncrement());
+    public LeaderOffer createOffer(String t) {
+      return new LeaderOffer() {};
     }
     
   }
