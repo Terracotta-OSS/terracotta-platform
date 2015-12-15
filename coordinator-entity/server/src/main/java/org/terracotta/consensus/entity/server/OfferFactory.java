@@ -17,12 +17,12 @@
 
 package org.terracotta.consensus.entity.server;
 
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.LeaderOffer;
 
 /**
  * @author Alex Snaps
  */
-public interface PermitFactory<T> {
+public interface OfferFactory<T> {
 
-  Nomination createPermit(T t);
+  LeaderOffer createOffer(T t);
 }

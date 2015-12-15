@@ -49,7 +49,7 @@ public class CoordinationServerEntityService implements ServerEntityService<Coor
     
     ClientCommunicator communicator = serviceRegistry.getService(new BasicServiceConfiguration<ClientCommunicator>(ClientCommunicator.class));
     
-    return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new ClientDescriptorPermitFactory()), communicator);
+    return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new UuidOfferFactory()), communicator);
   }
 
   public PassiveServerEntity<EntityMessage, EntityResponse> createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
