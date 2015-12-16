@@ -111,7 +111,7 @@ public class ClientProxyFactoryTest {
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(codec.encode(Integer.class, 42));
 
-    final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, codec, String.class, Integer.class);
+    final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, codec, String.class, Integer.class, Long.class, Double.class);
     assertThat(proxy.sync(), is(42));
     proxy.registerListener(new StringMessageListener());
     proxy.registerListener(new MessageListener<Integer>() {
@@ -120,6 +120,8 @@ public class ClientProxyFactoryTest {
         throw new UnsupportedOperationException("Implement me!");
       }
     });
+    proxy.registerListener(new ComplexMessageListener());
+    proxy.registerListener(new MoreComplexMessageListener());
     try {
       proxy.registerListener(new MessageListener<Object>() {
         @Override
@@ -145,9 +147,31 @@ public class ClientProxyFactoryTest {
 
   }
 
-  private static class StringMessageListener extends MessageListener<String> {
+  private static class StringMessageListener implements MessageListener<String> {
     public void onMessage(final String message) {
       throw new UnsupportedOperationException("Implement me!");
     }
+  }
+  
+  private static class ComplexMessageListener implements ListenerSubInterface {
+
+    public void onMessage(Long message) {
+      throw new UnsupportedOperationException("Implement me!");
+    }
+    
+  }
+  
+  private static interface ListenerSubInterface extends MessageListener<Long> {
+  }
+
+  private static class MoreComplexMessageListener implements ListenerGenericSubInterface<Double> {
+
+    public void onMessage(Double message) {
+      throw new UnsupportedOperationException("Implement me!");
+    }
+    
+  }
+  
+  private static interface ListenerGenericSubInterface<T> extends MessageListener<T> {
   }
 }
