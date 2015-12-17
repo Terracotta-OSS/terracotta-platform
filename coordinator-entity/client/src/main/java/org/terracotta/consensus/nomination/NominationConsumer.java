@@ -15,23 +15,18 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.consensus.entity.messages;
+package org.terracotta.consensus.nomination;
 
-import java.io.Serializable;
+import java.util.concurrent.Callable;
 
 /**
- * @author Alex Snaps
+ * 
+ * @author Abhilash
+ *
  */
-public class LeaderElected implements Serializable {
 
-  private String namespace;
+//Horrible name !
+public interface NominationConsumer extends NominationListener {
 
-  public LeaderElected(final String namespace) {
-    this.namespace = namespace;
-  }
-
-  public String getNamespace() {
-    return namespace;
-  }
-
+  Callable consumeNomination();
 }

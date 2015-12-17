@@ -15,7 +15,7 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.consensus.entity;
+package org.terracotta.consensus.entity.messages;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -30,20 +30,34 @@ public class Nomination implements Serializable {
   static final int AWAITS_ELECTION = -1;
 
   private volatile long id;
+  private final String namespace;
+  private final boolean elected;
 
-  public Nomination() {
+  public Nomination(String namespace) {
     this.id = AWAITS_ELECTION;
+    this.namespace = namespace;
+    this.elected = false;
   }
 
-  public Nomination(final long id) {
+  public Nomination(final String namespace, final long id, boolean elected) {
     if (id == AWAITS_ELECTION) {
       throw new IllegalArgumentException();
     }
     this.id = id;
+    this.namespace = namespace;
+    this.elected = elected;
   }
 
   public boolean awaitsElection() {
     return id == AWAITS_ELECTION;
+  }
+  
+  public String getNamespace() {
+    return namespace;
+  }
+  
+  public boolean isContinuing() {
+    return !this.elected;
   }
   
   @Override

@@ -17,6 +17,7 @@
 
 package org.terracotta.consensus.entity;
 
+import org.terracotta.consensus.entity.messages.Nomination;
 import org.terracotta.consensus.entity.server.PermitFactory;
 import org.terracotta.entity.ClientDescriptor;
 
@@ -25,11 +26,15 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Alex Snaps
  */
-public class ClientDescriptorPermitFactory implements PermitFactory<ClientDescriptor> {
+public class ClientDescriptorPermitFactory implements PermitFactory<String, ClientDescriptor> {
 
   private static final AtomicLong counter = new AtomicLong();
 
-  public Nomination createPermit(final ClientDescriptor clientDescriptor) {
-    return new Nomination(counter.getAndIncrement());
+  public Nomination createPermit(final String namespace, final ClientDescriptor clientDescriptor, final boolean elected) {
+    return new Nomination(namespace, counter.getAndIncrement(), elected);
+  }
+  
+  public Nomination createPermit(String k) {
+    return new Nomination(k);
   }
 }

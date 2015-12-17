@@ -15,16 +15,15 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.consensus.entity.server;
-
-import org.terracotta.consensus.entity.messages.Nomination;
+package org.terracotta.consensus.nomination;
 
 /**
- * @author Alex Snaps
+ * 
+ * @author Abhilash
+ *
  */
-public interface PermitFactory<K, V> {
 
-  Nomination createPermit(K k, V v, boolean elected);
-  
-  Nomination createPermit(K k);
+public interface NominationListener {
+
+  void onNominationByServer(Object result);
 }

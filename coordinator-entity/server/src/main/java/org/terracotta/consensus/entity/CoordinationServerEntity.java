@@ -17,8 +17,10 @@
 
 package org.terracotta.consensus.entity;
 
-import org.terracotta.consensus.entity.messages.LeaderElected;
-import org.terracotta.consensus.entity.server.DelistListener;
+import java.util.List;
+
+import org.terracotta.consensus.entity.messages.Nomination;
+import org.terracotta.consensus.entity.server.LeaderStateChangeListener;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
@@ -29,14 +31,14 @@ import org.terracotta.voltron.proxy.server.ProxyInvoker;
 /**
  * @author Alex Snaps
  */
-public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEntity> {
+public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEntity> implements LeaderStateChangeListener<ClientDescriptor> {
 
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
-    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, LeaderElected.class), new SerializationCodec(), clientCommunicator, LeaderElected.class));
+    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, Nomination.class), new SerializationCodec(), clientCommunicator, Nomination.class));
     this.leaderElector = leaderElector;
-    this.leaderElector.setListener(new DelistListenerImpl<String>());
+    this.leaderElector.setListener(this);
   }
 
   @Override
@@ -45,10 +47,15 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
     leaderElector.delistAll(clientDescriptor);
   }
 
-  private class DelistListenerImpl<K> implements DelistListener<K, ClientDescriptor> {
-    
-    public void onDelist(K key, ClientDescriptor clientDescriptor, Nomination permit) {
-      fireAndForgetMessage(permit, clientDescriptor);
+  public void onAccept(Nomination permit,
+      List<ClientDescriptor> clientDescriptors) {
+    if (clientDescriptors == null && clientDescriptors.isEmpty()) {
+      throw new IllegalArgumentException("Cannot send mesage to none clients.");
     }
+    fireAndForgetMessage(permit, clientDescriptors.toArray(new ClientDescriptor[clientDescriptors.size()]));
+  }
+
+  public void onDelist(Nomination permit, ClientDescriptor v) {
+    fireAndForgetMessage(permit, v);
   }
 }
