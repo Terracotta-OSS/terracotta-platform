@@ -20,8 +20,8 @@ package org.terracotta.voltron.proxy.client.messages;
 /**
  * @author Alex Snaps
  */
-public abstract class MessageListener<T> {
+public interface MessageListener<T> {
 
-  public abstract void onMessage(T message);
+  void onMessage(T message);
 
 }

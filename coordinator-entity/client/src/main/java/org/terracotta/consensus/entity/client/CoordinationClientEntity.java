@@ -19,12 +19,12 @@ package org.terracotta.consensus.entity.client;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.consensus.entity.CoordinationEntity;
-import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
 /**
  * @author Alex Snaps
  */
-public interface CoordinationClientEntity extends CoordinationEntity, Entity, ServerMessageAware<LeaderElected> {
+public interface CoordinationClientEntity extends CoordinationEntity, Entity, ServerMessageAware<ServerElectionEvent<String>> {
 
 }

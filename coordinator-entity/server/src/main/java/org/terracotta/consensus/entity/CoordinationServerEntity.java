@@ -17,14 +17,14 @@
 
 package org.terracotta.consensus.entity;
 
-import org.terracotta.consensus.entity.messages.LeaderElected;
-import org.terracotta.consensus.entity.server.DelistListener;
+import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
+import org.terracotta.consensus.entity.server.ElectionChangeListener;
 
 /**
  * @author Alex Snaps
@@ -34,9 +34,9 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
-    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, LeaderElected.class), new SerializationCodec(), clientCommunicator, LeaderElected.class));
+    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, ServerElectionEvent.class), new SerializationCodec(), clientCommunicator, ServerElectionEvent.class));
     this.leaderElector = leaderElector;
-    this.leaderElector.setListener(new DelistListenerImpl<String>());
+    this.leaderElector.setListener(new ElectionChangeListenerImpl());
   }
 
   @Override
@@ -45,10 +45,10 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
     leaderElector.delistAll(clientDescriptor);
   }
 
-  private class DelistListenerImpl<K> implements DelistListener<K, ClientDescriptor> {
+  private class ElectionChangeListenerImpl implements ElectionChangeListener<String, ClientDescriptor> {
     
-    public void onDelist(K key, ClientDescriptor clientDescriptor, Nomination permit) {
-      fireAndForgetMessage(permit, clientDescriptor);
+    public void onDelist(String namespace, ClientDescriptor clientDescriptor) {
+      fireAndForgetMessage(ServerElectionEvent.changed(namespace), clientDescriptor);
     }
   }
 }

@@ -28,8 +28,6 @@ import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
-import com.sun.org.apache.bcel.internal.classfile.Code;
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -92,7 +90,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       return null;
     } else if(registerListener.equals(method)) {
       final MessageListener arg = (MessageListener) args[0];
-      final Type eventType = ((ParameterizedType)arg.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+      Class<?> eventType = getMessageListenerEventType(arg);
       final CopyOnWriteArrayList<MessageListener> messageListeners = listeners.get(eventType);
       if(messageListeners == null) {
         throw new IllegalArgumentException("Event type '" + eventType + "' isn't supported");
@@ -158,6 +156,18 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     output.close();
     return byteOut.toByteArray();
+  }
+
+  private static Class<?> getMessageListenerEventType(MessageListener from) {
+    for (Method m: from.getClass().getMethods()) {
+      if (m.getName().equals("onMessage")) {
+        Class<?>[] params = m.getParameterTypes();
+        if (params.length == 1 && !m.getParameterTypes()[0].isPrimitive()) {
+          return m.getParameterTypes()[0];
+        }
+      }
+    }
+    throw new AssertionError();
   }
 
   private static class ProxiedInvokeFuture implements Future {

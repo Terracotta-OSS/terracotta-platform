@@ -20,15 +20,14 @@ package org.terracotta.consensus;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.ElectionResponse;
+import org.terracotta.consensus.entity.LeaderOffer;
 import org.terracotta.consensus.entity.Versions;
 import org.terracotta.consensus.entity.client.CoordinationClientEntity;
-import org.terracotta.consensus.entity.messages.LeaderElected;
+import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.util.concurrent.Callable;
@@ -61,9 +60,12 @@ public class CoordinationService {
 
   CoordinationService(CoordinationClientEntity coordinationClientEntity) {
     entity = coordinationClientEntity;
-    entity.registerListener(new MessageListener<LeaderElected>() {
-      public void onMessage(final LeaderElected message) {
-        leaderElected(message.getNamespace());
+    entity.registerListener(new MessageListener<ServerElectionEvent<String>>() {
+      public void onMessage(final ServerElectionEvent<String> message) {
+        switch (message.getType()) {
+          case CHANGED: electionChanged(message.getNamespace());
+          case COMPLETED: electionCompleted(message.getNamespace());
+        }
       }
     });
   }
@@ -97,43 +99,45 @@ public class CoordinationService {
         actualSync = sync;
       }
       synchronized (actualSync) {
-        Nomination nomination;
-        while ((nomination = entity.runForElection(namespace, Thread.currentThread())) != null && nomination.awaitsElection()) {
+        ElectionResponse response;
+        while ((response = entity.runForElection(namespace, Thread.currentThread())).isPending()) {
           actualSync.wait();
         }
-        if (nomination != null) {
+        if (response instanceof LeaderOffer) {
           try {
             final T t = callable.call();
-            entity.accept(namespace, nomination);
+            entity.accept(namespace, (LeaderOffer) response);
             return t;
           } catch (Throwable t) {
             entity.delist(namespace, this);
             throw t;
-          } finally {
-            actualSync.notify();
           }
         }
-        actualSync.notify();
       }
     }
     return null;
   }
 
-  void leaderElected(String namespace) {
-    Object sync = new Object();
-    synchronized (sync) {
-      Object actualSync = syncs.putIfAbsent(namespace, sync);
-      if (actualSync == null) {
-        actualSync = sync;
-      }
+  void electionCompleted(String namespace) {
+    Object actualSync = syncs.get(namespace);
+    if (actualSync != null) {
       synchronized (actualSync) {
         try {
           if (!syncs.remove(namespace, actualSync)) {
             throw new AssertionError("Broken FSM!");
           }
         } finally {
-          actualSync.notify();
+          actualSync.notifyAll();
         }
+      }
+    }
+  }
+  
+  void electionChanged(String namespace) {
+    Object actualSync = syncs.get(namespace);
+    if (actualSync != null) {
+      synchronized (actualSync) {
+        actualSync.notifyAll();
       }
     }
   }

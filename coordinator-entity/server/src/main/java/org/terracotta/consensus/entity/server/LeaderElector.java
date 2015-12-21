@@ -14,168 +14,151 @@
  * The Initial Developer of the Covered Software is
  * Terracotta, Inc., a Software AG company
  */
-
 package org.terracotta.consensus.entity.server;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
 
-import org.terracotta.consensus.entity.Nomination;
+import org.terracotta.consensus.entity.ElectionResult;
+import org.terracotta.consensus.entity.ElectionResponse;
+import org.terracotta.consensus.entity.LeaderOffer;
+
+import static java.util.Collections.emptyList;
 
 /**
  * @author Alex Snaps
  */
 public class LeaderElector<K, V> {
 
-  private final PermitFactory<V> factory;
-  private final ConcurrentMap<K, ElectionQueue<K, V>> leaderQueues = new ConcurrentHashMap<K, ElectionQueue<K, V>>();
-  private DelistListener<K, V> listener;
+  private final OfferFactory<V> offerFactory;
+  private final ConcurrentMap<K, ElectionQueue> leaderQueues = new ConcurrentHashMap<K, ElectionQueue>();
+  private ElectionChangeListener<K, V> listener;
 
-  public LeaderElector(PermitFactory<V> factory) {
-    this.factory = factory;
+  public LeaderElector(OfferFactory<V> factory) {
+    this.offerFactory = factory;
   }
 
-  public Nomination enlist(K key, V value) {
-    leaderQueues.putIfAbsent(key, new ElectionQueue<K, V>(key, factory,
-        listener));
-    return leaderQueues.get(key).runElectionOrAdd(value);
+  public ElectionResponse enlist(K key, V value) {
+    ElectionQueue queue = new ElectionQueue(key);
+    ElectionResponse response = queue.runElectionOrAdd(value);
+    ElectionQueue existing = leaderQueues.putIfAbsent(key, queue);
+    if (existing == null) {
+      return response;
+    } else {
+      return existing.runElectionOrAdd(value);
+    }
   }
 
-  public void setListener(DelistListener<K, V> listener) {
+  public void setListener(ElectionChangeListener<K, V> listener) {
     this.listener = listener;
   }
 
-  public void accept(K key, Nomination permit) {
-    leaderQueues.get(key).accept(permit);
+  public void accept(K key, LeaderOffer permit) {
+    final ElectionQueue queue = leaderQueues.get(key);
+    if (queue == null) {
+      throw new IllegalStateException("No election under that key");
+    } else {
+      queue.accept(permit);
+    }
   }
 
   public void delist(final K key, V value) {
-    leaderQueues.get(key).remove(value, new Callable() {
-
-      public Object call() throws Exception {
-        leaderQueues.remove(key);
-        return null;
-      }
-    });
+    final ElectionQueue queue = leaderQueues.get(key);
+    if (queue != null) {
+      queue.remove(value, new Runnable() {
+        public void run() {
+          leaderQueues.remove(key, queue);
+        }
+      });
+    }
   }
 
   public List<V> getAllWaitingOn(final K key) {
-    return leaderQueues.get(key).tail();
+    ElectionQueue queue = leaderQueues.get(key);
+    if (queue == null) {
+      return emptyList();
+    } else {
+      return queue.tail();
+    }
   }
 
   public void delistAll(V value) {
-    for (K key : leaderQueues.keySet()) {
-      delist(key, value);
+    for (final Iterator<Entry<K, ElectionQueue>> it = leaderQueues.entrySet().iterator(); it.hasNext();) {
+      Entry<K, ElectionQueue> entry = it.next();
+      entry.getValue().remove(value, new Runnable() {
+        public void run() {
+          it.remove();
+        }
+      });
     }
   }
 
-  private enum ElectionState {
-    RUNNING, ELECTED, NOT_ELECTED;
-  }
+  private class ElectionQueue {
 
-  private static class ElectionQueue<K, V> {
-    private final BlockingQueue<V> leaderQueue = new LinkedBlockingQueue<V>();
+    private final LinkedList<V> leaderQueue = new LinkedList<V>();
     private final K key;
-    private final PermitFactory<V> factory;
-    private ElectionState state = ElectionState.NOT_ELECTED;
-    private final DelistListener listener;
-    private final ReentrantLock lock = new ReentrantLock();
-    private Nomination currentPermit;
+    
+    private boolean hasLeader = false;
+    private LeaderOffer openOffer = null; //synonym for leaderQueue.peek?
 
-    public ElectionQueue(K key, PermitFactory<V> factory,
-        DelistListener listener) {
-      if (listener == null) {
-        throw new IllegalArgumentException("Listener cannot be null.");
-      }
+    ElectionQueue(K key) {
       this.key = key;
-      this.listener = listener;
-      this.factory = factory;
     }
 
-    private Nomination runElectionOrAdd(V value) {
-      lock.lock();
-      try {
-        switch (state) {
-        case ELECTED:
-          leaderQueue.offer(value);
-          return null;
-        case RUNNING:
-          leaderQueue.offer(value);
-          return new Nomination();
-        case NOT_ELECTED:
-          leaderQueue.offer(value);
-          if (leaderQueue.peek().equals(value)) {
-            state = ElectionState.RUNNING;
-            return currentPermit = factory.createPermit(value);
-          }
-          // this should not happen
-          return null;
-        default:
-          throw new AssertionError("Illegal Election state");
-        }
-      } finally {
-        lock.unlock();
-      }
-    }
-
-    private List<V> tail() {
-      lock.lock();
-      try {
-        List<V> list = new ArrayList<V>(leaderQueue);
-        list.remove(0);
-        return list;
-      } finally {
-        lock.unlock();
-      }
-    }
-
-    private void accept(Object permit) {
-      if (permit == null ) {
-        throw new IllegalStateException("Null Permits cannot be accepted");
-      }
-      lock.lock();
-      try {
-        if(!currentPermit.equals(permit)) {
-          throw new IllegalArgumentException("Wrong Nomination accepted"); 
-        }
-        if (state == ElectionState.RUNNING) {
-          state = ElectionState.ELECTED;
+    synchronized ElectionResponse runElectionOrAdd(V value) {
+      int position = leaderQueue.indexOf(value);
+      if (position == 0) {
+        return openOffer = offerFactory.createOffer(value);
+      } else if (position > 0) {
+        if (hasLeader) {
+          return ElectionResult.NOT_ELECTED;
         } else {
-          throw new AssertionError("Illegal Election state");
+          return ElectionResult.PENDING;
         }
-      } finally {
-        lock.unlock();
+      } else {
+        leaderQueue.add(value);
+        if (hasLeader) {
+          return ElectionResult.NOT_ELECTED;
+        } else if (leaderQueue.size() == 1) {
+          return openOffer = offerFactory.createOffer(value);
+        } else {
+          return ElectionResult.PENDING;
+        }
       }
     }
 
-    private void remove(V value, Callable callIfEmpty) {
-      lock.lock();
-      try {
-        if (leaderQueue.peek().equals(value)) {
-          state = ElectionState.NOT_ELECTED;
-          leaderQueue.remove(value);
-          V val = leaderQueue.peek();
+    synchronized List<V> tail() {
+      return Collections.unmodifiableList(leaderQueue.subList(1, leaderQueue.size()));
+    }
+
+    synchronized void accept(LeaderOffer offer) {
+      if (openOffer.equals(offer)) {
+        hasLeader = true;
+        openOffer = null;
+      } else {
+        throw new IllegalArgumentException("Leader offer not active");
+      }
+    }
+
+    synchronized void remove(V departing, Runnable onEmpty) {
+      if (leaderQueue.peek().equals(departing)) {
+        hasLeader = false;
+        openOffer = null;
+        leaderQueue.remove(departing);
+        V val = leaderQueue.peek();
           if (val != null) {
-            state = ElectionState.RUNNING;
-            listener.onDelist(key, val,
-                currentPermit = factory.createPermit(val));
-          }
-        } else {
-          leaderQueue.remove(value);
+            listener.onDelist(key, val);
         }
-        if(leaderQueue.isEmpty()) {
-          callIfEmpty.call();
-        }
-      } catch (Exception e) {
-        throw new IllegalStateException(e);
-      } finally {
-        lock.unlock();
+      } else {
+        leaderQueue.remove(departing);
+      }
+      if (leaderQueue.isEmpty()) {
+        onEmpty.run();
       }
     }
   }
