@@ -18,10 +18,13 @@
  */
 package org.terracotta.management.service.buffer;
 
+import org.junit.Assert;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.function.IntPredicate;
 
 import static org.terracotta.management.service.TestConstants.BUFFER_SIZE;
+import static org.terracotta.management.service.TestConstants.TEST_MAX_WAIT_TIME_MILLIS;
 
 /**
  * The producer or consumer simulator thread.
@@ -63,31 +66,47 @@ public final class ProducerOrConsumerSimulator implements Runnable {
   public void run() {
     try {
       startLatch.await();
-      int i = 0;
-      int numFailures = 0;
-      while (i < (BUFFER_SIZE * 4) - 1) {
-        if (producerOrConsumer.test(partitionNumber)) {
-          numFailures = 0;
-          i++;
-          if (!isProducer) {
-            notifyAndYield(allowOverflow);
-          }
-        } else {
-          numFailures++;
-          yieldLoop();
-        }
-        if (isProducer && !allowOverflow) {
-          waitIfBufferFull();
-        }
-        if (numFailures++ > 100 && !isProducer && doneLatch.getCount() == 1) {
-          // only the consumer is waiting for buffer..all producers are gone
-          break;
-        }
+      if (isProducer) {
+        doProducerLoop();
+      } else {
+        doConsumerLoop();
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } finally {
       doneLatch.countDown();
+    }
+  }
+
+  private void doProducerLoop() throws InterruptedException {
+    int i = 0;
+    while (i < ((BUFFER_SIZE * 4) - 1)) {
+      if (producerOrConsumer.test(partitionNumber)) {
+        i++;
+      } else {
+        Assert.fail("Unexpected behaviour from a producer");
+      }
+      if (!allowOverflow) {
+        waitIfBufferFull();
+      }
+    }
+  }
+
+  private void doConsumerLoop() {
+    boolean done = false;
+    int numFailures = 0;
+    while (!done) {
+      if (producerOrConsumer.test(partitionNumber)) {
+        numFailures = 0;
+        notifyAndYield(allowOverflow);
+      } else {
+        numFailures++;
+        yieldLoop();
+      }
+      if (numFailures++ > 100 && doneLatch.getCount() <= 1) {
+        // only the consumer is waiting for buffer..all producers are gone
+        done = true;
+      }
     }
   }
 
@@ -99,13 +118,18 @@ public final class ProducerOrConsumerSimulator implements Runnable {
    * @throws InterruptedException
    */
   private void waitIfBufferFull() throws InterruptedException {
+    long startTime = System.currentTimeMillis();
     synchronized (LOCK) {
       while (bufferFull.test(partitionNumber)) {
         // wait for producer and consumer to synchronize
         LOCK.wait(500);
+        if (System.currentTimeMillis() - startTime > TEST_MAX_WAIT_TIME_MILLIS) {
+          Assert.fail("Unexpected time out waiting for buffer to get consumed");
+        }
       }
     }
   }
+
   /**
    * Consumer notifies if it was able to consume something
    * <p>

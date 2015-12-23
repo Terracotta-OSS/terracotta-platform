@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.IntConsumer;
 
@@ -45,28 +44,29 @@ import java.util.function.IntConsumer;
  */
 public class SinglePartitionLockFreeRingBuffer<E> implements PartitionedRingBuffer<E> {
   private final static class Item<E> {
-    private final long writeSequence;
-    private final E item;
+    private final AtomicLong writeSequence;
+    private E item;
 
-    private Item(long writeSequence, E item) {
-      this.writeSequence = writeSequence;
-      this.item = item;
+    private Item() {
+      this.writeSequence = new AtomicLong(-1L);
+      this.item = null;
     }
   }
 
   private final AtomicLong writeSequence;
   private final AtomicLong readSequence;
-  private final AtomicReferenceArray<Item<E>> buffer;
+  private final Item<E>[] buffer;
   private final int mask;
   private final int overSpillThreshold;
 
+  @SuppressWarnings("unchecked")
   public SinglePartitionLockFreeRingBuffer(int size) {
-    this.buffer = new AtomicReferenceArray<>(size);
+    this.buffer = (Item<E>[])new Item[size];
     this.writeSequence = new AtomicLong(-1L);
     this.readSequence = new AtomicLong(-1L);
     this.mask = size - 1;
     for (int i = 0; i < size; i++) {
-      this.buffer.set(i, new Item<>(-1, null));
+      buffer[i] = new Item<>();
     }
     overSpillThreshold = Math.round(0.95f * (float)size);
   }
@@ -76,7 +76,7 @@ public class SinglePartitionLockFreeRingBuffer<E> implements PartitionedRingBuff
     if (partitionNo > 0) {
       throw new IllegalArgumentException("Invalid Partition Number " + partitionNo + " specified.");
     }
-    return buffer.length();
+    return buffer.length;
   }
 
   @Override
@@ -85,7 +85,7 @@ public class SinglePartitionLockFreeRingBuffer<E> implements PartitionedRingBuff
       throw new IllegalArgumentException("Invalid Partition Number " + partitionNo + " specified.");
     }
     int sz = (int)(writeSequence.get() - readSequence.get());
-    return (sz > buffer.length()) ? buffer.length() : sz;
+    return (sz > buffer.length) ? buffer.length : sz;
   }
 
   @Override
@@ -113,7 +113,9 @@ public class SinglePartitionLockFreeRingBuffer<E> implements PartitionedRingBuff
     long next = writeSequence.get() + 1;
     try {
       // use the better performing lazy set as this implementation follows the single writer priciple.
-      buffer.lazySet(((int)(mask & next)), new Item<>(next, item));
+      int i = (int)(mask & next);
+      buffer[i].item = item;
+      buffer[i].writeSequence.lazySet(next);
     } finally {
       long lastRead = readSequence.get();
       while (next - lastRead > mask + 1) {
@@ -178,8 +180,8 @@ public class SinglePartitionLockFreeRingBuffer<E> implements PartitionedRingBuff
     int endIdx = (int)(end + 1 & mask);
     int j = 0;
     do {
-      Item<E> item = buffer.get(startIdx);
-      if (item.writeSequence > start) {
+      Item<E> item = buffer[startIdx];
+      if (item.writeSequence.get() > start) {
         adder.accept(j, item.item);
         j++;
       } else {
