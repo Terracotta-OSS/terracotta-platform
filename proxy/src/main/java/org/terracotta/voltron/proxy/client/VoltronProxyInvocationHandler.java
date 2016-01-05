@@ -160,7 +160,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private static Class<?> getMessageListenerEventType(MessageListener from) {
     for (Method m: from.getClass().getMethods()) {
-      if (m.getName().equals("onMessage")) {
+      if (m.getName().equals("onMessage") && !m.isBridge()) {
         Class<?>[] params = m.getParameterTypes();
         if (params.length == 1 && !m.getParameterTypes()[0].isPrimitive()) {
           return m.getParameterTypes()[0];
