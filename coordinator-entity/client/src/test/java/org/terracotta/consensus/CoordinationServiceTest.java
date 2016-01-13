@@ -31,8 +31,12 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import org.hamcrest.core.IsSame;
+import static org.hamcrest.core.IsSame.sameInstance;
 
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
@@ -109,7 +113,7 @@ public class CoordinationServiceTest {
     final CoordinationClientEntity CoordinationClientEntity = mock(CoordinationClientEntity.class);
     CoordinationService coordinationService = new CoordinationService(mockInitialConnection(CoordinationClientEntity));
     final ElectionTask callable = mock(ElectionTask.class);
-    final AssertionError assertionError = new AssertionError();
+    final Throwable assertionError = new AssertionError();
     when(callable.call(false)).thenThrow(assertionError);
     final LeaderOffer nomination = mock(LeaderOffer.class);
     when(CoordinationClientEntity.runForElection(eq(FLAT_NAME), anyObject())).thenReturn(nomination);
@@ -117,8 +121,8 @@ public class CoordinationServiceTest {
     try {
       coordinationService.executeIfLeader(ENTITY_TYPE, ENTITY_NAME, callable);
       fail("this should have thrown");
-    } catch (AssertionError throwable) {
-      assertSame(throwable, assertionError);
+    } catch (ExecutionException throwable) {
+      assertThat(throwable.getCause(), sameInstance(assertionError));
     }
 
     InOrder inOrder = Mockito.inOrder(callable, nomination);
