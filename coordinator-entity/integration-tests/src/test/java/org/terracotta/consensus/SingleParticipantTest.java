@@ -5,12 +5,14 @@
  */
 package org.terracotta.consensus;
 
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.consensus.CoordinationService.ElectionTask;
 import org.terracotta.passthrough.PassthroughServer;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -52,9 +54,9 @@ public class SingleParticipantTest {
             throw new UnsupportedOperationException();
           }
         });
-        fail("Expected UnsupportedOperationException");
-      } catch (UnsupportedOperationException e) {
-        //expected
+        fail("Expected ExecutionException");
+      } catch (ExecutionException e) {
+        assertThat(e.getCause(), instanceOf(UnsupportedOperationException.class));
       }
     } finally {
       service.close();
@@ -74,9 +76,9 @@ public class SingleParticipantTest {
             throw new UnsupportedOperationException();
           }
         });
-        fail("Expected UnsupportedOperationException");
-      } catch (UnsupportedOperationException e) {
-        //expected
+        fail("Expected ExecutionException");
+      } catch (ExecutionException e) {
+        assertThat(e.getCause(), instanceOf(UnsupportedOperationException.class));
       }
 
       assertThat(service.executeIfLeader(Entity.class, "foo", new ElectionTask<Integer>() {

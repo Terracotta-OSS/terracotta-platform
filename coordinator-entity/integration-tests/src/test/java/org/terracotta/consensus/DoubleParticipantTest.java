@@ -8,6 +8,7 @@ package org.terracotta.consensus;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
@@ -15,6 +16,8 @@ import org.terracotta.consensus.CoordinationService.ElectionTask;
 import org.terracotta.passthrough.PassthroughServer;
 
 import static org.hamcrest.core.Is.is;
+import org.hamcrest.core.IsInstanceOf;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -167,9 +170,9 @@ public class DoubleParticipantTest {
             }
           }
         });
-        fail("Expected IllegalStateException");
-      } catch (IllegalStateException e) {
-        //expected
+        fail("Expected ExecutionException");
+      } catch (ExecutionException e) {
+        assertThat(e.getCause(), instanceOf(IllegalStateException.class));
       }
       
       assertThat(other.get(), is(1));

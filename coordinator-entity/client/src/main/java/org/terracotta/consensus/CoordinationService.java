@@ -33,6 +33,7 @@ import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Convenience service to deal with Leader election and executing code as such
@@ -84,7 +85,7 @@ public class CoordinationService {
    * @return the callable returned {@code T} should the election be won, {@code null} otherwise
    * @throws Throwable whatever the {@code callable} may throw
    */
-  public <T> T executeIfLeader(Class<? extends Entity> entityType, String entityName, ElectionTask<T> callable) throws Throwable {
+  public <T> T executeIfLeader(Class<? extends Entity> entityType, String entityName, ElectionTask<T> callable) throws ExecutionException {
 
     if(entityType == null || entityName == null || callable == null) {
       throw new NullPointerException();
@@ -99,19 +100,38 @@ public class CoordinationService {
         actualSync = sync;
       }
       synchronized (actualSync) {
+        boolean interrupted = false;
         ElectionResponse response;
-        while ((response = entity.runForElection(namespace, Thread.currentThread())).isPending()) {
-          actualSync.wait();
+        try {
+          while ((response = entity.runForElection(namespace, Thread.currentThread())).isPending()) {
+            try {
+              actualSync.wait();
+            } catch (InterruptedException ex) {
+              interrupted = true;
+            }
+          }
+        } finally {
+          if (interrupted) {
+            Thread.currentThread().interrupt();
+          }
         }
         if (response instanceof LeaderOffer) {
+          LeaderOffer offer = (LeaderOffer) response;
+          boolean accepted = false;
           try {
-            LeaderOffer offer = (LeaderOffer) response;
-            final T t = callable.call(offer.clean());
+            final T t;
+            try {
+              t = callable.call(offer.clean());
+            } catch (Throwable e) {
+              throw new ExecutionException(e);
+            }
             entity.accept(namespace, offer);
+            accepted = true;
             return t;
-          } catch (Throwable t) {
-            entity.delist(namespace, this);
-            throw t;
+          } finally {
+            if (!accepted) {
+              entity.delist(namespace, this);
+            }
           }
         }
       }
@@ -186,6 +206,6 @@ public class CoordinationService {
 
   public interface ElectionTask<T> {
 
-    T call(boolean clean);
+    T call(boolean clean) throws Exception;
   }
 }
