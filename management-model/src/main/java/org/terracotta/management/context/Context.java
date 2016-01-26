@@ -72,6 +72,15 @@ public class Context {
     return back.hashCode();
   }
 
+  @Override
+  public String toString() {
+    return back.toString();
+  }
+
+  public boolean contains(Context subCtx) {
+    return back.entrySet().containsAll(subCtx.back.entrySet());
+  }
+
   public static Context create() {
     return new Context();
   }
