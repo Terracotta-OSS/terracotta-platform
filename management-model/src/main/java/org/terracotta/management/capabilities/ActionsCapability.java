@@ -18,20 +18,26 @@ package org.terracotta.management.capabilities;
 import org.terracotta.management.capabilities.context.CapabilityContext;
 import org.terracotta.management.capabilities.descriptors.Descriptor;
 
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
  * @author Ludovic Orban
  */
-public class ActionsCapability implements Capability {
+public final class ActionsCapability implements Capability, Serializable {
 
   private final String name;
-  private final Collection<Descriptor> descriptions;
+  private final Collection<Descriptor> descriptors;
   private final CapabilityContext capabilityContext;
 
-  public ActionsCapability(String name, Collection<Descriptor> descriptions, CapabilityContext capabilityContext) {
+  public ActionsCapability(String name, CapabilityContext capabilityContext, Descriptor... descriptors) {
+    this(name, capabilityContext, Arrays.asList(descriptors));
+  }
+
+  public ActionsCapability(String name, CapabilityContext capabilityContext, Collection<Descriptor> descriptors) {
     this.name = name;
-    this.descriptions = descriptions;
+    this.descriptors = descriptors;
     this.capabilityContext = capabilityContext;
   }
 
@@ -40,9 +46,8 @@ public class ActionsCapability implements Capability {
     return name;
   }
 
-  @Override
-  public Collection<Descriptor> getDescriptions() {
-    return descriptions;
+  public Collection<Descriptor> getDescriptors() {
+    return descriptors;
   }
 
   @Override

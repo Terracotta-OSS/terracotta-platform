@@ -15,16 +15,27 @@
  */
 package org.terracotta.management.context;
 
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Ludovic Orban
  */
-public class ContextContainer {
+public final class ContextContainer implements Serializable {
 
   private final String name;
   private final String value;
   private final Collection<ContextContainer> subContexts;
+
+  public ContextContainer(String name, String value) {
+    this(name, value, Collections.<ContextContainer>emptyList());
+  }
+
+  public ContextContainer(String name, String value, ContextContainer... subContexts) {
+    this(name, value, Arrays.asList(subContexts));
+  }
 
   public ContextContainer(String name, String value, Collection<ContextContainer> subContexts) {
     this.name = name;

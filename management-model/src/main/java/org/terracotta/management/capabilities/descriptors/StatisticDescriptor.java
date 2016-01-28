@@ -17,10 +17,12 @@ package org.terracotta.management.capabilities.descriptors;
 
 import org.terracotta.management.stats.StatisticType;
 
+import java.io.Serializable;
+
 /**
  * @author Ludovic Orban
  */
-public class StatisticDescriptor implements Descriptor {
+public final class StatisticDescriptor implements Descriptor, Serializable {
 
   private final String name;
   private final StatisticType type;

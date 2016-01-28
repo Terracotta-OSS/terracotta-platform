@@ -19,12 +19,13 @@ import org.terracotta.management.stats.AbstractStatisticHistory;
 import org.terracotta.management.stats.MemoryUnit;
 import org.terracotta.management.stats.Sample;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
-public class SizeHistory extends AbstractStatisticHistory<Long, MemoryUnit> {
+public final class SizeHistory extends AbstractStatisticHistory<Long, MemoryUnit> implements Serializable {
   public SizeHistory(String name, List<Sample<Long>> samples, MemoryUnit memoryUnit) {
     super(name, samples, memoryUnit);
   }

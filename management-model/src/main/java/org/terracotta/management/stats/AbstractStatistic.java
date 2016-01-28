@@ -31,17 +31,17 @@ public abstract class AbstractStatistic<V, U> implements Statistic<V, U> {
   }
 
   @Override
-  public U getUnit() {
+  public final U getUnit() {
     return unit;
   }
 
   @Override
-  public String getName() {
+  public final String getName() {
     return name;
   }
 
   @Override
-  public V getValue() {
+  public final V getValue() {
     return value;
   }
 

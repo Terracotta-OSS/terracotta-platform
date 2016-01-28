@@ -18,23 +18,24 @@ package org.terracotta.management.capabilities;
 import org.terracotta.management.capabilities.context.CapabilityContext;
 import org.terracotta.management.capabilities.descriptors.Descriptor;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ludovic Orban
  */
-public class StatisticsCapability implements Capability {
+public final class StatisticsCapability implements Capability, Serializable {
 
   private final String name;
   private final Properties properties;
-  private final Collection<Descriptor> descriptions;
+  private final Collection<Descriptor> descriptors;
   private final CapabilityContext capabilityContext;
 
-  public StatisticsCapability(String name, Properties properties, Collection<Descriptor> descriptions, CapabilityContext capabilityContext) {
+  public StatisticsCapability(String name, Properties properties, Collection<Descriptor> descriptors, CapabilityContext capabilityContext) {
     this.name = name;
     this.properties = properties;
-    this.descriptions = descriptions;
+    this.descriptors = descriptors;
     this.capabilityContext = capabilityContext;
   }
 
@@ -42,9 +43,8 @@ public class StatisticsCapability implements Capability {
     return properties;
   }
 
-  @Override
-  public Collection<Descriptor> getDescriptions() {
-    return descriptions;
+  public Collection<Descriptor> getDescriptors() {
+    return descriptors;
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.capabilities.descriptors;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class StatisticDescriptorCategory implements Descriptor {
+public final class StatisticDescriptorCategory implements Descriptor, Serializable {
 
   private final String name;
   private final List<StatisticDescriptor> statistics;

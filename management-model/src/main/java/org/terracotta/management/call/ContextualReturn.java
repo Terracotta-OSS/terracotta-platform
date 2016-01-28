@@ -17,32 +17,33 @@ package org.terracotta.management.call;
 
 import org.terracotta.management.context.Context;
 
+import java.io.Serializable;
 import java.util.NoSuchElementException;
 
 /**
  * This class holds the results of the calls on each context.
- * <p/>
+ * <p>
  * If a call was not possible to make on a context, because the context was not supported or the capability not found,
  * then the method {@link #hasValue()} will return false.
- * <p/>
+ * <p>
  * You an call {@link #getValue()} only if there has been a result, event if it is null.
  *
  * @author Mathieu Carbou
  */
-public final class ContextualReturn<T> {
-
-  private static final Object NO_RESULT = new Object();
+public final class ContextualReturn<T> implements Serializable {
 
   private final T value;
   private final Context context;
+  private final String capability;
 
-  private ContextualReturn(Context context, T value) {
+  private ContextualReturn(String capability, Context context, T value) {
     this.value = value;
     this.context = context;
+    this.capability = capability;
   }
 
   public boolean hasValue() {
-    return value != NO_RESULT;
+    return value != Void.TYPE;
   }
 
   public T getValue() throws NoSuchElementException {
@@ -56,13 +57,25 @@ public final class ContextualReturn<T> {
     return context;
   }
 
-  public static <T> ContextualReturn<T> of(Context context, T result) {
-    return new ContextualReturn<T>(context, result);
+  public static <T> ContextualReturn<T> of(String capability, Context context, T result) {
+    return new ContextualReturn<T>(capability, context, result);
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> ContextualReturn<T> empty(Context context) {
-    return new ContextualReturn<T>(Context.empty(), (T) NO_RESULT);
+  public static <T> ContextualReturn<T> empty(String capability, Context context) {
+    return new ContextualReturn<T>(capability, Context.empty(), (T) Void.TYPE);
+  }
+
+  public String getCapability() {
+    return capability;
+  }
+
+  @Override
+  public String toString() {
+    return "ContextualReturn{" + "capability='" + capability + '\'' +
+        ", context=" + context +
+        ", value=" + value +
+        '}';
   }
 
 }

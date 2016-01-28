@@ -18,13 +18,14 @@ package org.terracotta.management.stats.history;
 import org.terracotta.management.stats.AbstractStatisticHistory;
 import org.terracotta.management.stats.Sample;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
  */
-public class AverageHistory extends AbstractStatisticHistory<Double, TimeUnit> {
+public final class AverageHistory extends AbstractStatisticHistory<Double, TimeUnit> implements Serializable {
   public AverageHistory(String name, List<Sample<Double>> samples, TimeUnit timeUnit) {
     super(name, samples, timeUnit);
   }

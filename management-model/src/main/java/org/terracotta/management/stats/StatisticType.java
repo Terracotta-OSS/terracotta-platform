@@ -43,10 +43,8 @@ public enum StatisticType {
   DURATION_HISTORY(DurationHistory.class),
   RATE_HISTORY(RateHistory.class),
   RATIO_HISTORY(RatioHistory.class),
-  SIZE_HISTORY(SizeHistory .class),
-  AVERAGE_HISTORY(AverageHistory.class),
-
-  ;
+  SIZE_HISTORY(SizeHistory.class),
+  AVERAGE_HISTORY(AverageHistory.class),;
   private final Class<? extends Statistic<?, ?>> clazz;
 
   StatisticType(Class<? extends Statistic<?, ?>> clazz) {
@@ -63,7 +61,7 @@ public enum StatisticType {
 
   public static StatisticType fromClass(Class<? extends Statistic<?, ?>> clazz) {
     for (StatisticType type : values()) {
-      if(type.clazz == clazz) {
+      if (type.clazz == clazz) {
         return type;
       }
     }

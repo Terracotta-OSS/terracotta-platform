@@ -19,12 +19,13 @@ import org.terracotta.management.stats.AbstractStatisticHistory;
 import org.terracotta.management.stats.NumberUnit;
 import org.terracotta.management.stats.Sample;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
-public class CounterHistory extends AbstractStatisticHistory<Long, NumberUnit> {
+public final class CounterHistory extends AbstractStatisticHistory<Long, NumberUnit> implements Serializable {
   public CounterHistory(String name, List<Sample<Long>> samples, NumberUnit unit) {
     super(name, samples, unit);
   }
