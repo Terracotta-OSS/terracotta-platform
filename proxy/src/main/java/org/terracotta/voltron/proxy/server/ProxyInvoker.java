@@ -21,6 +21,7 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.voltron.proxy.Codec;
+import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
@@ -54,6 +55,10 @@ public class ProxyInvoker<T> {
   private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
   private final ThreadLocal<InvocationContext> invocationContext = new ThreadLocal<InvocationContext>();
+  
+  public ProxyInvoker(Class<T> proxyType, T target) {
+    this(proxyType, target, new SerializationCodec(), null);
+  }
   
   public ProxyInvoker(Class<T> proxyType, T target, Codec codec) {
     this(proxyType, target, codec, null);
