@@ -17,12 +17,13 @@ package org.terracotta.management.stats.primitive;
 
 import org.terracotta.management.stats.AbstractStatistic;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
  */
-public class Average extends AbstractStatistic<Double, TimeUnit> {
+public final class Average extends AbstractStatistic<Double, TimeUnit> implements Serializable {
   public Average(String name, Double value, TimeUnit timeUnit) {
     super(name, value, timeUnit);
   }

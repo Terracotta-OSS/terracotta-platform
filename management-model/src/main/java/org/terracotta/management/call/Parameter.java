@@ -15,12 +15,14 @@
  */
 package org.terracotta.management.call;
 
+import java.io.Serializable;
+
 /**
  * Represents a method parameter
  *
  * @author Mathieu Carbou
  */
-public final class Parameter {
+public final class Parameter implements Serializable {
 
   private final Object value;
   private final String className;

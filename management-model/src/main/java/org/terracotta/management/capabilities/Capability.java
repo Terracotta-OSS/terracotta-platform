@@ -26,7 +26,9 @@ import java.util.Collection;
 public interface Capability {
 
   String getName();
-  Collection<Descriptor> getDescriptions();
+
+  Collection<Descriptor> getDescriptors();
+
   CapabilityContext getCapabilityContext();
 
 }

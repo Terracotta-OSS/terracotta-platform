@@ -15,20 +15,48 @@
  */
 package org.terracotta.management.capabilities.context;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author Ludovic Orban
  */
-public class CapabilityContext {
+public final class CapabilityContext implements Serializable {
 
   private final Collection<Attribute> attributes;
+
+  public CapabilityContext(Attribute... attributes) {
+    this(Arrays.asList(attributes));
+  }
 
   public CapabilityContext(Collection<Attribute> attributes) {
     this.attributes = attributes;
   }
 
   public Collection<Attribute> getAttributes() {
+    return attributes;
+  }
+
+  public Collection<String> getRequiredAttributeNames() {
+    Collection<String> names = new HashSet<String>();
+    for (Attribute attribute : this.attributes) {
+      if (attribute.isRequired()) {
+        names.add(attribute.getName());
+      }
+    }
+    return names;
+  }
+
+  public Collection<Attribute> getRequiredAttributes() {
+    Collection<Attribute> attributes = new ArrayList<Attribute>(this.attributes.size());
+    for (Attribute attribute : this.attributes) {
+      if (attribute.isRequired()) {
+        attributes.add(attribute);
+      }
+    }
     return attributes;
   }
 

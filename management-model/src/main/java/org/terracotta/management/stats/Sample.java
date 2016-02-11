@@ -15,10 +15,12 @@
  */
 package org.terracotta.management.stats;
 
+import java.io.Serializable;
+
 /**
  * @author Ludovic Orban
  */
-public class Sample<V> {
+public final class Sample<V> implements Serializable {
 
   private final long timestamp;
   private final V value;

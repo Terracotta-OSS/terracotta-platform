@@ -16,8 +16,8 @@
 package org.terracotta.management.stats;
 
 import org.terracotta.management.context.Context;
-import org.terracotta.management.stats.Statistic;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,14 +28,20 @@ import java.util.NoSuchElementException;
  *
  * @author Mathieu Carbou
  */
-public final class ContextualStatistics implements Iterable<Statistic<?, ?>> {
+public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Serializable {
 
   private final Map<String, Statistic<?, ?>> statistics;
+  private final String capability;
   private final Context context;
 
-  public ContextualStatistics(Context context, Map<String, Statistic<?, ?>> statistics) {
+  public ContextualStatistics(String capability, Context context, Map<String, Statistic<?, ?>> statistics) {
     this.statistics = statistics;
     this.context = context;
+    this.capability = capability;
+  }
+
+  public String getCapability() {
+    return capability;
   }
 
   public int size() {return statistics.size();}
@@ -79,7 +85,7 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>> {
   public <T extends Statistic<?, ?>> T getStatistic(Class<T> type, String name) throws NoSuchElementException {
     Map<String, T> filtered = getStatistics(type);
     for (T statistic : filtered.values()) {
-      if(statistic.getName().equals(name)) {
+      if (statistic.getName().equals(name)) {
         return statistic;
       }
     }
@@ -98,6 +104,14 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>> {
 
   public Context getContext() {
     return context;
+  }
+
+  @Override
+  public String toString() {
+    return "ContextualStatistics{" + "capability='" + capability + '\'' +
+        ", context=" + context +
+        ", statistics=" + statistics +
+        '}';
   }
 
 }

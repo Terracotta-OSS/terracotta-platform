@@ -17,12 +17,13 @@ package org.terracotta.management.stats.primitive;
 
 import org.terracotta.management.stats.AbstractStatistic;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ludovic Orban
  */
-public class Rate extends AbstractStatistic<Double, TimeUnit> {
+public final class Rate extends AbstractStatistic<Double, TimeUnit> implements Serializable {
   public Rate(String name, Double value, TimeUnit timeUnit) {
     super(name, value, timeUnit);
   }

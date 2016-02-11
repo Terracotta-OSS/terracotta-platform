@@ -15,14 +15,17 @@
  */
 package org.terracotta.management.context;
 
+import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Ludovic Orban
  */
-public class Context {
+public class Context extends AbstractMap<String, String> implements Serializable {
 
   private final Map<String, String> back = new LinkedHashMap<String, String>();
 
@@ -34,16 +37,24 @@ public class Context {
   }
 
   public Map<String, String> toMap() {
-    return new LinkedHashMap<String, String>(back);
+    return Collections.unmodifiableMap(back);
   }
 
   public Context with(String key, String val) {
+    if (val == null) {
+      throw new NullPointerException();
+    }
     Context context = new Context(back);
     context.back.put(key, val);
     return context;
   }
 
   public Context with(Map<String, String> props) {
+    for (String val : props.values()) {
+      if (val == null) {
+        throw new NullPointerException();
+      }
+    }
     Context context = new Context(back);
     context.back.putAll(props);
     return context;
@@ -58,6 +69,11 @@ public class Context {
   }
 
   public boolean isEmpty() { return back.isEmpty(); }
+
+  @Override
+  public Set<Entry<String, String>> entrySet() {
+    return toMap().entrySet();
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -81,8 +97,12 @@ public class Context {
     return back.entrySet().containsAll(subCtx.back.entrySet());
   }
 
-  public static Context create() {
-    return new Context();
+  public boolean contains(String key) {
+    return back.containsKey(key);
+  }
+
+  public boolean contains(String key, String val) {
+    return back.containsKey(key) && back.get(key).equals(val);
   }
 
   public static Context create(String key, String val) {

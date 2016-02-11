@@ -15,12 +15,13 @@
  */
 package org.terracotta.management.capabilities.descriptors;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
-public class CallDescriptor implements Descriptor {
+public final class CallDescriptor implements Descriptor, Serializable {
 
   private final String name;
   private final String returnType;

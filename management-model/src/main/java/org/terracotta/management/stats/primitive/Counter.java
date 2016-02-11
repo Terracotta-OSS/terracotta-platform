@@ -18,10 +18,12 @@ package org.terracotta.management.stats.primitive;
 import org.terracotta.management.stats.AbstractStatistic;
 import org.terracotta.management.stats.NumberUnit;
 
+import java.io.Serializable;
+
 /**
  * @author Ludovic Orban
  */
-public class Counter extends AbstractStatistic<Long, NumberUnit> {
+public final class Counter extends AbstractStatistic<Long, NumberUnit> implements Serializable {
   public Counter(String name, Long value, NumberUnit unit) {
     super(name, value, unit);
   }
