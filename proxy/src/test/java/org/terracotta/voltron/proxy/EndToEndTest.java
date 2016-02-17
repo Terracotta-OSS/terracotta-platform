@@ -23,17 +23,20 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.client.ClientProxyFactory;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
 import org.terracotta.voltron.proxy.server.messages.MessageFiring;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -50,9 +53,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.MessageCodec;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 /**
  * @author Alex Snaps
@@ -80,16 +80,17 @@ public class EndToEndTest {
   public void testServerInitiatedMessageFiring() throws ExecutionException, InterruptedException {
     final AtomicReference<EndpointDelegate> delegate = new AtomicReference<EndpointDelegate>();
     final Codec codec = new SerializationCodec();
+    final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, Comparable.class, String.class);
     final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(Comparable.class, new Comparable() {
       public int compareTo(final Object o) {
         return 42;
       }
-    }, codec, new ClientCommunicator() {
-      public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+    }, messageCodec, new ClientCommunicator() {
+      public void sendNoResponse(final ClientDescriptor clientDescriptor, final EntityResponse message) {
         throw new UnsupportedOperationException("Implement me!");
       }
 
-      public Future<Void> send(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+      public Future<Void> send(final ClientDescriptor clientDescriptor, final EntityResponse message) {
 
         final FutureTask<Void> voidFutureTask = new FutureTask<Void>(new Callable<Void>() {
           public Void call() throws Exception {
@@ -97,7 +98,7 @@ public class EndToEndTest {
           }
         });
         voidFutureTask.run();
-        delegate.get().handleMessage(bytes);
+        delegate.get().handleMessage(messageCodec.serialize((ProxyEntityResponse) message));
         return voidFutureTask;
       }
     }, String.class);
@@ -155,14 +156,15 @@ public class EndToEndTest {
     };
     final FiringClientIdAware firingClientIdAware = new FiringClientIdAware();
     final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(ClientIdAware.class, firingClientIdAware, codec, new ClientCommunicator() {
-      public void sendNoResponse(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+      public void sendNoResponse(final ClientDescriptor clientDescriptor, final EntityResponse message) {
         throw new UnsupportedOperationException("Implement me!");
       }
 
-      public Future<Void> send(final ClientDescriptor clientDescriptor, final byte[] bytes) {
+      public Future<Void> send(final ClientDescriptor clientDescriptor, final EntityResponse message) {
         final FutureTask<Void> voidFutureTask = new FutureTask<Void>(new Callable<Void>() {
           public Void call() throws Exception {
-            listener.onMessage((Integer)codec.decode(Arrays.copyOfRange(bytes, 1, bytes.length), Integer.class));
+            ProxyEntityResponse pem = (ProxyEntityResponse) message;
+            listener.onMessage((Integer) pem.getResponse());
             return null;
           }
         });

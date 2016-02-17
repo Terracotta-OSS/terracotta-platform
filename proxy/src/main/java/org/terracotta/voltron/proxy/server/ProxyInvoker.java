@@ -20,26 +20,22 @@ package org.terracotta.voltron.proxy.server;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.voltron.proxy.Codec;
+import org.terracotta.voltron.proxy.ProxyMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import org.terracotta.voltron.proxy.ProxyMessageCodec;
 
 /**
  * @author Alex Snaps
@@ -47,10 +43,8 @@ import org.terracotta.voltron.proxy.ProxyMessageCodec;
 public class ProxyInvoker<T> {
 
   private final T target;
-  private final Codec codec;
   private final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec;
-  private final Map<Class, Byte> eventMappings;
-  private final Set<Class> messageTypes;
+  private final Set<Class<?>> messageTypes;
   private final ClientCommunicator clientCommunicator;
   private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
@@ -64,11 +58,14 @@ public class ProxyInvoker<T> {
     this(proxyType, target, codec, null);
   }
 
-  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, ClientCommunicator clientCommunicator, Class... messageTypes) {
+  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
+    this(proxyType, target, new ProxyMessageCodec(codec, proxyType, messageTypes), clientCommunicator, messageTypes);
+  }
+  
+  public ProxyInvoker(Class<T> proxyType, T target, MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
     this.target = target;
-    this.codec = codec;
-    this.messageCodec = new ProxyMessageCodec(codec, proxyType);
-    this.messageTypes = new HashSet<Class>();
+    this.messageCodec = messageCodec;
+    this.messageTypes = new HashSet<Class<?>>();
     for (Class eventType : messageTypes) {
       this.messageTypes.add(eventType);
       if(target instanceof MessageFiring) {
@@ -84,7 +81,6 @@ public class ProxyInvoker<T> {
       throw new IllegalArgumentException("Messages cannot be sent using a null ClientCommunicator");
     } else {
       this.clientCommunicator = clientCommunicator;
-      this.eventMappings = createEventTypeMappings(messageTypes);
     }
   }
 
@@ -117,8 +113,11 @@ public class ProxyInvoker<T> {
     final ClientDescriptor caller = invocationContext == null ? null : invocationContext.caller;
     for (ClientDescriptor client : clients) {
       if (!client.equals(caller)) {
-        final Future<Void> send = clientCommunicator.send(client, encode(type, message));
-        futures.add(send);
+        try {
+          futures.add(clientCommunicator.send(client, ProxyEntityResponse.response(type, message)));
+        } catch (MessageCodecException ex) {
+          throw new RuntimeException(ex);
+        }
       }
     }
     boolean interrupted = false;
@@ -147,40 +146,12 @@ public class ProxyInvoker<T> {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
     }
     for (ClientDescriptor client : clients) {
-      clientCommunicator.sendNoResponse(client, encode(type, message));
+      try {
+        clientCommunicator.sendNoResponse(client, ProxyEntityResponse.response(type, message));
+      } catch (MessageCodecException ex) {
+        throw new RuntimeException(ex);
+      }
     }
-  }
-
-  private byte[] encode(final Class type, final Object message) {
-
-    final Byte messageTypeIdentifier = eventMappings.get(type);
-
-    if(messageTypeIdentifier == null) {
-      throw new AssertionError("WAT, no mapping for " + type.getName());
-    }
-
-    ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-    DataOutputStream output = new DataOutputStream(byteOut);
-
-    try {
-      output.writeByte(messageTypeIdentifier);
-      output.write(codec.encode(type, message));
-
-      output.close();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return byteOut.toByteArray();
-  }
-
-
-  static Map<Class, Byte> createEventTypeMappings(final Class... types) {
-    final HashMap<Class, Byte> map = new HashMap<Class, Byte>();
-    byte index = 0;
-    for (Class messageType : types) {
-      map.put(messageType, index++);
-    }
-    return map;
   }
 
   public void addClient(ClientDescriptor descriptor) {
