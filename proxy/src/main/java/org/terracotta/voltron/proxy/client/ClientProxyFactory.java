@@ -20,16 +20,14 @@ package org.terracotta.voltron.proxy.client;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.voltron.proxy.Codec;
-import org.terracotta.voltron.proxy.CommonProxyFactory;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedSet;
+
+import static org.terracotta.voltron.proxy.CommonProxyFactory.createMethodMappings;
+import static org.terracotta.voltron.proxy.CommonProxyFactory.createResponseTypeMappings;
+import static org.terracotta.voltron.proxy.CommonProxyFactory.invert;
 
 /**
  * @author Alex Snaps
@@ -65,7 +63,7 @@ public class ClientProxyFactory {
 
   public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint entityClientEndpoint,
                                   final Codec codec, Class... messageTypes) {
-
+    
     if (entityClientEndpoint == null) {
       throw new NullPointerException("EntityClientEndpoint has to be provided!");
     }
@@ -74,8 +72,6 @@ public class ClientProxyFactory {
       throw new IllegalArgumentException("We only proxy interfaces!");
     }
 
-    Map<Method, Byte> mappings = createMethodMappings(type);
-
     final Class[] interfaces;
     if (messageTypes.length == 0) {
       interfaces = new Class[] { clientType, Entity.class };
@@ -83,32 +79,16 @@ public class ClientProxyFactory {
       interfaces = new Class[] { clientType, Entity.class, ServerMessageAware.class };
     }
     return clientType.cast(Proxy.newProxyInstance(Entity.class.getClassLoader(), interfaces,
-        new VoltronProxyInvocationHandler(mappings, entityClientEndpoint, codec, createEventTypeMappings(messageTypes))));
+        new VoltronProxyInvocationHandler(
+                invert(createMethodMappings(type)),
+                entityClientEndpoint, codec,
+                invert(createResponseTypeMappings(type, messageTypes))
+        )
+    ));
   }
 
-  static Map<Method, Byte> createMethodMappings(final Class type) {
-    SortedSet<Method> methods = CommonProxyFactory.getSortedMethods(type);
-
-    final HashMap<Method, Byte> map = new HashMap<Method, Byte>();
-    byte index = 0;
-    for (final Method method : methods) {
-      map.put(method, index++);
-    }
-    return map;
-  }
-
-  static Map<Byte, Class> createEventTypeMappings(final Class... types) {
-    final HashMap<Byte, Class> map = new HashMap<Byte, Class>();
-    byte index = 0;
-    for (Class messageType : types) {
-      map.put(index++, messageType);
-    }
-    return map;
-  }
-
-
-  private static Class[] sum(Class one, Class[] others) {
-    Class[] result = new Class[others.length + 1];
+  private static Class<?>[] sum(Class<?> one, Class<?>[] others) {
+    Class<?>[] result = new Class<?>[others.length + 1];
     result[0] = one;
     System.arraycopy(others, 0, result, 1, others.length);
     return result;

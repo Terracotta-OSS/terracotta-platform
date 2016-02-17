@@ -32,12 +32,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 class ProxyEndpointDelegate implements EndpointDelegate {
 
   private final Codec codec;
-  private final ConcurrentMap<Class, CopyOnWriteArrayList<MessageListener>> listeners;
-  private final Map<Byte, Class> eventMappings;
+  private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
+  private final Map<Byte, Class<?>> eventMappings;
 
   public ProxyEndpointDelegate(final Codec codec,
-                               final ConcurrentMap<Class, CopyOnWriteArrayList<MessageListener>> listeners,
-                               final Map<Byte, Class> eventMappings) {
+                               final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners,
+                               final Map<Byte, Class<?>> eventMappings) {
     this.codec = codec;
     this.listeners = listeners;
     this.eventMappings = eventMappings;

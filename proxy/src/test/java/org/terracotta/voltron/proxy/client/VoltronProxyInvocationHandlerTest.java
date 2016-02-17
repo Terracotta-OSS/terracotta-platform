@@ -23,17 +23,21 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.voltron.proxy.ClientId;
+import org.terracotta.voltron.proxy.ProxyMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.terracotta.voltron.proxy.CommonProxyFactory.createMethodMappings;
+import static org.terracotta.voltron.proxy.CommonProxyFactory.invert;
 
 /**
  * @author Alex Snaps
@@ -45,7 +49,6 @@ public class VoltronProxyInvocationHandlerTest {
 
 
     final Set<Object[]> valuesSeen = new HashSet<Object[]>();
-    final HashMap<Method, Byte> mappings = new HashMap<Method, Byte>();
     final SerializationCodec codec = new SerializationCodec() {
       @Override
       public byte[] encode(final Class<?>[] type, final Object[] values) {
@@ -53,19 +56,18 @@ public class VoltronProxyInvocationHandlerTest {
         return super.encode(type, values);
       }
     };
-
+    final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, TestInterface.class);
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(codec.encode(Object.class, null));
+    when(future.get()).thenReturn(messageCodec.serialize(ProxyEntityResponse.response(Void.TYPE, null)));
 
-
-    VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(mappings, endpoint, codec, new HashMap<Byte, Class>());
-    for (Method method : TestInterface.class.getDeclaredMethods()) {
-      mappings.put(method, (byte)0);
+    Map<Method, Byte> methodMappings = invert(createMethodMappings(TestInterface.class));
+    VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(methodMappings, endpoint, codec, Collections.<Byte, Class<?>>emptyMap());
+    for (Method method : methodMappings.keySet()) {
       handler.invoke(null, method, new Object[] { "String", new Object() });
     }
     for (Object[] objects : valuesSeen) {

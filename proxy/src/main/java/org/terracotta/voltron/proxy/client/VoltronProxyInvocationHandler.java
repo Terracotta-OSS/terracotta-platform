@@ -36,6 +36,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -66,17 +67,17 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   private final Map<Method, Byte> mappings;
   private final EntityClientEndpoint entityClientEndpoint;
   private final Codec codec;
-  private final ConcurrentMap<Class, CopyOnWriteArrayList<MessageListener>> listeners;
+  private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
 
   public VoltronProxyInvocationHandler(final Map<Method, Byte> mappings,
                                        final EntityClientEndpoint entityClientEndpoint,
-                                       final Codec codec, Map<Byte, Class> eventMappings) {
+                                       final Codec codec, Map<Byte, Class<?>> eventMappings) {
     this.mappings = mappings;
     this.entityClientEndpoint = entityClientEndpoint;
     this.codec = codec;
-    this.listeners = new ConcurrentHashMap<Class, CopyOnWriteArrayList<MessageListener>>();
+    this.listeners = new ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<MessageListener>>();
     if (eventMappings.size() > 0) {
-      for (Class aClass : eventMappings.values()) {
+      for (Class<?> aClass : eventMappings.values()) {
         listeners.put(aClass, new CopyOnWriteArrayList<MessageListener>());
       }
       entityClientEndpoint.setDelegate(new ProxyEndpointDelegate(codec, listeners, eventMappings));
@@ -125,7 +126,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
           .invoke();
       return new ProxiedInvokeFuture(future, decodeTo, codec);
     } else {
-      return codec.decode(builder.invoke().get(), method.getReturnType());
+      byte[] bytes = builder.invoke().get();
+      return codec.decode(Arrays.copyOfRange(bytes, 1, bytes.length), method.getReturnType());
     }
   }
 

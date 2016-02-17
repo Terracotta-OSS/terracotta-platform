@@ -17,11 +17,12 @@
 
 package org.terracotta.voltron.proxy;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedSet;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
@@ -33,26 +34,30 @@ import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final Codec codec;
-  private final Map<Byte, Method> mappings;
-
-  public ProxyMessageCodec(Codec codec, Class<?> proxyType, Class<?> ... messageTypes) {
+  private final Map<Byte, Method> methodMappings;
+  private final Map<Class<?>, Byte> responseMappings;
+  
+  public ProxyMessageCodec(Codec codec, Class<?> proxyType, Class<?> ... eventTypes) {
     this.codec = codec;
-    this.mappings = createMethodMappings(proxyType);
-  }
-
-  static Map<Byte, Method> createMethodMappings(final Class type) {
-    SortedSet<Method> methods = CommonProxyFactory.getSortedMethods(type);
-
-    final HashMap<Byte, Method> map = new HashMap<Byte, Method>();
-    byte index = 0;
-    for (final Method method : methods) {
-      map.put(index++, method);
-    }
-    return map;
+    this.methodMappings = CommonProxyFactory.createMethodMappings(proxyType);
+    this.responseMappings = CommonProxyFactory.createResponseTypeMappings(proxyType, eventTypes);
   }
 
   public byte[] serialize(ProxyEntityResponse r) {
-    return codec.encode(r.getResponseType(), r.getResponse());
+    final Byte messageTypeIdentifier = responseMappings.get(r.getResponseType());
+    if(messageTypeIdentifier == null) {
+      throw new AssertionError("WAT, no mapping for " + r.getResponseType().getName());
+    }
+    ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+    DataOutputStream output = new DataOutputStream(byteOut);
+    try {
+      output.writeByte(messageTypeIdentifier);
+      output.write(codec.encode(r.getResponseType(), r.getResponse()));
+      output.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return byteOut.toByteArray();
   }
 
   public ProxyEntityMessage deserialize(final byte[] bytes) {
@@ -65,7 +70,7 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
   }
 
   private Method decodeMethod(final byte b) {
-    final Method method = mappings.get(b);
+    final Method method = methodMappings.get(b);
     if(method == null) {
       throw new AssertionError();
     }
