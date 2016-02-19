@@ -19,14 +19,18 @@ import org.terracotta.management.stats.AbstractStatisticHistory;
 import org.terracotta.management.stats.NumberUnit;
 import org.terracotta.management.stats.Sample;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public final class RatioHistory extends AbstractStatisticHistory<Double, NumberUnit> implements Serializable {
-  public RatioHistory(String name, List<Sample<Double>> samples, NumberUnit unit) {
-    super(name, samples, unit);
+public final class RatioHistory extends AbstractStatisticHistory<Double, NumberUnit> {
+  public RatioHistory(NumberUnit unit, Sample<Double>... values) {
+    super(unit, values);
+  }
+
+  public RatioHistory(List<Sample<Double>> samples, NumberUnit unit) {
+    super(samples, unit);
   }
 }

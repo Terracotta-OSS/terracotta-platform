@@ -15,9 +15,11 @@
  */
 package org.terracotta.management.stats;
 
+import org.terracotta.management.Objects;
 import org.terracotta.management.context.Context;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,9 +37,9 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Se
   private final Context context;
 
   public ContextualStatistics(String capability, Context context, Map<String, Statistic<?, ?>> statistics) {
-    this.statistics = statistics;
-    this.context = context;
-    this.capability = capability;
+    this.statistics = new HashMap<String, Statistic<?, ?>>(Objects.requireNonNull(statistics));
+    this.context = Objects.requireNonNull(context);
+    this.capability = Objects.requireNonNull(capability);
   }
 
   public String getCapability() {
@@ -84,12 +86,11 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Se
    */
   public <T extends Statistic<?, ?>> T getStatistic(Class<T> type, String name) throws NoSuchElementException {
     Map<String, T> filtered = getStatistics(type);
-    for (T statistic : filtered.values()) {
-      if (statistic.getName().equals(name)) {
-        return statistic;
-      }
+    T stat = filtered.get(name);
+    if (stat == null) {
+      throw new NoSuchElementException(name + ":" + type.getName());
     }
-    throw new NoSuchElementException(name + ":" + type.getName());
+    return stat;
   }
 
   public <T extends Statistic<?, ?>> Map<String, T> getStatistics(Class<T> type) {
@@ -112,6 +113,27 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Se
         ", context=" + context +
         ", statistics=" + statistics +
         '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ContextualStatistics that = (ContextualStatistics) o;
+
+    if (!statistics.equals(that.statistics)) return false;
+    if (!capability.equals(that.capability)) return false;
+    return context.equals(that.context);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = statistics.hashCode();
+    result = 31 * result + capability.hashCode();
+    result = 31 * result + context.hashCode();
+    return result;
   }
 
 }

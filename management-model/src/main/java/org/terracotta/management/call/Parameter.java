@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.call;
 
+import org.terracotta.management.Objects;
+
 import java.io.Serializable;
 
 /**
@@ -28,13 +30,13 @@ public final class Parameter implements Serializable {
   private final String className;
 
   public Parameter(Object value) {
-    this.value = value;
+    this.value = Objects.requireNonNull(value);
     this.className = value.getClass().getName();
   }
 
   public Parameter(Object value, String className) {
     this.value = value;
-    this.className = className;
+    this.className = Objects.requireNonNull(className);
   }
 
   public Object getValue() {
@@ -43,5 +45,24 @@ public final class Parameter implements Serializable {
 
   public String getClassName() {
     return className;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Parameter parameter = (Parameter) o;
+
+    if (value != null ? !value.equals(parameter.value) : parameter.value != null) return false;
+    return className.equals(parameter.className);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = value != null ? value.hashCode() : 0;
+    result = 31 * result + className.hashCode();
+    return result;
   }
 }

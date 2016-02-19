@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.message;
 
+import org.terracotta.management.Objects;
 import org.terracotta.management.call.ContextualReturn;
 import org.terracotta.management.notification.ContextualNotification;
 import org.terracotta.management.stats.ContextualStatistics;
@@ -31,10 +32,11 @@ public final class DefaultMessage implements Serializable, Message {
   private final long timeMillis;
   private final String messageType;
 
-  public DefaultMessage(long timeMillis, String messageType, Object data) {
+  // not opened yet to other message types
+  private DefaultMessage(long timeMillis, String messageType, Object data) {
     this.timeMillis = timeMillis;
-    this.messageType = messageType;
-    this.data = data;
+    this.messageType = Objects.requireNonNull(messageType);
+    this.data = Objects.requireNonNull(data);
   }
 
   public DefaultMessage(long timeMillis, ContextualNotification notification) {
@@ -72,6 +74,32 @@ public final class DefaultMessage implements Serializable, Message {
         ", type=" + getType() +
         ", data=" + (data == null ? null : data.getClass().isArray() ? Arrays.toString((Object[]) data) : data) +
         '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DefaultMessage that = (DefaultMessage) o;
+
+    if (timeMillis != that.timeMillis) return false;
+    if (data.getClass() != that.data.getClass()) return false;
+    if (data.getClass().isArray()) {
+      if (!Arrays.equals((Object[]) data, (Object[]) that.data)) return false;
+    } else {
+      if (!data.equals(that.data)) return false;
+    }
+    return messageType.equals(that.messageType);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = data.getClass().isArray() ? Arrays.hashCode((Object[]) data) : data.hashCode();
+    result = 31 * result + (int) (timeMillis ^ (timeMillis >>> 32));
+    result = 31 * result + messageType.hashCode();
+    return result;
   }
 
 }

@@ -20,10 +20,10 @@ package org.terracotta.management.stats;
  */
 public enum NumberUnit {
 
-  PERCENT {
+  RATIO {
     @Override
     public String toString() {
-      return "percentage";
+      return "ratio";
     }
   },
 

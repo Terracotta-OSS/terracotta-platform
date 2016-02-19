@@ -15,12 +15,14 @@
  */
 package org.terracotta.management.capabilities.descriptors;
 
+import org.terracotta.management.Objects;
 import org.terracotta.management.stats.StatisticType;
 
 import java.io.Serializable;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public final class StatisticDescriptor implements Descriptor, Serializable {
 
@@ -28,8 +30,8 @@ public final class StatisticDescriptor implements Descriptor, Serializable {
   private final StatisticType type;
 
   public StatisticDescriptor(String name, StatisticType type) {
-    this.name = name;
-    this.type = type;
+    this.name = Objects.requireNonNull(name);
+    this.type = Objects.requireNonNull(type);
   }
 
   public String getName() {
@@ -47,15 +49,15 @@ public final class StatisticDescriptor implements Descriptor, Serializable {
 
     StatisticDescriptor that = (StatisticDescriptor) o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    return !(type != null ? !type.equals(that.type) : that.type != null);
+    if (!name.equals(that.name)) return false;
+    return type == that.type;
 
   }
 
   @Override
   public int hashCode() {
-    int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (type != null ? type.hashCode() : 0);
+    int result = name.hashCode();
+    result = 31 * result + type.hashCode();
     return result;
   }
 }

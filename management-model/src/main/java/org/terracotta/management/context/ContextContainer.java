@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.context;
 
+import org.terracotta.management.Objects;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +24,7 @@ import java.util.Collections;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public final class ContextContainer implements Serializable {
 
@@ -38,9 +41,9 @@ public final class ContextContainer implements Serializable {
   }
 
   public ContextContainer(String name, String value, Collection<ContextContainer> subContexts) {
-    this.name = name;
-    this.value = value;
-    this.subContexts = subContexts;
+    this.name = Objects.requireNonNull(name);
+    this.value = Objects.requireNonNull(value);
+    this.subContexts = Objects.requireNonNull(subContexts);
   }
 
   public String getName() {
@@ -54,4 +57,26 @@ public final class ContextContainer implements Serializable {
   public Collection<ContextContainer> getSubContexts() {
     return subContexts;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ContextContainer that = (ContextContainer) o;
+
+    if (!name.equals(that.name)) return false;
+    if (!value.equals(that.value)) return false;
+    return subContexts.equals(that.subContexts);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + value.hashCode();
+    result = 31 * result + subContexts.hashCode();
+    return result;
+  }
+
 }

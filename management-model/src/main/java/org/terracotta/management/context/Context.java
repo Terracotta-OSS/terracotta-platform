@@ -24,6 +24,7 @@ import java.util.Set;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public class Context extends AbstractMap<String, String> implements Serializable {
 
@@ -31,9 +32,6 @@ public class Context extends AbstractMap<String, String> implements Serializable
 
   private Context(Map<String, String> back) {
     this.back.putAll(back);
-  }
-
-  private Context() {
   }
 
   public Map<String, String> toMap() {
@@ -106,7 +104,7 @@ public class Context extends AbstractMap<String, String> implements Serializable
   }
 
   public static Context create(String key, String val) {
-    return new Context().with(key, val);
+    return empty().with(key, val);
   }
 
   public static Context create(Map<String, String> map) {

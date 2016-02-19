@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.stats.history;
-
-import org.terracotta.management.stats.AbstractStatisticHistory;
-import org.terracotta.management.stats.Sample;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+package org.terracotta.management;
 
 /**
- * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public final class RateHistory extends AbstractStatisticHistory<Double, TimeUnit> {
-  public RateHistory(TimeUnit unit, Sample<Double>... values) {
-    super(unit, values);
-  }
-
-  public RateHistory(List<Sample<Double>> samples, TimeUnit timeUnit) {
-    super(samples, timeUnit);
+public class Objects {
+  public static <T> T requireNonNull(T obj) {
+    if (obj == null)
+      throw new NullPointerException();
+    return obj;
   }
 }

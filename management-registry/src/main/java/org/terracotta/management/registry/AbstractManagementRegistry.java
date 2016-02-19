@@ -16,7 +16,6 @@
 package org.terracotta.management.registry;
 
 import org.terracotta.management.capabilities.Capability;
-import org.terracotta.management.context.ContextContainer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public abstract class AbstractManagementRegistry implements ManagementRegistry {
 

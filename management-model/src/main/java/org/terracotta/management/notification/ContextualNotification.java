@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.notification;
 
+import org.terracotta.management.Objects;
 import org.terracotta.management.context.Context;
 
 import java.io.Serializable;
@@ -32,12 +33,9 @@ public final class ContextualNotification implements Serializable {
   private final Map<String, String> attributes;
 
   public ContextualNotification(Context context, String type, Map<String, String> attributes) {
-    if (context == null) throw new NullPointerException();
-    if (attributes == null) throw new NullPointerException();
-    if (type == null) throw new NullPointerException();
-    this.context = context;
-    this.type = type;
-    this.attributes = new HashMap<String, String>(attributes);
+    this.context = Objects.requireNonNull(context);
+    this.type = Objects.requireNonNull(type);
+    this.attributes = new HashMap<String, String>(Objects.requireNonNull(attributes));
   }
 
   public ContextualNotification(Context context, String type) {
@@ -63,4 +61,26 @@ public final class ContextualNotification implements Serializable {
         ", attributes=" + attributes +
         '}';
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ContextualNotification that = (ContextualNotification) o;
+
+    if (!type.equals(that.type)) return false;
+    if (!context.equals(that.context)) return false;
+    return attributes.equals(that.attributes);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = type.hashCode();
+    result = 31 * result + context.hashCode();
+    result = 31 * result + attributes.hashCode();
+    return result;
+  }
+
 }

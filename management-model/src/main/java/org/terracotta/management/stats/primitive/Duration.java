@@ -17,14 +17,14 @@ package org.terracotta.management.stats.primitive;
 
 import org.terracotta.management.stats.AbstractStatistic;
 
-import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public final class Duration extends AbstractStatistic<Long, TimeUnit> implements Serializable {
-  public Duration(String name, Long value, TimeUnit timeUnit) {
-    super(name, value, timeUnit);
+public final class Duration extends AbstractStatistic<Long, TimeUnit> {
+  public Duration(Long value, TimeUnit timeUnit) {
+    super(value, timeUnit);
   }
 }
