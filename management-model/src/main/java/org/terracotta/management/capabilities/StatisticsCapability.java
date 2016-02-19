@@ -57,7 +57,7 @@ public final class StatisticsCapability implements Capability, Serializable {
     return capabilityContext;
   }
 
-  public static class Properties {
+  public static class Properties implements Serializable {
     private final long averageWindowDuration;
     private final TimeUnit averageWindowUnit;
     private final int historySize;
