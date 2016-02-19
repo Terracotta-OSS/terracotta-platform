@@ -60,7 +60,7 @@ public final class CapabilityContext implements Serializable {
     return attributes;
   }
 
-  public static class Attribute {
+  public static class Attribute implements Serializable {
     private final String name;
     private final boolean required;
 

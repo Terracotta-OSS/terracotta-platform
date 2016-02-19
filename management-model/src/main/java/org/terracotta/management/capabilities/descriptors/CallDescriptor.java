@@ -67,7 +67,7 @@ public final class CallDescriptor implements Descriptor, Serializable {
     return result;
   }
 
-  public static class Parameter {
+  public static class Parameter implements Serializable {
     private final String name;
     private final String type;
 
