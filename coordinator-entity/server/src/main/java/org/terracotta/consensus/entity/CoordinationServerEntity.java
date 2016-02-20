@@ -21,7 +21,6 @@ import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 import org.terracotta.voltron.proxy.server.ProxyInvoker;
 import org.terracotta.consensus.entity.server.ElectionChangeListener;
@@ -34,7 +33,7 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
-    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, ServerElectionEvent.class), new SerializationCodec(), clientCommunicator, ServerElectionEvent.class));
+    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, ServerElectionEvent.class), clientCommunicator, ServerElectionEvent.class));
     this.leaderElector = leaderElector;
     this.leaderElector.setListener(new ElectionChangeListenerImpl());
   }

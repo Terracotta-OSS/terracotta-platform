@@ -19,9 +19,6 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.NoConcurrencyStrategy;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
@@ -39,10 +36,6 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
 
   public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
     return target.invoke(clientDescriptor, msg);
-  }
-
-  public ConcurrencyStrategy<ProxyEntityMessage> getConcurrencyStrategy() {
-    return new NoConcurrencyStrategy<ProxyEntityMessage>();
   }
 
   public void connected(ClientDescriptor clientDescriptor) {
@@ -63,10 +56,6 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
 
   public void synchronizeKeyToPassive(final PassiveSynchronizationChannel passiveSynchronizationChannel, final int i) {
     // no op ... for now?
-  }
-
-  public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
-    return target.getMessageCodec();
   }
 
   public void createNew() {
