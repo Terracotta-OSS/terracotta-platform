@@ -19,11 +19,7 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.voltron.proxy.Codec;
-import org.terracotta.voltron.proxy.ProxyMessageCodec;
-import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.server.messages.MessageFiring;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
@@ -43,31 +39,18 @@ import java.util.concurrent.Future;
 public class ProxyInvoker<T> {
 
   private final T target;
-  private final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec;
-  private final Set<Class<?>> messageTypes;
   private final ClientCommunicator clientCommunicator;
   private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
   private final ThreadLocal<InvocationContext> invocationContext = new ThreadLocal<InvocationContext>();
   
   public ProxyInvoker(Class<T> proxyType, T target) {
-    this(proxyType, target, new SerializationCodec(), null);
+    this(proxyType, target, null);
   }
   
-  public ProxyInvoker(Class<T> proxyType, T target, Codec codec) {
-    this(proxyType, target, codec, null);
-  }
-
-  public ProxyInvoker(Class<T> proxyType, T target, Codec codec, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
-    this(proxyType, target, new ProxyMessageCodec(codec, proxyType, messageTypes), clientCommunicator, messageTypes);
-  }
-  
-  public ProxyInvoker(Class<T> proxyType, T target, MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
+  public ProxyInvoker(Class<T> proxyType, T target, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
     this.target = target;
-    this.messageCodec = messageCodec;
-    this.messageTypes = new HashSet<Class<?>>();
     for (Class eventType : messageTypes) {
-      this.messageTypes.add(eventType);
       if(target instanceof MessageFiring) {
         ((MessageFiring)target).registerListener(eventType, new MessageListener() {
           @Override
@@ -82,10 +65,6 @@ public class ProxyInvoker<T> {
     } else {
       this.clientCommunicator = clientCommunicator;
     }
-  }
-
-  public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
-    return messageCodec;
   }
 
   public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage message) {
@@ -105,9 +84,6 @@ public class ProxyInvoker<T> {
 
   public void fireMessage(Object message) {
     final Class<?> type = message.getClass();
-    if(!messageTypes.contains(type)) {
-      throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
-    }
     Set<Future<Void>> futures = new HashSet<Future<Void>>();
     final InvocationContext invocationContext = this.invocationContext.get();
     final ClientDescriptor caller = invocationContext == null ? null : invocationContext.caller;
@@ -142,9 +118,6 @@ public class ProxyInvoker<T> {
 
   public void fireAndForgetMessage(Object message, ClientDescriptor... clients) {
     final Class<?> type = message.getClass();
-    if(!messageTypes.contains(type)) {
-      throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
-    }
     for (ClientDescriptor client : clients) {
       try {
         clientCommunicator.sendNoResponse(client, ProxyEntityResponse.response(type, message));

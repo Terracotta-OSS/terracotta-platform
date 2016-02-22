@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
@@ -67,6 +68,10 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
 
   public ProxyEntityMessage deserializeForSync(final int i, final byte[] bytes) {
     throw new UnsupportedOperationException("Implement me!");
+  }
+
+  public byte[] serializeForSync(int concurrencyKey, ProxyEntityResponse payload) throws MessageCodecException {
+    throw new UnsupportedOperationException("Not supported yet."); 
   }
 
   private Method decodeMethod(final byte b) {
