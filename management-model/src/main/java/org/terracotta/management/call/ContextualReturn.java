@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.call;
 
+import org.terracotta.management.Objects;
 import org.terracotta.management.context.Context;
 
 import java.io.Serializable;
@@ -38,8 +39,8 @@ public final class ContextualReturn<T> implements Serializable {
 
   private ContextualReturn(String capability, Context context, T value) {
     this.value = value;
-    this.context = context;
-    this.capability = capability;
+    this.context = Objects.requireNonNull(context);
+    this.capability = Objects.requireNonNull(capability);
   }
 
   public boolean hasValue() {
@@ -63,7 +64,7 @@ public final class ContextualReturn<T> implements Serializable {
 
   @SuppressWarnings("unchecked")
   public static <T> ContextualReturn<T> empty(String capability, Context context) {
-    return new ContextualReturn<T>(capability, Context.empty(), (T) Void.TYPE);
+    return new ContextualReturn<T>(capability, context, (T) Void.TYPE);
   }
 
   public String getCapability() {
@@ -76,6 +77,27 @@ public final class ContextualReturn<T> implements Serializable {
         ", context=" + context +
         ", value=" + value +
         '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ContextualReturn<?> that = (ContextualReturn<?>) o;
+
+    if (value != null ? !value.equals(that.value) : that.value != null) return false;
+    if (!context.equals(that.context)) return false;
+    return capability.equals(that.capability);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = value != null ? value.hashCode() : 0;
+    result = 31 * result + context.hashCode();
+    result = 31 * result + capability.hashCode();
+    return result;
   }
 
 }

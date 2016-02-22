@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.capabilities.context;
 
+import org.terracotta.management.Objects;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +25,7 @@ import java.util.HashSet;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public final class CapabilityContext implements Serializable {
 
@@ -33,7 +36,7 @@ public final class CapabilityContext implements Serializable {
   }
 
   public CapabilityContext(Collection<Attribute> attributes) {
-    this.attributes = attributes;
+    this.attributes = Objects.requireNonNull(attributes);
   }
 
   public Collection<Attribute> getAttributes() {
@@ -60,12 +63,28 @@ public final class CapabilityContext implements Serializable {
     return attributes;
   }
 
-  public static class Attribute implements Serializable {
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    CapabilityContext that = (CapabilityContext) o;
+
+    return attributes.equals(that.attributes);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return attributes.hashCode();
+  }
+
+  public static final class Attribute implements Serializable {
     private final String name;
     private final boolean required;
 
     public Attribute(String name, boolean required) {
-      this.name = name;
+      this.name = Objects.requireNonNull(name);
       this.required = required;
     }
 
@@ -75,6 +94,25 @@ public final class CapabilityContext implements Serializable {
 
     public boolean isRequired() {
       return required;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Attribute attribute = (Attribute) o;
+
+      if (required != attribute.required) return false;
+      return name.equals(attribute.name);
+
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + (required ? 1 : 0);
+      return result;
     }
   }
 

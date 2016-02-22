@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.capabilities;
 
+import org.terracotta.management.Objects;
 import org.terracotta.management.capabilities.context.CapabilityContext;
 import org.terracotta.management.capabilities.descriptors.Descriptor;
 
@@ -24,21 +25,22 @@ import java.util.Collection;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public final class ActionsCapability implements Capability, Serializable {
 
-  private final String name;
-  private final Collection<Descriptor> descriptors;
-  private final CapabilityContext capabilityContext;
+  private String name;
+  private Collection<Descriptor> descriptors;
+  private CapabilityContext capabilityContext;
 
   public ActionsCapability(String name, CapabilityContext capabilityContext, Descriptor... descriptors) {
     this(name, capabilityContext, Arrays.asList(descriptors));
   }
 
   public ActionsCapability(String name, CapabilityContext capabilityContext, Collection<Descriptor> descriptors) {
-    this.name = name;
-    this.descriptors = descriptors;
-    this.capabilityContext = capabilityContext;
+    this.name = Objects.requireNonNull(name);
+    this.descriptors = Objects.requireNonNull(descriptors);
+    this.capabilityContext = Objects.requireNonNull(capabilityContext);
   }
 
   @Override
@@ -54,4 +56,26 @@ public final class ActionsCapability implements Capability, Serializable {
   public CapabilityContext getCapabilityContext() {
     return capabilityContext;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ActionsCapability that = (ActionsCapability) o;
+
+    if (!name.equals(that.name)) return false;
+    if (!descriptors.equals(that.descriptors)) return false;
+    return capabilityContext.equals(that.capabilityContext);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + descriptors.hashCode();
+    result = 31 * result + capabilityContext.hashCode();
+    return result;
+  }
+
 }

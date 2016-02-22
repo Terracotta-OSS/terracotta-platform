@@ -15,29 +15,27 @@
  */
 package org.terracotta.management.stats;
 
+import org.terracotta.management.Objects;
+
+import java.io.Serializable;
+
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public abstract class AbstractStatistic<V, U> implements Statistic<V, U> {
+public abstract class AbstractStatistic<V extends Serializable, U extends Serializable> implements Statistic<V, U>, Serializable {
 
-  private final String name;
   private final V value;
   private final U unit;
 
-  public AbstractStatistic(String name, V value, U unit) {
-    this.name = name;
-    this.value = value;
-    this.unit = unit;
+  public AbstractStatistic(V value, U unit) {
+    this.value = Objects.requireNonNull(value);
+    this.unit = Objects.requireNonNull(unit);
   }
 
   @Override
   public final U getUnit() {
     return unit;
-  }
-
-  @Override
-  public final String getName() {
-    return name;
   }
 
   @Override
@@ -47,7 +45,7 @@ public abstract class AbstractStatistic<V, U> implements Statistic<V, U> {
 
   @Override
   public String toString() {
-    return "{" + "name='" + getName() + '\'' + ", value=" + getValue() + ", unit=" + getUnit() + '}';
+    return "{" + "type='" + getClass().getSimpleName() + '\'' + ", value=" + getValue() + ", unit=" + getUnit() + '}';
   }
 
   @Override
@@ -55,13 +53,13 @@ public abstract class AbstractStatistic<V, U> implements Statistic<V, U> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     AbstractStatistic<?, ?> that = (AbstractStatistic<?, ?>) o;
-    return name.equals(that.name) && value.equals(that.value) && unit.equals(that.unit);
+    if (!value.equals(that.value)) return false;
+    return unit.equals(that.unit);
   }
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + value.hashCode();
+    int result = value.hashCode();
     result = 31 * result + unit.hashCode();
     return result;
   }

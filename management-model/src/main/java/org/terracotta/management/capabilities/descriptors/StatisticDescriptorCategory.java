@@ -15,22 +15,28 @@
  */
 package org.terracotta.management.capabilities.descriptors;
 
+import org.terracotta.management.Objects;
+
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public final class StatisticDescriptorCategory implements Descriptor, Serializable {
 
   private final String name;
   private final List<StatisticDescriptor> statistics;
 
+  public StatisticDescriptorCategory(String name, StatisticDescriptor... statistics) {
+    this(name, Arrays.asList(statistics));
+  }
+
   public StatisticDescriptorCategory(String name, List<StatisticDescriptor> statistics) {
-    this.name = name;
-    this.statistics = Collections.unmodifiableList(new ArrayList<StatisticDescriptor>(statistics));
+    this.name = Objects.requireNonNull(name);
+    this.statistics = Objects.requireNonNull(statistics);
   }
 
   public String getName() {
@@ -48,14 +54,14 @@ public final class StatisticDescriptorCategory implements Descriptor, Serializab
 
     StatisticDescriptorCategory that = (StatisticDescriptorCategory) o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (!name.equals(that.name)) return false;
     return statistics.equals(that.statistics);
 
   }
 
   @Override
   public int hashCode() {
-    int result = name != null ? name.hashCode() : 0;
+    int result = name.hashCode();
     result = 31 * result + statistics.hashCode();
     return result;
   }

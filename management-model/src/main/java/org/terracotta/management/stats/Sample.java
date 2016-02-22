@@ -15,19 +15,22 @@
  */
 package org.terracotta.management.stats;
 
+import org.terracotta.management.Objects;
+
 import java.io.Serializable;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public final class Sample<V> implements Serializable {
+public final class Sample<V extends Serializable> implements Serializable {
 
   private final long timestamp;
   private final V value;
 
   public Sample(long timestamp, V value) {
     this.timestamp = timestamp;
-    this.value = value;
+    this.value = Objects.requireNonNull(value);
   }
 
   public long getTimestamp() {
@@ -46,14 +49,14 @@ public final class Sample<V> implements Serializable {
     Sample<?> sample = (Sample<?>) o;
 
     if (timestamp != sample.timestamp) return false;
-    return !(value != null ? !value.equals(sample.value) : sample.value != null);
+    return value.equals(sample.value);
 
   }
 
   @Override
   public int hashCode() {
     int result = (int) (timestamp ^ (timestamp >>> 32));
-    result = 31 * result + (value != null ? value.hashCode() : 0);
+    result = 31 * result + value.hashCode();
     return result;
   }
 

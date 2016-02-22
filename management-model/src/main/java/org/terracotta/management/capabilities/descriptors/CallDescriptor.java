@@ -15,11 +15,15 @@
  */
 package org.terracotta.management.capabilities.descriptors;
 
+import org.terracotta.management.Objects;
+
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
 public final class CallDescriptor implements Descriptor, Serializable {
 
@@ -27,10 +31,14 @@ public final class CallDescriptor implements Descriptor, Serializable {
   private final String returnType;
   private final List<Parameter> parameters;
 
+  public CallDescriptor(String name, String returnType, Parameter... parameters) {
+    this(name, returnType, Arrays.asList(parameters));
+  }
+
   public CallDescriptor(String name, String returnType, List<Parameter> parameters) {
-    this.name = name;
-    this.returnType = returnType;
-    this.parameters = parameters;
+    this.name = Objects.requireNonNull(name);
+    this.returnType = Objects.requireNonNull(returnType);
+    this.parameters = Objects.requireNonNull(parameters);
   }
 
   @Override
@@ -53,27 +61,27 @@ public final class CallDescriptor implements Descriptor, Serializable {
 
     CallDescriptor that = (CallDescriptor) o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    if (returnType != null ? !returnType.equals(that.returnType) : that.returnType != null) return false;
-    return !(parameters != null ? !parameters.equals(that.parameters) : that.parameters != null);
+    if (!name.equals(that.name)) return false;
+    if (!returnType.equals(that.returnType)) return false;
+    return parameters.equals(that.parameters);
 
   }
 
   @Override
   public int hashCode() {
-    int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (returnType != null ? returnType.hashCode() : 0);
-    result = 31 * result + (parameters != null ? parameters.hashCode() : 0);
+    int result = name.hashCode();
+    result = 31 * result + returnType.hashCode();
+    result = 31 * result + parameters.hashCode();
     return result;
   }
 
-  public static class Parameter implements Serializable {
+  public static final class Parameter implements Serializable {
     private final String name;
     private final String type;
 
     public Parameter(String name, String type) {
-      this.name = name;
-      this.type = type;
+      this.name = Objects.requireNonNull(name);
+      this.type = Objects.requireNonNull(type);
     }
 
     public String getName() {
@@ -91,15 +99,15 @@ public final class CallDescriptor implements Descriptor, Serializable {
 
       Parameter parameter = (Parameter) o;
 
-      if (name != null ? !name.equals(parameter.name) : parameter.name != null) return false;
-      return !(type != null ? !type.equals(parameter.type) : parameter.type != null);
+      if (!name.equals(parameter.name)) return false;
+      return type.equals(parameter.type);
 
     }
 
     @Override
     public int hashCode() {
-      int result = name != null ? name.hashCode() : 0;
-      result = 31 * result + (type != null ? type.hashCode() : 0);
+      int result = name.hashCode();
+      result = 31 * result + type.hashCode();
       return result;
     }
   }
