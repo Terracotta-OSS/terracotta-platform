@@ -18,12 +18,11 @@
 package org.terracotta.consensus.entity;
 
 import org.terracotta.consensus.entity.messages.ServerElectionEvent;
+import org.terracotta.consensus.entity.server.ElectionChangeListener;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
-import org.terracotta.voltron.proxy.server.ProxyInvoker;
-import org.terracotta.consensus.entity.server.ElectionChangeListener;
 
 /**
  * @author Alex Snaps
@@ -33,7 +32,7 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
-    super(new ProxyInvoker(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, ServerElectionEvent.class), clientCommunicator, ServerElectionEvent.class));
+    super(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, ServerElectionEvent.class), clientCommunicator, ServerElectionEvent.class);
     this.leaderElector = leaderElector;
     this.leaderElector.setListener(new ElectionChangeListenerImpl());
   }
@@ -45,7 +44,8 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
   }
 
   private class ElectionChangeListenerImpl implements ElectionChangeListener<String, ClientDescriptor> {
-    
+
+    @Override
     public void onDelist(String namespace, ClientDescriptor clientDescriptor) {
       fireAndForgetMessage(ServerElectionEvent.changed(namespace), clientDescriptor);
     }

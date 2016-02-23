@@ -18,6 +18,7 @@
 package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
@@ -30,42 +31,50 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
 
   private final ProxyInvoker<T> target;
 
-  public ProxiedServerEntity(final ProxyInvoker<T> target) {
-    this.target = target;
+  public ProxiedServerEntity(Class<T> proxyType, T target) {
+    this(proxyType, target, null);
   }
 
+  public ProxiedServerEntity(Class<T> proxyType, T target, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
+    this.target = new ProxyInvoker<T>(proxyType, target, clientCommunicator, messageTypes);
+  }
+
+  @Override
   public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
     return target.invoke(clientDescriptor, msg);
   }
 
+  @Override
   public void connected(ClientDescriptor clientDescriptor) {
     target.addClient(clientDescriptor);
   }
 
+  @Override
   public void disconnected(ClientDescriptor clientDescriptor) {
     target.removeClient(clientDescriptor);
   }
 
-  public byte[] getConfig() {
-    return null;
-  }
-
+  @Override
   public void handleReconnect(final ClientDescriptor clientDescriptor, final byte[] bytes) {
     // Don't care I think
   }
 
+  @Override
   public void synchronizeKeyToPassive(final PassiveSynchronizationChannel passiveSynchronizationChannel, final int i) {
     // no op ... for now?
   }
 
+  @Override
   public void createNew() {
     // Don't care I think
   }
 
+  @Override
   public void loadExisting() {
     // Don't care I think
   }
 
+  @Override
   public void destroy() {
     // Don't care I think
   }
