@@ -34,15 +34,18 @@ class ServerCoordinationImpl extends MessageFiring implements CoordinationEntity
     this.leaderElector = leaderElector;
   }
 
+  @Override
   public ElectionResponse runForElection(final String namespace, @ClientId final Object clientId) {
     return leaderElector.enlist(namespace, (ClientDescriptor)clientId);
   }
 
+  @Override
   public void accept(final String namespace, final LeaderOffer permit) {
     leaderElector.accept(namespace, permit);
     fire(ServerElectionEvent.completed(namespace));
   }
 
+  @Override
   public void delist(final String namespace, @ClientId final Object clientId) {
     leaderElector.delist(namespace, (ClientDescriptor)clientId);
   }

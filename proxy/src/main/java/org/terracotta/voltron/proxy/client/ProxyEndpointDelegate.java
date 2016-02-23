@@ -43,6 +43,7 @@ class ProxyEndpointDelegate implements EndpointDelegate {
     this.eventMappings = eventMappings;
   }
 
+  @Override
   public void handleMessage(final byte[] bytes) {
     final Object message = codec.decode(Arrays.copyOfRange(bytes, 1, bytes.length), eventMappings.get(bytes[0]));
     final Class<?> aClass = message.getClass();
@@ -51,11 +52,13 @@ class ProxyEndpointDelegate implements EndpointDelegate {
     }
   }
 
+  @Override
   public byte[] createExtendedReconnectData() {
     // no idea?!
     return new byte[0];
   }
 
+  @Override
   public void didDisconnectUnexpectedly() {
     // no idea?!
   }

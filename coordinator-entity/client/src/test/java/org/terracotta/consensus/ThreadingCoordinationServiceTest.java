@@ -137,18 +137,22 @@ public class ThreadingCoordinationServiceTest {
       return ElectionResult.NOT_ELECTED;
     }
 
+    @Override
     public synchronized void accept(final String namespace, final LeaderOffer permit) {
       accepted = true;
     }
 
+    @Override
     public synchronized void delist(final String namespace, @ClientId final Object clientId) {
       throw new UnsupportedOperationException("Implement me!");
     }
 
+    @Override
     public void close() {
       throw new UnsupportedOperationException("Implement me!");
     }
 
+    @Override
     public void registerListener(final MessageListener<ServerElectionEvent<String>> message) {
       // no op
     }
