@@ -17,20 +17,26 @@
 
 package org.terracotta.consensus.entity;
 
+import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.NoConcurrencyStrategy;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.voltron.proxy.ProxyMessageCodec;
+import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 /**
  * @author Alex Snaps
  */
-public class CoordinationServerEntityService implements ServerEntityService<CoordinationServerEntity, PassiveServerEntity<EntityMessage, EntityResponse>> {
+public class CoordinationServerEntityService implements ServerEntityService<ProxyEntityMessage, ProxyEntityResponse> {
   
   private static final String ENTITY_CLASS_NAME = "org.terracotta.consensus.entity.client.CoordinationClientEntity";
 
@@ -52,7 +58,15 @@ public class CoordinationServerEntityService implements ServerEntityService<Coor
     return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new UuidOfferFactory()), communicator);
   }
 
-  public PassiveServerEntity<EntityMessage, EntityResponse> createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
+  public PassiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
     throw new UnsupportedOperationException("Implement me!");
+  }
+
+  public ConcurrencyStrategy<ProxyEntityMessage> getConcurrencyStrategy(byte[] configuration) {
+    return new NoConcurrencyStrategy();
+  }
+
+  public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
+    return new ProxyMessageCodec(new SerializationCodec(), CoordinationEntity.class, ServerElectionEvent.class);
   }
 }

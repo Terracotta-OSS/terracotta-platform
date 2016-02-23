@@ -65,8 +65,12 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
     return new ProxyEntityMessage(method, decodeArgs(bytes, method.getParameterTypes()));
   }
 
+  public byte[] serializeForSync(int concurrencyKey, ProxyEntityResponse payload) {
+    throw new UnsupportedOperationException("Not supported yet."); 
+  }
+
   public ProxyEntityMessage deserializeForSync(final int i, final byte[] bytes) {
-    throw new UnsupportedOperationException("Implement me!");
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   private Method decodeMethod(final byte b) {
