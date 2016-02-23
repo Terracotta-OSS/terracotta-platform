@@ -22,32 +22,32 @@ import org.terracotta.consensus.entity.server.LeaderElector;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.NoConcurrencyStrategy;
-import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.voltron.proxy.ProxyMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
+import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
 /**
  * @author Alex Snaps
  */
-public class CoordinationServerEntityService implements ServerEntityService<ProxyEntityMessage, ProxyEntityResponse> {
+public class CoordinationServerEntityService extends ProxyServerEntityService {
   
   private static final String ENTITY_CLASS_NAME = "org.terracotta.consensus.entity.client.CoordinationClientEntity";
 
+  public CoordinationServerEntityService() {
+    super(CoordinationEntity.class, new SerializationCodec(), ServerElectionEvent.class);
+  }
+
+  @Override
   public long getVersion() {
     return Versions.LATEST.version();
   }
 
+  @Override
   public boolean handlesEntityType(final String s) {
     return ENTITY_CLASS_NAME.equals(s);
   }
 
+  @Override
   public CoordinationServerEntity createActiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
     if (bytes != null && bytes.length > 0) {
       throw new IllegalArgumentException("No config expected here!");
@@ -58,15 +58,4 @@ public class CoordinationServerEntityService implements ServerEntityService<Prox
     return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new UuidOfferFactory()), communicator);
   }
 
-  public PassiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
-    throw new UnsupportedOperationException("Implement me!");
-  }
-
-  public ConcurrencyStrategy<ProxyEntityMessage> getConcurrencyStrategy(byte[] configuration) {
-    return new NoConcurrencyStrategy();
-  }
-
-  public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
-    return new ProxyMessageCodec(new SerializationCodec(), CoordinationEntity.class, ServerElectionEvent.class);
-  }
 }

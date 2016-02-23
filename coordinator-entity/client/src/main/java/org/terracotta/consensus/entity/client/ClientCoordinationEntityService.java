@@ -28,18 +28,22 @@ import org.terracotta.voltron.proxy.client.ClientProxyFactory;
  */
 public class ClientCoordinationEntityService implements EntityClientService<CoordinationClientEntity, Void> {
 
+  @Override
   public boolean handlesEntityType(final Class<CoordinationClientEntity> aClass) {
     return aClass == CoordinationClientEntity.class;
   }
 
+  @Override
   public byte[] serializeConfiguration(final Void aVoid) {
     return new byte[0];
   }
 
+  @Override
   public Void deserializeConfiguration(final byte[] bytes) {
     return null;
   }
 
+  @Override
   public CoordinationClientEntity create(final EntityClientEndpoint entityClientEndpoint) {
     return ClientProxyFactory.createEntityProxy(CoordinationClientEntity.class, CoordinationEntity.class, entityClientEndpoint, ServerElectionEvent.class);
   }
