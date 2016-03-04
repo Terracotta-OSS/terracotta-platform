@@ -82,13 +82,14 @@ public class ClientProxyFactoryTest {
         return super.decode(buffer, type);
       }
     };
+    final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, PassThrough.class);
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(codec.encode(Integer.class, 42));
+    when(future.get()).thenReturn(messageCodec.serialize(response(Integer.class, 42)));
     when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(codec.encode(Integer.class, 43))
         .thenThrow(new TimeoutException("Blah!"));
 
