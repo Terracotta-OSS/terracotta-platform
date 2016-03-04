@@ -205,7 +205,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     public Object get() throws InterruptedException, ExecutionException {
       try {
-        return codec.decode(future.get(), (Class<?>)decodeTo);
+        byte[] result = future.get();
+        return codec.decode(Arrays.copyOfRange(result, 1, result.length), (Class<?>)decodeTo);
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }

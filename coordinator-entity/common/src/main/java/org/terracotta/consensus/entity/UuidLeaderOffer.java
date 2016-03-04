@@ -19,16 +19,27 @@ package org.terracotta.consensus.entity;
 
 import java.util.UUID;
 
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.consensus.entity.server.OfferFactory;
-
 /**
- * @author Alex Snaps
+ *
+ * @author cdennis
  */
-public class UuidOfferFactory implements OfferFactory<ClientDescriptor> {
+public class UuidLeaderOffer extends LeaderOffer {
 
-  public LeaderOffer createOffer(final ClientDescriptor client, boolean clean) {
-    return new UuidLeaderOffer(clean, UUID.randomUUID());
+  private final UUID offerId;
+
+  public UuidLeaderOffer(boolean clean, UUID offerId) {
+    super(clean);
+    this.offerId = offerId;
+  }
+
+  @Override
+  public int hashCode() {
+    return offerId.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return (obj instanceof UuidLeaderOffer) && offerId.equals(((UuidLeaderOffer) obj).offerId);
   }
 
 }
