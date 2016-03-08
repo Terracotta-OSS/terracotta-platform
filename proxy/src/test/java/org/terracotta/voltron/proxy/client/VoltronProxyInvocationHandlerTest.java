@@ -23,11 +23,11 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.voltron.proxy.ClientId;
+import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.ProxyMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,10 +65,10 @@ public class VoltronProxyInvocationHandlerTest {
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(messageCodec.serialize(ProxyEntityResponse.response(Void.TYPE, null)));
 
-    Map<Method, Byte> methodMappings = invert(createMethodMappings(TestInterface.class));
+    Map<MethodDescriptor, Byte> methodMappings = invert(createMethodMappings(TestInterface.class));
     VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(methodMappings, endpoint, codec, Collections.<Byte, Class<?>>emptyMap());
-    for (Method method : methodMappings.keySet()) {
-      handler.invoke(null, method, new Object[] { "String", new Object() });
+    for (MethodDescriptor method : methodMappings.keySet()) {
+      handler.invoke(null, method.getMethod(), new Object[] { "String", new Object() });
     }
     for (Object[] objects : valuesSeen) {
       assertNull(objects[1]);

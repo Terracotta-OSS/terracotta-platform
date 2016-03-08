@@ -20,10 +20,10 @@ package org.terracotta.voltron.proxy.server.messages;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.voltron.proxy.ClientId;
+import org.terracotta.voltron.proxy.MethodDescriptor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -31,12 +31,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ProxyEntityMessage implements EntityMessage {
 
-  private final Method method;
+  private final MethodDescriptor method;
   private final Object[] args;
 
   private final AtomicBoolean consumed = new AtomicBoolean(false);
 
-  public ProxyEntityMessage(final Method method, final Object[] args) {
+  public ProxyEntityMessage(final MethodDescriptor method, final Object[] args) {
     this.method = method;
     this.args = args;
   }
@@ -62,8 +62,8 @@ public class ProxyEntityMessage implements EntityMessage {
     return method.invoke(target, args);
   }
 
-  public Class<?> returnType() {
-    return method.getReturnType();
+  public Class<?> messageType() {
+    return method.getMessageType();
   }
 
 

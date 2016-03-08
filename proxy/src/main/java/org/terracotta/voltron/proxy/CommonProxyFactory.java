@@ -32,8 +32,8 @@ import static java.util.Collections.unmodifiableMap;
  * @author Alex Snaps
  */
 public class CommonProxyFactory {
-  private static final Comparator<Method> METHOD_COMPARATOR = new Comparator<Method>() {
-    public int compare(final Method m1, final Method m2) {
+  private static final Comparator<MethodDescriptor> METHOD_COMPARATOR = new Comparator<MethodDescriptor>() {
+    public int compare(final MethodDescriptor m1, final MethodDescriptor m2) {
       return m1.toGenericString().compareTo(m2.toGenericString());
     }
   };
@@ -54,12 +54,12 @@ public class CommonProxyFactory {
     return unmodifiableMap(inversion);
   }
 
-  public static Map<Byte, Method> createMethodMappings(final Class<?> proxyType) {
-    SortedSet<Method> methods = getSortedMethods(proxyType);
+  public static Map<Byte, MethodDescriptor> createMethodMappings(final Class<?> proxyType) {
+    SortedSet<MethodDescriptor> methods = getSortedMethods(proxyType);
 
-    final HashMap<Byte, Method> map = new HashMap<Byte, Method>();
+    final HashMap<Byte, MethodDescriptor> map = new HashMap<Byte, MethodDescriptor>();
     byte index = 0;
-    for (final Method method : methods) {
+    for (final MethodDescriptor method : methods) {
       map.put(index++, method);
     }
     return map;
@@ -68,10 +68,10 @@ public class CommonProxyFactory {
   public static Map<Class<?>, Byte> createResponseTypeMappings(Class<?> proxyType, Class<?> ... events) {
     final HashMap<Class<?>, Byte> map = new HashMap<Class<?>, Byte>();
     byte index = 0;
-    for (Method m : getSortedMethods(proxyType)) {
-      Class<?> returnType = m.getReturnType();
-      if (!map.containsKey(returnType)) {
-        map.put(returnType, index++);
+    for (MethodDescriptor m : getSortedMethods(proxyType)) {
+      Class<?> responseType = m.getMessageType();
+      if (!map.containsKey(responseType)) {
+        map.put(responseType, index++);
       }
     }
     for (Class<?> eventType : getSortedTypes(events)) {
@@ -82,8 +82,8 @@ public class CommonProxyFactory {
     return unmodifiableMap(map);
   }
 
-  private static SortedSet<Method> getSortedMethods(final Class<?> type) {
-    SortedSet<Method> methods = new TreeSet<Method>(METHOD_COMPARATOR);
+  static SortedSet<MethodDescriptor> getSortedMethods(final Class<?> type) {
+    SortedSet<MethodDescriptor> methods = new TreeSet<MethodDescriptor>(METHOD_COMPARATOR);
 
     final Method[] declaredMethods = type.getDeclaredMethods();
 
@@ -91,7 +91,10 @@ public class CommonProxyFactory {
       throw new IllegalArgumentException("Can't proxy that many methods on a single instance!");
     }
 
-    methods.addAll(asList(declaredMethods));
+    for (Method declaredMethod : declaredMethods) {
+      methods.add(MethodDescriptor.of(declaredMethod));
+    }
+
     if (methods.size() != declaredMethods.length) {
       throw new AssertionError("Ouch... looks like that didn't work!");
     }

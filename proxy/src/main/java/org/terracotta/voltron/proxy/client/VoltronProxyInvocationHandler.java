@@ -22,9 +22,9 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
-import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.Codec;
+import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
@@ -34,8 +34,6 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,12 +62,12 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     }
   }
 
-  private final Map<Method, Byte> mappings;
+  private final Map<MethodDescriptor, Byte> mappings;
   private final EntityClientEndpoint entityClientEndpoint;
   private final Codec codec;
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
 
-  public VoltronProxyInvocationHandler(final Map<Method, Byte> mappings,
+  public VoltronProxyInvocationHandler(final Map<MethodDescriptor, Byte> mappings,
                                        final EntityClientEndpoint entityClientEndpoint,
                                        final Codec codec, Map<Byte, Class<?>> eventMappings) {
     this.mappings = mappings;
@@ -101,37 +99,22 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       return null;
     }
 
-    final byte[] payload = encode(method, args);
+    final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
+    final byte[] payload = encode(methodDescriptor, args);
 
     final InvocationBuilder builder = entityClientEndpoint.beginInvoke()
         .payload(payload);
 
-    final Type returnType = method.getGenericReturnType();
-    if (method.getReturnType() == Future.class && returnType instanceof ParameterizedType) {
-      final Type decodeTo = ((ParameterizedType)returnType).getActualTypeArguments()[0];
+    if(methodDescriptor.isAsync()) {
+      methodDescriptor.getAck().applyTo(builder);
+      return new ProxiedInvokeFuture(builder.invoke(), methodDescriptor.getMessageType(), codec);
 
-      final Async annotation = method.getAnnotation(Async.class);
-      if (annotation != null) {
-        switch (annotation.value()) {
-          case RECEIVED:
-            builder.ackReceived();
-            break;
-          case NONE:
-            break;
-          default:
-            throw new IllegalArgumentException("Unknown Async annotation value of :" + annotation.value());
-        }
-      }
-
-      final InvokeFuture<byte[]> future = builder
-          .invoke();
-      return new ProxiedInvokeFuture(future, decodeTo, codec);
     } else {
       return codec.decode(stripHeader(builder.invoke().get()), method.getReturnType());
     }
   }
 
-  private byte[] encode(final Method method, final Object[] args) throws IOException {
+  private byte[] encode(final MethodDescriptor method, final Object[] args) throws IOException {
 
     final Byte methodIdentifier = mappings.get(method);
 
@@ -175,12 +158,12 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   private static class ProxiedInvokeFuture implements Future {
 
     private final InvokeFuture<byte[]> future;
-    private final Type decodeTo;
+    private final Class<?> decodeTo;
     private final Codec codec;
 
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
-    public ProxiedInvokeFuture(final InvokeFuture<byte[]> future, final Type decodeTo, final Codec codec) {
+    public ProxiedInvokeFuture(final InvokeFuture<byte[]> future, final Class<?> decodeTo, final Codec codec) {
       this.future = future;
       this.decodeTo = decodeTo;
       this.codec = codec;
@@ -204,7 +187,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     public Object get() throws InterruptedException, ExecutionException {
       try {
-        return codec.decode(stripHeader(future.get()), (Class<?>)decodeTo);
+        return codec.decode(stripHeader(future.get()), decodeTo);
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }
@@ -212,7 +195,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       try {
-        return codec.decode(stripHeader(future.getWithTimeout(timeout, unit)), (Class<?>)decodeTo);
+        return codec.decode(stripHeader(future.getWithTimeout(timeout, unit)), decodeTo);
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }

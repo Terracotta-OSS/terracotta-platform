@@ -20,7 +20,6 @@ package org.terracotta.voltron.proxy;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 import org.terracotta.entity.MessageCodec;
@@ -34,7 +33,7 @@ import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final Codec codec;
-  private final Map<Byte, Method> methodMappings;
+  private final Map<Byte, MethodDescriptor> methodMappings;
   private final Map<Class<?>, Byte> responseMappings;
   
   public ProxyMessageCodec(Codec codec, Class<?> proxyType, Class<?> ... eventTypes) {
@@ -61,7 +60,7 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
   }
 
   public ProxyEntityMessage deserialize(final byte[] bytes) {
-    final Method method = decodeMethod(bytes[0]);
+    final MethodDescriptor method = decodeMethod(bytes[0]);
     return new ProxyEntityMessage(method, decodeArgs(bytes, method.getParameterTypes()));
   }
 
@@ -73,8 +72,8 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
-  private Method decodeMethod(final byte b) {
-    final Method method = methodMappings.get(b);
+  private MethodDescriptor decodeMethod(final byte b) {
+    final MethodDescriptor method = methodMappings.get(b);
     if(method == null) {
       throw new AssertionError();
     }
