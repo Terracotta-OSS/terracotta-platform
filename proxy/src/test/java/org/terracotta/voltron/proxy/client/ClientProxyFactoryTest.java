@@ -90,7 +90,7 @@ public class ClientProxyFactoryTest {
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(messageCodec.serialize(response(Integer.class, 42)));
-    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(codec.encode(Integer.class, 43))
+    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(messageCodec.serialize(response(Integer.class, 43)))
         .thenThrow(new TimeoutException("Blah!"));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);

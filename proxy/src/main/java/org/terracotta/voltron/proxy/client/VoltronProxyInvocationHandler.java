@@ -127,8 +127,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
           .invoke();
       return new ProxiedInvokeFuture(future, decodeTo, codec);
     } else {
-      byte[] bytes = builder.invoke().get();
-      return codec.decode(Arrays.copyOfRange(bytes, 1, bytes.length), method.getReturnType());
+      return codec.decode(stripHeader(builder.invoke().get()), method.getReturnType());
     }
   }
 
@@ -205,8 +204,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     public Object get() throws InterruptedException, ExecutionException {
       try {
-        byte[] result = future.get();
-        return codec.decode(Arrays.copyOfRange(result, 1, result.length), (Class<?>)decodeTo);
+        return codec.decode(stripHeader(future.get()), (Class<?>)decodeTo);
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }
@@ -214,10 +212,15 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       try {
-        return codec.decode(future.getWithTimeout(timeout, unit), (Class<?>)decodeTo);
+        return codec.decode(stripHeader(future.getWithTimeout(timeout, unit)), (Class<?>)decodeTo);
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }
     }
   }
+
+  private static byte[] stripHeader(byte[] result) {
+    return Arrays.copyOfRange(result, 1, result.length);
+  }
+
 }
