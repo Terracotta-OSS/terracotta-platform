@@ -74,7 +74,7 @@ public class ProxyInvoker<T> {
     try {
       try {
         invocationContext.set(new InvocationContext(clientDescriptor));
-        return ProxyEntityResponse.response(message.returnType(), message.invoke(target, clientDescriptor));
+        return ProxyEntityResponse.response(message.messageType(), message.invoke(target, clientDescriptor));
       } finally {
         invocationContext.remove();
       }

@@ -24,6 +24,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
+import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ProxyMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
@@ -90,7 +91,7 @@ public class ClientProxyFactoryTest {
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(messageCodec.serialize(response(Integer.class, 42)));
-    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(codec.encode(Integer.class, 43))
+    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(messageCodec.serialize(response(Integer.class, 43)))
         .thenThrow(new TimeoutException("Blah!"));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
@@ -144,6 +145,7 @@ public class ClientProxyFactoryTest {
 
     Integer sync();
 
+    @Async
     Future<Integer> aSync();
 
   }
