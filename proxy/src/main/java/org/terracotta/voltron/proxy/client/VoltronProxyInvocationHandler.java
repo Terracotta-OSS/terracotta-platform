@@ -106,7 +106,15 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         .payload(payload);
 
     if(methodDescriptor.isAsync()) {
-      methodDescriptor.getAck().applyTo(builder);
+      switch (methodDescriptor.getAck()) {
+        case NONE:
+          break;
+        case RECEIVED:
+          builder.ackReceived();
+          break;
+        default:
+          throw new IllegalStateException(methodDescriptor.getAck().name());
+      }
       return new ProxiedInvokeFuture(builder.invoke(), methodDescriptor.getMessageType(), codec);
 
     } else {

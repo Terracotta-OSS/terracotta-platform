@@ -17,8 +17,6 @@
 
 package org.terracotta.voltron.proxy;
 
-import org.terracotta.entity.InvocationBuilder;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -34,21 +32,8 @@ public @interface Async {
   Ack value() default Ack.NONE;
 
   enum Ack {
-    NONE {
-      @Override
-      public void applyTo(InvocationBuilder builder) {
-        // no-op
-      }
-    },
-
-    RECEIVED {
-      @Override
-      public void applyTo(InvocationBuilder builder) {
-        builder.ackReceived();
-      }
-    };
-
-    public abstract void applyTo(InvocationBuilder builder);
+    NONE,
+    RECEIVED;
   }
 
 
