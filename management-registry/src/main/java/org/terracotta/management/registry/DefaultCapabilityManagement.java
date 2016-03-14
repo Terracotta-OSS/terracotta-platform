@@ -17,6 +17,7 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.call.Parameter;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -44,13 +45,13 @@ public class DefaultCapabilityManagement implements CapabilityManagement {
   }
 
   @Override
-  public <T> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters) {
+  public <T extends Serializable> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters) {
     return new DefaultCallQueryBuilder<T>(capabilityManagement, capabilityName, methodName, returnType, parameters);
   }
 
   @Override
-  public CallQuery.Builder<Void> call(String methodName, Parameter... parameters) {
-    return new DefaultCallQueryBuilder<Void>(capabilityManagement, capabilityName, methodName, Void.class, parameters);
+  public CallQuery.Builder<Serializable> call(String methodName, Parameter... parameters) {
+    return new DefaultCallQueryBuilder<Serializable>(capabilityManagement, capabilityName, methodName, Serializable.class, parameters);
   }
 
 }

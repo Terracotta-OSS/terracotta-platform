@@ -17,6 +17,7 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.call.Parameter;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 /**
@@ -49,7 +50,7 @@ public interface CapabilityManagement {
    * @param returnType The expected return type
    * @return the action method's return value.
    */
-  <T> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters);
+  <T extends Serializable> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters);
 
   /**
    * Call an action of a managed object's capability. We do not care about the return type.
@@ -58,6 +59,6 @@ public interface CapabilityManagement {
    * @param parameters the action method's parameters (objects and class names)
    * @return the action method's return value.
    */
-  CallQuery.Builder<Void> call(String methodName, Parameter... parameters);
+  CallQuery.Builder<Serializable> call(String methodName, Parameter... parameters);
 
 }

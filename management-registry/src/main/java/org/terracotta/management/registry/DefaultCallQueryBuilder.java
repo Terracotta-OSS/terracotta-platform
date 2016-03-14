@@ -18,6 +18,7 @@ package org.terracotta.management.registry;
 import org.terracotta.management.call.Parameter;
 import org.terracotta.management.context.Context;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author Mathieu Carbou
  */
-public class DefaultCallQueryBuilder<T> implements CallQuery.Builder<T> {
+public class DefaultCallQueryBuilder<T extends Serializable> implements CallQuery.Builder<T> {
 
   private final CapabilityManagementSupport capabilityManagement;
   private final String capabilityName;

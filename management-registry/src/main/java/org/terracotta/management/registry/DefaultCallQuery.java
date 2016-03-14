@@ -19,6 +19,7 @@ import org.terracotta.management.call.ContextualReturn;
 import org.terracotta.management.call.Parameter;
 import org.terracotta.management.context.Context;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +29,7 @@ import java.util.Map;
 /**
  * @author Mathieu Carbou
  */
-public class DefaultCallQuery<T> implements CallQuery<T> {
+public class DefaultCallQuery<T extends Serializable> implements CallQuery<T> {
 
   private final CapabilityManagementSupport capabilityManagement;
   private final String capabilityName;
@@ -81,11 +82,11 @@ public class DefaultCallQuery<T> implements CallQuery<T> {
     }
 
     for (Context context : contexts) {
-      ContextualReturn<T> result = ContextualReturn.empty(capabilityName, context);
+      ContextualReturn<T> result = ContextualReturn.empty(capabilityName, context, methodName);
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
           // just suppose there is only one manager handling calls - should be
-          result = ContextualReturn.of(capabilityName, context, managementProvider.callAction(context, methodName, returnType, parameters));
+          result = ContextualReturn.of(capabilityName, context, methodName, managementProvider.callAction(context, methodName, returnType, parameters));
           break;
         }
       }
