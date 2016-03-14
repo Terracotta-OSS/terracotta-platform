@@ -18,10 +18,12 @@ package org.terracotta.management.registry;
 import org.terracotta.management.call.ContextualReturn;
 import org.terracotta.management.call.Parameter;
 
+import java.io.Serializable;
+
 /**
  * @author Mathieu Carbou
  */
-public interface CallQuery<T> extends Query<ContextualReturn<T>> {
+public interface CallQuery<T extends Serializable> extends Query<ContextualReturn<T>> {
 
   Class<T> getReturnType();
 
@@ -29,7 +31,7 @@ public interface CallQuery<T> extends Query<ContextualReturn<T>> {
 
   Parameter[] getParameters();
 
-  interface Builder<T> extends QueryBuilder<Builder<T>, CallQuery<T>> {
+  interface Builder<T extends Serializable> extends QueryBuilder<Builder<T>, CallQuery<T>> {
 
   }
 }

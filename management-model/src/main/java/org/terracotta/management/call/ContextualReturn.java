@@ -31,13 +31,15 @@ import java.util.NoSuchElementException;
  *
  * @author Mathieu Carbou
  */
-public final class ContextualReturn<T> implements Serializable {
+public final class ContextualReturn<T extends Serializable> implements Serializable {
 
   private final T value;
   private final Context context;
   private final String capability;
+  private final String methodName;
 
-  private ContextualReturn(String capability, Context context, T value) {
+  private ContextualReturn(String capability, Context context, String methodName, T value) {
+    this.methodName = methodName;
     this.value = value;
     this.context = Objects.requireNonNull(context);
     this.capability = Objects.requireNonNull(capability);
@@ -58,22 +60,28 @@ public final class ContextualReturn<T> implements Serializable {
     return context;
   }
 
-  public static <T> ContextualReturn<T> of(String capability, Context context, T result) {
-    return new ContextualReturn<T>(capability, context, result);
+  public static <T extends Serializable> ContextualReturn<T> of(String capability, Context context, String methodName, T result) {
+    return new ContextualReturn<T>(capability, context, methodName, result);
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> ContextualReturn<T> empty(String capability, Context context) {
-    return new ContextualReturn<T>(capability, context, (T) Void.TYPE);
+  public static <T extends Serializable> ContextualReturn<T> empty(String capability, Context context, String methodName) {
+    return new ContextualReturn<T>(capability, context, methodName, (T) Void.TYPE);
   }
 
   public String getCapability() {
     return capability;
   }
 
+  public String getMethodName() {
+    return methodName;
+  }
+
   @Override
   public String toString() {
-    return "ContextualReturn{" + "capability='" + capability + '\'' +
+    return "ContextualReturn{" +
+        "capability='" + capability + '\'' +
+        "method='" + methodName + '\'' +
         ", context=" + context +
         ", value=" + value +
         '}';
@@ -88,6 +96,7 @@ public final class ContextualReturn<T> implements Serializable {
 
     if (value != null ? !value.equals(that.value) : that.value != null) return false;
     if (!context.equals(that.context)) return false;
+    if (!methodName.equals(that.methodName)) return false;
     return capability.equals(that.capability);
 
   }
@@ -96,6 +105,7 @@ public final class ContextualReturn<T> implements Serializable {
   public int hashCode() {
     int result = value != null ? value.hashCode() : 0;
     result = 31 * result + context.hashCode();
+    result = 31 * result + methodName.hashCode();
     result = 31 * result + capability.hashCode();
     return result;
   }

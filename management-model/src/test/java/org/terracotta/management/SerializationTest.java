@@ -53,6 +53,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -69,7 +70,7 @@ public class SerializationTest {
 
   @Test
   public void test_contextualReturn() throws Exception {
-    ContextualReturn contextualReturn = ContextualReturn.of("capability", context, 1);
+    ContextualReturn<Integer> contextualReturn = ContextualReturn.of("capability", context, "method", 1);
     DefaultMessage message = new DefaultMessage(1, contextualReturn);
     assertEquals(message, copy(message));
     assertEquals(message.hashCode(), copy(message).hashCode());
