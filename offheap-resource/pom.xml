@@ -13,6 +13,12 @@
 
   <dependencies>
     <dependency>
+      <!-- This is dep is probably wrong -->
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.18</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
       <version>10.0-SNAPSHOT</version>
