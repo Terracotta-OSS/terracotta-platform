@@ -24,7 +24,6 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.service.impl.DefaultManagementService;
 import org.terracotta.voltron.management.ManagementService;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -52,6 +51,10 @@ public class ManagementServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
+  }
+
+  @Override
+  public void clear() {
   }
 }
