@@ -34,6 +34,7 @@
   </properties>
 
   <modules>
+    <module>offheap-resource</module>
     <module>proxy</module>
     <module>coordinator-entity/common</module>
     <module>coordinator-entity/client</module>

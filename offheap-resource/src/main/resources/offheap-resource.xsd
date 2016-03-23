@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<xs:schema version="1.0" elementFormDefault="qualified"
+           xmlns:or="http://www.terracotta.org/config/offheap-resource"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.terracotta.org/config/offheap-resource">
+
+  <xs:element name="offheap-resources" type="or:offheap-resources-type">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        An enumeration of the resources that will be made available by this service.
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="offheap-resources-type">
+    <xs:sequence>
+      <xs:element name="resource" type="or:resource-type" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Definition of an offheap resource that can be consumed by Voltron entities.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="resource-type">
+    <xs:simpleContent>
+      <xs:extension base="xs:positiveInteger">
+        <xs:attribute name="name" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="en">
+              Name by which the pool can be referenced from an entity.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="unit" type="or:memory-unit" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="en">
+              The unit the resource size is expressed in.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:simpleType name="memory-unit">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="B"/>
+      <xs:enumeration value="kB"/>
+      <xs:enumeration value="MB"/>
+      <xs:enumeration value="GB"/>
+      <xs:enumeration value="TB"/>
+      <xs:enumeration value="PB"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
