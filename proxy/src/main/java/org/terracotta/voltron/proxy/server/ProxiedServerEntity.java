@@ -39,6 +39,10 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
     this.target = new ProxyInvoker<T>(proxyType, target, clientCommunicator, messageTypes);
   }
 
+  public T getTarget() {
+    return target.getTarget();
+  }
+
   @Override
   public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
     return target.invoke(clientDescriptor, msg);

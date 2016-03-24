@@ -70,6 +70,10 @@ public class ProxyInvoker<T> {
     }
   }
 
+  public T getTarget() {
+    return target;
+  }
+
   public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage message) {
     try {
       try {
