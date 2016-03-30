@@ -20,9 +20,12 @@ package org.terracotta.voltron.proxy;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Map;
+
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
@@ -34,15 +37,21 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
 
   private final Codec codec;
   private final Map<Byte, MethodDescriptor> methodMappings;
+  private final Map<MethodDescriptor, Byte> reverseMethodMappings;
+  
   private final Map<Class<?>, Byte> responseMappings;
+  private final Map<Byte, Class<?>> reverseResponseMappings;
   
   public ProxyMessageCodec(Codec codec, Class<?> proxyType, Class<?> ... eventTypes) {
     this.codec = codec;
     this.methodMappings = CommonProxyFactory.createMethodMappings(proxyType);
+    this.reverseMethodMappings = CommonProxyFactory.invert(methodMappings);
     this.responseMappings = CommonProxyFactory.createResponseTypeMappings(proxyType, eventTypes);
+    this.reverseResponseMappings = CommonProxyFactory.invert(responseMappings);
   }
 
-  public byte[] serialize(ProxyEntityResponse r) {
+  @Override
+  public byte[] encodeResponse(ProxyEntityResponse r) {
     final Byte messageTypeIdentifier = responseMappings.get(r.getResponseType());
     if(messageTypeIdentifier == null) {
       throw new AssertionError("WAT, no mapping for " + r.getResponseType().getName());
@@ -59,7 +68,56 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
     return byteOut.toByteArray();
   }
 
-  public ProxyEntityMessage deserialize(final byte[] bytes) {
+  @Override
+  public ProxyEntityResponse decodeResponse(byte[] binary) throws MessageCodecException {
+    byte messageTypeIdentifier = binary[0];
+
+    Class<?> responseType = reverseResponseMappings.get(messageTypeIdentifier);
+
+    if(responseType == null) {
+      throw new AssertionError("WAT, no mapping for " + messageTypeIdentifier);
+    }
+    return ProxyEntityResponse.response(responseType, codec.decode(Arrays.copyOfRange(binary, 1, binary.length), responseType));
+  }
+
+  @Override
+  public byte[] encodeMessage(ProxyEntityMessage message) throws MessageCodecException {
+    try {
+      MethodDescriptor method = message.getMethod();
+      Object[] args = message.getArguments();
+
+      final Byte methodIdentifier = reverseMethodMappings.get(method);
+      
+      if(methodIdentifier == null) {
+        throw new AssertionError("WAT, no mapping for " + method.toGenericString());
+      }
+
+      ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+      DataOutputStream output = new DataOutputStream(byteOut);
+
+      final Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+      for (int i = 0, parameterAnnotationsLength = parameterAnnotations.length; i < parameterAnnotationsLength; i++) {
+        final Annotation[] parameterAnnotation = parameterAnnotations[i];
+        for (Annotation annotation : parameterAnnotation) {
+          if (annotation.annotationType() == ClientId.class) {
+            args[i] = null;
+          }
+        }
+      }
+
+      final Class<?>[] parameterTypes = method.getParameterTypes();
+      output.writeByte(methodIdentifier);
+      output.write(codec.encode(parameterTypes, args));
+
+      output.close();
+      return byteOut.toByteArray();
+    } catch (IOException ex) {
+      throw new MessageCodecException("Error encoding ProxyEntityMessage", ex);
+    }
+  }
+
+  @Override
+  public ProxyEntityMessage decodeMessage(final byte[] bytes) {
     final MethodDescriptor method = decodeMethod(bytes[0]);
     return new ProxyEntityMessage(method, decodeArgs(bytes, method.getParameterTypes()));
   }

@@ -99,7 +99,7 @@ public class EndToEndTest {
           }
         });
         voidFutureTask.run();
-        delegate.get().handleMessage(messageCodec.serialize((ProxyEntityResponse) message));
+        delegate.get().handleMessage(messageCodec.encodeResponse((ProxyEntityResponse) message));
         return voidFutureTask;
       }
     }, String.class);
@@ -222,10 +222,10 @@ public class EndToEndTest {
     assertThat(proxy.much(12, 12), notNullValue());
   }
 
-  private static class RecordingInvocationBuilder implements InvocationBuilder {
+  private static class RecordingInvocationBuilder implements InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> {
     private final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec;
     private final ProxyInvoker<?> proxyInvoker;
-    private byte[] payload;
+    private ProxyEntityMessage message;
     private MyClientDescriptor clientDescriptor;
 
     public RecordingInvocationBuilder(final ProxyInvoker<?> proxyInvoker, MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec) {
@@ -238,40 +238,49 @@ public class EndToEndTest {
       this.codec = codec;
     }
 
-    public InvocationBuilder ackReceived() {
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackReceived() {
       return this;
     }
 
-    public InvocationBuilder ackCompleted() {
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackCompleted() {
       return this;
     }
 
-    public InvocationBuilder ackSent() {
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackSent() {
       return this;
     }
 
-    public InvocationBuilder replicate(final boolean b) {
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> replicate(final boolean b) {
       return this;
     }
 
-    public InvocationBuilder payload(final byte[] bytes) {
-      payload = bytes;
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> message(ProxyEntityMessage bytes) {
+      message = bytes;
       return this;
     }
 
-    public InvokeFuture<byte[]> invoke() {
-      final FutureTask<byte[]> futureTask = new FutureTask<byte[]>(new Callable<byte[]>() {
-        public byte[] call() throws Exception {
-          return codec.serialize(proxyInvoker.invoke(clientDescriptor, codec.deserialize(payload)));
+    @Override
+    public InvokeFuture<ProxyEntityResponse> invoke() {
+      final FutureTask<ProxyEntityResponse> futureTask = new FutureTask<ProxyEntityResponse>(new Callable<ProxyEntityResponse>() {
+        @Override
+        public ProxyEntityResponse call() throws Exception {
+          return proxyInvoker.invoke(clientDescriptor, message);
         }
       });
       futureTask.run();
-      return new InvokeFuture<byte[]>() {
+      return new InvokeFuture<ProxyEntityResponse>() {
+        @Override
         public boolean isDone() {
           throw new UnsupportedOperationException("Implement me!");
         }
 
-        public byte[] get() throws InterruptedException, EntityException {
+        @Override
+        public ProxyEntityResponse get() throws InterruptedException, EntityException {
           try {
             return futureTask.get();
           } catch (ExecutionException e) {
@@ -279,10 +288,12 @@ public class EndToEndTest {
           }
         }
 
-        public byte[] getWithTimeout(final long l, final TimeUnit timeUnit) throws InterruptedException, EntityException, TimeoutException {
+        @Override
+        public ProxyEntityResponse getWithTimeout(final long l, final TimeUnit timeUnit) throws InterruptedException, EntityException, TimeoutException {
           throw new UnsupportedOperationException("Implement me!");
         }
 
+        @Override
         public void interrupt() {
           throw new UnsupportedOperationException("Implement me!");
         }

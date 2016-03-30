@@ -34,27 +34,27 @@ import static org.terracotta.voltron.proxy.CommonProxyFactory.invert;
  */
 public class ClientProxyFactory {
 
-  public static <T, R extends Entity & ServerMessageAware> R createEntityProxy(Class<T> clientType, Class<? super T> type,
+  public static <T extends Entity & ServerMessageAware<?>> T createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                                                EntityClientEndpoint entityClientEndpoint,
-                                                                               Class<?> messageType, Class<?>... messageTypes) {
-    return (R) createProxy(clientType, type, entityClientEndpoint, new SerializationCodec(), sum(messageType, messageTypes));
+                                                                               Class<?>... messageTypes) {
+    return createProxy(clientType, type, entityClientEndpoint, new SerializationCodec(), messageTypes);
   }
 
-  public static <T, R extends Entity & ServerMessageAware> R createEntityProxy(Class<T> clientType, Class<? super T> type,
+  public static <T extends Entity & ServerMessageAware<?>> T createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                                                EntityClientEndpoint entityClientEndpoint,
                                                                                final Codec codec, Class<?> messageType,
                                                                                Class<?>... messageTypes) {
-    return (R) createProxy(clientType, type, entityClientEndpoint, codec, sum(messageType, messageTypes));
+    return createProxy(clientType, type, entityClientEndpoint, codec, sum(messageType, messageTypes));
   }
 
-  public static <T, R extends Entity> R createEntityProxy(Class<T> clientType, Class<? super T> type,
+  public static <T extends Entity> T createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                        EntityClientEndpoint entityClientEndpoint) {
-    return (R) createProxy(clientType, type, entityClientEndpoint);
+    return createProxy(clientType, type, entityClientEndpoint);
   }
 
-  public static <T, R extends Entity> R createEntityProxy(Class<T> clientType, Class<? super T> type,
+  public static <T extends Entity> T createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                        EntityClientEndpoint entityClientEndpoint, final Codec codec) {
-    return (R) createProxy(clientType, type, entityClientEndpoint, codec);
+    return createProxy(clientType, type, entityClientEndpoint, codec);
   }
 
   public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint entityClientEndpoint) {

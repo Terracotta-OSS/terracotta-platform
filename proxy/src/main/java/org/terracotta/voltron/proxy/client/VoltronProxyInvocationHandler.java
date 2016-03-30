@@ -22,19 +22,16 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
-import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -62,17 +59,13 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     }
   }
 
-  private final Map<MethodDescriptor, Byte> mappings;
-  private final EntityClientEndpoint entityClientEndpoint;
-  private final Codec codec;
+  private final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint;
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
 
   public VoltronProxyInvocationHandler(final Map<MethodDescriptor, Byte> mappings,
                                        final EntityClientEndpoint entityClientEndpoint,
                                        final Codec codec, Map<Byte, Class<?>> eventMappings) {
-    this.mappings = mappings;
     this.entityClientEndpoint = entityClientEndpoint;
-    this.codec = codec;
     this.listeners = new ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<MessageListener>>();
     if (eventMappings.size() > 0) {
       for (Class<?> aClass : eventMappings.values()) {
@@ -100,10 +93,9 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     }
 
     final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
-    final byte[] payload = encode(methodDescriptor, args);
 
-    final InvocationBuilder builder = entityClientEndpoint.beginInvoke()
-        .payload(payload);
+    final InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> builder = entityClientEndpoint.beginInvoke()
+            .message(new ProxyEntityMessage(methodDescriptor, args));
 
     if(methodDescriptor.isAsync()) {
       switch (methodDescriptor.getAck()) {
@@ -115,40 +107,11 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         default:
           throw new IllegalStateException(methodDescriptor.getAck().name());
       }
-      return new ProxiedInvokeFuture(builder.invoke(), methodDescriptor.getMessageType(), codec);
+      return new ProxiedInvokeFuture(builder.invoke());
 
     } else {
-      return codec.decode(stripHeader(builder.invoke().get()), method.getReturnType());
+      return builder.invoke().get().getResponse();
     }
-  }
-
-  private byte[] encode(final MethodDescriptor method, final Object[] args) throws IOException {
-
-    final Byte methodIdentifier = mappings.get(method);
-
-    if(methodIdentifier == null) {
-      throw new AssertionError("WAT, no mapping for " + method.toGenericString());
-    }
-
-    ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-    DataOutputStream output = new DataOutputStream(byteOut);
-
-    final Annotation[][] parameterAnnotations = method.getParameterAnnotations();
-    for (int i = 0, parameterAnnotationsLength = parameterAnnotations.length; i < parameterAnnotationsLength; i++) {
-      final Annotation[] parameterAnnotation = parameterAnnotations[i];
-      for (Annotation annotation : parameterAnnotation) {
-        if (annotation.annotationType() == ClientId.class) {
-          args[i] = null;
-        }
-      }
-    }
-
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    output.writeByte(methodIdentifier);
-    output.write(codec.encode(parameterTypes, args));
-
-    output.close();
-    return byteOut.toByteArray();
   }
 
   private static Class<?> getMessageListenerEventType(MessageListener from) {
@@ -165,18 +128,15 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private static class ProxiedInvokeFuture implements Future {
 
-    private final InvokeFuture<byte[]> future;
-    private final Class<?> decodeTo;
-    private final Codec codec;
+    private final InvokeFuture<ProxyEntityResponse> future;
 
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
-    public ProxiedInvokeFuture(final InvokeFuture<byte[]> future, final Class<?> decodeTo, final Codec codec) {
+    public ProxiedInvokeFuture(final InvokeFuture<ProxyEntityResponse> future) {
       this.future = future;
-      this.decodeTo = decodeTo;
-      this.codec = codec;
     }
 
+    @Override
     public boolean cancel(final boolean mayInterruptIfRunning) {
       if (cancelled.compareAndSet(false, true)) {
         future.interrupt();
@@ -185,33 +145,32 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       return false;
     }
 
+    @Override
     public boolean isCancelled() {
       return cancelled.get();
     }
 
+    @Override
     public boolean isDone() {
       return future.isDone();
     }
 
+    @Override
     public Object get() throws InterruptedException, ExecutionException {
       try {
-        return codec.decode(stripHeader(future.get()), decodeTo);
+        return future.get().getResponse();
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }
     }
 
+    @Override
     public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       try {
-        return codec.decode(stripHeader(future.getWithTimeout(timeout, unit)), decodeTo);
+        return future.getWithTimeout(timeout, unit).getResponse();
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }
     }
   }
-
-  private static byte[] stripHeader(byte[] result) {
-    return Arrays.copyOfRange(result, 1, result.length);
-  }
-
 }

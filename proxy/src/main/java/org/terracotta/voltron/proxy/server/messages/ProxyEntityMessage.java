@@ -41,6 +41,14 @@ public class ProxyEntityMessage implements EntityMessage {
     this.args = args;
   }
 
+  public MethodDescriptor getMethod() {
+    return method;
+  }
+
+  public Object[] getArguments() {
+    return args;
+  }
+
   public Object invoke(final Object target, final ClientDescriptor clientDescriptor) throws InvocationTargetException, IllegalAccessException {
 
     if(!consumed.compareAndSet(false, true)) {

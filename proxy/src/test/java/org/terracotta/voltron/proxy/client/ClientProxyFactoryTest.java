@@ -42,6 +42,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.MessageCodecException;
 import static org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse.response;
 
 /**
@@ -59,23 +61,22 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testFakeOutboundCall() throws ExecutionException, InterruptedException, EntityException {
+  public void testFakeOutboundCall() throws ExecutionException, InterruptedException, EntityException, MessageCodecException {
     final SerializationCodec codec = new SerializationCodec();
-    final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, PassThrough.class);
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
+    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(messageCodec.serialize(response(Integer.class, 42)));
+    when(future.get()).thenReturn(response(Integer.class, 42));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
     assertThat(proxy.sync(), is(42));
   }
 
   @Test
-  public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException, EntityException {
+  public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException, EntityException, MessageCodecException {
     final SerializationCodec codec = new SerializationCodec() {
       @Override
       public Object decode(final byte[] buffer, final Class<?> type) {
@@ -83,15 +84,14 @@ public class ClientProxyFactoryTest {
         return super.decode(buffer, type);
       }
     };
-    final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, PassThrough.class);
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
+    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(messageCodec.serialize(response(Integer.class, 42)));
-    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(messageCodec.serialize(response(Integer.class, 43)))
+    when(future.get()).thenReturn(response(Integer.class, 42));
+    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(response(Integer.class, 43))
         .thenThrow(new TimeoutException("Blah!"));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
@@ -106,16 +106,15 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testRegistersListeners() throws ExecutionException, InterruptedException, TimeoutException, EntityException {
+  public void testRegistersListeners() throws ExecutionException, InterruptedException, TimeoutException, EntityException, MessageCodecException {
     final SerializationCodec codec = new SerializationCodec();
-    final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, PassThrough.class);
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
+    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(messageCodec.serialize(response(Integer.class, 42)));
+    when(future.get()).thenReturn(response(Integer.class, 42));
 
     final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, codec, String.class, Integer.class, Long.class, Double.class);
     assertThat(proxy.sync(), is(42));
