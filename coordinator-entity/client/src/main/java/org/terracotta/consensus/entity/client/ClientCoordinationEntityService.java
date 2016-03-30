@@ -31,11 +31,6 @@ public class ClientCoordinationEntityService extends ProxyEntityClientService<Co
   }
 
   @Override
-  public boolean handlesEntityType(final Class<CoordinationClientEntity> aClass) {
-    return aClass == CoordinationClientEntity.class;
-  }
-
-  @Override
   public byte[] serializeConfiguration(final Void aVoid) {
     return new byte[0];
   }
