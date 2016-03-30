@@ -38,6 +38,10 @@ public abstract class ProxyEntityClientService<T extends Entity, C> implements E
     this.messageTypes = messageTypes;
   }
 
+  @Override
+  public boolean handlesEntityType(final Class<T> aClass) {
+    return aClass == clientType;
+  }
 
   @Override
   public T create(EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint) {
