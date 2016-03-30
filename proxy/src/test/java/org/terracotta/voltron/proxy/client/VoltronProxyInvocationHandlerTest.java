@@ -36,6 +36,7 @@ import java.util.Set;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.EntityMessage;
 import static org.terracotta.voltron.proxy.CommonProxyFactory.createMethodMappings;
 import static org.terracotta.voltron.proxy.CommonProxyFactory.invert;
 
@@ -56,14 +57,13 @@ public class VoltronProxyInvocationHandlerTest {
         return super.encode(type, values);
       }
     };
-    final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, TestInterface.class);
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.payload(Matchers.<byte[]>any())).thenReturn(builder);
+    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(messageCodec.serialize(ProxyEntityResponse.response(Void.TYPE, null)));
+    when(future.get()).thenReturn(ProxyEntityResponse.response(Void.TYPE, null));
 
     Map<MethodDescriptor, Byte> methodMappings = invert(createMethodMappings(TestInterface.class));
     VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(methodMappings, endpoint, codec, Collections.<Byte, Class<?>>emptyMap());

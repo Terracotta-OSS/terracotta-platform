@@ -17,16 +17,18 @@
 
 package org.terracotta.consensus.entity.client;
 
+import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
 import org.terracotta.consensus.entity.CoordinationEntity;
 import org.terracotta.consensus.entity.messages.ServerElectionEvent;
-import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityClientService;
-import org.terracotta.voltron.proxy.client.ClientProxyFactory;
 
 /**
  * @author Alex Snaps
  */
-public class ClientCoordinationEntityService implements EntityClientService<CoordinationClientEntity, Void> {
+public class ClientCoordinationEntityService extends ProxyEntityClientService<CoordinationClientEntity, Void> {
+
+  public ClientCoordinationEntityService() {
+    super(CoordinationClientEntity.class, CoordinationEntity.class, ServerElectionEvent.class);
+  }
 
   @Override
   public boolean handlesEntityType(final Class<CoordinationClientEntity> aClass) {
@@ -41,10 +43,5 @@ public class ClientCoordinationEntityService implements EntityClientService<Coor
   @Override
   public Void deserializeConfiguration(final byte[] bytes) {
     return null;
-  }
-
-  @Override
-  public CoordinationClientEntity create(final EntityClientEndpoint entityClientEndpoint) {
-    return ClientProxyFactory.createEntityProxy(CoordinationClientEntity.class, CoordinationEntity.class, entityClientEndpoint, ServerElectionEvent.class);
   }
 }

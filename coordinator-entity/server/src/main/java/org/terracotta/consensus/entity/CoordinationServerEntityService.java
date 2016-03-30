@@ -23,8 +23,11 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 /**
  * @author Alex Snaps

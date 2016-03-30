@@ -2,10 +2,12 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.NoConcurrencyStrategy;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.ProxyMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
@@ -46,4 +48,8 @@ public abstract class ProxyServerEntityService implements ServerEntityService<Pr
     throw new UnsupportedOperationException("Implement me!");
   }
 
+  @Override
+  public SyncMessageCodec<ProxyEntityMessage, ProxyEntityResponse> getSyncMessageCodec() {
+    return null;
+  }
 }
