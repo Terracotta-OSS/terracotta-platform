@@ -42,6 +42,7 @@
     <module>coordinator-entity/integration-tests</module>
     <module>management-api</module>
     <module>management-service</module>
+    <module>client-communicator-support</module>
   </modules>
 
   <dependencyManagement>
