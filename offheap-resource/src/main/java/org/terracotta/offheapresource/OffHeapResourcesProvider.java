@@ -86,11 +86,6 @@ public class OffHeapResourcesProvider implements ServiceProvider {
   }
 
   @Override
-  public void close() {
-    clear();
-  }
-
-  @Override
   public void clear() {
     resources.clear();
   }

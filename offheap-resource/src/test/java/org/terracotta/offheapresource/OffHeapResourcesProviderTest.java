@@ -103,7 +103,7 @@ public class OffHeapResourcesProviderTest {
 
 
   @Test
-  public void testNullReturnAfterClose() {
+  public void testNullReturnAfterClear() {
     ResourceType resourceConfig = mock(ResourceType.class);
     when(resourceConfig.getName()).thenReturn("foo");
     when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
@@ -114,7 +114,7 @@ public class OffHeapResourcesProviderTest {
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
     provider.initialize(config);
-    provider.close();
+    provider.clear();
     assertThat(provider.getService(42L, OffHeapResourceIdentifier.identifier("foo")), nullValue());
   }
 }

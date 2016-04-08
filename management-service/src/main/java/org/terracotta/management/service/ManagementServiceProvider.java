@@ -51,10 +51,6 @@ public class ManagementServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public void close() {
-  }
-
-  @Override
   public void clear() {
   }
 }
