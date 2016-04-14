@@ -15,12 +15,12 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.context.Context;
+import org.terracotta.management.model.context.Context;
 
 import java.util.NoSuchElementException;
 
 /**
- * @param <T> The result type ({@link org.terracotta.management.stats.ContextualStatistics}, {@link org.terracotta.management.call.ContextualReturn})
+ * @param <T> The result type ({@link org.terracotta.management.model.stats.ContextualStatistics}, {@link org.terracotta.management.model.call.ContextualReturn})
  *
  * @author Mathieu Carbou
  */

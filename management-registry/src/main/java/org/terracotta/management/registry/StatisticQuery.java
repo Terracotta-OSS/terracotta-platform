@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.stats.ContextualStatistics;
+import org.terracotta.management.model.stats.ContextualStatistics;
 
 import java.util.Collection;
 
@@ -31,8 +31,8 @@ public interface StatisticQuery extends Query<ContextualStatistics> {
 
   /**
    * The query will only collect statistics computed since this time.
-   * This allows for example to filter out the list of returned values within some {@link org.terracotta.management.stats.Statistic}
-   * such as {@link org.terracotta.management.stats.history.RateHistory}
+   * This allows for example to filter out the list of returned values within some {@link org.terracotta.management.model.stats.Statistic}
+   * such as {@link org.terracotta.management.model.stats.history.RateHistory}
    *
    * @return A unix timestamp
    */
@@ -42,8 +42,8 @@ public interface StatisticQuery extends Query<ContextualStatistics> {
 
     /**
      * The query will only collect statistics computed since this time.
-     * This allows for example to filter out the list of returned values within some {@link org.terracotta.management.stats.Statistic}
-     * such as {@link org.terracotta.management.stats.history.RateHistory}
+     * This allows for example to filter out the list of returned values within some {@link org.terracotta.management.model.stats.Statistic}
+     * such as {@link org.terracotta.management.model.stats.history.RateHistory}
      *
      * @param unixTimestampMs The unix timestamp
      * @return this builder

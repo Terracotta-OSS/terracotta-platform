@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.capabilities.Capability;
+import org.terracotta.management.model.capabilities.Capability;
 
 import java.util.ArrayList;
 import java.util.Collection;

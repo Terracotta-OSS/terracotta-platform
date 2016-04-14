@@ -15,9 +15,9 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.context.Context;
-import org.terracotta.management.stats.ContextualStatistics;
-import org.terracotta.management.stats.Statistic;
+import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.model.stats.Statistic;
 
 import java.util.ArrayList;
 import java.util.Collection;

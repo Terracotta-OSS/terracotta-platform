@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.context.Context;
+import org.terracotta.management.model.context.Context;
 
 import java.util.Collection;
 

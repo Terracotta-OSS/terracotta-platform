@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.message.Message;
+import org.terracotta.management.model.message.Message;
 
 /**
  * @author Mathieu Carbou

@@ -15,9 +15,9 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.call.ContextualReturn;
-import org.terracotta.management.call.Parameter;
-import org.terracotta.management.context.Context;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.call.Parameter;
+import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
 import java.util.ArrayList;
