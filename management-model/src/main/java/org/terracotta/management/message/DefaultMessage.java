@@ -26,29 +26,28 @@ import java.util.Arrays;
 /**
  * @author Mathieu Carbou
  */
-public final class DefaultMessage implements Serializable, Message {
+public class DefaultMessage implements Serializable, Message {
 
   private final Object data;
   private final long timeMillis;
   private final String messageType;
 
-  // not opened yet to other message types
-  private DefaultMessage(long timeMillis, String messageType, Object data) {
+  protected DefaultMessage(long timeMillis, String messageType, Object data) {
     this.timeMillis = timeMillis;
     this.messageType = Objects.requireNonNull(messageType);
     this.data = Objects.requireNonNull(data);
   }
 
   public DefaultMessage(long timeMillis, ContextualNotification notification) {
-    this(timeMillis, MessageType.NOTIFICATION.name(), notification);
+    this(timeMillis, "NOTIFICATION", notification);
   }
 
   public DefaultMessage(long timeMillis, ContextualReturn<?> response) {
-    this(timeMillis, MessageType.RETURN.name(), response);
+    this(timeMillis, "RETURN", response);
   }
 
   public DefaultMessage(long timeMillis, ContextualStatistics... statistics) {
-    this(timeMillis, MessageType.STATISTICS.name(), statistics);
+    this(timeMillis, "STATISTICS", statistics);
   }
 
   @Override
