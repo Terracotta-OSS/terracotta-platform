@@ -10,6 +10,7 @@
   <modules>
     <module>management-model</module>
     <module>management-registry</module>
+    <module>management-entity</module>
   </modules>
 
   <name>Terracotta Management</name>
