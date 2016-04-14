@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry.collect;
 
-import org.terracotta.management.context.Context;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.AbstractActionManagementProvider;
 import org.terracotta.management.registry.action.Exposed;
 import org.terracotta.management.registry.action.ExposedObject;

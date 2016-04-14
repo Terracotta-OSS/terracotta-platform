@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry.action;
 
-import org.terracotta.management.context.Context;
+import org.terracotta.management.model.context.Context;
 
 /**
  * @author Mathieu Carbou

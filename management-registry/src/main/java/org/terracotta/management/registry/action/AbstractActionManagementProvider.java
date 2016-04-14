@@ -15,12 +15,12 @@
  */
 package org.terracotta.management.registry.action;
 
-import org.terracotta.management.call.Parameter;
-import org.terracotta.management.capabilities.ActionsCapability;
-import org.terracotta.management.capabilities.Capability;
-import org.terracotta.management.capabilities.descriptors.CallDescriptor;
-import org.terracotta.management.capabilities.descriptors.Descriptor;
-import org.terracotta.management.context.Context;
+import org.terracotta.management.model.call.Parameter;
+import org.terracotta.management.model.capabilities.ActionsCapability;
+import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.AbstractManagementProvider;
 
 import java.lang.annotation.Annotation;
