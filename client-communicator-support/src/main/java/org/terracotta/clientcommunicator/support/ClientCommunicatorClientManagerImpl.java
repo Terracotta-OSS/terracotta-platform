@@ -52,8 +52,7 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
 
     @Override
     public void handleClientCommunicatorMessage(byte[] message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler) {
-        ClientCommunicatorRequest clientCommunicatorRequest = null;
-        clientCommunicatorRequest = ClientCommunicatorRequestCodec.deserialize(message);
+        ClientCommunicatorRequest clientCommunicatorRequest = ClientCommunicatorRequestCodec.deserialize(message);;
         switch (clientCommunicatorRequest.getRequestType()) {
             case ACK:
                 clientCommunicatorMessageHandler.handleMessage(clientCommunicatorRequest.getMsgBytes());

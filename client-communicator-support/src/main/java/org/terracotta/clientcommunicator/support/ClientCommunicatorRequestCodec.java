@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
  */
 class ClientCommunicatorRequestCodec {
     public static byte[] serialize(ClientCommunicatorRequest request) {
-        int size = request.getMsgBytes().length + 12;
+        int size = request.getMsgBytes().length + 2 * 4; // Integer size
         ByteBuffer buffer = ByteBuffer.allocate(size).
                 putInt(request.getRequestType().ordinal()).
                 putInt(request.getRequestSequenceNumber()).
