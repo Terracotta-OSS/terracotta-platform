@@ -40,13 +40,13 @@ public final class ClientIdentifier implements Serializable {
   private static final Logger LOGGER = Logger.getLogger(ClientIdentifier.class.getName());
 
   private final long pid;
-  private final String applicationName;
+  private final String name;
   private final String hostAddress;
 
-  private ClientIdentifier(long pid, String hostAddress, String applicationName) {
+  private ClientIdentifier(long pid, String hostAddress, String name) {
     this.hostAddress = Objects.requireNonNull(hostAddress);
     this.pid = pid;
-    this.applicationName = Objects.requireNonNull(applicationName);
+    this.name = Objects.requireNonNull(name);
   }
 
   public String getHostAddress() {
@@ -57,12 +57,12 @@ public final class ClientIdentifier implements Serializable {
     return pid;
   }
 
-  public String getApplicationName() {
-    return applicationName;
+  public String getName() {
+    return name;
   }
 
   public String getClientId() {
-    return getVmId() + ":" + getApplicationName();
+    return getVmId() + ":" + getName();
   }
 
   public String getVmId() {
@@ -79,13 +79,13 @@ public final class ClientIdentifier implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ClientIdentifier that = (ClientIdentifier) o;
-    return pid == that.pid && applicationName.equals(that.applicationName) && hostAddress.equals(that.hostAddress);
+    return pid == that.pid && name.equals(that.name) && hostAddress.equals(that.hostAddress);
   }
 
   @Override
   public int hashCode() {
     int result = (int) (pid ^ (pid >>> 32));
-    result = 31 * result + applicationName.hashCode();
+    result = 31 * result + name.hashCode();
     result = 31 * result + hostAddress.hashCode();
     return result;
   }
