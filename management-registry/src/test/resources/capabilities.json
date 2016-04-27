@@ -1,0 +1,28 @@
+[ {
+  "name" : "TheActionProvider",
+  "descriptors" : [ {
+    "name" : "incr",
+    "returnType" : "int",
+    "parameters" : [ {
+      "name" : "n",
+      "type" : "int"
+    } ]
+  } ],
+  "capabilityContext" : {
+    "attributes" : [ {
+      "name" : "cacheManagerName",
+      "required" : true
+    }, {
+      "name" : "cacheName",
+      "required" : true
+    } ],
+    "requiredAttributeNames" : [ "cacheManagerName", "cacheName" ],
+    "requiredAttributes" : [ {
+      "name" : "cacheManagerName",
+      "required" : true
+    }, {
+      "name" : "cacheName",
+      "required" : true
+    } ]
+  }
+} ]

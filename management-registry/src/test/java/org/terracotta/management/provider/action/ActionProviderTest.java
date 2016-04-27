@@ -24,11 +24,6 @@ import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.management.registry.action.AbstractActionManagementProvider;
-import org.terracotta.management.registry.action.Exposed;
-import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.action.Named;
-import org.terracotta.management.registry.action.RequiredContext;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -152,48 +147,6 @@ public class ActionProviderTest {
       fail("expected IllegalArgumentException");
     } catch (IllegalArgumentException iae) {
       // expected
-    }
-  }
-
-  @Named("TheActionProvider")
-  @RequiredContext({@Named("cacheManagerName"), @Named("cacheName")})
-  public static class MyManagementProvider extends AbstractActionManagementProvider<MyObject> {
-    public MyManagementProvider() {
-      super(MyObject.class);
-    }
-
-    @Override
-    protected ExposedObject<MyObject> wrap(MyObject managedObject) {
-      return managedObject;
-    }
-  }
-
-  public static class MyObject implements ExposedObject<MyObject> {
-
-    private final String cmName;
-    private final String cName;
-
-    public MyObject(String cmName, String cName) {
-      this.cmName = cmName;
-      this.cName = cName;
-    }
-
-    @Exposed
-    public int incr(@Named("n") int n) { return n + 1; }
-
-    @Override
-    public MyObject getTarget() {
-      return this;
-    }
-
-    @Override
-    public ClassLoader getClassLoader() {
-      return MyObject.class.getClassLoader();
-    }
-
-    @Override
-    public boolean matches(Context context) {
-      return cmName.equals(context.get("cacheManagerName")) && cName.equals(context.get("cacheName"));
     }
   }
 
