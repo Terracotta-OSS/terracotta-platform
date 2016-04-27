@@ -15,8 +15,19 @@
  */
 package org.terracotta.management.entity.server;
 
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
+import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.voltron.proxy.ClientId;
+
+import java.util.Collection;
+import java.util.concurrent.Future;
+
+import static org.terracotta.management.entity.server.Utils.array;
+import static org.terracotta.management.entity.server.Utils.completedFuture;
 
 /**
  * @author Mathieu Carbou
@@ -24,11 +35,19 @@ import org.terracotta.management.entity.ManagementAgentConfig;
 public class ManagementAgentImpl implements ManagementAgent {
 
   private final ManagementAgentConfig config;
+  private final IMonitoringProducer producer;
 
-  public ManagementAgentImpl(ManagementAgentConfig config) {
+  public ManagementAgentImpl(ManagementAgentConfig config, IMonitoringProducer producer) {
     this.config = config;
+    this.producer = producer;
   }
 
-  //TODO: MATHIEU - implement ManagementAgent API
+  @Override
+  public Future<Void> expose(ContextContainer contextContainer, Collection<Capability> capabilities, @ClientId Object clientId) {
+    ClientDescriptor clientDescriptor = (ClientDescriptor) clientId;
+    //TODO: MATHIEU - expose management metadata on the right connection found thanks to the ClientDescriptor
+
+    return completedFuture(null);
+  }
 
 }

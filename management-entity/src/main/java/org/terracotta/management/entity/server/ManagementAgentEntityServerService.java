@@ -15,12 +15,17 @@
  */
 package org.terracotta.management.entity.server;
 
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
 import org.terracotta.management.entity.Version;
-import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
+
+import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
@@ -32,11 +37,23 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
   }
 
   @Override
-  public ManagementAgentServerEntity createActiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public ProxiedServerEntity<ManagementAgent> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
     if (configuration == null || configuration.length == 0) {
       throw new IllegalArgumentException("Missing configuration");
     }
-    return new ManagementAgentServerEntity(ManagementAgentConfig.deserialize(configuration));
+
+    ManagementAgentConfig config = ManagementAgentConfig.deserialize(configuration);
+    IMonitoringProducer producer = registry.getService(new BasicServiceConfiguration<IMonitoringProducer>(IMonitoringProducer.class));
+
+    // try to get the monitoring service. If not installed, then disable the monitoring.
+    // Note: if IMonitoringProducer is not installed, internal server monitoring is skipped also.
+    if (producer == null) {
+      Logger.getLogger(getClass().getName()).warning("Management Entity disabled: no IMonitoringProducer service found on server.");
+      return new DisabledManagementAgentServerEntity();
+
+    } else {
+      return new ManagementAgentServerEntity(config, producer);
+    }
   }
 
   @Override

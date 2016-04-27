@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity;
+package org.terracotta.management.entity.server;
 
+import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ClientId;
 
 import java.util.Collection;
 import java.util.concurrent.Future;
 
+import static org.terracotta.management.entity.server.Utils.completedFuture;
+
 /**
  * @author Mathieu Carbou
  */
-public interface ManagementAgent {
+public class DisabledManagementAgent implements ManagementAgent {
 
-  /**
-   * Exposes this management registry output (context container and capabilities) over this connection.
-   * <p>
-   * The clientDescriptor will be the ClientDescriptor server-side. Client-side, when calling this method, this field is not required.
-   */
-  @Async(Async.Ack.NONE)
-  Future<Void> expose(ContextContainer contextContainer, Collection<Capability> capabilities, @ClientId Object clientDescriptor);
+  @Override
+  public Future<Void> expose(ContextContainer contextContainer, Collection<Capability> capabilities, @ClientId Object clientId) {
+    return completedFuture(null);
+  }
 
 }
