@@ -30,6 +30,8 @@ import org.terracotta.management.entity.server.ManagementAgentEntityServerServic
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
+import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
+import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 import org.terracotta.passthrough.PassthroughTestHelpers;
@@ -50,6 +52,7 @@ public class ManagementEntityTest {
         server.setServerName("server-1");
         server.registerClientEntityService(new ManagementAgentEntityClientService());
         server.registerServerEntityService(new ManagementAgentEntityServerService());
+        server.registerServiceProvider(new MonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
       }
     });
 
