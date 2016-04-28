@@ -10,6 +10,7 @@
   <modules>
     <module>management-model</module>
     <module>management-registry</module>
+    <module>monitoring-service</module>
     <module>management-entity</module>
   </modules>
 
@@ -26,8 +27,11 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.6</java.version>
     <slf4j.version>1.7.7</slf4j.version>
+    <platform.version>1.0-SNAPSHOT</platform.version>
+    <voltron-apis.version>1.0-SNAPSHOT</voltron-apis.version>
     <terracotta-os-snapshots-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</terracotta-os-snapshots-url>
     <terracotta-os-releases-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
   </properties>
