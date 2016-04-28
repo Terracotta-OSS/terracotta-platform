@@ -27,10 +27,13 @@ public class ClientIdentifierTest {
     assertNotEquals("127.0.0.1", identifier.getHostAddress());
 
     assertEquals(ClientIdentifier.create("my-app"), identifier);
-    assertEquals(ClientIdentifier.create(ClientIdentifier.discoverPID(), ClientIdentifier.discoverLANAddress().getHostAddress(), "my-app"), identifier);
+    assertEquals(ClientIdentifier.create(ClientIdentifier.discoverPID(), ClientIdentifier.discoverLANAddress().getHostAddress(), "my-app", ""), identifier);
     assertEquals(ClientIdentifier.valueOf(ClientIdentifier.discoverPID() + "@" + ClientIdentifier.discoverLANAddress().getHostAddress() + ":my-app"), identifier);
 
-    assertEquals("123@127.0.0.1:jetty:app:3", ClientIdentifier.valueOf("123@127.0.0.1:jetty:app:3").getClientId());
+    identifier = ClientIdentifier.valueOf("123@127.0.0.1:jetty:app:3");
+    assertEquals("123@127.0.0.1:jetty:app:3", identifier.getClientId());
+    assertEquals("123@127.0.0.1:jetty:app", identifier.getProductId());
+    assertEquals("123@127.0.0.1", identifier.getVmId());
   }
 
 }
