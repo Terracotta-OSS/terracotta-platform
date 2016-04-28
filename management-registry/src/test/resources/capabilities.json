@@ -15,14 +15,6 @@
     }, {
       "name" : "cacheName",
       "required" : true
-    } ],
-    "requiredAttributeNames" : [ "cacheManagerName", "cacheName" ],
-    "requiredAttributes" : [ {
-      "name" : "cacheManagerName",
-      "required" : true
-    }, {
-      "name" : "cacheName",
-      "required" : true
     } ]
   }
 } ]

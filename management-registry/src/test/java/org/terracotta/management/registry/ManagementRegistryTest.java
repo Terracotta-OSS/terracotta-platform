@@ -15,11 +15,13 @@
  */
 package org.terracotta.management.registry;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.provider.action.MyManagementProvider;
 import org.terracotta.management.provider.action.MyObject;
@@ -27,6 +29,7 @@ import org.terracotta.management.provider.action.MyObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 
@@ -51,9 +54,15 @@ public class ManagementRegistryTest {
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
     String expectedJson = new String(read(new File("src/test/resources/capabilities.json")), "UTF-8");
+
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    assertEquals(expectedJson, mapper.writeValueAsString(registry.getCapabilities()));
+    mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
+
+    String actual = mapper.writeValueAsString(registry.getCapabilities());
+    System.out.println(expectedJson);
+    System.out.println(actual);
+    assertEquals(expectedJson, actual);
   }
 
   static byte[] read(File f) throws IOException {
@@ -65,6 +74,13 @@ public class ManagementRegistryTest {
     } finally {
       reader.close();
     }
+  }
+
+  public static abstract class CapabilityContextMixin {
+    @JsonIgnore
+    public abstract Collection<String> getRequiredAttributeNames();
+    @JsonIgnore
+    public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
   }
 
 }
