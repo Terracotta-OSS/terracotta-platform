@@ -18,30 +18,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <packaging>pom</packaging>
-
-  <modules>
-    <module>management-entity-common</module>
-    <module>management-entity-client</module>
-    <module>management-entity-server</module>
-    <module>management-entity-tests</module>
-  </modules>
-
   <parent>
+    <artifactId>management-entity</artifactId>
     <groupId>org.terracotta.management</groupId>
-    <artifactId>terracotta-management</artifactId>
     <version>2.5.0-SNAPSHOT</version>
   </parent>
+  <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>management-entity</artifactId>
-  <name>Terracotta Management :: Management Entity</name>
+  <artifactId>management-entity-client</artifactId>
+  <name>Terracotta Management :: Management Entity :: Client</name>
 
-  <licenses>
-    <license>
-      <name>The Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>management-entity-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- provided by voltron-management module (client) -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-client-api</artifactId>
+      <scope>provided</scope>
+      <version>${voltron-apis.version}</version>
+    </dependency>
+  </dependencies>
 
 </project>
