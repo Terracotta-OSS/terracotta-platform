@@ -22,6 +22,7 @@ import java.io.PrintStream;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
@@ -55,12 +56,12 @@ class MonitoringService {
   private final ConcurrentMap<Long, Queue<Mutation>> mutations = new ConcurrentHashMap<>();
   private final Clock clock;
 
-  public MonitoringService(Clock clock, MonitoringServiceConfiguration config) {
+  MonitoringService(Clock clock, MonitoringServiceConfiguration config) {
     this.config = config;
     this.clock = clock;
   }
 
-  public IMonitoringProducer getProducer(long callerConsumerID) {
+  IMonitoringProducer getProducer(long callerConsumerID) {
     return new IMonitoringProducer() {
       @Override
       public boolean addNode(String[] parents, String name, Object value) {
@@ -74,7 +75,7 @@ class MonitoringService {
     };
   }
 
-  public IMonitoringConsumer getConsumer(long callerConsumerID, MonitoringConsumerConfiguration configuration) {
+  IMonitoringConsumer getConsumer(long callerConsumerID, MonitoringConsumerConfiguration configuration) {
 
     // when a new consumer is requested, create a consumer queue for itself to stock all mutations that happened
     if (configuration.isRecordingMutations()) {
@@ -93,6 +94,11 @@ class MonitoringService {
       }
 
       @Override
+      public Optional<Map<String, Object>> getChildValuesForNode(String[] path) {
+        return MonitoringService.this.getChildValuesForNode(callerConsumerID, path);
+      }
+
+      @Override
       public Stream<Mutation> readMutations() {
         return MonitoringService.this.readMutations(callerConsumerID);
       }
@@ -106,14 +112,14 @@ class MonitoringService {
 
   // cleanup
 
-  public void clear() {
+  void clear() {
     mutations.clear();
     tree.removeChildren();
   }
 
   /// producing
 
-  public boolean addNode(long callerConsumerID, String[] parents, String name, Object value) {
+  private boolean addNode(long callerConsumerID, String[] parents, String name, Object value) {
     if (parents == null) {
       parents = new String[0];
     }
@@ -155,7 +161,7 @@ class MonitoringService {
     return true;
   }
 
-  public boolean removeNode(long consumerID, String[] parents, String name) {
+  private boolean removeNode(long consumerID, String[] parents, String name) {
     if (parents == null) {
       parents = new String[0];
     }
@@ -237,7 +243,7 @@ class MonitoringService {
         });
   }
 
-  public <T> Optional<T> getValueForNode(long callerConsumerID, String[] path, Class<T> type) throws ClassCastException {
+  private <T> Optional<T> getValueForNode(long callerConsumerID, String[] path, Class<T> type) throws ClassCastException {
     Node node = getNodeForPath(path);
     if (null != node) {
       try {
@@ -255,7 +261,16 @@ class MonitoringService {
     return Optional.empty();
   }
 
-  public Optional<Collection<String>> getChildNamesForNode(long callerConsumerID, String[] path) {
+  private Optional<Map<String, Object>> getChildValuesForNode(long callerConsumerID, String[] path) {
+    Map<String, Object> children = null;
+    Node node = getNodeForPath(path);
+    if (null != node) {
+      children = node.getChildValues();
+    }
+    return Optional.ofNullable(children);
+  }
+
+  private Optional<Collection<String>> getChildNamesForNode(long callerConsumerID, String[] path) {
     Set<String> children = null;
     Node node = getNodeForPath(path);
     if (null != node) {
@@ -298,32 +313,40 @@ class MonitoringService {
     private final Object value;
     private final ConcurrentMap<String, Node> children = new ConcurrentHashMap<>(0);
 
-    public Node() {
+    Node() {
       this(null);
     }
 
-    public Node(Object value) {
+    Node(Object value) {
       this.value = value;
     }
 
-    public Node addChild(String name, Node child) {
+    Node addChild(String name, Node child) {
       return this.children.put(name, child);
     }
 
-    public void removeChildren() {
+    void removeChildren() {
       children.clear();
     }
 
-    public Node removeChild(String name) {
+    Node removeChild(String name) {
       return this.children.remove(name);
     }
 
-    public Node getChild(String name) {
+    Node getChild(String name) {
       return this.children.get(name);
     }
 
-    public Set<String> getChildNames() {
+    Set<String> getChildNames() {
       return this.children.keySet();
+    }
+
+    Map<String, Object> getChildValues() {
+      Map<String, Object> copy = new HashMap<>(children.size());
+      for (Map.Entry<String, Node> entry : this.children.entrySet()) {
+        copy.put(entry.getKey(), entry.getValue().value);
+      }
+      return copy;
     }
 
     @Override
@@ -331,7 +354,7 @@ class MonitoringService {
       return String.valueOf(value) + " " + getChildNames();
     }
 
-    public boolean hasChild() {
+    boolean hasChild() {
       return !children.isEmpty();
     }
 
@@ -358,7 +381,7 @@ class MonitoringService {
   private class MutationSpliterator extends Spliterators.AbstractSpliterator<Mutation> {
     private final long callerConsumerID;
 
-    public MutationSpliterator(long callerConsumerID) {
+    MutationSpliterator(long callerConsumerID) {
       super(mutations.getOrDefault(callerConsumerID, EMPTY_QUEUE).size(), NONNULL | ORDERED | SIZED | SUBSIZED | DISTINCT | IMMUTABLE);
       this.callerConsumerID = callerConsumerID;
     }

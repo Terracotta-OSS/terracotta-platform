@@ -20,8 +20,11 @@ import com.tc.classloader.CommonComponent;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import static org.terracotta.management.service.monitoring.Utils.concat;
 
 /**
  * @author Mathieu Carbou
@@ -40,7 +43,7 @@ public interface IMonitoringConsumer extends Closeable {
   <T> Optional<T> getValueForNode(String[] path, Class<T> type) throws ClassCastException;
 
   default <T> Optional<T> getValueForNode(String[] parents, String nodeName, Class<T> type) throws ClassCastException {
-    return getValueForNode(Utils.concat(parents, nodeName), type);
+    return getValueForNode(concat(parents, nodeName), type);
   }
 
   /**
@@ -52,7 +55,13 @@ public interface IMonitoringConsumer extends Closeable {
   Optional<Collection<String>> getChildNamesForNode(String[] path);
 
   default Optional<Collection<String>> getChildNamesForNode(String[] parent, String nodeName) {
-    return getChildNamesForNode(Utils.concat(parent, nodeName));
+    return getChildNamesForNode(concat(parent, nodeName));
+  }
+
+  Optional<Map<String, Object>> getChildValuesForNode(String[] path);
+
+  default Optional<Map<String, Object>> getChildValuesForNode(String[] parent, String nodeName) {
+    return getChildValuesForNode(concat(parent, nodeName));
   }
 
   /**
