@@ -31,7 +31,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Client identifier:
+ * Client identifier: {@code <PID>@<IP>:<PRODUCT>:<UUID>}. Where:
+ * <ul>
+ * <li>PID is the JVM PID</li>
+ * <li>IP is the JVM local address used to connect to the cluster</li>
+ * <li>PRODUCT is a product-defined string such as ehcache:my-cache-manager</li>
+ * <li>UUID is the logical connection ID of the cluster</li>
+ * </ul>
+ * A logical connection is a composition of several physical connections to each stripe in multi-stripe mdoe (cluster)
  *
  * @author Mathieu Carbou
  */
