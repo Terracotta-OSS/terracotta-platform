@@ -1,21 +1,19 @@
 /*
  * Copyright Terracotta, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package org.terracotta.management.model.cluster;
-
-import org.terracotta.management.model.Objects;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayOutputStream;
@@ -26,6 +24,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,17 +47,13 @@ public final class ClientIdentifier implements Serializable {
 
   private final long pid;
   private final String product;
-  private final String uuid;
+  private final String connectionUid;
   private final String hostAddress;
 
-  private ClientIdentifier(long pid, String hostAddress, String product) {
-    this(pid, hostAddress, product, "");
-  }
-
-  private ClientIdentifier(long pid, String hostAddress, String product, String uuid) {
+  private ClientIdentifier(long pid, String hostAddress, String product, String connectionUid) {
     this.hostAddress = Objects.requireNonNull(hostAddress);
     this.pid = pid;
-    this.uuid = Objects.requireNonNull(uuid);
+    this.connectionUid = Objects.requireNonNull(connectionUid);
     this.product = Objects.requireNonNull(product);
     if (hostAddress.isEmpty()) {
       throw new IllegalArgumentException("Empty host address");
@@ -68,8 +63,8 @@ public final class ClientIdentifier implements Serializable {
     }
   }
 
-  public String getUuid() {
-    return uuid;
+  public String getConnectionUid() {
+    return connectionUid;
   }
 
   public String getHostAddress() {
@@ -93,7 +88,7 @@ public final class ClientIdentifier implements Serializable {
   }
 
   public String getClientId() {
-    return getProductId() + (uuid.isEmpty() ? "" : (":" + uuid));
+    return getProductId() + ":" + connectionUid;
   }
 
   @Override
@@ -108,7 +103,7 @@ public final class ClientIdentifier implements Serializable {
     ClientIdentifier that = (ClientIdentifier) o;
     return pid == that.pid
         && product.equals(that.product)
-        && uuid.equals(that.uuid)
+        && connectionUid.equals(that.connectionUid)
         && hostAddress.equals(that.hostAddress);
   }
 
@@ -116,7 +111,7 @@ public final class ClientIdentifier implements Serializable {
   public int hashCode() {
     int result = (int) (pid ^ (pid >>> 32));
     result = 31 * result + product.hashCode();
-    result = 31 * result + uuid.hashCode();
+    result = 31 * result + connectionUid.hashCode();
     result = 31 * result + hostAddress.hashCode();
     return result;
   }
@@ -125,16 +120,12 @@ public final class ClientIdentifier implements Serializable {
     return new ClientIdentifier(pid, hostAddress, product, uuid);
   }
 
-  public static ClientIdentifier create() {
-    return create(generateNewUUID());
-  }
-
-  public static ClientIdentifier create(String product) {
+  public static ClientIdentifier create(String product, String logicalConnectionUid) {
     try {
       InetAddress inetAddress = discoverLANAddress();
-      return new ClientIdentifier(discoverPID(), inetAddress.getHostAddress(), product);
+      return new ClientIdentifier(discoverPID(), inetAddress.getHostAddress(), product, logicalConnectionUid);
     } catch (UnknownHostException e) {
-      return new ClientIdentifier(discoverPID(), "127.0.0.1", product);
+      return new ClientIdentifier(discoverPID(), "127.0.0.1", product, logicalConnectionUid);
     }
 
   }
@@ -147,8 +138,8 @@ public final class ClientIdentifier implements Serializable {
       return new ClientIdentifier(
           Long.parseLong(identifier.substring(0, copy)),
           identifier.substring(copy + 1, firstColon),
-          identifier.substring(firstColon + 1, lastColon > firstColon ? lastColon : identifier.length()),
-          lastColon > firstColon ? identifier.substring(lastColon + 1) : "");
+          identifier.substring(firstColon + 1, lastColon),
+          identifier.substring(lastColon + 1));
     } catch (RuntimeException e) {
       throw new IllegalArgumentException(identifier);
     }
