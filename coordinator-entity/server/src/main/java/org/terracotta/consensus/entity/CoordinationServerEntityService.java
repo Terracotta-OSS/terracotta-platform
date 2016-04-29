@@ -23,21 +23,18 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 /**
  * @author Alex Snaps
  */
-public class CoordinationServerEntityService extends ProxyServerEntityService {
+public class CoordinationServerEntityService extends ProxyServerEntityService<Void> {
   
   private static final String ENTITY_CLASS_NAME = "org.terracotta.consensus.entity.client.CoordinationClientEntity";
 
   public CoordinationServerEntityService() {
-    super(CoordinationEntity.class, new SerializationCodec(), ServerElectionEvent.class);
+    super(CoordinationEntity.class, Void.TYPE, new SerializationCodec(), ServerElectionEvent.class);
   }
 
   @Override
@@ -51,11 +48,7 @@ public class CoordinationServerEntityService extends ProxyServerEntityService {
   }
 
   @Override
-  public CoordinationServerEntity createActiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
-    if (bytes != null && bytes.length > 0) {
-      throw new IllegalArgumentException("No config expected here!");
-    }
-    
+  public CoordinationServerEntity createActiveEntity(final ServiceRegistry serviceRegistry, Void v) {
     ClientCommunicator communicator = serviceRegistry.getService(new BasicServiceConfiguration<ClientCommunicator>(ClientCommunicator.class));
     
     return new CoordinationServerEntity(new LeaderElector<String, ClientDescriptor>(new UuidOfferFactory()), communicator);
