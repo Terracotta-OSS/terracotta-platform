@@ -38,6 +38,11 @@
       <artifactId>management-entity-common</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>cluster-topology</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- provided by voltron (server) -->
     <dependency>
