@@ -27,7 +27,7 @@ public class OffHeapResourceTest {
   @Test
   public void testNegativeResourceSize() {
     try {
-      new OffHeapResource(-1);
+      new OffHeapResourceImpl(-1);
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       //expected;
@@ -36,14 +36,14 @@ public class OffHeapResourceTest {
 
   @Test
   public void testZeroSizeResourceIsUseless() {
-    OffHeapResource ohr = new OffHeapResource(0);
+    OffHeapResource ohr = new OffHeapResourceImpl(0);
     assertThat(ohr.reserve(1), is(false));
     assertThat(ohr.available(), is(0L));
   }
 
   @Test
   public void testAllocationReducesSize() {
-    OffHeapResource ohr = new OffHeapResource(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(20);
     assertThat(ohr.available(), is(20L));
     assertThat(ohr.reserve(10), is(true));
     assertThat(ohr.available(), is(10L));
@@ -51,7 +51,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testNegativeAllocationFails() {
-    OffHeapResource ohr = new OffHeapResource(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(20);
     try {
       ohr.reserve(-1);
       fail("Expected IllegalArgumentException");
@@ -62,7 +62,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testAllocationWhenExhaustedFails() {
-    OffHeapResource ohr = new OffHeapResource(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(20);
     ohr.reserve(20);
     assertThat(ohr.reserve(1), is(false));
     assertThat(ohr.available(), is(0L));
@@ -70,7 +70,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testFreeIncreasesSize() {
-    OffHeapResource ohr = new OffHeapResource(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(20);
     ohr.reserve(20);
     assertThat(ohr.available(), is(0L));
     ohr.release(10);
@@ -79,7 +79,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testNegativeFreeFails() {
-    OffHeapResource ohr = new OffHeapResource(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(20);
     ohr.reserve(10);
     try {
       ohr.release(-10);

@@ -55,7 +55,7 @@ public class OffHeapResourcesProvider implements ServiceProvider {
         for (ResourceType r : configuration.getResources()) {
           long size = convert(r.getValue(), r.getUnit()).longValueExact();
           totalSize += size;
-          resources.put(OffHeapResourceIdentifier.identifier(r.getName()), new OffHeapResource(size));
+          resources.put(OffHeapResourceIdentifier.identifier(r.getName()), new OffHeapResourceImpl(size));
         }
         Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
         if (physicalMemory != null && totalSize > physicalMemory) {
