@@ -62,7 +62,8 @@ abstract class AbstractNode<P extends Contextual> implements Node, Serializable 
 
   @Override
   public Context getContext() {
-    return parent == null ? Context.empty() : parent.getContext().with(getContextKey(), getId());
+    return (parent == null ? Context.empty() : parent.getContext())
+        .with(getContextKey(), getId());
   }
 
   abstract String getContextKey();

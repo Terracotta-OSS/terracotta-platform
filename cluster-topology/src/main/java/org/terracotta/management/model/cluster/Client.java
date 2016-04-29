@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
 
   public static final String KEY = "clientId";
-  public static final String IDENTIFIER_KEY = KEY;
 
   // physical connections to stripes (active server)
   private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
@@ -43,8 +42,8 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
   private final SortedSet<String> tags = new TreeSet<>();
   private String hostName;
 
-  private Client(String id, ClientIdentifier clientIdentifier) {
-    super(id);
+  private Client(ClientIdentifier clientIdentifier) {
+    super(clientIdentifier.getClientId());
     this.clientIdentifier = Objects.requireNonNull(clientIdentifier);
   }
 
@@ -207,11 +206,6 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
   }
 
   @Override
-  public Context getContext() {
-    return super.getContext().with(IDENTIFIER_KEY, getClientId());
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -255,7 +249,7 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
   }
 
   public static Client create(ClientIdentifier clientIdentifier) {
-    return new Client(clientIdentifier.getClientId(), clientIdentifier);
+    return new Client(clientIdentifier);
   }
 
 }
