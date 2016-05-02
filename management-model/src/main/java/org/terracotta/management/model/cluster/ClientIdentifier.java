@@ -31,10 +31,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Client identifier: {@code <PID>@<IP>:<PRODUCT>:<UUID>}. Where:
+ * Client identifier: {@code <PID>@<ADDRESS>:<PRODUCT>:<UUID>}. Where:
  * <ul>
  * <li>PID is the JVM PID</li>
- * <li>IP is the JVM local address used to connect to the cluster</li>
+ * <li>ADDRESS is the JVM host address used to connect to the cluster</li>
  * <li>PRODUCT is a product-defined string such as ehcache:my-cache-manager</li>
  * <li>UUID is the logical connection ID of the cluster</li>
  * </ul>

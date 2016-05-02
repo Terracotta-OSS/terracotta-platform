@@ -26,10 +26,9 @@ import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.provider.action.MyManagementProvider;
 import org.terracotta.management.provider.action.MyObject;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Collection;
+import java.util.Scanner;
 
 import static org.junit.Assert.assertEquals;
 
@@ -53,7 +52,9 @@ public class ManagementRegistryTest {
     registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
-    String expectedJson = new String(read(new File("src/test/resources/capabilities.json")), "UTF-8");
+    Scanner scanner = new Scanner(ManagementRegistryTest.class.getResourceAsStream("/capabilities.json"), "UTF-8").useDelimiter("\\A");
+    String expectedJson = scanner.next();
+    scanner.close();
 
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
@@ -63,17 +64,6 @@ public class ManagementRegistryTest {
     System.out.println(expectedJson);
     System.out.println(actual);
     assertEquals(expectedJson, actual);
-  }
-
-  static byte[] read(File f) throws IOException {
-    byte[] data = new byte[(int) f.length()];
-    RandomAccessFile reader = new RandomAccessFile(f, "r");
-    try {
-      reader.readFully(data);
-      return data;
-    } finally {
-      reader.close();
-    }
   }
 
   public static abstract class CapabilityContextMixin {
