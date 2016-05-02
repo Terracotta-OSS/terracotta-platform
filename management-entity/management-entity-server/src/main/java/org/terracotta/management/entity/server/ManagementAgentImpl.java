@@ -32,6 +32,7 @@ import org.terracotta.voltron.proxy.ClientId;
 
 import java.util.AbstractMap;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -94,6 +95,8 @@ class ManagementAgentImpl implements ManagementAgent {
           if (!platformEntity.isPresent()) {
             return Context.empty();
           }
+
+          // create a manageable just to build a context object easily. we could have just set the keys by our own instead.
           Manageable manageable = Manageable.create(platformEntity.get().name, platformEntity.get().typeName);
 
           consumer.getValueForNode(array(PLATFORM_ROOT_NAME, FETCHED_ROOT_NAME, entry.getKey(), "contextContainer"), ContextContainer.class)
@@ -106,7 +109,7 @@ class ManagementAgentImpl implements ManagementAgent {
   }
 
   @Override
-  public Future<Void> expose(Context entityContext, ContextContainer contextContainer, Collection<Capability> capabilities, @ClientId Object clientDescriptor) {
+  public Future<Void> expose(Context entityContext, ContextContainer contextContainer, Collection<Capability> capabilities, Collection<String> tags, @ClientId Object clientDescriptor) {
     if (!entityContext.contains(Manageable.NAME_KEY) || !entityContext.contains(Manageable.TYPE_KEY)) {
       throw new IllegalArgumentException("Bad entity context: " + entityContext);
     }
@@ -122,6 +125,7 @@ class ManagementAgentImpl implements ManagementAgent {
             .ifPresent(platformEntity -> {
               producer.addNode(array(PLATFORM_ROOT_NAME, FETCHED_ROOT_NAME, entry.getKey()), "contextContainer", contextContainer);
               producer.addNode(array(PLATFORM_ROOT_NAME, FETCHED_ROOT_NAME, entry.getKey()), "capabilities", capabilities);
+              producer.addNode(array(PLATFORM_ROOT_NAME, FETCHED_ROOT_NAME, entry.getKey()), "tags", tags == null ? Collections.emptyList() : tags);
             }));
 
     return CompletableFuture.completedFuture(null);

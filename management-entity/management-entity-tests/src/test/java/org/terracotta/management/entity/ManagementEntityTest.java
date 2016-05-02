@@ -41,6 +41,7 @@ import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
@@ -82,7 +83,7 @@ public class ManagementEntityTest {
       ClientIdentifier clientIdentifier = entity.getClientIdentifier(null).get();
       System.out.println(clientIdentifier);
       assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
-      assertEquals("product-name", clientIdentifier.getProduct());
+      assertEquals("product-name", clientIdentifier.getName());
       assertEquals("logical-conn-uuid", clientIdentifier.getConnectionUid());
 
       Collection<Context> contexts = entity.getEntityContexts(null).get();
@@ -104,6 +105,7 @@ public class ManagementEntityTest {
               .with(Manageable.NAME_KEY, "SUPER_NAME"),
           registry.getContextContainer(),
           registry.getCapabilities(),
+          Arrays.asList("EhcachePounder", "webapp-1", "app-server-node-1"),
           null).get();
 
       contexts = entity.getEntityContexts(null).get();

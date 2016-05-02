@@ -89,10 +89,6 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
     return clientIdentifier.getPid();
   }
 
-  public String getproduct() {
-    return clientIdentifier.getProduct();
-  }
-
   public String getClientId() {
     return clientIdentifier.getClientId();
   }
@@ -103,9 +99,7 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
 
   public String getLogicalConnectionUid() {return clientIdentifier.getConnectionUid();}
 
-  public String getProduct() {return clientIdentifier.getProduct();}
-
-  public String getProductId() {return clientIdentifier.getProductId();}
+  public String getName() {return clientIdentifier.getName();}
 
   public Map<String, Connection> getConnections() {
     return Collections.unmodifiableMap(connections);
@@ -232,13 +226,12 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
   public Map<String, Object> toMap() {
     Map<String, Object> map = super.toMap();
     map.put("pid", getPid());
-    map.put("product", getProduct());
-    map.put("logicalConnectionUid", getLogicalConnectionUid());
-    map.put("hostName", getHostName());
     map.put("hostAddress", getHostAddress());
-    map.put("clientId", getClientId());
+    map.put("name", getName());
+    map.put("logicalConnectionUid", getLogicalConnectionUid());
     map.put("vmId", getVmId());
-    map.put("productId", getProductId());
+    map.put("clientId", getClientId());
+    map.put("hostName", getHostName());
     map.put("tags", tags);
     map.put("connections", connectionStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(Connection::toMap).collect(Collectors.toList()));
     return map;
