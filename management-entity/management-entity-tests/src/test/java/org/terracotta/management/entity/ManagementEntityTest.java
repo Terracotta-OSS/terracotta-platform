@@ -20,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
+import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
@@ -34,6 +35,8 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
+import org.terracotta.management.service.monitoring.IMonitoringConsumer;
+import org.terracotta.management.service.monitoring.MonitoringConsumerConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
 import org.terracotta.passthrough.IClusterControl;
@@ -43,16 +46,22 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.monitoring.PlatformMonitoringConstants.FETCHED_PATH;
 
 /**
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
 public class ManagementEntityTest {
+
+  private static IMonitoringConsumer consumer;
 
   @Test
   public void test_expose() throws EntityNotProvidedException, EntityVersionMismatchException, EntityAlreadyExistsException, EntityNotFoundException, IOException, ExecutionException, InterruptedException {
@@ -62,7 +71,7 @@ public class ManagementEntityTest {
       server.setServerName("server-1");
       server.registerClientEntityService(new ManagementAgentEntityClientService());
       server.registerServerEntityService(new ManagementAgentEntityServerService());
-      server.registerServiceProvider(new MonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
+      server.registerServiceProvider(new HackedMonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
     });
 
     ManagementRegistry registry = new AbstractManagementRegistry() {
@@ -83,8 +92,8 @@ public class ManagementEntityTest {
       ClientIdentifier clientIdentifier = entity.getClientIdentifier(null).get();
       System.out.println(clientIdentifier);
       assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
-      assertEquals("product-name", clientIdentifier.getName());
-      assertEquals("logical-conn-uuid", clientIdentifier.getConnectionUid());
+      assertEquals("UNKNOWN", clientIdentifier.getName());
+      assertNotNull(clientIdentifier.getConnectionUid());
 
       Collection<Context> contexts = entity.getEntityContexts(null).get();
       System.out.println(contexts);
@@ -114,6 +123,23 @@ public class ManagementEntityTest {
       context = contexts.iterator().next();
       assertEquals(5, context.size());
       assertEquals("my-cm-name", context.get("cacheManagerName"));
+
+      String fetchId = consumer.getChildNamesForNode(FETCHED_PATH).get().iterator().next();
+      Map<String, Object> children = consumer.getChildValuesForNode(FETCHED_PATH, fetchId).get();
+      assertEquals(3, children.size());
+      assertEquals(new TreeSet<>(Arrays.asList("contextContainer", "capabilities", "tags")), new TreeSet<>(children.keySet()));
+      assertEquals(registry.getCapabilities(), children.get("capabilities"));
+      assertEquals(Arrays.asList("EhcachePounder", "webapp-1", "app-server-node-1"), children.get("tags"));
+    }
+  }
+
+  // to be able to access the IMonitoringConsumer interface outside Voltron
+  public static class HackedMonitoringServiceProvider extends MonitoringServiceProvider {
+    @Override
+    public boolean initialize(ServiceProviderConfiguration configuration) {
+      super.initialize(configuration);
+      consumer = getService(0, new MonitoringConsumerConfiguration());
+      return true;
     }
   }
 
