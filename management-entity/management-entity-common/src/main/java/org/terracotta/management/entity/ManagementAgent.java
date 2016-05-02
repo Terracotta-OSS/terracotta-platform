@@ -37,9 +37,10 @@ public interface ManagementAgent {
    * @param contextContainer output from Management registry
    * @param capabilities     output from Management registry
    * @param clientDescriptor must be null, used only for implementation
+   * @param tags             the tags to expose for this client
    */
   @Async(Async.Ack.NONE)
-  Future<Void> expose(Context entity, ContextContainer contextContainer, Collection<Capability> capabilities, @ClientId Object clientDescriptor);
+  Future<Void> expose(Context entity, ContextContainer contextContainer, Collection<Capability> capabilities, Collection<String> tags, @ClientId Object clientDescriptor);
 
   /**
    * Gets the {@link ClientIdentifier} for the underlying logical connection.
