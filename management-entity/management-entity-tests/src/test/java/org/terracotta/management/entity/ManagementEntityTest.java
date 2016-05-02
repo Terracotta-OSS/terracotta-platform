@@ -51,6 +51,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.FETCHED_PATH;
 
@@ -59,6 +60,8 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.FETCHED_PATH
  */
 @RunWith(JUnit4.class)
 public class ManagementEntityTest {
+
+  private static IMonitoringConsumer consumer;
 
   @Test
   public void test_expose() throws EntityNotProvidedException, EntityVersionMismatchException, EntityAlreadyExistsException, EntityNotFoundException, IOException, ExecutionException, InterruptedException {
@@ -89,8 +92,8 @@ public class ManagementEntityTest {
       ClientIdentifier clientIdentifier = entity.getClientIdentifier(null).get();
       System.out.println(clientIdentifier);
       assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
-      assertEquals("product-name", clientIdentifier.getName());
-      assertEquals("logical-conn-uuid", clientIdentifier.getConnectionUid());
+      assertEquals("UNKNOWN", clientIdentifier.getName());
+      assertNotNull(clientIdentifier.getConnectionUid());
 
       Collection<Context> contexts = entity.getEntityContexts(null).get();
       System.out.println(contexts);
@@ -121,7 +124,6 @@ public class ManagementEntityTest {
       assertEquals(5, context.size());
       assertEquals("my-cm-name", context.get("cacheManagerName"));
 
-      IMonitoringConsumer consumer = HackedMonitoringServiceProvider.consumer;
       String fetchId = consumer.getChildNamesForNode(FETCHED_PATH).get().iterator().next();
       Map<String, Object> children = consumer.getChildValuesForNode(FETCHED_PATH, fetchId).get();
       assertEquals(3, children.size());
@@ -131,10 +133,8 @@ public class ManagementEntityTest {
     }
   }
 
+  // to be able to access the IMonitoringConsumer interface outside Voltron
   public static class HackedMonitoringServiceProvider extends MonitoringServiceProvider {
-
-    static IMonitoringConsumer consumer;
-
     @Override
     public boolean initialize(ServiceProviderConfiguration configuration) {
       super.initialize(configuration);
@@ -142,4 +142,5 @@ public class ManagementEntityTest {
       return true;
     }
   }
+
 }

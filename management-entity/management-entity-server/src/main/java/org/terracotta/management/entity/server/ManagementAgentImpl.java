@@ -30,18 +30,19 @@ import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.voltron.proxy.ClientId;
 
+import javax.xml.bind.DatatypeConverter;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.terracotta.management.entity.server.Utils.array;
-import static org.terracotta.management.entity.server.Utils.toClientIdentifier;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.FETCHED_PATH;
@@ -59,6 +60,7 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.PLATFORM_ROO
  * <ul>
  * <li>{@code platform/fetched/<id>/contextContainer ContextContainer}</li>
  * <li>{@code platform/fetched/<id>/capabilities Collections<Capability>}</li>
+ * <li>{@code platform/fetched/<id>/tags Collections<String>}</li>
  * </ul>
  *
  * @author Mathieu Carbou
@@ -159,6 +161,14 @@ class ManagementAgentImpl implements ManagementAgent {
             .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), (PlatformClientFetchedEntity) entry.getValue()))
             .filter(entry -> entry.getValue().clientDescriptor.equals(clientDescriptor))
             .findFirst());
+  }
+
+  private static ClientIdentifier toClientIdentifier(PlatformConnectedClient connection) {
+    return ClientIdentifier.create(
+        connection.clientPID,
+        connection.remoteAddress.getHostAddress(),
+        connection.name == null || connection.name.isEmpty() ? "UNKNOWN" : connection.name,
+        connection.uuid);
   }
 
 }

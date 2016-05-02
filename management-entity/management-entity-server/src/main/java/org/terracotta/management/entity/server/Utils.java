@@ -16,9 +16,6 @@
 
 package org.terracotta.management.entity.server;
 
-import org.terracotta.management.model.cluster.ClientIdentifier;
-import org.terracotta.monitoring.PlatformConnectedClient;
-
 /**
  * @author Mathieu Carbou
  */
@@ -26,15 +23,6 @@ class Utils {
 
   static <T> T[] array(T... o) {
     return o;
-  }
-
-  static ClientIdentifier toClientIdentifier(PlatformConnectedClient connection) {
-    //TODO MATHIEU - replaces to read tag field from PlatformConnectedClient
-    return ClientIdentifier.create(
-        connection.clientPID,
-        connection.remoteAddress.getHostAddress(),
-        "product-name", // connection name => connection.name
-        "logical-conn-uuid"); // logical connection UUID => connection.uuid
   }
 
 }
