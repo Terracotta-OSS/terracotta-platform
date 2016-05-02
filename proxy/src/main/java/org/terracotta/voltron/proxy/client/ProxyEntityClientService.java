@@ -21,19 +21,20 @@ public abstract class ProxyEntityClientService<T extends Entity, C> implements E
   private final Class<? super T> type;
   private final Codec codec;
   private final Class<?>[] messageTypes;
+  private final Class<C> configType;
 
-
-  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<?>... messageTypes) {
-    this(clientType, type, new SerializationCodec(), messageTypes);
+  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType, Class<?>... messageTypes) {
+    this(clientType, type, configType, new SerializationCodec(), messageTypes);
   }
 
-  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type) {
-    this(clientType, type, new SerializationCodec());
+  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType) {
+    this(clientType, type, configType, new SerializationCodec());
   }
 
-  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Codec codec, Class<?>... messageTypes) {
+  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType, Codec codec, Class<?>... messageTypes) {
     this.clientType = clientType;
     this.type = type;
+    this.configType = configType;
     this.codec = codec;
     this.messageTypes = messageTypes;
   }
@@ -51,6 +52,22 @@ public abstract class ProxyEntityClientService<T extends Entity, C> implements E
   @Override
   public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
     return new ProxyMessageCodec(codec, type, messageTypes);
+  }
+
+  @Override
+  public C deserializeConfiguration(byte[] configuration) {
+    if(configType == Void.TYPE) {
+      return null;
+    }
+    return configType.cast(codec.decode(configuration, configType));
+  }
+
+  @Override
+  public byte[] serializeConfiguration(C configuration) {
+    if(configType == Void.TYPE) {
+      return new byte[0];
+    }
+    return codec.encode(configType, configuration);
   }
 
   private static Class<?>[] sum(Class<?> one, Class<?>[] others) {

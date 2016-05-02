@@ -27,16 +27,7 @@ import org.terracotta.consensus.entity.messages.ServerElectionEvent;
 public class ClientCoordinationEntityService extends ProxyEntityClientService<CoordinationClientEntity, Void> {
 
   public ClientCoordinationEntityService() {
-    super(CoordinationClientEntity.class, CoordinationEntity.class, ServerElectionEvent.class);
+    super(CoordinationClientEntity.class, CoordinationEntity.class, Void.TYPE, ServerElectionEvent.class);
   }
 
-  @Override
-  public byte[] serializeConfiguration(final Void aVoid) {
-    return new byte[0];
-  }
-
-  @Override
-  public Void deserializeConfiguration(final byte[] bytes) {
-    return null;
-  }
 }
