@@ -19,10 +19,12 @@ package org.terracotta.offheapresource;
 
 import org.terracotta.entity.ServiceConfiguration;
 
+import com.tc.classloader.CommonComponent;
+
 /**
- *
- * @author cdennis
+ * Provides identification of a server-defined off-heap resource.
  */
+@CommonComponent
 public final class OffHeapResourceIdentifier implements ServiceConfiguration<OffHeapResource> {
 
   private final String name;
