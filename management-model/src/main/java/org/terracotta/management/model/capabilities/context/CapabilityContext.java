@@ -21,7 +21,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 /**
  * @author Ludovic Orban
@@ -36,7 +36,7 @@ public final class CapabilityContext implements Serializable {
   }
 
   public CapabilityContext(Collection<Attribute> attributes) {
-    this.attributes = Objects.requireNonNull(attributes);
+    this.attributes = new ArrayList<Attribute>(Objects.requireNonNull(attributes));
   }
 
   public Collection<Attribute> getAttributes() {
@@ -44,7 +44,7 @@ public final class CapabilityContext implements Serializable {
   }
 
   public Collection<String> getRequiredAttributeNames() {
-    Collection<String> names = new HashSet<String>();
+    Collection<String> names = new LinkedHashSet<String>();
     for (Attribute attribute : this.attributes) {
       if (attribute.isRequired()) {
         names.add(attribute.getName());

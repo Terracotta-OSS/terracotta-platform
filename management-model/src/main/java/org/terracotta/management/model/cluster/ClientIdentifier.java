@@ -1,17 +1,17 @@
 /*
  * Copyright Terracotta, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package org.terracotta.management.model.cluster;
 
@@ -31,7 +31,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Client identifier:
+ * Client identifier: {@code <PID>@<ADDRESS>:<PRODUCT>:<UUID>}. Where:
+ * <ul>
+ * <li>PID is the JVM PID</li>
+ * <li>ADDRESS is the JVM host address used to connect to the cluster</li>
+ * <li>PRODUCT is a product-defined string such as ehcache:my-cache-manager</li>
+ * <li>UUID is the logical connection ID of the cluster</li>
+ * </ul>
+ * A logical connection is a composition of several physical connections to each stripe in multi-stripe mdoe (cluster)
  *
  * @author Mathieu Carbou
  */
@@ -40,13 +47,25 @@ public final class ClientIdentifier implements Serializable {
   private static final Logger LOGGER = Logger.getLogger(ClientIdentifier.class.getName());
 
   private final long pid;
-  private final String name;
+  private final String product;
+  private final String connectionUid;
   private final String hostAddress;
 
-  private ClientIdentifier(long pid, String hostAddress, String name) {
+  private ClientIdentifier(long pid, String hostAddress, String product, String connectionUid) {
     this.hostAddress = Objects.requireNonNull(hostAddress);
     this.pid = pid;
-    this.name = Objects.requireNonNull(name);
+    this.connectionUid = Objects.requireNonNull(connectionUid);
+    this.product = Objects.requireNonNull(product);
+    if (hostAddress.isEmpty()) {
+      throw new IllegalArgumentException("Empty host address");
+    }
+    if (product.isEmpty()) {
+      throw new IllegalArgumentException("Empty product name");
+    }
+  }
+
+  public String getConnectionUid() {
+    return connectionUid;
   }
 
   public String getHostAddress() {
@@ -57,16 +76,20 @@ public final class ClientIdentifier implements Serializable {
     return pid;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public String getClientId() {
-    return getVmId() + ":" + getName();
+  public String getProduct() {
+    return product;
   }
 
   public String getVmId() {
-    return getPid() + "@" + getHostAddress();
+    return pid + "@" + hostAddress;
+  }
+
+  public String getProductId() {
+    return getVmId() + ":" + product;
+  }
+
+  public String getClientId() {
+    return getProductId() + ":" + connectionUid;
   }
 
   @Override
@@ -79,31 +102,31 @@ public final class ClientIdentifier implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ClientIdentifier that = (ClientIdentifier) o;
-    return pid == that.pid && name.equals(that.name) && hostAddress.equals(that.hostAddress);
+    return pid == that.pid
+        && product.equals(that.product)
+        && connectionUid.equals(that.connectionUid)
+        && hostAddress.equals(that.hostAddress);
   }
 
   @Override
   public int hashCode() {
     int result = (int) (pid ^ (pid >>> 32));
-    result = 31 * result + name.hashCode();
+    result = 31 * result + product.hashCode();
+    result = 31 * result + connectionUid.hashCode();
     result = 31 * result + hostAddress.hashCode();
     return result;
   }
 
-  public static ClientIdentifier create(long pid, String hostAddress, String uuid) {
-    return new ClientIdentifier(pid, hostAddress, uuid);
+  public static ClientIdentifier create(long pid, String hostAddress, String product, String uuid) {
+    return new ClientIdentifier(pid, hostAddress, product, uuid);
   }
 
-  public static ClientIdentifier create() {
-    return create(generateNewUUID());
-  }
-
-  public static ClientIdentifier create(String applicationName) {
+  public static ClientIdentifier create(String product, String logicalConnectionUid) {
     try {
       InetAddress inetAddress = discoverLANAddress();
-      return new ClientIdentifier(discoverPID(), inetAddress.getHostAddress(), applicationName);
+      return new ClientIdentifier(discoverPID(), inetAddress.getHostAddress(), product, logicalConnectionUid);
     } catch (UnknownHostException e) {
-      return new ClientIdentifier(discoverPID(), "127.0.0.1", applicationName);
+      return new ClientIdentifier(discoverPID(), "127.0.0.1", product, logicalConnectionUid);
     }
 
   }
@@ -111,8 +134,13 @@ public final class ClientIdentifier implements Serializable {
   public static ClientIdentifier valueOf(String identifier) {
     try {
       int copy = identifier.indexOf('@');
-      int colon = identifier.indexOf(':', copy + 1);
-      return new ClientIdentifier(Long.parseLong(identifier.substring(0, copy)), identifier.substring(copy + 1, colon), identifier.substring(colon + 1));
+      int firstColon = identifier.indexOf(':', copy + 1);
+      int lastColon = identifier.lastIndexOf(':');
+      return new ClientIdentifier(
+          Long.parseLong(identifier.substring(0, copy)),
+          identifier.substring(copy + 1, firstColon),
+          identifier.substring(firstColon + 1, lastColon),
+          identifier.substring(lastColon + 1));
     } catch (RuntimeException e) {
       throw new IllegalArgumentException(identifier);
     }

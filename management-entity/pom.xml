@@ -1,13 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright Terracotta, Inc.
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>management-entity-common</module>
+    <module>management-entity-client</module>
+    <module>management-entity-server</module>
+    <module>management-entity-tests</module>
+  </modules>
 
   <parent>
     <groupId>org.terracotta.management</groupId>
     <artifactId>terracotta-management</artifactId>
-    <version>2.4.0-SNAPSHOT</version>
+    <version>2.5.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>management-entity</artifactId>
@@ -19,92 +43,5 @@
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-registry</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-model</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>voltron-proxy</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-
-    <!-- provided by voltron-management module (client) -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-client-api</artifactId>
-      <scope>provided</scope>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-
-    <!-- provided by voltron (server) -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-server-api</artifactId>
-      <scope>provided</scope>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>standard-cluster-services</artifactId>
-      <scope>provided</scope>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.3</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>plugin</shadedClassifierName>
-              <!-- we have to make sure no voltron api comes in the shaded jar -->
-              <artifactSet>
-                <includes>
-                  <include>org.terracotta.management:management-model</include>
-                  <include>org.terracotta.management:management-registry</include>
-                  <include>org.terracotta:voltron-proxy</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>
