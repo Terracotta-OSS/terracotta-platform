@@ -31,14 +31,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Client identifier: {@code <PID>@<ADDRESS>:<PRODUCT>:<UUID>}. Where:
+ * Client identifier: {@code <PID>@<ADDRESS>:<NAME>:<UUID>}. Where:
  * <ul>
  * <li>PID is the JVM PID</li>
  * <li>ADDRESS is the JVM host address used to connect to the cluster</li>
- * <li>PRODUCT is a product-defined string such as ehcache:my-cache-manager</li>
- * <li>UUID is the logical connection ID of the cluster</li>
+ * <li>NAME is a user-defined string passed when opening a connection to a cluster (connection.name property) such as EHCACHE:my-cache-manager</li>
+ * <li>UUID is the logical connection ID set by the platform, used to regroup several physical connections when in a cluster with several stripes</li>
  * </ul>
- * A logical connection is a composition of several physical connections to each stripe in multi-stripe mdoe (cluster)
  *
  * @author Mathieu Carbou
  */
@@ -47,20 +46,20 @@ public final class ClientIdentifier implements Serializable {
   private static final Logger LOGGER = Logger.getLogger(ClientIdentifier.class.getName());
 
   private final long pid;
-  private final String product;
+  private final String name;
   private final String connectionUid;
   private final String hostAddress;
 
-  private ClientIdentifier(long pid, String hostAddress, String product, String connectionUid) {
+  private ClientIdentifier(long pid, String hostAddress, String name, String connectionUid) {
     this.hostAddress = Objects.requireNonNull(hostAddress);
     this.pid = pid;
     this.connectionUid = Objects.requireNonNull(connectionUid);
-    this.product = Objects.requireNonNull(product);
+    this.name = Objects.requireNonNull(name);
     if (hostAddress.isEmpty()) {
       throw new IllegalArgumentException("Empty host address");
     }
-    if (product.isEmpty()) {
-      throw new IllegalArgumentException("Empty product name");
+    if (name.isEmpty()) {
+      throw new IllegalArgumentException("Empty name");
     }
   }
 
@@ -76,20 +75,16 @@ public final class ClientIdentifier implements Serializable {
     return pid;
   }
 
-  public String getProduct() {
-    return product;
+  public String getName() {
+    return name;
   }
 
   public String getVmId() {
     return pid + "@" + hostAddress;
   }
 
-  public String getProductId() {
-    return getVmId() + ":" + product;
-  }
-
   public String getClientId() {
-    return getProductId() + ":" + connectionUid;
+    return getVmId() + ":" + name + ":" + connectionUid;
   }
 
   @Override
@@ -103,7 +98,7 @@ public final class ClientIdentifier implements Serializable {
     if (o == null || getClass() != o.getClass()) return false;
     ClientIdentifier that = (ClientIdentifier) o;
     return pid == that.pid
-        && product.equals(that.product)
+        && name.equals(that.name)
         && connectionUid.equals(that.connectionUid)
         && hostAddress.equals(that.hostAddress);
   }
@@ -111,22 +106,22 @@ public final class ClientIdentifier implements Serializable {
   @Override
   public int hashCode() {
     int result = (int) (pid ^ (pid >>> 32));
-    result = 31 * result + product.hashCode();
+    result = 31 * result + name.hashCode();
     result = 31 * result + connectionUid.hashCode();
     result = 31 * result + hostAddress.hashCode();
     return result;
   }
 
-  public static ClientIdentifier create(long pid, String hostAddress, String product, String uuid) {
-    return new ClientIdentifier(pid, hostAddress, product, uuid);
+  public static ClientIdentifier create(long pid, String hostAddress, String name, String uuid) {
+    return new ClientIdentifier(pid, hostAddress, name, uuid);
   }
 
-  public static ClientIdentifier create(String product, String logicalConnectionUid) {
+  public static ClientIdentifier create(String name, String logicalConnectionUid) {
     try {
       InetAddress inetAddress = discoverLANAddress();
-      return new ClientIdentifier(discoverPID(), inetAddress.getHostAddress(), product, logicalConnectionUid);
+      return new ClientIdentifier(discoverPID(), inetAddress.getHostAddress(), name, logicalConnectionUid);
     } catch (UnknownHostException e) {
-      return new ClientIdentifier(discoverPID(), "127.0.0.1", product, logicalConnectionUid);
+      return new ClientIdentifier(discoverPID(), "127.0.0.1", name, logicalConnectionUid);
     }
 
   }

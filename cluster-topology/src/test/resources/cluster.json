@@ -135,13 +135,12 @@
       } ]
     } ],
     "pid" : 12345,
-    "product" : "ehcache",
-    "logicalConnectionUid" : "uid",
-    "hostName" : null,
     "hostAddress" : "127.0.0.1",
-    "clientId" : "12345@127.0.0.1:ehcache:uid",
+    "name" : "ehcache",
+    "logicalConnectionUid" : "uid",
     "vmId" : "12345@127.0.0.1",
-    "productId" : "12345@127.0.0.1:ehcache",
+    "clientId" : "12345@127.0.0.1:ehcache:uid",
+    "hostName" : null,
     "tags" : [ ],
     "connections" : [ {
       "id" : "uid:stripe-1:server-1:10.10.10.10:3456",

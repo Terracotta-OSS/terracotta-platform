@@ -82,7 +82,7 @@ public class ManagementEntityTest {
       ClientIdentifier clientIdentifier = entity.getClientIdentifier(null).get();
       System.out.println(clientIdentifier);
       assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
-      assertEquals("product-name", clientIdentifier.getProduct());
+      assertEquals("product-name", clientIdentifier.getName());
       assertEquals("logical-conn-uuid", clientIdentifier.getConnectionUid());
 
       Collection<Context> contexts = entity.getEntityContexts(null).get();
