@@ -28,10 +28,7 @@ import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.management.entity.client.ManagementAgentEntity;
 import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
 import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
-import org.terracotta.management.model.cluster.Manageable;
-import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
@@ -52,8 +49,9 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.terracotta.monitoring.PlatformMonitoringConstants.FETCHED_PATH;
+import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_PATH;
+import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_ROOT_NAME;
+import static org.terracotta.monitoring.PlatformMonitoringConstants.PLATFORM_ROOT_NAME;
 
 /**
  * @author Mathieu Carbou
@@ -95,41 +93,28 @@ public class ManagementEntityTest {
       assertEquals("UNKNOWN", clientIdentifier.getName());
       assertNotNull(clientIdentifier.getConnectionUid());
 
-      Collection<Context> contexts = entity.getEntityContexts(null).get();
-      System.out.println(contexts);
-      assertEquals(1, contexts.size());
-      Context context = contexts.iterator().next();
-      assertEquals(4, context.size());
-      assertTrue(context.contains(Client.KEY));
-      assertTrue(context.contains(Manageable.KEY));
-      assertTrue(context.contains(Manageable.TYPE_KEY));
-      assertTrue(context.contains(Manageable.NAME_KEY));
-      assertEquals(clientIdentifier.getClientId(), context.get(Client.KEY));
-      assertEquals("SUPER_NAME", context.get(Manageable.NAME_KEY));
-      assertEquals(ManagementAgentConfig.ENTITY_NAME, context.get(Manageable.TYPE_KEY));
+      entity
+          .exposeTags(null, Arrays.asList("EhcachePounder", "webapp-1", "app-server-node-1"))
+          .get();
 
-      entity.expose(
-          Context.empty()
-              .with(Manageable.TYPE_KEY, ManagementAgentConfig.ENTITY_NAME)
-              .with(Manageable.NAME_KEY, "SUPER_NAME"),
-          registry.getContextContainer(),
-          registry.getCapabilities(),
-          Arrays.asList("EhcachePounder", "webapp-1", "app-server-node-1"),
-          null).get();
+      entity
+          .exposeManagementMetadata(null, registry.getContextContainer(), registry.getCapabilities())
+          .get();
 
-      contexts = entity.getEntityContexts(null).get();
-      System.out.println(contexts);
-      assertEquals(1, contexts.size());
-      context = contexts.iterator().next();
-      assertEquals(5, context.size());
-      assertEquals("my-cm-name", context.get("cacheManagerName"));
+      String clientId = consumer.getChildNamesForNode(CLIENTS_PATH).get().iterator().next();
+      Map<String, Object> children = consumer.getChildValuesForNode(CLIENTS_PATH, clientId).get();
+      assertEquals(2, children.size());
+      assertEquals(new TreeSet<>(Arrays.asList("management", "tags")), new TreeSet<>(children.keySet()));
+      assertEquals(new TreeSet<>(Arrays.asList("app-server-node-1", "EhcachePounder", "webapp-1")), new TreeSet<>((Collection<String>) children.get("tags")));
 
-      String fetchId = consumer.getChildNamesForNode(FETCHED_PATH).get().iterator().next();
-      Map<String, Object> children = consumer.getChildValuesForNode(FETCHED_PATH, fetchId).get();
-      assertEquals(3, children.size());
-      assertEquals(new TreeSet<>(Arrays.asList("contextContainer", "capabilities", "tags")), new TreeSet<>(children.keySet()));
+      Collection<String> names = consumer.getChildNamesForNode(new String[]{PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, clientId}, "management").get();
+      assertEquals(1, names.size());
+      assertEquals("cacheManagerName:my-cm-name", names.iterator().next());
+
+      children = consumer.getChildValuesForNode(new String[]{PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, clientId, "management"}, "cacheManagerName:my-cm-name").get();
+      assertEquals(2, children.size());
       assertEquals(registry.getCapabilities(), children.get("capabilities"));
-      assertEquals(Arrays.asList("EhcachePounder", "webapp-1", "app-server-node-1"), children.get("tags"));
+      assertEquals(registry.getContextContainer(), children.get("contextContainer"));
     }
   }
 
