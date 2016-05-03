@@ -51,8 +51,9 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
     }
 
     @Override
-    public void handleClientCommunicatorMessage(byte[] message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler) {
-        ClientCommunicatorRequest clientCommunicatorRequest = ClientCommunicatorRequestCodec.deserialize(message);;
+    public void handleClientCommunicatorMessage(R message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler) {
+      try {
+        ClientCommunicatorRequest clientCommunicatorRequest = ClientCommunicatorRequestCodec.deserialize(clientCommunicatorMessageFactory.extractBytesFromResponse(message));
         switch (clientCommunicatorRequest.getRequestType()) {
             case ACK:
                 clientCommunicatorMessageHandler.handleMessage(clientCommunicatorRequest.getMsgBytes());
@@ -82,6 +83,10 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
             default:
                 throw new IllegalArgumentException("unexpected/unknown ClientCommunicatorRequestType: " + clientCommunicatorRequest.getRequestType());
         }
+      } catch (MessageCodecException e) {
+        // This would mean a serious bug in the message factory.
+        throw new RuntimeException(e);
+      }
     }
 }
 

@@ -99,7 +99,7 @@ public class EndToEndTest {
           }
         });
         voidFutureTask.run();
-        delegate.get().handleMessage(messageCodec.encodeResponse((ProxyEntityResponse) message));
+        delegate.get().handleMessage(message);
         return voidFutureTask;
       }
     }, String.class);
