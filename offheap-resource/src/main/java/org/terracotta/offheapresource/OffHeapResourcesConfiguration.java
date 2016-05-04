@@ -23,11 +23,11 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
 
-class OffHeapResourcesConfiguration implements ServiceProviderConfiguration {
+public class OffHeapResourcesConfiguration implements ServiceProviderConfiguration {
 
   private final OffheapResourcesType xmlConfig;
 
-  OffHeapResourcesConfiguration(OffheapResourcesType xmlConfig) {
+  public OffHeapResourcesConfiguration(OffheapResourcesType xmlConfig) {
     this.xmlConfig = xmlConfig;
   }
 

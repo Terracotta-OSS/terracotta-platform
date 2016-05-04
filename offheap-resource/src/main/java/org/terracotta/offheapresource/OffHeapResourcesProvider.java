@@ -53,7 +53,7 @@ public class OffHeapResourcesProvider implements ServiceProvider {
       if (resources.isEmpty()) {
         long totalSize = 0;
         for (ResourceType r : configuration.getResources()) {
-          long size = convert(r.getValue(), r.getUnit()).longValueExact();
+          long size = longValueExact(convert(r.getValue(), r.getUnit()));
           totalSize += size;
           resources.put(OffHeapResourceIdentifier.identifier(r.getName()), new OffHeapResourceImpl(size));
         }
@@ -100,5 +100,14 @@ public class OffHeapResourcesProvider implements ServiceProvider {
       case PB: return value.shiftLeft(50);
     }
     throw new IllegalArgumentException("Unknown unit " + unit);
+  }
+
+  private static final BigInteger MAX_LONG_PLUS_ONE = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
+  private static long longValueExact(BigInteger value) {
+    if (value.compareTo(MAX_LONG_PLUS_ONE) < 0) {
+      return value.longValue();
+    } else {
+      throw new ArithmeticException("BigInteger out of long range");
+    }
   }
 }
