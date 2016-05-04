@@ -117,4 +117,43 @@ public class OffHeapResourcesProviderTest {
     provider.clear();
     assertThat(provider.getService(42L, OffHeapResourceIdentifier.identifier("foo")), nullValue());
   }
+
+  @Test
+  public void testResourceTooBig() throws Exception {
+    ResourceType resourceConfig = mock(ResourceType.class);
+    when(resourceConfig.getName()).thenReturn("foo");
+    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.B);
+    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE));
+
+    OffHeapResourcesConfiguration config = mock(OffHeapResourcesConfiguration.class);
+    when(config.getResources()).thenReturn(Collections.singleton(resourceConfig));
+
+    OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
+    try {
+      provider.initialize(config);
+      fail();
+    } catch (ArithmeticException e) {
+      // expected
+    } finally {
+      provider.clear();
+    }
+  }
+
+  @Test
+  public void testResourceMax() throws Exception {
+    ResourceType resourceConfig = mock(ResourceType.class);
+    when(resourceConfig.getName()).thenReturn("foo");
+    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.B);
+    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(Long.MAX_VALUE));
+
+    OffHeapResourcesConfiguration config = mock(OffHeapResourcesConfiguration.class);
+    when(config.getResources()).thenReturn(Collections.singleton(resourceConfig));
+
+    OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
+    try {
+      provider.initialize(config);
+    } finally {
+      provider.clear();
+    }
+  }
 }
