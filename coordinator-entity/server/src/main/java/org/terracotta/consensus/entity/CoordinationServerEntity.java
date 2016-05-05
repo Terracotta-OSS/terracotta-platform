@@ -32,7 +32,7 @@ public class CoordinationServerEntity extends ProxiedServerEntity<CoordinationEn
   private final LeaderElector<String, ClientDescriptor> leaderElector;
 
   public CoordinationServerEntity(final LeaderElector<String, ClientDescriptor> leaderElector, final ClientCommunicator clientCommunicator) {
-    super(CoordinationEntity.class, new ServerCoordinationImpl(leaderElector, ServerElectionEvent.class), clientCommunicator, ServerElectionEvent.class);
+    super(new ServerCoordinationImpl(leaderElector, ServerElectionEvent.class), clientCommunicator, ServerElectionEvent.class);
     this.leaderElector = leaderElector;
     this.leaderElector.setListener(new ElectionChangeListenerImpl());
   }

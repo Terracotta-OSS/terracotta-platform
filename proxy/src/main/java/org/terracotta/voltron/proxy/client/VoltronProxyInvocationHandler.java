@@ -22,7 +22,6 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
-import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
@@ -31,8 +30,7 @@ import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-
-import java.util.Map;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -62,16 +60,14 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   private final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint;
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
 
-  public VoltronProxyInvocationHandler(final Map<MethodDescriptor, Byte> mappings,
-                                       final EntityClientEndpoint entityClientEndpoint,
-                                       final Codec codec, Map<Byte, Class<?>> eventMappings) {
+  public VoltronProxyInvocationHandler(final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, Collection<Class<?>> events) {
     this.entityClientEndpoint = entityClientEndpoint;
     this.listeners = new ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<MessageListener>>();
-    if (eventMappings.size() > 0) {
-      for (Class<?> aClass : eventMappings.values()) {
+    if (events.size() > 0) {
+      for (Class<?> aClass : events) {
         listeners.put(aClass, new CopyOnWriteArrayList<MessageListener>());
       }
-      entityClientEndpoint.setDelegate(new ProxyEndpointDelegate(codec, listeners, eventMappings));
+      entityClientEndpoint.setDelegate(new ProxyEndpointDelegate(listeners));
     }
   }
 

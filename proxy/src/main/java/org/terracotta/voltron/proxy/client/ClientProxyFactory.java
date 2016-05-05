@@ -22,6 +22,8 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.lang.reflect.Proxy;
 
@@ -35,33 +37,33 @@ import static org.terracotta.voltron.proxy.CommonProxyFactory.invert;
 public class ClientProxyFactory {
 
   public static <T extends Entity & ServerMessageAware<?>> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                                               EntityClientEndpoint entityClientEndpoint,
+                                                                               EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
                                                                                Class<?>... messageTypes) {
     return createProxy(clientType, type, entityClientEndpoint, new SerializationCodec(), messageTypes);
   }
 
   public static <T extends Entity & ServerMessageAware<?>> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                                               EntityClientEndpoint entityClientEndpoint,
+                                                                               EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
                                                                                final Codec codec, Class<?> messageType,
                                                                                Class<?>... messageTypes) {
     return createProxy(clientType, type, entityClientEndpoint, codec, sum(messageType, messageTypes));
   }
 
   public static <T extends Entity> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                       EntityClientEndpoint entityClientEndpoint) {
+                                                       EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint) {
     return createProxy(clientType, type, entityClientEndpoint);
   }
 
   public static <T extends Entity> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                       EntityClientEndpoint entityClientEndpoint, final Codec codec) {
+                                                       EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, final Codec codec) {
     return createProxy(clientType, type, entityClientEndpoint, codec);
   }
 
-  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint entityClientEndpoint) {
+  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint) {
     return createProxy(clientType, type, entityClientEndpoint, new SerializationCodec());
   }
 
-  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint entityClientEndpoint,
+  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
                                   final Codec codec, Class... messageTypes) {
     
     if (entityClientEndpoint == null) {
@@ -80,9 +82,8 @@ public class ClientProxyFactory {
     }
     return clientType.cast(Proxy.newProxyInstance(Entity.class.getClassLoader(), interfaces,
         new VoltronProxyInvocationHandler(
-                invert(createMethodMappings(type)),
-                entityClientEndpoint, codec,
-                invert(createResponseTypeMappings(type, messageTypes))
+                entityClientEndpoint,
+                invert(createResponseTypeMappings(type, messageTypes)).values()
         )
     ));
   }

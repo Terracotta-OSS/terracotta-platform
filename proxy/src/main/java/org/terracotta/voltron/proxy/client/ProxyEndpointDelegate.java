@@ -19,12 +19,9 @@ package org.terracotta.voltron.proxy.client;
 
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
-import java.util.Arrays;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -33,16 +30,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 class ProxyEndpointDelegate implements EndpointDelegate {
 
-  private final Codec codec;
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
-  private final Map<Byte, Class<?>> eventMappings;
 
-  public ProxyEndpointDelegate(final Codec codec,
-                               final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners,
-                               final Map<Byte, Class<?>> eventMappings) {
-    this.codec = codec;
+  public ProxyEndpointDelegate(final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners) {
     this.listeners = listeners;
-    this.eventMappings = eventMappings;
   }
 
   @Override

@@ -44,12 +44,12 @@ public class ProxyInvoker<T> {
   private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
 
   private final ThreadLocal<InvocationContext> invocationContext = new ThreadLocal<InvocationContext>();
-  
-  public ProxyInvoker(Class<T> proxyType, T target) {
-    this(proxyType, target, null);
+
+  public ProxyInvoker(T target) {
+    this(target, null);
   }
-  
-  public ProxyInvoker(Class<T> proxyType, T target, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
+
+  public ProxyInvoker(T target, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
     this.target = target;
     this.messageTypes = new HashSet<Class<?>>();
     for (Class eventType : messageTypes) {

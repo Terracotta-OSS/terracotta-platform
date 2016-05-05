@@ -31,12 +31,12 @@ public abstract class ProxiedServerEntity<T> implements ActiveServerEntity<Proxy
 
   private final ProxyInvoker<T> target;
 
-  public ProxiedServerEntity(Class<T> proxyType, T target) {
-    this(proxyType, target, null);
+  public ProxiedServerEntity(T target) {
+    this(target, null);
   }
 
-  public ProxiedServerEntity(Class<T> proxyType, T target, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
-    this.target = new ProxyInvoker<T>(proxyType, target, clientCommunicator, messageTypes);
+  public ProxiedServerEntity(T target, ClientCommunicator clientCommunicator, Class<?> ... messageTypes) {
+    this.target = new ProxyInvoker<T>(target, clientCommunicator, messageTypes);
   }
 
   @Override
