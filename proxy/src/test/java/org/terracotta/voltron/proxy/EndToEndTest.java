@@ -63,7 +63,7 @@ public class EndToEndTest {
   public void testBothEnds() throws ExecutionException, InterruptedException {
     final Codec codec = new SerializationCodec();
     final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, Comparable.class);
-    final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(Comparable.class, new Comparable() {
+    final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(new Comparable() {
       public int compareTo(final Object o) {
         return 42;
       }
@@ -82,7 +82,7 @@ public class EndToEndTest {
     final AtomicReference<EndpointDelegate> delegate = new AtomicReference<EndpointDelegate>();
     final Codec codec = new SerializationCodec();
     final ProxyMessageCodec messageCodec = new ProxyMessageCodec(codec, Comparable.class, String.class);
-    final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(Comparable.class, new Comparable() {
+    final ProxyInvoker<Comparable> proxyInvoker = new ProxyInvoker<Comparable>(new Comparable() {
       public int compareTo(final Object o) {
         return 42;
       }
@@ -157,7 +157,7 @@ public class EndToEndTest {
     };
     final FiringClientIdAware firingClientIdAware = new FiringClientIdAware();
     final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> msgCodec = new ProxyMessageCodec(codec, ClientIdAware.class, Integer.class);
-    final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(ClientIdAware.class, firingClientIdAware, new ClientCommunicator() {
+    final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(firingClientIdAware, new ClientCommunicator() {
       public void sendNoResponse(final ClientDescriptor clientDescriptor, final EntityResponse message) {
         throw new UnsupportedOperationException("Implement me!");
       }
@@ -192,7 +192,7 @@ public class EndToEndTest {
   public void testClientIdSubstitution() throws ExecutionException, InterruptedException {
     final Codec codec = new SerializationCodec();
     final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec = new ProxyMessageCodec(codec, ClientIdAware.class);
-    final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(ClientIdAware.class, new ClientIdAware() {
+    final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(new ClientIdAware() {
       public void registerListener(final MessageListener<Integer> listener) {
         throw new UnsupportedOperationException("Implement me!");
       }

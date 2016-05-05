@@ -20,12 +20,13 @@ package org.terracotta.voltron.proxy.client;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.MethodDescriptor;
-import org.terracotta.voltron.proxy.ProxyMessageCodec;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.util.Collections;
@@ -33,10 +34,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.EntityMessage;
 import static org.terracotta.voltron.proxy.CommonProxyFactory.createMethodMappings;
 import static org.terracotta.voltron.proxy.CommonProxyFactory.invert;
 
@@ -57,7 +57,7 @@ public class VoltronProxyInvocationHandlerTest {
         return super.encode(type, values);
       }
     };
-    final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
+    final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
@@ -66,7 +66,7 @@ public class VoltronProxyInvocationHandlerTest {
     when(future.get()).thenReturn(ProxyEntityResponse.response(Void.TYPE, null));
 
     Map<MethodDescriptor, Byte> methodMappings = invert(createMethodMappings(TestInterface.class));
-    VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(methodMappings, endpoint, codec, Collections.<Byte, Class<?>>emptyMap());
+    VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(endpoint, Collections.<Class<?>>emptyList());
     for (MethodDescriptor method : methodMappings.keySet()) {
       handler.invoke(null, method.getMethod(), new Object[] { "String", new Object() });
     }
