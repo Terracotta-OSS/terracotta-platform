@@ -30,7 +30,7 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
   private final IMonitoringConsumer consumer;
 
   ManagementAgentServerEntity(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer) {
-    super(ManagementAgent.class, new ManagementAgentImpl(config, consumer, producer));
+    super(new ManagementAgentImpl(config, consumer, producer));
     this.consumer = consumer;
   }
 
