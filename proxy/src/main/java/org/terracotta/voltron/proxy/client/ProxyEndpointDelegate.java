@@ -18,8 +18,10 @@
 package org.terracotta.voltron.proxy.client;
 
 import org.terracotta.entity.EndpointDelegate;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -44,11 +46,11 @@ class ProxyEndpointDelegate implements EndpointDelegate {
   }
 
   @Override
-  public void handleMessage(final byte[] bytes) {
-    final Object message = codec.decode(Arrays.copyOfRange(bytes, 1, bytes.length), eventMappings.get(bytes[0]));
-    final Class<?> aClass = message.getClass();
+  public void handleMessage(EntityResponse messageFromServer) {
+    ProxyEntityResponse response = (ProxyEntityResponse)messageFromServer;
+    final Class<?> aClass = response.getResponseType();
     for (MessageListener messageListener : listeners.get(aClass)) {
-      messageListener.onMessage(message);
+      messageListener.onMessage(response.getResponse());
     }
   }
 

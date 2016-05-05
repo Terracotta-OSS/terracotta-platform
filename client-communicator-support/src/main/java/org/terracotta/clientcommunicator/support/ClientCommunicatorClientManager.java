@@ -26,5 +26,5 @@ public interface ClientCommunicatorClientManager<M extends EntityMessage, R exte
      * @param message the received message
      * @param clientCommunicatorMessageHandler an entity handler to process server message
      */
-    void handleClientCommunicatorMessage(byte[] message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler);
+    void handleClientCommunicatorMessage(R message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler);
 }
