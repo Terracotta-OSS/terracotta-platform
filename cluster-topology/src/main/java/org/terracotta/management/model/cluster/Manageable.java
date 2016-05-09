@@ -48,7 +48,7 @@ public final class Manageable extends AbstractNode<Node> {
   private final String type; // type (service, client entity, server entity, etc)
   private final String name; // type (entity type name)
   private ContextContainer contextContainer; // management registry output
-  private Map<String, Capability> capabilities = new HashMap<String, Capability>();
+  private Map<String, Capability> capabilities = new LinkedHashMap<>();
 
   // matches management registry config, or entity id, or service type
   private Manageable(String id, String name, String type) {
@@ -69,6 +69,13 @@ public final class Manageable extends AbstractNode<Node> {
 
   public Manageable addCapability(Capability capability) {
     this.capabilities.put(capability.getName(), capability);
+    return this;
+  }
+
+  public Manageable addCapabilities(Capability... capabilities) {
+    for (Capability capability : capabilities) {
+      addCapability(capability);
+    }
     return this;
   }
 
