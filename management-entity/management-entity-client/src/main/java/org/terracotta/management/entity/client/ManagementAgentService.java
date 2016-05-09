@@ -107,11 +107,11 @@ public class ManagementAgentService implements Closeable {
       }
       return entityRef.fetchEntity();
     } catch (EntityNotProvidedException e) {
-      throw new IllegalStateException("Entity " + ManagementAgentConfig.ENTITY_NAME + " not found", e);
+      throw new IllegalStateException("Entity " + ManagementAgentConfig.ENTITY_TYPE + " not found", e);
     } catch (EntityVersionMismatchException e) {
-      throw new IllegalStateException("Entity " + ManagementAgentConfig.ENTITY_NAME + " version mismatch", e);
+      throw new IllegalStateException("Entity " + ManagementAgentConfig.ENTITY_TYPE + " version mismatch", e);
     } catch (EntityNotFoundException e) {
-      throw new IllegalStateException("Entity " + ManagementAgentConfig.ENTITY_NAME + " cannot be created and fetched", e);
+      throw new IllegalStateException("Entity " + ManagementAgentConfig.ENTITY_TYPE + " cannot be created and fetched", e);
     }
   }
 

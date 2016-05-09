@@ -31,7 +31,10 @@ import java.util.Collection;
  */
 public class MonitoringServiceProvider implements ServiceProvider {
 
-  private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(IMonitoringProducer.class, IMonitoringConsumer.class);
+  private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
+      IMonitoringConsumer.class,
+      IMonitoringProducer.class
+  );
 
   private MonitoringService monitoringService;
 

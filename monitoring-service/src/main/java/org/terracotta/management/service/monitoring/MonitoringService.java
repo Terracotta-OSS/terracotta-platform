@@ -119,18 +119,15 @@ class MonitoringService {
 
   /// producing
 
-  private boolean addNode(long callerConsumerID, String[] parents, String name, Object value) {
+  private synchronized boolean addNode(long callerConsumerID, String[] parents, String name, Object value) {
     if (parents == null) {
       parents = new String[0];
     }
 
-    Node parent = getNodeForPath(parents);
-    if (parent == null) {
+    Node parentNode = getNodeForPath(parents);
+    if (parentNode == null) {
       return false;
     }
-
-    Node child = new Node(value);
-    Node previous = parent.addChild(name, child);
 
     if (config.isDebug()) {
       PrintStream writer = System.out;
@@ -138,15 +135,23 @@ class MonitoringService {
       dumpTree(tree, 0, writer);
     }
 
+    addNode(parentNode, parents, name, value);
+    return true;
+  }
+
+  private void addNode(Node parentNode, String[] parents, String name, Object value) {
+    Node child = new Node(value);
+    Node previous = parentNode.addChild(name, child);
+
     if (previous == null) {
       // addition, value can be null (=> would be a branch addition)
       recordMutation(new TreeMutation(clock.millis(), ADDITION, parents, name, null, value, getParentValues(parents)));
-      return true;
+      return;
     }
 
     if (previous.equals(child)) {
       // same leaf => no mutations, node added (see IMonitoringProducer contract)
-      return true;
+      return;
     }
 
     // first record child removal for this node, since a replacement removes children
@@ -157,11 +162,9 @@ class MonitoringService {
     if (mutation.isValueChanged()) {
       recordMutation(mutation);
     }
-
-    return true;
   }
 
-  private boolean removeNode(long consumerID, String[] parents, String name) {
+  private synchronized boolean removeNode(long consumerID, String[] parents, String name) {
     if (parents == null) {
       parents = new String[0];
     }
