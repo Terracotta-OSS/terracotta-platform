@@ -37,7 +37,7 @@ public interface ManagementAgent {
    * @param clientDescriptor must be null, used only for implementation
    */
   @Async(Async.Ack.NONE)
-  Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Collection<Capability> capabilities);
+  Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability[] capabilities);
 
   /**
    * Exposes client tags
@@ -46,7 +46,7 @@ public interface ManagementAgent {
    * @param tags             the tags to expose for this client
    */
   @Async(Async.Ack.NONE)
-  Future<Void> exposeTags(@ClientId Object clientDescriptor, Collection<String> tags);
+  Future<Void> exposeTags(@ClientId Object clientDescriptor, String... tags);
 
   /**
    * Gets the {@link ClientIdentifier} for the underlying logical connection.
