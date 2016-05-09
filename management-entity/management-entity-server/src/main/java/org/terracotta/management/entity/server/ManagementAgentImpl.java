@@ -76,7 +76,7 @@ class ManagementAgentImpl implements ManagementAgent {
   }
 
   @Override
-  public Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Collection<Capability> capabilities) {
+  public Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities) {
     // get the connection info
     Map.Entry<String, PlatformConnectedClient> entry = getPlatformConnectedClient(clientDescriptor);
 
@@ -98,10 +98,10 @@ class ManagementAgentImpl implements ManagementAgent {
   }
 
   @Override
-  public Future<Void> exposeTags(@ClientId Object clientDescriptor, Collection<String> tags) {
+  public Future<Void> exposeTags(@ClientId Object clientDescriptor, String... tags) {
     // get the connection info
     Map.Entry<String, PlatformConnectedClient> entry = getPlatformConnectedClient(clientDescriptor);
-    producer.addNode(array(PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, entry.getKey()), "tags", tags == null ? Collections.emptyList() : tags);
+    producer.addNode(array(PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, entry.getKey()), "tags", tags == null ? new String[0] : tags);
     return CompletableFuture.completedFuture(null);
   }
 
