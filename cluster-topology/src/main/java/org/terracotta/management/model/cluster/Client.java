@@ -102,7 +102,7 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
   public String getName() {return clientIdentifier.getName();}
 
   public Map<String, Connection> getConnections() {
-    return Collections.unmodifiableMap(connections);
+    return connections;
   }
 
   public int getConnectionCount() {

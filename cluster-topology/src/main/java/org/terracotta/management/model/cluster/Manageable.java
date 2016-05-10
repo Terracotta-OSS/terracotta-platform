@@ -28,8 +28,6 @@ import org.terracotta.management.model.context.ContextContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +78,7 @@ public final class Manageable extends AbstractNode<Node> {
   }
 
   public Collection<Capability> getCapabilities() {
-    return Collections.unmodifiableCollection(capabilities.values());
+    return capabilities.values();
   }
 
   public Capability findCapability(String id) {

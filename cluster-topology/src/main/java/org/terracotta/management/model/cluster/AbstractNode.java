@@ -77,7 +77,7 @@ abstract class AbstractNode<P extends Contextual> implements Node, Serializable 
     List<Node> path = new ArrayList<>(parentNodes.size() + 1);
     path.addAll(parentNodes);
     path.add(this);
-    return Collections.unmodifiableList(path);
+    return path;
   }
 
   @Override

@@ -17,7 +17,6 @@ package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +38,7 @@ abstract class AbstractNodeWithManageable<P extends Contextual, B> extends Abstr
 
   @Override
   public final Map<String, Manageable> getManageables() {
-    return Collections.unmodifiableMap(manageables);
+    return manageables;
   }
 
   @Override

@@ -17,7 +17,6 @@ package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +47,7 @@ public final class Stripe extends AbstractNode<Cluster> {
   }
 
   public Map<String, Server> getServers() {
-    return Collections.unmodifiableMap(servers);
+    return servers;
   }
 
   public Stream<Server> serverStream() {
