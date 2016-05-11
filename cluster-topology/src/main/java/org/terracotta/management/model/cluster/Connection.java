@@ -138,11 +138,11 @@ public final class Connection extends AbstractNode<Client> {
   @Override
   public Map<String, Object> toMap() {
     Map<String, Object> map = super.toMap();
+    map.put("logicalConnectionUid", this.logicalConnectionUid);
     map.put("clientEndpoint", clientEndpoint.toMap());
     map.put("stripeId", this.stripeId);
     map.put("serverId", this.serverId);
     map.put("manageableIds", this.manageableIds);
-    map.put("logicalConnectionUid", this.logicalConnectionUid);
     return map;
   }
 
