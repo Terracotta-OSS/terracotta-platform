@@ -55,7 +55,7 @@ import static org.junit.Assert.assertThat;
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
-public class ManagementEntityTest {
+public class ManagementAgentServiceTest {
 
   private static IMonitoringConsumer consumer;
 
