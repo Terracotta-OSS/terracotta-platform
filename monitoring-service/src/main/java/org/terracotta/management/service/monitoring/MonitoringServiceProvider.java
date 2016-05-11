@@ -22,7 +22,6 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.monitoring.IMonitoringProducer;
 
-import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -43,7 +42,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
     MonitoringServiceConfiguration config = configuration instanceof MonitoringServiceConfiguration ?
         (MonitoringServiceConfiguration) configuration :
         new MonitoringServiceConfiguration();
-    this.monitoringService = new MonitoringService(Clock.systemUTC(), config);
+    this.monitoringService = new MonitoringService(config);
     return true;
   }
 

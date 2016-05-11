@@ -33,7 +33,7 @@ public interface Mutation {
 
   long getSequence();
 
-  long getTimestamp();
+  long getTimeNanos();
 
   Type getType();
 

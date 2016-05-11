@@ -29,25 +29,25 @@ import java.util.Arrays;
 public class DefaultMessage implements Serializable, Message {
 
   private final Object data;
-  private final long timeMillis;
+  private final long timeNanos;
   private final String messageType;
 
-  protected DefaultMessage(long timeMillis, String messageType, Object data) {
-    this.timeMillis = timeMillis;
+  protected DefaultMessage(long timeNanos, String messageType, Object data) {
+    this.timeNanos = timeNanos;
     this.messageType = Objects.requireNonNull(messageType);
     this.data = Objects.requireNonNull(data);
   }
 
-  public DefaultMessage(long timeMillis, ContextualNotification notification) {
-    this(timeMillis, "NOTIFICATION", notification);
+  public DefaultMessage(long timeNanos, ContextualNotification notification) {
+    this(timeNanos, "NOTIFICATION", notification);
   }
 
-  public DefaultMessage(long timeMillis, ContextualReturn<?> response) {
-    this(timeMillis, "RETURN", response);
+  public DefaultMessage(long timeNanos, ContextualReturn<?> response) {
+    this(timeNanos, "RETURN", response);
   }
 
-  public DefaultMessage(long timeMillis, ContextualStatistics... statistics) {
-    this(timeMillis, "STATISTICS", statistics);
+  public DefaultMessage(long timeNanos, ContextualStatistics... statistics) {
+    this(timeNanos, "STATISTICS", statistics);
   }
 
   @Override
@@ -57,7 +57,12 @@ public class DefaultMessage implements Serializable, Message {
 
   @Override
   public long getTimeMillis() {
-    return timeMillis;
+    return timeNanos / 1000000;
+  }
+
+  @Override
+  public long getTimeNanos() {
+    return timeNanos;
   }
 
   @Override
@@ -69,8 +74,8 @@ public class DefaultMessage implements Serializable, Message {
   public String toString() {
     return getClass().getSimpleName() +
         "{" +
-        "timeMillis=" + getTimeMillis() +
-        ", type=" + getType() +
+        "timeNanos=" + timeNanos +
+        ", type=" + messageType +
         ", data=" + (data == null ? null : data.getClass().isArray() ? Arrays.toString((Object[]) data) : data) +
         '}';
   }
@@ -82,7 +87,7 @@ public class DefaultMessage implements Serializable, Message {
 
     DefaultMessage that = (DefaultMessage) o;
 
-    if (timeMillis != that.timeMillis) return false;
+    if (timeNanos != that.timeNanos) return false;
     if (data.getClass() != that.data.getClass()) return false;
     if (data.getClass().isArray()) {
       if (!Arrays.equals((Object[]) data, (Object[]) that.data)) return false;
@@ -96,7 +101,7 @@ public class DefaultMessage implements Serializable, Message {
   @Override
   public int hashCode() {
     int result = data.getClass().isArray() ? Arrays.hashCode((Object[]) data) : data.hashCode();
-    result = 31 * result + (int) (timeMillis ^ (timeMillis >>> 32));
+    result = 31 * result + (int) (timeNanos ^ (timeNanos >>> 32));
     result = 31 * result + messageType.hashCode();
     return result;
   }
