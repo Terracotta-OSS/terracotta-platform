@@ -31,27 +31,23 @@ public class ClientCommunicatorServerManagerImpl<M extends EntityMessage, R exte
 
     @Override
     public R sendWithAck(Set<ClientDescriptor> toClients, byte[] message, ClientDescriptor source) throws MessageCodecException {
-        return sendInternal(toClients, message, ClientCommunicatorRequestType.ACK, source);
+        int requestSequenceNumber = requestSequence.getAndIncrement();
+        pendingRequests.putIfAbsent(requestSequenceNumber, new ClientRequestInfo(source, toClients));
+        for (ClientDescriptor connectedClient : toClients) {
+            clientCommunicator.sendNoResponse(connectedClient,
+                    clientCommunicatorMessageFactory.createEntityResponse(ClientCommunicatorRequestCodec.serialize(new ClientCommunicatorRequest(ClientCommunicatorRequestType.ACK, requestSequenceNumber, message))));
+        }
+
+        return clientCommunicatorMessageFactory.createEntityResponse(ClientCommunicatorRequestCodec.serialize(new ClientCommunicatorRequest(ClientCommunicatorRequestType.CLIENT_WAIT, requestSequenceNumber, new byte[0])));
+
     }
 
     @Override
     public void sendWithNoAck(Set<ClientDescriptor> toClients, byte[] message) throws MessageCodecException {
         for (ClientDescriptor connectedClient : toClients) {
             clientCommunicator.sendNoResponse(connectedClient,
-                    clientCommunicatorMessageFactory.createEntityResponse(ClientCommunicatorRequestCodec.serialize(new ClientCommunicatorRequest(ClientCommunicatorRequestType.ACK, -1, message))));
+                    clientCommunicatorMessageFactory.createEntityResponse(ClientCommunicatorRequestCodec.serialize(new ClientCommunicatorRequest(ClientCommunicatorRequestType.NO_ACK, -1, message))));
         }
-    }
-
-    private R sendInternal(Set<ClientDescriptor> toClients, byte[] message, ClientCommunicatorRequestType requestType, ClientDescriptor source) throws MessageCodecException {
-        int requestSequenceNumber = requestSequence.getAndIncrement();
-        pendingRequests.putIfAbsent(requestSequenceNumber, new ClientRequestInfo(source, toClients));
-        for (ClientDescriptor connectedClient : toClients) {
-            clientCommunicator.sendNoResponse(connectedClient,
-                    clientCommunicatorMessageFactory.createEntityResponse(ClientCommunicatorRequestCodec.serialize(new ClientCommunicatorRequest(requestType, requestSequenceNumber, message))));
-        }
-
-        return clientCommunicatorMessageFactory.createEntityResponse(ClientCommunicatorRequestCodec.serialize(new ClientCommunicatorRequest(ClientCommunicatorRequestType.CLIENT_WAIT, requestSequenceNumber, new byte[0])));
-
     }
 
     @Override
