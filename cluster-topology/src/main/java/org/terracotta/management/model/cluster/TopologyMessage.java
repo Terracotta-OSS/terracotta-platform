@@ -23,8 +23,8 @@ import org.terracotta.management.model.message.DefaultMessage;
  */
 public final class TopologyMessage extends DefaultMessage {
 
-  public TopologyMessage(long timeMillis, Cluster topology) {
-    super(timeMillis, "TOPOLOGY", topology);
+  public TopologyMessage(long timeNanos, Cluster topology) {
+    super(timeNanos, "TOPOLOGY", topology);
   }
 
 }

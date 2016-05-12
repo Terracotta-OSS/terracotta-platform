@@ -18,7 +18,6 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,7 +48,7 @@ public final class Cluster implements Contextual, Serializable {
   }
 
   public Map<String, Client> getClients() {
-    return Collections.unmodifiableMap(clients);
+    return clients;
   }
 
   public int getClientCount() {
@@ -57,7 +56,7 @@ public final class Cluster implements Contextual, Serializable {
   }
 
   public Map<String, Stripe> getStripes() {
-    return Collections.unmodifiableMap(stripes);
+    return stripes;
   }
 
   public int getStripeCount() {

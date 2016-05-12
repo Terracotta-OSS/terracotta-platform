@@ -19,7 +19,6 @@ package org.terracotta.management.service.monitoring;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.io.PrintStream;
-import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,11 +53,9 @@ class MonitoringService {
   private final Node tree = new Node();
   private final MonitoringServiceConfiguration config;
   private final ConcurrentMap<Long, Queue<Mutation>> mutations = new ConcurrentHashMap<>();
-  private final Clock clock;
 
-  MonitoringService(Clock clock, MonitoringServiceConfiguration config) {
+  MonitoringService(MonitoringServiceConfiguration config) {
     this.config = config;
-    this.clock = clock;
   }
 
   IMonitoringProducer getProducer(long callerConsumerID) {
@@ -119,18 +116,19 @@ class MonitoringService {
 
   /// producing
 
-  private boolean addNode(long callerConsumerID, String[] parents, String name, Object value) {
+  private long nanoTime() {
+    return System.nanoTime();
+  }
+
+  private synchronized boolean addNode(long callerConsumerID, String[] parents, String name, Object value) {
     if (parents == null) {
       parents = new String[0];
     }
 
-    Node parent = getNodeForPath(parents);
-    if (parent == null) {
+    Node parentNode = getNodeForPath(parents);
+    if (parentNode == null) {
       return false;
     }
-
-    Node child = new Node(value);
-    Node previous = parent.addChild(name, child);
 
     if (config.isDebug()) {
       PrintStream writer = System.out;
@@ -138,30 +136,36 @@ class MonitoringService {
       dumpTree(tree, 0, writer);
     }
 
+    addNode(parentNode, parents, name, value);
+    return true;
+  }
+
+  private void addNode(Node parentNode, String[] parents, String name, Object value) {
+    Node child = new Node(value);
+    Node previous = parentNode.addChild(name, child);
+
     if (previous == null) {
       // addition, value can be null (=> would be a branch addition)
-      recordMutation(new TreeMutation(clock.millis(), ADDITION, parents, name, null, value, getParentValues(parents)));
-      return true;
+      recordMutation(new TreeMutation(nanoTime(), ADDITION, parents, name, null, value, getParentValues(parents)));
+      return;
     }
 
     if (previous.equals(child)) {
       // same leaf => no mutations, node added (see IMonitoringProducer contract)
-      return true;
+      return;
     }
 
     // first record child removal for this node, since a replacement removes children
     recordChildRemoval(parents, name, previous);
 
     // the nodes have the same name, check if their values are different
-    Mutation mutation = new TreeMutation(clock.millis(), CHANGE, parents, name, previous.value, value, getParentValues(parents));
+    Mutation mutation = new TreeMutation(nanoTime(), CHANGE, parents, name, previous.value, value, getParentValues(parents));
     if (mutation.isValueChanged()) {
       recordMutation(mutation);
     }
-
-    return true;
   }
 
-  private boolean removeNode(long consumerID, String[] parents, String name) {
+  private synchronized boolean removeNode(long consumerID, String[] parents, String name) {
     if (parents == null) {
       parents = new String[0];
     }
@@ -183,7 +187,7 @@ class MonitoringService {
     }
 
     recordChildRemoval(parents, name, removed);
-    recordMutation(new TreeMutation(clock.millis(), REMOVAL, parents, name, removed.value, null, getParentValues(parents)));
+    recordMutation(new TreeMutation(nanoTime(), REMOVAL, parents, name, removed.value, null, getParentValues(parents)));
     return true;
   }
 
@@ -210,7 +214,7 @@ class MonitoringService {
         Node removed = node.removeChild(childName);
         if (removed != null) {
           recordChildRemoval(fullPath, childName, removed);
-          recordMutation(new TreeMutation(clock.millis(), REMOVAL, fullPath, childName, removed.value, null, parentValues));
+          recordMutation(new TreeMutation(nanoTime(), REMOVAL, fullPath, childName, removed.value, null, parentValues));
         }
       }
     }

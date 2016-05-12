@@ -144,24 +144,24 @@
     "tags" : [ ],
     "connections" : [ {
       "id" : "uid:stripe-1:server-1:10.10.10.10:3456",
+      "logicalConnectionUid" : "uid",
       "clientEndpoint" : {
         "address" : "10.10.10.10",
         "port" : 3456
       },
       "stripeId" : "stripe-1",
       "serverId" : "server-1",
-      "manageableIds" : [ ],
-      "logicalConnectionUid" : "uid"
+      "manageableIds" : [ ]
     }, {
       "id" : "uid:stripe-2:server-1:10.10.10.10:3457",
+      "logicalConnectionUid" : "uid",
       "clientEndpoint" : {
         "address" : "10.10.10.10",
         "port" : 3457
       },
       "stripeId" : "stripe-2",
       "serverId" : "server-1",
-      "manageableIds" : [ ],
-      "logicalConnectionUid" : "uid"
+      "manageableIds" : [ ]
     } ]
   } ]
 }

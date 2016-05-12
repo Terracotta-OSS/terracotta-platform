@@ -50,6 +50,6 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
 
   @Override
   public boolean handlesEntityType(String typeName) {
-    return ManagementAgentConfig.ENTITY_NAME.equals(typeName);
+    return ManagementAgentConfig.ENTITY_TYPE.equals(typeName);
   }
 }

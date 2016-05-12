@@ -31,15 +31,15 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
   private final Object[] parentValues;
   private final Object oldValue;
   private final Object newValue;
-  private final long timestamp;
+  private final long timeNanos;
   private final Type type;
   private final String[] parents;
   private final String name;
   private final boolean valueChanged;
   private final String[] path;
 
-  public TreeMutation(long timestamp, Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
-    this.timestamp = timestamp;
+  public TreeMutation(long timeNanos, Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
+    this.timeNanos = timeNanos;
     this.type = type;
     this.parents = parents;
     this.name = name;
@@ -109,8 +109,8 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
   }
 
   @Override
-  public long getTimestamp() {
-    return timestamp;
+  public long getTimeNanos() {
+    return timeNanos;
   }
 
   @Override
@@ -137,7 +137,7 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
   public String toString() {
     final StringBuilder sb = new StringBuilder("TreeMutation{");
     sb.append("sequence=").append(sequence);
-    sb.append(", timestamp=").append(timestamp);
+    sb.append(", timeNanos=").append(timeNanos);
     sb.append(", type=").append(type);
     sb.append(", path=").append(String.join("/", path));
     sb.append('}');

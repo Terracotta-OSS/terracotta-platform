@@ -52,13 +52,13 @@ public interface IMonitoringConsumer extends Closeable {
    * @param path The node name path leading to a specific node, starting at the root.
    * @return The names of all immediate children of this node or null, if it wasn't found.
    */
-  Optional<Collection<String>> getChildNamesForNode(String[] path);
+  Optional<Collection<String>> getChildNamesForNode(String... path);
 
   default Optional<Collection<String>> getChildNamesForNode(String[] parent, String nodeName) {
     return getChildNamesForNode(concat(parent, nodeName));
   }
 
-  Optional<Map<String, Object>> getChildValuesForNode(String[] path);
+  Optional<Map<String, Object>> getChildValuesForNode(String... path);
 
   default Optional<Map<String, Object>> getChildValuesForNode(String[] parent, String nodeName) {
     return getChildValuesForNode(concat(parent, nodeName));

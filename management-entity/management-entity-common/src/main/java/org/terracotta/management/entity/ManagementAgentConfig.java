@@ -23,6 +23,6 @@ import java.io.Serializable;
 public final class ManagementAgentConfig implements Serializable {
 
   // name must be hardcoded because it reference a class name in client package and is used on server-side
-  public static final String ENTITY_NAME = "org.terracotta.management.entity.client.ManagementAgentEntity";
+  public static final String ENTITY_TYPE = "org.terracotta.management.entity.client.ManagementAgentEntity";
 
 }

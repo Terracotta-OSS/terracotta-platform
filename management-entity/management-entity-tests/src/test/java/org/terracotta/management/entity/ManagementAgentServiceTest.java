@@ -19,15 +19,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
-import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
-import org.terracotta.management.entity.client.ManagementAgentEntity;
 import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
+import org.terracotta.management.entity.client.ManagementAgentService;
 import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
+import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.AbstractManagementRegistry;
@@ -41,23 +41,21 @@ import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_PATH;
-import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_ROOT_NAME;
-import static org.terracotta.monitoring.PlatformMonitoringConstants.PLATFORM_ROOT_NAME;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
-public class ManagementEntityTest {
+public class ManagementAgentServiceTest {
 
   private static IMonitoringConsumer consumer;
 
@@ -83,37 +81,34 @@ public class ManagementEntityTest {
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
     try (Connection connection = stripeControl.createConnectionToActive()) {
-      EntityRef<ManagementAgentEntity, ManagementAgentConfig> ref = connection.getEntityRef(ManagementAgentEntity.class, Version.LATEST.version(), "SUPER_NAME");
-      ref.create(new ManagementAgentConfig());
-      ManagementAgentEntity entity = ref.fetchEntity();
 
-      ClientIdentifier clientIdentifier = entity.getClientIdentifier(null).get();
+      ManagementAgentService managementAgent = new ManagementAgentService(connection);
+
+      ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
       System.out.println(clientIdentifier);
       assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
       assertEquals("UNKNOWN", clientIdentifier.getName());
       assertNotNull(clientIdentifier.getConnectionUid());
 
-      entity
-          .exposeTags(null, Arrays.asList("EhcachePounder", "webapp-1", "app-server-node-1"))
-          .get();
+      managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
+      managementAgent.setCapabilities(registry.getContextContainer(), registry.getCapabilities());
 
-      entity
-          .exposeManagementMetadata(null, registry.getContextContainer(), registry.getCapabilities())
-          .get();
-
-      String clientId = consumer.getChildNamesForNode(CLIENTS_PATH).get().iterator().next();
-      Map<String, Object> children = consumer.getChildValuesForNode(CLIENTS_PATH, clientId).get();
-      assertEquals(2, children.size());
-      assertEquals(new TreeSet<>(Arrays.asList("management", "tags")), new TreeSet<>(children.keySet()));
-      assertEquals(new TreeSet<>(Arrays.asList("app-server-node-1", "EhcachePounder", "webapp-1")), new TreeSet<>((Collection<String>) children.get("tags")));
-
-      Collection<String> names = consumer.getChildNamesForNode(new String[]{PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, clientId}, "management").get();
+      Collection<String> names = consumer.getChildNamesForNode(new String[]{"management", "clients"}).get();
       assertEquals(1, names.size());
-      assertEquals("cacheManagerName:my-cm-name", names.iterator().next());
+      assertEquals(clientIdentifier.getClientId(), names.iterator().next());
 
-      children = consumer.getChildValuesForNode(new String[]{PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, clientId, "management"}, "cacheManagerName:my-cm-name").get();
+      names = consumer.getChildNamesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}).get();
+      assertEquals(2, names.size());
+      assertThat(names, hasItem("tags"));
+      assertThat(names, hasItem("cacheManagerName:my-cm-name"));
+
+      assertArrayEquals(
+          new String[]{"EhcachePounder", "webapp-1", "app-server-node-1"},
+          consumer.getValueForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "tags", String[].class).get());
+
+      Map<String, Object> children = consumer.getChildValuesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "cacheManagerName:my-cm-name").get();
       assertEquals(2, children.size());
-      assertEquals(registry.getCapabilities(), children.get("capabilities"));
+      assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
     }
   }

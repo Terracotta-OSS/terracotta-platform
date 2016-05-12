@@ -25,4 +25,6 @@ public interface Message {
   String getType();
 
   long getTimeMillis();
+
+  long getTimeNanos();
 }

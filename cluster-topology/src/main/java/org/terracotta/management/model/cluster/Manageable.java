@@ -28,8 +28,6 @@ import org.terracotta.management.model.context.ContextContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +46,7 @@ public final class Manageable extends AbstractNode<Node> {
   private final String type; // type (service, client entity, server entity, etc)
   private final String name; // type (entity type name)
   private ContextContainer contextContainer; // management registry output
-  private Map<String, Capability> capabilities = new HashMap<String, Capability>();
+  private Map<String, Capability> capabilities = new LinkedHashMap<>();
 
   // matches management registry config, or entity id, or service type
   private Manageable(String id, String name, String type) {
@@ -72,8 +70,15 @@ public final class Manageable extends AbstractNode<Node> {
     return this;
   }
 
+  public Manageable addCapabilities(Capability... capabilities) {
+    for (Capability capability : capabilities) {
+      addCapability(capability);
+    }
+    return this;
+  }
+
   public Collection<Capability> getCapabilities() {
-    return Collections.unmodifiableCollection(capabilities.values());
+    return capabilities.values();
   }
 
   public Capability findCapability(String id) {
