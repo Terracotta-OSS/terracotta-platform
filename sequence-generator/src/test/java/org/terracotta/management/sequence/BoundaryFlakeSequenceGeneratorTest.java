@@ -66,6 +66,7 @@ public class BoundaryFlakeSequenceGeneratorTest {
     buffer.putLong(instanceId | seq);
 
     assertEquals(DatatypeConverter.printHexBinary(buffer.array()), sequence.toHexString());
+    assertEquals(sequence, BoundaryFlakeSequence.fromHexString(sequence.toHexString()));
   }
 
   @Test

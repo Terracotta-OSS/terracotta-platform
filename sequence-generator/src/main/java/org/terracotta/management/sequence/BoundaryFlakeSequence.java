@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 /**
  * @author Mathieu Carbou
  */
-final class BoundaryFlakeSequence implements Sequence, Serializable {
+public final class BoundaryFlakeSequence implements Sequence, Serializable {
 
   private final long timestamp;
   private final long nodeId;
@@ -90,6 +90,14 @@ final class BoundaryFlakeSequence implements Sequence, Serializable {
     result = 31 * result + (int) (nodeId ^ (nodeId >>> 32));
     result = 31 * result + (int) (sequence ^ (sequence >>> 32));
     return result;
+  }
+
+  public static BoundaryFlakeSequence fromHexString(String hex) {
+    ByteBuffer buffer = ByteBuffer.wrap(DatatypeConverter.parseHexBinary(hex));
+    long timestamp = buffer.getLong();
+    long nodeId = buffer.getLong();
+    long sequence = buffer.getLong();
+    return new BoundaryFlakeSequence(timestamp, nodeId, sequence);
   }
 
 }

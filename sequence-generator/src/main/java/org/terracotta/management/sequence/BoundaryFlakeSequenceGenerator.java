@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Mathieu Carbou
  */
-final public class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
+public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
 
   private static final int SEQ_BITLENGTH = 20;
   private static final long SEQ_BITMASK = (1L << SEQ_BITLENGTH) - 1;
