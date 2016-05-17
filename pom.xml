@@ -8,9 +8,11 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>sequence-generator</module>
     <module>management-model</module>
-    <module>cluster-topology</module>
     <module>management-registry</module>
+    <module>cluster-topology</module>
+    <module>cluster-messaging</module>
     <module>monitoring-service</module>
     <module>management-entity</module>
   </modules>
