@@ -14,17 +14,16 @@
  *  limitations under the License.
  */
 
-package org.terracotta.management.model.cluster;
+package org.terracotta.management.model.message;
 
-import org.terracotta.management.model.message.DefaultMessage;
+import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.sequence.Sequence;
 
 /**
  * @author Mathieu Carbou
  */
 public final class TopologyMessage extends DefaultMessage {
-
-  public TopologyMessage(long timeNanos, Cluster topology) {
-    super(timeNanos, "TOPOLOGY", topology);
+  public TopologyMessage(Sequence sequence, Cluster topology) {
+    super(sequence, "TOPOLOGY", topology);
   }
-
 }
