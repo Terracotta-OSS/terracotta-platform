@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * - https://github.com/mumrah/flake-java
  * - https://github.com/boundary/flake
  * - https://github.com/rholder/fauxflake
+ * - https://github.com/hibernate/hibernate-orm/blob/master/hibernate-testing/src/main/java/org/hibernate/testing/cache/Timestamper.java
  * <p>
  * For this implementation we will use:
  * - 44 bits: timestamp - positive long - 44 bits is enough for next 500 years
