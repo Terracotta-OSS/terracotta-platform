@@ -17,6 +17,7 @@
 package org.terracotta.management.sequence.perf;
 
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
+import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
 
 import java.util.Arrays;
@@ -29,7 +30,7 @@ import java.util.concurrent.CyclicBarrier;
  */
 public class PerfTest {
 
-  private static BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM);
+  private static BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM, NodeIdSource.MAC_PID);
 
   public static void main(String[] args) throws InterruptedException {
     {

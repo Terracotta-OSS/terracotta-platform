@@ -19,23 +19,9 @@ package org.terracotta.management.sequence;
 /**
  * @author Mathieu Carbou
  */
-public interface TimeSource {
+public interface NodeIdSource {
 
-  TimeSource SYSTEM = Defaults.SYSTEM_TIME_SOURCE;
+  NodeIdSource MAC_PID = Defaults.DEFAULT_NODE_ID_SOURCE;
 
-  long getTimestamp();
-
-  class Fixed implements TimeSource {
-
-    private final long timestamp;
-
-    public Fixed(long timestamp) {
-      this.timestamp = timestamp;
-    }
-
-    @Override
-    public long getTimestamp() {
-      return timestamp;
-    }
-  }
+  long getNodeId();
 }

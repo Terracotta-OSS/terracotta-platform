@@ -24,12 +24,7 @@ import java.util.concurrent.Callable;
 public class Runner implements Callable<String> {
   @Override
   public String call() throws Exception {
-    SequenceGenerator generator = new BoundaryFlakeSequenceGenerator(new TimeSource() {
-      @Override
-      public long getTimestamp() {
-        return 1463580865895L;
-      }
-    });
+    SequenceGenerator generator = new BoundaryFlakeSequenceGenerator(new TimeSource.Fixed(1463580865895L), NodeIdSource.MAC_PID);
     return generator.next().toHexString();
   }
 }

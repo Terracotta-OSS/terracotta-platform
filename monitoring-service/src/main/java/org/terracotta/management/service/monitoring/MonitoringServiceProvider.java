@@ -21,6 +21,7 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
+import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
 import org.terracotta.monitoring.IMonitoringProducer;
 
@@ -44,7 +45,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
     MonitoringServiceConfiguration config = configuration instanceof MonitoringServiceConfiguration ?
         (MonitoringServiceConfiguration) configuration :
         new MonitoringServiceConfiguration();
-    this.monitoringService = new MonitoringService(config, new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM));
+    this.monitoringService = new MonitoringService(config, new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM, NodeIdSource.MAC_PID));
     return true;
   }
 

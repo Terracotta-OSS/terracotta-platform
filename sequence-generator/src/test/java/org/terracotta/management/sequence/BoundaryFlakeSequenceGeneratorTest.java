@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.terracotta.management.sequence.Defaults.readMAC;
+import static org.terracotta.management.sequence.Defaults.readPID;
 
 /**
  * @author Mathieu Carbou
@@ -43,17 +45,12 @@ public class BoundaryFlakeSequenceGeneratorTest {
   @Test
   public void test_generation() {
     final long now = System.currentTimeMillis(); // fix the TS for testing
-    BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(new TimeSource() {
-      @Override
-      public long getTimestamp() {
-        return now;
-      }
-    });
+    BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(new TimeSource.Fixed(now), NodeIdSource.MAC_PID);
 
     long instanceId = generator.getInstanceId();
     long nodeId = generator.getNodeId();
-    byte[] mac = BoundaryFlakeSequenceGenerator.readMAC();
-    long pid = BoundaryFlakeSequenceGenerator.readPID();
+    byte[] mac = readMAC();
+    long pid = readPID();
     long seq = 0;
 
     Sequence sequence = generator.next();
@@ -98,7 +95,7 @@ public class BoundaryFlakeSequenceGeneratorTest {
 
   @Test
   public void test_no_collisions() throws InterruptedException {
-    final BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM);
+    final BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM, NodeIdSource.MAC_PID);
     final Collection<Sequence> bag = new ConcurrentSkipListSet<Sequence>();
     // single thread generation
     {

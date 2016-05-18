@@ -16,10 +16,12 @@
 
 package org.terracotta.management.sequence;
 
-import java.lang.management.ManagementFactory;
-import java.net.NetworkInterface;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.terracotta.management.sequence.Defaults.INSTANCE_BITLENGTH;
+import static org.terracotta.management.sequence.Defaults.INSTANCE_BITMASK;
+import static org.terracotta.management.sequence.Defaults.SEQ_BITLENGTH;
+import static org.terracotta.management.sequence.Defaults.SEQ_BITMASK;
 
 /**
  * Sort of Boundary Flake, inspired by (and related docs):
@@ -54,15 +56,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
 
-  private static final int PID_BITLENGTH = 16;
-  private static final long PID_BITMASK = (1L << PID_BITLENGTH) - 1;
-
-  private static final int SEQ_BITLENGTH = 18;
-  private static final long SEQ_BITMASK = (1L << SEQ_BITLENGTH) - 1;
-
-  private static final int INSTANCE_BITLENGTH = 18;
-  private static final int INSTANCE_BITMASK = (1 << INSTANCE_BITLENGTH) - 1;
-
   private static final IntCyclicRangeCounter INSTANCE_ID = new IntCyclicRangeCounter(0, INSTANCE_BITMASK);
 
   private final TimeSource timeSource;
@@ -71,19 +64,13 @@ public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
   private final AtomicLong timeAndSeq = new AtomicLong(); // 44 bits TS + 20 bits sequence
 
   public BoundaryFlakeSequenceGenerator() {
-    this(TimeSource.SYSTEM);
+    this(TimeSource.SYSTEM, NodeIdSource.MAC_PID);
   }
 
-  public BoundaryFlakeSequenceGenerator(TimeSource timeSource) {
+  public BoundaryFlakeSequenceGenerator(TimeSource timeSource, NodeIdSource nodeIdSource) {
     long clId = getClass().getClassLoader().hashCode();
-    byte[] mac = readMAC();
-    long macId = 0;
-    for (int i = 0; i < 6; i++) {
-      macId = (macId << 8) | (mac[i] & 0XFF);
-    }
-
     this.timeSource = timeSource;
-    this.nodeId = (macId << PID_BITLENGTH) | (readPID() & PID_BITMASK);
+    this.nodeId = nodeIdSource.getNodeId();
     this.instanceId = ((clId << INSTANCE_BITLENGTH) | (INSTANCE_ID.getAndIncrement() & INSTANCE_BITMASK)) << SEQ_BITLENGTH;
   }
 
@@ -116,29 +103,6 @@ public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
 
   long getNodeId() {
     return nodeId;
-  }
-
-  static byte[] readMAC() {
-    try {
-      byte[] mac;
-      for (NetworkInterface networkInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-        if (!networkInterface.isLoopback() && (mac = networkInterface.getHardwareAddress()) != null) {
-          return mac;
-        }
-      }
-      throw new IllegalStateException("Unable to read MAC address");
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  static long readPID() {
-    String name = ManagementFactory.getRuntimeMXBean().getName();
-    long pid = 0;
-    for (int i = 0; i < name.length() && Character.isDigit(name.charAt(i)); i++) {
-      pid = pid * 10 + Character.getNumericValue(name.charAt(i));
-    }
-    return pid;
   }
 
 }
