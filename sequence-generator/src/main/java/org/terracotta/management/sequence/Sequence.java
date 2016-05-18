@@ -19,6 +19,8 @@ package org.terracotta.management.sequence;
 import java.io.Serializable;
 
 /**
+ * Sequence = timestamp + node id + sequence id
+ *
  * @author Mathieu Carbou
  */
 public interface Sequence extends Serializable, Comparable<Sequence> {

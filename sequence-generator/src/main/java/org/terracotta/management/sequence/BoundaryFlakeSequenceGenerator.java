@@ -35,9 +35,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * - 32 bits: instance ID  - positive int - used to identify the generator instance
  * - 20 bits: sequence  - positive int - (incremented at each call for the same millisecond)
  * <p>
+ * sequence = timestamp + node id (mac and pid) + sequence id (instance id and sequence)
+ * <p>
  * timestamp + sequence are put together in the same long (64 bits) for CAS performance
  * <p>
- * This leads to 3 longs (192 bits): timestamp + machine id + instance id with sequence
+ * This leads to 3 longs (192 bits)
  *
  * @author Mathieu Carbou
  */
@@ -50,7 +52,7 @@ public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
   private final TimeSource timeSource;
   private final long nodeId;
   private final long instanceId;
-  private final AtomicLong timeAndSeq = new AtomicLong(); // 44 bits relative TS + 20 bits seq
+  private final AtomicLong timeAndSeq = new AtomicLong(); // 44 bits TS + 20 bits sequence
 
   public BoundaryFlakeSequenceGenerator() {
     this(TimeSource.SYSTEM);
