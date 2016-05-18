@@ -16,25 +16,20 @@
 
 package org.terracotta.management.sequence;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-import static org.junit.Assert.assertEquals;
+import java.util.concurrent.Callable;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
-public class LongCyclicRangeCounterTest {
-
-  @Test
-  public void test_cycle() {
-    LongCyclicRangeCounter counter = new LongCyclicRangeCounter(Integer.MAX_VALUE - 2, Integer.MAX_VALUE);
-    assertEquals(Integer.MAX_VALUE - 2, counter.getAndIncrement());
-    assertEquals(Integer.MAX_VALUE - 1, counter.getAndIncrement());
-    assertEquals(Integer.MAX_VALUE, counter.getAndIncrement());
-    assertEquals(Integer.MAX_VALUE - 2, counter.getAndIncrement());
+public class Runner implements Callable<String> {
+  @Override
+  public String call() throws Exception {
+    SequenceGenerator generator = new BoundaryFlakeSequenceGenerator(new TimeSource() {
+      @Override
+      public long getTimestamp() {
+        return 1463580865895L;
+      }
+    });
+    return generator.next().toHexString();
   }
-
 }

@@ -16,21 +16,23 @@
 
 package org.terracotta.management.sequence;
 
-import java.io.Serializable;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- * SEQUENCE = TIMESTAMP + NODE_ID + SEQUENCE_ID
- *
  * @author Mathieu Carbou
  */
-public interface Sequence extends Serializable, Comparable<Sequence> {
-
-  long getTimestamp();
-
-  long getNodeId();
-
-  long getSequenceId();
-
-  String toHexString();
-
+@RunWith(JUnit4.class)
+public class IntCyclicRangeCounterTest {
+  @Test
+  public void test_cycle() {
+    IntCyclicRangeCounter counter = new IntCyclicRangeCounter(4, 6);
+    assertEquals(4, counter.getAndIncrement());
+    assertEquals(5, counter.getAndIncrement());
+    assertEquals(6, counter.getAndIncrement());
+    assertEquals(4, counter.getAndIncrement());
+  }
 }

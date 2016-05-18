@@ -23,31 +23,47 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Sort of Boundary Flake, inspired by (and related docs):
- * - http://www.slideshare.net/davegardnerisme/unique-id-generation-in-distributed-systems
- * - https://github.com/mumrah/flake-java
- * - https://github.com/boundary/flake
- * - https://github.com/rholder/fauxflake
- * - https://github.com/hibernate/hibernate-orm/blob/master/hibernate-testing/src/main/java/org/hibernate/testing/cache/Timestamper.java
- * <p>
+ * <ul>
+ * <li>http://www.slideshare.net/davegardnerisme/unique-id-generation-in-distributed-systems</li>
+ * <li>https://github.com/mumrah/flake-java</li>
+ * <li>https://github.com/boundary/flake</li>
+ * <li>https://github.com/rholder/fauxflake</li>
+ * <li>https://github.com/hibernate/hibernate-orm/blob/master/hibernate-testing/src/main/java/org/hibernate/testing/cache/Timestamper.java</li>
+ * </ul>
  * For this implementation we will use:
- * - 44 bits: timestamp - positive long - 44 bits is enough for next 500 years
- * - 64 bits: machine id - long - composed of full mac address (48 bits) with latest bits of the PID / VMID (16 bits)
- * - 32 bits: instance ID  - positive int - used to identify the generator instance
- * - 20 bits: sequence  - positive int - (incremented at each call for the same millisecond)
+ * <pre>
+ * SEQUENCE = TIMESTAMP + NODE_ID + SEQUENCE_ID
+ * NODE_ID = MAC + PID
+ * SEQUENCE_ID = CLASSLOADER_ID + INSTANCE_ID + SEQUENCE_MS
+ * </pre>
+ * Where:
+ * <ul>
+ * <li>TIMESTAMP: 46 bits - enough for next 500 years</li>
+ * <li>MAC: 48 bits - full mac address</li>
+ * <li>PID: 16 bits - latest bits of the PID / VMID</li>
+ * <li>CLASSLOADER_ID: 32 bits - classloader hashcode</li>
+ * <li>INSTANCE_ID: 14 bits - number of instances per classloader</li>
+ * <li>SEQUENCE_MS: 18 bits - seq id within the same millisecond</li>
+ * </ul>
  * <p>
- * sequence = timestamp + node id (mac and pid) + sequence id (instance id and sequence)
+ * This leads to 3 longs (192 bits).
  * <p>
- * timestamp + sequence are put together in the same long (64 bits) for CAS performance
- * <p>
- * This leads to 3 longs (192 bits)
+ * This generator will be able to generate a maximum of about 262,144 unique sequence numbers / millisecond / instance / classloader / JVM / machine.
  *
  * @author Mathieu Carbou
  */
 public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
 
-  private static final int SEQ_BITLENGTH = 20;
+  private static final int PID_BITLENGTH = 16;
+  private static final long PID_BITMASK = (1L << PID_BITLENGTH) - 1;
+
+  private static final int SEQ_BITLENGTH = 18;
   private static final long SEQ_BITMASK = (1L << SEQ_BITLENGTH) - 1;
-  private static final LongCyclicRangeCounter INSTANCE_ID = new LongCyclicRangeCounter(0, Integer.MAX_VALUE);
+
+  private static final int INSTANCE_BITLENGTH = 18;
+  private static final int INSTANCE_BITMASK = (1 << INSTANCE_BITLENGTH) - 1;
+
+  private static final IntCyclicRangeCounter INSTANCE_ID = new IntCyclicRangeCounter(0, INSTANCE_BITMASK);
 
   private final TimeSource timeSource;
   private final long nodeId;
@@ -59,14 +75,16 @@ public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
   }
 
   public BoundaryFlakeSequenceGenerator(TimeSource timeSource) {
-    this.timeSource = timeSource;
-    this.instanceId = INSTANCE_ID.getAndIncrement() << 32;
+    long clId = getClass().getClassLoader().hashCode();
     byte[] mac = readMAC();
-    long id = 0;
+    long macId = 0;
     for (int i = 0; i < 6; i++) {
-      id = (id << 8) | (mac[i] & 0XFF);
+      macId = (macId << 8) | (mac[i] & 0XFF);
     }
-    nodeId = (id << 16) | (readPID() & 0xFFFF);
+
+    this.timeSource = timeSource;
+    this.nodeId = (macId << PID_BITLENGTH) | (readPID() & PID_BITMASK);
+    this.instanceId = ((clId << INSTANCE_BITLENGTH) | (INSTANCE_ID.getAndIncrement() & INSTANCE_BITMASK)) << SEQ_BITLENGTH;
   }
 
   @Override

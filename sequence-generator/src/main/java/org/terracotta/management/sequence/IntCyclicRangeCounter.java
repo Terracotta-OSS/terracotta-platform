@@ -16,20 +16,20 @@
 
 package org.terracotta.management.sequence;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Counter which only goes from positives min to max values and cycle back to min value when max is reached
  *
  * @author Mathieu Carbou
  */
-class LongCyclicRangeCounter {
+class IntCyclicRangeCounter {
 
-  private final AtomicLong counter;
-  private final long min;
-  private final long max;
+  private final AtomicInteger counter;
+  private final int min;
+  private final int max;
 
-  LongCyclicRangeCounter(long min, long max) {
+  IntCyclicRangeCounter(int min, int max) {
     this.min = min;
     this.max = max;
     if (min >= max) {
@@ -41,13 +41,13 @@ class LongCyclicRangeCounter {
     if (max <= 0) {
       throw new IllegalArgumentException("max <= 0");
     }
-    counter = new AtomicLong(min);
+    counter = new AtomicInteger(min);
   }
 
-  long getAndIncrement() {
+  int getAndIncrement() {
     for (; ; ) {
-      long current = counter.get();
-      long next = current == max ? min : current + 1;
+      int current = counter.get();
+      int next = current == max ? min : current + 1;
       if (counter.compareAndSet(current, next)) {
         return current;
       }

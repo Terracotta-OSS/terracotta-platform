@@ -21,13 +21,18 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import javax.xml.bind.DatatypeConverter;
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author Mathieu Carbou
@@ -67,6 +72,28 @@ public class BoundaryFlakeSequenceGeneratorTest {
 
     assertEquals(DatatypeConverter.printHexBinary(buffer.array()), sequence.toHexString());
     assertEquals(sequence, BoundaryFlakeSequence.fromHexString(sequence.toHexString()));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void test_generation_in_different_isolated_classloaders() throws Exception {
+    URL[] cp = new URL[]{
+        new File("target/classes").toURI().toURL(),
+        new File("target/test-classes").toURI().toURL(),
+    };
+    URLClassLoader cl1 = new URLClassLoader(cp, ClassLoader.getSystemClassLoader().getParent());
+    URLClassLoader cl2 = new URLClassLoader(cp, ClassLoader.getSystemClassLoader().getParent());
+
+    Callable<String> runner1 = (Callable<String>) cl1.loadClass("org.terracotta.management.sequence.Runner").newInstance();
+    Callable<String> runner2 = (Callable<String>) cl2.loadClass("org.terracotta.management.sequence.Runner").newInstance();
+
+    String seq1 = runner1.call();
+    String seq2 = runner2.call();
+
+    System.out.println(seq1);
+    System.out.println(seq2);
+
+    assertNotEquals(seq1, seq2);
   }
 
   @Test
