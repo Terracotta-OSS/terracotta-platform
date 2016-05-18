@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.terracotta.management.model.message;
+package org.terracotta.management.model.cluster;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,8 +46,6 @@ import org.terracotta.management.model.stats.primitive.Duration;
 import org.terracotta.management.model.stats.primitive.Rate;
 import org.terracotta.management.model.stats.primitive.Ratio;
 import org.terracotta.management.model.stats.primitive.Size;
-import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
-import org.terracotta.management.sequence.SequenceGenerator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -66,15 +64,13 @@ import static org.junit.Assert.assertEquals;
 @RunWith(JUnit4.class)
 public class SerializationTest {
 
-  Context context = Context.create("cacheManagerName", "my-cm-1");
-  SequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator();
+  private Context context = Context.create("cacheManagerName", "my-cm-1");
 
   @Test
   public void test_contextualReturn() throws Exception {
     ContextualReturn<Integer> contextualReturn = ContextualReturn.of("capability", context, "method", 1);
-    CallReturnMessage message = new CallReturnMessage(sequenceGenerator.next(), contextualReturn);
-    assertEquals(message, copy(message));
-    assertEquals(message.hashCode(), copy(message).hashCode());
+    assertEquals(contextualReturn, copy(contextualReturn));
+    assertEquals(contextualReturn.hashCode(), copy(contextualReturn).hashCode());
   }
 
   @Test
@@ -106,9 +102,8 @@ public class SerializationTest {
   @Test
   public void test_contextualNotif() throws Exception {
     ContextualNotification notif = new ContextualNotification(context, "TYPE", Context.create("key", "val"));
-    NotificationMessage message = new NotificationMessage(sequenceGenerator.next(), notif);
-    assertEquals(message, copy(message));
-    assertEquals(message.hashCode(), copy(message).hashCode());
+    assertEquals(notif, copy(notif));
+    assertEquals(notif.hashCode(), copy(notif).hashCode());
   }
 
   @Test
@@ -128,9 +123,8 @@ public class SerializationTest {
       put("stat15", new Ratio(1.0, NumberUnit.RATIO));
       put("stat16", new Size(1L, MemoryUnit.B));
     }});
-    StatisticMessage message = new StatisticMessage(sequenceGenerator.next(), statistics);
-    assertEquals(message, copy(message));
-    assertEquals(message.hashCode(), copy(message).hashCode());
+    assertEquals(statistics, copy(statistics));
+    assertEquals(statistics.hashCode(), copy(statistics).hashCode());
   }
 
   @SuppressWarnings("unchecked")

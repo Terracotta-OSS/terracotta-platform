@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.model.message;
 
-import org.terracotta.management.model.Objects;
 import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
@@ -30,10 +29,10 @@ public class DefaultMessage implements Message {
   private final Sequence sequence;
   private final String messageType;
 
-  protected DefaultMessage(Sequence sequence, String messageType, Serializable data) {
-    this.sequence = Objects.requireNonNull(sequence);
-    this.messageType = Objects.requireNonNull(messageType);
-    this.data = Objects.requireNonNull(data);
+  public DefaultMessage(Sequence sequence, String messageType, Serializable data) {
+    this.sequence = sequence;
+    this.messageType = messageType;
+    this.data = data;
   }
 
   @Override
