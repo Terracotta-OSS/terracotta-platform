@@ -39,7 +39,7 @@ public class Defaults {
   static final NodeIdSource DEFAULT_NODE_ID_SOURCE = new NodeIdSource() {
     @Override
     public long getNodeId() {
-      byte[] mac = readMAC();
+      byte[] mac = readFirstNonLoopbackMacAddress();
       long macId = 0;
       for (int i = 0; i < 6; i++) {
         macId = (macId << 8) | (mac[i] & 0XFF);
@@ -55,7 +55,7 @@ public class Defaults {
     }
   };
 
-  static byte[] readMAC() {
+  static byte[] readFirstNonLoopbackMacAddress() {
     List<NetworkInterface> networkInterfaces;
     try {
       networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
@@ -63,21 +63,12 @@ public class Defaults {
       throw new IllegalStateException("Machine has no network interfaces!", e);
     }
     for (NetworkInterface networkInterface : networkInterfaces) {
-      // loopback check
       try {
-        if (networkInterface.isLoopback()) {
-          continue;
-        }
-      } catch (SocketException e) {
-        throw new IllegalStateException("Unable to check if network interface " + networkInterface + " is loopback.", e);
-      }
-      try {
-        byte[] mac = networkInterface.getHardwareAddress();
-        if (mac != null) {
+        byte[] mac;
+        if (!networkInterface.isLoopback() && (mac = networkInterface.getHardwareAddress()) != null) {
           return mac;
         }
-      } catch (SocketException e) {
-        throw new IllegalStateException("Unable to read mac address of network interface " + networkInterface, e);
+      } catch (SocketException ignored) {
       }
     }
     throw new IllegalStateException("Unable to read a MAC address");

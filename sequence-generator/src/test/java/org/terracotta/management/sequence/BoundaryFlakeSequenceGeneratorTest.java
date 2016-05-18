@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.terracotta.management.sequence.Defaults.readMAC;
+import static org.terracotta.management.sequence.Defaults.readFirstNonLoopbackMacAddress;
 import static org.terracotta.management.sequence.Defaults.readPID;
 
 /**
@@ -49,7 +49,7 @@ public class BoundaryFlakeSequenceGeneratorTest {
 
     long instanceId = generator.getInstanceId();
     long nodeId = generator.getNodeId();
-    byte[] mac = readMAC();
+    byte[] mac = readFirstNonLoopbackMacAddress();
     long pid = readPID();
     long seq = 0;
 
