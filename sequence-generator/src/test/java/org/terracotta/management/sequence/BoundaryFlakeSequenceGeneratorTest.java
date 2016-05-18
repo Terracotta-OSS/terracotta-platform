@@ -51,6 +51,7 @@ public class BoundaryFlakeSequenceGeneratorTest {
     long nodeId = generator.getNodeId();
 
     byte[] mac = readFirstNonLoopbackMacAddress();
+    mac[0] = (byte) (mac[0] & Byte.MAX_VALUE); // to make the node id positive
     assertEquals(6, mac.length);
 
     long pid = readPID();
