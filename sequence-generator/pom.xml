@@ -45,7 +45,19 @@
           <argLine>-server -Xmx512M -Xms512M</argLine>
           <reuseForks>false</reuseForks>
         </configuration>
-      </plugin></plugins>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.terracotta.management.sequence.perf.PerfTest</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <dependencies>
