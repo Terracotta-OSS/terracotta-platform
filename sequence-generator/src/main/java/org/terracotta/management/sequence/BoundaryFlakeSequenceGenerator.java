@@ -40,7 +40,7 @@ import static org.terracotta.management.sequence.Defaults.SEQ_BITMASK;
  * </pre>
  * Where:
  * <ul>
- * <li>TIMESTAMP: 46 bits - enough for next 500 years</li>
+ * <li>TIMESTAMP: 46 bits - enough for next >200 years</li>
  * <li>MAC: 48 bits - full mac address</li>
  * <li>PID: 16 bits - latest bits of the PID / VMID</li>
  * <li>CLASSLOADER_ID: 32 bits - classloader hashcode</li>
@@ -50,7 +50,8 @@ import static org.terracotta.management.sequence.Defaults.SEQ_BITMASK;
  * <p>
  * This leads to 3 longs (192 bits).
  * <p>
- * This generator will be able to generate a maximum of about 262,144 unique sequence numbers / millisecond / instance / classloader / JVM / machine.
+ * This generator will generate a maximum of about 262,144 sequence numbers / millisecond / instance / classloader / JVM / machine,
+ * with high probability to be unique if node id is unique.
  *
  * @author Mathieu Carbou
  */
@@ -64,7 +65,7 @@ public final class BoundaryFlakeSequenceGenerator implements SequenceGenerator {
   private final AtomicLong timeAndSeq = new AtomicLong(); // 44 bits TS + 20 bits sequence
 
   public BoundaryFlakeSequenceGenerator() {
-    this(TimeSource.SYSTEM, NodeIdSource.MAC_PID);
+    this(TimeSource.BEST, NodeIdSource.BEST);
   }
 
   public BoundaryFlakeSequenceGenerator(TimeSource timeSource, NodeIdSource nodeIdSource) {

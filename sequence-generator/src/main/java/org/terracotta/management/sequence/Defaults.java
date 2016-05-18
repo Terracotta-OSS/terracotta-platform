@@ -20,12 +20,14 @@ import java.lang.management.ManagementFactory;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * @author Mathieu Carbou
  */
-public class Defaults {
+class Defaults {
 
   private static final int PID_BITLENGTH = 16;
   private static final long PID_BITMASK = (1L << PID_BITLENGTH) - 1;
@@ -36,15 +38,27 @@ public class Defaults {
   static final int INSTANCE_BITLENGTH = 18;
   static final int INSTANCE_BITMASK = (1 << INSTANCE_BITLENGTH) - 1;
 
-  static final NodeIdSource DEFAULT_NODE_ID_SOURCE = new NodeIdSource() {
+  static final NodeIdSource MAC_PID_NODE_ID_SOURCE = new NodeIdSource() {
     @Override
     public long getNodeId() {
+      // at least 6 bytes
       byte[] mac = readFirstNonLoopbackMacAddress();
-      long macId = 0;
-      for (int i = 0; i < 6; i++) {
-        macId = (macId << 8) | (mac[i] & 0XFF);
+      long nodeId = 0;
+      // we consider the 6 last bytes only,
+      for (int i = Math.max(0, mac.length - 6); i < mac.length; i++) {
+        nodeId = (nodeId << 8) | (mac[i] & 0XFF);
       }
-      return (macId << PID_BITLENGTH) | (readPID() & PID_BITMASK);
+      // keeps a positive node id with the 0x7fffffffffffffffL mask
+      return ((nodeId << PID_BITLENGTH) & Long.MAX_VALUE) | (readPID() & PID_BITMASK);
+    }
+  };
+
+  static final NodeIdSource BEST_NODE_ID_SOURCE = new NodeIdSource() {
+    final NodeIdSource delegate = findBest(NodeIdSource.class, MAC_PID_NODE_ID_SOURCE);
+
+    @Override
+    public long getNodeId() {
+      return delegate.getNodeId();
     }
   };
 
@@ -55,6 +69,22 @@ public class Defaults {
     }
   };
 
+  static final TimeSource BEST_TIME_SOURCE = new TimeSource() {
+    final TimeSource delegate = findBest(TimeSource.class, SYSTEM_TIME_SOURCE);
+
+    @Override
+    public long getTimestamp() {
+      return delegate.getTimestamp();
+    }
+  };
+
+  private static final Comparator<NetworkInterface> NETWORK_INTERFACE_COMPARATOR = new Comparator<NetworkInterface>() {
+    @Override
+    public int compare(NetworkInterface o1, NetworkInterface o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
+
   static byte[] readFirstNonLoopbackMacAddress() {
     List<NetworkInterface> networkInterfaces;
     try {
@@ -62,15 +92,42 @@ public class Defaults {
     } catch (SocketException e) {
       throw new IllegalStateException("Machine has no network interfaces!", e);
     }
+
+    // order interfaces by name
+    Collections.sort(networkInterfaces, NETWORK_INTERFACE_COMPARATOR);
+
+    // find the first accessible non-loopback interface having a mac address
+    // we try first to skip all virtual interfaces since they can be easily dynamically created on-demand
+    // the goal of this method is to try return the same value each time as possible
+    // we consider only "parent" interfaces
     for (NetworkInterface networkInterface : networkInterfaces) {
       try {
         byte[] mac;
-        if (!networkInterface.isLoopback() && (mac = networkInterface.getHardwareAddress()) != null) {
+        if (!networkInterface.isLoopback()
+            && !networkInterface.isPointToPoint()
+            && !networkInterface.isVirtual()
+            && networkInterface.getParent() == null
+            && (mac = networkInterface.getHardwareAddress()) != null
+            && mac.length >= 6) {
           return mac;
         }
       } catch (SocketException ignored) {
       }
     }
+
+    // if we do not succeed, we enlarge our search
+    for (NetworkInterface networkInterface : networkInterfaces) {
+      try {
+        byte[] mac;
+        if (!networkInterface.isLoopback()
+            && (mac = networkInterface.getHardwareAddress()) != null
+            && mac.length >= 6) {
+          return mac;
+        }
+      } catch (SocketException ignored) {
+      }
+    }
+
     throw new IllegalStateException("Unable to read a MAC address");
   }
 
@@ -81,6 +138,26 @@ public class Defaults {
       pid = pid * 10 + Character.getNumericValue(name.charAt(i));
     }
     return pid;
+  }
+
+  private static <T> T findBest(Class<T> type, T def) {
+    // try first a JVM sysprop
+    String cName = System.getProperty(type.getName());
+    if (cName != null) {
+      try {
+        return type.cast(Defaults.class.getClassLoader().loadClass(cName).newInstance());
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Unable to instance  " + type.getSimpleName() + " " + cName + " set from system property");
+      }
+    } else {
+      // otherwise, try a service implementation
+      try {
+        return ServiceLoader.load(type).iterator().next();
+      } catch (Exception ignored) {
+      }
+    }
+    // or returns default
+    return def;
   }
 
 }

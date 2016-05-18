@@ -22,6 +22,7 @@ package org.terracotta.management.sequence;
 public interface TimeSource {
 
   TimeSource SYSTEM = Defaults.SYSTEM_TIME_SOURCE;
+  TimeSource BEST = Defaults.BEST_TIME_SOURCE;
 
   long getTimestamp();
 

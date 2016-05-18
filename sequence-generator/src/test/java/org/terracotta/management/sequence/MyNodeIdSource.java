@@ -19,24 +19,9 @@ package org.terracotta.management.sequence;
 /**
  * @author Mathieu Carbou
  */
-public interface NodeIdSource {
-
-  NodeIdSource MAC_PID = Defaults.MAC_PID_NODE_ID_SOURCE;
-  NodeIdSource BEST = Defaults.BEST_NODE_ID_SOURCE;
-
-  long getNodeId();
-
-  class Fixed implements NodeIdSource {
-
-    private final long nodeId;
-
-    public Fixed(long nodeId) {
-      this.nodeId = nodeId;
-    }
-
-    @Override
-    public long getNodeId() {
-      return nodeId;
-    }
+public class MyNodeIdSource implements NodeIdSource {
+  @Override
+  public long getNodeId() {
+    return 5;
   }
 }

@@ -49,7 +49,10 @@ public class BoundaryFlakeSequenceGeneratorTest {
 
     long instanceId = generator.getInstanceId();
     long nodeId = generator.getNodeId();
+
     byte[] mac = readFirstNonLoopbackMacAddress();
+    assertEquals(6, mac.length);
+
     long pid = readPID();
     long seq = 0;
 
@@ -69,6 +72,13 @@ public class BoundaryFlakeSequenceGeneratorTest {
 
     assertEquals(DatatypeConverter.printHexBinary(buffer.array()), sequence.toHexString());
     assertEquals(sequence, BoundaryFlakeSequence.fromHexString(sequence.toHexString()));
+  }
+
+  @Test
+  public void test_sys_prop() {
+    BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST);
+    assertEquals(5, generator.getNodeId());
+    assertEquals(7, generator.getTimeSource().getTimestamp());
   }
 
   @Test
