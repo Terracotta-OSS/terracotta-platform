@@ -28,7 +28,7 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
   private final Object[] parentValues;
   private final Object oldValue;
   private final Object newValue;
-  private final String sequence;
+  private final byte[] sequence;
   private final long timestamp;
   private final Type type;
   private final String[] parents;
@@ -39,7 +39,7 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
 
   TreeMutation(long index, Sequence sequence, Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
     this.index = index;
-    this.sequence = sequence.toHexString();
+    this.sequence = sequence.toBytes();
     this.timestamp = sequence.getTimestamp();
     this.type = type;
     this.parents = parents;
@@ -105,7 +105,7 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
   }
 
   @Override
-  public String getSequence() {
+  public byte[] getSequence() {
     return sequence;
   }
 
@@ -142,7 +142,6 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
   public String toString() {
     final StringBuilder sb = new StringBuilder("TreeMutation{");
     sb.append("index=").append(index);
-    sb.append("sequence=").append(sequence);
     sb.append(", timestamp=").append(timestamp);
     sb.append(", type=").append(type);
     sb.append(", path=").append(String.join("/", path));

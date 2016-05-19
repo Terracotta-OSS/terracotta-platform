@@ -32,7 +32,7 @@ public interface Mutation {
     CHANGE,
   }
 
-  String getSequence();
+  byte[] getSequence();
 
   long getTimestamp();
 
