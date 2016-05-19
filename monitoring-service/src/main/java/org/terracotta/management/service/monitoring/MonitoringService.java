@@ -25,12 +25,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,6 +52,8 @@ class MonitoringService {
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final Queue<Mutation> EMPTY_QUEUE = new LinkedList<>();
+
+  private static final AtomicLong MUTATION_INDEX = new AtomicLong(Long.MIN_VALUE);
 
   private final Node tree = new Node();
   private final MonitoringServiceConfiguration config;
@@ -145,7 +149,7 @@ class MonitoringService {
 
     if (previous == null) {
       // addition, value can be null (=> would be a branch addition)
-      recordMutation(new TreeMutation(generator.next(), ADDITION, parents, name, null, value, getParentValues(parents)));
+      recordMutation(ADDITION, parents, name, null, value, getParentValues(parents));
       return;
     }
 
@@ -158,9 +162,8 @@ class MonitoringService {
     recordChildRemoval(parents, name, previous);
 
     // the nodes have the same name, check if their values are different
-    Mutation mutation = new TreeMutation(generator.next(), CHANGE, parents, name, previous.value, value, getParentValues(parents));
-    if (mutation.isValueChanged()) {
-      recordMutation(mutation);
+    if (!Objects.equals(previous.value, value)) {
+      recordMutation(CHANGE, parents, name, previous.value, value, getParentValues(parents));
     }
   }
 
@@ -186,7 +189,7 @@ class MonitoringService {
     }
 
     recordChildRemoval(parents, name, removed);
-    recordMutation(new TreeMutation(generator.next(), REMOVAL, parents, name, removed.value, null, getParentValues(parents)));
+    recordMutation(REMOVAL, parents, name, removed.value, null, getParentValues(parents));
     return true;
   }
 
@@ -213,13 +216,14 @@ class MonitoringService {
         Node removed = node.removeChild(childName);
         if (removed != null) {
           recordChildRemoval(fullPath, childName, removed);
-          recordMutation(new TreeMutation(generator.next(), REMOVAL, fullPath, childName, removed.value, null, parentValues));
+          recordMutation(REMOVAL, fullPath, childName, removed.value, null, parentValues);
         }
       }
     }
   }
 
-  private void recordMutation(Mutation mutation) {
+  private synchronized void recordMutation(Mutation.Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
+    TreeMutation mutation = new TreeMutation(MUTATION_INDEX.getAndIncrement(), generator.next(), type, parents, name, oldValue, newValue, parentValues);
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("recordMutation: " + mutation);
     }

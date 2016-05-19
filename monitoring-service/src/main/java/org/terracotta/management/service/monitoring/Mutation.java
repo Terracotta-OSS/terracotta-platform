@@ -36,6 +36,8 @@ public interface Mutation {
 
   long getTimestamp();
 
+  long getIndex();
+
   Type getType();
 
   boolean isAnyType(Type... types);
