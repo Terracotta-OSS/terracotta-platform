@@ -33,4 +33,5 @@ public interface Sequence extends Serializable, Comparable<Sequence> {
 
   String toHexString();
 
+  byte[] toBytes();
 }

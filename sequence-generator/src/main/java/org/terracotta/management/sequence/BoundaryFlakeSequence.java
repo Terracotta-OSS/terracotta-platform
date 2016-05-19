@@ -52,11 +52,16 @@ public final class BoundaryFlakeSequence implements Sequence, Serializable {
 
   @Override
   public String toHexString() {
+    return DatatypeConverter.printHexBinary(toBytes());
+  }
+
+  @Override
+  public byte[] toBytes() {
     ByteBuffer buffer = ByteBuffer.allocate(24);
     buffer.putLong(timestamp);
     buffer.putLong(nodeId);
     buffer.putLong(sequence);
-    return DatatypeConverter.printHexBinary(buffer.array());
+    return buffer.array();
   }
 
   @Override
@@ -92,12 +97,16 @@ public final class BoundaryFlakeSequence implements Sequence, Serializable {
     return result;
   }
 
-  public static BoundaryFlakeSequence fromHexString(String hex) {
-    ByteBuffer buffer = ByteBuffer.wrap(DatatypeConverter.parseHexBinary(hex));
+  public static BoundaryFlakeSequence fromBytes(byte[] bytes) {
+    ByteBuffer buffer = ByteBuffer.wrap(bytes);
     long timestamp = buffer.getLong();
     long nodeId = buffer.getLong();
     long sequence = buffer.getLong();
     return new BoundaryFlakeSequence(timestamp, nodeId, sequence);
+  }
+
+  public static BoundaryFlakeSequence fromHexString(String hex) {
+    return fromBytes(DatatypeConverter.parseHexBinary(hex));
   }
 
 }
