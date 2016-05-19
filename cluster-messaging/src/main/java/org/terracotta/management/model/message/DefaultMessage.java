@@ -46,6 +46,11 @@ public class DefaultMessage implements Message {
   }
 
   @Override
+  public long getTimestamp() {
+    return sequence.getTimestamp();
+  }
+
+  @Override
   public String getType() {
     return messageType;
   }

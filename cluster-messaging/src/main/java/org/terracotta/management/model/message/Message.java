@@ -30,4 +30,5 @@ public interface Message extends Serializable {
 
   Sequence getSequence();
 
+  long getTimestamp();
 }
