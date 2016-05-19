@@ -1,19 +1,19 @@
 /*
  * Copyright Terracotta, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-package org.terracotta.management;
+package org.terracotta.management.model.cluster;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +27,6 @@ import org.terracotta.management.model.capabilities.descriptors.StatisticDescrip
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptorCategory;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.model.stats.MemoryUnit;
@@ -65,14 +64,13 @@ import static org.junit.Assert.assertEquals;
 @RunWith(JUnit4.class)
 public class SerializationTest {
 
-  Context context = Context.create("cacheManagerName", "my-cm-1");
+  private Context context = Context.create("cacheManagerName", "my-cm-1");
 
   @Test
   public void test_contextualReturn() throws Exception {
     ContextualReturn<Integer> contextualReturn = ContextualReturn.of("capability", context, "method", 1);
-    DefaultMessage message = new DefaultMessage(1, contextualReturn);
-    assertEquals(message, copy(message));
-    assertEquals(message.hashCode(), copy(message).hashCode());
+    assertEquals(contextualReturn, copy(contextualReturn));
+    assertEquals(contextualReturn.hashCode(), copy(contextualReturn).hashCode());
   }
 
   @Test
@@ -104,9 +102,8 @@ public class SerializationTest {
   @Test
   public void test_contextualNotif() throws Exception {
     ContextualNotification notif = new ContextualNotification(context, "TYPE", Context.create("key", "val"));
-    DefaultMessage message = new DefaultMessage(1, notif);
-    assertEquals(message, copy(message));
-    assertEquals(message.hashCode(), copy(message).hashCode());
+    assertEquals(notif, copy(notif));
+    assertEquals(notif.hashCode(), copy(notif).hashCode());
   }
 
   @Test
@@ -126,9 +123,8 @@ public class SerializationTest {
       put("stat15", new Ratio(1.0, NumberUnit.RATIO));
       put("stat16", new Size(1L, MemoryUnit.B));
     }});
-    DefaultMessage message = new DefaultMessage(1, statistics);
-    assertEquals(message, copy(message));
-    assertEquals(message.hashCode(), copy(message).hashCode());
+    assertEquals(statistics, copy(statistics));
+    assertEquals(statistics.hashCode(), copy(statistics).hashCode());
   }
 
   @SuppressWarnings("unchecked")

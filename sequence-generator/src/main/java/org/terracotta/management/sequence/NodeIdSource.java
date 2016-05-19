@@ -14,17 +14,29 @@
  *  limitations under the License.
  */
 
-package org.terracotta.management.model.cluster;
-
-import org.terracotta.management.model.message.DefaultMessage;
+package org.terracotta.management.sequence;
 
 /**
  * @author Mathieu Carbou
  */
-public final class TopologyMessage extends DefaultMessage {
+public interface NodeIdSource {
 
-  public TopologyMessage(long timeNanos, Cluster topology) {
-    super(timeNanos, "TOPOLOGY", topology);
+  NodeIdSource MAC_PID = Defaults.MAC_PID_NODE_ID_SOURCE;
+  NodeIdSource BEST = Defaults.BEST_NODE_ID_SOURCE;
+
+  long getNodeId();
+
+  class Fixed implements NodeIdSource {
+
+    private final long nodeId;
+
+    public Fixed(long nodeId) {
+      this.nodeId = nodeId;
+    }
+
+    @Override
+    public long getNodeId() {
+      return nodeId;
+    }
   }
-
 }

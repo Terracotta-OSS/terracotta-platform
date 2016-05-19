@@ -20,6 +20,8 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
+import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.Arrays;
@@ -42,7 +44,8 @@ public class MonitoringServiceProvider implements ServiceProvider {
     MonitoringServiceConfiguration config = configuration instanceof MonitoringServiceConfiguration ?
         (MonitoringServiceConfiguration) configuration :
         new MonitoringServiceConfiguration();
-    this.monitoringService = new MonitoringService(config);
+    SequenceGenerator generator = new BoundaryFlakeSequenceGenerator();
+    this.monitoringService = new MonitoringService(config, generator);
     return true;
   }
 

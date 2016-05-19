@@ -15,10 +15,7 @@
  */
 package org.terracotta.management.model.message;
 
-import org.terracotta.management.model.Objects;
-import org.terracotta.management.model.call.ContextualReturn;
-import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -26,43 +23,31 @@ import java.util.Arrays;
 /**
  * @author Mathieu Carbou
  */
-public class DefaultMessage implements Serializable, Message {
+public class DefaultMessage implements Message {
 
-  private final Object data;
-  private final long timeNanos;
+  private final Serializable data;
+  private final Sequence sequence;
   private final String messageType;
 
-  protected DefaultMessage(long timeNanos, String messageType, Object data) {
-    this.timeNanos = timeNanos;
-    this.messageType = Objects.requireNonNull(messageType);
-    this.data = Objects.requireNonNull(data);
-  }
-
-  public DefaultMessage(long timeNanos, ContextualNotification notification) {
-    this(timeNanos, "NOTIFICATION", notification);
-  }
-
-  public DefaultMessage(long timeNanos, ContextualReturn<?> response) {
-    this(timeNanos, "RETURN", response);
-  }
-
-  public DefaultMessage(long timeNanos, ContextualStatistics... statistics) {
-    this(timeNanos, "STATISTICS", statistics);
+  public DefaultMessage(Sequence sequence, String messageType, Serializable data) {
+    this.sequence = sequence;
+    this.messageType = messageType;
+    this.data = data;
   }
 
   @Override
-  public <T> T unwrap(Class<T> type) {
+  public <T extends Serializable> T unwrap(Class<T> type) {
     return type.cast(data);
   }
 
   @Override
-  public long getTimeMillis() {
-    return timeNanos / 1000000;
+  public Sequence getSequence() {
+    return sequence;
   }
 
   @Override
-  public long getTimeNanos() {
-    return timeNanos;
+  public long getTimestamp() {
+    return sequence.getTimestamp();
   }
 
   @Override
@@ -74,7 +59,7 @@ public class DefaultMessage implements Serializable, Message {
   public String toString() {
     return getClass().getSimpleName() +
         "{" +
-        "timeNanos=" + timeNanos +
+        "sequence=" + sequence +
         ", type=" + messageType +
         ", data=" + (data == null ? null : data.getClass().isArray() ? Arrays.toString((Object[]) data) : data) +
         '}';
@@ -87,7 +72,7 @@ public class DefaultMessage implements Serializable, Message {
 
     DefaultMessage that = (DefaultMessage) o;
 
-    if (timeNanos != that.timeNanos) return false;
+    if (!sequence.equals(that.sequence)) return false;
     if (data.getClass() != that.data.getClass()) return false;
     if (data.getClass().isArray()) {
       if (!Arrays.equals((Object[]) data, (Object[]) that.data)) return false;
@@ -101,7 +86,7 @@ public class DefaultMessage implements Serializable, Message {
   @Override
   public int hashCode() {
     int result = data.getClass().isArray() ? Arrays.hashCode((Object[]) data) : data.hashCode();
-    result = 31 * result + (int) (timeNanos ^ (timeNanos >>> 32));
+    result = 31 * result + sequence.hashCode();
     result = 31 * result + messageType.hashCode();
     return result;
   }

@@ -17,6 +17,7 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.management.sequence.Sequence;
 
 /**
  * @author Mathieu Carbou
@@ -31,9 +32,11 @@ public interface Mutation {
     CHANGE,
   }
 
-  long getSequence();
+  byte[] getSequence();
 
-  long getTimeNanos();
+  long getTimestamp();
+
+  long getIndex();
 
   Type getType();
 

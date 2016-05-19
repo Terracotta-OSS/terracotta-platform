@@ -38,10 +38,10 @@ import static org.terracotta.management.entity.server.Utils.array;
  * </ul>
  * Produces:
  * <ul>
+ * <li>{@code management/clients/<client-identifier>/tags String[]}</li>
  * <li>{@code management/clients/<client-identifier>/<name>}</li>
- * <li>{@code management/clients/<client-identifier>/<name>/tags Collections<String>}</li>
  * <li>{@code management/clients/<client-identifier>/<name>/contextContainer ContextContainer}</li>
- * <li>{@code management/clients/<client-identifier>/<name>/capabilities Collections<Capability>}</li>
+ * <li>{@code management/clients/<client-identifier>/<name>/capabilities Capability[]}</li>
  * </ul>
  *
  * @author Mathieu Carbou

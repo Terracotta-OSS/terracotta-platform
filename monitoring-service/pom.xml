@@ -40,6 +40,12 @@
   </licenses>
 
   <dependencies>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>sequence-generator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- provided by voltron (server) -->
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -73,5 +79,33 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>plugin</shadedClassifierName>
+              <!-- we have to make sure no voltron api comes in the shaded jar -->
+              <artifactSet>
+                <includes>
+                  <include>org.terracotta.management:sequence-generator</include>
+                </includes>
+              </artifactSet>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
