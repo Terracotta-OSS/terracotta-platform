@@ -147,7 +147,7 @@ class Defaults {
       try {
         return type.cast(Defaults.class.getClassLoader().loadClass(cName).newInstance());
       } catch (Exception e) {
-        throw new IllegalArgumentException("Unable to instance  " + type.getSimpleName() + " " + cName + " set from system property");
+        throw new IllegalArgumentException("Unable to instantiate  " + type.getSimpleName() + " " + cName + " set from system property");
       }
     } else {
       // otherwise, try a service implementation

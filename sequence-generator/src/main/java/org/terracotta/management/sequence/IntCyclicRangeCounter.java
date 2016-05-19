@@ -38,9 +38,6 @@ class IntCyclicRangeCounter {
     if (min < 0) {
       throw new IllegalArgumentException("min < 0");
     }
-    if (max <= 0) {
-      throw new IllegalArgumentException("max <= 0");
-    }
     counter = new AtomicInteger(min);
   }
 

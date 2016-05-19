@@ -35,4 +35,29 @@ public class IntCyclicRangeCounterTest {
     assertEquals(6, counter.getAndIncrement());
     assertEquals(4, counter.getAndIncrement());
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void test_cycle_min_less_than_zero() {
+    new IntCyclicRangeCounter(-1, 3);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void test_cycle_min_and_max_zero() {
+    new IntCyclicRangeCounter(0, 0);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void test_cycle_max_less_than_zero() {
+    new IntCyclicRangeCounter(5, -12);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void test_cycle_all_negatives() {
+    new IntCyclicRangeCounter(-5, -1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void test_cycle_min_negative_max_ok() {
+    new IntCyclicRangeCounter(-5, 10);
+  }
 }
