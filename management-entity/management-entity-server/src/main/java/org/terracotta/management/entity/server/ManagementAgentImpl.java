@@ -24,6 +24,7 @@ import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -54,8 +55,8 @@ class ManagementAgentImpl implements ManagementAgent {
 
   ManagementAgentImpl(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer) {
     this.config = config;
-    this.producer = producer;
-    this.consumer = consumer;
+    this.producer = Objects.requireNonNull(producer, "IMonitoringProducer service is missing");
+    this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
   }
 
   @Override
