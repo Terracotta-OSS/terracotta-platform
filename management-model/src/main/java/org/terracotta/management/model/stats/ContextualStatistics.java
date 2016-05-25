@@ -109,7 +109,8 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Se
 
   @Override
   public String toString() {
-    return "ContextualStatistics{" + "capability='" + capability + '\'' +
+    return "ContextualStatistics{" +
+        "capability='" + capability + '\'' +
         ", context=" + context +
         ", statistics=" + statistics +
         '}';
