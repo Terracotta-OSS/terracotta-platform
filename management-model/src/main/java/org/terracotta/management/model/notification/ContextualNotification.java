@@ -56,8 +56,9 @@ public final class ContextualNotification implements Serializable {
 
   @Override
   public String toString() {
-    return "ContextualNotification{" + "context=" + context +
-        ", type='" + type + '\'' +
+    return "ContextualNotification{" +
+        "type='" + type + '\'' +
+        ", context=" + context +
         ", attributes=" + attributes +
         '}';
   }

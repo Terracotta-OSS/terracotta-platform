@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,7 +39,8 @@ import org.terracotta.management.service.monitoring.MonitoringConsumerConfigurat
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
 import org.terracotta.passthrough.IClusterControl;
-import org.terracotta.passthrough.PassthroughTestHelpers;
+import org.terracotta.passthrough.PassthroughClusterControl;
+import org.terracotta.passthrough.PassthroughServer;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -59,17 +62,29 @@ public class ManagementAgentServiceTest {
 
   private static IMonitoringConsumer consumer;
 
+  IClusterControl stripeControl;
+
+  @Before
+  public void setUp() throws Exception {
+    PassthroughServer activeServer = new PassthroughServer(true);
+    activeServer.setServerName("server-1");
+    activeServer.setBindPort(9510);
+    activeServer.setGroupPort(9610);
+    activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
+    activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
+    activeServer.registerServiceProvider(new HackedMonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
+    activeServer.start();
+    stripeControl = new PassthroughClusterControl("server-1", activeServer, null);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    stripeControl.tearDown();
+  }
+
+
   @Test
   public void test_expose() throws EntityNotProvidedException, EntityVersionMismatchException, EntityAlreadyExistsException, EntityNotFoundException, IOException, ExecutionException, InterruptedException {
-    IClusterControl stripeControl = PassthroughTestHelpers.createActiveOnly(server -> {
-      server.setBindPort(9510);
-      server.setGroupPort(9610);
-      server.setServerName("server-1");
-      server.registerClientEntityService(new ManagementAgentEntityClientService());
-      server.registerServerEntityService(new ManagementAgentEntityServerService());
-      server.registerServiceProvider(new HackedMonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
-    });
-
     ManagementRegistry registry = new AbstractManagementRegistry() {
       @Override
       public ContextContainer getContextContainer() {

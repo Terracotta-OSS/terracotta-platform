@@ -24,6 +24,8 @@ import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
+import java.util.Objects;
+
 import static org.terracotta.management.entity.server.Utils.array;
 import static org.terracotta.management.entity.server.Utils.getClientIdentifier;
 
@@ -37,8 +39,8 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
 
   ManagementAgentServerEntity(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer) {
     super(new ManagementAgentImpl(config, consumer, producer));
-    this.consumer = consumer;
-    this.producer = producer;
+    this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
+    this.producer = Objects.requireNonNull(producer, "IMonitoringProducer service is missing");
 
     // when an entity is created, we create the root: /management (null)
     if (!consumer.getChildNamesForNode(array("management")).isPresent()) {
