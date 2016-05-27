@@ -191,7 +191,11 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
   }
 
   public boolean isLinkedToManageable(String name, String type) {
-    return linkedManageableStream().filter(manageable -> manageable.is(name, type)).findFirst().isPresent();
+    return getLinkedManageable(name, type).isPresent();
+  }
+
+  public Optional<Manageable> getLinkedManageable(String name, String type) {
+    return linkedManageableStream().filter(manageable -> manageable.is(name, type)).findFirst();
   }
 
   @Override
