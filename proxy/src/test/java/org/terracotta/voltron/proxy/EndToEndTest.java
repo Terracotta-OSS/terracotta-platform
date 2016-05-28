@@ -249,6 +249,11 @@ public class EndToEndTest {
     }
 
     @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackRetired() {
+      return this;
+    }
+
+    @Override
     public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackSent() {
       return this;
     }
@@ -261,6 +266,11 @@ public class EndToEndTest {
     @Override
     public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> message(ProxyEntityMessage bytes) {
       message = bytes;
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> blockGetOnRetire() {
       return this;
     }
 
