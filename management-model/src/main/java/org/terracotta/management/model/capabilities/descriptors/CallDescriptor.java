@@ -55,6 +55,16 @@ public final class CallDescriptor implements Descriptor, Serializable {
   }
 
   @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("CallDescriptor{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", returnType='").append(returnType).append('\'');
+    sb.append(", parameters=").append(parameters);
+    sb.append('}');
+    return sb.toString();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -90,6 +100,15 @@ public final class CallDescriptor implements Descriptor, Serializable {
 
     public String getType() {
       return type;
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder("Parameter{");
+      sb.append("name='").append(name).append('\'');
+      sb.append(", type='").append(type).append('\'');
+      sb.append('}');
+      return sb.toString();
     }
 
     @Override
