@@ -133,13 +133,14 @@ class MonitoringService {
       return false;
     }
 
+    addNode(parentNode, parents, name, value);
+
     if (config.isDebug()) {
       PrintStream writer = System.out;
       writer.println("addNode() " + String.join("/", parents) + (parents.length > 0 ? "/" : "") + name);
       dumpTree(tree, 0, writer);
     }
 
-    addNode(parentNode, parents, name, value);
     return true;
   }
 
