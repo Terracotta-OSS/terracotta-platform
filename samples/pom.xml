@@ -26,6 +26,7 @@
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
+  <groupId>org.terracotta.management.samples</groupId>
   <artifactId>samples</artifactId>
   <name>Terracotta Management :: Samples</name>
   <packaging>pom</packaging>

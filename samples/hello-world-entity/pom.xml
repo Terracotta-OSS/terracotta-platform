@@ -22,7 +22,7 @@
 
   <parent>
     <artifactId>samples</artifactId>
-    <groupId>org.terracotta.management</groupId>
+    <groupId>org.terracotta.management.samples</groupId>
     <version>2.5.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
@@ -99,7 +99,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.management</groupId>
+      <groupId>org.terracotta.management.samples</groupId>
       <artifactId>monitoring-tree-consumer</artifactId>
       <classifier>plugin</classifier>
       <version>${project.version}</version>
