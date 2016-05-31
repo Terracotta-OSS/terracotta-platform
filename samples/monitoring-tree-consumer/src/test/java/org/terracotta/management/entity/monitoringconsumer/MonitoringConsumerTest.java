@@ -75,7 +75,6 @@ public class MonitoringConsumerTest {
       MonitoringConsumerEntity entity = monitoringConsumerEntityFactory.retrieveOrCreate(getClass().getSimpleName());
 
       Collection<String> serverNodeIds = entity.getChildNamesForNode(SERVERS_PATH);
-      System.out.println(serverNodeIds);
 
       try {
         entity.getValueForNode(SERVERS_PATH, serverNodeIds.iterator().next());
