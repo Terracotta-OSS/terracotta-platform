@@ -28,14 +28,23 @@ import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
 import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
 import org.terracotta.management.entity.client.ManagementAgentService;
+import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntity;
+import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntityClientService;
+import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntityFactory;
+import org.terracotta.management.entity.monitoringconsumer.server.MonitoringConsumerEntityServerService;
 import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
 import org.terracotta.management.model.call.Parameter;
+import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 
@@ -57,6 +66,9 @@ public class HelloWorldTest {
     activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
     activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
 
+    activeServer.registerServerEntityService(new MonitoringConsumerEntityServerService());
+    activeServer.registerClientEntityService(new MonitoringConsumerEntityClientService());
+
     activeServer.registerServiceProvider(new MonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
 
     activeServer.start();
@@ -69,7 +81,7 @@ public class HelloWorldTest {
   }
 
   @Test
-  public void test_basic_tms_entity() throws Exception {
+  public void test_hello_world_management() throws Exception {
     try (Connection connection = stripeControl.createConnectionToActive()) {
 
       // create, fetch and use the custom entity
@@ -100,7 +112,18 @@ public class HelloWorldTest {
       ManagementAgentService managementAgentService = new ManagementAgentService(connection);
       managementAgentService.setCapabilities(managementRegistry.getContextContainer(), managementRegistry.getCapabilities());
 
-      //
+      // check it has been exposed properly
+
+      MonitoringConsumerEntityFactory entityFactory = new MonitoringConsumerEntityFactory(connection);
+      MonitoringConsumerEntity consumerEntity = entityFactory.retrieveOrCreate(getClass().getSimpleName());
+      String clientId = consumerEntity.getChildNamesForNode("management", "clients").iterator().next();
+      System.out.println(clientId);
+
+      ContextContainer contextContainer = (ContextContainer) consumerEntity.getValueForNode("management", "clients", clientId, "entityName:my-hello-world-entity-name", "contextContainer");
+      Capability[] capabilities = (Capability[]) consumerEntity.getValueForNode("management", "clients", clientId, "entityName:my-hello-world-entity-name", "capabilities");
+
+      assertEquals(managementRegistry.getContextContainer(), contextContainer);
+      assertEquals(managementRegistry.getCapabilities(), Arrays.asList(capabilities));
     }
   }
 
