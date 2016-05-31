@@ -192,7 +192,7 @@ public class ClusterTest extends AbstractTest {
     assertEquals(1, client.getManageables().size());
 
     try {
-      client.addManageable(Manageable.create(contextContainer.getValue(), ManageableType.CACHE_MANAGER_SERVER_ENTITY).setContextContainer(contextContainer));
+      client.addManageable(Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity").setContextContainer(contextContainer));
       fail();
     } catch (Exception e) {
       assertEquals(IllegalArgumentException.class, e.getClass());
@@ -200,13 +200,13 @@ public class ClusterTest extends AbstractTest {
 
     assertEquals(1, client.getManageables().size());
 
-    client.addManageable(Manageable.create("other-cm-4", ManageableType.CACHE_MANAGER_SERVER_ENTITY).setContextContainer(contextContainer));
+    client.addManageable(Manageable.create("other-cm-4", "org.ehcache.clustered.client.internal.EhcacheClientEntity").setContextContainer(contextContainer));
     client.addManageable(Manageable.create("name", "OTHER_TYPE").setContextContainer(contextContainer));
 
     assertEquals(3, client.getManageables().size());
 
-    assertTrue(client.removeManageable("other-cm-4:" + ManageableType.CACHE_MANAGER_SERVER_ENTITY.getTypeName()).isPresent());
-    assertFalse(client.getManageable("other-cm-4:" + ManageableType.CACHE_MANAGER_SERVER_ENTITY.getTypeName()).isPresent());
+    assertTrue(client.removeManageable("other-cm-4:" + "org.ehcache.clustered.client.internal.EhcacheClientEntity").isPresent());
+    assertFalse(client.getManageable("other-cm-4:" + "org.ehcache.clustered.client.internal.EhcacheClientEntity").isPresent());
     assertEquals(2, client.getManageables().size());
   }
 

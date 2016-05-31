@@ -51,7 +51,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(ehcache_server_entity = Manageable.create(contextContainer.getValue(), ManageableType.CACHE_MANAGER_SERVER_ENTITY)
+                .addManageable(ehcache_server_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                     .setContextContainer(contextContainer)
                     .addCapability(action))
                 .addManageable(Manageable.create("service-1", "SERVICE")
@@ -67,7 +67,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(Manageable.create(contextContainer.getValue(), ManageableType.CACHE_MANAGER_SERVER_ENTITY)
+                .addManageable(Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                     .setContextContainer(new ContextContainer("cacheManagerName", "cache-manager-1"))
                     .addCapability(action))
                 .addManageable(Manageable.create("service-1", "SERVICE")
@@ -78,7 +78,7 @@ public abstract class AbstractTest {
                 .setBindPort(8881)
                 .setState(ServerState.PASSIVE)))
         .addClient(Client.create("12345@127.0.0.1:ehcache:uid")
-            .addManageable(ehcache_client_entity = Manageable.create(contextContainer.getValue(), ManageableType.CACHE_MANAGER_SERVER_ENTITY)
+            .addManageable(ehcache_client_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                 .setContextContainer(contextContainer)
                 .addCapability(action)));
 
@@ -101,7 +101,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(ehcache_server_entity = Manageable.create(contextContainer.getValue(), ManageableType.CACHE_MANAGER_SERVER_ENTITY)
+                .addManageable(ehcache_server_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                     .setContextContainer(contextContainer)
                     .addCapability(action))
                 .addManageable(Manageable.create("service-1", "SERVICE")
@@ -117,7 +117,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(Manageable.create(contextContainer.getValue(), ManageableType.CACHE_MANAGER_SERVER_ENTITY)
+                .addManageable(Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                     .setContextContainer(new ContextContainer("cacheManagerName", "cache-manager-1"))
                     .addCapability(action))
                 .addManageable(Manageable.create("service-1", "SERVICE")
@@ -128,7 +128,7 @@ public abstract class AbstractTest {
                 .setBindPort(8881)
                 .setState(ServerState.PASSIVE)))
         .addClient(Client.create("12345@127.0.0.1:ehcache:uid")
-            .addManageable(ehcache_client_entity = Manageable.create(contextContainer.getValue(), ManageableType.CACHE_MANAGER_SERVER_ENTITY)
+            .addManageable(ehcache_client_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                 .setContextContainer(contextContainer)
                 .addCapability(action)));
 

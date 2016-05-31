@@ -103,10 +103,6 @@ public final class Manageable extends AbstractNode<Node> {
     return type;
   }
 
-  public boolean isType(ManageableType type) {
-    return isType(type.getTypeName());
-  }
-
   public boolean isType(String type) {
     return this.type.equals(type);
   }
@@ -288,10 +284,6 @@ public final class Manageable extends AbstractNode<Node> {
 
   public static Manageable create(String manageableName, String type) {
     return new Manageable(key(manageableName, type), manageableName, type);
-  }
-
-  public static Manageable create(String manageableName, ManageableType type) {
-    return create(manageableName, type.getTypeName());
   }
 
   public static String key(String manageableName, String type) {

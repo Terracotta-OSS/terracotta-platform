@@ -19,14 +19,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>management-entity</artifactId>
-    <groupId>org.terracotta.management</groupId>
+    <artifactId>samples</artifactId>
+    <groupId>org.terracotta.management.samples</groupId>
     <version>2.5.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>management-entity-tests</artifactId>
-  <name>Terracotta Management :: Management Entity :: Tests</name>
+  <artifactId>monitoring-tree-consumer</artifactId>
+  <packaging>jar</packaging>
+  <name>Terracotta Management :: Samples :: Monitoring Consumer Entity</name>
 
   <properties>
     <java.version>1.8</java.version>
@@ -34,51 +35,32 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-entity-client</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-entity-server</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
+      <groupId>org.terracotta</groupId>
+      <artifactId>voltron-proxy</artifactId>
+      <version>${platform.version}</version>
     </dependency>
 
-    <!-- provided by voltron-management module (client) -->
+    <!-- provided by voltron (client) -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
-      <scope>test</scope>
       <version>${voltron-apis.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron (server) -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <scope>test</scope>
       <version>${voltron-apis.version}</version>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>standard-cluster-services</artifactId>
-      <scope>test</scope>
-      <version>${voltron-apis.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>monitoring-support</artifactId>
-      <version>${voltron-apis.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>monitoring-service</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
+      <classifier>plugin</classifier>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -93,12 +75,33 @@
       <version>${voltron-apis.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-registry</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>plugin</shadedClassifierName>
+              <!-- we have to make sure no voltron api comes in the shaded jar -->
+              <artifactSet>
+                <includes>
+                  <include>org.terracotta:voltron-proxy</include>
+                </includes>
+              </artifactSet>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
