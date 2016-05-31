@@ -90,7 +90,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-test-lib</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${voltron-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
