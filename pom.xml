@@ -15,6 +15,7 @@
     <module>cluster-messaging</module>
     <module>monitoring-service</module>
     <module>management-entity</module>
+    <module>samples</module>
   </modules>
 
   <name>Terracotta Management</name>
