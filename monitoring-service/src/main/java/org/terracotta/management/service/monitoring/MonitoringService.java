@@ -201,7 +201,7 @@ class MonitoringService {
       prefix += " ";
     }
     for (Map.Entry<String, Node> entry : parent.children.entrySet()) {
-      writer.println(prefix + "- " + entry.getKey() + " : " + entry.getValue().value);
+      writer.println(prefix + "- " + entry.getKey() + " : " + (entry.getValue().value == null ? null : (entry.getValue().value.getClass().isArray() ? Arrays.deepToString((Object[]) entry.getValue().value) : entry.getValue().value)));
       dumpTree(entry.getValue(), level + 1, writer);
     }
   }
