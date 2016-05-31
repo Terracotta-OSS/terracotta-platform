@@ -16,8 +16,6 @@
 
 package org.terracotta.management.entity.client;
 
-import org.terracotta.connection.Connection;
-import org.terracotta.management.entity.ManagementAgentConfig;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
@@ -38,10 +36,6 @@ public class ManagementAgentService {
 
   public ManagementAgentService(ManagementAgentEntity entity) {
     this.entity = entity;
-  }
-
-  public ManagementAgentService(Connection connection) {
-    this.entity = new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig());
   }
 
   public void setTimeout(long duration, TimeUnit unit) {

@@ -27,6 +27,7 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
+import org.terracotta.management.entity.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.client.ManagementAgentService;
 import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
 import org.terracotta.management.model.capabilities.Capability;
@@ -97,7 +98,7 @@ public class ManagementAgentServiceTest {
 
     try (Connection connection = stripeControl.createConnectionToActive()) {
 
-      ManagementAgentService managementAgent = new ManagementAgentService(connection);
+      ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
 
       ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
       System.out.println(clientIdentifier);

@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.helloworld;
 
+import org.terracotta.management.entity.ManagementAgentConfig;
+import org.terracotta.management.entity.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntity;
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntityClientService;
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntityFactory;
@@ -109,7 +111,7 @@ public class HelloWorldTest {
 
       // expose a management registry in the server
 
-      ManagementAgentService managementAgentService = new ManagementAgentService(connection);
+      ManagementAgentService managementAgentService = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
       managementAgentService.setCapabilities(managementRegistry.getContextContainer(), managementRegistry.getCapabilities());
 
       // check it has been exposed properly
