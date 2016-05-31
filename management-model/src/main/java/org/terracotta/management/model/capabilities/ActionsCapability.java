@@ -58,6 +58,16 @@ public final class ActionsCapability implements Capability, Serializable {
   }
 
   @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("ActionsCapability{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", capabilityContext=").append(capabilityContext);
+    sb.append(", descriptors=").append(descriptors);
+    sb.append('}');
+    return sb.toString();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

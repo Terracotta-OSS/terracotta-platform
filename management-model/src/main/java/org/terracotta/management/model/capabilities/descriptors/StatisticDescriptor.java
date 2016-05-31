@@ -43,6 +43,15 @@ public final class StatisticDescriptor implements Descriptor, Serializable {
   }
 
   @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("StatisticDescriptor{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", type=").append(type);
+    sb.append('}');
+    return sb.toString();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

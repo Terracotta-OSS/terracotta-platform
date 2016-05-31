@@ -48,6 +48,15 @@ public final class StatisticDescriptorCategory implements Descriptor, Serializab
   }
 
   @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("StatisticDescriptorCategory{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", statistics=").append(statistics);
+    sb.append('}');
+    return sb.toString();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
