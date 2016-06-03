@@ -146,6 +146,10 @@ public final class Connection extends AbstractNode<Client> {
     return map;
   }
 
+  public void unlinkServerManageable(String name, String type) {
+    manageableIds.remove(Manageable.key(name, type));
+  }
+
   public boolean linkServerManageable(Manageable manageable) {
     if (!isConnected()) {
       throw new IllegalStateException("not connnected");
