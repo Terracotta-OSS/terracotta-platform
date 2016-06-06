@@ -26,6 +26,8 @@ import java.io.Serializable;
  */
 public final class StatisticDescriptor implements Descriptor, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final String name;
   private final StatisticType type;
 

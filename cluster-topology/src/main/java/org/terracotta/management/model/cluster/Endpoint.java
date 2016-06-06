@@ -25,6 +25,8 @@ import java.util.Objects;
  */
 public final class Endpoint implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final String address;
   private final int port;
 

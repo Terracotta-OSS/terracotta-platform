@@ -88,6 +88,9 @@ public final class CapabilityContext implements Serializable {
   }
 
   public static final class Attribute implements Serializable {
+
+    private static final long serialVersionUID = 1;
+
     private final String name;
     private final boolean required;
 

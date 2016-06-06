@@ -27,6 +27,8 @@ import java.util.List;
  */
 public final class StatisticDescriptorCategory implements Descriptor, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final String name;
   private final List<StatisticDescriptor> statistics;
 

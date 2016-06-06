@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit;
  * @author Mathieu Carbou
  */
 public final class RateHistory extends AbstractStatisticHistory<Double, TimeUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public RateHistory(TimeUnit unit, Sample<Double>... values) {
     super(unit, values);
   }

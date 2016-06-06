@@ -23,6 +23,9 @@ import org.terracotta.management.model.stats.NumberUnit;
  * @author Mathieu Carbou
  */
 public final class Ratio extends AbstractStatistic<Double, NumberUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public Ratio(Double value, NumberUnit unit) {
     super(value, unit);
   }

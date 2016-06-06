@@ -25,6 +25,9 @@ import java.util.concurrent.TimeUnit;
  * @author Mathieu Carbou
  */
 public final class AverageHistory extends AbstractStatisticHistory<Double, TimeUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public AverageHistory(TimeUnit unit, Sample<Double>... values) {
     super(unit, values);
   }

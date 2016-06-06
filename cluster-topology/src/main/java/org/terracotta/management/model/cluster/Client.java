@@ -33,6 +33,8 @@ import java.util.stream.Stream;
  */
 public final class Client extends AbstractNodeWithManageable<Cluster, Client> {
 
+  private static final long serialVersionUID = 1;
+
   public static final String KEY = "clientId";
 
   // physical connections to stripes (active server)

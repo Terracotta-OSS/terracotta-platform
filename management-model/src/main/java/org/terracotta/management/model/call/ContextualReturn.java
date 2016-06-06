@@ -33,6 +33,8 @@ import java.util.NoSuchElementException;
  */
 public final class ContextualReturn<T extends Serializable> implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final T value;
   private final Context context;
   private final String capability;

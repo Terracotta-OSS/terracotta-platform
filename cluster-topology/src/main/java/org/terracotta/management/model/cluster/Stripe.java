@@ -29,6 +29,8 @@ import java.util.stream.Stream;
  */
 public final class Stripe extends AbstractNode<Cluster> {
 
+  private static final long serialVersionUID = 1;
+
   public static final String KEY = "stripeId";
 
   private final ConcurrentMap<String, Server> servers = new ConcurrentHashMap<String, Server>();

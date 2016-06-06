@@ -25,6 +25,8 @@ import java.nio.ByteBuffer;
  */
 public final class BoundaryFlakeSequence implements Sequence, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final long timestamp;
   private final long nodeId;
   private final long sequence;

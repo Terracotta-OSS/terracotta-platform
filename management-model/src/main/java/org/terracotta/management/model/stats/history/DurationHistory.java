@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit;
  * @author Mathieu Carbou
  */
 public final class DurationHistory extends AbstractStatisticHistory<Long, TimeUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public DurationHistory(TimeUnit unit, Sample<Long>... values) {
     super(unit, values);
   }

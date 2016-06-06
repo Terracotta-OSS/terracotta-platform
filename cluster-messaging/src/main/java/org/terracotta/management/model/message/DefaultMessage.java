@@ -25,6 +25,8 @@ import java.util.Arrays;
  */
 public class DefaultMessage implements Message {
 
+  private static final long serialVersionUID = 1;
+
   private final Serializable data;
   private final Sequence sequence;
   private final String messageType;

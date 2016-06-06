@@ -32,6 +32,8 @@ import java.util.NoSuchElementException;
  */
 public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final Map<String, Statistic<?, ?>> statistics;
   private final String capability;
   private final Context context;
