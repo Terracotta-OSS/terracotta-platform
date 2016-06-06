@@ -33,6 +33,8 @@ import java.util.stream.Stream;
  */
 public final class Cluster implements Contextual, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final ConcurrentMap<String, Client> clients = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, Stripe> stripes = new ConcurrentHashMap<>();
 

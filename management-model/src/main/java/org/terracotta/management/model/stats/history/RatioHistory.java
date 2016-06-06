@@ -26,6 +26,9 @@ import java.util.List;
  * @author Mathieu Carbou
  */
 public final class RatioHistory extends AbstractStatisticHistory<Double, NumberUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public RatioHistory(NumberUnit unit, Sample<Double>... values) {
     super(unit, values);
   }

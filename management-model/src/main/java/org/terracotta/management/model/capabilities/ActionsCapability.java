@@ -29,6 +29,8 @@ import java.util.Collection;
  */
 public final class ActionsCapability implements Capability, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private String name;
   private Collection<Descriptor> descriptors;
   private CapabilityContext capabilityContext;

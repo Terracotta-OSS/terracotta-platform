@@ -43,6 +43,8 @@ import java.util.logging.Logger;
  */
 public final class ClientIdentifier implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private static final Logger LOGGER = Logger.getLogger(ClientIdentifier.class.getName());
 
   private final long pid;

@@ -25,6 +25,8 @@ import java.util.Map;
  */
 public final class Server extends AbstractNodeWithManageable<Stripe, Server> {
 
+  private static final long serialVersionUID = 1;
+
   public static final String KEY = "serverId";
   public static final String NAME_KEY = "serverName";
 

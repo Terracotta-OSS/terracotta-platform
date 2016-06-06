@@ -26,6 +26,9 @@ import java.util.List;
  * @author Mathieu Carbou
  */
 public final class SizeHistory extends AbstractStatisticHistory<Long, MemoryUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public SizeHistory(MemoryUnit unit, Sample<Long>... values) {
     super(unit, values);
   }

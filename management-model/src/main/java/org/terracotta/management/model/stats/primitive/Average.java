@@ -23,6 +23,9 @@ import java.util.concurrent.TimeUnit;
  * @author Mathieu Carbou
  */
 public final class Average extends AbstractStatistic<Double, TimeUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public Average(Double value, TimeUnit timeUnit) {
     super(value, timeUnit);
   }

@@ -26,6 +26,9 @@ import java.util.List;
  * @author Mathieu Carbou
  */
 public final class CounterHistory extends AbstractStatisticHistory<Long, NumberUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public CounterHistory(NumberUnit unit, Sample<Long>... values) {
     super(unit, values);
   }

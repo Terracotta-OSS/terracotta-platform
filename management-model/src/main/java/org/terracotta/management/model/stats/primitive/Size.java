@@ -23,6 +23,9 @@ import org.terracotta.management.model.stats.MemoryUnit;
  * @author Mathieu Carbou
  */
 public final class Size extends AbstractStatistic<Long, MemoryUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public Size(Long value, MemoryUnit memoryUnit) {
     super(value, memoryUnit);
   }

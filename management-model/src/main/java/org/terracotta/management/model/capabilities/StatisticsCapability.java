@@ -99,6 +99,8 @@ public final class StatisticsCapability implements Capability, Serializable {
   }
 
   public static class Properties implements Serializable {
+    private static final long serialVersionUID = 1;
+
     private final long averageWindowDuration;
     private final TimeUnit averageWindowUnit;
     private final int historySize;

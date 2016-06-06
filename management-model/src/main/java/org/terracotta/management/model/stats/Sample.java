@@ -23,6 +23,8 @@ import java.io.Serializable;
  */
 public final class Sample<V extends Serializable> implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final long timestamp;
   private final V value;
 

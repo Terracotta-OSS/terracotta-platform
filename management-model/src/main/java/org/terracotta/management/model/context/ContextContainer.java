@@ -28,6 +28,8 @@ import java.util.Collections;
  */
 public final class ContextContainer implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final String name;
   private final String value;
   private final Collection<ContextContainer> subContexts;

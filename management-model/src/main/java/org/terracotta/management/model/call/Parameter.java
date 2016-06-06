@@ -26,6 +26,8 @@ import java.io.Serializable;
  */
 public final class Parameter implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final Object value;
   private final String className;
 

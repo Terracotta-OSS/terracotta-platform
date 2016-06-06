@@ -28,6 +28,8 @@ import java.util.Set;
  */
 public class Context extends AbstractMap<String, String> implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final Map<String, String> back = new LinkedHashMap<String, String>();
 
   private Context(Map<String, String> back) {

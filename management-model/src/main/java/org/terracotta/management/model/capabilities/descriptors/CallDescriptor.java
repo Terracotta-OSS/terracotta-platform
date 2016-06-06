@@ -27,6 +27,8 @@ import java.util.List;
  */
 public final class CallDescriptor implements Descriptor, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final String name;
   private final String returnType;
   private final List<Parameter> parameters;

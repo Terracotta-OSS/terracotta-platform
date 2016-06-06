@@ -29,6 +29,8 @@ import java.util.stream.Stream;
  */
 public final class Connection extends AbstractNode<Client> {
 
+  private static final long serialVersionUID = 1;
+
   public static final String KEY = "connectionId";
 
   private final Collection<String> manageableIds = new ConcurrentSkipListSet<>();

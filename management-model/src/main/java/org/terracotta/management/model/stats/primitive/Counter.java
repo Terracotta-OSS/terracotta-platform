@@ -23,6 +23,9 @@ import org.terracotta.management.model.stats.NumberUnit;
  * @author Mathieu Carbou
  */
 public final class Counter extends AbstractStatistic<Long, NumberUnit> {
+
+  private static final long serialVersionUID = 1;
+
   public Counter(Long value, NumberUnit unit) {
     super(value, unit);
   }

@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
  */
 public final class Manageable extends AbstractNode<Node> {
 
+  private static final long serialVersionUID = 1;
+
   public static final String KEY = "manageableId";
   public static final String TYPE_KEY = "manageableType";
   public static final String NAME_KEY = "manageableName";
