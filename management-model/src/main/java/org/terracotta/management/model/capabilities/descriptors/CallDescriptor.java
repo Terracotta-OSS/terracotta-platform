@@ -43,7 +43,6 @@ public final class CallDescriptor implements Descriptor, Serializable {
     this.parameters = Objects.requireNonNull(parameters);
   }
 
-  @Override
   public String getName() {
     return name;
   }

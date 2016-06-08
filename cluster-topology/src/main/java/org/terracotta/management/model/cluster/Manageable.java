@@ -20,6 +20,7 @@ import org.terracotta.management.model.capabilities.StatisticsCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptorCategory;
 import org.terracotta.management.model.context.Context;
@@ -219,8 +220,10 @@ public final class Manageable extends AbstractNode<Node> implements Serializable
         descriptorList.add(toMap((StatisticDescriptor) o));
       } else if (o instanceof StatisticDescriptorCategory) {
         descriptorList.add(toMap((StatisticDescriptorCategory) o));
+      } else if (o instanceof Settings) {
+        descriptorList.add(toMap((Settings) o));
       } else {
-        throw new UnsupportedOperationException(o.getClass().getName());
+        descriptorList.add(toMap(o));
       }
     }
 
@@ -268,6 +271,17 @@ public final class Manageable extends AbstractNode<Node> implements Serializable
     map.put("name", descriptor.getName());
     map.put("returnType", descriptor.getReturnType());
     map.put("parameters", descriptor.getParameters().stream().map(Manageable::toMap).collect(Collectors.toList()));
+    return map;
+  }
+
+  private static Map<String, Object> toMap(Settings descriptor) {
+    // settings descriptor is already a map of simple types
+    return descriptor;
+  }
+
+  private static Map<String, Object> toMap(Descriptor descriptor) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("type", descriptor.getClass().getName());
     return map;
   }
 
