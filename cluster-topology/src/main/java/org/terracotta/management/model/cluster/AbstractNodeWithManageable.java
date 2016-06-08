@@ -17,6 +17,7 @@ package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-abstract class AbstractNodeWithManageable<P extends Contextual, B> extends AbstractNode<P> implements NodeWithManageable<B> {
+abstract class AbstractNodeWithManageable<P extends Contextual, B> extends AbstractNode<P> implements NodeWithManageable<B>, Serializable {
 
   // services, server entities, client entities, etc.
   private final ConcurrentMap<String, Manageable> manageables = new ConcurrentHashMap<>();

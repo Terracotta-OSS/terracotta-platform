@@ -25,13 +25,13 @@ import java.util.List;
 /**
  * @author Mathieu Carbou
  */
-public abstract class AbstractStatisticHistory<V extends Serializable, U extends Serializable> implements StatisticHistory<V, U>, Serializable {
+public abstract class AbstractStatisticHistory<V, U> implements StatisticHistory<V, U>, Serializable {
 
   private final Sample<V>[] values;
   private final U unit;
 
   @SuppressWarnings("unchecked")
-  public AbstractStatisticHistory(List<Sample<V>> values, U unit) {
+  public AbstractStatisticHistory(U unit, List<Sample<V>> values) {
     this.values = Objects.requireNonNull(values).toArray(new Sample[values.size()]);
     this.unit = Objects.requireNonNull(unit);
   }

@@ -23,7 +23,7 @@ import java.io.Serializable;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public abstract class AbstractStatistic<V extends Serializable, U extends Serializable> implements Statistic<V, U>, Serializable {
+public abstract class AbstractStatistic<V, U> implements Statistic<V, U>, Serializable {
 
   private final V value;
   private final U unit;

@@ -25,6 +25,7 @@ import org.terracotta.management.model.capabilities.descriptors.StatisticDescrip
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * @author Mathieu Carbou
  */
-public final class Manageable extends AbstractNode<Node> {
+public final class Manageable extends AbstractNode<Node> implements Serializable {
 
   private static final long serialVersionUID = 1;
 

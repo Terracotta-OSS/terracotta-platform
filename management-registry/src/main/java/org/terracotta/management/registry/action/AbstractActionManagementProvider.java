@@ -16,8 +16,8 @@
 package org.terracotta.management.registry.action;
 
 import org.terracotta.management.model.call.Parameter;
-import org.terracotta.management.model.capabilities.ActionsCapability;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
@@ -56,7 +56,7 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
 
   @Override
   public final Capability getCapability() {
-    return new ActionsCapability(getCapabilityName(), getCapabilityContext(), getDescriptors());
+    return new DefaultCapability(getCapabilityName(), getCapabilityContext(), getDescriptors());
   }
 
   @Override

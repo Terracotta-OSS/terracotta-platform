@@ -88,6 +88,9 @@ public final class CallDescriptor implements Descriptor, Serializable {
   }
 
   public static final class Parameter implements Serializable {
+
+    private static final long serialVersionUID = 1;
+
     private final String name;
     private final String type;
 

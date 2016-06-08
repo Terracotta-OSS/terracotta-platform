@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class StatisticsCapability implements Capability, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final String name;
   private final Properties properties;
   private final Collection<Descriptor> descriptors;
@@ -50,6 +52,7 @@ public final class StatisticsCapability implements Capability, Serializable {
     return properties;
   }
 
+  @Override
   public Collection<Descriptor> getDescriptors() {
     return descriptors;
   }

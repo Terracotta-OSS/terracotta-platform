@@ -18,11 +18,13 @@ package org.terracotta.management.model.stats.primitive;
 import org.terracotta.management.model.stats.AbstractStatistic;
 import org.terracotta.management.model.stats.NumberUnit;
 
+import java.io.Serializable;
+
 /**
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public final class Ratio extends AbstractStatistic<Double, NumberUnit> {
+public final class Ratio extends AbstractStatistic<Double, NumberUnit> implements Serializable {
 
   private static final long serialVersionUID = 1;
 

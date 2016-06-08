@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.management.model.call.ContextualReturn;
-import org.terracotta.management.model.capabilities.ActionsCapability;
+import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.StatisticsCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
@@ -82,7 +82,7 @@ public class SerializationTest {
 
   @Test
   public void test_capability() throws Exception {
-    ActionsCapability actionsCapability = new ActionsCapability(
+    DefaultCapability actionsCapability = new DefaultCapability(
         "capability",
         new CapabilityContext(new CapabilityContext.Attribute("cache", true)),
         new CallDescriptor("clear", Void.TYPE.getName(), new CallDescriptor.Parameter("cache", String.class.getName())));
