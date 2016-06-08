@@ -16,6 +16,8 @@
 package org.terracotta.management.registry;
 
 import org.terracotta.management.model.call.Parameter;
+import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
@@ -61,6 +63,11 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   @Override
   public final CapabilityContext getCapabilityContext() {
     return capabilityContext;
+  }
+
+  @Override
+  public Capability getCapability() {
+    return new DefaultCapability(getCapabilityName(), getCapabilityContext(), getDescriptors());
   }
 
   @Override
