@@ -17,6 +17,7 @@ package org.terracotta.management.model.cluster;
 
 
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-public final class Connection extends AbstractNode<Client> {
+public final class Connection extends AbstractNode<Client> implements Serializable {
 
   private static final long serialVersionUID = 1;
 

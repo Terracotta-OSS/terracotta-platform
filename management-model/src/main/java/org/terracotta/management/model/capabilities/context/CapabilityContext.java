@@ -29,6 +29,8 @@ import java.util.LinkedHashSet;
  */
 public final class CapabilityContext implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final Collection<Attribute> attributes;
 
   public CapabilityContext(Attribute... attributes) {

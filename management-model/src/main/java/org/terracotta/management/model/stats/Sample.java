@@ -21,7 +21,7 @@ import java.io.Serializable;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public final class Sample<V extends Serializable> implements Serializable {
+public final class Sample<V> implements Serializable {
 
   private static final long serialVersionUID = 1;
 

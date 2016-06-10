@@ -19,8 +19,8 @@ package org.terracotta.management.model.cluster;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.terracotta.management.model.capabilities.ActionsCapability;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.context.ContextContainer;
 
@@ -40,7 +40,7 @@ public abstract class AbstractTest {
 
   @Before
   public void createClusters() {
-    action = new ActionsCapability("ActionCapability", new CapabilityContext());
+    action = new DefaultCapability("ActionCapability", new CapabilityContext());
     contextContainer = new ContextContainer("cacheManagerName", "cache-manager-1", new ContextContainer("cacheName", "my-cache"));
     clientIdentifier = ClientIdentifier.create("ehcache", "client1");
 

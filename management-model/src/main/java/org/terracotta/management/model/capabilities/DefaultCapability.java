@@ -27,19 +27,19 @@ import java.util.Collection;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public final class ActionsCapability implements Capability, Serializable {
+public final class DefaultCapability implements Capability, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  private String name;
-  private Collection<Descriptor> descriptors;
-  private CapabilityContext capabilityContext;
+  private final String name;
+  private final Collection<Descriptor> descriptors;
+  private final CapabilityContext capabilityContext;
 
-  public ActionsCapability(String name, CapabilityContext capabilityContext, Descriptor... descriptors) {
+  public DefaultCapability(String name, CapabilityContext capabilityContext, Descriptor... descriptors) {
     this(name, capabilityContext, Arrays.asList(descriptors));
   }
 
-  public ActionsCapability(String name, CapabilityContext capabilityContext, Collection<Descriptor> descriptors) {
+  public DefaultCapability(String name, CapabilityContext capabilityContext, Collection<Descriptor> descriptors) {
     this.name = Objects.requireNonNull(name);
     this.descriptors = Objects.requireNonNull(descriptors);
     this.capabilityContext = Objects.requireNonNull(capabilityContext);
@@ -50,6 +50,7 @@ public final class ActionsCapability implements Capability, Serializable {
     return name;
   }
 
+  @Override
   public Collection<Descriptor> getDescriptors() {
     return descriptors;
   }
@@ -61,9 +62,9 @@ public final class ActionsCapability implements Capability, Serializable {
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("ActionsCapability{");
+    final StringBuilder sb = new StringBuilder("Capability{");
     sb.append("name='").append(name).append('\'');
-    sb.append(", capabilityContext=").append(capabilityContext);
+    sb.append(", context=").append(capabilityContext);
     sb.append(", descriptors=").append(descriptors);
     sb.append('}');
     return sb.toString();
@@ -74,7 +75,7 @@ public final class ActionsCapability implements Capability, Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    ActionsCapability that = (ActionsCapability) o;
+    DefaultCapability that = (DefaultCapability) o;
 
     if (!name.equals(that.name)) return false;
     if (!descriptors.equals(that.descriptors)) return false;

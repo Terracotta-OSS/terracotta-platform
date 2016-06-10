@@ -23,7 +23,7 @@ import java.util.Arrays;
 /**
  * @author Mathieu Carbou
  */
-public class DefaultMessage implements Message {
+public class DefaultMessage implements Message, Serializable {
 
   private static final long serialVersionUID = 1;
 
@@ -38,7 +38,7 @@ public class DefaultMessage implements Message {
   }
 
   @Override
-  public <T extends Serializable> T unwrap(Class<T> type) {
+  public <T> T unwrap(Class<T> type) {
     return type.cast(data);
   }
 

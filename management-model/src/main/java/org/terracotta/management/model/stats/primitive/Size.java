@@ -18,11 +18,13 @@ package org.terracotta.management.model.stats.primitive;
 import org.terracotta.management.model.stats.AbstractStatistic;
 import org.terracotta.management.model.stats.MemoryUnit;
 
+import java.io.Serializable;
+
 /**
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public final class Size extends AbstractStatistic<Long, MemoryUnit> {
+public final class Size extends AbstractStatistic<Long, MemoryUnit> implements Serializable {
 
   private static final long serialVersionUID = 1;
 

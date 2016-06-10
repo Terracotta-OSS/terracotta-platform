@@ -18,6 +18,7 @@ package org.terracotta.management.model.stats.history;
 import org.terracotta.management.model.stats.AbstractStatisticHistory;
 import org.terracotta.management.model.stats.Sample;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public final class RateHistory extends AbstractStatisticHistory<Double, TimeUnit> {
+public final class RateHistory extends AbstractStatisticHistory<Double, TimeUnit> implements Serializable {
 
   private static final long serialVersionUID = 1;
 
@@ -34,6 +35,6 @@ public final class RateHistory extends AbstractStatisticHistory<Double, TimeUnit
   }
 
   public RateHistory(List<Sample<Double>> samples, TimeUnit timeUnit) {
-    super(samples, timeUnit);
+    super(timeUnit, samples);
   }
 }
