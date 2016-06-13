@@ -16,6 +16,17 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
 
   private final Map<String, Object> map = new LinkedHashMap<String, Object>();
 
+  public Settings() {
+  }
+
+  public Settings(Map<String, String> map) {
+    this.map.putAll(map);
+  }
+
+  public Settings(Settings settings) {
+    this.map.putAll(settings.map);
+  }
+
   @Override
   public Set<Entry<String, Object>> entrySet() {
     return map.entrySet();
@@ -75,7 +86,11 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
   }
 
   public Settings set(String key, Enum<?> value) {
-    return set(key, value.name());
+    return set(key, value == null ? null : value.name());
+  }
+
+  public Settings set(String key, Class<?> value) {
+    return set(key, value == null ? null : value.getName());
   }
 
   public <T> Settings with(String key, T object, Builder<T> builder) {
