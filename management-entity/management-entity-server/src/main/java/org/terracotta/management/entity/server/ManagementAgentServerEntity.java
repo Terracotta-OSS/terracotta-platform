@@ -19,7 +19,6 @@ package org.terracotta.management.entity.server;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
-import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
@@ -56,15 +55,17 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
     super.connected(clientDescriptor);
 
     // when an entity is fetched, we create the root /management/<id> (ClientDescriptor)
-    ClientIdentifier identifier = getClientIdentifier(consumer, clientDescriptor);
-    producer.addNode(array("management", "clients"), identifier.getClientId(), clientDescriptor);
+    getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
+      producer.addNode(array("management", "clients"), clientIdentifier.getClientId(), clientDescriptor);
+    });
   }
 
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {
     // when an entity is closed, we remove the node /management/<id> having the same ClientDescriptor
-    ClientIdentifier identifier = getClientIdentifier(consumer, clientDescriptor);
-    producer.removeNode(array("management", "clients"), identifier.getClientId());
+    getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
+      producer.removeNode(array("management", "clients"), clientIdentifier.getClientId());
+    });
 
     super.disconnected(clientDescriptor);
   }

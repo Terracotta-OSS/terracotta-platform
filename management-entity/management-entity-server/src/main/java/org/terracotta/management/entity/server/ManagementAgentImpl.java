@@ -61,23 +61,24 @@ class ManagementAgentImpl implements ManagementAgent {
 
   @Override
   public Future<ClientIdentifier> getClientIdentifier(@ClientId Object clientDescriptor) {
-    return CompletableFuture.completedFuture(Utils.getClientIdentifier(consumer, clientDescriptor));
+    return CompletableFuture.completedFuture(Utils.getClientIdentifier(consumer, clientDescriptor).get());
   }
 
   @Override
   public Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities) {
-    ClientIdentifier clientIdentifier = Utils.getClientIdentifier(consumer, clientDescriptor);
-    String name = contextContainer.getName() + ":" + contextContainer.getValue();
-    producer.addNode(array("management", "clients", clientIdentifier.getClientId()), name, null);
-    producer.addNode(array("management", "clients", clientIdentifier.getClientId(), name), "contextContainer", contextContainer);
-    producer.addNode(array("management", "clients", clientIdentifier.getClientId(), name), "capabilities", capabilities);
+    Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
+      String name = contextContainer.getName() + ":" + contextContainer.getValue();
+      producer.addNode(array("management", "clients", clientIdentifier.getClientId()), name, null);
+      producer.addNode(array("management", "clients", clientIdentifier.getClientId(), name), "contextContainer", contextContainer);
+      producer.addNode(array("management", "clients", clientIdentifier.getClientId(), name), "capabilities", capabilities);
+    });
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> exposeTags(@ClientId Object clientDescriptor, String... tags) {
-    ClientIdentifier clientIdentifier = Utils.getClientIdentifier(consumer, clientDescriptor);
-    producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "tags", tags == null ? new String[0] : tags);
+    Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier ->
+        producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "tags", tags == null ? new String[0] : tags));
     return CompletableFuture.completedFuture(null);
   }
 
