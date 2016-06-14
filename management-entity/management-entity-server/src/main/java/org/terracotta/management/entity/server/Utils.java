@@ -37,16 +37,15 @@ class Utils {
     return o;
   }
 
-  static ClientIdentifier getClientIdentifier(IMonitoringConsumer consumer, Object clientDescriptor) {
-    return toClientIdentifier(getPlatformConnectedClient(consumer, clientDescriptor).getValue());
+  static Optional<ClientIdentifier> getClientIdentifier(IMonitoringConsumer consumer, Object clientDescriptor) {
+    return getPlatformConnectedClient(consumer, clientDescriptor).map(entry -> toClientIdentifier(entry.getValue()));
   }
 
   // return the PlatformConnectedClient object representing the connection used by this clientDescriptor
-  private static Map.Entry<String, PlatformConnectedClient> getPlatformConnectedClient(IMonitoringConsumer consumer, Object clientDescriptor) {
+  private static Optional<Map.Entry<String, PlatformConnectedClient>> getPlatformConnectedClient(IMonitoringConsumer consumer, Object clientDescriptor) {
     return getPlatformClientFetchedEntity(consumer, clientDescriptor)
         .flatMap(entry -> consumer.getValueForNode(CLIENTS_PATH, entry.getValue().clientIdentifier, PlatformConnectedClient.class)
-            .map(platformConnectedClient -> new AbstractMap.SimpleEntry<>(entry.getValue().clientIdentifier, platformConnectedClient)))
-        .orElseThrow(() -> new IllegalStateException("Unable to find fetch information matching client descriptor " + clientDescriptor));
+            .map(platformConnectedClient -> new AbstractMap.SimpleEntry<>(entry.getValue().clientIdentifier, platformConnectedClient)));
   }
 
   // return the PlatformClientFetchedEntity object linked to this clientDescriptor
