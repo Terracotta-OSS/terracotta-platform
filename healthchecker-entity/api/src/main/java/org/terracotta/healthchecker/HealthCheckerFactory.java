@@ -50,11 +50,12 @@ public class HealthCheckerFactory {
     
     private final Connection root;
     private final HealthCheck checker;
-    private final Set<TimeoutListener> listeners = Collections.synchronizedSet(new LinkedHashSet<TimeoutListener>());
+    private final Set<TimeoutListener> listeners = new LinkedHashSet<TimeoutListener>();
     private final Timer driver;
     private long iteration;
     private String currentMsg;
     private Future<String> currentProbe;
+    private boolean closed;
 
     public HealthCheckTimeoutManager(Connection conn, HealthCheck checker) {
       this.root = conn;
@@ -65,7 +66,11 @@ public class HealthCheckerFactory {
     public synchronized boolean probe(long timeout) throws InterruptedException, ExecutionException {
       if (currentProbe == null || currentProbe.isDone()) {
         currentMsg = "ping-" + (iteration++);
-        currentProbe = checker.ping(currentMsg);
+        try {
+          currentProbe = checker.ping(currentMsg);
+        } catch (Throwable t) {
+          throw new ExecutionException(t);
+        }
       }
 
       try {
@@ -90,18 +95,13 @@ public class HealthCheckerFactory {
                   period = timeout - lapse;
                 }
               } else {
-                try {
-                  root.close();
-                } catch (IOException ioe) {
-                  driver.cancel();
-                }
-                fireTimeoutListeners();
+                closeConnection();
               }
             }
           } catch (ExecutionException ee) {
-            driver.cancel();
+            closeConnection();
           } catch (InterruptedException ie) {
-            driver.cancel();
+            closeConnection();
           }
         }
       };
@@ -109,24 +109,40 @@ public class HealthCheckerFactory {
       return this;
     }
     
-    private void fireProbeListeners() {
+    private synchronized void closeConnection() {
+      try {
+        closed = true;
+        root.close();
+      } catch (IOException ioe) {
+//  anything todo here?
+      }
+      fireTimeoutListeners();
+    }
+    
+    private synchronized void fireProbeListeners() {
       for (TimeoutListener l : listeners) {
         l.probeFailed(root);
       }
     }
     
-    private void fireTimeoutListeners() {
+    private synchronized void fireTimeoutListeners() {
       for (TimeoutListener l : listeners) {
         l.connectionClosed(root);
       }
     }
 
     @Override
-    public boolean addTimeoutListener(TimeoutListener timeout) {
+    public synchronized boolean addTimeoutListener(TimeoutListener timeout) {
+      if (closed) {
+        throw new IllegalStateException();
+      }
       return listeners.add(timeout);
     }
     
-    public boolean removeTimeoutListener(TimeoutListener timeout) {
+    public synchronized boolean removeTimeoutListener(TimeoutListener timeout) {
+      if (closed) {
+        throw new IllegalStateException();
+      }
       return listeners.remove(timeout);
     }
   }
