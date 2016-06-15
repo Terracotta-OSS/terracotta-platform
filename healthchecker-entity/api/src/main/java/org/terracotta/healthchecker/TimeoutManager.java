@@ -10,4 +10,5 @@ package org.terracotta.healthchecker;
  */
 public interface TimeoutManager {
   boolean addTimeoutListener(TimeoutListener timout);
+  boolean isConnected();
 }

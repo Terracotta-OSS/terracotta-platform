@@ -140,10 +140,12 @@ public class HealthCheckerFactory {
     }
     
     public synchronized boolean removeTimeoutListener(TimeoutListener timeout) {
-      if (closed) {
-        throw new IllegalStateException();
-      }
       return listeners.remove(timeout);
+    }
+    
+    @Override
+    public synchronized boolean isConnected() {
+      return !closed;
     }
   }
 }
