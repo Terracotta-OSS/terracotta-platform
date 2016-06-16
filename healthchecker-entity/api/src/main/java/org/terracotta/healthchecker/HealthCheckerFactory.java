@@ -1,11 +1,24 @@
 /*
- * All content copyright (c) 2014 Terracotta, Inc., except as may otherwise
- * be noted in a separate copyright notice. All rights reserved.
+ *
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
+ *
+ *  http://terracotta.org/legal/terracotta-public-license.
+ *
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
  */
 package org.terracotta.healthchecker;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -28,7 +41,16 @@ import org.terracotta.exception.EntityVersionMismatchException;
 public class HealthCheckerFactory {
   
   private static final String NAME = "staticHealthChecker";
-  
+  /**
+   * Start a health checker on a connection.  Adding a timeout manager to a connection 
+   * starts a new thread that will periodically ping the server to make sure it is up and running
+   * 
+   * @param connection the connection to be monitored
+   * @param probeFrequencyPerMinute the frequency which to ping a server per minute
+   * @param probeTimeoutInMillis timeout the connection and close if the timeout amount of time passes
+   *   before a proper response is received
+   * @return A TimeoutManager to attach listeners to and monitor the connection
+   */
   public static TimeoutManager startHealthChecker(Connection connection, int probeFrequencyPerMinute, long probeTimeoutInMillis) {
     try {
       EntityRef<HealthCheck, Properties> check = connection.getEntityRef(HealthCheck.class, HealthCheck.VERSION, NAME);
@@ -50,11 +72,12 @@ public class HealthCheckerFactory {
     
     private final Connection root;
     private final HealthCheck checker;
-    private final Set<TimeoutListener> listeners = Collections.synchronizedSet(new LinkedHashSet<TimeoutListener>());
+    private final Set<TimeoutListener> listeners = new LinkedHashSet<TimeoutListener>();
     private final Timer driver;
     private long iteration;
     private String currentMsg;
     private Future<String> currentProbe;
+    private boolean closed;
 
     public HealthCheckTimeoutManager(Connection conn, HealthCheck checker) {
       this.root = conn;
@@ -65,7 +88,11 @@ public class HealthCheckerFactory {
     public synchronized boolean probe(long timeout) throws InterruptedException, ExecutionException {
       if (currentProbe == null || currentProbe.isDone()) {
         currentMsg = "ping-" + (iteration++);
-        currentProbe = checker.ping(currentMsg);
+        try {
+          currentProbe = checker.ping(currentMsg);
+        } catch (Throwable t) {
+          throw new ExecutionException(t);
+        }
       }
 
       try {
@@ -90,18 +117,13 @@ public class HealthCheckerFactory {
                   period = timeout - lapse;
                 }
               } else {
-                try {
-                  root.close();
-                } catch (IOException ioe) {
-                  driver.cancel();
-                }
-                fireTimeoutListeners();
+                closeConnection();
               }
             }
           } catch (ExecutionException ee) {
-            driver.cancel();
+            closeConnection();
           } catch (InterruptedException ie) {
-            driver.cancel();
+            closeConnection();
           }
         }
       };
@@ -109,25 +131,43 @@ public class HealthCheckerFactory {
       return this;
     }
     
-    private void fireProbeListeners() {
+    private synchronized void closeConnection() {
+      try {
+        closed = true;
+        root.close();
+      } catch (IOException ioe) {
+//  anything todo here?
+      }
+      fireTimeoutListeners();
+    }
+    
+    private synchronized void fireProbeListeners() {
       for (TimeoutListener l : listeners) {
         l.probeFailed(root);
       }
     }
     
-    private void fireTimeoutListeners() {
+    private synchronized void fireTimeoutListeners() {
       for (TimeoutListener l : listeners) {
         l.connectionClosed(root);
       }
     }
 
     @Override
-    public boolean addTimeoutListener(TimeoutListener timeout) {
+    public synchronized boolean addTimeoutListener(TimeoutListener timeout) {
+      if (closed) {
+        throw new IllegalStateException();
+      }
       return listeners.add(timeout);
     }
     
-    public boolean removeTimeoutListener(TimeoutListener timeout) {
+    public synchronized boolean removeTimeoutListener(TimeoutListener timeout) {
       return listeners.remove(timeout);
+    }
+    
+    @Override
+    public synchronized boolean isConnected() {
+      return !closed;
     }
   }
 }
