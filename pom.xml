@@ -40,6 +40,10 @@
     <module>coordinator-entity/client</module>
     <module>coordinator-entity/server</module>
     <module>coordinator-entity/integration-tests</module>
+    <module>concurrent-map-entity/common</module>
+    <module>concurrent-map-entity/client</module>
+    <module>concurrent-map-entity/server</module>
+    <module>concurrent-map-entity/integration-tests</module>
     <module>management-api</module>
     <module>management-service</module>
     <module>client-communicator-support</module>
