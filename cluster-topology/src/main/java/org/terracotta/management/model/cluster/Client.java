@@ -161,16 +161,16 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
     return connection;
   }
 
-  public Stream<Manageable> linkedManageableStream() {
+  public Stream<Manageable> serverManageableStream() {
     return connectionStream()
         .filter(Connection::isConnectedToActiveServer)
-        .flatMap(Connection::linkedManageableStream);
+        .flatMap(Connection::serverManageableStream);
   }
 
-  public int getLinkedManageableCount() {
+  public int getServerManageableCount() {
     return connectionStream()
         .filter(Connection::isConnectedToActiveServer)
-        .mapToInt(Connection::getLinkedManageableCount).sum();
+        .mapToInt(Connection::getServerManageableCount).sum();
   }
 
   @Override
@@ -193,12 +193,12 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
     return connectionStream().filter(Connection::isConnectedToActiveServer).findFirst().isPresent();
   }
 
-  public boolean isLinkedToManageable(String name, String type) {
-    return getLinkedManageable(name, type).isPresent();
+  public boolean isConnectedToServerManageable(String name, String type) {
+    return getServerManageable(name, type).isPresent();
   }
 
-  public Optional<Manageable> getLinkedManageable(String name, String type) {
-    return linkedManageableStream().filter(manageable -> manageable.is(name, type)).findFirst();
+  public Optional<Manageable> getServerManageable(String name, String type) {
+    return serverManageableStream().filter(manageable -> manageable.is(name, type)).findFirst();
   }
 
   @Override
