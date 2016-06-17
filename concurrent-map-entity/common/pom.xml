@@ -27,7 +27,7 @@
     <relativePath>../..</relativePath>
   </parent>
 
-  <groupId>org.terracotta.entity</groupId>
+  <groupId>org.terracotta.entities</groupId>
   <artifactId>clustered-map-common</artifactId>
 
   <dependencies>

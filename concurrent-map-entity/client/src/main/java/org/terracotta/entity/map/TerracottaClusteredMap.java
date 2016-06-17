@@ -30,6 +30,7 @@ import org.terracotta.entity.map.common.EntrySetResponse;
 import org.terracotta.entity.map.common.GetOperation;
 import org.terracotta.entity.map.common.KeySetOperation;
 import org.terracotta.entity.map.common.KeySetResponse;
+import org.terracotta.entity.map.common.MapEntry;
 import org.terracotta.entity.map.common.MapOperation;
 import org.terracotta.entity.map.common.MapResponse;
 import org.terracotta.entity.map.common.MapValueResponse;
@@ -43,16 +44,35 @@ import org.terracotta.entity.map.common.SizeResponse;
 import org.terracotta.entity.map.common.ValueCollectionResponse;
 import org.terracotta.entity.map.common.ValuesOperation;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.terracotta.entity.map.ValueCodecFactory.getCodecForClass;
+
 @SuppressWarnings("unchecked")
 class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
+
   private final EntityClientEndpoint<MapOperation, MapResponse> endpoint;
+
+  private Class<K> keyClass;
+  private Class<V> valueClass;
+  private ValueCodec<K> keyValueCodec;
+  private ValueCodec<V> valueValueCodec;
 
   TerracottaClusteredMap(EntityClientEndpoint<MapOperation, MapResponse> endpoint) {
     this.endpoint = endpoint;
+  }
+
+  @Override
+  public void setTypes(Class<K> keyClass, Class<V> valueClass) {
+    this.keyClass = keyClass;
+    this.valueClass = valueClass;
+    keyValueCodec = getCodecForClass(keyClass);
+    valueValueCodec = getCodecForClass(valueClass);
   }
 
   @Override
@@ -79,27 +99,42 @@ class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
 
   @Override
   public boolean containsKey(Object key) {
-    return ((BooleanResponse)invokeWithReturn(new ContainsKeyOperation(key))).isTrue();
+    if (!keyClass.isAssignableFrom(key.getClass())) {
+      return false;
+    }
+    return ((BooleanResponse)invokeWithReturn(new ContainsKeyOperation(keyValueCodec.encode((K)key)))).isTrue();
   }
 
   @Override
   public boolean containsValue(Object value) {
-    return ((BooleanResponse)invokeWithReturn(new ContainsValueOperation(value))).isTrue();
+    if (!valueClass.isAssignableFrom(value.getClass())) {
+      return false;
+    }
+    return ((BooleanResponse)invokeWithReturn(new ContainsValueOperation(valueValueCodec.encode((V) value)))).isTrue();
   }
 
   @Override
   public V get(Object key) {
-    return (V) ((MapValueResponse)invokeWithReturn(new GetOperation(key))).getValue();
+    if (!keyClass.isAssignableFrom(key.getClass())) {
+      return null;
+    }
+    MapValueResponse response = (MapValueResponse) invokeWithReturn(new GetOperation(keyValueCodec.encode((K) key)));
+    return valueValueCodec.decode(response.getValue());
   }
 
   @Override
   public V put(K key, V value) {
-    return (V) ((MapValueResponse)invokeWithReturn(new PutOperation(key, value))).getValue();
+    MapValueResponse response = (MapValueResponse) invokeWithReturn(new PutOperation(keyValueCodec.encode(key), valueValueCodec.encode(value)));
+    return valueValueCodec.decode(response.getValue());
   }
 
   @Override
   public V remove(Object key) {
-    return (V) ((MapValueResponse)invokeWithReturn(new RemoveOperation(key))).getValue();
+    if (!keyClass.isAssignableFrom(key.getClass())) {
+      return null;
+    }
+    MapValueResponse mapValueResponse = (MapValueResponse) invokeWithReturn(new RemoveOperation(keyValueCodec.encode((K) key)));
+    return valueValueCodec.decode(mapValueResponse.getValue());
   }
 
   private MapResponse invokeWithReturn(MapOperation operation) {
@@ -116,7 +151,11 @@ class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
 
   @Override
   public void putAll(Map<? extends K, ? extends V> m) {
-    invokeWithReturn(new PutAllOperation((Map<Object, Object>) m));
+    HashMap<Object, Object> input = new HashMap<Object, Object>();
+    for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
+      input.put(keyValueCodec.encode(entry.getKey()), valueValueCodec.encode(entry.getValue()));
+    }
+    invokeWithReturn(new PutAllOperation(input));
   }
 
   @Override
@@ -126,36 +165,62 @@ class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
 
   @Override
   public Set<K> keySet() {
-    return (Set<K>) ((KeySetResponse)invokeWithReturn(new KeySetOperation())).getKeySet();
+    Set<K> result = new HashSet<K>();
+    KeySetResponse keySetResponse = (KeySetResponse) invokeWithReturn(new KeySetOperation());
+    for (Object o : keySetResponse.getKeySet()) {
+      result.add(keyValueCodec.decode(o));
+    }
+    return result;
   }
 
   @Override
   public Collection<V> values() {
-    return (Collection<V>) ((ValueCollectionResponse)invokeWithReturn(new ValuesOperation())).getValues();
+    ArrayList<V> result = new ArrayList<V>();
+    ValueCollectionResponse response = (ValueCollectionResponse) invokeWithReturn(new ValuesOperation());
+    for (Object o : response.getValues()) {
+      result.add(valueValueCodec.decode(o));
+    }
+    return result;
   }
 
   @Override
   public Set<Map.Entry<K, V>> entrySet() {
-    return (Set<Map.Entry<K, V>>)(Object)((EntrySetResponse)invokeWithReturn(new EntrySetOperation())).getEntrySet();
+    HashSet<Entry<K, V>> result = new HashSet<Entry<K, V>>();
+    EntrySetResponse response = (EntrySetResponse) invokeWithReturn(new EntrySetOperation());
+    for (Entry<Object, Object> entry : response.getEntrySet()) {
+      result.add(new MapEntry<K, V>(keyValueCodec.decode(entry.getKey()), valueValueCodec.decode(entry.getValue())));
+    }
+    return result;
   }
 
   @Override
   public V putIfAbsent(K key, V value) {
-    return (V) ((MapValueResponse)invokeWithReturn(new PutIfAbsentOperation(key, value))).getValue();
+    MapValueResponse response = (MapValueResponse) invokeWithReturn(new PutIfAbsentOperation(keyValueCodec.encode(key), valueValueCodec.encode(value)));
+    return valueValueCodec.decode(response.getValue());
   }
 
   @Override
   public boolean remove(Object key, Object value) {
-    return ((BooleanResponse)invokeWithReturn(new ConditionalRemoveOperation(key, value))).isTrue();
+    if (!keyClass.isAssignableFrom(key.getClass())) {
+      return false;
+    }
+    if (!valueClass.isAssignableFrom(value.getClass())) {
+      return false;
+    }
+    MapOperation operation = new ConditionalRemoveOperation(keyValueCodec.encode((K) key), valueValueCodec.encode((V) value));
+    return ((BooleanResponse) invokeWithReturn(operation)).isTrue();
   }
 
   @Override
   public boolean replace(K key, V oldValue, V newValue) {
-    return ((BooleanResponse) invokeWithReturn(new ConditionalReplaceOperation(key, oldValue, newValue))).isTrue();
+    MapOperation operation = new ConditionalReplaceOperation(keyValueCodec.encode(key), valueValueCodec.encode(oldValue), valueValueCodec.encode(newValue));
+    return ((BooleanResponse) invokeWithReturn(operation)).isTrue();
   }
 
   @Override
   public V replace(K key, V value) {
-    return (V) ((MapValueResponse) invokeWithReturn(new PutIfPresentOperation(key, value))).getValue();
+    MapOperation operation = new PutIfPresentOperation(keyValueCodec.encode(key), valueValueCodec.encode(value));
+    MapValueResponse response = (MapValueResponse) invokeWithReturn(operation);
+    return valueValueCodec.decode(response.getValue());
   }
 }

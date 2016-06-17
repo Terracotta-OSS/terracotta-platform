@@ -25,6 +25,8 @@ import org.terracotta.entity.map.server.TerracottaClusteredMapService;
 import org.terracotta.passthrough.PassthroughConnection;
 import org.terracotta.passthrough.PassthroughServer;
 
+import java.io.Serializable;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -49,6 +51,7 @@ public class ClusteredConcurrentMapPassthroughTest {
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     entityRef.create(null);
     clusteredMap = entityRef.fetchEntity();
+    clusteredMap.setTypes(Long.class, String.class);
   }
 
   @After
@@ -74,6 +77,7 @@ public class ClusteredConcurrentMapPassthroughTest {
     PassthroughConnection connection = server.connectNewClient();
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     ConcurrentClusteredMap<Long, String> mapFromOtherClient = entityRef.fetchEntity();
+    mapFromOtherClient.setTypes(Long.class, String.class);
 
     assertThat(mapFromOtherClient.get(key), is(value));
   }
@@ -94,5 +98,35 @@ public class ClusteredConcurrentMapPassthroughTest {
     assertThat(clusteredMap.replace(key, value2, value3), is(true));
 
     assertThat(clusteredMap.remove(key, value3), is(true));
+  }
+
+  @Test
+  public void testWithCustomType() throws Exception {
+    PassthroughConnection connection = server.connectNewClient();
+    EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
+    entityRef.create(null);
+    ConcurrentClusteredMap<Long, Person> map = entityRef.fetchEntity();
+    map.setTypes(Long.class, Person.class);
+
+    map.put(33L, new Person("Iron Man", 33));
+    map.close();
+
+    connection = server.connectNewClient();
+    entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
+    map = entityRef.fetchEntity();
+    map.setTypes(Long.class, Person.class);
+
+    assertThat(map.get(33L).name, is("Iron Man"));
+    map.close();
+  }
+
+  public static class Person implements Serializable  {
+    final String name;
+    final int age;
+
+    public Person(String name, int age) {
+      this.name = name;
+      this.age = age;
+    }
   }
 }

@@ -28,17 +28,17 @@
     <relativePath>../..</relativePath>
   </parent>
 
-  <groupId>org.terracotta.entity</groupId>
+  <groupId>org.terracotta.entities</groupId>
   <artifactId>clustered-map-integration-tests</artifactId>
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.entity</groupId>
+      <groupId>org.terracotta.entities</groupId>
       <artifactId>clustered-map-server</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.entity</groupId>
+      <groupId>org.terracotta.entities</groupId>
       <artifactId>clustered-map-client</artifactId>
       <version>${project.version}</version>
     </dependency>

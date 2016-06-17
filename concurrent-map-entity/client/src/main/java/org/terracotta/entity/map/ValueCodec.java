@@ -15,20 +15,16 @@
  * Terracotta, Inc., a Software AG company
  */
 
-package org.terracotta.entity.map.common;
+package org.terracotta.entity.map;
 
-import org.terracotta.connection.entity.Entity;
+import java.io.Serializable;
 
-import java.util.concurrent.ConcurrentMap;
+/**
+ * ValueCodec
+ */
+interface ValueCodec<T> {
 
-public interface ConcurrentClusteredMap<K, V> extends ConcurrentMap<K, V>, Entity {
-  long VERSION = 1;
+  Object encode(T input);
 
-  /**
-   * Records the key and value classes to enable optimizations.
-   *
-   * @param keyClass the key class
-   * @param valueClass the value class
-   */
-  void setTypes(Class<K> keyClass, Class<V> valueClass);
+  T decode(Object input);
 }
