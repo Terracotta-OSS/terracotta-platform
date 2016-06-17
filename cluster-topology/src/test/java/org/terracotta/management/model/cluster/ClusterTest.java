@@ -70,17 +70,17 @@ public class ClusterTest extends AbstractTest {
 
   @Test
   public void test_nodes_path() throws UnknownHostException {
-    assertEquals(3, cluster1.getActiveManageable(ehcache_server_entity.getContext()).get().getNodePath().size());
+    assertEquals(3, cluster1.getManageable(ehcache_server_entity.getContext()).get().getNodePath().size());
     assertEquals(
         "stripe-1/server-1/cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-        cluster1.getActiveManageable(ehcache_server_entity.getContext()).get().getStringPath());
+        cluster1.getManageable(ehcache_server_entity.getContext()).get().getStringPath());
 
     assertEquals(5, ehcache_client_entity.getContext().size());
 
-    assertEquals(2, cluster1.getActiveManageable(ehcache_client_entity.getContext()).get().getNodePath().size());
+    assertEquals(2, cluster1.getManageable(ehcache_client_entity.getContext()).get().getNodePath().size());
     assertEquals(
         "12345@127.0.0.1:ehcache:uid/cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-        cluster1.getActiveManageable(ehcache_client_entity.getContext()).get().getStringPath());
+        cluster1.getManageable(ehcache_client_entity.getContext()).get().getStringPath());
 
     assertEquals(3, cluster1.getNodes(ehcache_server_entity.getContext()).size());
     assertEquals("[stripe-1, server-1, cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity]", cluster1.getNodes(ehcache_server_entity.getContext()).toString());

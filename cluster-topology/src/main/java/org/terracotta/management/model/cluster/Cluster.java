@@ -128,7 +128,7 @@ public final class Cluster implements Contextual, Serializable {
     return stripe;
   }
 
-  public Optional<Manageable> getActiveManageable(Context context) {
+  public Optional<Manageable> getManageable(Context context) {
     Optional<Manageable> manageable = getStripe(context).flatMap(s -> s.getActiveManageable(context));
     if (manageable.isPresent()) {
       return manageable;
@@ -165,11 +165,11 @@ public final class Cluster implements Contextual, Serializable {
     return sb.toString();
   }
 
-  public Stream<Manageable> activeManageableStream() {
-    return Stream.concat(activeServerManageableStream(), clientManageableStream());
+  public Stream<Manageable> allManageableStream() {
+    return Stream.concat(serverManageableStream(), clientManageableStream());
   }
 
-  public Stream<Manageable> activeServerManageableStream() {
+  public Stream<Manageable> serverManageableStream() {
     return stripeStream().flatMap(Stripe::activeManageableStream);
   }
 

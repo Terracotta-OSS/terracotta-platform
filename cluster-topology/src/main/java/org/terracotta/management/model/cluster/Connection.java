@@ -77,7 +77,7 @@ public final class Connection extends AbstractNode<Client> implements Serializab
     }
   }
 
-  public Stream<Manageable> linkedManageableStream() {
+  public Stream<Manageable> serverManageableStream() {
     return getServer()
         .map(server -> manageableIds.stream()
             .map(server::getManageable)
@@ -86,7 +86,7 @@ public final class Connection extends AbstractNode<Client> implements Serializab
         .orElse(Stream.empty());
   }
 
-  public int getLinkedManageableCount() {
+  public int getServerManageableCount() {
     return getServer()
         .map(server -> manageableIds.stream()
             .map(server::getManageable)
@@ -149,11 +149,11 @@ public final class Connection extends AbstractNode<Client> implements Serializab
     return map;
   }
 
-  public void unlinkServerManageable(String name, String type) {
+  public void disconnectServerManageable(String name, String type) {
     manageableIds.remove(Manageable.key(name, type));
   }
 
-  public boolean linkServerManageable(Manageable manageable) {
+  public boolean connectServerManageable(Manageable manageable) {
     if (!isConnected()) {
       throw new IllegalStateException("not connnected");
     }
@@ -167,8 +167,8 @@ public final class Connection extends AbstractNode<Client> implements Serializab
     return manageableIds.add(manageable.getId());
   }
 
-  public boolean isLinkedToManageable(String name, String type) {
-    return linkedManageableStream().filter(manageable -> manageable.is(name, type)).findFirst().isPresent();
+  public boolean isConnectedToServerManageable(String name, String type) {
+    return serverManageableStream().filter(manageable -> manageable.is(name, type)).findFirst().isPresent();
   }
 
   public boolean isConnectedToActiveServer() {
