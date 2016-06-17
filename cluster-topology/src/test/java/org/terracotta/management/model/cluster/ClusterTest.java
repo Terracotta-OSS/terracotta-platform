@@ -70,25 +70,20 @@ public class ClusterTest extends AbstractTest {
 
   @Test
   public void test_nodes_path() throws UnknownHostException {
-    assertEquals(3, cluster1.getManageable(ehcache_server_entity.getContext()).get().getNodePath().size());
+    assertEquals(3, cluster1.getServerEntity(ehcache_server_entity.getContext()).get().getNodePath().size());
     assertEquals(
-        "stripe-1/server-1/cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-        cluster1.getManageable(ehcache_server_entity.getContext()).get().getStringPath());
+        "stripe-1/server-1/ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
+        cluster1.getServerEntity(ehcache_server_entity.getContext()).get().getStringPath());
 
-    assertEquals(5, ehcache_client_entity.getContext().size());
-
-    assertEquals(2, cluster1.getManageable(ehcache_client_entity.getContext()).get().getNodePath().size());
-    assertEquals(
-        "12345@127.0.0.1:ehcache:uid/cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-        cluster1.getManageable(ehcache_client_entity.getContext()).get().getStringPath());
+    assertEquals(6, ehcache_server_entity.getContext().size());
 
     assertEquals(3, cluster1.getNodes(ehcache_server_entity.getContext()).size());
-    assertEquals("[stripe-1, server-1, cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity]", cluster1.getNodes(ehcache_server_entity.getContext()).toString());
+    assertEquals("[stripe-1, server-1, ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity]", cluster1.getNodes(ehcache_server_entity.getContext()).toString());
 
-    assertEquals(2, cluster1.getNodes(ehcache_client_entity.getContext()).size());
+    assertEquals(1, cluster1.getNodes(client.getContext()).size());
     assertEquals(
-        "[12345@127.0.0.1:ehcache:uid, cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity]",
-        cluster1.getNodes(ehcache_client_entity.getContext()).toString());
+        "[12345@127.0.0.1:ehcache:uid]",
+        cluster1.getNodes(client.getContext()).toString());
   }
 
   @Test
@@ -184,30 +179,30 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_add_remove_manageable() {
+  public void test_add_remove_server_entity() {
     System.out.println(ClientIdentifier.discoverHostName());
 
-    Client client = cluster1.getClient("12345@127.0.0.1:ehcache:uid").get();
+    Server server = cluster1.stripeStream().findFirst().get().getActiveServer().get();
 
-    assertEquals(1, client.getManageables().size());
+    assertEquals(1, server.getServerEntityCount());
 
     try {
-      client.addManageable(Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity").setContextContainer(contextContainer));
+      server.addServerEntity(ServerEntity.create(serverContextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
       fail();
     } catch (Exception e) {
       assertEquals(IllegalArgumentException.class, e.getClass());
     }
 
-    assertEquals(1, client.getManageables().size());
+    assertEquals(1, server.getServerEntityCount());
 
-    client.addManageable(Manageable.create("other-cm-4", "org.ehcache.clustered.client.internal.EhcacheClientEntity").setContextContainer(contextContainer));
-    client.addManageable(Manageable.create("name", "OTHER_TYPE").setContextContainer(contextContainer));
+    server.addServerEntity(ServerEntity.create("other-cm-4", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    server.addServerEntity(ServerEntity.create("name", "OTHER_TYPE"));
 
-    assertEquals(3, client.getManageables().size());
+    assertEquals(3, server.getServerEntityCount());
 
-    assertTrue(client.removeManageable("other-cm-4:" + "org.ehcache.clustered.client.internal.EhcacheClientEntity").isPresent());
-    assertFalse(client.getManageable("other-cm-4:" + "org.ehcache.clustered.client.internal.EhcacheClientEntity").isPresent());
-    assertEquals(2, client.getManageables().size());
+    assertTrue(server.removeServerEntity("other-cm-4:" + "org.ehcache.clustered.client.internal.EhcacheClientEntity").isPresent());
+    assertFalse(server.getServerEntity("other-cm-4:" + "org.ehcache.clustered.client.internal.EhcacheClientEntity").isPresent());
+    assertEquals(2, server.getServerEntityCount());
   }
 
   @Test

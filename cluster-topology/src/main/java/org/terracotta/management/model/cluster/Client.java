@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-public final class Client extends AbstractNodeWithManageable<Cluster, Client> implements Serializable {
+public final class Client extends AbstractNode<Cluster> implements Serializable {
 
   private static final long serialVersionUID = 1;
 
@@ -44,10 +44,20 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
   private final ClientIdentifier clientIdentifier;
   private final SortedSet<String> tags = new TreeSet<>();
   private String hostName;
+  private ManagementRegistry managementRegistry;
 
   private Client(ClientIdentifier clientIdentifier) {
     super(clientIdentifier.getClientId());
     this.clientIdentifier = Objects.requireNonNull(clientIdentifier);
+  }
+
+  public Optional<ManagementRegistry> getManagementRegistry() {
+    return Optional.ofNullable(managementRegistry);
+  }
+
+  public Client setManagementRegistry(ManagementRegistry managementRegistry) {
+    this.managementRegistry = managementRegistry;
+    return this;
   }
 
   public SortedSet<String> getTags() {
@@ -161,16 +171,14 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
     return connection;
   }
 
-  public Stream<Manageable> serverManageableStream() {
+  public Stream<ServerEntity> fetchedServerEntityStream() {
     return connectionStream()
-        .filter(Connection::isConnectedToActiveServer)
-        .flatMap(Connection::serverManageableStream);
+        .flatMap(Connection::fetchedServerEntityStream);
   }
 
-  public int getServerManageableCount() {
+  public int getFetchedServerEntityCount() {
     return connectionStream()
-        .filter(Connection::isConnectedToActiveServer)
-        .mapToInt(Connection::getServerManageableCount).sum();
+        .mapToInt(Connection::getFetchedServerEntityCount).sum();
   }
 
   @Override
@@ -189,16 +197,12 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
     return connectionStream().filter(Connection::isConnected).findFirst().isPresent();
   }
 
-  public boolean isConnectedToActive() {
-    return connectionStream().filter(Connection::isConnectedToActiveServer).findFirst().isPresent();
+  public boolean hasFetchedServerEntity(String name, String type) {
+    return getFetchedServerEntity(name, type).isPresent();
   }
 
-  public boolean isConnectedToServerManageable(String name, String type) {
-    return getServerManageable(name, type).isPresent();
-  }
-
-  public Optional<Manageable> getServerManageable(String name, String type) {
-    return serverManageableStream().filter(manageable -> manageable.is(name, type)).findFirst();
+  public Optional<ServerEntity> getFetchedServerEntity(String name, String type) {
+    return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst();
   }
 
   @Override
@@ -216,7 +220,9 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
 
     if (!connections.equals(client.connections)) return false;
     if (!clientIdentifier.equals(client.clientIdentifier)) return false;
-    return hostName != null ? hostName.equals(client.hostName) : client.hostName == null;
+    if (!tags.equals(client.tags)) return false;
+    if (hostName != null ? !hostName.equals(client.hostName) : client.hostName != null) return false;
+    return managementRegistry != null ? managementRegistry.equals(client.managementRegistry) : client.managementRegistry == null;
 
   }
 
@@ -225,7 +231,9 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
     int result = super.hashCode();
     result = 31 * result + connections.hashCode();
     result = 31 * result + clientIdentifier.hashCode();
+    result = 31 * result + tags.hashCode();
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
+    result = 31 * result + (managementRegistry != null ? managementRegistry.hashCode() : 0);
     return result;
   }
 
@@ -241,6 +249,7 @@ public final class Client extends AbstractNodeWithManageable<Cluster, Client> im
     map.put("hostName", getHostName());
     map.put("tags", tags);
     map.put("connections", connectionStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(Connection::toMap).collect(Collectors.toList()));
+    map.put("managementRegistry", managementRegistry == null ? null : managementRegistry.toMap());
     return map;
   }
 

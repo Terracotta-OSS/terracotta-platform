@@ -4,31 +4,21 @@
     "name" : "stripe-1",
     "servers" : [ {
       "id" : "server-1",
-      "manageables" : [ {
-        "id" : "cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
+      "serverEntities" : [ {
+        "id" : "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
         "type" : "org.ehcache.clustered.client.internal.EhcacheClientEntity",
-        "name" : "cache-manager-1",
-        "contextContainer" : {
-          "cacheManagerName" : "cache-manager-1",
-          "subContexts" : [ {
-            "cacheName" : "my-cache",
+        "name" : "ehcache-entity-name-1",
+        "managementRegistry" : {
+          "contextContainer" : {
+            "entityName" : "ehcache-entity-name-1",
             "subContexts" : [ ]
+          },
+          "capabilities" : [ {
+            "name" : "ActionCapability",
+            "context" : [ ],
+            "descriptors" : [ ]
           } ]
-        },
-        "capabilities" : [ {
-          "name" : "ActionCapability",
-          "context" : [ ],
-          "descriptors" : [ ]
-        } ]
-      }, {
-        "id" : "service-1:SERVICE",
-        "type" : "SERVICE",
-        "name" : "service-1",
-        "contextContainer" : {
-          "serviceName" : "task-service",
-          "subContexts" : [ ]
-        },
-        "capabilities" : [ ]
+        }
       } ],
       "serverName" : "server-1",
       "hostName" : "hostname-1",
@@ -44,7 +34,7 @@
       "activateTime" : 0
     }, {
       "id" : "server-2",
-      "manageables" : [ ],
+      "serverEntities" : [ ],
       "serverName" : "server-2",
       "hostName" : "hostname-2",
       "hostAddress" : null,
@@ -63,28 +53,21 @@
     "name" : "stripe-2",
     "servers" : [ {
       "id" : "server-1",
-      "manageables" : [ {
-        "id" : "cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
+      "serverEntities" : [ {
+        "id" : "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
         "type" : "org.ehcache.clustered.client.internal.EhcacheClientEntity",
-        "name" : "cache-manager-1",
-        "contextContainer" : {
-          "cacheManagerName" : "cache-manager-1",
-          "subContexts" : [ ]
-        },
-        "capabilities" : [ {
-          "name" : "ActionCapability",
-          "context" : [ ],
-          "descriptors" : [ ]
-        } ]
-      }, {
-        "id" : "service-1:SERVICE",
-        "type" : "SERVICE",
-        "name" : "service-1",
-        "contextContainer" : {
-          "serviceName" : "task-service",
-          "subContexts" : [ ]
-        },
-        "capabilities" : [ ]
+        "name" : "ehcache-entity-name-1",
+        "managementRegistry" : {
+          "contextContainer" : {
+            "entityName" : "ehcache-entity-name-1",
+            "subContexts" : [ ]
+          },
+          "capabilities" : [ {
+            "name" : "ActionCapability",
+            "context" : [ ],
+            "descriptors" : [ ]
+          } ]
+        }
       } ],
       "serverName" : "server-1",
       "hostName" : "hostname-3",
@@ -100,7 +83,7 @@
       "activateTime" : 0
     }, {
       "id" : "server-2",
-      "manageables" : [ ],
+      "serverEntities" : [ ],
       "serverName" : "server-2",
       "hostName" : "hostname-4",
       "hostAddress" : null,
@@ -117,23 +100,6 @@
   } ],
   "clients" : [ {
     "id" : "12345@127.0.0.1:ehcache:uid",
-    "manageables" : [ {
-      "id" : "cache-manager-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-      "type" : "org.ehcache.clustered.client.internal.EhcacheClientEntity",
-      "name" : "cache-manager-1",
-      "contextContainer" : {
-        "cacheManagerName" : "cache-manager-1",
-        "subContexts" : [ {
-          "cacheName" : "my-cache",
-          "subContexts" : [ ]
-        } ]
-      },
-      "capabilities" : [ {
-        "name" : "ActionCapability",
-        "context" : [ ],
-        "descriptors" : [ ]
-      } ]
-    } ],
     "pid" : 12345,
     "hostAddress" : "127.0.0.1",
     "name" : "ehcache",
@@ -151,7 +117,7 @@
       },
       "stripeId" : "stripe-1",
       "serverId" : "server-1",
-      "manageableIds" : [ ]
+      "serverEntityIds" : [ ]
     }, {
       "id" : "uid:stripe-2:server-1:10.10.10.10:3457",
       "logicalConnectionUid" : "uid",
@@ -161,7 +127,21 @@
       },
       "stripeId" : "stripe-2",
       "serverId" : "server-1",
-      "manageableIds" : [ ]
-    } ]
+      "serverEntityIds" : [ ]
+    } ],
+    "managementRegistry" : {
+      "contextContainer" : {
+        "cacheManagerName" : "cache-manager-1",
+        "subContexts" : [ {
+          "cacheName" : "my-cache",
+          "subContexts" : [ ]
+        } ]
+      },
+      "capabilities" : [ {
+        "name" : "ActionCapability",
+        "context" : [ ],
+        "descriptors" : [ ]
+      } ]
+    }
   } ]
 }

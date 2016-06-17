@@ -120,8 +120,8 @@ public class HelloWorldTest {
       MonitoringConsumerEntity consumerEntity = entityFactory.retrieveOrCreate(getClass().getSimpleName());
       String clientIdentifier = consumerEntity.getChildNamesForNode("management", "clients").iterator().next();
 
-      ContextContainer contextContainer = (ContextContainer) consumerEntity.getValueForNode("management", "clients", clientIdentifier, "entityName:my-hello-world-entity-name", "contextContainer");
-      Capability[] capabilities = (Capability[]) consumerEntity.getValueForNode("management", "clients", clientIdentifier, "entityName:my-hello-world-entity-name", "capabilities");
+      ContextContainer contextContainer = (ContextContainer) consumerEntity.getValueForNode("management", "clients", clientIdentifier, "registry", "contextContainer");
+      Capability[] capabilities = (Capability[]) consumerEntity.getValueForNode("management", "clients", clientIdentifier, "registry", "capabilities");
 
       assertEquals(managementRegistry.getContextContainer(), contextContainer);
       assertEquals(managementRegistry.getCapabilities(), Arrays.asList(capabilities));

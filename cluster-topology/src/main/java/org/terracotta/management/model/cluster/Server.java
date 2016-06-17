@@ -15,23 +15,31 @@
  */
 package org.terracotta.management.model.cluster;
 
+import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
 import java.time.Clock;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
  */
-public final class Server extends AbstractNodeWithManageable<Stripe, Server> implements Serializable {
+public final class Server extends AbstractNode<Stripe> implements Serializable {
 
   private static final long serialVersionUID = 1;
 
   public static final String KEY = "serverId";
   public static final String NAME_KEY = "serverName";
 
+  private final ConcurrentMap<String, ServerEntity> serverEntities = new ConcurrentHashMap<>();
   private final String serverName; // matches xml config
+
   private String hostName; // matches xml config
   private String hostAddress; // matches xml config
   private String bindAddress; // matches xml config
@@ -46,7 +54,7 @@ public final class Server extends AbstractNodeWithManageable<Stripe, Server> imp
 
   private Server(String serverId, String serverName) {
     super(serverId);
-    this.serverName = serverName;
+    this.serverName = Objects.requireNonNull(serverName);
   }
 
   public boolean isActive() {
@@ -183,6 +191,62 @@ public final class Server extends AbstractNodeWithManageable<Stripe, Server> imp
     return this;
   }
 
+  public final Map<String, ServerEntity> getServerEntities() {
+    return serverEntities;
+  }
+
+  public final int getServerEntityCount() {
+    return serverEntities.size();
+  }
+
+  public final Stream<ServerEntity> serverEntityStream() {
+    return serverEntities.values().stream();
+  }
+
+  public final Server addServerEntity(ServerEntity serverEntity) {
+    // ServerEntityId are unique per their ID but also per their combination of (type + name)
+    for (ServerEntity m : serverEntities.values()) {
+      if (m.is(serverEntity.getType(), serverEntity.getName())) {
+        throw new IllegalArgumentException("Duplicate serverEntity: type=" + serverEntity.getType() + ", name=" + serverEntity.getName());
+      }
+    }
+    if (serverEntities.putIfAbsent(serverEntity.getId(), serverEntity) != null) {
+      throw new IllegalArgumentException("Duplicate serverEntity: " + serverEntity.getId());
+    }
+    serverEntity.setParent(this);
+    return this;
+  }
+
+  public final Optional<ServerEntity> getServerEntity(Context context) {
+    return getServerEntity(context.get(ServerEntity.KEY));
+  }
+
+  public final Optional<ServerEntity> getServerEntity(String id) {
+    return id == null ? Optional.empty() : Optional.ofNullable(serverEntities.get(id));
+  }
+
+  public final Optional<ServerEntity> getServerEntity(String name, String type) {
+    return serverEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst();
+  }
+
+  public final boolean hasServerEntity(String name, String type) {
+    return getServerEntity(name, type).isPresent();
+  }
+
+  public final Optional<ServerEntity> removeServerEntity(String id) {
+    Optional<ServerEntity> serverEntity = getServerEntity(id);
+    serverEntity.ifPresent(m -> {
+      if (serverEntities.remove(id, m)) {
+        m.detach();
+      }
+    });
+    return serverEntity;
+  }
+
+  public final Stream<ServerEntity> serverEntityStream(String type) {
+    return serverEntityStream().filter(serverEntity -> serverEntity.isType(type));
+  }
+
   @Override
   public void remove() {
     Stripe parent = getParent();
@@ -201,11 +265,14 @@ public final class Server extends AbstractNodeWithManageable<Stripe, Server> imp
 
     if (bindPort != server.bindPort) return false;
     if (groupPort != server.groupPort) return false;
-    if (activateTime != server.activateTime) return false;
     if (startTime != server.startTime) return false;
+    if (activateTime != server.activateTime) return false;
+    if (!serverEntities.equals(server.serverEntities)) return false;
+    if (serverName != null ? !serverName.equals(server.serverName) : server.serverName != null) return false;
     if (hostName != null ? !hostName.equals(server.hostName) : server.hostName != null) return false;
     if (hostAddress != null ? !hostAddress.equals(server.hostAddress) : server.hostAddress != null) return false;
     if (bindAddress != null ? !bindAddress.equals(server.bindAddress) : server.bindAddress != null) return false;
+    if (state != server.state) return false;
     if (version != null ? !version.equals(server.version) : server.version != null) return false;
     return buildId != null ? buildId.equals(server.buildId) : server.buildId == null;
 
@@ -214,21 +281,25 @@ public final class Server extends AbstractNodeWithManageable<Stripe, Server> imp
   @Override
   public int hashCode() {
     int result = super.hashCode();
+    result = 31 * result + serverEntities.hashCode();
+    result = 31 * result + (serverName != null ? serverName.hashCode() : 0);
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
     result = 31 * result + (hostAddress != null ? hostAddress.hashCode() : 0);
     result = 31 * result + (bindAddress != null ? bindAddress.hashCode() : 0);
     result = 31 * result + bindPort;
     result = 31 * result + groupPort;
+    result = 31 * result + (state != null ? state.hashCode() : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + (buildId != null ? buildId.hashCode() : 0);
-    result = 31 * result + (int) (activateTime ^ (activateTime >>> 32));
     result = 31 * result + (int) (startTime ^ (startTime >>> 32));
+    result = 31 * result + (int) (activateTime ^ (activateTime >>> 32));
     return result;
   }
 
   @Override
   public Map<String, Object> toMap() {
     Map<String, Object> map = super.toMap();
+    map.put("serverEntities", serverEntityStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(ServerEntity::toMap).collect(Collectors.toList()));
     map.put("serverName", this.getServerName());
     map.put("hostName", this.hostName);
     map.put("hostAddress", this.hostAddress);
