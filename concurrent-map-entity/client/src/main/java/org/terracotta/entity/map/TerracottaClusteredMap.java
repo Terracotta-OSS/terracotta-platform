@@ -30,7 +30,6 @@ import org.terracotta.entity.map.common.EntrySetResponse;
 import org.terracotta.entity.map.common.GetOperation;
 import org.terracotta.entity.map.common.KeySetOperation;
 import org.terracotta.entity.map.common.KeySetResponse;
-import org.terracotta.entity.map.common.MapEntry;
 import org.terracotta.entity.map.common.MapOperation;
 import org.terracotta.entity.map.common.MapResponse;
 import org.terracotta.entity.map.common.MapValueResponse;
@@ -44,6 +43,7 @@ import org.terracotta.entity.map.common.SizeResponse;
 import org.terracotta.entity.map.common.ValueCollectionResponse;
 import org.terracotta.entity.map.common.ValuesOperation;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -188,7 +188,7 @@ class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
     HashSet<Entry<K, V>> result = new HashSet<Entry<K, V>>();
     EntrySetResponse response = (EntrySetResponse) invokeWithReturn(new EntrySetOperation());
     for (Entry<Object, Object> entry : response.getEntrySet()) {
-      result.add(new MapEntry<K, V>(keyValueCodec.decode(entry.getKey()), valueValueCodec.decode(entry.getValue())));
+      result.add(new AbstractMap.SimpleEntry<K, V > (keyValueCodec.decode(entry.getKey()), valueValueCodec.decode(entry.getValue())));
     }
     return result;
   }
