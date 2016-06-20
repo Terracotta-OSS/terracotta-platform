@@ -34,7 +34,7 @@ public final class Connection extends AbstractNode<Client> implements Serializab
 
   public static final String KEY = "connectionId";
 
-  private final Collection<String> manageableIds = new ConcurrentSkipListSet<>();
+  private final Collection<String> serverEntityIds = new ConcurrentSkipListSet<>();
   private final Endpoint clientEndpoint;
   private final String stripeId;
   private final String serverId;
@@ -77,19 +77,19 @@ public final class Connection extends AbstractNode<Client> implements Serializab
     }
   }
 
-  public Stream<Manageable> serverManageableStream() {
+  public Stream<ServerEntity> fetchedServerEntityStream() {
     return getServer()
-        .map(server -> manageableIds.stream()
-            .map(server::getManageable)
+        .map(server -> serverEntityIds.stream()
+            .map(server::getServerEntity)
             .filter(Optional::isPresent)
             .map(Optional::get))
         .orElse(Stream.empty());
   }
 
-  public int getServerManageableCount() {
+  public int getFetchedServerEntityCount() {
     return getServer()
-        .map(server -> manageableIds.stream()
-            .map(server::getManageable)
+        .map(server -> serverEntityIds.stream()
+            .map(server::getServerEntity)
             .filter(Optional::isPresent)
             .count())
         .orElse(0L).intValue();
@@ -118,7 +118,7 @@ public final class Connection extends AbstractNode<Client> implements Serializab
 
     Connection that = (Connection) o;
 
-    if (!manageableIds.equals(that.manageableIds)) return false;
+    if (!serverEntityIds.equals(that.serverEntityIds)) return false;
     if (!clientEndpoint.equals(that.clientEndpoint)) return false;
     if (stripeId != null ? !stripeId.equals(that.stripeId) : that.stripeId != null) return false;
     return serverId != null ? serverId.equals(that.serverId) : that.serverId == null;
@@ -131,7 +131,7 @@ public final class Connection extends AbstractNode<Client> implements Serializab
     // and can be different whether we opened/closed several connections in our different tests
     //int result = super.hashCode();
     int result = 0;
-    result = 31 * result + manageableIds.hashCode();
+    result = 31 * result + serverEntityIds.hashCode();
     result = 31 * result + clientEndpoint.hashCode();
     result = 31 * result + (stripeId != null ? stripeId.hashCode() : 0);
     result = 31 * result + (serverId != null ? serverId.hashCode() : 0);
@@ -145,34 +145,30 @@ public final class Connection extends AbstractNode<Client> implements Serializab
     map.put("clientEndpoint", clientEndpoint.toMap());
     map.put("stripeId", this.stripeId);
     map.put("serverId", this.serverId);
-    map.put("manageableIds", this.manageableIds);
+    map.put("serverEntityIds", this.serverEntityIds);
     return map;
   }
 
-  public void disconnectServerManageable(String name, String type) {
-    manageableIds.remove(Manageable.key(name, type));
+  public void unfetchServerEntity(String name, String type) {
+    serverEntityIds.remove(ServerEntity.key(name, type));
   }
 
-  public boolean connectServerManageable(Manageable manageable) {
+  public boolean fetchServerEntity(ServerEntity serverEntity) {
     if (!isConnected()) {
       throw new IllegalStateException("not connnected");
     }
-    if (!(manageable.getParent() instanceof Server)) {
-      throw new IllegalArgumentException(String.valueOf(manageable.getParent()));
+    if (!(serverEntity.getParent() instanceof Server)) {
+      throw new IllegalArgumentException(String.valueOf(serverEntity.getParent()));
     }
-    Server server = (Server) manageable.getParent();
+    Server server = (Server) serverEntity.getParent();
     if (server != getServer().get()) {
-      throw new IllegalStateException("wrong server manageable");
+      throw new IllegalStateException("wrong server serverEntity");
     }
-    return manageableIds.add(manageable.getId());
+    return serverEntityIds.add(serverEntity.getId());
   }
 
-  public boolean isConnectedToServerManageable(String name, String type) {
-    return serverManageableStream().filter(manageable -> manageable.is(name, type)).findFirst().isPresent();
-  }
-
-  public boolean isConnectedToActiveServer() {
-    return getServer().filter(Server::isActive).isPresent();
+  public boolean hasFetchedServerEntity(String name, String type) {
+    return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst().isPresent();
   }
 
   public boolean isConnectedTo(Server server) {

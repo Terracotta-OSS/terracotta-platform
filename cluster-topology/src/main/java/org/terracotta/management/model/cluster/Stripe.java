@@ -110,20 +110,16 @@ public final class Stripe extends AbstractNode<Cluster> implements Serializable 
     return server;
   }
 
-  public Optional<Manageable> getActiveManageable(Context context) {
-    return getActiveServer().flatMap(s -> s.getManageable(context));
+  public Optional<ServerEntity> getServerEntity(Context context) {
+    return getActiveServer().flatMap(s -> s.getServerEntity(context));
   }
 
-  public Optional<Manageable> getActiveManageable(String name, String type) {
-    return getActiveServer().flatMap(s -> s.getManageable(name, type));
+  public Optional<ServerEntity> getServerEntity(String name, String type) {
+    return getActiveServer().flatMap(s -> s.getServerEntity(name, type));
   }
 
-  public Stream<Manageable> manageableStream() {
-    return serverStream().flatMap(NodeWithManageable::manageableStream);
-  }
-
-  public Stream<Manageable> activeManageableStream() {
-    return getActiveServer().map(NodeWithManageable::manageableStream).orElse(Stream.empty());
+  public Stream<ServerEntity> serverEntityStream() {
+    return getActiveServer().map(Server::serverEntityStream).orElse(Stream.empty());
   }
 
   @Override

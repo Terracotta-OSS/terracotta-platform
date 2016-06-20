@@ -32,17 +32,22 @@ public abstract class AbstractTest {
 
   protected Cluster cluster1;
   protected Cluster cluster2;
-  protected Manageable ehcache_client_entity;
-  protected Manageable ehcache_server_entity;
+  protected ServerEntity ehcache_server_entity;
   protected Capability action;
-  protected ContextContainer contextContainer;
+  protected ContextContainer serverContextContainer;
+  protected ContextContainer clientContextContainer;
+  protected Client client;
   private ClientIdentifier clientIdentifier;
 
   @Before
   public void createClusters() {
     action = new DefaultCapability("ActionCapability", new CapabilityContext());
-    contextContainer = new ContextContainer("cacheManagerName", "cache-manager-1", new ContextContainer("cacheName", "my-cache"));
+    clientContextContainer = new ContextContainer("cacheManagerName", "cache-manager-1", new ContextContainer("cacheName", "my-cache"));
+    serverContextContainer = new ContextContainer("entityName", "ehcache-entity-name-1");
     clientIdentifier = ClientIdentifier.create("ehcache", "client1");
+    ehcache_server_entity = ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+        .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
+            .addCapabilities(action));
 
     cluster1 = Cluster.create()
         .addStripe(Stripe.create("stripe-1")
@@ -51,11 +56,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(ehcache_server_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
-                    .setContextContainer(contextContainer)
-                    .addCapability(action))
-                .addManageable(Manageable.create("service-1", "SERVICE")
-                    .setContextContainer(new ContextContainer("serviceName", "task-service"))))
+                .addServerEntity(ehcache_server_entity))
             .addServer(Server.create("server-2")
                 .setHostName("hostname-2")
                 .setBindAddress("0.0.0.0")
@@ -67,19 +68,16 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
-                    .setContextContainer(new ContextContainer("cacheManagerName", "cache-manager-1"))
-                    .addCapability(action))
-                .addManageable(Manageable.create("service-1", "SERVICE")
-                    .setContextContainer(new ContextContainer("serviceName", "task-service"))))
+                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+                    .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
+                        .addCapabilities(action))))
             .addServer(Server.create("server-2")
                 .setHostName("hostname-4")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.PASSIVE)))
-        .addClient(Client.create("12345@127.0.0.1:ehcache:uid")
-            .addManageable(ehcache_client_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
-                .setContextContainer(contextContainer)
+        .addClient(client = Client.create("12345@127.0.0.1:ehcache:uid")
+            .setManagementRegistry(ManagementRegistry.create(clientContextContainer)
                 .addCapability(action)));
 
     Client client1 = cluster1.getClient("12345@127.0.0.1:ehcache:uid").get();
@@ -101,11 +99,9 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(ehcache_server_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
-                    .setContextContainer(contextContainer)
-                    .addCapability(action))
-                .addManageable(Manageable.create("service-1", "SERVICE")
-                    .setContextContainer(new ContextContainer("serviceName", "task-service"))))
+                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+                    .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
+                        .addCapabilities(action))))
             .addServer(Server.create("server-2")
                 .setHostName("hostname-2")
                 .setBindAddress("0.0.0.0")
@@ -117,19 +113,16 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.ACTIVE)
-                .addManageable(Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
-                    .setContextContainer(new ContextContainer("cacheManagerName", "cache-manager-1"))
-                    .addCapability(action))
-                .addManageable(Manageable.create("service-1", "SERVICE")
-                    .setContextContainer(new ContextContainer("serviceName", "task-service"))))
+                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+                    .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
+                        .addCapabilities(action))))
             .addServer(Server.create("server-2")
                 .setHostName("hostname-4")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(ServerState.PASSIVE)))
         .addClient(Client.create("12345@127.0.0.1:ehcache:uid")
-            .addManageable(ehcache_client_entity = Manageable.create(contextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")
-                .setContextContainer(contextContainer)
+            .setManagementRegistry(ManagementRegistry.create(clientContextContainer)
                 .addCapability(action)));
 
     Client client2 = cluster2.getClient("12345@127.0.0.1:ehcache:uid").get();

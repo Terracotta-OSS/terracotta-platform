@@ -116,13 +116,13 @@ public class ManagementAgentServiceTest {
       names = consumer.getChildNamesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}).get();
       assertEquals(2, names.size());
       assertThat(names, hasItem("tags"));
-      assertThat(names, hasItem("cacheManagerName:my-cm-name"));
+      assertThat(names, hasItem("registry"));
 
       assertArrayEquals(
           new String[]{"EhcachePounder", "webapp-1", "app-server-node-1"},
           consumer.getValueForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "tags", String[].class).get());
 
-      Map<String, Object> children = consumer.getChildValuesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "cacheManagerName:my-cm-name").get();
+      Map<String, Object> children = consumer.getChildValuesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "registry").get();
       assertEquals(2, children.size());
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));

@@ -128,12 +128,8 @@ public final class Cluster implements Contextual, Serializable {
     return stripe;
   }
 
-  public Optional<Manageable> getManageable(Context context) {
-    Optional<Manageable> manageable = getStripe(context).flatMap(s -> s.getActiveManageable(context));
-    if (manageable.isPresent()) {
-      return manageable;
-    }
-    return getClient(context).flatMap(c -> c.getManageable(context));
+  public Optional<ServerEntity> getServerEntity(Context context) {
+    return getStripe(context).flatMap(s -> s.getServerEntity(context));
   }
 
   public Optional<Server> getServer(Context context) {
@@ -146,13 +142,10 @@ public final class Cluster implements Contextual, Serializable {
       nodes.add(stripe1);
       stripe1.getServer(context).ifPresent(server -> {
         nodes.add(server);
-        server.getManageable(context).ifPresent(nodes::add);
+        server.getServerEntity(context).ifPresent(nodes::add);
       });
     });
-    getClient(context).ifPresent(client -> {
-      nodes.add(client);
-      client.getManageable(context).ifPresent(nodes::add);
-    });
+    getClient(context).ifPresent(nodes::add);
     return nodes;
   }
 
@@ -165,16 +158,8 @@ public final class Cluster implements Contextual, Serializable {
     return sb.toString();
   }
 
-  public Stream<Manageable> allManageableStream() {
-    return Stream.concat(serverManageableStream(), clientManageableStream());
-  }
-
-  public Stream<Manageable> serverManageableStream() {
-    return stripeStream().flatMap(Stripe::activeManageableStream);
-  }
-
-  public Stream<Manageable> clientManageableStream() {
-    return clientStream().flatMap(Client::manageableStream);
+  public Stream<ServerEntity> serverEntityStream() {
+    return stripeStream().flatMap(Stripe::serverEntityStream);
   }
 
   public Stream<Server> serverStream() {

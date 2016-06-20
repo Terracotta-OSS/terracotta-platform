@@ -40,9 +40,9 @@ import static org.terracotta.management.entity.server.Utils.array;
  * Produces:
  * <ul>
  * <li>{@code management/clients/<client-identifier>/tags String[]}</li>
- * <li>{@code management/clients/<client-identifier>/<name>}</li>
- * <li>{@code management/clients/<client-identifier>/<name>/contextContainer ContextContainer}</li>
- * <li>{@code management/clients/<client-identifier>/<name>/capabilities Capability[]}</li>
+ * <li>{@code management/clients/<client-identifier>/registry}</li>
+ * <li>{@code management/clients/<client-identifier>/registry/contextContainer ContextContainer}</li>
+ * <li>{@code management/clients/<client-identifier>/registry/capabilities Capability[]}</li>
  * </ul>
  *
  * @author Mathieu Carbou
@@ -67,10 +67,8 @@ class ManagementAgentImpl implements ManagementAgent {
   @Override
   public Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities) {
     Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
-      String name = contextContainer.getName() + ":" + contextContainer.getValue();
-      producer.addNode(array("management", "clients", clientIdentifier.getClientId()), name, null);
-      producer.addNode(array("management", "clients", clientIdentifier.getClientId(), name), "contextContainer", contextContainer);
-      producer.addNode(array("management", "clients", clientIdentifier.getClientId(), name), "capabilities", capabilities);
+      producer.addNode(array("management", "clients", clientIdentifier.getClientId(), "registry"), "contextContainer", contextContainer);
+      producer.addNode(array("management", "clients", clientIdentifier.getClientId(), "registry"), "capabilities", capabilities);
     });
     return CompletableFuture.completedFuture(null);
   }
