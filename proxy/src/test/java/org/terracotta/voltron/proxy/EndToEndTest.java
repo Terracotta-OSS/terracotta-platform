@@ -270,7 +270,7 @@ public class EndToEndTest {
     }
 
     @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> blockGetOnRetire() {
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> blockGetOnRetire(boolean shouldBlock) {
       return this;
     }
 
