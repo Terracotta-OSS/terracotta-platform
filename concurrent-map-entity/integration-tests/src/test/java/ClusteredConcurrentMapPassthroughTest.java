@@ -27,6 +27,8 @@ import org.terracotta.passthrough.PassthroughServer;
 
 import java.io.Serializable;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -98,6 +100,17 @@ public class ClusteredConcurrentMapPassthroughTest {
     assertThat(clusteredMap.replace(key, value2, value3), is(true));
 
     assertThat(clusteredMap.remove(key, value3), is(true));
+  }
+
+  @Test
+  public void testBulkOps() throws Exception {
+    clusteredMap.put(1L, "One");
+    clusteredMap.put(2L, "Two");
+    clusteredMap.put(3L, "Three");
+
+    assertThat(clusteredMap.keySet(), containsInAnyOrder(1L, 2L, 3L));
+    assertThat(clusteredMap.values(), containsInAnyOrder("One", "Two", "Three"));
+    assertThat(clusteredMap.entrySet().size(), is(3));
   }
 
   @Test

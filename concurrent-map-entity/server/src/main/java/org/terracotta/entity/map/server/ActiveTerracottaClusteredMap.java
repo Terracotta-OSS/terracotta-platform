@@ -41,6 +41,7 @@ import org.terracotta.entity.map.common.RemoveOperation;
 import org.terracotta.entity.map.common.SizeResponse;
 import org.terracotta.entity.map.common.ValueCollectionResponse;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -75,7 +76,7 @@ class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, M
   @SuppressWarnings("deprecation")
   @Override
   public MapResponse invoke(ClientDescriptor clientDescriptor, MapOperation input) {
-    MapResponse response = null;
+    MapResponse response;
     
     switch (input.operationType()) {
       case PUT: {
@@ -134,7 +135,9 @@ class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, M
       }
       case ENTRY_SET: {
         Set<Map.Entry<Object, Object>> entrySet = new HashSet<Map.Entry<Object, Object>>();
-        entrySet.addAll(map.entrySet());
+        for (Map.Entry<Object, Object> entry : map.entrySet()) {
+          entrySet.add(new AbstractMap.SimpleEntry<Object, Object > (entry.getKey(), entry.getValue()));
+        }
         response = new EntrySetResponse(entrySet);
         break;
       }
