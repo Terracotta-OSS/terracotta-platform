@@ -22,6 +22,11 @@
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>packaging-support</artifactId>
+        <scope>provided</scope>
+    </dependency>
   </dependencies>
     <build>
     <plugins>
