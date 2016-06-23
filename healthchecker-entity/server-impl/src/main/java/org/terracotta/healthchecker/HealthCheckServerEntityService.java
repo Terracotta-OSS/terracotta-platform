@@ -18,6 +18,7 @@
  */
 package org.terracotta.healthchecker;
 
+import com.tc.classloader.PermanentEntity;
 import java.util.Collections;
 import java.util.Set;
 import org.terracotta.entity.ActiveServerEntity;
@@ -30,8 +31,9 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 
 /**
- *
+ *  annotation must match the type, and version below for this to work
  */
+@PermanentEntity(type="org.terracotta.healthchecker.HealthCheck", names={"staticHealthChecker"}, version=1)
 public class HealthCheckServerEntityService implements ServerEntityService<HealthCheckReq, HealthCheckRsp> {
   
   private static final ConcurrencyStrategy CONCURRENCY = new ConcurrencyStrategy() {
