@@ -27,7 +27,6 @@ import org.terracotta.passthrough.PassthroughServer;
 
 import java.io.Serializable;
 
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -45,10 +44,12 @@ public class ClusteredConcurrentMapPassthroughTest {
 
   @Before
   public void setUp() throws Exception {
-    server = new PassthroughServer(true);
+    server = new PassthroughServer();
     server.registerClientEntityService(new TerracottaClusteredMapClientService());
     server.registerServerEntityService(new TerracottaClusteredMapService());
-    server.start();
+    boolean isActive = true;
+    boolean shouldLoadStorage = false;
+    server.start(isActive, shouldLoadStorage);
     PassthroughConnection connection = server.connectNewClient();
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     entityRef.create(null);
