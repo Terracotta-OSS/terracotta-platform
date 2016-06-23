@@ -67,15 +67,14 @@ public class ManagementAgentServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    PassthroughServer activeServer = new PassthroughServer(true);
+    PassthroughServer activeServer = new PassthroughServer();
     activeServer.setServerName("server-1");
     activeServer.setBindPort(9510);
     activeServer.setGroupPort(9610);
     activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
     activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
     activeServer.registerServiceProvider(new HackedMonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
-    activeServer.start();
-    stripeControl = new PassthroughClusterControl("server-1", activeServer, null);
+    stripeControl = new PassthroughClusterControl("server-1", activeServer);
   }
 
   @After
