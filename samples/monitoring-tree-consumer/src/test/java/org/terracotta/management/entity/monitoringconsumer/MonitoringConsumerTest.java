@@ -49,15 +49,14 @@ public class MonitoringConsumerTest {
 
   @Before
   public void setUp() throws Exception {
-    PassthroughServer activeServer = new PassthroughServer(true);
+    PassthroughServer activeServer = new PassthroughServer();
 
     activeServer.registerServerEntityService(new MonitoringConsumerEntityServerService());
     activeServer.registerClientEntityService(new MonitoringConsumerEntityClientService());
 
     activeServer.registerServiceProvider(new MonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
 
-    activeServer.start();
-    stripeControl = new PassthroughClusterControl("server-1", activeServer, null);
+    stripeControl = new PassthroughClusterControl("server-1", activeServer);
   }
 
   @After

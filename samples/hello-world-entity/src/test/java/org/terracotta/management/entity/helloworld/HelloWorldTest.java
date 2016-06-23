@@ -60,7 +60,7 @@ public class HelloWorldTest {
 
   @Before
   public void setUp() throws Exception {
-    PassthroughServer activeServer = new PassthroughServer(true);
+    PassthroughServer activeServer = new PassthroughServer();
 
     activeServer.registerServerEntityService(new HelloWorldEntityServerService());
     activeServer.registerClientEntityService(new HelloWorldEntityClientService());
@@ -73,8 +73,7 @@ public class HelloWorldTest {
 
     activeServer.registerServiceProvider(new MonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
 
-    activeServer.start();
-    stripeControl = new PassthroughClusterControl("server-1", activeServer, null);
+    stripeControl = new PassthroughClusterControl("server-1", activeServer);
   }
 
   @After
