@@ -40,7 +40,7 @@ public class HealthCheckerClient implements HealthCheck {
 
   public HealthCheckerClient(EntityClientEndpoint<HealthCheckReq, HealthCheckRsp> endpoint) {
     this.endpoint = endpoint;
-    this.driver = new Timer("healthcheck timer - " + endpoint.hashCode());
+    this.driver = new Timer("healthcheck timer - " + endpoint.hashCode(), true);
     this.endpoint.setDelegate(new HealthCheckerDelegate());
   }
 
