@@ -24,10 +24,10 @@ public final class TestUtils {
   }
   
   public static PassthroughServer createServer() {
-    PassthroughServer server = new PassthroughServer(true);
+    PassthroughServer server = new PassthroughServer();
     server.registerServerEntityService(new CoordinationServerEntityService());
     server.registerClientEntityService(new ClientCoordinationEntityService());
-    server.start();
+    server.start(true, false);
     return server;
   }
   
