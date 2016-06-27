@@ -28,6 +28,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotFoundException;
@@ -40,6 +42,7 @@ import org.terracotta.exception.EntityVersionMismatchException;
  */
 public class HealthCheckerFactory {
   
+  private static Logger LOG = LoggerFactory.getLogger(HealthCheck.class);
   private static final String NAME = "staticHealthChecker";
   /**
    * Start a health checker on a connection.  Adding a timeout manager to a connection 
@@ -78,6 +81,8 @@ public class HealthCheckerFactory {
     private String currentMsg;
     private Future<String> currentProbe;
     private boolean closed;
+    private long totalTime;
+    private int observations;
 
     public HealthCheckTimeoutManager(Connection conn, HealthCheck checker) {
       this.root = conn;
@@ -102,12 +107,26 @@ public class HealthCheckerFactory {
       }
     }
     
+    private void updateMovingAverage(long time) {
+//  not sure if this is a good algorithm but good enough for now
+      totalTime += time;
+      observations += 1;
+      if (observations > 100) {
+        totalTime -= (totalTime/observations--);
+      }
+    }
+    
+    private void logMovingAverage() {
+      LOG.info("moving average ping time:" + TimeUnit.MICROSECONDS.convert(totalTime/observations, TimeUnit.NANOSECONDS) + "µs");
+    }
+    
     public TimeoutManager start(final long timeout, final long cyclesPerMin) {
       TimerTask task = new TimerTask() {
         @Override
         public void run() {
           long period = (timeout < 60000/cyclesPerMin) ? timeout : 60000/cyclesPerMin;
           long start = System.currentTimeMillis();
+          long nanos = System.nanoTime();
           try {
             while (!probe(period)) {
               long lapse = System.currentTimeMillis() - start;
@@ -120,6 +139,11 @@ public class HealthCheckerFactory {
                 closeConnection();
               }
             }
+            nanos = System.nanoTime() - nanos;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("ping time:" + TimeUnit.MICROSECONDS.convert(nanos, TimeUnit.NANOSECONDS) + "µs");
+            }
+            updateMovingAverage(nanos);
           } catch (ExecutionException ee) {
             closeConnection();
           } catch (InterruptedException ie) {
@@ -128,6 +152,12 @@ public class HealthCheckerFactory {
         }
       };
       driver.scheduleAtFixedRate(task, 0, 60000/cyclesPerMin);
+      driver.scheduleAtFixedRate(new TimerTask() {
+        @Override
+        public void run() {
+          logMovingAverage();
+        }
+      }, 60000, 60000);
       return this;
     }
     
@@ -137,6 +167,8 @@ public class HealthCheckerFactory {
         root.close();
       } catch (IOException ioe) {
 //  anything todo here?
+      } catch (IllegalStateException state) {
+//  already closed        
       }
       fireTimeoutListeners();
     }
