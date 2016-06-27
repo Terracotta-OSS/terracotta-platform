@@ -65,6 +65,14 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
     return getOrDefault(key, Boolean.class, def);
   }
 
+  public String[] getStrings(String key) {
+    return get(key, String[].class);
+  }
+
+  public String[] getStringsOrDefault(String key, String... def) {
+    return getOrDefault(key, String[].class, def);
+  }
+
   public Settings set(String key, Settings settings) {
     map.put(key, settings);
     return this;
@@ -91,6 +99,11 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
 
   public Settings set(String key, Class<?> value) {
     return set(key, value == null ? null : value.getName());
+  }
+
+  public Settings set(String key, String... items) {
+    map.put(key, items);
+    return this;
   }
 
   public <T> Settings with(String key, T object, Builder<T> builder) {
