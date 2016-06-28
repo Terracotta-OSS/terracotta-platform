@@ -25,11 +25,6 @@ http://www.terracotta.org
 
 See also: http://www.github.com/ehcache/ehcache3
 
-Status of the build: image:https://terracotta-oss.ci.cloudbees.com/buildStatus/icon?job=terracotta-management[Terracotta-OSS@Cloudbees, link="https://terracotta-oss.ci.cloudbees.com/job/terracotta-management/"]
-
-image:https://www.cloudbees.com/sites/default/files/styles/large/public/Button-Powered-by-CB.png?itok=uMDWINfY[Cloudbees, link="http://www.cloudbees.com/resources/foss"]
-
-
 == Git Commit Messages
 
 * Use the present tense ("Add feature" not "Added feature")
