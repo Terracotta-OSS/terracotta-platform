@@ -148,6 +148,7 @@
         <artifactId>nexus-staging-maven-plugin</artifactId>
       </plugin>
       <plugin>
+        <inherited>false</inherited>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <version>3.0.rc1</version>
@@ -155,6 +156,7 @@
           <keywords>
             <keyword>License</keyword>
           </keywords>
+          <aggregate>true</aggregate>
           <header>header.txt</header>
           <excludes>
             <exclude>**/README</exclude>
