@@ -1,0 +1,7 @@
+= terracotta-platform
+
+image:https://badge.waffle.io/Terracotta-OSS/terracotta-platform.svg?label=ready&title=Ready[link="http://waffle.io/Terracotta-OSS/terracotta-platform"]
+image:https://badge.waffle.io/Terracotta-OSS/terracotta-platform.svg?label=in%20progress&title=In%20Progress[link="http://waffle.io/Terracotta-OSS/terracotta-platform"]
+image:https://badge.waffle.io/Terracotta-OSS/terracotta-platform.svg?label=under%20review&title=Under%20Review[link="http://waffle.io/Terracotta-OSS/terracotta-platform"]
+
+image:https://terracotta-oss.ci.cloudbees.com/buildStatus/icon?job=terracotta-platform[Terracotta-OSS@Cloudbees, link="https://terracotta-oss.ci.cloudbees.com/job/terracotta-platform/"]
