@@ -16,6 +16,7 @@
 
 package org.terracotta.management.sequence;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -105,6 +106,7 @@ public class BoundaryFlakeSequenceGeneratorTest {
   }
 
   @Test
+  @Ignore
   public void test_no_collisions() throws InterruptedException {
     final BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM, NodeIdSource.MAC_PID);
     final Collection<Sequence> bag = new ConcurrentSkipListSet<Sequence>();

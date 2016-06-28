@@ -43,9 +43,6 @@
         <version>2.19</version>
         <configuration>
           <argLine>
-            -server
-            -Xmx512M
-            -Xms512M
             -Dorg.terracotta.management.sequence.NodeIdSource=org.terracotta.management.sequence.MyNodeIdSource
             -Dorg.terracotta.management.sequence.TimeSource=org.terracotta.management.sequence.MyTimeSource
           </argLine>
