@@ -51,6 +51,10 @@ public final class OffHeapResourceIdentifier implements ServiceConfiguration<Off
     return (obj instanceof OffHeapResourceIdentifier) && name.equals(((OffHeapResourceIdentifier) obj).name);
   }
 
+  public String getName() {
+    return name;
+  }
+
   @Override
   public Class<OffHeapResource> getServiceType() {
     return OffHeapResource.class;

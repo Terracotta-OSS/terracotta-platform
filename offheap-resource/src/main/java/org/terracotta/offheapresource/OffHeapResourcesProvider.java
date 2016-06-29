@@ -18,10 +18,13 @@
 package org.terracotta.offheapresource;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +78,18 @@ public class OffHeapResourcesProvider implements ServiceProvider {
     if (unknownConfiguration instanceof OffHeapResourceIdentifier) {
       OffHeapResourceIdentifier identifier = (OffHeapResourceIdentifier) unknownConfiguration;
       return (T) identifier.getServiceType().cast(resources.get(identifier));
+    } else if (OffHeapResources.class.isAssignableFrom(unknownConfiguration.getServiceType())) {
+      return (T) new OffHeapResources() {
+        @Override
+        public Set<String> getAllIdentifiers() {
+          Set<String> names = new HashSet<String>();
+          for (OffHeapResourceIdentifier identifier: resources.keySet()) {
+            names.add(identifier.getName());
+          }
+
+          return Collections.unmodifiableSet(names);
+        }
+      };
     } else {
       throw new IllegalArgumentException("Unexpected configuration type " + unknownConfiguration.getClass());
     }
@@ -82,7 +97,7 @@ public class OffHeapResourcesProvider implements ServiceProvider {
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Collections.<Class<?>>singleton(OffHeapResource.class);
+    return Arrays.asList(OffHeapResource.class, OffHeapResources.class);
   }
 
   @Override
