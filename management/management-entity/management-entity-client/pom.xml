@@ -41,7 +41,7 @@
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
       <scope>provided</scope>
-      <version>${voltron-apis.version}</version>
+      <version>${terracotta-apis.version}</version>
     </dependency>
   </dependencies>
 
