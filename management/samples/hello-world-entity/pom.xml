@@ -40,14 +40,13 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>voltron-proxy</artifactId>
-      <version>${platform.version}</version>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- provided by voltron-management module (client) -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -55,7 +54,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -76,13 +74,11 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-test-lib</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

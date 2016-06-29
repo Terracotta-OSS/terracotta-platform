@@ -18,19 +18,19 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.terracotta.management</groupId>
-  <artifactId>terracotta-management</artifactId>
-  <version>5.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
-
-
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
     <version>5.0-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.terracotta.management</groupId>
+  <artifactId>terracotta-management</artifactId>
+  <packaging>pom</packaging>
+
+
 
   <modules>
     <module>sequence-generator</module>
@@ -61,8 +61,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.6</java.version>
-    <terracotta-os-snapshots-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</terracotta-os-snapshots-url>
-    <terracotta-os-releases-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
   </properties>
 
   <build>
@@ -128,15 +126,6 @@
 
   <profiles>
     <profile>
-      <id>deploy-sonatype</id>
-      <distributionManagement>
-        <repository>
-          <id>sonatype-nexus-staging</id>
-          <url>http://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </repository>
-      </distributionManagement>
-    </profile>
-    <profile>
       <!-- Profile to sign artifacts with a PGP key (using GPG). -->
       <id>sign-artifacts</id>
       <activation>
@@ -182,26 +171,6 @@
     </profile>
   </profiles>
 
-  <distributionManagement>
-    <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>${terracotta-os-releases-url}</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>${terracotta-os-snapshots-url}</url>
-    </snapshotRepository>
-  </distributionManagement>
-
-  <scm>
-    <connection>scm:git:https://github.com/terracotta-oss/terracotta-management.git</connection>
-    <developerConnection>scm:git:git@github.com:terracotta-oss/terracotta-management.git</developerConnection>
-    <url>https://github.com/terracotta-oss/terracotta-management</url>
-  </scm>
-
   <developers>
     <developer>
       <name>Ludovic Orban</name>
@@ -222,16 +191,5 @@
       <organizationUrl>https://terracotta.org</organizationUrl>
     </developer>
   </developers>
-
-  <repositories>
-    <repository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </repository>
-    <repository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
 
 </project>

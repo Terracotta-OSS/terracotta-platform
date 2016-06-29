@@ -52,7 +52,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
       <scope>test</scope>
-      <version>${terracotta-apis.version}</version>
     </dependency>
 
     <!-- provided by voltron (server) -->
@@ -60,18 +59,15 @@
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
       <scope>test</scope>
-      <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>standard-cluster-services</artifactId>
       <scope>test</scope>
-      <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>monitoring-support</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -85,13 +81,11 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-test-lib</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

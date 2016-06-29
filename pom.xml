@@ -28,7 +28,6 @@
     <maven-forge-plugin.version>1.2.16</maven-forge-plugin.version>
     <slf4j.version>1.7.7</slf4j.version>
     <terracotta-apis.version>1.0.0.beta</terracotta-apis.version>
-    <platform.version>5.0-SNAPSHOT</platform.version>
     <tcconfig.version>10.0.0.beta</tcconfig.version>
     <terracotta-core.version>5.0.0-SNAPSHOT</terracotta-core.version>
   </properties>
@@ -50,7 +49,7 @@
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.11</version>
+        <version>4.12</version>
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
@@ -110,6 +109,11 @@
       <dependency>
         <groupId> org.terracotta</groupId>
         <artifactId>entity-test-lib</artifactId>
+        <version>${terracotta-apis.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>monitoring-support</artifactId>
         <version>${terracotta-apis.version}</version>
       </dependency>
     </dependencies>
