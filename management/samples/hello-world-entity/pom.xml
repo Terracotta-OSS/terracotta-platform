@@ -47,7 +47,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
-      <version>${voltron-apis.version}</version>
+      <version>${terracotta-apis.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -55,7 +55,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <version>${voltron-apis.version}</version>
+      <version>${terracotta-apis.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -82,7 +82,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-test-lib</artifactId>
-      <version>${voltron-apis.version}</version>
+      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

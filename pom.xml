@@ -28,6 +28,7 @@
     <maven-forge-plugin.version>1.2.16</maven-forge-plugin.version>
     <slf4j.version>1.7.7</slf4j.version>
     <terracotta-apis.version>1.0-SNAPSHOT</terracotta-apis.version>
+    <platform.version>1.0-SNAPSHOT</platform.version>
     <tc-messaging.version>2.0.0-SNAPSHOT</tc-messaging.version>
     <tcconfig.version>10.0-SNAPSHOT</tcconfig.version>
     <terracotta-core.version>5.0.0-SNAPSHOT</terracotta-core.version>
@@ -162,6 +163,8 @@
             <exclude>**/README</exclude>
             <exclude>src/test/resources/**</exclude>
             <exclude>src/main/resources/**</exclude>
+            <!-- if you only import management in your ide, it will generate its metadata under management/ -->
+            <exclude>**/.idea/**</exclude>
           </excludes>
         </configuration>
         <executions>
