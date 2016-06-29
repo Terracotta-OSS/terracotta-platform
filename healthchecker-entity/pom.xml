@@ -27,7 +27,6 @@
   </parent>
 
   <artifactId>healthchecker-entity</artifactId>
-  <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -50,7 +49,7 @@
         <dependency>
             <groupId>org.terracotta</groupId>
             <artifactId>packaging-support</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${terracotta-apis.version}</version>
         </dependency>
     </dependencies>
   </dependencyManagement>
