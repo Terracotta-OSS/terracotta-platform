@@ -38,7 +38,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>voltron-proxy</artifactId>
-      <version>${platform.version}</version>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 
