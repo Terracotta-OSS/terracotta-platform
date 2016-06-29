@@ -27,10 +27,9 @@
   <properties>
     <maven-forge-plugin.version>1.2.16</maven-forge-plugin.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <terracotta-apis.version>1.0-SNAPSHOT</terracotta-apis.version>
+    <terracotta-apis.version>1.0.0.beta</terracotta-apis.version>
     <platform.version>1.0-SNAPSHOT</platform.version>
-    <tc-messaging.version>2.0.0-SNAPSHOT</tc-messaging.version>
-    <tcconfig.version>10.0-SNAPSHOT</tcconfig.version>
+    <tcconfig.version>10.0.0.beta</tcconfig.version>
     <terracotta-core.version>5.0.0-SNAPSHOT</terracotta-core.version>
   </properties>
 
@@ -64,9 +63,24 @@
         <version>1.10.19</version>
       </dependency>
       <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>tc-config-parser</artifactId>
+        <version>${tcconfig.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>packaging-support</artifactId>
+        <version>${terracotta-apis.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-messaging</artifactId>
-        <version>${tc-messaging.version}</version>
+        <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>
         <groupId> org.terracotta</groupId>
@@ -96,7 +110,7 @@
       <dependency>
         <groupId> org.terracotta</groupId>
         <artifactId>entity-test-lib</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>${terracotta-apis.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
