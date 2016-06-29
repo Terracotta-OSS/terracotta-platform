@@ -5,3 +5,16 @@ image:https://badge.waffle.io/Terracotta-OSS/terracotta-platform.svg?label=in%20
 image:https://badge.waffle.io/Terracotta-OSS/terracotta-platform.svg?label=under%20review&title=Under%20Review[link="http://waffle.io/Terracotta-OSS/terracotta-platform"]
 
 image:https://terracotta-oss.ci.cloudbees.com/buildStatus/icon?job=terracotta-platform[Terracotta-OSS@Cloudbees, link="https://terracotta-oss.ci.cloudbees.com/job/terracotta-platform/"]
+
+== For Developers
+
+=== License Headers
+
+This project uses the license-maven-plugin to make sure all license headers are present (including all java and xml files) and conform to the root header.txt (Apache 2 License)
+Whenever you add a new file, you can automatically have the header added using, at the root level :
+
+     mvn com.mycila:license-maven-plugin:format
+
+Otherwise, you would get such an error while building :
+
+    [ERROR] Failed to execute goal com.mycila:license-maven-plugin:3.0.rc1:check (default) on project platform-root: Some files do not have the expected license header -> [Help 1]
