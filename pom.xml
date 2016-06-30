@@ -29,7 +29,6 @@
     <slf4j.version>1.7.7</slf4j.version>
     <terracotta-apis.version>1.0.0.beta</terracotta-apis.version>
     <tcconfig.version>10.0.0.beta</tcconfig.version>
-    <terracotta-core.version>5.0.0-SNAPSHOT</terracotta-core.version>
   </properties>
 
   <modules>
@@ -75,11 +74,6 @@
         <groupId>org.terracotta</groupId>
         <artifactId>packaging-support</artifactId>
         <version>${terracotta-apis.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.terracotta.internal</groupId>
-        <artifactId>tc-messaging</artifactId>
-        <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>
         <groupId> org.terracotta</groupId>
