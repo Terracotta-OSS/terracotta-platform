@@ -18,11 +18,14 @@ package org.terracotta.management.entity.server;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
+import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import static org.terracotta.management.entity.server.Utils.array;
 import static org.terracotta.management.entity.server.Utils.getClientIdentifier;
@@ -35,8 +38,8 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
   private final IMonitoringConsumer consumer;
   private final IMonitoringProducer producer;
 
-  ManagementAgentServerEntity(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer) {
-    super(new ManagementAgentImpl(config, consumer, producer));
+  ManagementAgentServerEntity(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer, SequenceGenerator sequenceGenerator) {
+    super(new ManagementAgentImpl(config, consumer, producer, sequenceGenerator));
     this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
     this.producer = Objects.requireNonNull(producer, "IMonitoringProducer service is missing");
 
@@ -46,6 +49,14 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
     }
     if (!consumer.getChildNamesForNode(array("management", "clients")).isPresent()) {
       producer.addNode(array("management"), "clients", null);
+    }
+
+    //TODO: MATHIEU - PERF: improve queues by using ring-buffer
+    if (!consumer.getChildNamesForNode(array("management", "notifications")).isPresent()) {
+      producer.addNode(array("management"), "notifications", new ArrayBlockingQueue<List<?>>(1024 * 1024));
+    }
+    if (!consumer.getChildNamesForNode(array("management", "statistics")).isPresent()) {
+      producer.addNode(array("management"), "statistics", new ArrayBlockingQueue<List<?>>(1024 * 1024));
     }
   }
 

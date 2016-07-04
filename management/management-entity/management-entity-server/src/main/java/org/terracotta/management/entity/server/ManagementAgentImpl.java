@@ -22,13 +22,18 @@ import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 import static org.terracotta.management.entity.server.Utils.array;
 
@@ -41,6 +46,8 @@ import static org.terracotta.management.entity.server.Utils.array;
  * </ul>
  * Produces:
  * <ul>
+ * <li>{@code management/statistics [Sequence, BlockingQueue<ContextualStatistics[]>]}</li>
+ * <li>{@code management/notifications [Sequence, BlockingQueue<ContextualNotification>]}</li>
  * <li>{@code management/clients/<client-identifier>/tags String[]}</li>
  * <li>{@code management/clients/<client-identifier>/registry}</li>
  * <li>{@code management/clients/<client-identifier>/registry/contextContainer ContextContainer}</li>
@@ -51,14 +58,18 @@ import static org.terracotta.management.entity.server.Utils.array;
  */
 class ManagementAgentImpl implements ManagementAgent {
 
+  private static final Logger LOGGER = Logger.getLogger(ManagementAgentImpl.class.getName());
+
   private final ManagementAgentConfig config;
   private final IMonitoringProducer producer;
   private final IMonitoringConsumer consumer;
+  private final SequenceGenerator sequenceGenerator;
 
-  ManagementAgentImpl(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer) {
+  ManagementAgentImpl(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer, SequenceGenerator sequenceGenerator) {
     this.config = config;
     this.producer = Objects.requireNonNull(producer, "IMonitoringProducer service is missing");
     this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
+    this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator, "SequenceGenerator service is missing");
   }
 
   @Override
@@ -68,12 +79,29 @@ class ManagementAgentImpl implements ManagementAgent {
 
   @Override
   public Future<Void> pushNotification(@ClientId Object clientDescriptor, ContextualNotification notification) {
+    BlockingQueue<List<Object>> queue = getQueue("notifications");
+    List<Object> o = Arrays.asList(sequenceGenerator.next(), notification);
+    while (!queue.offer(o)) {
+      Object removed = queue.poll();
+      LOGGER.warning("Notification queue full: removed entry " + removed);
+    }
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> pushStatistics(@ClientId Object clientDescriptor, ContextualStatistics... statistics) {
+    BlockingQueue<List<Object>> queue = getQueue("statistics");
+    List<Object> o = Arrays.asList(sequenceGenerator.next(), statistics);
+    while (!queue.offer(o)) {
+      Object removed = queue.poll();
+      LOGGER.warning("Statistic queue full: removed entry " + removed);
+    }
     return CompletableFuture.completedFuture(null);
+  }
+
+  @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
+  private BlockingQueue<List<Object>> getQueue(String node) {
+    return (BlockingQueue<List<Object>>) consumer.getValueForNode(array("management", node), BlockingQueue.class).get();
   }
 
   @Override

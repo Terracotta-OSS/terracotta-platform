@@ -52,9 +52,12 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -113,8 +116,12 @@ public class ManagementAgentServiceTest {
 
       managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
       managementAgent.setCapabilities(registry.getContextContainer(), registry.getCapabilities());
-      managementAgent.pushNotification(new ContextualNotification(Context.create("key", "value"), "EXPLODED"));
-      managementAgent.pushStatistics(new ContextualStatistics("my-capability", Context.create("key", "value"), Collections.singletonMap("my-stat", new Counter(1L, NumberUnit.COUNT))));
+
+      ContextualNotification notif = new ContextualNotification(Context.create("key", "value"), "EXPLODED");
+      ContextualStatistics stat = new ContextualStatistics("my-capability", Context.create("key", "value"), Collections.singletonMap("my-stat", new Counter(1L, NumberUnit.COUNT)));
+
+      managementAgent.pushNotification(notif);
+      managementAgent.pushStatistics(stat, stat);
 
       Collection<String> names = consumer.getChildNamesForNode(new String[]{"management", "clients"}).get();
       assertEquals(1, names.size());
@@ -133,6 +140,12 @@ public class ManagementAgentServiceTest {
       assertEquals(2, children.size());
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
+
+      BlockingQueue<List<Object>> notifs = consumer.getValueForNode(new String[]{"management", "notifications"}, BlockingQueue.class).get();
+      BlockingQueue<List<Object>> stats = consumer.getValueForNode(new String[]{"management", "statistics"}, BlockingQueue.class).get();
+
+      assertThat(notifs.poll().get(1), equalTo(notif));
+      assertThat(stats.poll().get(1), equalTo(new ContextualStatistics[]{stat, stat}));
     }
   }
 
