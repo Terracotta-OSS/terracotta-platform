@@ -46,7 +46,6 @@ import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 
