@@ -20,6 +20,8 @@ import org.terracotta.management.entity.ManagementAgentConfig;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
@@ -62,6 +64,16 @@ class ManagementAgentImpl implements ManagementAgent {
   @Override
   public Future<ClientIdentifier> getClientIdentifier(@ClientId Object clientDescriptor) {
     return CompletableFuture.completedFuture(Utils.getClientIdentifier(consumer, clientDescriptor).get());
+  }
+
+  @Override
+  public Future<Void> pushNotification(@ClientId Object clientDescriptor, ContextualNotification notification) {
+    return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  public Future<Void> pushStatistics(@ClientId Object clientDescriptor, ContextualStatistics... statistics) {
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override

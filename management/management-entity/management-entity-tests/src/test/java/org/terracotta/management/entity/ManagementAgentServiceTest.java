@@ -32,7 +32,12 @@ import org.terracotta.management.entity.client.ManagementAgentService;
 import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.model.stats.NumberUnit;
+import org.terracotta.management.model.stats.primitive.Counter;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
@@ -46,6 +51,7 @@ import org.terracotta.passthrough.PassthroughServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -107,6 +113,8 @@ public class ManagementAgentServiceTest {
 
       managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
       managementAgent.setCapabilities(registry.getContextContainer(), registry.getCapabilities());
+      managementAgent.pushNotification(new ContextualNotification(Context.create("key", "value"), "EXPLODED"));
+      managementAgent.pushStatistics(new ContextualStatistics("my-capability", Context.create("key", "value"), Collections.singletonMap("my-stat", new Counter(1L, NumberUnit.COUNT))));
 
       Collection<String> names = consumer.getChildNamesForNode(new String[]{"management", "clients"}).get();
       assertEquals(1, names.size());
