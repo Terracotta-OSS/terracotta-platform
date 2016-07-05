@@ -241,6 +241,7 @@ class MonitoringService {
   }
 
   private Queue<Mutation> buildConsumerQueue(long callerConsumerID) {
+    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/109
     return new BoundedEvictingPriorityQueue<>(
         config.getMaximumUnreadMutationsPerConsumer(),
         mutation -> {

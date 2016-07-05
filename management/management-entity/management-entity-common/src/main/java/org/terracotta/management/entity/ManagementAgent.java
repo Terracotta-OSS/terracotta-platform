@@ -18,10 +18,11 @@ package org.terracotta.management.entity;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ClientId;
 
-import java.util.Collection;
 import java.util.concurrent.Future;
 
 /**
@@ -37,7 +38,7 @@ public interface ManagementAgent {
    * @param clientDescriptor must be null, used only for implementation
    */
   @Async(Async.Ack.NONE)
-  Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability[] capabilities);
+  Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities);
 
   /**
    * Exposes client tags
@@ -55,5 +56,23 @@ public interface ManagementAgent {
    */
   @Async(Async.Ack.NONE)
   Future<ClientIdentifier> getClientIdentifier(@ClientId Object clientDescriptor);
+
+  /**
+   * Sends client's notification to the server
+   *
+   * @param notification     the client's notification
+   * @param clientDescriptor must be null, used only for implementation
+   */
+  @Async(Async.Ack.NONE)
+  Future<Void> pushNotification(@ClientId Object clientDescriptor, ContextualNotification notification);
+
+  /**
+   * Sends client's stats to the server
+   *
+   * @param statistics     the client's stats
+   * @param clientDescriptor must be null, used only for implementation
+   */
+  @Async(Async.Ack.NONE)
+  Future<Void> pushStatistics(@ClientId Object clientDescriptor, ContextualStatistics... statistics);
 
 }

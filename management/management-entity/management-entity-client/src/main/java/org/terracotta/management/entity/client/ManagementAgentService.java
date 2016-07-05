@@ -18,6 +18,8 @@ package org.terracotta.management.entity.client;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.ContextualStatistics;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
@@ -55,6 +57,22 @@ public class ManagementAgentService {
 
   public void setTags(String... tags) {
     get(entity.exposeTags(null, tags));
+  }
+
+  public void pushNotification(ContextualNotification notification) {
+    if (notification != null) {
+      get(entity.pushNotification(null, notification));
+    }
+  }
+
+  public void pushStatistics(ContextualStatistics... statistics) {
+    if (statistics.length > 0) {
+      get(entity.pushStatistics(null, statistics));
+    }
+  }
+
+  public void pushStatistics(Collection<ContextualStatistics> statistics) {
+    pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()]));
   }
 
   public ClientIdentifier getClientIdentifier() {
