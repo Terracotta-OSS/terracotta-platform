@@ -17,6 +17,7 @@ package org.terracotta.management.entity.client;
 
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
+import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
 
 /**
@@ -25,7 +26,8 @@ import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
 public class ManagementAgentEntityClientService extends ProxyEntityClientService<ManagementAgentEntity, ManagementAgentConfig> {
 
   public ManagementAgentEntityClientService() {
-    super(ManagementAgentEntity.class, ManagementAgent.class, ManagementAgentConfig.class);
+    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
+    super(ManagementAgentEntity.class, ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec());
   }
 
 }

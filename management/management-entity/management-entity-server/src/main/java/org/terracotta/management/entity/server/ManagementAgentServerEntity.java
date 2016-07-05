@@ -51,7 +51,7 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
       producer.addNode(array("management"), "clients", null);
     }
 
-    //TODO: MATHIEU - PERF: improve queues by using ring-buffer
+    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/108
     if (!consumer.getChildNamesForNode(array("management", "notifications")).isPresent()) {
       producer.addNode(array("management"), "notifications", new ArrayBlockingQueue<List<?>>(1024 * 1024));
     }

@@ -36,6 +36,7 @@ import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgentConfig> {
 
   public ManagementAgentEntityServerService() {
+    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
     super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec());
   }
 
