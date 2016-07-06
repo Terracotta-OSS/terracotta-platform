@@ -53,7 +53,6 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -142,8 +141,8 @@ public class ManagementAgentServiceTest {
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
 
-      BlockingQueue<Serializable[]> notifs = consumer.getValueForNode(new String[]{"management", "notifications", "clients"}, BlockingQueue.class).get();
-      BlockingQueue<Serializable[]> stats = consumer.getValueForNode(new String[]{"management", "statistics", "clients"}, BlockingQueue.class).get();
+      BlockingQueue<Serializable[]> notifs = consumer.getValueForNode(new String[]{"management", "notifications"}, BlockingQueue.class).get();
+      BlockingQueue<Serializable[]> stats = consumer.getValueForNode(new String[]{"management", "statistics"}, BlockingQueue.class).get();
 
       assertThat(notifs.poll()[1], equalTo(notif));
       assertThat(stats.poll()[1], equalTo(new ContextualStatistics[]{stat, stat}));

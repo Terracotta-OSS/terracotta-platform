@@ -22,15 +22,13 @@ import java.io.Serializable;
  */
 public final class ManagementAgentConfig implements Serializable {
 
-  private static final long serialVersionUID = 2;
+  private static final long serialVersionUID = 3;
 
   // name must be hardcoded because it reference a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.client.ManagementAgentEntity";
 
   private int maximumUnreadClientNotifications = 1024 * 1024;
   private int maximumUnreadClientStatistics = 1024 * 1024;
-  private int maximumUnreadClusterNotifications = 1024 * 1024;
-  private int maximumUnreadClusterStatistics = 1024 * 1024;
 
   public ManagementAgentConfig setMaximumUnreadClientNotifications(int maximumUnreadClientNotifications) {
     this.maximumUnreadClientNotifications = maximumUnreadClientNotifications;
@@ -50,21 +48,4 @@ public final class ManagementAgentConfig implements Serializable {
     return this;
   }
 
-  public int getMaximumUnreadClusterNotifications() {
-    return maximumUnreadClusterNotifications;
-  }
-
-  public ManagementAgentConfig setMaximumUnreadClusterNotifications(int maximumUnreadClusterNotifications) {
-    this.maximumUnreadClusterNotifications = maximumUnreadClusterNotifications;
-    return this;
-  }
-
-  public int getMaximumUnreadClusterStatistics() {
-    return maximumUnreadClusterStatistics;
-  }
-
-  public ManagementAgentConfig setMaximumUnreadClusterStatistics(int maximumUnreadClusterStatistics) {
-    this.maximumUnreadClusterStatistics = maximumUnreadClusterStatistics;
-    return this;
-  }
 }
