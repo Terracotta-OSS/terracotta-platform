@@ -46,10 +46,8 @@ import static org.terracotta.management.entity.server.Utils.array;
  * </ul>
  * Produces:
  * <ul>
- * <li>{@code management/statistics/clients BlockingQueue<[byte[] sequence, ContextualStatistics[]]>}</li>
- * <li>{@code management/notifications/clients BlockingQueue<[byte[] sequence, ContextualNotification]>}</li>
- * <li>{@code management/statistics/cluster BlockingQueue<[byte[] sequence, ContextualStatistics[]]>}</li>
- * <li>{@code management/notifications/cluster BlockingQueue<[byte[] sequence, ContextualNotification]>}</li>
+ * <li>{@code management/statistics BlockingQueue<[byte[] sequence, ContextualStatistics[]]>}</li>
+ * <li>{@code management/notifications BlockingQueue<[byte[] sequence, ContextualNotification]>}</li>
  * <li>{@code management/clients/<client-identifier>/tags String[]}</li>
  * <li>{@code management/clients/<client-identifier>/registry}</li>
  * <li>{@code management/clients/<client-identifier>/registry/contextContainer ContextContainer}</li>
@@ -133,7 +131,7 @@ class ManagementAgentImpl implements ManagementAgent {
 
   @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
   private BlockingQueue<Serializable[]> getQueue(String node) {
-    return (BlockingQueue<Serializable[]>) consumer.getValueForNode(array("management", node, "clients"), BlockingQueue.class).get();
+    return (BlockingQueue<Serializable[]>) consumer.getValueForNode(array("management", node), BlockingQueue.class).get();
   }
 
 }
