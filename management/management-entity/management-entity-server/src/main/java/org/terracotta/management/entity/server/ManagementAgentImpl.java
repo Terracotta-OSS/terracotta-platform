@@ -27,8 +27,8 @@ import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
 
+import java.io.Serializable;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -46,8 +46,10 @@ import static org.terracotta.management.entity.server.Utils.array;
  * </ul>
  * Produces:
  * <ul>
- * <li>{@code management/statistics [Sequence, BlockingQueue<ContextualStatistics[]>]}</li>
- * <li>{@code management/notifications [Sequence, BlockingQueue<ContextualNotification>]}</li>
+ * <li>{@code management/statistics/clients BlockingQueue<[byte[] sequence, ContextualStatistics[]]>}</li>
+ * <li>{@code management/notifications/clients BlockingQueue<[byte[] sequence, ContextualNotification]>}</li>
+ * <li>{@code management/statistics/cluster BlockingQueue<[byte[] sequence, ContextualStatistics[]]>}</li>
+ * <li>{@code management/notifications/cluster BlockingQueue<[byte[] sequence, ContextualNotification]>}</li>
  * <li>{@code management/clients/<client-identifier>/tags String[]}</li>
  * <li>{@code management/clients/<client-identifier>/registry}</li>
  * <li>{@code management/clients/<client-identifier>/registry/contextContainer ContextContainer}</li>
@@ -79,29 +81,38 @@ class ManagementAgentImpl implements ManagementAgent {
 
   @Override
   public Future<Void> pushNotification(@ClientId Object clientDescriptor, ContextualNotification notification) {
-    BlockingQueue<List<Object>> queue = getQueue("notifications");
-    List<Object> o = Arrays.asList(sequenceGenerator.next(), notification);
-    while (!queue.offer(o)) {
-      Object removed = queue.poll();
-      LOGGER.warning("Notification queue full: removed entry " + removed);
-    }
+    Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
+      // ensure the clientId is there
+      notification.setContext(notification.getContext().with("clientId", clientIdentifier.getClientId()));
+      // store in voltron tree
+      BlockingQueue<Serializable[]> queue = getQueue("notifications");
+      Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), notification};
+      while (!queue.offer(o)) {
+        Serializable[] removed = queue.poll();
+        LOGGER.warning("Notification queue full: removed entry " + Arrays.toString(removed));
+      }
+    });
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> pushStatistics(@ClientId Object clientDescriptor, ContextualStatistics... statistics) {
-    BlockingQueue<List<Object>> queue = getQueue("statistics");
-    List<Object> o = Arrays.asList(sequenceGenerator.next(), statistics);
-    while (!queue.offer(o)) {
-      Object removed = queue.poll();
-      LOGGER.warning("Statistic queue full: removed entry " + removed);
+    if (statistics.length > 0) {
+      Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
+        // ensure the clientId is there
+        for (ContextualStatistics statistic : statistics) {
+          statistic.setContext(statistic.getContext().with("clientId", clientIdentifier.getClientId()));
+        }
+        // store in voltron tree
+        BlockingQueue<Serializable[]> queue = getQueue("statistics");
+        Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), statistics};
+        while (!queue.offer(o)) {
+          Serializable[] removed = queue.poll();
+          LOGGER.warning("Statistic queue full: removed entry " + Arrays.toString(removed));
+        }
+      });
     }
     return CompletableFuture.completedFuture(null);
-  }
-
-  @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
-  private BlockingQueue<List<Object>> getQueue(String node) {
-    return (BlockingQueue<List<Object>>) consumer.getValueForNode(array("management", node), BlockingQueue.class).get();
   }
 
   @Override
@@ -118,6 +129,11 @@ class ManagementAgentImpl implements ManagementAgent {
     Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier ->
         producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "tags", tags == null ? new String[0] : tags));
     return CompletableFuture.completedFuture(null);
+  }
+
+  @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
+  private BlockingQueue<Serializable[]> getQueue(String node) {
+    return (BlockingQueue<Serializable[]>) consumer.getValueForNode(array("management", node, "clients"), BlockingQueue.class).get();
   }
 
 }

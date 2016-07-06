@@ -23,9 +23,9 @@ import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.terracotta.management.entity.server.Utils.array;
 import static org.terracotta.management.entity.server.Utils.getClientIdentifier;
@@ -50,13 +50,29 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
     if (!consumer.getChildNamesForNode(array("management", "clients")).isPresent()) {
       producer.addNode(array("management"), "clients", null);
     }
-
-    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/108
     if (!consumer.getChildNamesForNode(array("management", "notifications")).isPresent()) {
-      producer.addNode(array("management"), "notifications", new ArrayBlockingQueue<List<?>>(1024 * 1024));
+      producer.addNode(array("management"), "notifications", null);
     }
     if (!consumer.getChildNamesForNode(array("management", "statistics")).isPresent()) {
-      producer.addNode(array("management"), "statistics", new ArrayBlockingQueue<List<?>>(1024 * 1024));
+      producer.addNode(array("management"), "statistics", null);
+    }
+
+    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/108
+
+    // this will be the paths where the client-side stats and notifications are
+    if (!consumer.getChildNamesForNode(array("management", "notifications", "clients")).isPresent()) {
+      producer.addNode(array("management", "notifications"), "clients", new LinkedBlockingQueue<>(config.getMaximumUnreadClientNotifications()));
+    }
+    if (!consumer.getChildNamesForNode(array("management", "statistics", "clients")).isPresent()) {
+      producer.addNode(array("management", "statistics"), "clients", new LinkedBlockingQueue(config.getMaximumUnreadClientStatistics()));
+    }
+
+    // this will be the paths where the server entities stats and notifications are
+    if (!consumer.getChildNamesForNode(array("management", "statistics", "cluster")).isPresent()) {
+      producer.addNode(array("management", "statistics"), "cluster", new LinkedBlockingQueue(config.getMaximumUnreadClusterStatistics()));
+    }
+    if (!consumer.getChildNamesForNode(array("management", "notifications", "cluster")).isPresent()) {
+      producer.addNode(array("management", "notifications"), "cluster", new LinkedBlockingQueue(config.getMaximumUnreadClusterNotifications()));
     }
   }
 

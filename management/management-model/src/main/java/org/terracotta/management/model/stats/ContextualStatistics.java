@@ -36,7 +36,7 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Se
 
   private final Map<String, Statistic<?, ?>> statistics;
   private final String capability;
-  private final Context context;
+  private Context context;
 
   public ContextualStatistics(String capability, Context context, Map<String, Statistic<?, ?>> statistics) {
     this.statistics = new HashMap<String, Statistic<?, ?>>(Objects.requireNonNull(statistics));
@@ -103,6 +103,10 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Se
       }
     }
     return filtered;
+  }
+
+  public void setContext(Context context) {
+    this.context = Objects.requireNonNull(context);
   }
 
   public Context getContext() {
