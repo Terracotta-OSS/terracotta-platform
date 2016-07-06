@@ -31,7 +31,7 @@ public final class ContextualNotification implements Serializable {
   private static final long serialVersionUID = 1;
 
   private final String type;
-  private final Context context;
+  private Context context;
   private final Map<String, String> attributes;
 
   public ContextualNotification(Context context, String type, Map<String, String> attributes) {
@@ -42,6 +42,10 @@ public final class ContextualNotification implements Serializable {
 
   public ContextualNotification(Context context, String type) {
     this(context, type, Collections.<String, String>emptyMap());
+  }
+
+  public void setContext(Context context) {
+    this.context = Objects.requireNonNull(context);
   }
 
   public Context getContext() {

@@ -36,7 +36,7 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
   private static final long serialVersionUID = 1;
 
   private final T value;
-  private final Context context;
+  private Context context;
   private final String capability;
   private final String methodName;
 
@@ -56,6 +56,10 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
       throw new NoSuchElementException();
     }
     return value;
+  }
+
+  public void setContext(Context context) {
+    this.context = Objects.requireNonNull(context);
   }
 
   public Context getContext() {

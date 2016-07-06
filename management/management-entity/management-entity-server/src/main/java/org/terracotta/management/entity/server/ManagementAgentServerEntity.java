@@ -25,6 +25,7 @@ import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.terracotta.management.entity.server.Utils.array;
 import static org.terracotta.management.entity.server.Utils.getClientIdentifier;
@@ -60,18 +61,18 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
 
     // this will be the paths where the client-side stats and notifications are
     if (!consumer.getChildNamesForNode(array("management", "notifications", "clients")).isPresent()) {
-      producer.addNode(array("management", "notifications"), "clients", new ArrayBlockingQueue(config.getMaximumUnreadClientNotifications()));
+      producer.addNode(array("management", "notifications"), "clients", new LinkedBlockingQueue<>(config.getMaximumUnreadClientNotifications()));
     }
     if (!consumer.getChildNamesForNode(array("management", "statistics", "clients")).isPresent()) {
-      producer.addNode(array("management", "statistics"), "clients", new ArrayBlockingQueue(config.getMaximumUnreadClientStatistics()));
+      producer.addNode(array("management", "statistics"), "clients", new LinkedBlockingQueue(config.getMaximumUnreadClientStatistics()));
     }
 
     // this will be the paths where the server entities stats and notifications are
     if (!consumer.getChildNamesForNode(array("management", "statistics", "cluster")).isPresent()) {
-      producer.addNode(array("management", "statistics"), "cluster", new ArrayBlockingQueue(config.getMaximumUnreadClusterStatistics()));
+      producer.addNode(array("management", "statistics"), "cluster", new LinkedBlockingQueue(config.getMaximumUnreadClusterStatistics()));
     }
     if (!consumer.getChildNamesForNode(array("management", "notifications", "cluster")).isPresent()) {
-      producer.addNode(array("management", "notifications"), "cluster", new ArrayBlockingQueue(config.getMaximumUnreadClusterNotifications()));
+      producer.addNode(array("management", "notifications"), "cluster", new LinkedBlockingQueue(config.getMaximumUnreadClusterNotifications()));
     }
   }
 

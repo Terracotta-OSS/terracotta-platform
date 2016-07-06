@@ -81,24 +81,36 @@ class ManagementAgentImpl implements ManagementAgent {
 
   @Override
   public Future<Void> pushNotification(@ClientId Object clientDescriptor, ContextualNotification notification) {
-    BlockingQueue<Serializable[]> queue = getQueue("notifications");
-    Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), notification};
-    while (!queue.offer(o)) {
-      Serializable[] removed = queue.poll();
-      LOGGER.warning("Notification queue full: removed entry " + Arrays.toString(removed));
-    }
+    Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
+      // ensure the clientId is there
+      notification.setContext(notification.getContext().with("clientId", clientIdentifier.getClientId()));
+      // store in voltron tree
+      BlockingQueue<Serializable[]> queue = getQueue("notifications");
+      Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), notification};
+      while (!queue.offer(o)) {
+        Serializable[] removed = queue.poll();
+        LOGGER.warning("Notification queue full: removed entry " + Arrays.toString(removed));
+      }
+    });
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> pushStatistics(@ClientId Object clientDescriptor, ContextualStatistics... statistics) {
     if (statistics.length > 0) {
-      BlockingQueue<Serializable[]> queue = getQueue("statistics");
-      Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), statistics};
-      while (!queue.offer(o)) {
-        Serializable[] removed = queue.poll();
-        LOGGER.warning("Statistic queue full: removed entry " + Arrays.toString(removed));
-      }
+      Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
+        // ensure the clientId is there
+        for (ContextualStatistics statistic : statistics) {
+          statistic.setContext(statistic.getContext().with("clientId", clientIdentifier.getClientId()));
+        }
+        // store in voltron tree
+        BlockingQueue<Serializable[]> queue = getQueue("statistics");
+        Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), statistics};
+        while (!queue.offer(o)) {
+          Serializable[] removed = queue.poll();
+          LOGGER.warning("Statistic queue full: removed entry " + Arrays.toString(removed));
+        }
+      });
     }
     return CompletableFuture.completedFuture(null);
   }

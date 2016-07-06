@@ -33,13 +33,15 @@ import java.util.concurrent.TimeoutException;
 public class ManagementAgentService {
 
   private final ManagementAgentEntity entity;
+  private final ClientIdentifier clientIdentifier;
   private long timeout = 5000;
 
   public ManagementAgentService(ManagementAgentEntity entity) {
     this.entity = entity;
+    this.clientIdentifier = get(entity.getClientIdentifier(null), 20000);
   }
 
-  public void setTimeout(long duration, TimeUnit unit) {
+  public void setOperationTimeout(long duration, TimeUnit unit) {
     this.timeout = TimeUnit.MILLISECONDS.convert(duration, unit);
   }
 
@@ -48,7 +50,7 @@ public class ManagementAgentService {
   }
 
   public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) {
-    get(entity.exposeManagementMetadata(null, contextContainer, capabilities));
+    get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
   }
 
   public void setTags(Collection<String> tags) {
@@ -56,18 +58,22 @@ public class ManagementAgentService {
   }
 
   public void setTags(String... tags) {
-    get(entity.exposeTags(null, tags));
+    get(entity.exposeTags(null, tags), timeout);
   }
 
   public void pushNotification(ContextualNotification notification) {
     if (notification != null) {
-      get(entity.pushNotification(null, notification));
+      notification.setContext(notification.getContext().with("clientId", clientIdentifier.getClientId()));
+      get(entity.pushNotification(null, notification), timeout);
     }
   }
 
   public void pushStatistics(ContextualStatistics... statistics) {
     if (statistics.length > 0) {
-      get(entity.pushStatistics(null, statistics));
+      for (ContextualStatistics statistic : statistics) {
+        statistic.setContext(statistic.getContext().with("clientId", clientIdentifier.getClientId()));
+      }
+      get(entity.pushStatistics(null, statistics), timeout);
     }
   }
 
@@ -76,10 +82,10 @@ public class ManagementAgentService {
   }
 
   public ClientIdentifier getClientIdentifier() {
-    return get(entity.getClientIdentifier(null));
+    return clientIdentifier;
   }
 
-  private <V> V get(Future<V> future) {
+  private static <V> V get(Future<V> future, long timeout) {
     try {
       return future.get(timeout, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
