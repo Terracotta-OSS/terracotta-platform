@@ -21,6 +21,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -51,9 +53,11 @@ import org.terracotta.passthrough.PassthroughServer;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 
@@ -72,7 +76,7 @@ public class ManagementAgentServiceTest {
 
   private static IMonitoringConsumer consumer;
 
-  IClusterControl stripeControl;
+  PassthroughClusterControl stripeControl;
 
   @Before
   public void setUp() throws Exception {
@@ -93,7 +97,7 @@ public class ManagementAgentServiceTest {
 
 
   @Test
-  public void test_expose() throws EntityNotProvidedException, EntityVersionMismatchException, EntityAlreadyExistsException, EntityNotFoundException, IOException, ExecutionException, InterruptedException {
+  public void test_expose() throws EntityNotProvidedException, EntityVersionMismatchException, EntityAlreadyExistsException, EntityNotFoundException, IOException, ExecutionException, InterruptedException, ConnectionException {
     ManagementRegistry registry = new AbstractManagementRegistry() {
       @Override
       public ContextContainer getContextContainer() {
@@ -104,7 +108,7 @@ public class ManagementAgentServiceTest {
     registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
-    try (Connection connection = stripeControl.createConnectionToActive()) {
+    try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
       ManagementAgentService managementAgent = new ManagementAgentService(registry, new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
       managementAgent.init();

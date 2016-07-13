@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.entity.helloworld;
 
+import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.management.entity.ManagementAgentConfig;
 import org.terracotta.management.entity.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntity;
@@ -45,7 +46,9 @@ import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
+import java.net.URI;
 import java.util.Arrays;
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
@@ -55,7 +58,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(JUnit4.class)
 public class HelloWorldTest {
 
-  IClusterControl stripeControl;
+  PassthroughClusterControl stripeControl;
 
   @Before
   public void setUp() throws Exception {
@@ -82,7 +85,7 @@ public class HelloWorldTest {
 
   @Test
   public void test_hello_world_management() throws Exception {
-    try (Connection connection = stripeControl.createConnectionToActive()) {
+    try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
       // create, fetch and use the custom entity
 
