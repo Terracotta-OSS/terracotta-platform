@@ -15,12 +15,17 @@
  */
 package org.terracotta.management.entity.client;
 
+import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.registry.ManagementProvider;
+import org.terracotta.management.registry.ManagementProviderAdapter;
+import org.terracotta.management.registry.ManagementRegistry;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -30,15 +35,59 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Mathieu Carbou
  */
-public class ManagementAgentService {
+public class ManagementAgentService implements Closeable {
 
+  private final ManagementRegistry registry;
   private final ManagementAgentEntity entity;
-  private final ClientIdentifier clientIdentifier;
-  private long timeout = 5000;
 
-  public ManagementAgentService(ManagementAgentEntity entity) {
-    this.entity = entity;
-    this.clientIdentifier = get(entity.getClientIdentifier(null), 20000);
+  private ClientIdentifier clientIdentifier;
+  private long timeout = 5000;
+  private boolean closed = true;
+
+  private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(ManagementAgentService.class.getSimpleName(), Object.class) {
+    @Override
+    public void register(Object managedObject) {
+      // expose the registry each time a new object is registered in the management registry
+      if (!closed) {
+        setCapabilities(registry.getContextContainer(), registry.getCapabilities());
+      }
+    }
+
+    @Override
+    public void unregister(Object managedObject) {
+      // expose the registry each time a new object is registered in the management registry
+      if (!closed) {
+        setCapabilities(registry.getContextContainer(), registry.getCapabilities());
+      }
+    }
+  };
+
+  public ManagementAgentService(ManagementRegistry registry, ManagementAgentEntity entity) {
+    this.registry = Objects.requireNonNull(registry);
+    this.entity = Objects.requireNonNull(entity);
+  }
+
+  public synchronized void init() {
+    if (closed) {
+
+      clientIdentifier = get(entity.getClientIdentifier(null), 20000);
+
+      registry.addManagementProvider(managementProvider);
+
+      // expose the registry when CM is first available
+      Collection<Capability> capabilities = registry.getCapabilities();
+      get(entity.exposeManagementMetadata(null, registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()])), timeout);
+
+      closed = false;
+    }
+  }
+
+  @Override
+  public synchronized void close() {
+    if (!closed) {
+      registry.removeManagementProvider(managementProvider);
+      closed = true;
+    }
   }
 
   public void setOperationTimeout(long duration, TimeUnit unit) {
@@ -50,7 +99,9 @@ public class ManagementAgentService {
   }
 
   public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) {
-    get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
+    if (!closed) {
+      get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
+    }
   }
 
   public void setTags(Collection<String> tags) {
@@ -58,18 +109,20 @@ public class ManagementAgentService {
   }
 
   public void setTags(String... tags) {
-    get(entity.exposeTags(null, tags), timeout);
+    if (!closed) {
+      get(entity.exposeTags(null, tags), timeout);
+    }
   }
 
   public void pushNotification(ContextualNotification notification) {
-    if (notification != null) {
+    if (!closed && notification != null) {
       notification.setContext(notification.getContext().with("clientId", clientIdentifier.getClientId()));
       get(entity.pushNotification(null, notification), timeout);
     }
   }
 
   public void pushStatistics(ContextualStatistics... statistics) {
-    if (statistics.length > 0) {
+    if (!closed && statistics.length > 0) {
       for (ContextualStatistics statistic : statistics) {
         statistic.setContext(statistic.getContext().with("clientId", clientIdentifier.getClientId()));
       }
