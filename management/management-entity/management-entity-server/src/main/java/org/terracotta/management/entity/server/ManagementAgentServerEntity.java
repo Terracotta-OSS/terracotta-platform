@@ -15,9 +15,11 @@
  */
 package org.terracotta.management.entity.server;
 
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
+import org.terracotta.management.entity.ManagementEvent;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -37,8 +39,8 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
   private final IMonitoringConsumer consumer;
   private final IMonitoringProducer producer;
 
-  ManagementAgentServerEntity(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer, SequenceGenerator sequenceGenerator) {
-    super(new ManagementAgentImpl(config, consumer, producer, sequenceGenerator));
+  ManagementAgentServerEntity(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer, SequenceGenerator sequenceGenerator, ClientCommunicator communicator) {
+    super(new ManagementAgentImpl(config, consumer, producer, sequenceGenerator, communicator), communicator, ManagementEvent.class);
     this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
     this.producer = Objects.requireNonNull(producer, "IMonitoringProducer service is missing");
 
