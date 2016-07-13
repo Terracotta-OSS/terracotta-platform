@@ -106,16 +106,16 @@ public class ManagementAgentServiceTest {
 
     try (Connection connection = stripeControl.createConnectionToActive()) {
 
-      ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
+      ManagementAgentService managementAgent = new ManagementAgentService(registry, new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
+      managementAgent.init();
 
       ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
-      System.out.println(clientIdentifier);
+      //System.out.println(clientIdentifier);
       assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
       assertEquals("UNKNOWN", clientIdentifier.getName());
       assertNotNull(clientIdentifier.getConnectionUid());
 
       managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
-      managementAgent.setCapabilities(registry.getContextContainer(), registry.getCapabilities());
 
       ContextualNotification notif = new ContextualNotification(Context.create("key", "value"), "EXPLODED");
       ContextualStatistics stat = new ContextualStatistics("my-capability", Context.create("key", "value"), Collections.singletonMap("my-stat", new Counter(1L, NumberUnit.COUNT)));
