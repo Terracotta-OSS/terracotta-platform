@@ -24,6 +24,7 @@ import org.terracotta.management.model.stats.Statistic;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Interface to a provider of management capabilities for certain object class.
@@ -97,7 +98,7 @@ public interface ManagementProvider<T> {
    * @param <V> the expected response type
    * @return the action's return value.
    */
-  <V> V callAction(Context context, String methodName, Class<V> returnType, Parameter... parameters);
+  <V> V callAction(Context context, String methodName, Class<V> returnType, Parameter... parameters) throws ExecutionException;
 
   /**
    * Call an action, if the provider supports this.
@@ -106,7 +107,7 @@ public interface ManagementProvider<T> {
    * @param methodName the method name.
    * @param parameters the action method's parameters (objects and class names)
    */
-  void callAction(Context context, String methodName, Parameter... parameters);
+  void callAction(Context context, String methodName, Parameter... parameters) throws ExecutionException;
 
   /**
    * Check wheter this management provider supports the given context

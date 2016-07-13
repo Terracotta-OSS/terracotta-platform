@@ -20,12 +20,13 @@ import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class holds the results of the calls on each context.
  * <p>
  * If a call was not possible to make on a context, because the context was not supported or the capability not found,
- * then the method {@link #hasValue()} will return false.
+ * then the method {@link #hasExecuted()} will return false.
  * <p>
  * You an call {@link #getValue()} only if there has been a result, event if it is null.
  *
@@ -39,21 +40,36 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
   private Context context;
   private final String capability;
   private final String methodName;
+  private final ExecutionException error;
+  private final boolean executed;
 
-  private ContextualReturn(String capability, Context context, String methodName, T value) {
+  private ContextualReturn(String capability, Context context, String methodName, T value, ExecutionException error, boolean executed) {
     this.methodName = methodName;
     this.value = value;
     this.context = Objects.requireNonNull(context);
     this.capability = Objects.requireNonNull(capability);
+    this.error = error;
+    this.executed = executed;
   }
 
-  public boolean hasValue() {
-    return value != Void.TYPE;
+  /**
+   * @return true if the management call has been executed (if a provider has been found to execute this call), false otherwie
+   */
+  public boolean hasExecuted() {
+    return executed;
   }
 
-  public T getValue() throws NoSuchElementException {
-    if (!hasValue()) {
+  /**
+   * @return The returned value, might be null
+   * @throws NoSuchElementException If the management call was not able to execute because a provider was not found
+   * @throws ExecutionException     If the management call launched an exception
+   */
+  public T getValue() throws NoSuchElementException, ExecutionException {
+    if (!hasExecuted()) {
       throw new NoSuchElementException();
+    }
+    if (error != null) {
+      throw error;
     }
     return value;
   }
@@ -67,12 +83,16 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
   }
 
   public static <T extends Serializable> ContextualReturn<T> of(String capability, Context context, String methodName, T result) {
-    return new ContextualReturn<T>(capability, context, methodName, result);
+    return new ContextualReturn<T>(capability, context, methodName, result, null, true);
   }
 
   @SuppressWarnings("unchecked")
-  public static <T extends Serializable> ContextualReturn<T> empty(String capability, Context context, String methodName) {
-    return new ContextualReturn<T>(capability, context, methodName, (T) Void.TYPE);
+  public static <T extends Serializable> ContextualReturn<T> notExecuted(String capability, Context context, String methodName) {
+    return new ContextualReturn<T>(capability, context, methodName, null, null, false);
+  }
+
+  public static <T extends Serializable> ContextualReturn<T> error(String capability, Context context, String methodName, ExecutionException throwable) {
+    return new ContextualReturn<T>(capability, context, methodName, null, throwable, true);
   }
 
   public String getCapability() {
@@ -87,8 +107,9 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
   public String toString() {
     return "ContextualReturn{" +
         "capability='" + capability + '\'' +
-        "method='" + methodName + '\'' +
+        ", method='" + methodName + '\'' +
         ", context=" + context +
+        ", executed=" + executed +
         ", value=" + value +
         '}';
   }
@@ -100,10 +121,12 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
 
     ContextualReturn<?> that = (ContextualReturn<?>) o;
 
+    if (executed != that.executed) return false;
     if (value != null ? !value.equals(that.value) : that.value != null) return false;
     if (!context.equals(that.context)) return false;
+    if (!capability.equals(that.capability)) return false;
     if (!methodName.equals(that.methodName)) return false;
-    return capability.equals(that.capability);
+    return error != null ? error.equals(that.error) : that.error == null;
 
   }
 
@@ -111,8 +134,10 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
   public int hashCode() {
     int result = value != null ? value.hashCode() : 0;
     result = 31 * result + context.hashCode();
-    result = 31 * result + methodName.hashCode();
     result = 31 * result + capability.hashCode();
+    result = 31 * result + methodName.hashCode();
+    result = 31 * result + (error != null ? error.hashCode() : 0);
+    result = 31 * result + (executed ? 1 : 0);
     return result;
   }
 

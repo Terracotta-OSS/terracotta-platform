@@ -21,7 +21,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.provider.action.MyManagementProvider;
 import org.terracotta.management.provider.action.MyObject;
@@ -29,8 +32,12 @@ import org.terracotta.management.provider.action.MyObject;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Mathieu Carbou
@@ -64,6 +71,22 @@ public class ManagementRegistryTest {
     System.out.println(expectedJson);
     System.out.println(actual);
     assertEquals(expectedJson, actual);
+
+    ContextualReturn<?> cr = registry.withCapability("TheActionProvider")
+        .call("incr", int.class, new Parameter(Integer.MAX_VALUE, "int"))
+        .on(Context.empty()
+            .with("cacheManagerName", "myCacheManagerName")
+            .with("cacheName", "myCacheName1"))
+        .build()
+        .execute()
+        .getSingleResult();
+
+    try {
+      cr.getValue();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(IllegalArgumentException.class, e.getCause().getClass());
+    }
   }
 
   public static abstract class CapabilityContextMixin {

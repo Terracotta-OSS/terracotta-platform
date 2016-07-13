@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Mathieu Carbou
@@ -71,7 +72,7 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
 
   @SuppressWarnings("unchecked")
   @Override
-  public final <V> V callAction(Context context, String methodName, Class<V> returnType, Parameter... parameters) {
+  public final <V> V callAction(Context context, String methodName, Class<V> returnType, Parameter... parameters) throws ExecutionException {
     ExposedObject<T> managedObject = findExposedObject(context);
     if (managedObject == null) {
       throw new IllegalArgumentException("No such managed object for context : " + context);
@@ -97,7 +98,7 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
     } catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     } catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
+      throw new ExecutionException(e.getTargetException());
     }
   }
 

@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Mathieu Carbou
@@ -104,12 +105,12 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   }
 
   @Override
-  public final void callAction(Context context, String methodName, Parameter... parameters) {
+  public final void callAction(Context context, String methodName, Parameter... parameters) throws ExecutionException {
     callAction(context, methodName, Object.class, parameters);
   }
 
   @Override
-  public <V> V callAction(Context context, String methodName, Class<V> returnType, Parameter... parameters) {
+  public <V> V callAction(Context context, String methodName, Class<V> returnType, Parameter... parameters) throws ExecutionException {
     throw new UnsupportedOperationException("Not an action provider : " + getCapabilityName());
   }
 

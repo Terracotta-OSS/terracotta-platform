@@ -34,7 +34,12 @@ public class MyObject implements ExposedObject<MyObject> {
   }
 
   @Exposed
-  public int incr(@Named("n") int n) { return n + 1; }
+  public int incr(@Named("n") int n) {
+    if (n == Integer.MAX_VALUE) {
+      throw new IllegalArgumentException();
+    }
+    return n + 1;
+  }
 
   @Override
   public MyObject getTarget() {

@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Mathieu Carbou
@@ -82,11 +83,15 @@ public class DefaultCallQuery<T extends Serializable> implements CallQuery<T> {
     }
 
     for (Context context : contexts) {
-      ContextualReturn<T> result = ContextualReturn.empty(capabilityName, context, methodName);
+      ContextualReturn<T> result = ContextualReturn.notExecuted(capabilityName, context, methodName);
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
           // just suppose there is only one manager handling calls - should be
-          result = ContextualReturn.of(capabilityName, context, methodName, managementProvider.callAction(context, methodName, returnType, parameters));
+          try {
+            result = ContextualReturn.of(capabilityName, context, methodName, managementProvider.callAction(context, methodName, returnType, parameters));
+          } catch (ExecutionException e) {
+            result = ContextualReturn.error(capabilityName, context, methodName, e);
+          }
           break;
         }
       }
