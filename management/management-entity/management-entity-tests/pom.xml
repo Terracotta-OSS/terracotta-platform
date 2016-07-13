@@ -85,7 +85,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>entity-test-lib</artifactId>
+      <artifactId>passthrough-server</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

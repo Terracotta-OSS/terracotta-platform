@@ -22,18 +22,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntity;
 import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntityClientService;
 import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntityFactory;
 import org.terracotta.management.entity.monitoringconsumer.server.MonitoringConsumerEntityServerService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
-import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
 import java.lang.reflect.UndeclaredThrowableException;
+import java.net.URI;
 import java.util.Collection;
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -45,7 +47,7 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.SERVERS_PATH
 @RunWith(JUnit4.class)
 public class MonitoringConsumerTest {
 
-  IClusterControl stripeControl;
+  PassthroughClusterControl stripeControl;
 
   @Before
   public void setUp() throws Exception {
@@ -66,7 +68,7 @@ public class MonitoringConsumerTest {
 
   @Test
   public void test_read_tree() throws Exception {
-    try (Connection connection = stripeControl.createConnectionToActive()) {
+    try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
       // create, fetch and use the custom entity
 
