@@ -21,17 +21,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.exception.EntityAlreadyExistsException;
-import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
 import org.terracotta.management.entity.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.client.ManagementAgentService;
 import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
@@ -46,11 +43,9 @@ import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.MonitoringConsumerConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
-import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
@@ -60,13 +55,18 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * @author Mathieu Carbou
@@ -96,8 +96,8 @@ public class ManagementAgentServiceTest {
   }
 
 
-  @Test
-  public void test_expose() throws EntityNotProvidedException, EntityVersionMismatchException, EntityAlreadyExistsException, EntityNotFoundException, IOException, ExecutionException, InterruptedException, ConnectionException {
+  @Test(timeout = 5000)
+  public void test_expose() throws Exception {
     ManagementRegistry registry = new AbstractManagementRegistry() {
       @Override
       public ContextContainer getContextContainer() {
@@ -110,8 +110,8 @@ public class ManagementAgentServiceTest {
 
     try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
-      ManagementAgentService managementAgent = new ManagementAgentService(registry, new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
-      managementAgent.init();
+      ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
+      managementAgent.bridge(registry);
 
       ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
       //System.out.println(clientIdentifier);
@@ -150,6 +150,61 @@ public class ManagementAgentServiceTest {
 
       assertThat(notifs.poll()[1], equalTo(notif));
       assertThat(stats.poll()[1], equalTo(new ContextualStatistics[]{stat, stat}));
+
+      runManagementCallFromAnotherClient(clientIdentifier);
+    }
+  }
+
+  private void runManagementCallFromAnotherClient(ClientIdentifier targetClientIdentifier) throws Exception {
+    try (Connection managementConnection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+      ManagementAgentService agent = new ManagementAgentService(new ManagementAgentEntityFactory(managementConnection).retrieveOrCreate(new ManagementAgentConfig()));
+
+      assertThat(agent.getManageableClients().size(), equalTo(2));
+      assertThat(agent.getManageableClients(), hasItem(targetClientIdentifier));
+      assertThat(agent.getManageableClients(), hasItem(agent.getClientIdentifier()));
+
+      AtomicReference<String> managementCallId = new AtomicReference<>();
+      BlockingQueue<ContextualReturn<?>> returns = new LinkedBlockingQueue<>();
+
+      agent.setContextualReturnListener((from, id, aReturn) -> {
+        assertEquals(targetClientIdentifier, from);
+        assertEquals(managementCallId.get(), id);
+        returns.offer(aReturn);
+      });
+
+      managementCallId.set(agent.call(
+          targetClientIdentifier,
+          Context.empty()
+              .with("cacheManagerName", "myCacheManagerName")
+              .with("cacheName", "myCacheName1"),
+          "TheActionProvider",
+          "incr",
+          int.class,
+          new Parameter(Integer.MAX_VALUE, "int")));
+
+      ContextualReturn<?> ret = returns.take();
+      assertThat(ret.hasExecuted(), is(true));
+      try {
+        ret.getValue();
+        fail();
+      } catch (Exception e) {
+        assertThat(e, instanceOf(ExecutionException.class));
+        assertThat(e.getCause(), instanceOf(IllegalArgumentException.class));
+      }
+
+      managementCallId.set(agent.call(
+          targetClientIdentifier,
+          Context.empty()
+              .with("cacheManagerName", "myCacheManagerName")
+              .with("cacheName", "myCacheName1"),
+          "TheActionProvider",
+          "incr",
+          int.class,
+          new Parameter(1, "int")));
+
+      ret = returns.take();
+      assertThat(ret.hasExecuted(), is(true));
+      assertThat(ret.getValue(), equalTo(2));
     }
   }
 

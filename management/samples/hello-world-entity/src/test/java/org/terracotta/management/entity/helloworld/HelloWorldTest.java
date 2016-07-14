@@ -112,8 +112,8 @@ public class HelloWorldTest {
 
       // expose a management registry in the server
 
-      ManagementAgentService managementAgentService = new ManagementAgentService(managementRegistry, new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
-      managementAgentService.init();
+      ManagementAgentService managementAgentService = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
+      managementAgentService.bridge(managementRegistry);
 
       // check it has been exposed properly
 

@@ -33,7 +33,7 @@ public interface ResultSet<T> extends Iterable<T> {
 
   /**
    * @return The result of the query for the only one existing context
-   * @throws NoSuchElementException If the result set is empty or has more than 1 values
+   * @throws NoSuchElementException If the result set is not executed or has more than 1 values
    */
   T getSingleResult() throws NoSuchElementException;
 

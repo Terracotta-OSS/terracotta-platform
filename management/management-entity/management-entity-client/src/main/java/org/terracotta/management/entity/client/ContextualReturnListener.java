@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.registry;
+package org.terracotta.management.entity.client;
 
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
+import org.terracotta.management.model.cluster.ClientIdentifier;
+import org.terracotta.management.model.context.Context;
 
 /**
  * @author Mathieu Carbou
  */
-public interface CallQuery<T> extends Query<ContextualReturn<T>> {
+public interface ContextualReturnListener {
 
-  Class<T> getReturnType();
+  /**
+   * Listens to management call results
+   *
+   * @param from             the target of the management call
+   * @param managementCallId the identifier of the management call, return by {@link ManagementAgentService#call(ClientIdentifier, Context, String, String, Class, Parameter...)}
+   * @param aReturn          the returned result
+   */
+  void onContextualReturn(ClientIdentifier from, String managementCallId, ContextualReturn<?> aReturn);
 
-  String getMethodName();
-
-  Parameter[] getParameters();
-
-  interface Builder<T> extends QueryBuilder<Builder<T>, CallQuery<T>> {
-
-  }
 }

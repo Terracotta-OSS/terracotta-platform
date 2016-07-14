@@ -16,9 +16,11 @@
 package org.terracotta.management.entity.server;
 
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
+import org.terracotta.management.entity.ManagementEvent;
 import org.terracotta.management.entity.Version;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
@@ -37,14 +39,15 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
 
   public ManagementAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec());
+    super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec(), ManagementEvent.class);
   }
 
   @Override
   public ProxiedServerEntity<ManagementAgent> createActiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
+    ClientCommunicator communicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
     IMonitoringProducer producer = registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
     IMonitoringConsumer consumer = registry.getService(new MonitoringConsumerConfiguration());
-    return new ManagementAgentServerEntity(configuration, consumer, producer, new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST));
+    return new ManagementAgentServerEntity(configuration, consumer, producer, new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST), communicator);
   }
 
   @Override

@@ -45,13 +45,13 @@ public class DefaultCapabilityManagement implements CapabilityManagement {
   }
 
   @Override
-  public <T extends Serializable> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters) {
+  public <T> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters) {
     return new DefaultCallQueryBuilder<T>(capabilityManagement, capabilityName, methodName, returnType, parameters);
   }
 
   @Override
-  public CallQuery.Builder<Serializable> call(String methodName, Parameter... parameters) {
-    return new DefaultCallQueryBuilder<Serializable>(capabilityManagement, capabilityName, methodName, Serializable.class, parameters);
+  public CallQuery.Builder<?> call(String methodName, Parameter... parameters) {
+    return new DefaultCallQueryBuilder<Object>(capabilityManagement, capabilityName, methodName, Object.class, parameters);
   }
 
 }

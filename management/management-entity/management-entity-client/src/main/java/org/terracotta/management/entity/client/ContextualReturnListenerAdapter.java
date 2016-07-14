@@ -15,14 +15,15 @@
  */
 package org.terracotta.management.entity.client;
 
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.management.entity.ManagementAgent;
-import org.terracotta.management.entity.ManagementEvent;
-import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.cluster.ClientIdentifier;
 
 /**
  * @author Mathieu Carbou
  */
-public interface ManagementAgentEntity extends ManagementAgent, Entity, ServerMessageAware<ManagementEvent> {
+public class ContextualReturnListenerAdapter implements ContextualReturnListener {
+  @Override
+  public void onContextualReturn(ClientIdentifier from, String id, ContextualReturn<?> aReturn) {
 
+  }
 }

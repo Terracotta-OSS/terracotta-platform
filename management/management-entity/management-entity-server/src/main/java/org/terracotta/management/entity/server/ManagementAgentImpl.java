@@ -15,10 +15,19 @@
  */
 package org.terracotta.management.entity.server;
 
+import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
+import org.terracotta.management.entity.ManagementCallEvent;
+import org.terracotta.management.entity.ManagementCallReturnEvent;
+import org.terracotta.management.entity.ManagementEvent;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -26,10 +35,13 @@ import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
+import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -64,12 +76,14 @@ class ManagementAgentImpl implements ManagementAgent {
   private final IMonitoringProducer producer;
   private final IMonitoringConsumer consumer;
   private final SequenceGenerator sequenceGenerator;
+  private final ClientCommunicator communicator;
 
-  ManagementAgentImpl(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer, SequenceGenerator sequenceGenerator) {
+  ManagementAgentImpl(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer, SequenceGenerator sequenceGenerator, ClientCommunicator communicator) {
     this.config = config;
     this.producer = Objects.requireNonNull(producer, "IMonitoringProducer service is missing");
     this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator, "SequenceGenerator service is missing");
+    this.communicator = Objects.requireNonNull(communicator);
   }
 
   @Override
@@ -127,6 +141,53 @@ class ManagementAgentImpl implements ManagementAgent {
     Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier ->
         producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "tags", tags == null ? new String[0] : tags));
     return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  public Future<Collection<ClientIdentifier>> getManageableClients(@ClientId Object clientDescriptor) {
+    return CompletableFuture.completedFuture(Utils.getManageableClients(consumer));
+  }
+
+  @Override
+  public Future<String> call(@ClientId Object clientDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
+    ClientIdentifier caller = Utils.getClientIdentifier(consumer, clientDescriptor).orElseThrow(() -> new IllegalStateException("Unable to get client identifier for client descriptor " + clientDescriptor));
+    ClientDescriptor toClientDescriptor = Utils.getClientDescriptor(consumer, to).orElseThrow(() -> new IllegalStateException("Target not found " + to));
+    String id = UUID.randomUUID().toString();
+    context = context.with("clientId", to.getClientId());
+    ManagementCallEvent event = new ManagementCallEvent(id, caller, context, capabilityName, methodName, returnType, parameters);
+    securityCheck(to, toClientDescriptor, event);
+    try {
+      communicator.sendNoResponse(toClientDescriptor, ProxyEntityResponse.response(ManagementEvent.class, event));
+    } catch (MessageCodecException e) {
+      throw new RuntimeException(e);
+    }
+    return CompletableFuture.completedFuture(id);
+  }
+
+  @Override
+  public Future<Void> callReturn(@ClientId Object clientDescriptor, ClientIdentifier to, String managementCallId, ContextualReturn<?> contextualReturn) {
+    Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(caller -> {
+      Utils.getClientDescriptor(consumer, to).ifPresent(toClientDescriptor -> {
+        // ensure the clientId is there
+        contextualReturn.setContext(contextualReturn.getContext().with("clientId", caller.getClientId()));
+        // create event
+        ManagementCallReturnEvent event = new ManagementCallReturnEvent(caller, managementCallId, contextualReturn);
+        securityCheck(to, toClientDescriptor, event);
+        try {
+          communicator.sendNoResponse(toClientDescriptor, ProxyEntityResponse.response(ManagementEvent.class, event));
+        } catch (MessageCodecException e) {
+          throw new RuntimeException(e);
+        }
+      });
+    });
+    return CompletableFuture.completedFuture(null);
+  }
+
+  private void securityCheck(ClientIdentifier to, ClientDescriptor toClientDescriptor, ManagementEvent event) throws SecurityException {
+    //TODO: MATHIEU: Security checks for management calls (https://github.com/Terracotta-OSS/terracotta-platform/issues/115)
+    if (!Utils.isManageableClient(consumer, to)) {
+      throw new SecurityException("Client " + to + " cannot be targeted");
+    }
   }
 
   @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})

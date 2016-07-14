@@ -79,7 +79,14 @@ public class ProxyInvoker<T> {
     } catch (IllegalAccessException e) {
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
-      throw new RuntimeException(e.getCause());
+      Throwable target = e.getTargetException();
+      if(target instanceof Error) {
+        throw (Error) target;
+      }
+      if(target instanceof RuntimeException) {
+        throw (RuntimeException) target;
+      }
+      throw new RuntimeException(target.getMessage(), target);
     }
   }
 
