@@ -19,7 +19,6 @@ import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.context.Context;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author Mathieu Carbou
  */
-public class DefaultCallQuery<T extends Serializable> implements CallQuery<T> {
+public class DefaultCallQuery<T> implements CallQuery<T> {
 
   private final CapabilityManagementSupport capabilityManagement;
   private final String capabilityName;

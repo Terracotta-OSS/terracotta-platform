@@ -149,7 +149,7 @@ class ManagementAgentImpl implements ManagementAgent {
   }
 
   @Override
-  public Future<String> call(@ClientId Object clientDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<? extends Serializable> returnType, Parameter... parameters) {
+  public Future<String> call(@ClientId Object clientDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
     ClientIdentifier caller = Utils.getClientIdentifier(consumer, clientDescriptor).orElseThrow(() -> new IllegalStateException("Unable to get client identifier for client descriptor " + clientDescriptor));
     ClientDescriptor toClientDescriptor = Utils.getClientDescriptor(consumer, to).orElseThrow(() -> new IllegalStateException("Target not found " + to));
     String id = UUID.randomUUID().toString();
@@ -165,7 +165,7 @@ class ManagementAgentImpl implements ManagementAgent {
   }
 
   @Override
-  public Future<Void> callReturn(@ClientId Object clientDescriptor, ClientIdentifier to, String managementCallId, ContextualReturn<? extends Serializable> contextualReturn) {
+  public Future<Void> callReturn(@ClientId Object clientDescriptor, ClientIdentifier to, String managementCallId, ContextualReturn<?> contextualReturn) {
     Utils.getClientIdentifier(consumer, clientDescriptor).ifPresent(caller -> {
       Utils.getClientDescriptor(consumer, to).ifPresent(toClientDescriptor -> {
         // ensure the clientId is there

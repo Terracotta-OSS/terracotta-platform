@@ -26,7 +26,6 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ClientId;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.concurrent.Future;
 
@@ -76,13 +75,13 @@ public interface ManagementAgent {
    * Returns a unique identifier for this management call.
    */
   @Async(Async.Ack.NONE)
-  Future<String> call(@ClientId Object clientDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<? extends Serializable> returnType, Parameter... parameters);
+  Future<String> call(@ClientId Object clientDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
 
   /**
    * Return a result from a received management call
    */
   @Async(Async.Ack.NONE)
-  Future<Void> callReturn(@ClientId Object clientDescriptor, ClientIdentifier to, String managementCallId, ContextualReturn<? extends Serializable> contextualReturn);
+  Future<Void> callReturn(@ClientId Object clientDescriptor, ClientIdentifier to, String managementCallId, ContextualReturn<?> contextualReturn);
 
   /**
    * Sends client's notification to the server

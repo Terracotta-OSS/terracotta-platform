@@ -33,7 +33,6 @@ import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.io.Closeable;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -208,7 +207,7 @@ public class ManagementAgentService implements Closeable {
    * <p>
    * Returns a unique identifier for this management call.
    */
-  public String call(ClientIdentifier to, Context context, String capabilityName, String methodName, Class<? extends Serializable> returnType, Parameter... parameters) {
+  public String call(ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
     return get(entity.call(null, to, context, capabilityName, methodName, returnType, parameters), timeout);
   }
 

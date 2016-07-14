@@ -31,10 +31,10 @@ public class ManagementCallEvent extends ManagementEvent implements Serializable
   private final Context context;
   private final String capabilityName;
   private final String methodName;
-  private final Class<? extends Serializable> returnType;
+  private final Class<?> returnType;
   private final Parameter[] parameters;
 
-  public ManagementCallEvent(String id, ClientIdentifier from, Context context, String capabilityName, String methodName, Class<? extends Serializable> returnType, Parameter[] parameters) {
+  public ManagementCallEvent(String id, ClientIdentifier from, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter[] parameters) {
     super(id, from);
     this.context = Objects.requireNonNull(context);
     this.capabilityName = Objects.requireNonNull(capabilityName);
@@ -59,7 +59,7 @@ public class ManagementCallEvent extends ManagementEvent implements Serializable
     return parameters;
   }
 
-  public Class<? extends Serializable> getReturnType() {
+  public Class<?> getReturnType() {
     return returnType;
   }
 

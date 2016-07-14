@@ -32,7 +32,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Mathieu Carbou
  */
-public final class ContextualReturn<T extends Serializable> implements Serializable {
+public final class ContextualReturn<T> implements Serializable {
 
   private static final long serialVersionUID = 1;
 
@@ -82,16 +82,16 @@ public final class ContextualReturn<T extends Serializable> implements Serializa
     return context;
   }
 
-  public static <T extends Serializable> ContextualReturn<T> of(String capability, Context context, String methodName, T result) {
+  public static <T> ContextualReturn<T> of(String capability, Context context, String methodName, T result) {
     return new ContextualReturn<T>(capability, context, methodName, result, null, true);
   }
 
   @SuppressWarnings("unchecked")
-  public static <T extends Serializable> ContextualReturn<T> notExecuted(String capability, Context context, String methodName) {
+  public static <T> ContextualReturn<T> notExecuted(String capability, Context context, String methodName) {
     return new ContextualReturn<T>(capability, context, methodName, null, null, false);
   }
 
-  public static <T extends Serializable> ContextualReturn<T> error(String capability, Context context, String methodName, ExecutionException throwable) {
+  public static <T> ContextualReturn<T> error(String capability, Context context, String methodName, ExecutionException throwable) {
     return new ContextualReturn<T>(capability, context, methodName, null, throwable, true);
   }
 
