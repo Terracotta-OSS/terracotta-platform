@@ -49,9 +49,10 @@ public class ManagementAgentService implements Closeable {
   private final ClientIdentifier clientIdentifier;
 
   private volatile ManagementRegistry registry;
+  private volatile boolean bridging = false;
+
   private ContextualReturnListener contextualReturnListener = new ContextualReturnListenerAdapter();
   private long timeout = 5000;
-  private boolean bridging = false;
   private Executor managementCallExecutor = new Executor() {
     @Override
     public void execute(Runnable command) {
@@ -117,8 +118,10 @@ public class ManagementAgentService implements Closeable {
     });
   }
 
-  // bridging a management registry
-
+  /**
+   * Bridges a management registry with a management entity. All exposure in the registry will be propagated to the server and
+   * it will listen for management calls also.
+   */
   public synchronized ManagementAgentService bridge(ManagementRegistry registry) {
     if (!bridging) {
       this.registry = registry;

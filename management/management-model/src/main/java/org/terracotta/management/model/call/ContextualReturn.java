@@ -53,7 +53,7 @@ public final class ContextualReturn<T> implements Serializable {
   }
 
   /**
-   * @return true if the management call has been executed (if a provider has been found to execute this call), false otherwie
+   * @return true if the management call has been executed (if a provider has been found to execute this call), false otherwise
    */
   public boolean hasExecuted() {
     return executed;

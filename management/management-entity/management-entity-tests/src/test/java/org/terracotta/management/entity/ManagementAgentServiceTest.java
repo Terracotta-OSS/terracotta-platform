@@ -156,8 +156,8 @@ public class ManagementAgentServiceTest {
   }
 
   private void runManagementCallFromAnotherClient(ClientIdentifier targetClientIdentifier) throws Exception {
-    try (Connection managementConsole = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
-      ManagementAgentService agent = new ManagementAgentService(new ManagementAgentEntityFactory(managementConsole).retrieveOrCreate(new ManagementAgentConfig()));
+    try (Connection managementConnection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+      ManagementAgentService agent = new ManagementAgentService(new ManagementAgentEntityFactory(managementConnection).retrieveOrCreate(new ManagementAgentConfig()));
 
       assertThat(agent.getManageableClients().size(), equalTo(2));
       assertThat(agent.getManageableClients(), hasItem(targetClientIdentifier));
