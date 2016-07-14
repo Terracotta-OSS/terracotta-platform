@@ -48,7 +48,7 @@ public class ClusteredConcurrentMapPassthroughTest {
     boolean isActive = true;
     boolean shouldLoadStorage = false;
     server.start(isActive, shouldLoadStorage);
-    PassthroughConnection connection = server.connectNewClient();
+    PassthroughConnection connection = server.connectNewClient("connectionName");
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     entityRef.create(null);
     clusteredMap = entityRef.fetchEntity();
@@ -75,7 +75,7 @@ public class ClusteredConcurrentMapPassthroughTest {
     String value = "see that?";
     clusteredMap.put(key, value);
 
-    PassthroughConnection connection = server.connectNewClient();
+    PassthroughConnection connection = server.connectNewClient("connectionName");
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     ConcurrentClusteredMap<Long, String> mapFromOtherClient = entityRef.fetchEntity();
     mapFromOtherClient.setTypes(Long.class, String.class);
@@ -114,7 +114,7 @@ public class ClusteredConcurrentMapPassthroughTest {
 
   @Test
   public void testWithCustomType() throws Exception {
-    PassthroughConnection connection = server.connectNewClient();
+    PassthroughConnection connection = server.connectNewClient("connectionName");
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
     entityRef.create(null);
     ConcurrentClusteredMap<Long, Person> map = entityRef.fetchEntity();
@@ -123,7 +123,7 @@ public class ClusteredConcurrentMapPassthroughTest {
     map.put(33L, new Person("Iron Man", 33));
     map.close();
 
-    connection = server.connectNewClient();
+    connection = server.connectNewClient("connectionName");
     entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
     map = entityRef.fetchEntity();
     map.setTypes(Long.class, Person.class);
