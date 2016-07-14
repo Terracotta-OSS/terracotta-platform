@@ -17,10 +17,10 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.NoConcurrencyStrategy;
 import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.Codec;
@@ -32,7 +32,7 @@ import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 /**
  * @author Mathieu Carbou
  */
-public abstract class ProxyServerEntityService<C> implements ServerEntityService<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ProxyServerEntityService<C> implements EntityServerService<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final Class<?> proxyType;
   private final Codec codec;

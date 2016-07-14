@@ -17,9 +17,9 @@ package org.terracotta.entity.map.server;
 
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ServerEntityService;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.entity.map.common.ClusteredMapCodec;
@@ -30,7 +30,7 @@ import org.terracotta.entity.map.common.MapResponse;
 /**
  * TerracottaClusteredMapService
  */
-public class TerracottaClusteredMapService implements ServerEntityService<MapOperation, MapResponse> {
+public class TerracottaClusteredMapService implements EntityServerService<MapOperation, MapResponse> {
   @Override
   public long getVersion() {
     return ConcurrentClusteredMap.VERSION;
