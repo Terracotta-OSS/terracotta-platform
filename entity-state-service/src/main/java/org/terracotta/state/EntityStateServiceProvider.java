@@ -20,7 +20,9 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.state.config.TransientEntityStateRepositoryConfig;
+import org.terracotta.state.config.EntityStateRepositoryConfig;
+
+import com.tc.classloader.BuiltinService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,9 +33,10 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * {@link ServiceProvider} for {@link EntityStateRepository}
  */
+@BuiltinService
 public class EntityStateServiceProvider implements ServiceProvider {
 
-  private ConcurrentMap<Long, EntityStateRepository> stateRepositoryMap = new ConcurrentHashMap<Long, EntityStateRepository>();
+  private final ConcurrentMap<Long, EntityStateRepository> stateRepositoryMap = new ConcurrentHashMap<Long, EntityStateRepository>();
 
 
   @Override
@@ -41,11 +44,10 @@ public class EntityStateServiceProvider implements ServiceProvider {
     return true;
   }
 
-  //TODO: check generics once again
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     EntityStateRepository stateRepository;
-    if (configuration instanceof TransientEntityStateRepositoryConfig) {
+    if (configuration instanceof EntityStateRepositoryConfig) {
       if ((stateRepository = stateRepositoryMap.get(consumerID)) == null) {
         stateRepository = new TransientEntityStateRepository();
         stateRepositoryMap.put(consumerID, stateRepository);
@@ -58,7 +60,7 @@ public class EntityStateServiceProvider implements ServiceProvider {
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
     List<Class<?>> classes = new ArrayList<Class<?>>();
-    classes.add(TransientEntityStateRepository.class);
+    classes.add(EntityStateRepository.class);
     return classes;
   }
 

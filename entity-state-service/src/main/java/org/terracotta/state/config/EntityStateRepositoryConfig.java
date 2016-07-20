@@ -17,13 +17,14 @@
 package org.terracotta.state.config;
 
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.state.TransientEntityStateRepository;
+import org.terracotta.state.EntityStateRepository;
 
-/**
- */
-public class TransientEntityStateRepositoryConfig implements ServiceConfiguration<TransientEntityStateRepository> {
+import com.tc.classloader.CommonComponent;
+
+@CommonComponent
+public class EntityStateRepositoryConfig implements ServiceConfiguration<EntityStateRepository> {
   @Override
-  public Class<TransientEntityStateRepository> getServiceType() {
-    return TransientEntityStateRepository.class;
+  public Class<EntityStateRepository> getServiceType() {
+    return EntityStateRepository.class;
   }
 }

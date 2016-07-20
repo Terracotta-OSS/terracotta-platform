@@ -28,7 +28,7 @@ import java.util.Map;
 @CommonComponent
 public interface EntityStateRepository {
 
-  < K, V> Map<K, V> getOrCreateState(String name, Class<K> kClass, Class<V> vClass);
+  <K, V> Map<K, V> getOrCreateState(String name, Class<K> kClass, Class<V> vClass);
 
   void destroyState(String name);
 }

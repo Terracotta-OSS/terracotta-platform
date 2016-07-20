@@ -16,19 +16,18 @@
 
 package org.terracotta.state;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- */
 public class TransientEntityStateRepository implements EntityStateRepository {
 
   private ConcurrentMap<String, Map> stateMap = new ConcurrentHashMap<String, Map>();
 
   @Override
   public <K, V> Map<K, V> getOrCreateState(String name, Class<K> kClass, Class<V> vClass) {
-    Map state = new ConcurrentHashMap<K, V>();
+    Map state = new HashMap<K, V>();
     Map actual =  stateMap.putIfAbsent(name, state);
     if (actual == null) {
       actual = state;
