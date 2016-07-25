@@ -16,9 +16,11 @@
 package org.terracotta.entity.map.server;
 
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.map.common.BooleanResponse;
 import org.terracotta.entity.map.common.ConditionalRemoveOperation;
 import org.terracotta.entity.map.common.ConditionalReplaceOperation;
@@ -38,6 +40,7 @@ import org.terracotta.entity.map.common.PutOperation;
 import org.terracotta.entity.map.common.RemoveOperation;
 import org.terracotta.entity.map.common.SizeResponse;
 import org.terracotta.entity.map.common.ValueCollectionResponse;
+import org.terracotta.service.reference.holder.ReferenceHolderService;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -54,9 +57,14 @@ class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, M
 
   private static final int CONCURRENCY_KEY = 42;
 
-  // TODO Given the way a passive becomes active - this does not work ...
-  private final ConcurrentMap<Object, Object> map = new ConcurrentHashMap<Object, Object>();
-  
+  private final ReferenceHolderService referenceHolderService;
+
+  private volatile ConcurrentMap<Object, Object> map;
+
+  public ActiveTerracottaClusteredMap(ServiceRegistry services) {
+    this.referenceHolderService = services.getService(new BasicServiceConfiguration<ReferenceHolderService>(ReferenceHolderService.class));
+  }
+
   @Override
   public void connected(ClientDescriptor clientDescriptor) {
   }
@@ -172,10 +180,12 @@ class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, M
 
   @Override
   public void createNew() {
+    this.map = (ConcurrentMap<Object, Object>) referenceHolderService.storeReference("map", new ConcurrentHashMap());
   }
 
   @Override
   public void loadExisting() {
+    this.map = (ConcurrentMap<Object, Object>) referenceHolderService.retrieveReference("map", ConcurrentMap.class);
   }
 
   @Override
