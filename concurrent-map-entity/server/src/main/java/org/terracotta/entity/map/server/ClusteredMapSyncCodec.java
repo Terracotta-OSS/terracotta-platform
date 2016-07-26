@@ -27,8 +27,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 
 class ClusteredMapSyncCodec implements SyncMessageCodec<MapOperation> {
@@ -61,7 +62,7 @@ class ClusteredMapSyncCodec implements SyncMessageCodec<MapOperation> {
         try {
             InputStream is = new ByteArrayInputStream(payload);
             ObjectInputStream dis = new ObjectInputStream(is);
-            Map<Object, Object> map = new HashMap<Object, Object>();
+            ConcurrentMap<Object, Object> map = new ConcurrentHashMap<Object, Object>();
             Object key = readKey(dis);
             while (null != key) {
               Object value = dis.readObject();
