@@ -77,10 +77,6 @@ public class DefaultCallQuery<T> implements CallQuery<T> {
     Map<Context, ContextualReturn<T>> contextualResults = new LinkedHashMap<Context, ContextualReturn<T>>(contexts.size());
     Collection<ManagementProvider<?>> managementProviders = capabilityManagement.getManagementProvidersByCapability(capabilityName);
 
-    if (managementProviders.isEmpty()) {
-      throw new IllegalArgumentException("Bad capability: " + capabilityName);
-    }
-
     for (Context context : contexts) {
       ContextualReturn<T> result = ContextualReturn.notExecuted(capabilityName, context, methodName);
       for (ManagementProvider<?> managementProvider : managementProviders) {
@@ -90,6 +86,8 @@ public class DefaultCallQuery<T> implements CallQuery<T> {
             result = ContextualReturn.of(capabilityName, context, methodName, managementProvider.callAction(context, methodName, returnType, parameters));
           } catch (ExecutionException e) {
             result = ContextualReturn.error(capabilityName, context, methodName, e);
+          } catch (Exception e) {
+            result = ContextualReturn.error(capabilityName, context, methodName, new ExecutionException(e.getMessage(), e));
           }
           break;
         }
