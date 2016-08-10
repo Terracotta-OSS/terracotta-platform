@@ -23,7 +23,6 @@
             <xs:sequence minOccurs="0" maxOccurs="1">
             </xs:sequence>
             <xs:attribute name="debug" type="xs:boolean" default="false" use="optional"/>
-            <xs:attribute name="maximumUnreadMutationsPerConsumer" type="xs:integer" default="1048576" use="optional"/>
         </xs:complexType>
     </xs:element>
 </xs:schema>

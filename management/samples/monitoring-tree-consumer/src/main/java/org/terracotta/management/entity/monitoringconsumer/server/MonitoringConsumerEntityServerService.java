@@ -32,7 +32,7 @@ public class MonitoringConsumerEntityServerService extends ProxyServerEntityServ
 
   @Override
   public MonitoringConsumerEntity createActiveEntity(ServiceRegistry registry, Void config) {
-    IMonitoringConsumer monitoringConsumer = registry.getService(new MonitoringConsumerConfiguration().setRecordingMutations(false));
+    IMonitoringConsumer monitoringConsumer = registry.getService(new MonitoringConsumerConfiguration());
     return new MonitoringConsumerEntity(monitoringConsumer);
   }
 

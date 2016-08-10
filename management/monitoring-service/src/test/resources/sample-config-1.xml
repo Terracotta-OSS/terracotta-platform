@@ -20,4 +20,4 @@
   xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
   xmlns:management="http://www.terracotta.org/config/management"
   xsi:schemaLocation='http://www.terracotta.org/config/management ../../main/resources/org/terracotta/management/service/monitoring/management.xsd'
-  maximumUnreadMutationsPerConsumer="50"/>
+  debug="true"/>
