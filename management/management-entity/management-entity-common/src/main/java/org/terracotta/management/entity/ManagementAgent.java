@@ -77,6 +77,8 @@ public interface ManagementAgent {
   @Async(Async.Ack.NONE)
   Future<String> call(@ClientId Object clientDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
 
+  //TODO: MATHIEU: Add a method to run the same management call over several clients at once: https://github.com/Terracotta-OSS/terracotta-platform/issues/126
+
   /**
    * Return a result from a received management call
    */
