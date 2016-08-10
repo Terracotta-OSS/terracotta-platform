@@ -57,7 +57,7 @@ public class MonitoringServiceTest {
   public void setUp() throws Exception {
     serviceProvider.initialize(new MonitoringServiceConfiguration().setDebug(true));
     producer = serviceProvider.getService(0, new BasicServiceConfiguration<>(IMonitoringProducer.class));
-    consumer = serviceProvider.getService(0, new MonitoringConsumerConfiguration().setRecordingMutations(true));
+    consumer = serviceProvider.getService(0, new MonitoringConsumerConfiguration().recordMutations());
   }
 
   @Test

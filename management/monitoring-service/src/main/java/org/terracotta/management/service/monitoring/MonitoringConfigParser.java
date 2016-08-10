@@ -50,10 +50,6 @@ public class MonitoringConfigParser implements ServiceConfigParser {
       configuration.setDebug(Boolean.valueOf(fragment.getAttribute("debug")));
     }
 
-    if (fragment.hasAttribute("maximumUnreadMutationsPerConsumer")) {
-      configuration.setMaximumUnreadMutationsPerConsumer(Integer.valueOf(fragment.getAttribute("maximumUnreadMutationsPerConsumer")));
-    }
-
     return configuration;
   }
 

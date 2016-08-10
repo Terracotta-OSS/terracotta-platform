@@ -24,16 +24,6 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 public class MonitoringServiceConfiguration implements ServiceProviderConfiguration {
 
   private boolean debug;
-  private int maximumUnreadMutationsPerConsumer = 1024 * 1024;
-
-  public int getMaximumUnreadMutationsPerConsumer() {
-    return maximumUnreadMutationsPerConsumer;
-  }
-
-  public MonitoringServiceConfiguration setMaximumUnreadMutationsPerConsumer(int maximumUnreadMutationsPerConsumer) {
-    this.maximumUnreadMutationsPerConsumer = maximumUnreadMutationsPerConsumer;
-    return this;
-  }
 
   public boolean isDebug() {
     return debug;

@@ -47,7 +47,7 @@ public class MonitoringConfigParserTestTest {
 
     MonitoringServiceConfiguration configuration = parser.parse(dom.getDocumentElement(), "source");
 
-    assertEquals(50, configuration.getMaximumUnreadMutationsPerConsumer());
+    assertEquals(true, configuration.isDebug());
   }
 
   @Test
@@ -59,7 +59,7 @@ public class MonitoringConfigParserTestTest {
 
     MonitoringServiceConfiguration configuration = parser.parse(dom.getDocumentElement(), "source");
 
-    assertEquals(1048576, configuration.getMaximumUnreadMutationsPerConsumer());
+    assertEquals(false, configuration.isDebug());
   }
 
 }

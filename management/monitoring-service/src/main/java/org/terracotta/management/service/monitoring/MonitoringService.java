@@ -22,21 +22,17 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.terracotta.management.service.monitoring.Mutation.Type.ADDITION;
 import static org.terracotta.management.service.monitoring.Mutation.Type.CHANGE;
@@ -49,14 +45,11 @@ class MonitoringService {
 
   private static final Logger LOGGER = Logger.getLogger(MonitoringService.class.getName());
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final Queue<Mutation> EMPTY_QUEUE = new LinkedList<>();
-
   private static final AtomicLong MUTATION_INDEX = new AtomicLong(Long.MIN_VALUE);
 
   private final Node tree = new Node();
   private final MonitoringServiceConfiguration config;
-  private final ConcurrentMap<Long, Queue<Mutation>> mutations = new ConcurrentHashMap<>();
+  private final Queue<MonitoringConsumer> consumers = new ConcurrentLinkedQueue<>();
   private final SequenceGenerator generator;
 
   MonitoringService(MonitoringServiceConfiguration config, SequenceGenerator generator) {
@@ -80,12 +73,7 @@ class MonitoringService {
 
   IMonitoringConsumer getConsumer(long callerConsumerID, MonitoringConsumerConfiguration configuration) {
 
-    // when a new consumer is requested, create a consumer queue for itself to stock all mutations that happened
-    if (configuration.isRecordingMutations()) {
-      mutations.computeIfAbsent(callerConsumerID, this::buildConsumerQueue);
-    }
-
-    return new IMonitoringConsumer() {
+    MonitoringConsumer consumer = new MonitoringConsumer(callerConsumerID, configuration) {
       @Override
       public Optional<Collection<String>> getChildNamesForNode(String[] path) {
         return MonitoringService.this.getChildNamesForNode(callerConsumerID, path);
@@ -102,21 +90,20 @@ class MonitoringService {
       }
 
       @Override
-      public Stream<Mutation> readMutations() {
-        return MonitoringService.this.readMutations(callerConsumerID);
-      }
-
-      @Override
       public void close() {
-        mutations.remove(callerConsumerID);
+        consumers.remove(this);
       }
     };
+
+    consumers.offer(consumer);
+
+    return consumer;
   }
 
   // cleanup
 
   void clear() {
-    mutations.clear();
+    consumers.clear();
     tree.removeChildren();
   }
 
@@ -229,27 +216,15 @@ class MonitoringService {
     }
     // when a mutation is recorded, we add it to all the consumer queues
     // if the queue is a BoundedEvictingPriorityQueue, older mutations will be discarded
-    for (Queue<Mutation> queue : mutations.values()) {
-      queue.offer(mutation);
+    synchronized (consumers) {
+
+    }
+    for (MonitoringConsumer consumer : consumers) {
+      consumer.record(mutation);
     }
   }
 
   // consuming
-
-  private Stream<Mutation> readMutations(long callerConsumerID) {
-    return StreamSupport.stream(new MutationSpliterator(callerConsumerID), false);
-  }
-
-  private Queue<Mutation> buildConsumerQueue(long callerConsumerID) {
-    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/109
-    return new BoundedEvictingPriorityQueue<>(
-        config.getMaximumUnreadMutationsPerConsumer(),
-        mutation -> {
-          if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine("Discarded mutation " + mutation + " from consumer " + callerConsumerID);
-          }
-        });
-  }
 
   private <T> Optional<T> getValueForNode(long callerConsumerID, String[] path, Class<T> type) throws ClassCastException {
     Node node = getNodeForPath(path);
@@ -383,29 +358,6 @@ class MonitoringService {
       int result = value != null ? value.hashCode() : 0;
       result = 31 * result + children.hashCode();
       return result;
-    }
-  }
-
-  private class MutationSpliterator extends Spliterators.AbstractSpliterator<Mutation> {
-    private final long callerConsumerID;
-
-    MutationSpliterator(long callerConsumerID) {
-      super(mutations.getOrDefault(callerConsumerID, EMPTY_QUEUE).size(), NONNULL | ORDERED | SIZED | SUBSIZED | DISTINCT | IMMUTABLE);
-      this.callerConsumerID = callerConsumerID;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super Mutation> action) {
-      Queue<Mutation> queue = mutations.get(callerConsumerID);
-      if (queue == null) {
-        return false;
-      }
-      Mutation mutation = queue.poll();
-      if (mutation == null) {
-        return false;
-      }
-      action.accept(mutation);
-      return true;
     }
   }
 

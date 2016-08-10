@@ -25,13 +25,24 @@ import org.terracotta.entity.ServiceConfiguration;
 public class MonitoringConsumerConfiguration implements ServiceConfiguration<IMonitoringConsumer> {
 
   private boolean recordingMutations;
+  private int maximumUnreadMutations = 1024 * 1024;
 
   public boolean isRecordingMutations() {
     return recordingMutations;
   }
 
-  public MonitoringConsumerConfiguration setRecordingMutations(boolean recordingMutations) {
-    this.recordingMutations = recordingMutations;
+  public MonitoringConsumerConfiguration recordMutations() {
+    this.recordingMutations = true;
+    return this;
+  }
+
+
+  public int getMaximumUnreadMutations() {
+    return maximumUnreadMutations;
+  }
+
+  public MonitoringConsumerConfiguration setMaximumUnreadMutations(int maximumUnreadMutations) {
+    this.maximumUnreadMutations = maximumUnreadMutations;
     return this;
   }
 
