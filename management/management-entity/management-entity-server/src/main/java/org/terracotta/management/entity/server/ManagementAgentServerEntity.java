@@ -22,7 +22,7 @@ import org.terracotta.management.entity.ManagementAgentConfig;
 import org.terracotta.management.entity.ManagementEvent;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.management.service.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 import java.util.Objects;
@@ -50,15 +50,6 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
     }
     if (!consumer.getChildNamesForNode(array("management", "clients")).isPresent()) {
       producer.addNode(array("management"), "clients", null);
-    }
-
-    //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/108
-    // this will be the paths where the client-side stats and notifications are
-    if (!consumer.getChildNamesForNode(array("management", "notifications")).isPresent()) {
-      producer.addNode(array("management"), "notifications", new LinkedBlockingQueue<>(config.getMaximumUnreadClientNotifications()));
-    }
-    if (!consumer.getChildNamesForNode(array("management", "statistics")).isPresent()) {
-      producer.addNode(array("management"), "statistics", new LinkedBlockingQueue(config.getMaximumUnreadClientStatistics()));
     }
   }
 

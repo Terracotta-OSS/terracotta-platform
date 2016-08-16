@@ -33,16 +33,14 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.management.service.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
@@ -97,12 +95,8 @@ class ManagementAgentImpl implements ManagementAgent {
       // ensure the clientId is there
       notification.setContext(notification.getContext().with("clientId", clientIdentifier.getClientId()));
       // store in voltron tree
-      BlockingQueue<Serializable[]> queue = getQueue("notifications");
       Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), notification};
-      while (!queue.offer(o)) {
-        Serializable[] removed = queue.poll();
-        LOGGER.warning("Notification queue full: removed entry " + Arrays.toString(removed));
-      }
+      producer.pushBestEffortsData("client-notifications", o);
     });
     return CompletableFuture.completedFuture(null);
   }
@@ -116,12 +110,8 @@ class ManagementAgentImpl implements ManagementAgent {
           statistic.setContext(statistic.getContext().with("clientId", clientIdentifier.getClientId()));
         }
         // store in voltron tree
-        BlockingQueue<Serializable[]> queue = getQueue("statistics");
         Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), statistics};
-        while (!queue.offer(o)) {
-          Serializable[] removed = queue.poll();
-          LOGGER.warning("Statistic queue full: removed entry " + Arrays.toString(removed));
-        }
+        producer.pushBestEffortsData("client-statistics", o);
       });
     }
     return CompletableFuture.completedFuture(null);
@@ -188,11 +178,6 @@ class ManagementAgentImpl implements ManagementAgent {
     if (!Utils.isManageableClient(consumer, to)) {
       throw new SecurityException("Client " + to + " cannot be targeted");
     }
-  }
-
-  @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
-  private BlockingQueue<Serializable[]> getQueue(String node) {
-    return (BlockingQueue<Serializable[]>) consumer.getValueForNode(array("management", node), BlockingQueue.class).get();
   }
 
 }

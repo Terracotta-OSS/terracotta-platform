@@ -43,6 +43,7 @@ import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.MonitoringConsumerConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
+import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
@@ -108,6 +109,9 @@ public class ManagementAgentServiceTest {
     registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
+    ReadOnlyBuffer<Serializable[]> clientNotifs = consumer.getOrCreateBestEffortBuffer("client-notifications", 100, Serializable[].class);
+    ReadOnlyBuffer<Serializable[]> clientStats = consumer.getOrCreateBestEffortBuffer("client-statistics", 100, Serializable[].class);
+
     try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
       ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
@@ -145,11 +149,8 @@ public class ManagementAgentServiceTest {
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
 
-      BlockingQueue<Serializable[]> notifs = consumer.getValueForNode(new String[]{"management", "notifications"}, BlockingQueue.class).get();
-      BlockingQueue<Serializable[]> stats = consumer.getValueForNode(new String[]{"management", "statistics"}, BlockingQueue.class).get();
-
-      assertThat(notifs.poll()[1], equalTo(notif));
-      assertThat(stats.poll()[1], equalTo(new ContextualStatistics[]{stat, stat}));
+      assertThat(clientNotifs.read()[1], equalTo(notif));
+      assertThat(clientStats.read()[1], equalTo(new ContextualStatistics[]{stat, stat}));
 
       runManagementCallFromAnotherClient(clientIdentifier);
     }
