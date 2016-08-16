@@ -21,15 +21,12 @@ import org.terracotta.monitoring.IMonitoringProducer;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -149,8 +146,8 @@ class MonitoringService {
     recordChildRemoval(parents, name, previous);
 
     // the nodes have the same name, check if their values are different
-    if (!Objects.equals(previous.value, value)) {
-      recordMutation(CHANGE, parents, name, previous.value, value, getParentValues(parents));
+    if (!Objects.equals(previous.getValue(), value)) {
+      recordMutation(CHANGE, parents, name, previous.getValue(), value, getParentValues(parents));
     }
   }
 
@@ -176,7 +173,7 @@ class MonitoringService {
     }
 
     recordChildRemoval(parents, name, removed);
-    recordMutation(REMOVAL, parents, name, removed.value, null, getParentValues(parents));
+    recordMutation(REMOVAL, parents, name, removed.getValue(), null, getParentValues(parents));
     return true;
   }
 
@@ -186,8 +183,8 @@ class MonitoringService {
     for (int i = 0; i < level * indent; i++) {
       prefix += " ";
     }
-    for (Map.Entry<String, Node> entry : parent.children.entrySet()) {
-      writer.println(prefix + "- " + entry.getKey() + " : " + (entry.getValue().value == null ? null : (entry.getValue().value.getClass().isArray() ? Arrays.deepToString((Object[]) entry.getValue().value) : entry.getValue().value)));
+    for (Map.Entry<String, Node> entry : parent.getChildren().entrySet()) {
+      writer.println(prefix + "- " + entry.getKey() + " : " + (entry.getValue().getValue() == null ? null : (entry.getValue().getValue().getClass().isArray() ? Arrays.deepToString((Object[]) entry.getValue().getValue()) : entry.getValue().getValue())));
       dumpTree(entry.getValue(), level + 1, writer);
     }
   }
@@ -203,7 +200,7 @@ class MonitoringService {
         Node removed = node.removeChild(childName);
         if (removed != null) {
           recordChildRemoval(fullPath, childName, removed);
-          recordMutation(REMOVAL, fullPath, childName, removed.value, null, parentValues);
+          recordMutation(REMOVAL, fullPath, childName, removed.getValue(), null, parentValues);
         }
       }
     }
@@ -214,11 +211,7 @@ class MonitoringService {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("recordMutation: " + mutation);
     }
-    // when a mutation is recorded, we add it to all the consumer queues
-    // if the queue is a BoundedEvictingPriorityQueue, older mutations will be discarded
-    synchronized (consumers) {
-
-    }
+    // when a mutation is recorded, we add it to all the consumer's ring buffers
     for (MonitoringConsumer consumer : consumers) {
       consumer.record(mutation);
     }
@@ -230,12 +223,12 @@ class MonitoringService {
     Node node = getNodeForPath(path);
     if (null != node) {
       try {
-        return Optional.ofNullable(type.cast(node.value));
+        return Optional.ofNullable(type.cast(node.getValue()));
       } catch (ClassCastException e) {
         // We catch this here to add more information and re-throw a new exception.
         String nodePath = String.join("/", path);
         String requestedType = type.getName() + " (loaded by: " + type.getClassLoader() + ")";
-        Class<?> valueClass = node.value.getClass();
+        Class<?> valueClass = node.getValue().getClass();
         String actualType = valueClass.getName() + " (loaded by: " + valueClass.getClassLoader() + ")";
         String message = nodePath + " type is " + actualType + " but requested " + requestedType;
         throw new ClassCastException(message);
@@ -284,81 +277,11 @@ class MonitoringService {
       if (null == node) {
         break;
       }
-      values[i] = node.value;
+      values[i] = node.getValue();
     }
     return values;
   }
 
   // inner classes
-
-  private static class Node {
-
-    private final Object value;
-    private final ConcurrentMap<String, Node> children = new ConcurrentHashMap<>(0);
-
-    Node() {
-      this(null);
-    }
-
-    Node(Object value) {
-      this.value = value;
-    }
-
-    Node addChild(String name, Node child) {
-      return this.children.put(name, child);
-    }
-
-    void removeChildren() {
-      children.clear();
-    }
-
-    Node removeChild(String name) {
-      return this.children.remove(name);
-    }
-
-    Node getChild(String name) {
-      return this.children.get(name);
-    }
-
-    Set<String> getChildNames() {
-      return this.children.keySet();
-    }
-
-    Map<String, Object> getChildValues() {
-      Map<String, Object> copy = new HashMap<>(children.size());
-      for (Map.Entry<String, Node> entry : this.children.entrySet()) {
-        copy.put(entry.getKey(), entry.getValue().value);
-      }
-      return copy;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value) + " " + getChildNames();
-    }
-
-    boolean hasChild() {
-      return !children.isEmpty();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Node node = (Node) o;
-
-      if (value != null ? !value.equals(node.value) : node.value != null) return false;
-      return children.equals(node.children);
-
-    }
-
-    @Override
-    public int hashCode() {
-      int result = value != null ? value.hashCode() : 0;
-      result = 31 * result + children.hashCode();
-      return result;
-    }
-  }
 
 }
