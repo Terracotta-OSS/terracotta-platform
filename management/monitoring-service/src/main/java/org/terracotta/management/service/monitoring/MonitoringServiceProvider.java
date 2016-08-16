@@ -53,11 +53,11 @@ public class MonitoringServiceProvider implements ServiceProvider {
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
-    if (serviceType == IMonitoringProducer.class) {
+    if (IMonitoringProducer.class.isAssignableFrom(serviceType)) {
       return serviceType.cast(monitoringService.getProducer(consumerID));
     }
 
-    if (serviceType == IMonitoringConsumer.class) {
+    if (IMonitoringConsumer.class.isAssignableFrom(serviceType)) {
       MonitoringConsumerConfiguration config = configuration instanceof MonitoringConsumerConfiguration ?
           (MonitoringConsumerConfiguration) configuration :
           new MonitoringConsumerConfiguration();

@@ -42,8 +42,10 @@ abstract class MonitoringConsumer implements IMonitoringConsumer {
   private static final Logger LOGGER = Logger.getLogger(MonitoringService.class.getName());
 
   private final Queue<Mutation> mutationQueue;
+  private final long callerConsumerID;
 
   MonitoringConsumer(long callerConsumerID, MonitoringConsumerConfiguration consumerConfiguration) {
+    this.callerConsumerID = callerConsumerID;
     if (consumerConfiguration.isRecordingMutations()) {
       //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/109
       mutationQueue = new BoundedEvictingPriorityQueue<>(
@@ -80,6 +82,27 @@ abstract class MonitoringConsumer implements IMonitoringConsumer {
     if (mutationQueue != EMPTY_QUEUE) {
       mutationQueue.offer(mutation);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MonitoringConsumer consumer = (MonitoringConsumer) o;
+    return callerConsumerID == consumer.callerConsumerID;
+  }
+
+  @Override
+  public int hashCode() {
+    return (int) (callerConsumerID ^ (callerConsumerID >>> 32));
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("MonitoringConsumer{");
+    sb.append("callerConsumerID=").append(callerConsumerID);
+    sb.append('}');
+    return sb.toString();
   }
 
 }

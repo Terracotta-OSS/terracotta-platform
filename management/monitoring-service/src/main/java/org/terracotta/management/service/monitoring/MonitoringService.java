@@ -16,7 +16,6 @@
 package org.terracotta.management.service.monitoring;
 
 import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -24,9 +23,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,7 +45,8 @@ class MonitoringService {
 
   private final Node tree = new Node();
   private final MonitoringServiceConfiguration config;
-  private final Queue<MonitoringConsumer> consumers = new ConcurrentLinkedQueue<>();
+  private final ConcurrentMap<MonitoringConsumer, ConcurrentMap<String, ReadWriteBuffer<?>>> consumers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, MonitoringConsumer> categories = new ConcurrentHashMap<>();
   private final SequenceGenerator generator;
 
   MonitoringService(MonitoringServiceConfiguration config, SequenceGenerator generator) {
@@ -64,6 +64,11 @@ class MonitoringService {
       @Override
       public boolean removeNode(String[] parents, String name) {
         return MonitoringService.this.removeNode(callerConsumerID, parents, name);
+      }
+
+      @Override
+      public void pushBestEffortsData(String category, Object data) {
+        MonitoringService.this.pushBestEffortsData(callerConsumerID, category, data);
       }
     };
   }
@@ -87,12 +92,20 @@ class MonitoringService {
       }
 
       @Override
+      public <V> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(String category, int maxBufferSize, Class<V> type) {
+        return MonitoringService.this.getOrCreateBestEffortBuffer(this, category, maxBufferSize, type);
+      }
+
+      @Override
       public void close() {
-        consumers.remove(this);
+        Map<String, ReadWriteBuffer<?>> buffers = consumers.remove(this);
+        if (buffers != null) {
+          buffers.forEach((k, v) -> categories.remove(k, this));
+        }
       }
     };
 
-    consumers.offer(consumer);
+    consumers.put(consumer, new ConcurrentHashMap<>());
 
     return consumer;
   }
@@ -101,6 +114,7 @@ class MonitoringService {
 
   void clear() {
     consumers.clear();
+    categories.clear();
     tree.removeChildren();
   }
 
@@ -177,6 +191,16 @@ class MonitoringService {
     return true;
   }
 
+  private void pushBestEffortsData(long callerConsumerID, String category, Object data) {
+    IMonitoringConsumer key = categories.get(category);
+    if (key != null) {
+      ReadWriteBuffer buffer = consumers.get(key).get(category);
+      if (buffer != null) {
+        buffer.put(data);
+      }
+    }
+  }
+
   private void dumpTree(Node parent, int level, PrintStream writer) {
     int indent = 4;
     String prefix = "";
@@ -212,7 +236,7 @@ class MonitoringService {
       LOGGER.finest("recordMutation: " + mutation);
     }
     // when a mutation is recorded, we add it to all the consumer's ring buffers
-    for (MonitoringConsumer consumer : consumers) {
+    for (MonitoringConsumer consumer : consumers.keySet()) {
       consumer.record(mutation);
     }
   }
@@ -255,6 +279,22 @@ class MonitoringService {
     return Optional.ofNullable(children);
   }
 
+  private <V> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(MonitoringConsumer consumer, String category, int maxBufferSize, Class<V> type) {
+    MonitoringConsumer monitoringConsumer = categories.computeIfAbsent(category, s -> consumer);
+    if (monitoringConsumer != consumer) {
+      throw new IllegalArgumentException("Buffer on category " + category + " is already hold by consumer " + consumer);
+    }
+    return (ReadWriteBuffer<V>) consumers.get(monitoringConsumer).computeIfAbsent(category, s -> new RingBuffer<V>(maxBufferSize) {
+      @Override
+      public synchronized void put(V value) {
+        if (!type.isInstance(value)) {
+          throw new IllegalArgumentException("Value type is " + value.getClass() + ". Required type is " + type);
+        }
+        super.put(value);
+      }
+    });
+  }
+
   private Node getNodeForPath(String[] path) {
     Node node = this.tree;
     for (String name : path) {
@@ -281,7 +321,5 @@ class MonitoringService {
     }
     return values;
   }
-
-  // inner classes
 
 }
