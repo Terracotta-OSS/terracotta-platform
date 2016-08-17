@@ -23,6 +23,8 @@ import com.tc.classloader.CommonComponent;
 @CommonComponent
 public interface IMonitoringProducer extends org.terracotta.monitoring.IMonitoringProducer {
 
+  //TODO: Remove this method when tc-apis will be relased and will contain this method
+  //See commit: https://github.com/Terracotta-OSS/terracotta-apis/commit/e60f3713d4e8c062c6f983bee091a6b0150bb1bb
   /**
    * Push some data for consumption on the underlying structure matching this tree path
    *
