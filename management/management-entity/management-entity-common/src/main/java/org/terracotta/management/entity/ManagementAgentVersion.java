@@ -18,13 +18,13 @@ package org.terracotta.management.entity;
 /**
  * @author Mathieu Carbou
  */
-public enum Version {
+public enum ManagementAgentVersion {
 
   LATEST(1L);
 
   private final long version;
 
-  Version(final long version) {
+  ManagementAgentVersion(final long version) {
     this.version = version;
   }
 

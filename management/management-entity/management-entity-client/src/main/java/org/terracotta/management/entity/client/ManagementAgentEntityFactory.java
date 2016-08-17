@@ -22,7 +22,7 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.management.entity.ManagementAgentConfig;
-import org.terracotta.management.entity.Version;
+import org.terracotta.management.entity.ManagementAgentVersion;
 
 /**
  * @author Mathieu Carbou
@@ -73,7 +73,7 @@ public class ManagementAgentEntityFactory {
 
   private EntityRef<ManagementAgentEntity, ManagementAgentConfig> getEntityRef() {
     try {
-      return connection.getEntityRef(ManagementAgentEntity.class, Version.LATEST.version(), ENTITYNAME);
+      return connection.getEntityRef(ManagementAgentEntity.class, ManagementAgentVersion.LATEST.version(), ENTITYNAME);
     } catch (EntityNotProvidedException e) {
       throw new AssertionError(e);
     }

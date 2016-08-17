@@ -21,7 +21,7 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
 import org.terracotta.management.entity.ManagementEvent;
-import org.terracotta.management.entity.Version;
+import org.terracotta.management.entity.ManagementAgentVersion;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
@@ -52,7 +52,7 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
 
   @Override
   public long getVersion() {
-    return Version.LATEST.version();
+    return ManagementAgentVersion.LATEST.version();
   }
 
   @Override
