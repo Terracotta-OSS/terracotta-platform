@@ -17,6 +17,8 @@ package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 /**
@@ -24,6 +26,16 @@ import java.util.stream.Stream;
  */
 @CommonComponent
 public interface ReadOnlyBuffer<V> {
+
+  /**
+   * Reads next available value from the buffer, waiting for it if not yet available
+   */
+  V take() throws InterruptedException;
+
+  /**
+   * Reads next available value from the buffer, waiting for it if not yet available
+   */
+  V take(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 
   /**
    * Reads next available value from the buffer, or null if none available

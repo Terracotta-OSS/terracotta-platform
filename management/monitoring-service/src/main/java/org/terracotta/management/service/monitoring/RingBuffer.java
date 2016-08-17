@@ -15,8 +15,11 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import java.io.Serializable;
 import java.util.Spliterators;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -29,6 +32,9 @@ import static java.util.Spliterator.SIZED;
 import static java.util.Spliterator.SUBSIZED;
 
 /**
+ * A ring buffer for best-effort push in {@link org.terracotta.monitoring.IMonitoringProducer#pushBestEffortsData(String, Serializable)}.
+ * Some data are discarded when the queue is full.
+ *
  * @author Mathieu Carbou
  */
 class RingBuffer<V> implements ReadWriteBuffer<V> {
@@ -43,13 +49,27 @@ class RingBuffer<V> implements ReadWriteBuffer<V> {
   }
 
   @Override
-  public synchronized void put(V value) {
+  public void put(V value) {
     if (value == null) {
       throw new NullPointerException();
     }
     while (!queue.offer(value)) {
       queue.poll();
     }
+  }
+
+  @Override
+  public V take() throws InterruptedException {
+    return queue.take();
+  }
+
+  @Override
+  public V take(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+    V v = queue.poll(timeout, unit);
+    if (v == null) {
+      throw new TimeoutException();
+    }
+    return v;
   }
 
   @Override
