@@ -58,10 +58,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
     }
 
     if (IMonitoringConsumer.class.isAssignableFrom(serviceType)) {
-      MonitoringConsumerConfiguration config = configuration instanceof MonitoringConsumerConfiguration ?
-          (MonitoringConsumerConfiguration) configuration :
-          new MonitoringConsumerConfiguration();
-      return serviceType.cast(monitoringService.getConsumer(consumerID, config));
+      return serviceType.cast(monitoringService.getConsumer(consumerID));
     }
 
     throw new IllegalStateException("Unknown service type " + serviceType.getName());

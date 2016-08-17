@@ -53,12 +53,14 @@ public class MonitoringServiceTest {
   MonitoringServiceProvider serviceProvider = new MonitoringServiceProvider();
   IMonitoringProducer producer;
   IMonitoringConsumer consumer;
+  ReadOnlyBuffer<Mutation> mutationBuffer;
 
   @Before
   public void setUp() throws Exception {
     serviceProvider.initialize(new MonitoringServiceConfiguration().setDebug(true));
     producer = serviceProvider.getService(0, new BasicServiceConfiguration<>(IMonitoringProducer.class));
-    consumer = serviceProvider.getService(0, new MonitoringConsumerConfiguration().recordMutations());
+    consumer = serviceProvider.getService(0, new BasicServiceConfiguration<>(IMonitoringConsumer.class));
+    mutationBuffer = consumer.getOrCreateMutationBuffer(1024);
   }
 
   @Test
@@ -293,7 +295,7 @@ public class MonitoringServiceTest {
   }
 
   private List<Mutation> collectMutation() {
-    return consumer.readMutations().collect(Collectors.toList());
+    return mutationBuffer.stream().collect(Collectors.toList());
   }
 
   private static List<Mutation.Type> types(List<Mutation> mutations) {

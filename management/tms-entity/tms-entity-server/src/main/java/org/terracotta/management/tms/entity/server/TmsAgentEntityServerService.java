@@ -20,7 +20,6 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.management.service.monitoring.MonitoringConsumerConfiguration;
 import org.terracotta.management.tms.entity.TmsAgent;
 import org.terracotta.management.tms.entity.TmsAgentConfig;
 import org.terracotta.management.tms.entity.TmsAgentVersion;
@@ -38,9 +37,7 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
 
   @Override
   public TmsAgentServerEntity createActiveEntity(ServiceRegistry registry, TmsAgentConfig tmsAgentConfig) {
-    IMonitoringConsumer consumer = registry.getService(new MonitoringConsumerConfiguration()
-        .setMaximumUnreadMutations(tmsAgentConfig.getMaximumUnreadMutations())
-        .recordMutations());
+    IMonitoringConsumer consumer = registry.getService(new BasicServiceConfiguration<>(IMonitoringConsumer.class));
     SequenceGenerator sequenceGenerator = registry.getService(new BasicServiceConfiguration<>(SequenceGenerator.class));
     if (sequenceGenerator == null) {
       sequenceGenerator = new BoundaryFlakeSequenceGenerator();

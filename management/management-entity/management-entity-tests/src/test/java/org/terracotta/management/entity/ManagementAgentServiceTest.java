@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
 import org.terracotta.management.entity.client.ManagementAgentEntityFactory;
@@ -40,7 +41,6 @@ import org.terracotta.management.model.stats.primitive.Counter;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.management.service.monitoring.MonitoringConsumerConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
 import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
@@ -214,7 +214,7 @@ public class ManagementAgentServiceTest {
     @Override
     public boolean initialize(ServiceProviderConfiguration configuration) {
       super.initialize(configuration);
-      consumer = getService(0, new MonitoringConsumerConfiguration());
+      consumer = getService(0, new BasicServiceConfiguration<>(IMonitoringConsumer.class));
       return true;
     }
   }

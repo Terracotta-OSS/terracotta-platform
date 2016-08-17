@@ -23,6 +23,7 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.sequence.BoundaryFlakeSequence;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
+import org.terracotta.management.service.monitoring.Mutation;
 import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.management.tms.entity.TmsAgent;
 import org.terracotta.management.tms.entity.TmsAgentConfig;
@@ -73,6 +74,7 @@ class TmsAgentImpl implements TmsAgent {
   private final SequenceGenerator sequenceGenerator;
   private final ReadOnlyBuffer<Serializable[]> notificationBuffer;
   private final ReadOnlyBuffer<Serializable[]> statisticBuffer;
+  private final ReadOnlyBuffer<Mutation> mutationBuffer;
 
   private long expectedNextIndex = Long.MIN_VALUE;
 
@@ -83,6 +85,7 @@ class TmsAgentImpl implements TmsAgent {
     this.topologyBuilder = new TopologyBuilder(consumer, stripeName);
     this.notificationBuffer = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
     this.statisticBuffer = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Serializable[].class);
+    this.mutationBuffer = consumer.getOrCreateMutationBuffer(config.getMaximumUnreadMutations());
   }
 
   @Override
@@ -111,7 +114,7 @@ class TmsAgentImpl implements TmsAgent {
   }
 
   private Stream<Message> readTopologyMutations() {
-    List<Notification> notifications = consumer.readMutations()
+    List<Notification> notifications = mutationBuffer.stream()
         .map(Notification::new)
         .collect(Collectors.toList());
 

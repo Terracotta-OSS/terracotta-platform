@@ -26,7 +26,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,12 +40,9 @@ class MonitoringService {
 
   private static final Logger LOGGER = Logger.getLogger(MonitoringService.class.getName());
 
-  private static final AtomicLong MUTATION_INDEX = new AtomicLong(Long.MIN_VALUE);
-
   private final Node tree = new Node();
   private final MonitoringServiceConfiguration config;
-  private final ConcurrentMap<MonitoringConsumer, ConcurrentMap<String, ReadWriteBuffer<?>>> consumers = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, MonitoringConsumer> categories = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Long, ConcurrentMap<String, ReadWriteBuffer<?>>> consumers = new ConcurrentHashMap<>();
   private final SequenceGenerator generator;
 
   MonitoringService(MonitoringServiceConfiguration config, SequenceGenerator generator) {
@@ -58,88 +54,138 @@ class MonitoringService {
     return new IMonitoringProducer() {
       @Override
       public boolean addNode(String[] parents, String name, Object value) {
-        return MonitoringService.this.addNode(callerConsumerID, parents, name, value);
+        synchronized (tree) {
+          if (parents == null) {
+            parents = new String[0];
+          }
+
+          Node parentNode = getNodeForPath(parents);
+          if (parentNode == null) {
+            return false;
+          }
+
+          MonitoringService.this.addNode(parentNode, parents, name, value);
+
+          if (config.isDebug()) {
+            PrintStream writer = System.out;
+            writer.println("addNode() " + String.join("/", parents) + (parents.length > 0 ? "/" : "") + name);
+            dumpTree(tree, 0, writer);
+          }
+
+          return true;
+        }
       }
 
       @Override
       public boolean removeNode(String[] parents, String name) {
-        return MonitoringService.this.removeNode(callerConsumerID, parents, name);
+        synchronized (tree) {
+          if (parents == null) {
+            parents = new String[0];
+          }
+
+          Node parent = getNodeForPath(parents);
+          if (parent == null) {
+            return false;
+          }
+
+          Node removed = parent.removeChild(name);
+          if (removed == null) {
+            return false;
+          }
+
+          if (config.isDebug()) {
+            PrintStream writer = System.out;
+            writer.println("removeNode() " + String.join("/", parents) + (parents.length > 0 ? "/" : "") + name);
+            dumpTree(tree, 0, writer);
+          }
+
+          recordChildRemoval(parents, name, removed);
+          recordMutation(REMOVAL, parents, name, removed.getValue(), null, getParentValues(parents));
+          return true;
+        }
       }
 
       @Override
       public void pushBestEffortsData(String category, Object data) {
-        MonitoringService.this.pushBestEffortsData(callerConsumerID, category, data);
+        push(category, data);
       }
     };
   }
 
-  IMonitoringConsumer getConsumer(long callerConsumerID, MonitoringConsumerConfiguration configuration) {
-
-    MonitoringConsumer consumer = new MonitoringConsumer(callerConsumerID, configuration) {
+  IMonitoringConsumer getConsumer(long callerConsumerID) {
+    consumers.put(callerConsumerID, new ConcurrentHashMap<>());
+    return new IMonitoringConsumer() {
       @Override
       public Optional<Collection<String>> getChildNamesForNode(String[] path) {
-        return MonitoringService.this.getChildNamesForNode(callerConsumerID, path);
+        Set<String> children = null;
+        Node node = getNodeForPath(path);
+        if (null != node) {
+          children = node.getChildNames();
+        }
+        return Optional.ofNullable(children);
       }
 
       @Override
       public <T> Optional<T> getValueForNode(String[] path, Class<T> type) throws ClassCastException {
-        return MonitoringService.this.getValueForNode(callerConsumerID, path, type);
+        Node node = getNodeForPath(path);
+        if (null != node) {
+          try {
+            return Optional.ofNullable(type.cast(node.getValue()));
+          } catch (ClassCastException e) {
+            // We catch this here to add more information and re-throw a new exception.
+            String nodePath = String.join("/", path);
+            String requestedType = type.getName() + " (loaded by: " + type.getClassLoader() + ")";
+            Class<?> valueClass = node.getValue().getClass();
+            String actualType = valueClass.getName() + " (loaded by: " + valueClass.getClassLoader() + ")";
+            String message = nodePath + " type is " + actualType + " but requested " + requestedType;
+            throw new ClassCastException(message);
+          }
+        }
+        return Optional.empty();
       }
 
       @Override
       public Optional<Map<String, Object>> getChildValuesForNode(String[] path) {
-        return MonitoringService.this.getChildValuesForNode(callerConsumerID, path);
+        Map<String, Object> children = null;
+        Node node = getNodeForPath(path);
+        if (null != node) {
+          children = node.getChildValues();
+        }
+        return Optional.ofNullable(children);
       }
 
+      @SuppressWarnings("unchecked")
       @Override
       public <V> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(String category, int maxBufferSize, Class<V> type) {
-        return MonitoringService.this.getOrCreateBestEffortBuffer(this, category, maxBufferSize, type);
+        if ("monitoring-tree-mutations".equals(category) && Mutation.class != type) {
+          throw new IllegalArgumentException("Protected buffer name: monitoring-tree-mutations");
+        }
+        return (ReadWriteBuffer<V>) consumers.get(callerConsumerID).computeIfAbsent(category, s -> new RingBuffer<V>(maxBufferSize) {
+          @Override
+          public void put(V value) {
+            if (!type.isInstance(value)) {
+              throw new IllegalArgumentException("Value type is " + value.getClass() + ". Required type is " + type);
+            }
+            super.put(value);
+          }
+        });
       }
 
       @Override
       public void close() {
-        Map<String, ReadWriteBuffer<?>> buffers = consumers.remove(this);
-        if (buffers != null) {
-          buffers.forEach((k, v) -> categories.remove(k, this));
-        }
+        consumers.remove(callerConsumerID);
       }
     };
-
-    consumers.put(consumer, new ConcurrentHashMap<>());
-
-    return consumer;
   }
 
   // cleanup
 
   void clear() {
     consumers.clear();
-    categories.clear();
     tree.removeChildren();
   }
 
   /// producing
-
-  private synchronized boolean addNode(long callerConsumerID, String[] parents, String name, Object value) {
-    if (parents == null) {
-      parents = new String[0];
-    }
-
-    Node parentNode = getNodeForPath(parents);
-    if (parentNode == null) {
-      return false;
-    }
-
-    addNode(parentNode, parents, name, value);
-
-    if (config.isDebug()) {
-      PrintStream writer = System.out;
-      writer.println("addNode() " + String.join("/", parents) + (parents.length > 0 ? "/" : "") + name);
-      dumpTree(tree, 0, writer);
-    }
-
-    return true;
-  }
 
   private void addNode(Node parentNode, String[] parents, String name, Object value) {
     Node child = new Node(value);
@@ -165,36 +211,10 @@ class MonitoringService {
     }
   }
 
-  private synchronized boolean removeNode(long consumerID, String[] parents, String name) {
-    if (parents == null) {
-      parents = new String[0];
-    }
-
-    Node parent = getNodeForPath(parents);
-    if (parent == null) {
-      return false;
-    }
-
-    Node removed = parent.removeChild(name);
-    if (removed == null) {
-      return false;
-    }
-
-    if (config.isDebug()) {
-      PrintStream writer = System.out;
-      writer.println("removeNode() " + String.join("/", parents) + (parents.length > 0 ? "/" : "") + name);
-      dumpTree(tree, 0, writer);
-    }
-
-    recordChildRemoval(parents, name, removed);
-    recordMutation(REMOVAL, parents, name, removed.getValue(), null, getParentValues(parents));
-    return true;
-  }
-
-  private void pushBestEffortsData(long callerConsumerID, String category, Object data) {
-    IMonitoringConsumer key = categories.get(category);
-    if (key != null) {
-      ReadWriteBuffer buffer = consumers.get(key).get(category);
+  @SuppressWarnings("unchecked")
+  private void push(String category, Object data) {
+    for (ConcurrentMap<String, ReadWriteBuffer<?>> buffers : consumers.values()) {
+      ReadWriteBuffer buffer = buffers.get(category);
       if (buffer != null) {
         buffer.put(data);
       }
@@ -230,69 +250,13 @@ class MonitoringService {
     }
   }
 
-  private synchronized void recordMutation(Mutation.Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
+  private void recordMutation(Mutation.Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
     TreeMutation mutation = new TreeMutation(generator.next(), type, parents, name, oldValue, newValue, parentValues);
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("recordMutation: " + mutation);
     }
     // when a mutation is recorded, we add it to all the consumer's ring buffers
-    for (MonitoringConsumer consumer : consumers.keySet()) {
-      consumer.record(mutation);
-    }
-  }
-
-  // consuming
-
-  private <T> Optional<T> getValueForNode(long callerConsumerID, String[] path, Class<T> type) throws ClassCastException {
-    Node node = getNodeForPath(path);
-    if (null != node) {
-      try {
-        return Optional.ofNullable(type.cast(node.getValue()));
-      } catch (ClassCastException e) {
-        // We catch this here to add more information and re-throw a new exception.
-        String nodePath = String.join("/", path);
-        String requestedType = type.getName() + " (loaded by: " + type.getClassLoader() + ")";
-        Class<?> valueClass = node.getValue().getClass();
-        String actualType = valueClass.getName() + " (loaded by: " + valueClass.getClassLoader() + ")";
-        String message = nodePath + " type is " + actualType + " but requested " + requestedType;
-        throw new ClassCastException(message);
-      }
-    }
-    return Optional.empty();
-  }
-
-  private Optional<Map<String, Object>> getChildValuesForNode(long callerConsumerID, String[] path) {
-    Map<String, Object> children = null;
-    Node node = getNodeForPath(path);
-    if (null != node) {
-      children = node.getChildValues();
-    }
-    return Optional.ofNullable(children);
-  }
-
-  private Optional<Collection<String>> getChildNamesForNode(long callerConsumerID, String[] path) {
-    Set<String> children = null;
-    Node node = getNodeForPath(path);
-    if (null != node) {
-      children = node.getChildNames();
-    }
-    return Optional.ofNullable(children);
-  }
-
-  private <V> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(MonitoringConsumer consumer, String category, int maxBufferSize, Class<V> type) {
-    MonitoringConsumer monitoringConsumer = categories.computeIfAbsent(category, s -> consumer);
-    if (monitoringConsumer != consumer) {
-      throw new IllegalArgumentException("Buffer on category " + category + " is already hold by consumer " + consumer);
-    }
-    return (ReadWriteBuffer<V>) consumers.get(monitoringConsumer).computeIfAbsent(category, s -> new RingBuffer<V>(maxBufferSize) {
-      @Override
-      public synchronized void put(V value) {
-        if (!type.isInstance(value)) {
-          throw new IllegalArgumentException("Value type is " + value.getClass() + ". Required type is " + type);
-        }
-        super.put(value);
-      }
-    });
+    push("monitoring-tree-mutations", mutation);
   }
 
   private Node getNodeForPath(String[] path) {
