@@ -18,6 +18,7 @@ package org.terracotta.management.service.monitoring;
 import org.terracotta.management.sequence.SequenceGenerator;
 
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -53,7 +54,7 @@ class MonitoringService {
   IMonitoringProducer getProducer(long callerConsumerID) {
     return new IMonitoringProducer() {
       @Override
-      public boolean addNode(String[] parents, String name, Object value) {
+      public boolean addNode(String[] parents, String name, Serializable value) {
         synchronized (tree) {
           if (parents == null) {
             parents = new String[0];
@@ -106,7 +107,7 @@ class MonitoringService {
       }
 
       @Override
-      public void pushBestEffortsData(String category, Object data) {
+      public void pushBestEffortsData(String category, Serializable data) {
         push(category, data);
       }
     };

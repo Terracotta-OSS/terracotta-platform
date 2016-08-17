@@ -59,7 +59,7 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
 
     // when an entity is fetched, we create the root /management/<id> (ClientDescriptor)
     getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
-      producer.addNode(array("management", "clients"), clientIdentifier.getClientId(), clientDescriptor);
+      producer.addNode(array("management", "clients"), clientIdentifier.getClientId(), null);
       producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "registry", null);
     });
   }
