@@ -16,7 +16,7 @@
 package org.terracotta.management.entity;
 
 /**
- * @author Alex Snaps
+ * @author Mathieu Carbou
  */
 public enum Version {
 

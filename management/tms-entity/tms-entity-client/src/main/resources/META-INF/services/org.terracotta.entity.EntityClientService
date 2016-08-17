@@ -1,1 +1,1 @@
-com.terracottatech.management.voltron.tms.entity.client.TmsAgentEntityClientService
+org.terracotta.management.tms.entity.client.TmsAgentEntityClientService

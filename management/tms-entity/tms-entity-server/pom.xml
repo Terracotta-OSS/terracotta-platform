@@ -29,8 +29,78 @@
   <artifactId>tms-entity-server</artifactId>
   <name>Terracotta Management :: TMS Entity :: Server</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>tms-entity-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>sequence-generator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- provided by voltron (server) -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>monitoring-support</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>plugin</shadedClassifierName>
+              <!-- we have to make sure no voltron api comes in the shaded jar -->
+              <artifactSet>
+                <includes>
+                  <!--
+                    management-model must be set as an api library in voltron
+                    it is used by the management entity and other entities
+                   -->
+                  <!--<include>org.terracotta.management:management-model</include>-->
+                  <include>org.terracotta.management:tms-entity-common</include>
+                  <include>org.terracotta.management:sequence-generator</include>
+                  <include>org.terracotta.management:cluster-topology</include>
+                  <include>org.terracotta.management:cluster-messaging</include>
+                  <include>org.terracotta:voltron-proxy</include>
+                </includes>
+              </artifactSet>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
