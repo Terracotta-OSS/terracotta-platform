@@ -27,25 +27,4 @@ public final class ManagementAgentConfig implements Serializable {
   // name must be hardcoded because it reference a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.client.ManagementAgentEntity";
 
-  private int maximumUnreadClientNotifications = 1024 * 1024;
-  private int maximumUnreadClientStatistics = 1024 * 1024;
-
-  public ManagementAgentConfig setMaximumUnreadClientNotifications(int maximumUnreadClientNotifications) {
-    this.maximumUnreadClientNotifications = maximumUnreadClientNotifications;
-    return this;
-  }
-
-  public int getMaximumUnreadClientNotifications() {
-    return maximumUnreadClientNotifications;
-  }
-
-  public int getMaximumUnreadClientStatistics() {
-    return maximumUnreadClientStatistics;
-  }
-
-  public ManagementAgentConfig setMaximumUnreadClientStatistics(int maximumUnreadClientStatistics) {
-    this.maximumUnreadClientStatistics = maximumUnreadClientStatistics;
-    return this;
-  }
-
 }
