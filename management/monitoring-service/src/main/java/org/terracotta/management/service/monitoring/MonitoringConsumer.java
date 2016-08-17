@@ -15,12 +15,8 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Spliterators;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -36,51 +32,36 @@ import static java.util.Spliterator.SUBSIZED;
  */
 abstract class MonitoringConsumer implements IMonitoringConsumer {
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final Queue<Mutation> EMPTY_QUEUE = new LinkedList<>();
-
-  private static final Logger LOGGER = Logger.getLogger(MonitoringService.class.getName());
-
-  private final Queue<Mutation> mutationQueue;
+  private final ReadWriteBuffer<Mutation> mutations;
   private final long callerConsumerID;
 
   MonitoringConsumer(long callerConsumerID, MonitoringConsumerConfiguration consumerConfiguration) {
     this.callerConsumerID = callerConsumerID;
-    if (consumerConfiguration.isRecordingMutations()) {
-      //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/109
-      mutationQueue = new BoundedEvictingPriorityQueue<>(
-          consumerConfiguration.getMaximumUnreadMutations(),
-          mutation -> {
-            if (LOGGER.isLoggable(Level.FINE)) {
-              LOGGER.fine("CONSUMER " + callerConsumerID + ": discarded mutation " + mutation);
-            }
-          });
-    } else {
-      mutationQueue = EMPTY_QUEUE;
-    }
+    this.mutations = consumerConfiguration.isRecordingMutations() ? new RingBuffer<>(consumerConfiguration.getMaximumUnreadMutations()) : null;
   }
 
   @Override
   public final Stream<Mutation> readMutations() {
-    return StreamSupport.stream(new Spliterators.AbstractSpliterator<Mutation>(mutationQueue.size(), NONNULL | ORDERED | SIZED | SUBSIZED | DISTINCT | IMMUTABLE) {
-      @Override
-      public boolean tryAdvance(Consumer<? super Mutation> action) {
-        if (mutationQueue == EMPTY_QUEUE) {
-          return false;
+    if (mutations == null) {
+      return Stream.empty();
+    } else {
+      return StreamSupport.stream(new Spliterators.AbstractSpliterator<Mutation>(mutations.size(), NONNULL | ORDERED | SIZED | SUBSIZED | DISTINCT | IMMUTABLE) {
+        @Override
+        public boolean tryAdvance(Consumer<? super Mutation> action) {
+          Mutation mutation = mutations.read();
+          if (mutation == null) {
+            return false;
+          }
+          action.accept(mutation);
+          return true;
         }
-        Mutation mutation = mutationQueue.poll();
-        if (mutation == null) {
-          return false;
-        }
-        action.accept(mutation);
-        return true;
-      }
-    }, false);
+      }, false);
+    }
   }
 
-  void record(TreeMutation mutation) {
-    if (mutationQueue != EMPTY_QUEUE) {
-      mutationQueue.offer(mutation);
+  final void record(TreeMutation mutation) {
+    if (mutations != null) {
+      mutations.put(mutation);
     }
   }
 

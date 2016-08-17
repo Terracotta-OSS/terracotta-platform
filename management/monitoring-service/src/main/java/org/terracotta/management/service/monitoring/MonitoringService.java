@@ -231,7 +231,7 @@ class MonitoringService {
   }
 
   private synchronized void recordMutation(Mutation.Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
-    TreeMutation mutation = new TreeMutation(MUTATION_INDEX.getAndIncrement(), generator.next(), type, parents, name, oldValue, newValue, parentValues);
+    TreeMutation mutation = new TreeMutation(generator.next(), type, parents, name, oldValue, newValue, parentValues);
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("recordMutation: " + mutation);
     }
