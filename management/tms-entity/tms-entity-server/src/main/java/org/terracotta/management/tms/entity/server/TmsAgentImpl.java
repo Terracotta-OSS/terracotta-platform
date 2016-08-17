@@ -15,18 +15,17 @@
  */
 package org.terracotta.management.tms.entity.server;
 
-import org.terracotta.management.tms.entity.TmsAgent;
-import org.terracotta.management.tms.entity.TmsAgentConfig;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.BoundaryFlakeSequence;
-import org.terracotta.management.sequence.Sequence;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
+import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
+import org.terracotta.management.tms.entity.TmsAgent;
+import org.terracotta.management.tms.entity.TmsAgentConfig;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -35,13 +34,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.terracotta.management.tms.entity.server.Utils.array;
 
 /**
  * Consumes:
@@ -75,6 +71,8 @@ class TmsAgentImpl implements TmsAgent {
   private final String stripeName;
   private final TopologyBuilder topologyBuilder;
   private final SequenceGenerator sequenceGenerator;
+  private final ReadOnlyBuffer<Serializable[]> notificationBuffer;
+  private final ReadOnlyBuffer<Serializable[]> statisticBuffer;
 
   private long expectedNextIndex = Long.MIN_VALUE;
 
@@ -83,6 +81,8 @@ class TmsAgentImpl implements TmsAgent {
     this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
     this.stripeName = config.getStripeName() != null ? config.getStripeName() : "stripe-1";
     this.topologyBuilder = new TopologyBuilder(consumer, stripeName);
+    this.notificationBuffer = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
+    this.statisticBuffer = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Serializable[].class);
   }
 
   @Override
@@ -98,24 +98,14 @@ class TmsAgentImpl implements TmsAgent {
     readTopologyMutations().forEach(messages::add);
 
     // 2nd: read notifications coming client-side if any
-    consumer.getValueForNode(array("management", "notifications"), BlockingQueue.class).ifPresent(queue -> {
-      while (!queue.isEmpty()) {
-        Serializable[] bucket = (Serializable[]) queue.poll();
-        Sequence sequence = BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]);
-        ContextualNotification notification = (ContextualNotification) bucket[1];
-        messages.add(new DefaultMessage(sequence, "NOTIFICATION", notification));
-      }
-    });
+    notificationBuffer.stream()
+        .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "NOTIFICATION", bucket[1]))
+        .forEach(messages::add);
 
     // 3rd: read stats coming client-side if any
-    consumer.getValueForNode(array("management", "statistics"), BlockingQueue.class).ifPresent(queue -> {
-      while (!queue.isEmpty()) {
-        Serializable[] bucket = (Serializable[]) queue.poll();
-        Sequence sequence = BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]);
-        ContextualStatistics[] statistics = (ContextualStatistics[]) bucket[1];
-        messages.add(new DefaultMessage(sequence, "STATISTICS", statistics));
-      }
-    });
+    statisticBuffer.stream()
+        .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "STATISTICS", bucket[1]))
+        .forEach(messages::add);
 
     return CompletableFuture.completedFuture(messages);
   }

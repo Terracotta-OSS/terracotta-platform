@@ -15,15 +15,15 @@
  */
 package org.terracotta.management.tms.entity.server;
 
-import org.terracotta.management.tms.entity.TmsAgent;
-import org.terracotta.management.tms.entity.TmsAgentConfig;
-import org.terracotta.management.tms.entity.Version;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.MonitoringConsumerConfiguration;
+import org.terracotta.management.tms.entity.TmsAgent;
+import org.terracotta.management.tms.entity.TmsAgentConfig;
+import org.terracotta.management.tms.entity.TmsAgentVersion;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
@@ -38,7 +38,9 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
 
   @Override
   public TmsAgentServerEntity createActiveEntity(ServiceRegistry registry, TmsAgentConfig tmsAgentConfig) {
-    IMonitoringConsumer consumer = registry.getService(new MonitoringConsumerConfiguration().recordMutations());
+    IMonitoringConsumer consumer = registry.getService(new MonitoringConsumerConfiguration()
+        .setMaximumUnreadMutations(tmsAgentConfig.getMaximumUnreadMutations())
+        .recordMutations());
     SequenceGenerator sequenceGenerator = registry.getService(new BasicServiceConfiguration<>(SequenceGenerator.class));
     if (sequenceGenerator == null) {
       sequenceGenerator = new BoundaryFlakeSequenceGenerator();
@@ -48,7 +50,7 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
 
   @Override
   public long getVersion() {
-    return Version.LATEST.version();
+    return TmsAgentVersion.LATEST.version();
   }
 
   @Override

@@ -15,8 +15,6 @@
  */
 package org.terracotta.management.tms.entity;
 
-import org.terracotta.management.model.Objects;
-
 import java.io.Serializable;
 
 /**
@@ -29,17 +27,45 @@ public final class TmsAgentConfig implements Serializable {
   // name must be hardcoded because it reference a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.tms.entity.client.TmsAgentEntity";
 
-  private final String connectionName;
-  private final String stripeName;
+  private String stripeName;
+  private int maximumUnreadMutations = 1024 * 1024;
+  private int maximumUnreadNotifications = 1024 * 1024;
+  private int maximumUnreadStatistics = 1024 * 1024;
 
-  public TmsAgentConfig(String connectionName, String stripeName) {
-    this.connectionName = Objects.requireNonNull(connectionName);
-    this.stripeName = Objects.requireNonNull(stripeName);
+  public int getMaximumUnreadMutations() {
+    return maximumUnreadMutations;
   }
 
-  public TmsAgentConfig(String connectionName) {
-    this.connectionName = Objects.requireNonNull(connectionName);
-    this.stripeName = null;
+  public TmsAgentConfig setMaximumUnreadMutations(int maximumUnreadMutations) {
+    this.maximumUnreadMutations = maximumUnreadMutations;
+    return this;
+  }
+
+  public String getStripeName() {
+    return stripeName;
+  }
+
+  public TmsAgentConfig setStripeName(String stripeName) {
+    this.stripeName = stripeName;
+    return this;
+  }
+
+  public int getMaximumUnreadNotifications() {
+    return maximumUnreadNotifications;
+  }
+
+  public TmsAgentConfig setMaximumUnreadNotifications(int maximumUnreadNotifications) {
+    this.maximumUnreadNotifications = maximumUnreadNotifications;
+    return this;
+  }
+
+  public int getMaximumUnreadStatistics() {
+    return maximumUnreadStatistics;
+  }
+
+  public TmsAgentConfig setMaximumUnreadStatistics(int maximumUnreadStatistics) {
+    this.maximumUnreadStatistics = maximumUnreadStatistics;
+    return this;
   }
 
   @Override
@@ -49,28 +75,31 @@ public final class TmsAgentConfig implements Serializable {
 
     TmsAgentConfig that = (TmsAgentConfig) o;
 
-    if (!connectionName.equals(that.connectionName)) return false;
+    if (maximumUnreadMutations != that.maximumUnreadMutations) return false;
+    if (maximumUnreadNotifications != that.maximumUnreadNotifications) return false;
+    if (maximumUnreadStatistics != that.maximumUnreadStatistics) return false;
     return stripeName != null ? stripeName.equals(that.stripeName) : that.stripeName == null;
 
   }
 
   @Override
   public int hashCode() {
-    int result = connectionName.hashCode();
-    result = 31 * result + (stripeName != null ? stripeName.hashCode() : 0);
+    int result = stripeName != null ? stripeName.hashCode() : 0;
+    result = 31 * result + maximumUnreadMutations;
+    result = 31 * result + maximumUnreadNotifications;
+    result = 31 * result + maximumUnreadStatistics;
     return result;
   }
 
-  public String getConnectionName() {
-    return connectionName;
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("TmsAgentConfig{");
+    sb.append("stripeName='").append(stripeName).append('\'');
+    sb.append(", maximumUnreadMutations=").append(maximumUnreadMutations);
+    sb.append(", maximumUnreadNotifications=").append(maximumUnreadNotifications);
+    sb.append(", maximumUnreadStatistics=").append(maximumUnreadStatistics);
+    sb.append('}');
+    return sb.toString();
   }
-
-  public String getStripeName() {
-    return stripeName;
-  }
-
-  public TmsAgentConfig withStripeName(String stripeName) {
-    return new TmsAgentConfig(connectionName, stripeName);
-  }
-
+  
 }

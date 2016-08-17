@@ -18,13 +18,13 @@ package org.terracotta.management.tms.entity;
 /**
  * @author Mathieu Carbou
  */
-public enum Version {
+public enum TmsAgentVersion {
 
   LATEST(1L);
 
   private final long version;
 
-  Version(final long version) {
+  TmsAgentVersion(final long version) {
     this.version = version;
   }
 

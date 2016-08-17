@@ -17,9 +17,6 @@ package org.terracotta.management.tms.entity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.terracotta.management.tms.entity.client.TmsAgentEntity;
-import org.terracotta.management.tms.entity.client.TmsAgentEntityClientService;
-import org.terracotta.management.tms.entity.server.TmsAgentEntityServerService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +37,9 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
+import org.terracotta.management.tms.entity.client.TmsAgentEntity;
+import org.terracotta.management.tms.entity.client.TmsAgentEntityClientService;
+import org.terracotta.management.tms.entity.server.TmsAgentEntityServerService;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
@@ -122,8 +122,8 @@ public class TmsAgentTest {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
     try (org.terracotta.connection.Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
-      EntityRef<TmsAgentEntity, TmsAgentConfig> ref = connection.getEntityRef(TmsAgentEntity.class, Version.LATEST.version(), getClass().getSimpleName());
-      ref.create(new TmsAgentConfig("my-cluster"));
+      EntityRef<TmsAgentEntity, TmsAgentConfig> ref = connection.getEntityRef(TmsAgentEntity.class, TmsAgentVersion.LATEST.version(), getClass().getSimpleName());
+      ref.create(new TmsAgentConfig());
 
       TmsAgentEntity entity = ref.fetchEntity();
 
