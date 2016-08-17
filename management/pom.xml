@@ -40,10 +40,8 @@
     <module>cluster-messaging</module>
     <module>monitoring-service</module>
     <module>management-entity</module>
+    <module>tms-entity</module>
     <module>samples</module>
-    <!-- not used for now -->
-    <!--module>management-api</module>
-    <module>management-service</module-->
   </modules>
 
   <name>Terracotta Management</name>
