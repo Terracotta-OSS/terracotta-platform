@@ -53,7 +53,8 @@ public interface ReadOnlyBuffer<V> {
   boolean isEmpty();
 
   /**
-   * Returns a stream on all the available values coming in this buffer
+   * Returns a reading stream, like and sort of input stream on all the available values coming in this buffer.
+   * This is a destructive operation since all values are read and cannot be read again.
    */
   Stream<V> stream();
 

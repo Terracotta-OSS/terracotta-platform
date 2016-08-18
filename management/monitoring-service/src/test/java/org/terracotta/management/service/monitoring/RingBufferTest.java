@@ -17,6 +17,9 @@ package org.terracotta.management.service.monitoring;
 
 import org.junit.Test;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -48,6 +51,15 @@ public class RingBufferTest {
     assertThat(buffer.size(), equalTo(0));
 
     assertThat(buffer.read(), equalTo(null));
+
+    buffer.put(1);
+    buffer.put(2);
+    assertThat(buffer.size(), equalTo(2));
+    List<Integer> collect = buffer.stream().collect(Collectors.toList());
+    assertThat(collect.get(0), equalTo(1));
+    assertThat(collect.get(1), equalTo(2));
+    // now that the stream has been consumed once, calling it again on buffer returns an empty stream
+    assertThat(buffer.stream().count(), equalTo(0L));
   }
 
 }

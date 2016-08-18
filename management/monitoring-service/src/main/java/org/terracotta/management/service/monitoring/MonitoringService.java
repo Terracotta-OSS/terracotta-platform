@@ -40,6 +40,7 @@ import static org.terracotta.management.service.monitoring.Mutation.Type.REMOVAL
 class MonitoringService {
 
   private static final Logger LOGGER = Logger.getLogger(MonitoringService.class.getName());
+  private static final String MUTATIONS_CATEGORY = "monitoring-tree-mutations";
 
   private final Node tree = new Node();
   private final MonitoringServiceConfiguration config;
@@ -158,18 +159,10 @@ class MonitoringService {
       @SuppressWarnings("unchecked")
       @Override
       public <V> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(String category, int maxBufferSize, Class<V> type) {
-        if ("monitoring-tree-mutations".equals(category) && Mutation.class != type) {
-          throw new IllegalArgumentException("Protected buffer name: monitoring-tree-mutations");
+        if (MUTATIONS_CATEGORY.equals(category) && Mutation.class != type) {
+          throw new IllegalArgumentException("Protected buffer name: " + MUTATIONS_CATEGORY);
         }
-        return (ReadWriteBuffer<V>) consumers.get(callerConsumerID).computeIfAbsent(category, s -> new RingBuffer<V>(maxBufferSize) {
-          @Override
-          public void put(V value) {
-            if (!type.isInstance(value)) {
-              throw new IllegalArgumentException("Value type is " + value.getClass() + ". Required type is " + type);
-            }
-            super.put(value);
-          }
-        });
+        return new TypedReadWriteBuffer<>(consumers.get(callerConsumerID).computeIfAbsent(category, s -> new RingBuffer<V>(maxBufferSize)), type);
       }
 
       @Override

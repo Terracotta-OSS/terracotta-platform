@@ -18,10 +18,10 @@ package org.terracotta.management.service.monitoring;
 import com.tc.classloader.CommonComponent;
 
 import java.io.Closeable;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.terracotta.management.service.monitoring.Utils.concat;
 
@@ -79,7 +79,7 @@ public interface IMonitoringConsumer extends Closeable {
   /**
    * Create a buffer where producers can push some data into. Not that push is a best effort so if the buffer is full, some data might be discarded without any notice.
    *
-   * @param category The category name of this producer, used in {@link IMonitoringProducer#pushBestEffortsData(String, Object)}
+   * @param category The category name of this producer, used in {@link IMonitoringProducer#pushBestEffortsData(String, Serializable)}
    * @param type     The class of data for casting
    * @param <V>      The type of data expected to receive in this buffer
    * @return a read-only buffer

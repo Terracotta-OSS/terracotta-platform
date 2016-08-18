@@ -262,7 +262,7 @@ public class MonitoringServiceTest {
   }
 
   @Test
-  public void test_push_inexisting_buffer() {
+  public void test_push_into_inexisting_buffer_do_not_fail() {
     // do not fail
     producer.pushBestEffortsData("test_push_inexisting_buffer", 1);
 

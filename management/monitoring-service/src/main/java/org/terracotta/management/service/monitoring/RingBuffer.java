@@ -37,7 +37,7 @@ import static java.util.Spliterator.SUBSIZED;
  *
  * @author Mathieu Carbou
  */
-class RingBuffer<V> implements ReadWriteBuffer<V> {
+public class RingBuffer<V> implements ReadWriteBuffer<V> {
 
   private final LinkedBlockingQueue<V> queue;
 
