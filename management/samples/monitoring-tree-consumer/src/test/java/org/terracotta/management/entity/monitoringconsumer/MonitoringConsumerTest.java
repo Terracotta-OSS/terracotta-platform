@@ -16,7 +16,6 @@
 package org.terracotta.management.entity.monitoringconsumer;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,16 +28,16 @@ import org.terracotta.management.entity.monitoringconsumer.client.MonitoringCons
 import org.terracotta.management.entity.monitoringconsumer.server.MonitoringConsumerEntityServerService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
+import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertThat;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.SERVERS_PATH;
 
 /**
@@ -77,12 +76,9 @@ public class MonitoringConsumerTest {
 
       Collection<String> serverNodeIds = entity.getChildNamesForNode(SERVERS_PATH);
 
-      try {
-        entity.getValueForNode(SERVERS_PATH, serverNodeIds.iterator().next());
-        fail();
-      } catch (Exception e) {
-        assertEquals(UndeclaredThrowableException.class, e.getClass());
-      }
+      Object o = entity.getValueForNode(SERVERS_PATH, serverNodeIds.iterator().next());
+      System.out.println(o);
+      assertThat(o, instanceOf(PlatformServer.class));
     }
   }
 

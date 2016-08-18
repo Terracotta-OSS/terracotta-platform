@@ -20,15 +20,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.management.service.monitoring.Mutation.Type.ADDITION;
 import static org.terracotta.management.service.monitoring.Mutation.Type.CHANGE;
@@ -52,12 +53,14 @@ public class MonitoringServiceTest {
   MonitoringServiceProvider serviceProvider = new MonitoringServiceProvider();
   IMonitoringProducer producer;
   IMonitoringConsumer consumer;
+  ReadOnlyBuffer<Mutation> mutationBuffer;
 
   @Before
   public void setUp() throws Exception {
     serviceProvider.initialize(new MonitoringServiceConfiguration().setDebug(true));
     producer = serviceProvider.getService(0, new BasicServiceConfiguration<>(IMonitoringProducer.class));
-    consumer = serviceProvider.getService(0, new MonitoringConsumerConfiguration().recordMutations());
+    consumer = serviceProvider.getService(0, new BasicServiceConfiguration<>(IMonitoringConsumer.class));
+    mutationBuffer = consumer.getOrCreateMutationBuffer(1024);
   }
 
   @Test
@@ -258,8 +261,41 @@ public class MonitoringServiceTest {
     assertEquals(asList(asList(), asList()), parentVals(mutations));
   }
 
+  @Test
+  public void test_push_into_inexisting_buffer_do_not_fail() {
+    // do not fail
+    producer.pushBestEffortsData("test_push_inexisting_buffer", 1);
+
+    ReadOnlyBuffer<Integer> buffer = consumer.getOrCreateBestEffortBuffer("test_push_inexisting_buffer", 2, Integer.class);
+    assertThat(buffer.size(), equalTo(0));
+    assertThat(buffer.read(), equalTo(null));
+
+    producer.pushBestEffortsData("test_push_inexisting_buffer", 1);
+    assertThat(buffer.size(), equalTo(1));
+    assertThat(buffer.read(), equalTo(1));
+
+  }
+
+  @Test
+  public void test_push_buffer() {
+    ReadOnlyBuffer<Integer> buffer = consumer.getOrCreateBestEffortBuffer("test_push_buffer", 2, Integer.class);
+    assertThat(buffer.size(), equalTo(0));
+    assertThat(buffer.read(), equalTo(null));
+
+    producer.pushBestEffortsData("test_push_buffer", 1);
+    producer.pushBestEffortsData("test_push_buffer", 2);
+    producer.pushBestEffortsData("test_push_buffer", 3);
+
+    assertThat(buffer.size(), equalTo(2));
+    assertThat(buffer.read(), equalTo(2));
+    assertThat(buffer.read(), equalTo(3));
+
+    assertThat(buffer.size(), equalTo(0));
+    assertThat(buffer.read(), equalTo(null));
+  }
+
   private List<Mutation> collectMutation() {
-    return consumer.readMutations().collect(Collectors.toList());
+    return mutationBuffer.stream().collect(Collectors.toList());
   }
 
   private static List<Mutation.Type> types(List<Mutation> mutations) {

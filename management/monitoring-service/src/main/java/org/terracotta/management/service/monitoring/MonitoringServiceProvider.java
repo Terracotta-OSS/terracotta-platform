@@ -21,7 +21,6 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,7 +32,8 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
       IMonitoringConsumer.class,
-      IMonitoringProducer.class
+      IMonitoringProducer.class,
+      org.terracotta.monitoring.IMonitoringProducer.class
   );
 
   private MonitoringService monitoringService;
@@ -53,15 +53,12 @@ public class MonitoringServiceProvider implements ServiceProvider {
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
-    if (serviceType == IMonitoringProducer.class) {
+    if (org.terracotta.monitoring.IMonitoringProducer.class.isAssignableFrom(serviceType)) {
       return serviceType.cast(monitoringService.getProducer(consumerID));
     }
 
-    if (serviceType == IMonitoringConsumer.class) {
-      MonitoringConsumerConfiguration config = configuration instanceof MonitoringConsumerConfiguration ?
-          (MonitoringConsumerConfiguration) configuration :
-          new MonitoringConsumerConfiguration();
-      return serviceType.cast(monitoringService.getConsumer(consumerID, config));
+    if (IMonitoringConsumer.class.isAssignableFrom(serviceType)) {
+      return serviceType.cast(monitoringService.getConsumer(consumerID));
     }
 
     throw new IllegalStateException("Unknown service type " + serviceType.getName());

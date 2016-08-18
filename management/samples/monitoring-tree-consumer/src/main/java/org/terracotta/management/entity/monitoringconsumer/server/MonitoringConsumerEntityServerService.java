@@ -15,10 +15,10 @@
  */
 package org.terracotta.management.entity.monitoringconsumer.server;
 
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.management.entity.monitoringconsumer.MonitoringConsumer;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.management.service.monitoring.MonitoringConsumerConfiguration;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
@@ -32,7 +32,7 @@ public class MonitoringConsumerEntityServerService extends ProxyServerEntityServ
 
   @Override
   public MonitoringConsumerEntity createActiveEntity(ServiceRegistry registry, Void config) {
-    IMonitoringConsumer monitoringConsumer = registry.getService(new MonitoringConsumerConfiguration());
+    IMonitoringConsumer monitoringConsumer = registry.getService(new BasicServiceConfiguration<>(IMonitoringConsumer.class));
     return new MonitoringConsumerEntity(monitoringConsumer);
   }
 

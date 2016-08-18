@@ -18,11 +18,14 @@ package org.terracotta.management.service.monitoring;
 import org.terracotta.management.sequence.Sequence;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Mathieu Carbou
  */
-class TreeMutation implements Mutation, Comparable<TreeMutation> {
+class TreeMutation implements Mutation {
+
+  private static final AtomicLong MUTATION_INDEX = new AtomicLong(Long.MIN_VALUE);
 
   private final Object[] parentValues;
   private final Object oldValue;
@@ -36,8 +39,8 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
   private final String[] path;
   private final long index;
 
-  TreeMutation(long index, Sequence sequence, Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
-    this.index = index;
+  TreeMutation(Sequence sequence, Type type, String[] parents, String name, Object oldValue, Object newValue, Object[] parentValues) {
+    this.index = MUTATION_INDEX.getAndIncrement();
     this.sequence = sequence.toBytes();
     this.timestamp = sequence.getTimestamp();
     this.type = type;
@@ -130,11 +133,6 @@ class TreeMutation implements Mutation, Comparable<TreeMutation> {
       }
     }
     return false;
-  }
-
-  @Override
-  public int compareTo(TreeMutation o) {
-    return (int) (index - o.index);
   }
 
   @Override

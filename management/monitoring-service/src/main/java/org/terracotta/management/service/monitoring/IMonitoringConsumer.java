@@ -18,10 +18,10 @@ package org.terracotta.management.service.monitoring;
 import com.tc.classloader.CommonComponent;
 
 import java.io.Closeable;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.terracotta.management.service.monitoring.Utils.concat;
 
@@ -64,7 +64,7 @@ public interface IMonitoringConsumer extends Closeable {
   }
 
   /**
-   * Get the stream of mutations of the monitoring tree. They are ordered by creation time.
+   * Get the buffer of mutations of the monitoring tree. They are ordered by creation time.
    * The stream returned is always the same and consumed messages cannot be consumed again.
    * This is a little like a 'read' method.
    * <p>
@@ -72,7 +72,19 @@ public interface IMonitoringConsumer extends Closeable {
    * <p>
    * There is also one stream per consumer. So mutations read by this consumer will still be available if other consumers are also reading.
    */
-  Stream<Mutation> readMutations();
+  default ReadOnlyBuffer<Mutation> getOrCreateMutationBuffer(int maxBufferSize) {
+    return getOrCreateBestEffortBuffer("monitoring-tree-mutations", maxBufferSize, Mutation.class);
+  }
+
+  /**
+   * Create a buffer where producers can push some data into. Not that push is a best effort so if the buffer is full, some data might be discarded without any notice.
+   *
+   * @param category The category name of this producer, used in {@link IMonitoringProducer#pushBestEffortsData(String, Serializable)}
+   * @param type     The class of data for casting
+   * @param <V>      The type of data expected to receive in this buffer
+   * @return a read-only buffer
+   */
+  <V> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(String category, int maxBufferSize, Class<V> type);
 
   /**
    * closes this consumer
