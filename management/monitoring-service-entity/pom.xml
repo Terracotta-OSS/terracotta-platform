@@ -19,18 +19,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <groupId>org.terracotta.management</groupId>
+    <artifactId>terracotta-management</artifactId>
+    <version>5.0-SNAPSHOT</version>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <artifactId>samples</artifactId>
-    <groupId>org.terracotta.management.samples</groupId>
-    <version>5.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
-  </parent>
-
-  <artifactId>hello-world-entity</artifactId>
+  <artifactId>monitoring-service-entity</artifactId>
   <packaging>jar</packaging>
-  <name>Terracotta Management :: Samples :: Hello World Entity</name>
+  <name>Terracotta Management :: Monitoring Service Consumer Entity</name>
 
   <properties>
     <java.version>1.8</java.version>
@@ -43,7 +41,7 @@
       <version>${project.version}</version>
     </dependency>
 
-    <!-- provided by voltron-management module (client) -->
+    <!-- provided by voltron (client) -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
@@ -56,19 +54,12 @@
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
-
-    <!-- for the entity to be managed - optionally -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>management-registry</artifactId>
+      <artifactId>monitoring-service</artifactId>
       <version>${project.version}</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-entity-client</artifactId>
-      <version>${project.version}</version>
-      <optional>true</optional>
+      <classifier>plugin</classifier>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -79,27 +70,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>passthrough-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
-      <classifier>plugin</classifier>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-entity-server</artifactId>
-      <classifier>plugin</classifier>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service-entity</artifactId>
-      <classifier>plugin</classifier>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

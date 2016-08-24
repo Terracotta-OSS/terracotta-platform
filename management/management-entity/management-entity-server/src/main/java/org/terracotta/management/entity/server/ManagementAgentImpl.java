@@ -56,12 +56,15 @@ import static org.terracotta.management.entity.server.Utils.array;
  * </ul>
  * Produces:
  * <ul>
- * <li>{@code management/statistics BlockingQueue<[byte[] sequence, ContextualStatistics[]]>}</li>
- * <li>{@code management/notifications BlockingQueue<[byte[] sequence, ContextualNotification]>}</li>
  * <li>{@code management/clients/<client-identifier>/tags String[]}</li>
  * <li>{@code management/clients/<client-identifier>/registry}</li>
  * <li>{@code management/clients/<client-identifier>/registry/contextContainer ContextContainer}</li>
  * <li>{@code management/clients/<client-identifier>/registry/capabilities Capability[]}</li>
+ * </ul>
+ * Buffers:
+ * <ul>
+ * <li>{@code client-statistics [byte[] sequence, ContextualStatistics[]]>}</li>
+ * <li>{@code client-notifications [byte[] sequence, ContextualNotification]>}</li>
  * </ul>
  *
  * @author Mathieu Carbou

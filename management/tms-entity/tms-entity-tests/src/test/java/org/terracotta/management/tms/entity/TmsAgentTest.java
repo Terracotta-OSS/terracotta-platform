@@ -35,8 +35,6 @@ import org.terracotta.management.model.cluster.ServerState;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
-import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
 import org.terracotta.management.tms.entity.client.TmsAgentEntity;
 import org.terracotta.management.tms.entity.client.TmsAgentEntityClientService;
 import org.terracotta.management.tms.entity.server.TmsAgentEntityServerService;
@@ -72,7 +70,6 @@ public class TmsAgentTest {
     activeServer.setGroupPort(9610);
     activeServer.registerServerEntityService(new TmsAgentEntityServerService());
     activeServer.registerClientEntityService(new TmsAgentEntityClientService());
-    activeServer.registerServiceProvider(new MonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(false));
     stripeControl = new PassthroughClusterControl("server-1", activeServer);
 
     clientIdentifier = ClientIdentifier.create(

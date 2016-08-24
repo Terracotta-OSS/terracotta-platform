@@ -20,15 +20,14 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.ManagementAgent;
 import org.terracotta.management.entity.ManagementAgentConfig;
-import org.terracotta.management.entity.ManagementEvent;
 import org.terracotta.management.entity.ManagementAgentVersion;
+import org.terracotta.management.entity.ManagementEvent;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.SerializationCodec;
-import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
 /**
@@ -42,7 +41,7 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
   }
 
   @Override
-  public ProxiedServerEntity<ManagementAgent> createActiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
+  public ManagementAgentServerEntity createActiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
     ClientCommunicator communicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
     IMonitoringProducer producer = registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
     IMonitoringConsumer consumer = registry.getService(new BasicServiceConfiguration<>(IMonitoringConsumer.class));

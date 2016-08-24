@@ -33,7 +33,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>monitoring-tree-consumer</module>
     <module>hello-world-entity</module>
   </modules>
 

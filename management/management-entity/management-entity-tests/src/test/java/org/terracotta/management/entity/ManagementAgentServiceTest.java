@@ -22,11 +22,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
 import org.terracotta.management.entity.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.client.ManagementAgentService;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntity;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityClientService;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityFactory;
+import org.terracotta.management.entity.monitoring.server.MonitoringServiceEntityServerService;
 import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
@@ -40,10 +42,6 @@ import org.terracotta.management.model.stats.NumberUnit;
 import org.terracotta.management.model.stats.primitive.Counter;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
-import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
-import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
-import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
@@ -75,7 +73,7 @@ import static org.junit.Assert.fail;
 @RunWith(JUnit4.class)
 public class ManagementAgentServiceTest {
 
-  private static IMonitoringConsumer consumer;
+  private static MonitoringServiceEntity consumer;
 
   PassthroughClusterControl stripeControl;
 
@@ -87,13 +85,18 @@ public class ManagementAgentServiceTest {
     activeServer.setGroupPort(9610);
     activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
     activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
-    activeServer.registerServiceProvider(new HackedMonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
+    activeServer.registerServerEntityService(new MonitoringServiceEntityServerService());
+    activeServer.registerClientEntityService(new MonitoringServiceEntityClientService());
     stripeControl = new PassthroughClusterControl("server-1", activeServer);
+
+    consumer = new MonitoringServiceEntityFactory(ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())).retrieveOrCreate("MonitoringConsumerEntity");
   }
 
   @After
   public void tearDown() throws Exception {
-    stripeControl.tearDown();
+    if (stripeControl != null) {
+      stripeControl.tearDown();
+    }
   }
 
 
@@ -109,8 +112,8 @@ public class ManagementAgentServiceTest {
     registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
-    ReadOnlyBuffer<Serializable[]> clientNotifs = consumer.getOrCreateBestEffortBuffer("client-notifications", 100, Serializable[].class);
-    ReadOnlyBuffer<Serializable[]> clientStats = consumer.getOrCreateBestEffortBuffer("client-statistics", 100, Serializable[].class);
+    consumer.createBestEffortBuffer("client-notifications", 100, Serializable[].class);
+    consumer.createBestEffortBuffer("client-statistics", 100, Serializable[].class);
 
     try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
@@ -131,26 +134,26 @@ public class ManagementAgentServiceTest {
       managementAgent.pushNotification(notif);
       managementAgent.pushStatistics(stat, stat);
 
-      Collection<String> names = consumer.getChildNamesForNode(new String[]{"management", "clients"}).get();
+      Collection<String> names = consumer.getChildNamesForNode(new String[]{"management", "clients"});
       assertEquals(1, names.size());
       assertEquals(clientIdentifier.getClientId(), names.iterator().next());
 
-      names = consumer.getChildNamesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}).get();
+      names = consumer.getChildNamesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()});
       assertEquals(2, names.size());
       assertThat(names, hasItem("tags"));
       assertThat(names, hasItem("registry"));
 
       assertArrayEquals(
           new String[]{"EhcachePounder", "webapp-1", "app-server-node-1"},
-          consumer.getValueForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "tags", String[].class).get());
+          consumer.getValueForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "tags", String[].class));
 
-      Map<String, Object> children = consumer.getChildValuesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "registry").get();
+      Map<String, Object> children = consumer.getChildValuesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "registry");
       assertEquals(2, children.size());
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
 
-      assertThat(clientNotifs.read()[1], equalTo(notif));
-      assertThat(clientStats.read()[1], equalTo(new ContextualStatistics[]{stat, stat}));
+      assertThat(consumer.readBuffer("client-notifications", Serializable[].class)[1], equalTo(notif));
+      assertThat(consumer.readBuffer("client-statistics", Serializable[].class)[1], equalTo(new ContextualStatistics[]{stat, stat}));
 
       runManagementCallFromAnotherClient(clientIdentifier);
     }
@@ -206,16 +209,6 @@ public class ManagementAgentServiceTest {
       ret = returns.take();
       assertThat(ret.hasExecuted(), is(true));
       assertThat(ret.getValue(), equalTo(2));
-    }
-  }
-
-  // to be able to access the IMonitoringConsumer interface outside Voltron
-  public static class HackedMonitoringServiceProvider extends MonitoringServiceProvider {
-    @Override
-    public boolean initialize(ServiceProviderConfiguration configuration) {
-      super.initialize(configuration);
-      consumer = getService(0, new BasicServiceConfiguration<>(IMonitoringConsumer.class));
-      return true;
     }
   }
 
