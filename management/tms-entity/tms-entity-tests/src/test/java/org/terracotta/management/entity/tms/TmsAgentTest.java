@@ -107,7 +107,7 @@ public class TmsAgentTest {
 
     connection.fetchServerEntity(expectedCluster.getStripe("stripe-1").get()
         .getServerByName("server-1").get()
-        .getServerEntity("TmsAgentTest:" + TmsAgentConfig.ENTITY_TYPE).get());
+        .getServerEntity(getClass().getSimpleName() + ":" + TmsAgentConfig.ENTITY_TYPE).get());
   }
 
   @After

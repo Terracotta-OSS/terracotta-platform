@@ -25,7 +25,7 @@ public final class TmsAgentConfig implements Serializable {
   private static final long serialVersionUID = 1;
 
   // name must be hardcoded because it reference a class name in client package and is used on server-side
-  public static final String ENTITY_TYPE = "org.terracotta.management.tms.entity.client.TmsAgentEntity";
+  public static final String ENTITY_TYPE = "org.terracotta.management.entity.tms.client.TmsAgentEntity";
 
   private String stripeName;
   private int maximumUnreadMutations = 1024 * 1024;
