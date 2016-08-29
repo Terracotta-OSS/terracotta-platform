@@ -27,8 +27,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author Mathieu Carbou
@@ -90,20 +88,6 @@ class MonitoringServiceImpl implements MonitoringService {
   @Override
   public <T> T readBuffer(String name, Class<T> type) {
     return Optional.ofNullable(buffers.get(name)).map(ReadOnlyBuffer::read).map(type::cast).orElse(null);
-  }
-
-  @Override
-  public <T> T takeBuffer(String name, Class<T> type) {
-    return Optional.ofNullable(buffers.get(name)).map(buffer -> {
-      try {
-        return buffer.take(1, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException(e);
-      } catch (TimeoutException e) {
-        throw new RuntimeException(e);
-      }
-    }).map(type::cast).orElse(null);
   }
 
   private static String[] concat(String[] parents, String name) {

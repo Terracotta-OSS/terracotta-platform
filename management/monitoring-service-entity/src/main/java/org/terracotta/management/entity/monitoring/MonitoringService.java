@@ -43,5 +43,4 @@ public interface MonitoringService {
 
   <T> T readBuffer(String name, Class<T> type);
 
-  <T> T takeBuffer(String name, Class<T> type);
 }

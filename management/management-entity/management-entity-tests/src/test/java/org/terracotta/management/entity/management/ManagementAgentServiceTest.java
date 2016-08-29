@@ -153,7 +153,7 @@ public class ManagementAgentServiceTest {
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
 
       assertThat(consumer.readBuffer("client-notifications", Serializable[].class)[1], equalTo(notif));
-      assertThat(consumer.takeBuffer("client-statistics", Serializable[].class)[1], equalTo(new ContextualStatistics[]{stat, stat}));
+      assertThat(consumer.readBuffer("client-statistics", Serializable[].class)[1], equalTo(new ContextualStatistics[]{stat, stat}));
 
       runManagementCallFromAnotherClient(clientIdentifier);
     }
