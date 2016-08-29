@@ -15,9 +15,7 @@
  */
 package org.terracotta.management.entity.tms.server;
 
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
-import org.terracotta.management.model.cluster.Endpoint;
 import org.terracotta.monitoring.PlatformConnectedClient;
 
 /**
@@ -25,26 +23,12 @@ import org.terracotta.monitoring.PlatformConnectedClient;
  */
 class Utils {
 
-  static <T> T[] array(T... o) {
-    return o;
-  }
-
-  static Endpoint toClientEndpoint(PlatformConnectedClient connection) {
-    return Endpoint.create(connection.remoteAddress.getHostAddress(), connection.remotePort);
-  }
-
   static ClientIdentifier toClientIdentifier(PlatformConnectedClient connection) {
     return ClientIdentifier.create(
         connection.clientPID,
         connection.remoteAddress.getHostAddress(),
         connection.name == null || connection.name.isEmpty() ? "UNKNOWN" : connection.name,
         connection.uuid);
-  }
-
-  static Client toClient(PlatformConnectedClient connection) {
-    ClientIdentifier clientIdentifier = toClientIdentifier(connection);
-    return Client.create(clientIdentifier)
-        .setHostName(connection.remoteAddress.getHostName());
   }
 
 }

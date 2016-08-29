@@ -38,11 +38,11 @@ public class MonitoringServiceProvider implements ServiceProvider {
       org.terracotta.monitoring.IMonitoringProducer.class
   );
 
-  private final MonitoringService monitoringService;
+  private final VoltronMonitoringService voltronMonitoringService;
 
   public MonitoringServiceProvider() {
     SequenceGenerator generator = new BoundaryFlakeSequenceGenerator();
-    this.monitoringService = new MonitoringService(generator);
+    this.voltronMonitoringService = new VoltronMonitoringService(generator);
   }
 
   @Override
@@ -57,11 +57,11 @@ public class MonitoringServiceProvider implements ServiceProvider {
     Class<T> serviceType = configuration.getServiceType();
 
     if (org.terracotta.monitoring.IMonitoringProducer.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(monitoringService.getProducer(consumerID));
+      return serviceType.cast(voltronMonitoringService.getProducer(consumerID));
     }
 
     if (IMonitoringConsumer.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(monitoringService.getConsumer(consumerID));
+      return serviceType.cast(voltronMonitoringService.getConsumer(consumerID));
     }
 
     throw new IllegalStateException("Unknown service type " + serviceType.getName());
@@ -74,7 +74,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   @Override
   public void clear() throws ServiceProviderCleanupException {
-    monitoringService.clear();
+    voltronMonitoringService.clear();
   }
 
 }

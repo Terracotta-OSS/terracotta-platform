@@ -15,32 +15,36 @@
  */
 package org.terracotta.management.entity.monitoring;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * @author Mathieu Carbou
  */
 public interface MonitoringService {
 
-  Object getValueForNode(String... path);
+  long getConsumerId(String entityType, String entityName) throws NoSuchElementException;
 
-  <T> T getValueForNode(String[] path, Class<T> type);
+  Serializable getValueForNode(long consumerId, String... path);
 
-  Object getValueForNode(String[] parents, String nodeName);
+  <T extends Serializable> T getValueForNode(long consumerId, String[] path, Class<T> type);
 
-  <T> T getValueForNode(String[] parents, String nodeName, Class<T> type);
+  Serializable getValueForNode(long consumerId, String[] parents, String nodeName);
 
-  Collection<String> getChildNamesForNode(String... path);
+  <T extends Serializable> T getValueForNode(long consumerId, String[] parents, String nodeName, Class<T> type);
 
-  Collection<String> getChildNamesForNode(String[] parent, String nodeName);
+  Collection<String> getChildNamesForNode(long consumerId, String... path);
 
-  Map<String, Object> getChildValuesForNode(String... path);
+  Collection<String> getChildNamesForNode(long consumerId, String[] parent, String nodeName);
 
-  Map<String, Object> getChildValuesForNode(String[] parent, String nodeName);
+  Map<String, Serializable> getChildValuesForNode(long consumerId, String... path);
 
-  void createBestEffortBuffer(String name, int size, Class<?> type);
+  Map<String, Serializable> getChildValuesForNode(long consumerId, String[] parent, String nodeName);
 
-  <T> T readBuffer(String name, Class<T> type);
+  void createBestEffortBuffer(String name, int size, Class<? extends Serializable> type);
+
+  <T extends Serializable> T readBuffer(String name, Class<T> type);
 
 }

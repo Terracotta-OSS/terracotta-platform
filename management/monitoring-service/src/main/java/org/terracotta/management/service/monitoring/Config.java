@@ -20,6 +20,6 @@ package org.terracotta.management.service.monitoring;
  */
 class Config {
 
-  static final boolean DEBUG = Boolean.getBoolean("org.terracotta.management.service.monitoring.MonitoringService.DEBUG");
+  static final boolean DEBUG = Boolean.getBoolean("org.terracotta.management.service.monitoring.VoltronMonitoringService.DEBUG");
 
 }

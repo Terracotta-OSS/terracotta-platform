@@ -54,19 +54,19 @@ public abstract class AbstractTest {
                 .setHostName("hostname-1")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.ACTIVE)
+                .setState(Server.State.ACTIVE)
                 .addServerEntity(ehcache_server_entity))
             .addServer(Server.create("server-2")
                 .setHostName("hostname-2")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.PASSIVE)))
+                .setState(Server.State.PASSIVE)))
         .addStripe(Stripe.create("stripe-2")
             .addServer(Server.create("server-1")
                 .setHostName("hostname-3")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.ACTIVE)
+                .setState(Server.State.ACTIVE)
                 .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                     .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
                         .addCapabilities(action))))
@@ -74,19 +74,17 @@ public abstract class AbstractTest {
                 .setHostName("hostname-4")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.PASSIVE)))
+                .setState(Server.State.PASSIVE)))
         .addClient(client = Client.create("12345@127.0.0.1:ehcache:uid")
             .setManagementRegistry(ManagementRegistry.create(clientContextContainer)
                 .addCapability(action)));
 
-    Client client1 = cluster1.getClient("12345@127.0.0.1:ehcache:uid").get();
-
-    client1.addConnection(Connection.create(
+    client.addConnection(Connection.create(
         "uid",
         cluster1.getStripe("stripe-1").get().getServerByName("server-1").get(),
         Endpoint.create("10.10.10.10", 3456)));
 
-    client1.addConnection(Connection.create(
+    client.addConnection(Connection.create(
         "uid",
         cluster1.getStripe("stripe-2").get().getServerByName("server-1").get(),
         Endpoint.create("10.10.10.10", 3457)));
@@ -97,7 +95,7 @@ public abstract class AbstractTest {
                 .setHostName("hostname-1")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.ACTIVE)
+                .setState(Server.State.ACTIVE)
                 .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                     .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
                         .addCapabilities(action))))
@@ -105,13 +103,13 @@ public abstract class AbstractTest {
                 .setHostName("hostname-2")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.PASSIVE)))
+                .setState(Server.State.PASSIVE)))
         .addStripe(Stripe.create("stripe-2")
             .addServer(Server.create("server-1")
                 .setHostName("hostname-3")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.ACTIVE)
+                .setState(Server.State.ACTIVE)
                 .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
                     .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
                         .addCapabilities(action))))
@@ -119,7 +117,7 @@ public abstract class AbstractTest {
                 .setHostName("hostname-4")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
-                .setState(ServerState.PASSIVE)))
+                .setState(Server.State.PASSIVE)))
         .addClient(Client.create("12345@127.0.0.1:ehcache:uid")
             .setManagementRegistry(ManagementRegistry.create(clientContextContainer)
                 .addCapability(action)));

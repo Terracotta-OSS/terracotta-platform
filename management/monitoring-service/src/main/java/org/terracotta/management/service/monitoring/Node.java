@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,18 +27,18 @@ import java.util.concurrent.ConcurrentMap;
  */
 class Node {
 
-  private final Object value;
+  private final Serializable value;
   private final ConcurrentMap<String, Node> children = new ConcurrentHashMap<>(0);
 
   Node() {
     this(null);
   }
 
-  Node(Object value) {
+  Node(Serializable value) {
     this.value = value;
   }
 
-  Object getValue() {
+  Serializable getValue() {
     return value;
   }
 
@@ -61,8 +62,8 @@ class Node {
     return this.children.keySet();
   }
 
-  Map<String, Object> getChildValues() {
-    Map<String, Object> copy = new HashMap<>(children.size());
+  Map<String, Serializable> getChildValues() {
+    Map<String, Serializable> copy = new HashMap<>(children.size());
     for (Map.Entry<String, Node> entry : this.children.entrySet()) {
       copy.put(entry.getKey(), entry.getValue().getValue());
     }

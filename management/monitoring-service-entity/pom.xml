@@ -28,7 +28,7 @@
 
   <artifactId>monitoring-service-entity</artifactId>
   <packaging>jar</packaging>
-  <name>Terracotta Management :: Monitoring Service Consumer Entity</name>
+  <name>Terracotta Management :: Monitoring Service Entity</name>
 
   <properties>
     <java.version>1.8</java.version>

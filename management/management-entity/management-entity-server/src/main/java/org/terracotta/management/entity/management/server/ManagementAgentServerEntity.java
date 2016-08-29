@@ -18,17 +18,16 @@ package org.terracotta.management.entity.management.server;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.management.ManagementAgent;
-import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.ManagementEvent;
-import org.terracotta.management.sequence.SequenceGenerator;
+import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 import java.util.Objects;
 
 import static org.terracotta.management.entity.management.server.Utils.array;
-import static org.terracotta.management.entity.management.server.Utils.getClientIdentifier;
 
 /**
  * @author Mathieu Carbou
@@ -37,46 +36,51 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
 
   private final IMonitoringConsumer consumer;
   private final IMonitoringProducer producer;
+  private final ManagementAgentImpl managementAgent;
 
-  ManagementAgentServerEntity(ManagementAgentConfig config, IMonitoringConsumer consumer, IMonitoringProducer producer, SequenceGenerator sequenceGenerator, ClientCommunicator communicator) {
-    super(new ManagementAgentImpl(config, consumer, producer, sequenceGenerator, communicator), communicator, ManagementEvent.class);
+  ManagementAgentServerEntity(ManagementAgentImpl managementAgent, IMonitoringConsumer consumer, IMonitoringProducer producer, ClientCommunicator communicator) {
+    super(managementAgent, communicator, ManagementEvent.class);
+    this.managementAgent = Objects.requireNonNull(managementAgent);
     this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
     this.producer = Objects.requireNonNull(producer, "IMonitoringProducer service is missing");
-
-    // when an entity is created, we create the root: /management (null)
-    if (!consumer.getChildNamesForNode(array("management")).isPresent()) {
-      producer.addNode(new String[0], "management", null);
-    }
-    if (!consumer.getChildNamesForNode(array("management", "clients")).isPresent()) {
-      producer.addNode(array("management"), "clients", null);
-    }
+    producer.addNode(new String[0], "management", null);
+    producer.addNode(array("management"), "clients", null);
   }
 
   @Override
   public void connected(ClientDescriptor clientDescriptor) {
     super.connected(clientDescriptor);
-
-    // when an entity is fetched, we create the root /management/<id> (ClientDescriptor)
-    getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
-      producer.addNode(array("management", "clients"), clientIdentifier.getClientId(), null);
-      producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "registry", null);
-    });
+    PlatformConnectedClient platformConnectedClient = consumer.getPlatformConnectedClient(clientDescriptor)
+        .orElseThrow(() -> new IllegalStateException("Invalid monitoring tree: cannot get " + PlatformConnectedClient.class.getSimpleName() + " from descriptor " + clientDescriptor));
+    ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+    producer.addNode(array("management", "clients"), clientIdentifier.getClientId(), null);
+    producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "registry", null);
+    managementAgent.connected(clientDescriptor, clientIdentifier);
   }
 
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {
-    // when an entity is closed, we remove the node /management/<id> having the same ClientDescriptor
-    getClientIdentifier(consumer, clientDescriptor).ifPresent(clientIdentifier -> {
-      producer.removeNode(array("management", "clients"), clientIdentifier.getClientId());
-    });
-
+    PlatformConnectedClient platformConnectedClient = consumer.getPlatformConnectedClient(clientDescriptor)
+        .orElseThrow(() -> new IllegalStateException("Invalid monitoring tree: cannot get " + PlatformConnectedClient.class.getSimpleName() + " from descriptor " + clientDescriptor));
+    ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+    managementAgent.disconnected(clientDescriptor);
+    producer.removeNode(array("management", "clients"), clientIdentifier.getClientId());
     super.disconnected(clientDescriptor);
   }
 
   @Override
   public void destroy() {
     consumer.close();
+    producer.removeNode(new String[0], "management");
     super.destroy();
+  }
+
+  private static ClientIdentifier toClientIdentifier(PlatformConnectedClient connection) {
+    return ClientIdentifier.create(
+        connection.clientPID,
+        connection.remoteAddress.getHostAddress(),
+        connection.name == null || connection.name.isEmpty() ? "UNKNOWN" : connection.name,
+        connection.uuid);
   }
 
 }

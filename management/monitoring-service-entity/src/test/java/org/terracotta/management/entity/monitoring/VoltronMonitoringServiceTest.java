@@ -42,9 +42,9 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.SERVERS_PATH
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
-public class MonitoringServiceTest {
+public class VoltronMonitoringServiceTest {
 
-  PassthroughClusterControl stripeControl;
+  private PassthroughClusterControl stripeControl;
 
   @Before
   public void setUp() throws Exception {
@@ -58,7 +58,9 @@ public class MonitoringServiceTest {
 
   @After
   public void tearDown() throws Exception {
-    stripeControl.tearDown();
+    if(stripeControl != null) {
+      stripeControl.tearDown();
+    }
   }
 
   @Test
@@ -70,9 +72,10 @@ public class MonitoringServiceTest {
       MonitoringServiceEntityFactory monitoringServiceEntityFactory = new MonitoringServiceEntityFactory(connection);
       MonitoringServiceEntity entity = monitoringServiceEntityFactory.retrieveOrCreate(getClass().getSimpleName());
 
-      Collection<String> serverNodeIds = entity.getChildNamesForNode(SERVERS_PATH);
+      // 0 is a special number: its the consumer ID of the platform
+      Collection<String> serverNodeIds = entity.getChildNamesForNode(0, SERVERS_PATH);
 
-      Object o = entity.getValueForNode(SERVERS_PATH, serverNodeIds.iterator().next());
+      Object o = entity.getValueForNode(0, SERVERS_PATH, serverNodeIds.iterator().next());
       System.out.println(o);
       assertThat(o, instanceOf(PlatformServer.class));
     }

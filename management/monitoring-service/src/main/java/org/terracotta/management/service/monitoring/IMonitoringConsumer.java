@@ -16,14 +16,16 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.monitoring.PlatformConnectedClient;
+import org.terracotta.monitoring.PlatformEntity;
+import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.monitoring.ServerState;
 
 import java.io.Closeable;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
-
-import static org.terracotta.management.service.monitoring.Utils.concat;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
@@ -32,39 +34,60 @@ import static org.terracotta.management.service.monitoring.Utils.concat;
 public interface IMonitoringConsumer extends Closeable {
 
   /**
-   * Reads the value for the node located at the given path.
+   * Get a read-only access to a monitoring tree of another consumer.
    *
-   * @param path The node name path leading to a specific node, starting at the root.
-   * @param type The type of the value, for runtime type safety.
-   * @return The value set for the node or null, if it wasn't found.
-   * @throws ClassCastException If the type given does not match the type in the node (beware different class loaders).
+   * @param consumerId The consumer id to whom the tree belongs to
+   * @return The monitoring tree
    */
-  <T> Optional<T> getValueForNode(String[] path, Class<T> type) throws ClassCastException;
+  Optional<MonitoringTree> getMonitoringTree(long consumerId);
 
-  default <T> Optional<T> getValueForNode(String[] parents, String nodeName, Class<T> type) throws ClassCastException {
-    return getValueForNode(concat(parents, nodeName), type);
+  default Optional<MonitoringTree> getMonitoringTree(String entityType, String entityName) {
+    return getConsumerId(entityType, entityName).flatMap(this::getMonitoringTree);
   }
 
   /**
-   * Gets the names of the children of a node located at the given path.
-   *
-   * @param path The node name path leading to a specific node, starting at the root.
-   * @return The names of all immediate children of this node or null, if it wasn't found.
+   * @return The consumer ID of a specific entity
    */
-  Optional<Collection<String>> getChildNamesForNode(String... path);
-
-  default Optional<Collection<String>> getChildNamesForNode(String[] parent, String nodeName) {
-    return getChildNamesForNode(concat(parent, nodeName));
+  default Optional<Long> getConsumerId(String entityType, String entityName) {
+    return getPlatformEntities()
+        .filter(platformEntity -> platformEntity.typeName.equals(entityType) && platformEntity.name.equals(entityName))
+        .findFirst()
+        .map(platformEntity -> platformEntity.consumerID);
   }
 
-  Optional<Map<String, Object>> getChildValuesForNode(String... path);
-
-  default Optional<Map<String, Object>> getChildValuesForNode(String[] parent, String nodeName) {
-    return getChildValuesForNode(concat(parent, nodeName));
+  default Stream<Long> getConsumerIds(String entityType) {
+    return getPlatformEntities()
+        .filter(platformEntity -> platformEntity.typeName.equals(entityType))
+        .map(platformEntity -> platformEntity.consumerID);
   }
+
+  default Stream<MonitoringTree> getMonitoringTrees(String entityType) {
+    return getConsumerIds(entityType)
+        .map(this::getMonitoringTree)
+        .filter(Optional::isPresent)
+        .map(Optional::get);
+  }
+
+  Stream<PlatformServer> getPlatformServers();
+
+  Stream<PlatformEntity> getPlatformEntities();
+
+  Stream<PlatformConnectedClient> getPlatformConnectedClients();
+
+  Stream<PlatformEntity> getFetchedEntities(PlatformConnectedClient platformConnectedClient);
+
+  default Optional<PlatformServer> getPlatformServer(String serverName) {
+    return getPlatformServers()
+        .filter(platformServer -> platformServer.getServerName().equals(serverName))
+        .findFirst();
+  }
+
+  Optional<ServerState> getServerState(String serverName);
+
+  Optional<PlatformConnectedClient> getPlatformConnectedClient(ClientDescriptor clientDescriptor);
 
   /**
-   * Get the buffer of mutations of the monitoring tree. They are ordered by creation time.
+   * Get the buffer of notifications of the platform. They are ordered by creation time.
    * The stream returned is always the same and consumed messages cannot be consumed again.
    * This is a little like a 'read' method.
    * <p>
@@ -72,8 +95,8 @@ public interface IMonitoringConsumer extends Closeable {
    * <p>
    * There is also one stream per consumer. So mutations read by this consumer will still be available if other consumers are also reading.
    */
-  default ReadOnlyBuffer<Mutation> getOrCreateMutationBuffer(int maxBufferSize) {
-    return getOrCreateBestEffortBuffer("monitoring-tree-mutations", maxBufferSize, Mutation.class);
+  default ReadOnlyBuffer<PlatformNotification> getOrCreatePlatformNotificationBuffer(int maxBufferSize) {
+    return getOrCreateBestEffortBuffer("platform-notifications", maxBufferSize, PlatformNotification.class);
   }
 
   /**
@@ -84,7 +107,7 @@ public interface IMonitoringConsumer extends Closeable {
    * @param <V>      The type of data expected to receive in this buffer
    * @return a read-only buffer
    */
-  <V> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(String category, int maxBufferSize, Class<V> type);
+  <V extends Serializable> ReadOnlyBuffer<V> getOrCreateBestEffortBuffer(String category, int maxBufferSize, Class<V> type);
 
   /**
    * closes this consumer
