@@ -1,0 +1,25 @@
+Sort of Boundary Flake, inspired by (and related docs):
+
+ - http://www.slideshare.net/davegardnerisme/unique-id-generation-in-distributed-systems
+ - https://github.com/mumrah/flake-java
+ - https://github.com/boundary/flake
+ - https://github.com/rholder/fauxflake
+ - https://github.com/hibernate/hibernate-orm/blob/master/hibernate-testing/src/main/java/org/hibernate/testing/cache/Timestamper.java
+
+For this implementation we will use:
+
+    SEQUENCE = TIMESTAMP + NODE_ID + SEQUENCE_ID
+    NODE_ID = MAC + PID
+    SEQUENCE_ID = CLASSLOADER_ID + INSTANCE_ID + SEQUENCE_MS
+
+Where:
+
+    TIMESTAMP: 46 bits - enough for next >200 years
+    MAC: 48 bits - full mac address
+    PID: 16 bits - latest bits of the PID / VMID
+    CLASSLOADER_ID: 32 bits - classloader hashcode
+    INSTANCE_ID: 14 bits - number of instances per classloader
+    SEQUENCE_MS: 18 bits - seq id within the same millisecond
+
+This leads to 3 longs (192 bits).
+This generator will generate a maximum of about 262,144 sequence numbers / millisecond / instance / classloader / JVM / machine, with high probability to be unique if node id is unique.

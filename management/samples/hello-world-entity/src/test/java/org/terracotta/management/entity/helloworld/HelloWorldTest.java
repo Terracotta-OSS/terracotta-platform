@@ -15,34 +15,31 @@
  */
 package org.terracotta.management.entity.helloworld;
 
-import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.management.entity.ManagementAgentConfig;
-import org.terracotta.management.entity.client.ManagementAgentEntityFactory;
-import org.terracotta.management.entity.helloworld.client.HelloWorldEntity;
-import org.terracotta.management.entity.helloworld.client.HelloWorldEntityClientService;
-import org.terracotta.management.entity.helloworld.client.HelloWorldEntityFactory;
-import org.terracotta.management.entity.helloworld.client.management.HelloWorldManagementRegistry;
-import org.terracotta.management.entity.helloworld.server.HelloWorldEntityServerService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
-import org.terracotta.management.entity.client.ManagementAgentEntityClientService;
-import org.terracotta.management.entity.client.ManagementAgentService;
-import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntity;
-import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntityClientService;
-import org.terracotta.management.entity.monitoringconsumer.client.MonitoringConsumerEntityFactory;
-import org.terracotta.management.entity.monitoringconsumer.server.MonitoringConsumerEntityServerService;
-import org.terracotta.management.entity.server.ManagementAgentEntityServerService;
+import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.management.entity.management.ManagementAgentConfig;
+import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
+import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
+import org.terracotta.management.entity.management.client.ManagementAgentService;
+import org.terracotta.management.entity.helloworld.client.HelloWorldEntity;
+import org.terracotta.management.entity.helloworld.client.HelloWorldEntityClientService;
+import org.terracotta.management.entity.helloworld.client.HelloWorldEntityFactory;
+import org.terracotta.management.entity.helloworld.client.management.HelloWorldManagementRegistry;
+import org.terracotta.management.entity.helloworld.server.HelloWorldEntityServerService;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntity;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityClientService;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityFactory;
+import org.terracotta.management.entity.monitoring.server.MonitoringServiceEntityServerService;
+import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
-import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
-import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
@@ -70,10 +67,8 @@ public class HelloWorldTest {
     activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
     activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
 
-    activeServer.registerServerEntityService(new MonitoringConsumerEntityServerService());
-    activeServer.registerClientEntityService(new MonitoringConsumerEntityClientService());
-
-    activeServer.registerServiceProvider(new MonitoringServiceProvider(), new MonitoringServiceConfiguration().setDebug(true));
+    activeServer.registerServerEntityService(new MonitoringServiceEntityServerService());
+    activeServer.registerClientEntityService(new MonitoringServiceEntityClientService());
 
     stripeControl = new PassthroughClusterControl("server-1", activeServer);
   }
@@ -117,8 +112,8 @@ public class HelloWorldTest {
 
       // check it has been exposed properly
 
-      MonitoringConsumerEntityFactory entityFactory = new MonitoringConsumerEntityFactory(connection);
-      MonitoringConsumerEntity consumerEntity = entityFactory.retrieveOrCreate(getClass().getSimpleName());
+      MonitoringServiceEntityFactory entityFactory = new MonitoringServiceEntityFactory(connection);
+      MonitoringServiceEntity consumerEntity = entityFactory.retrieveOrCreate(getClass().getSimpleName());
       String clientIdentifier = consumerEntity.getChildNamesForNode("management", "clients").iterator().next();
 
       ContextContainer contextContainer = (ContextContainer) consumerEntity.getValueForNode("management", "clients", clientIdentifier, "registry", "contextContainer");

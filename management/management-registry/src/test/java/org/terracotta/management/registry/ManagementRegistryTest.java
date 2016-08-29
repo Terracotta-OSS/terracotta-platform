@@ -26,15 +26,14 @@ import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.provider.action.MyManagementProvider;
-import org.terracotta.management.provider.action.MyObject;
+import org.terracotta.management.registry.action.MyManagementProvider;
+import org.terracotta.management.registry.action.MyObject;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

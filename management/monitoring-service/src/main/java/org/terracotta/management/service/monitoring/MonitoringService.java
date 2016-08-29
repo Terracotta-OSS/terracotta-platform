@@ -43,12 +43,10 @@ class MonitoringService {
   private static final String MUTATIONS_CATEGORY = "monitoring-tree-mutations";
 
   private final Node tree = new Node();
-  private final MonitoringServiceConfiguration config;
   private final ConcurrentMap<Long, ConcurrentMap<String, ReadWriteBuffer<?>>> consumers = new ConcurrentHashMap<>();
   private final SequenceGenerator generator;
 
-  MonitoringService(MonitoringServiceConfiguration config, SequenceGenerator generator) {
-    this.config = config;
+  MonitoringService(SequenceGenerator generator) {
     this.generator = generator;
   }
 
@@ -68,7 +66,7 @@ class MonitoringService {
 
           MonitoringService.this.addNode(parentNode, parents, name, value);
 
-          if (config.isDebug()) {
+          if (Config.DEBUG) {
             PrintStream writer = System.out;
             writer.println("addNode() " + String.join("/", parents) + (parents.length > 0 ? "/" : "") + name);
             dumpTree(tree, 0, writer);
@@ -95,7 +93,7 @@ class MonitoringService {
             return false;
           }
 
-          if (config.isDebug()) {
+          if (Config.DEBUG) {
             PrintStream writer = System.out;
             writer.println("removeNode() " + String.join("/", parents) + (parents.length > 0 ? "/" : "") + name);
             dumpTree(tree, 0, writer);

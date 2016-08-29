@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import com.tc.classloader.BuiltinService;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
@@ -28,6 +29,7 @@ import java.util.Collection;
 /**
  * @author Mathieu Carbou
  */
+@BuiltinService
 public class MonitoringServiceProvider implements ServiceProvider {
 
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
@@ -36,15 +38,16 @@ public class MonitoringServiceProvider implements ServiceProvider {
       org.terracotta.monitoring.IMonitoringProducer.class
   );
 
-  private MonitoringService monitoringService;
+  private final MonitoringService monitoringService;
+
+  public MonitoringServiceProvider() {
+    SequenceGenerator generator = new BoundaryFlakeSequenceGenerator();
+    this.monitoringService = new MonitoringService(generator);
+  }
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
-    MonitoringServiceConfiguration config = configuration instanceof MonitoringServiceConfiguration ?
-        (MonitoringServiceConfiguration) configuration :
-        new MonitoringServiceConfiguration();
-    SequenceGenerator generator = new BoundaryFlakeSequenceGenerator();
-    this.monitoringService = new MonitoringService(config, generator);
+    // useless for a @BuiltinService
     return true;
   }
 

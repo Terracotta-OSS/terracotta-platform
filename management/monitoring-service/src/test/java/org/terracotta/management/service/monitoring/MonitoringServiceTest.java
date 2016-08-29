@@ -57,7 +57,6 @@ public class MonitoringServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    serviceProvider.initialize(new MonitoringServiceConfiguration().setDebug(true));
     producer = serviceProvider.getService(0, new BasicServiceConfiguration<>(IMonitoringProducer.class));
     consumer = serviceProvider.getService(0, new BasicServiceConfiguration<>(IMonitoringConsumer.class));
     mutationBuffer = consumer.getOrCreateMutationBuffer(1024);

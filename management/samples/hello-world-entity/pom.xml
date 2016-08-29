@@ -96,8 +96,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.management.samples</groupId>
-      <artifactId>monitoring-tree-consumer</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-entity</artifactId>
       <classifier>plugin</classifier>
       <version>${project.version}</version>
       <scope>test</scope>
