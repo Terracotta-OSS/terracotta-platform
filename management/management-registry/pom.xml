@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.terracotta.management</groupId>
     <artifactId>terracotta-management</artifactId>
-    <version>5.0-SNAPSHOT</version>
+    <version>5.0.6.beta3</version>
   </parent>
 
   <artifactId>management-registry</artifactId>
