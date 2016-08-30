@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -77,6 +79,8 @@ public class ManagementAgentServiceTest {
 
   PassthroughClusterControl stripeControl;
 
+  ExecutorService executorService = Executors.newCachedThreadPool();
+
   @Before
   public void setUp() throws Exception {
     PassthroughServer activeServer = new PassthroughServer();
@@ -94,6 +98,7 @@ public class ManagementAgentServiceTest {
 
   @After
   public void tearDown() throws Exception {
+    executorService.shutdown();
     if (stripeControl != null) {
       stripeControl.tearDown();
     }
@@ -118,7 +123,7 @@ public class ManagementAgentServiceTest {
     try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
       ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
-      managementAgent.bridge(registry);
+      managementAgent.setManagementCallExecutor(executorService);
 
       ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
       //System.out.println(clientIdentifier);
@@ -126,7 +131,11 @@ public class ManagementAgentServiceTest {
       assertEquals("UNKNOWN", clientIdentifier.getName());
       assertNotNull(clientIdentifier.getConnectionUid());
 
+      managementAgent.bridge(registry);
+      assertThat(consumer.readBuffer("client-notifications", Serializable[].class)[1], equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_REGISTRY_UPDATED")));
+
       managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
+      assertThat(consumer.readBuffer("client-notifications", Serializable[].class)[1], equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED")));
 
       ContextualNotification notif = new ContextualNotification(Context.create("key", "value"), "EXPLODED");
       ContextualStatistics stat = new ContextualStatistics("my-capability", Context.create("key", "value"), Collections.singletonMap("my-stat", new Counter(1L, NumberUnit.COUNT)));
@@ -134,20 +143,22 @@ public class ManagementAgentServiceTest {
       managementAgent.pushNotification(notif);
       managementAgent.pushStatistics(stat, stat);
 
-      Collection<String> names = consumer.getChildNamesForNode(new String[]{"management", "clients"});
+      long consumerId = consumer.getConsumerId(ManagementAgentConfig.ENTITY_TYPE, ManagementAgentEntityFactory.ENTITYNAME);
+
+      Collection<String> names = consumer.getChildNamesForNode(consumerId, "management", "clients");
       assertEquals(1, names.size());
       assertEquals(clientIdentifier.getClientId(), names.iterator().next());
 
-      names = consumer.getChildNamesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()});
+      names = consumer.getChildNamesForNode(consumerId, "management", "clients", clientIdentifier.getClientId());
       assertEquals(2, names.size());
       assertThat(names, hasItem("tags"));
       assertThat(names, hasItem("registry"));
 
       assertArrayEquals(
           new String[]{"EhcachePounder", "webapp-1", "app-server-node-1"},
-          consumer.getValueForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "tags", String[].class));
+          consumer.getValueForNode(consumerId, new String[]{"management", "clients", clientIdentifier.getClientId()}, "tags", String[].class));
 
-      Map<String, Object> children = consumer.getChildValuesForNode(new String[]{"management", "clients", clientIdentifier.getClientId()}, "registry");
+      Map<String, Serializable> children = consumer.getChildValuesForNode(consumerId, new String[]{"management", "clients", clientIdentifier.getClientId()}, "registry");
       assertEquals(2, children.size());
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
@@ -162,6 +173,7 @@ public class ManagementAgentServiceTest {
   private void runManagementCallFromAnotherClient(ClientIdentifier targetClientIdentifier) throws Exception {
     try (Connection managementConnection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
       ManagementAgentService agent = new ManagementAgentService(new ManagementAgentEntityFactory(managementConnection).retrieveOrCreate(new ManagementAgentConfig()));
+      agent.setManagementCallExecutor(executorService);
 
       assertThat(agent.getManageableClients().size(), equalTo(2));
       assertThat(agent.getManageableClients(), hasItem(targetClientIdentifier));

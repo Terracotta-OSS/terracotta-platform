@@ -47,7 +47,7 @@ class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
   public void connected(ClientDescriptor clientDescriptor) {
     super.connected(clientDescriptor);
     if(!connected.compareAndSet(false, true)) {
-      throw new AssertionError("Only one connection allowed per TmsAgentServerEntity");
+      throw new AssertionError("Only one connection allowed per " + TmsAgentConfig.ENTITY_TYPE);
     }
   }
 

@@ -24,8 +24,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.entity.tms.TmsAgentVersion;
+import org.terracotta.management.entity.tms.client.TmsAgentEntity;
+import org.terracotta.management.entity.tms.client.TmsAgentEntityClientService;
+import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
@@ -33,13 +34,9 @@ import org.terracotta.management.model.cluster.Connection;
 import org.terracotta.management.model.cluster.Endpoint;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.ServerEntity;
-import org.terracotta.management.model.cluster.ServerState;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.entity.tms.client.TmsAgentEntity;
-import org.terracotta.management.entity.tms.client.TmsAgentEntityClientService;
-import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
@@ -51,6 +48,8 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Mathieu Carbou
@@ -92,7 +91,7 @@ public class TmsAgentTest {
                 .setHostAddress("127.0.0.1")
                 .setVersion("Version Passthrough 5.0.0-SNAPSHOT")
                 .setBuildId("Build ID")
-                .setState(ServerState.ACTIVE)
+                .setState(Server.State.ACTIVE)
                 .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName()))))
         .addClient(Client.create(clientIdentifier)
             .setHostName(InetAddress.getLocalHost().getHostName()));
@@ -105,9 +104,7 @@ public class TmsAgentTest {
     );
     client.addConnection(connection);
 
-    connection.fetchServerEntity(expectedCluster.getStripe("stripe-1").get()
-        .getServerByName("server-1").get()
-        .getServerEntity(getClass().getSimpleName() + ":" + TmsAgentConfig.ENTITY_TYPE).get());
+    assertTrue(connection.fetchServerEntity(getClass().getSimpleName(), TmsAgentConfig.ENTITY_TYPE));
   }
 
   @After
@@ -160,16 +157,16 @@ public class TmsAgentTest {
 
       System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
 
-      assertEquals("TOPOLOGY", messages.get(0).getType());
-      assertEquals(cluster, messages.get(0).unwrap(Cluster.class));
+      assertEquals("TOPOLOGY", messages.get(messages.size() - 1).getType());
+      assertEquals(cluster, messages.get(messages.size() - 1).unwrap(Cluster.class));
 
-      assertEquals("NOTIFICATION", messages.get(1).getType());
-      ContextualNotification firstNotif = messages.get(1).unwrap(ContextualNotification.class);
+      assertEquals("NOTIFICATION", messages.get(0).getType());
+      ContextualNotification firstNotif = messages.get(0).unwrap(ContextualNotification.class);
       assertEquals("SERVER_ENTITY_CREATED", firstNotif.getType());
       assertEquals(expectedCluster.serverEntityStream().findFirst().get().getContext(), firstNotif.getContext());
 
-      assertEquals("NOTIFICATION", messages.get(2).getType());
-      ContextualNotification secondNotif = messages.get(2).unwrap(ContextualNotification.class);
+      assertEquals("NOTIFICATION", messages.get(1).getType());
+      ContextualNotification secondNotif = messages.get(1).unwrap(ContextualNotification.class);
       assertEquals("SERVER_ENTITY_FETCHED", secondNotif.getType());
       assertEquals(expectedCluster.serverEntityStream().findFirst().get().getContext(), firstNotif.getContext());
       assertEquals(

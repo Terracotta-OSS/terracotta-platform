@@ -205,6 +205,18 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
+  public void test_fetch_unfetch() throws IOException {
+    Connection connection = client.connectionStream().findFirst().get();
+    assertFalse(connection.hasFetchedServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+
+    assertTrue(connection.fetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    assertTrue(connection.hasFetchedServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+
+    assertTrue(connection.unfetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    assertFalse(connection.hasFetchedServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+  }
+
+  @Test
   public void test_toMap() throws IOException {
     String expectedJson = new String(Files.readAllBytes(new File("src/test/resources/cluster.json").toPath()), "UTF-8");
     Map actual = cluster1.toMap();

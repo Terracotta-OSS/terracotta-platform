@@ -149,22 +149,18 @@ public final class Connection extends AbstractNode<Client> implements Serializab
     return map;
   }
 
-  public void unfetchServerEntity(String name, String type) {
-    serverEntityIds.remove(ServerEntity.key(name, type));
+  public boolean unfetchServerEntity(String name, String type) {
+    return serverEntityIds.remove(ServerEntity.key(name, type));
   }
 
-  public boolean fetchServerEntity(ServerEntity serverEntity) {
+  public boolean fetchServerEntity(String name, String type) {
     if (!isConnected()) {
       throw new IllegalStateException("not connnected");
     }
-    if (!(serverEntity.getParent() instanceof Server)) {
-      throw new IllegalArgumentException(String.valueOf(serverEntity.getParent()));
-    }
-    Server server = (Server) serverEntity.getParent();
-    if (server != getServer().get()) {
-      throw new IllegalStateException("wrong server serverEntity");
-    }
-    return serverEntityIds.add(serverEntity.getId());
+    return getServer()
+        .flatMap(server -> server.getServerEntity(name, type))
+        .map(serverEntity -> serverEntityIds.add(serverEntity.getId()))
+        .orElse(false);
   }
 
   public boolean hasFetchedServerEntity(String name, String type) {

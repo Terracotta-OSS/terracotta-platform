@@ -45,7 +45,7 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
   private String bindAddress; // matches xml config
   private int bindPort; // matches xml config
   private int groupPort; // matches xml config
-  private ServerState state = ServerState.UNKNOWN; // taken at runtime from servers
+  private State state = State.UNKNOWN; // taken at runtime from servers
   private String version; // taken at runtime from servers
   private String buildId; // taken at runtime from servers
   private long startTime; // taken at runtime from servers
@@ -58,7 +58,7 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
   }
 
   public boolean isActive() {
-    return state == ServerState.ACTIVE;
+    return state == State.ACTIVE;
   }
 
   public String getServerName() {
@@ -88,7 +88,7 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
     return this;
   }
 
-  public ServerState getState() {
+  public State getState() {
     return state;
   }
 
@@ -168,7 +168,7 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
     return this;
   }
 
-  public Server setState(ServerState state) {
+  public Server setState(State state) {
     this.state = state;
     return this;
   }
@@ -319,4 +319,30 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
     return new Server(serverName, serverName);
   }
 
+  public enum State {
+
+  //  Currently the possible transitions for a server are:
+  //  UNINITIALIZED->SYNCHRONIZING->PASSIVE->ACTIVE
+  //  UNINITIALIZED->ACTIVE
+
+    UNINITIALIZED,
+    SYNCHRONIZING,
+    PASSIVE,
+    ACTIVE,
+
+    UNKNOWN;
+
+    public static State parse(String state) {
+      if (state == null) {
+        return UNKNOWN;
+      }
+      for (State serverState : State.values()) {
+        if (serverState.name().equalsIgnoreCase(state)) {
+          return serverState;
+        }
+      }
+      return UNKNOWN;
+    }
+
+  }
 }

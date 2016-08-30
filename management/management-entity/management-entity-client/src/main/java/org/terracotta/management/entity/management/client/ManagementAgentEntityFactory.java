@@ -29,7 +29,7 @@ import org.terracotta.management.entity.management.ManagementAgentVersion;
  */
 public class ManagementAgentEntityFactory {
 
-  private static final String ENTITYNAME = "ManagementAgent";
+  public static final String ENTITYNAME = "ManagementAgent";
 
   private final Connection connection;
 

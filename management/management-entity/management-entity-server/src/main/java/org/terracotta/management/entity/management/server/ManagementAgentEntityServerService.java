@@ -45,7 +45,9 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
     ClientCommunicator communicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
     IMonitoringProducer producer = registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
     IMonitoringConsumer consumer = registry.getService(new BasicServiceConfiguration<>(IMonitoringConsumer.class));
-    return new ManagementAgentServerEntity(configuration, consumer, producer, new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST), communicator);
+    BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST);
+    ManagementAgentImpl managementAgent = new ManagementAgentImpl(producer, sequenceGenerator, communicator);
+    return new ManagementAgentServerEntity(managementAgent, consumer, producer, communicator);
   }
 
   @Override

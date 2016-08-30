@@ -19,11 +19,13 @@ import org.terracotta.management.entity.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,60 +35,73 @@ import java.util.concurrent.ConcurrentMap;
  */
 class MonitoringServiceImpl implements MonitoringService {
 
-  private final IMonitoringConsumer monitoringConsumer;
+  private final IMonitoringConsumer consumer;
   private final ConcurrentMap<String, ReadOnlyBuffer<?>> buffers = new ConcurrentHashMap<>();
 
-  MonitoringServiceImpl(IMonitoringConsumer monitoringConsumer) {
-    this.monitoringConsumer = monitoringConsumer;
+  MonitoringServiceImpl(IMonitoringConsumer consumer) {
+    this.consumer = consumer;
   }
 
   @Override
-  public Collection<String> getChildNamesForNode(String[] parent, String nodeName) {
-    return monitoringConsumer.getChildNamesForNode(parent, nodeName).map(ArrayList::new).orElse(null);
+  public long getConsumerId(String entityType, String entityName) throws NoSuchElementException {
+    return consumer.getConsumerId(entityType, entityName).get();
   }
 
   @Override
-  public Object getValueForNode(String[] path) {
-    return getValueForNode(path, Object.class);
+  public Serializable getValueForNode(long consumerId, String[] path) {
+    return getValueForNode(consumerId, path, Serializable.class);
   }
 
   @Override
-  public <T> T getValueForNode(String[] parents, String nodeName, Class<T> type) {
-    return getValueForNode(concat(parents, nodeName), type);
+  public <T extends Serializable> T getValueForNode(long consumerId, String[] parents, String nodeName, Class<T> type) {
+    return getValueForNode(consumerId, concat(parents, nodeName), type);
   }
 
   @Override
-  public Object getValueForNode(String[] parents, String nodeName) {
-    return getValueForNode(concat(parents, nodeName), Object.class);
+  public Serializable getValueForNode(long consumerId, String[] parents, String nodeName) {
+    return getValueForNode(consumerId, concat(parents, nodeName), Serializable.class);
   }
 
   @Override
-  public <T> T getValueForNode(String[] path, Class<T> type) {
-    return monitoringConsumer.getValueForNode(path, type).orElse(null);
+  public <T extends Serializable> T getValueForNode(long consumerId, String[] path, Class<T> type) {
+    return consumer.getMonitoringTree(consumerId)
+        .flatMap(tree -> tree.getValueForNode(path, type))
+        .orElse(null);
   }
 
   @Override
-  public Collection<String> getChildNamesForNode(String... path) {
-    return monitoringConsumer.getChildNamesForNode(path).map(ArrayList::new).orElse(null);
+  public Collection<String> getChildNamesForNode(long consumerId, String[] parent, String nodeName) {
+    return getChildNamesForNode(consumerId, concat(parent, nodeName));
   }
 
   @Override
-  public Map<String, Object> getChildValuesForNode(String... path) {
-    return monitoringConsumer.getChildValuesForNode(path).map(HashMap::new).orElse(null);
+  public Collection<String> getChildNamesForNode(long consumerId, String... path) {
+    return consumer.getMonitoringTree(consumerId)
+        .flatMap(tree -> tree.getChildNamesForNode(path))
+        .map(ArrayList::new)
+        .orElse(null);
   }
 
   @Override
-  public Map<String, Object> getChildValuesForNode(String[] parent, String nodeName) {
-    return monitoringConsumer.getChildValuesForNode(parent, nodeName).map(HashMap::new).orElse(null);
+  public Map<String, Serializable> getChildValuesForNode(long consumerId, String[] parent, String nodeName) {
+    return getChildValuesForNode(consumerId, concat(parent, nodeName));
   }
 
   @Override
-  public void createBestEffortBuffer(String name, int size, Class<?> type) {
-    buffers.putIfAbsent(name, monitoringConsumer.getOrCreateBestEffortBuffer(name, size, type));
+  public Map<String, Serializable> getChildValuesForNode(long consumerId, String... path) {
+    return consumer.getMonitoringTree(consumerId)
+        .flatMap(tree -> tree.getChildValuesForNode(path))
+        .map(HashMap::new)
+        .orElse(null);
   }
 
   @Override
-  public <T> T readBuffer(String name, Class<T> type) {
+  public void createBestEffortBuffer(String name, int size, Class<? extends Serializable> type) {
+    buffers.putIfAbsent(name, consumer.getOrCreateBestEffortBuffer(name, size, type));
+  }
+
+  @Override
+  public <T extends Serializable> T readBuffer(String name, Class<T> type) {
     return Optional.ofNullable(buffers.get(name)).map(ReadOnlyBuffer::read).map(type::cast).orElse(null);
   }
 

@@ -13,34 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.model.cluster;
+package org.terracotta.management.service.monitoring;
+
+import com.tc.classloader.CommonComponent;
+
+import java.io.Serializable;
 
 /**
  * @author Mathieu Carbou
  */
-public enum ServerState {
+@CommonComponent
+public interface PlatformNotification extends Serializable {
 
-//  Currently the possible transitions for a server are:
-//  UNINITIALIZED->SYNCHRONIZING->PASSIVE->ACTIVE
-//  UNINITIALIZED->ACTIVE
+  @CommonComponent
+  enum Type {
+    SERVER_ENTITY_CREATED,
+    SERVER_ENTITY_DESTROYED,
 
-  UNINITIALIZED,
-  SYNCHRONIZING,
-  PASSIVE,
-  ACTIVE,
+    SERVER_ENTITY_FETCHED,
+    SERVER_ENTITY_UNFETCHED,
 
-  UNKNOWN,;
+    CLIENT_CONNECTED,
+    CLIENT_DISCONNECTED,
 
-  public static ServerState parse(String state) {
-    if (state == null) {
-      return UNKNOWN;
-    }
-    for (ServerState serverState : values()) {
-      if (serverState.name().equalsIgnoreCase(state)) {
-        return serverState;
-      }
-    }
-    return UNKNOWN;
+    SERVER_JOINED,
+    SERVER_LEFT,
+    SERVER_STATE_CHANGED,
   }
 
+  byte[] getSequence();
+
+  long getIndex();
+
+  Type getType();
+
+  <T extends Serializable> T getSource(Class<T> type);
 }

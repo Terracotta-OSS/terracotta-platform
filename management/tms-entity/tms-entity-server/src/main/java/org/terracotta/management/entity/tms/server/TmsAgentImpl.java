@@ -15,7 +15,13 @@
  */
 package org.terracotta.management.entity.tms.server;
 
+import org.terracotta.management.entity.tms.TmsAgent;
+import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.cluster.Server;
+import org.terracotta.management.model.cluster.ServerEntity;
+import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
@@ -23,16 +29,16 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.sequence.BoundaryFlakeSequence;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.management.service.monitoring.Mutation;
+import org.terracotta.management.service.monitoring.PlatformNotification;
 import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
-import org.terracotta.management.entity.tms.TmsAgent;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.monitoring.PlatformConnectedClient;
+import org.terracotta.monitoring.PlatformEntity;
+import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -40,52 +46,43 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.terracotta.management.entity.tms.server.Utils.toClientIdentifier;
+
 /**
  * Consumes:
  * <ul>
- * <li>{@code platform/servers/<id> PlatformServer}</li>
- * <li>{@code platform/servers/<id>/state ServerState}</li>
- * <li>{@code platform/clients/<id> PlatformConnectedClient}</li>
- * <li>{@code platform/fetched/<id> PlatformClientFetchedEntity}</li>
- * <li>{@code platform/entities/<id> PlatformEntity}</li>
- * <li>{@code management/statistics BlockingQueue<[byte[] sequence, ContextualStatistics[]]>}</li>
- * <li>{@code management/notifications BlockingQueue<[byte[] sequence, ContextualNotification]>}</li>
  * <li>{@code management/clients/<client-identifier>/tags String[]}</li>
  * <li>{@code management/clients/<client-identifier>/registry}</li>
  * <li>{@code management/clients/<client-identifier>/registry/contextContainer ContextContainer}</li>
  * <li>{@code management/clients/<client-identifier>/registry/capabilities Capability[]}</li>
+ * </ul>
+ * Buffers:
+ * <ul>
+ * <li>{@code client-statistics [byte[] sequence, ContextualStatistics[]]>}</li>
+ * <li>{@code client-notifications [byte[] sequence, ContextualNotification]>}</li>
  * </ul>
  *
  * @author Mathieu Carbou
  */
 class TmsAgentImpl implements TmsAgent {
 
-  private static final Collection<String> IGNORED = new HashSet<>(Arrays.asList(
-      PlatformNotificationType.CONNECTION_CLOSED.name(),
-      PlatformNotificationType.CONNECTION_OPENED.name(),
-      PlatformNotificationType.CLIENT_TAGS_UPDATED.name(),
-      PlatformNotificationType.CLIENT_CONTEXT_CONTAINER_UPDATED.name(),
-      PlatformNotificationType.CLIENT_CAPABILITIES_UPDATED.name()
-  ));
+  private static final Comparator<Message> MESSAGE_COMPARATOR = (o1, o2) -> o1.getSequence().compareTo(o2.getSequence());
 
-  private final IMonitoringConsumer consumer;
-  private final String stripeName;
   private final TopologyBuilder topologyBuilder;
   private final SequenceGenerator sequenceGenerator;
-  private final ReadOnlyBuffer<Serializable[]> notificationBuffer;
-  private final ReadOnlyBuffer<Serializable[]> statisticBuffer;
-  private final ReadOnlyBuffer<Mutation> mutationBuffer;
+  private final ReadOnlyBuffer<Serializable[]> clientNotifications;
+  private final ReadOnlyBuffer<Serializable[]> clientStatistics;
+  private final ReadOnlyBuffer<PlatformNotification> platformNotifications;
 
-  private long expectedNextIndex = Long.MIN_VALUE;
+  private long nextExpectedIndex = Long.MIN_VALUE;
 
   TmsAgentImpl(TmsAgentConfig config, IMonitoringConsumer consumer, SequenceGenerator sequenceGenerator) {
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator, "SequenceGenerator service is missing");
-    this.consumer = Objects.requireNonNull(consumer, "IMonitoringConsumer service is missing");
-    this.stripeName = config.getStripeName() != null ? config.getStripeName() : "stripe-1";
+    String stripeName = config.getStripeName() != null ? config.getStripeName() : "stripe-1";
     this.topologyBuilder = new TopologyBuilder(consumer, stripeName);
-    this.notificationBuffer = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
-    this.statisticBuffer = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Serializable[].class);
-    this.mutationBuffer = consumer.getOrCreateMutationBuffer(config.getMaximumUnreadMutations());
+    this.clientNotifications = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
+    this.clientStatistics = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Serializable[].class);
+    this.platformNotifications = consumer.getOrCreatePlatformNotificationBuffer(config.getMaximumUnreadMutations());
   }
 
   @Override
@@ -97,24 +94,26 @@ class TmsAgentImpl implements TmsAgent {
   public synchronized Future<List<Message>> readMessages() {
     List<Message> messages = new ArrayList<>();
 
-    // 1st: read mutations on the voltron tree to build notifications about topology changes
-    readTopologyMutations().forEach(messages::add);
+    // reads platform notifications
+    readPlatformNotifications().forEach(messages::add);
 
-    // 2nd: read notifications coming client-side if any
-    notificationBuffer.stream()
+    // read notifications coming client-side if any
+    clientNotifications.stream()
         .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "NOTIFICATION", bucket[1]))
         .forEach(messages::add);
 
-    // 3rd: read stats coming client-side if any
-    statisticBuffer.stream()
+    // read stats coming client-side if any
+    clientStatistics.stream()
         .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "STATISTICS", bucket[1]))
         .forEach(messages::add);
+
+    messages.sort(MESSAGE_COMPARATOR);
 
     return CompletableFuture.completedFuture(messages);
   }
 
-  private Stream<Message> readTopologyMutations() {
-    List<Notification> notifications = mutationBuffer.stream()
+  private Stream<Message> readPlatformNotifications() {
+    List<Notification> notifications = platformNotifications.stream()
         .map(Notification::new)
         .collect(Collectors.toList());
 
@@ -124,55 +123,89 @@ class TmsAgentImpl implements TmsAgent {
     }
 
     // reset the sequence numbers for next read
-    long nextSequence = notifications.get(0).getIndex();
-    long expectedNextIndex = this.expectedNextIndex == Long.MIN_VALUE ? nextSequence : this.expectedNextIndex;
-    this.expectedNextIndex = notifications.get(notifications.size() - 1).getIndex() + 1;
+    long currentIndex = notifications.get(0).getIndex();
+    long expectedIndex = this.nextExpectedIndex == Long.MIN_VALUE ? currentIndex : this.nextExpectedIndex;
+    this.nextExpectedIndex = notifications.get(notifications.size() - 1).getIndex() + 1;
+
+    Cluster cluster = topologyBuilder.buildTopology();
+    Stripe stripe = cluster.getStripes().values().iterator().next();
+    Server active = stripe.getActiveServer().orElseThrow(() -> new IllegalStateException("Unable to find active server on stripe " + stripe.getName()));
 
     // if this is not the first time we read AND the next expected sequence number is not the one next
     // it means that the queue was full at one point and some notifications were discarded
     // so just ignore them and send a fresh new topology
-    if (expectedNextIndex != nextSequence) {
-      Cluster cluster = topologyBuilder.buildTopology();
+    if (expectedIndex != currentIndex) {
       return Stream.of(
           clusterMessage(cluster),
-          lostNotificationMessage(cluster.getStripe(stripeName).get().getContext())
+          new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(stripe.getContext(), "LOST_NOTIFICATIONS"))
       );
     }
 
-    // checks whether the mutations on the tree are just about branch mutations
-    notifications.removeIf(mutation -> !mutation.isValueChanged());
-    if (notifications.isEmpty()) {
-      return Stream.empty();
+    // parse the notifs
+    for (Notification notification : notifications) {
+      switch (notification.getType()) {
+
+        case SERVER_ENTITY_CREATED:
+        case SERVER_ENTITY_DESTROYED: {
+          PlatformEntity platformEntity = notification.getSource(PlatformEntity.class);
+          notification.setContext(active.getContext()
+              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName).getContext()));
+          break;
+        }
+
+        case SERVER_JOINED:
+        case SERVER_LEFT: {
+          PlatformServer server = notification.getSource(PlatformServer.class);
+          notification.setContext(stripe.getContext()
+              .with(Server.KEY, server.getServerName())
+              .with(Server.NAME_KEY, server.getServerName()));
+          break;
+        }
+
+        case SERVER_STATE_CHANGED: {
+          Serializable[] bucket = notification.getSource(Serializable[].class);
+          PlatformServer platformServer = (PlatformServer) bucket[0];
+          ServerState serverState = (ServerState) bucket[1];
+          notification.setContext(stripe.getContext()
+              .with(Server.KEY, platformServer.getServerName())
+              .with(Server.NAME_KEY, platformServer.getServerName()));
+          notification.setAttribute("state", serverState.getState());
+          notification.setAttribute("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
+          break;
+        }
+
+        case SERVER_ENTITY_FETCHED:
+        case SERVER_ENTITY_UNFETCHED: {
+          Serializable[] bucket = notification.getSource(Serializable[].class);
+          PlatformConnectedClient platformClient = (PlatformConnectedClient) bucket[0];
+          PlatformEntity platformEntity = (PlatformEntity) bucket[1];
+          Context context = active.getContext()
+              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName).getContext());
+          notification.setContext(context);
+          notification.setAttribute(Client.KEY, toClientIdentifier(platformClient).getClientId());
+          break;
+        }
+
+        case CLIENT_CONNECTED:
+        case CLIENT_DISCONNECTED: {
+          PlatformConnectedClient platformClient = notification.getSource(PlatformConnectedClient.class);
+          notification.setContext(Context
+              .create(Client.KEY, toClientIdentifier(platformClient).getClientId()));
+          break;
+        }
+
+        default:
+          throw new AssertionError(notification.getType());
+      }
     }
-
-    // check whether the notifications we have are ONLY mutations that change the topology
-    // but are not relevant to send back to the tms.
-    notifications.removeIf(mutation -> mutation.getPlatformNotificationType() == PlatformNotificationType.OTHER);
-    if (notifications.isEmpty()) {
-      return Stream.of(clusterMessage(topologyBuilder.buildTopology()));
-    }
-
-    // here, we only have notifications that changed the topology AND must be sent back to tms
-    Cluster cluster = topologyBuilder.buildTopology();
-
-    MutationReducer mutationReducer = new MutationReducer(consumer, cluster, notifications);
-    mutationReducer.reduce();
 
     return Stream.concat(
         Stream.of(clusterMessage(cluster)),
-        mutationReducer.stream()
-            // we only keep "CLIENT_DISCONNECTED" and "CLIENT_CONNECTED" events
-            .filter(notification -> !IGNORED.contains(notification.getType()))
-            .map(Notification::toMessage)
-    );
+        notifications.stream().map(Notification::toMessage));
   }
 
   private Message clusterMessage(Cluster cluster) {
     return new DefaultMessage(sequenceGenerator.next(), "TOPOLOGY", cluster);
-  }
-
-  private Message lostNotificationMessage(Context context) {
-    return new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(context, "LOST_NOTIFICATIONS"));
   }
 
 }
