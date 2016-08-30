@@ -14,4 +14,4 @@
 #  limitations under the License.
 #
 
-monitoring.server.MonitoringConsumerEntityServerService
+org.terracotta.management.entity.monitoring.server.MonitoringServiceEntityServerService
