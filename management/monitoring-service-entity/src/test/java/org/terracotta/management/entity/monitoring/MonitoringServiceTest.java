@@ -42,7 +42,7 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.SERVERS_PATH
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
-public class VoltronMonitoringServiceTest {
+public class MonitoringServiceTest {
 
   private PassthroughClusterControl stripeControl;
 
