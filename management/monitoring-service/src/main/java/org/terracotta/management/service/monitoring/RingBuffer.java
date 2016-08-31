@@ -83,6 +83,11 @@ public class RingBuffer<V> implements ReadWriteBuffer<V> {
   }
 
   @Override
+  public void clear() {
+    queue.clear();
+  }
+
+  @Override
   public boolean isEmpty() {
     return queue.isEmpty();
   }

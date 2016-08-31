@@ -105,6 +105,12 @@ class MonitoringServiceImpl implements MonitoringService {
     return Optional.ofNullable(buffers.get(name)).map(ReadOnlyBuffer::read).map(type::cast).orElse(null);
   }
 
+  @Override
+  public void clearBuffer(String name) {
+    Optional.ofNullable(buffers.get(name)).ifPresent(ReadOnlyBuffer::clear);
+  }
+
+
   private static String[] concat(String[] parents, String name) {
     if (parents == null) {
       parents = new String[0];
