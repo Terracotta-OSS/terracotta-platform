@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public abstract class AbstractStatistic<V, U> implements Statistic<V, U>, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final V value;
   private final U unit;
 

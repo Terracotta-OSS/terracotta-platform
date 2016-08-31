@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public abstract class ManagementEvent implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final String id;
   private final ClientIdentifier from;
 

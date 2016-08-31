@@ -28,6 +28,8 @@ import java.util.Arrays;
  */
 public class ManagementCallEvent extends ManagementEvent implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final Context context;
   private final String capabilityName;
   private final String methodName;

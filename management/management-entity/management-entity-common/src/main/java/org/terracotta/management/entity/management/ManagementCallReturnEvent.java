@@ -26,6 +26,8 @@ import java.io.Serializable;
  */
 public class ManagementCallReturnEvent extends ManagementEvent implements Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final ContextualReturn<?> contextualReturn;
 
   public ManagementCallReturnEvent(ClientIdentifier from, String id, ContextualReturn<?> contextualReturn) {

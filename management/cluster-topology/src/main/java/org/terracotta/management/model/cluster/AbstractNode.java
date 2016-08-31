@@ -30,6 +30,8 @@ import java.util.Objects;
  */
 abstract class AbstractNode<P extends Contextual> implements Node, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private P parent;
   private final String id;
 
