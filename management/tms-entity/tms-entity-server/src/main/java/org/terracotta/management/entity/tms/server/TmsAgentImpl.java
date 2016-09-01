@@ -38,13 +38,14 @@ import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.terracotta.management.entity.tms.server.Utils.toClientIdentifier;
 
@@ -93,9 +94,18 @@ class TmsAgentImpl implements TmsAgent {
   @Override
   public synchronized Future<List<Message>> readMessages() {
     List<Message> messages = new ArrayList<>();
+    Cluster cluster = topologyBuilder.buildTopology();
 
     // reads platform notifications
-    readPlatformNotifications().forEach(messages::add);
+    try {
+      Collection<Notification> platformNotifications = getPlatformNotifications(cluster);
+      for (Notification platformNotification : platformNotifications) {
+        messages.add(platformNotification.toMessage());
+      }
+    } catch (BadIndexException e) {
+      Stripe stripe = cluster.getStripes().values().iterator().next();
+      messages.add(new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(stripe.getContext(), "LOST_NOTIFICATIONS")));
+    }
 
     // read notifications coming client-side if any
     clientNotifications.stream()
@@ -107,19 +117,24 @@ class TmsAgentImpl implements TmsAgent {
         .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "STATISTICS", bucket[1]))
         .forEach(messages::add);
 
+    // in any case, whether there is at least one message, we add the cluster topology
+    if (!messages.isEmpty()) {
+      messages.add(new DefaultMessage(sequenceGenerator.next(), "TOPOLOGY", cluster));
+    }
+
     messages.sort(MESSAGE_COMPARATOR);
 
     return CompletableFuture.completedFuture(messages);
   }
 
-  private Stream<Message> readPlatformNotifications() {
+  private Collection<Notification> getPlatformNotifications(Cluster cluster) throws BadIndexException {
     List<Notification> notifications = platformNotifications.stream()
         .map(Notification::new)
         .collect(Collectors.toList());
 
     // no unread mutations => no topology changes
     if (notifications.isEmpty()) {
-      return Stream.empty();
+      return Collections.emptyList();
     }
 
     // reset the sequence numbers for next read
@@ -127,19 +142,15 @@ class TmsAgentImpl implements TmsAgent {
     long expectedIndex = this.nextExpectedIndex == Long.MIN_VALUE ? currentIndex : this.nextExpectedIndex;
     this.nextExpectedIndex = notifications.get(notifications.size() - 1).getIndex() + 1;
 
-    Cluster cluster = topologyBuilder.buildTopology();
-    Stripe stripe = cluster.getStripes().values().iterator().next();
-    Server active = stripe.getActiveServer().orElseThrow(() -> new IllegalStateException("Unable to find active server on stripe " + stripe.getName()));
-
     // if this is not the first time we read AND the next expected sequence number is not the one next
     // it means that the queue was full at one point and some notifications were discarded
     // so just ignore them and send a fresh new topology
     if (expectedIndex != currentIndex) {
-      return Stream.of(
-          clusterMessage(cluster),
-          new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(stripe.getContext(), "LOST_NOTIFICATIONS"))
-      );
+      throw new BadIndexException();
     }
+
+    Stripe stripe = cluster.getStripes().values().iterator().next();
+    Server active = stripe.getActiveServer().orElseThrow(() -> new IllegalStateException("Unable to find active server on stripe " + stripe.getName()));
 
     // parse the notifs
     for (Notification notification : notifications) {
@@ -200,13 +211,11 @@ class TmsAgentImpl implements TmsAgent {
       }
     }
 
-    return Stream.concat(
-        Stream.of(clusterMessage(cluster)),
-        notifications.stream().map(Notification::toMessage));
+    return notifications;
   }
 
-  private Message clusterMessage(Cluster cluster) {
-    return new DefaultMessage(sequenceGenerator.next(), "TOPOLOGY", cluster);
+  private static final class BadIndexException extends Exception {
+    private static final long serialVersionUID = -7243509059801791979L;
   }
 
 }
