@@ -189,8 +189,9 @@ class TmsAgentImpl implements TmsAgent {
         case CLIENT_CONNECTED:
         case CLIENT_DISCONNECTED: {
           PlatformConnectedClient platformClient = notification.getSource(PlatformConnectedClient.class);
-          notification.setContext(Context
-              .create(Client.KEY, toClientIdentifier(platformClient).getClientId()));
+          Context context = active.getContext()
+              .with(Client.KEY, toClientIdentifier(platformClient).getClientId());
+          notification.setContext(context);
           break;
         }
 
