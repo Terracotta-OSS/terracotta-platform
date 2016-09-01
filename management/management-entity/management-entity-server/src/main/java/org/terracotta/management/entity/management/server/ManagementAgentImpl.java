@@ -91,8 +91,7 @@ class ManagementAgentImpl implements ManagementAgent {
     // ensure the clientId is there
     notification.setContext(notification.getContext().with("clientId", clientIdentifier.getClientId()));
     // store in voltron tree
-    Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), notification};
-    producer.pushBestEffortsData("client-notifications", o);
+    fireNotif(notification);
     return CompletableFuture.completedFuture(null);
   }
 
@@ -120,7 +119,7 @@ class ManagementAgentImpl implements ManagementAgent {
     // marker that we keep, saying this client has a registry
     haveRegistry.put((ClientDescriptor) clientDescriptor, Void.TYPE);
     // fire notification
-    pushNotification(clientDescriptor, new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_REGISTRY_UPDATED"));
+    fireNotif(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_REGISTRY_UPDATED"));
     return CompletableFuture.completedFuture(null);
   }
 
@@ -130,7 +129,7 @@ class ManagementAgentImpl implements ManagementAgent {
     // expose tags
     producer.addNode(Utils.array("management", "clients", clientIdentifier.getClientId()), "tags", tags == null ? new String[0] : tags);
     // fire notification
-    pushNotification(clientDescriptor, new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED"));
+    fireNotif(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED"));
     return CompletableFuture.completedFuture(null);
   }
 
@@ -198,6 +197,11 @@ class ManagementAgentImpl implements ManagementAgent {
     connectedClients.remove(clientDescriptor);
     haveRegistry.remove(clientDescriptor);
     pendingCalls.remove(clientDescriptor);
+  }
+
+  private void fireNotif(ContextualNotification notification) {
+    Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), notification};
+    producer.pushBestEffortsData("client-notifications", o);
   }
 
   private ClientIdentifier findClientIdentifier(ClientDescriptor clientDescriptor) {
