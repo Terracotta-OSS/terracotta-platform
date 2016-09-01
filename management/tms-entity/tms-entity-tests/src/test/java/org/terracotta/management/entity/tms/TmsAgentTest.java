@@ -24,6 +24,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.entity.EntityRef;
+import org.terracotta.management.entity.management.ManagementAgentConfig;
+import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
+import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
+import org.terracotta.management.entity.management.client.ManagementAgentService;
+import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
 import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityClientService;
 import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
@@ -35,8 +40,11 @@ import org.terracotta.management.model.cluster.Endpoint;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.cluster.Stripe;
+import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.registry.AbstractManagementRegistry;
+import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
@@ -45,10 +53,12 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -56,6 +66,8 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(JUnit4.class)
 public class TmsAgentTest {
+
+  ExecutorService executorService = Executors.newCachedThreadPool();
 
   Cluster expectedCluster;
   Client client;
@@ -71,6 +83,8 @@ public class TmsAgentTest {
     activeServer.setGroupPort(9610);
     activeServer.registerServerEntityService(new TmsAgentEntityServerService());
     activeServer.registerClientEntityService(new TmsAgentEntityClientService());
+    activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
+    activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
     stripeControl = new PassthroughClusterControl("server-1", activeServer);
 
     clientIdentifier = ClientIdentifier.create(
@@ -109,7 +123,10 @@ public class TmsAgentTest {
 
   @After
   public void tearDown() throws Exception {
-    stripeControl.tearDown();
+    executorService.shutdown();
+    if (stripeControl != null) {
+      stripeControl.tearDown();
+    }
   }
 
   @Test
@@ -172,6 +189,59 @@ public class TmsAgentTest {
       assertEquals(
           expectedCluster.clientStream().findFirst().get().getClientId().replace("uuid", uuid),
           secondNotif.getAttributes().get(Client.KEY));
+
+      entity.readMessages().get();
+
+      // not connects a client management registry
+
+      ManagementRegistry registry = new AbstractManagementRegistry() {
+        @Override
+        public ContextContainer getContextContainer() {
+          return new ContextContainer("cacheManagerName", "my-cm-name");
+        }
+      };
+      registry.addManagementProvider(new MyManagementProvider());
+
+      try (org.terracotta.connection.Connection secondConnection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+
+        ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(secondConnection).retrieveOrCreate(new ManagementAgentConfig()));
+        managementAgent.setManagementCallExecutor(executorService);
+
+        ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
+        //System.out.println(clientIdentifier);
+        assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
+        assertEquals("UNKNOWN", clientIdentifier.getName());
+        assertNotNull(clientIdentifier.getConnectionUid());
+
+        managementAgent.bridge(registry);
+        managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
+
+        messages = entity.readMessages().get();
+        System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
+        assertEquals(6, messages.size());
+        for (int i = 0; i < 5; i++) {
+          assertEquals("NOTIFICATION", messages.get(0).getType());
+        }
+        assertEquals("CLIENT_CONNECTED", messages.get(0).unwrap(ContextualNotification.class).getType());
+        assertEquals("SERVER_ENTITY_CREATED", messages.get(1).unwrap(ContextualNotification.class).getType());
+        assertEquals("SERVER_ENTITY_FETCHED", messages.get(2).unwrap(ContextualNotification.class).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(3).unwrap(ContextualNotification.class).getType());
+        assertEquals("CLIENT_TAGS_UPDATED", messages.get(4).unwrap(ContextualNotification.class).getType());
+        assertEquals("TOPOLOGY", messages.get(5).getType());
+
+        registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
+        registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
+
+        messages = entity.readMessages().get();
+        System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
+        assertEquals(3, messages.size());
+        assertEquals("NOTIFICATION", messages.get(0).getType());
+        assertEquals("NOTIFICATION", messages.get(1).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(0).unwrap(ContextualNotification.class).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(1).unwrap(ContextualNotification.class).getType());
+        assertEquals("TOPOLOGY", messages.get(2).getType());
+      }
+
     }
   }
 
