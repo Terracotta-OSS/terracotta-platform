@@ -34,6 +34,11 @@ public class TypedReadWriteBuffer<V> implements ReadWriteBuffer<V> {
   }
 
   @Override
+  public void clear() {
+    buffer.clear();
+  }
+
+  @Override
   public void put(V value) {
     buffer.put(type.cast(value));
   }

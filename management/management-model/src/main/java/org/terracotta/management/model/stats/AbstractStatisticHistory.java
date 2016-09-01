@@ -26,6 +26,8 @@ import java.util.List;
  */
 public abstract class AbstractStatisticHistory<V, U> implements StatisticHistory<V, U>, Serializable {
 
+  private static final long serialVersionUID = 1;
+
   private final Sample<V>[] values;
   private final U unit;
 

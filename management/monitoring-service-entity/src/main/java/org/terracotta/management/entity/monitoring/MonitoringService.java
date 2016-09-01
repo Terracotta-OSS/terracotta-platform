@@ -47,4 +47,6 @@ public interface MonitoringService {
 
   <T extends Serializable> T readBuffer(String name, Class<T> type);
 
+  void clearBuffer(String name);
+
 }

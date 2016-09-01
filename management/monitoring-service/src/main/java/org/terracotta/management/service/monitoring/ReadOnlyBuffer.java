@@ -58,4 +58,6 @@ public interface ReadOnlyBuffer<V> {
    */
   Stream<V> stream();
 
+  void clear();
+
 }
