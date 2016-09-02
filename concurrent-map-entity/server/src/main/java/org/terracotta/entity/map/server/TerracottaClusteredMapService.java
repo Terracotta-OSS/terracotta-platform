@@ -43,12 +43,12 @@ public class TerracottaClusteredMapService implements EntityServerService<MapOpe
 
   @Override
   public ActiveServerEntity<MapOperation, MapResponse> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
-    return new ActiveTerracottaClusteredMap();
+    return new ActiveTerracottaClusteredMap(registry);
   }
 
   @Override
   public PassiveServerEntity<MapOperation, MapResponse> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
-    return new PassiveTerracottaClusteredMap();
+    return new PassiveTerracottaClusteredMap(registry);
   }
 
   @Override

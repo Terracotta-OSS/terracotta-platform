@@ -15,59 +15,49 @@
  */
 package org.terracotta.entity.map.server;
 
-import org.omg.CORBA.Object;
 import org.terracotta.entity.PassiveServerEntity;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.map.common.MapOperation;
 import org.terracotta.entity.map.common.MapResponse;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * PassiveTerracottaClusteredMap
  */
-class PassiveTerracottaClusteredMap implements PassiveServerEntity<MapOperation, MapResponse> {
+class PassiveTerracottaClusteredMap extends AbstractClusteredMap implements PassiveServerEntity<MapOperation, MapResponse> {
 
-  private final ConcurrentMap<Object, Object> map = new ConcurrentHashMap<Object, Object>();
+  public PassiveTerracottaClusteredMap(ServiceRegistry services) {
+    super(services);
+  }
 
   @Override
-  public void invoke(MapOperation message) {
-    // do assign received map to instance map
-    // or append content if message is an operation
+  public void invoke(MapOperation operation) {
+    switch (operation.operationType()) {
+      case SYNC_OP:
+        SyncOperation syncOperation = (SyncOperation) operation;
+        ConcurrentMap<Object, Object> objectMap = syncOperation.getObjectMap();
+        this.dataMap.putAll(objectMap);
+        break;
+      default:
+        super.invokeInternal(operation);
+    }
   }
 
   @Override
   public void startSyncEntity() {
-    throw new UnsupportedOperationException("TODO Implement me!");
   }
 
   @Override
   public void endSyncEntity() {
-    throw new UnsupportedOperationException("TODO Implement me!");
   }
 
   @Override
   public void startSyncConcurrencyKey(int concurrencyKey) {
-    throw new UnsupportedOperationException("TODO Implement me!");
   }
 
   @Override
   public void endSyncConcurrencyKey(int concurrencyKey) {
-    throw new UnsupportedOperationException("TODO Implement me!");
   }
 
-  @Override
-  public void createNew() {
-    throw new UnsupportedOperationException("TODO Implement me!");
-  }
-
-  @Override
-  public void loadExisting() {
-    throw new UnsupportedOperationException("TODO Implement me!");
-  }
-
-  @Override
-  public void destroy() {
-    throw new UnsupportedOperationException("TODO Implement me!");
-  }
 }

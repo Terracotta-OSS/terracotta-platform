@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.terracotta.passthrough;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,8 +22,6 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.map.TerracottaClusteredMapClientService;
 import org.terracotta.entity.map.common.ConcurrentClusteredMap;
 import org.terracotta.entity.map.server.TerracottaClusteredMapService;
-import org.terracotta.passthrough.PassthroughConnection;
-import org.terracotta.passthrough.PassthroughServer;
 
 import java.io.Serializable;
 

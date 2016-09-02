@@ -19,13 +19,13 @@ import org.terracotta.entity.map.common.MapOperation;
 
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 
 class SyncOperation implements MapOperation {
-  private final Map<Object, Object> objects;
+  private final ConcurrentMap<Object, Object> objects;
 
-  public SyncOperation(Map<Object, Object> objects) {
+  public SyncOperation(ConcurrentMap<Object, Object> objects) {
     this.objects = objects;
   }
 
@@ -39,7 +39,7 @@ class SyncOperation implements MapOperation {
 
   }
 
-  public Map<Object, Object> getObjectMap() {
+  public ConcurrentMap<Object, Object> getObjectMap() {
     return objects;
   }
 }
