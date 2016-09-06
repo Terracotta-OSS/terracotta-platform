@@ -45,15 +45,17 @@ public interface ManagementRegistry extends CapabilityManagementSupport {
    * Register an object in the management registry.
    *
    * @param managedObject the managed object.
+   * @return true if this object has been registered
    */
-  void register(Object managedObject);
+  boolean register(Object managedObject);
 
   /**
    * Unregister an object from the management registry.
    *
    * @param managedObject the managed object.
+   * @return true if this object has been unregistered
    */
-  void unregister(Object managedObject);
+  boolean unregister(Object managedObject);
 
   /**
    * Get the management capabilities of the registered objects.

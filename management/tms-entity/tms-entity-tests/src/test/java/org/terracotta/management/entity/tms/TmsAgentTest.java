@@ -106,7 +106,7 @@ public class TmsAgentTest {
                 .setVersion("Version Passthrough 5.0.0-SNAPSHOT")
                 .setBuildId("Build ID")
                 .setState(Server.State.ACTIVE)
-                .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName()))))
+                .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName(), 1))))
         .addClient(Client.create(clientIdentifier)
             .setHostName(InetAddress.getLocalHost().getHostName()));
 

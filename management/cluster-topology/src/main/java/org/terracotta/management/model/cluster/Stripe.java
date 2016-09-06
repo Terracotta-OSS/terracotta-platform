@@ -114,6 +114,10 @@ public final class Stripe extends AbstractNode<Cluster> implements Serializable 
     return getActiveServer().flatMap(s -> s.getServerEntity(context));
   }
 
+  public Optional<ServerEntity> getServerEntity(long consumerId) {
+    return getActiveServer().flatMap(s -> s.getServerEntity(consumerId));
+  }
+
   public Optional<ServerEntity> getServerEntity(String name, String type) {
     return getActiveServer().flatMap(s -> s.getServerEntity(name, type));
   }

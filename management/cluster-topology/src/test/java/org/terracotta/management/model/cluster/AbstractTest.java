@@ -44,7 +44,7 @@ public abstract class AbstractTest {
     clientContextContainer = new ContextContainer("cacheManagerName", "cache-manager-1", new ContextContainer("cacheName", "my-cache"));
     serverContextContainer = new ContextContainer("entityName", "ehcache-entity-name-1");
     clientIdentifier = ClientIdentifier.create("ehcache", "client1");
-    ehcache_server_entity = ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+    ehcache_server_entity = ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity", 1)
         .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
             .addCapabilities(action));
 
@@ -67,7 +67,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(Server.State.ACTIVE)
-                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity", 1)
                     .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
                         .addCapabilities(action))))
             .addServer(Server.create("server-2")
@@ -96,7 +96,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(Server.State.ACTIVE)
-                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity", 1)
                     .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
                         .addCapabilities(action))))
             .addServer(Server.create("server-2")
@@ -110,7 +110,7 @@ public abstract class AbstractTest {
                 .setBindAddress("0.0.0.0")
                 .setBindPort(8881)
                 .setState(Server.State.ACTIVE)
-                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity")
+                .addServerEntity(ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity", 1)
                     .setManagementRegistry(ManagementRegistry.create(serverContextContainer)
                         .addCapabilities(action))))
             .addServer(Server.create("server-2")

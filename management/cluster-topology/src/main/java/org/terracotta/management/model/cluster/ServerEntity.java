@@ -27,21 +27,24 @@ import java.util.Optional;
  */
 public final class ServerEntity extends AbstractNode<Server> implements Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   public static final String KEY = "entityId";
   public static final String TYPE_KEY = "entityType";
   public static final String NAME_KEY = "entityName";
+  public static final String CONSUMER_ID_KEY = "entityConsumerId";
 
   private final String type; // type (service, client entity, server entity, etc)
   private final String name; // type (entity type name)
+  private final long consumerId; // consumerId (entity consumerId)
   private ManagementRegistry managementRegistry;
 
   // matches management registry config, or entity id, or service type
-  private ServerEntity(String id, String name, String type) {
+  private ServerEntity(String id, String name, String type, long consumerId) {
     super(id);
     this.type = Objects.requireNonNull(type);
     this.name = Objects.requireNonNull(name);
+    this.consumerId = consumerId;
   }
 
   public Optional<ManagementRegistry> getManagementRegistry() {
@@ -51,6 +54,10 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
   public ServerEntity setManagementRegistry(ManagementRegistry managementRegistry) {
     this.managementRegistry = managementRegistry;
     return this;
+  }
+
+  public long getConsumerId() {
+    return consumerId;
   }
 
   public String getType() {
@@ -67,7 +74,10 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
 
   @Override
   public Context getContext() {
-    return super.getContext().with(NAME_KEY, name).with(TYPE_KEY, type);
+    return super.getContext()
+        .with(NAME_KEY, name)
+        .with(TYPE_KEY, type)
+        .with(CONSUMER_ID_KEY, String.valueOf(consumerId));
   }
 
   @Override
@@ -99,6 +109,7 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
 
     ServerEntity that = (ServerEntity) o;
 
+    if (consumerId != that.consumerId) return false;
     if (!type.equals(that.type)) return false;
     if (!name.equals(that.name)) return false;
     return managementRegistry != null ? managementRegistry.equals(that.managementRegistry) : that.managementRegistry == null;
@@ -108,6 +119,7 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
   @Override
   public int hashCode() {
     int result = super.hashCode();
+    result = (int) (31 * consumerId);
     result = 31 * result + type.hashCode();
     result = 31 * result + name.hashCode();
     result = 31 * result + (managementRegistry != null ? managementRegistry.hashCode() : 0);
@@ -119,12 +131,13 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
     Map<String, Object> map = super.toMap();
     map.put("type", getType());
     map.put("name", getName());
+    map.put("consumerId", getConsumerId());
     map.put("managementRegistry", managementRegistry == null ? null : managementRegistry.toMap());
     return map;
   }
 
-  public static ServerEntity create(String serverEntityName, String type) {
-    return new ServerEntity(key(serverEntityName, type), serverEntityName, type);
+  public static ServerEntity create(String serverEntityName, String type, long consumerId) {
+    return new ServerEntity(key(serverEntityName, type), serverEntityName, type, consumerId);
   }
 
   public static String key(String serverEntityName, String type) {

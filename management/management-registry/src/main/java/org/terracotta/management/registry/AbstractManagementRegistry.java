@@ -48,22 +48,28 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void register(Object managedObject) {
+  public boolean register(Object managedObject) {
+    boolean b = false;
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
         managementProvider.register(managedObject);
+        b = true;
       }
     }
+    return b;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public void unregister(Object managedObject) {
+  public boolean unregister(Object managedObject) {
+    boolean b = false;
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
         managementProvider.unregister(managedObject);
+        b = true;
       }
     }
+    return b;
   }
 
   @Override

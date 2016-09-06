@@ -218,7 +218,24 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
   }
 
   public final Optional<ServerEntity> getServerEntity(Context context) {
-    return getServerEntity(context.get(ServerEntity.KEY));
+    String id = context.get(ServerEntity.KEY);
+    String type = context.get(ServerEntity.TYPE_KEY);
+    String name = context.get(ServerEntity.NAME_KEY);
+    String cid = context.get(ServerEntity.CONSUMER_ID_KEY);
+    if (id != null) {
+      return getServerEntity(id);
+    }
+    if (type != null && name != null) {
+      return getServerEntity(name, type);
+    }
+    if (cid != null) {
+      return getServerEntity(Long.parseLong(cid));
+    }
+    return Optional.empty();
+  }
+
+  public final Optional<ServerEntity> getServerEntity(long consumerId) {
+    return serverEntities.values().stream().filter(serverEntity -> serverEntity.getConsumerId() == consumerId).findFirst();
   }
 
   public final Optional<ServerEntity> getServerEntity(String id) {
@@ -321,9 +338,9 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
 
   public enum State {
 
-  //  Currently the possible transitions for a server are:
-  //  UNINITIALIZED->SYNCHRONIZING->PASSIVE->ACTIVE
-  //  UNINITIALIZED->ACTIVE
+    //  Currently the possible transitions for a server are:
+    //  UNINITIALIZED->SYNCHRONIZING->PASSIVE->ACTIVE
+    //  UNINITIALIZED->ACTIVE
 
     UNINITIALIZED,
     SYNCHRONIZING,
