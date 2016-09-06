@@ -46,6 +46,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.terracotta.management.entity.tms.server.Utils.toClientIdentifier;
 
@@ -71,6 +72,7 @@ class TmsAgentImpl implements TmsAgent {
 
   private final TopologyBuilder topologyBuilder;
   private final SequenceGenerator sequenceGenerator;
+  private final ReadOnlyBuffer<Serializable[]> entityNotifications;
   private final ReadOnlyBuffer<Serializable[]> clientNotifications;
   private final ReadOnlyBuffer<Serializable[]> clientStatistics;
   private final ReadOnlyBuffer<PlatformNotification> platformNotifications;
@@ -81,6 +83,7 @@ class TmsAgentImpl implements TmsAgent {
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator, "SequenceGenerator service is missing");
     String stripeName = config.getStripeName() != null ? config.getStripeName() : "stripe-1";
     this.topologyBuilder = new TopologyBuilder(consumer, stripeName);
+    this.entityNotifications = consumer.getOrCreateBestEffortBuffer("entity-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
     this.clientNotifications = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
     this.clientStatistics = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Serializable[].class);
     this.platformNotifications = consumer.getOrCreatePlatformNotificationBuffer(config.getMaximumUnreadMutations());
@@ -107,8 +110,8 @@ class TmsAgentImpl implements TmsAgent {
       messages.add(new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(stripe.getContext(), "LOST_NOTIFICATIONS")));
     }
 
-    // read notifications coming client-side if any
-    clientNotifications.stream()
+    // read entity and client notifications
+    Stream.concat(entityNotifications.stream(), clientNotifications.stream())
         .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "NOTIFICATION", bucket[1]))
         .forEach(messages::add);
 
