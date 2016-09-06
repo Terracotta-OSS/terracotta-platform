@@ -31,7 +31,7 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
   protected final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<ManagementProvider<?>>();
 
   @Override
-  public final void addManagementProvider(ManagementProvider<?> provider) {
+  public void addManagementProvider(ManagementProvider<?> provider) {
     String name = provider.getCapabilityName();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       if (managementProvider.getCapabilityName().equals(name)) {
@@ -42,13 +42,13 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
   }
 
   @Override
-  public final void removeManagementProvider(ManagementProvider<?> provider) {
+  public void removeManagementProvider(ManagementProvider<?> provider) {
     managementProviders.remove(provider);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public final void register(Object managedObject) {
+  public void register(Object managedObject) {
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
         managementProvider.register(managedObject);
@@ -58,7 +58,7 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
 
   @SuppressWarnings("unchecked")
   @Override
-  public final void unregister(Object managedObject) {
+  public void unregister(Object managedObject) {
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
         managementProvider.unregister(managedObject);
@@ -67,12 +67,12 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
   }
 
   @Override
-  public final CapabilityManagement withCapability(String capabilityName) {
+  public CapabilityManagement withCapability(String capabilityName) {
     return new DefaultCapabilityManagement(this, capabilityName);
   }
 
   @Override
-  public final Collection<Capability> getCapabilities() {
+  public Collection<Capability> getCapabilities() {
     Collection<Capability> capabilities = new ArrayList<Capability>();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       capabilities.add(managementProvider.getCapability());
@@ -81,7 +81,7 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
   }
 
   @Override
-  public final List<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
+  public List<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
     List<ManagementProvider<?>> allProviders = new ArrayList<ManagementProvider<?>>();
     for (ManagementProvider<?> provider : managementProviders) {
       if (provider.getCapabilityName().equals(capabilityName)) {
