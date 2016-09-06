@@ -1,0 +1,50 @@
+---
+---
+== Encoding format
+ifndef::sourcedir[]
+include::common.adoc[]
+endif::sourcedir[]
+
+== Intro
+
+This is the description of the encoding format.
+
+== Prefix common to all fields
+
+|===
+|index* |size* |<field specific>
+|===
+
+*: Encoded as VLQ (https://en.wikipedia.org/wiki/Variable-length_quantity)
+
+== Int32
+|===
+|index* |size* |1 |2 |3 |4
+|===
+
+== Int64
+|===
+|index* |size* |1 |2 |3 |4 |5 |6 |7 |8
+|===
+
+== ByteBuffer
+|===
+|index* |size* |(size bytes) |...
+|===
+
+== String
+|===
+|index* |size* |(size bytes) |...
+|===
+
+Each pair of byte is a java `char`.
+
+== Array
+|===
+|index* |size* |length* |entry size* |(entry size bytes) |...
+|===
+
+== Struct
+|===
+|index* |size* |field index* |field size* |(field size bytes) |...
+|===

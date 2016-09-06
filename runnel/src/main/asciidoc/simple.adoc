@@ -1,0 +1,57 @@
+---
+---
+== Encoding and decoding simple structures
+ifndef::sourcedir[]
+include::common.adoc[]
+endif::sourcedir[]
+
+== Intro
+
+Quick guide explaining how to work with simple structures only made of primitive types.
+
+== Defining the structure
+
+The first thing you need to do is to define your data structure, much like you would define a `struct` in the C language.
+
+[source,java,indent=0]
+----
+include::{sourcedir}/src/test/java/org/terracotta/tampon/docs/GettingStarted.java[tag=createSimpleStructure]
+----
+<1> Create a `StructBuilder`.
+<2> Add the fields of that structure, each field having a name (for human reference) and an index (for encoding).
+<3> Call `build()` to create the `Struct`.
+
+Note that indices must be unique, ordered and must never change over time as they will part of the encoded bytes.
+
+== Encoding fields
+
+Once you have a structure, you can start using it to encode 'instances' of it into a `ByteBuffer`.
+
+[source,java,indent=0]
+----
+include::{sourcedir}/src/test/java/org/terracotta/tampon/docs/GettingStarted.java[tag=encodeSimpleStructure]
+----
+<1> Create a `Struct` like explained above.
+<2> Call the `encoder()` method to start the data encoding.
+<3> Fill in the structure's fields, by referencing them with their name.
+<4> Call `encode()` to perform the data encoding process. Note that the returned `ByteBuffer` has the exact size of the
+    binary representation of the structure, but you could call `encode(ByteBuffer buffer)` instead and pass your own
+    buffer, as long as it has enough capacity left.
+
+Note that the fields must be filled *in the order they were defined in the structure*.
+
+== Decoding a buffer
+
+With a struct previously encoded into a buffer, you can start extracting back the fields.
+
+[source,java,indent=0]
+----
+include::{sourcedir}/src/test/java/org/terracotta/tampon/docs/GettingStarted.java[tag=decodeSimpleStructure]
+----
+<1> Create a `Struct` like explained above.
+<2> Encode a structure into a buffer.
+<3> Rewind the `ByteBuffer`, as the encoder will leave it pointing to the last written byte.
+<4> Call the `decoder()` method to start the data decoding.
+<5> Read the fields from the buffer.
+
+Note that the fields must be read *in the order they were defined in the structure*.
