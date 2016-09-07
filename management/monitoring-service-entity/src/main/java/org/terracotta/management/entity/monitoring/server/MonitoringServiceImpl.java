@@ -97,7 +97,11 @@ class MonitoringServiceImpl implements MonitoringService {
 
   @Override
   public void createBestEffortBuffer(String name, int size, Class<? extends Serializable> type) {
-    buffers.putIfAbsent(name, consumer.getOrCreateBestEffortBuffer(name, size, type));
+    if("platform-notifications".equals(name)) {
+      buffers.putIfAbsent(name, consumer.getOrCreatePlatformNotificationBuffer(size));
+    } else {
+      buffers.putIfAbsent(name, consumer.getOrCreateBestEffortBuffer(name, size, type));
+    }
   }
 
   @Override
