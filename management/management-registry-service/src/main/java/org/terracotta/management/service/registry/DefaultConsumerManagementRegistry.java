@@ -18,12 +18,12 @@ package org.terracotta.management.service.registry;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.monitoring.IMonitoringProducer;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,10 +74,10 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
       producer.addNode(path, "contextContainer", contextContainer);
       producer.addNode(path, "capabilities", capabilitiesArray);
 
-      producer.pushBestEffortsData("entity-notifications", new Serializable[]{
-          sequenceGenerator.next().toBytes(),
-          new ContextualNotification(Context.create(contextContainer.getName(), contextContainer.getValue()), "ENTITY_REGISTRY_UPDATED")
-      });
+      producer.pushBestEffortsData("entity-notifications", new DefaultMessage(
+          sequenceGenerator.next(),
+          "NOTIFICATION",
+          new ContextualNotification(Context.create(contextContainer.getName(), contextContainer.getValue()), "ENTITY_REGISTRY_UPDATED")));
     }
   }
 

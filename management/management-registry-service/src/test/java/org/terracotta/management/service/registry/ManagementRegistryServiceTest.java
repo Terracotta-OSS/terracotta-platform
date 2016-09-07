@@ -20,9 +20,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.message.Message;
 import org.terracotta.monitoring.IMonitoringProducer;
-
-import java.io.Serializable;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -57,7 +56,7 @@ public class ManagementRegistryServiceTest {
     verify(monitoringProducer).addNode(new String[]{"registry"}, "contextContainer", new ContextContainer("entityConsumerId", "0"));
     verify(monitoringProducer).addNode(eq(new String[]{"registry"}), eq("capabilities"), any(Capability[].class));
 
-    verify(monitoringProducer).pushBestEffortsData(eq("entity-notifications"), any(Serializable[].class));
+    verify(monitoringProducer).pushBestEffortsData(eq("entity-notifications"), any(Message.class));
     verifyNoMoreInteractions(monitoringProducer);
   }
 

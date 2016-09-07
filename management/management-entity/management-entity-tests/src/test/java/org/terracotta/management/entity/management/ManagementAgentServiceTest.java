@@ -36,6 +36,7 @@ import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.model.stats.NumberUnit;
@@ -117,8 +118,8 @@ public class ManagementAgentServiceTest {
     registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
-    consumer.createBestEffortBuffer("client-notifications", 100, Serializable[].class);
-    consumer.createBestEffortBuffer("client-statistics", 100, Serializable[].class);
+    consumer.createBestEffortBuffer("client-notifications", 100, Message.class);
+    consumer.createBestEffortBuffer("client-statistics", 100, Message.class);
 
     try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
 
@@ -132,10 +133,10 @@ public class ManagementAgentServiceTest {
       assertNotNull(clientIdentifier.getConnectionUid());
 
       managementAgent.bridge(registry);
-      assertThat(consumer.readBuffer("client-notifications", Serializable[].class)[1], equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_REGISTRY_UPDATED")));
+      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_REGISTRY_UPDATED")));
 
       managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
-      assertThat(consumer.readBuffer("client-notifications", Serializable[].class)[1], equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED")));
+      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED")));
 
       ContextualNotification notif = new ContextualNotification(Context.create("key", "value"), "EXPLODED");
       ContextualStatistics stat = new ContextualStatistics("my-capability", Context.create("key", "value"), Collections.singletonMap("my-stat", new Counter(1L, NumberUnit.COUNT)));
@@ -163,8 +164,8 @@ public class ManagementAgentServiceTest {
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
 
-      assertThat(consumer.readBuffer("client-notifications", Serializable[].class)[1], equalTo(notif));
-      assertThat(consumer.readBuffer("client-statistics", Serializable[].class)[1], equalTo(new ContextualStatistics[]{stat, stat}));
+      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(notif));
+      assertThat(consumer.readBuffer("client-statistics", Message.class).unwrap(ContextualStatistics[].class), equalTo(new ContextualStatistics[]{stat, stat}));
 
       runManagementCallFromAnotherClient(clientIdentifier);
     }

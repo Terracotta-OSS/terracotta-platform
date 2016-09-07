@@ -26,7 +26,6 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.sequence.BoundaryFlakeSequence;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.PlatformNotification;
@@ -37,7 +36,6 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -72,9 +70,9 @@ class TmsAgentImpl implements TmsAgent {
 
   private final TopologyBuilder topologyBuilder;
   private final SequenceGenerator sequenceGenerator;
-  private final ReadOnlyBuffer<Serializable[]> entityNotifications;
-  private final ReadOnlyBuffer<Serializable[]> clientNotifications;
-  private final ReadOnlyBuffer<Serializable[]> clientStatistics;
+  private final ReadOnlyBuffer<Message> entityNotifications;
+  private final ReadOnlyBuffer<Message> clientNotifications;
+  private final ReadOnlyBuffer<Message> clientStatistics;
   private final ReadOnlyBuffer<PlatformNotification> platformNotifications;
 
   private long nextExpectedIndex = Long.MIN_VALUE;
@@ -83,9 +81,9 @@ class TmsAgentImpl implements TmsAgent {
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator, "SequenceGenerator service is missing");
     String stripeName = config.getStripeName() != null ? config.getStripeName() : "stripe-1";
     this.topologyBuilder = new TopologyBuilder(consumer, stripeName);
-    this.entityNotifications = consumer.getOrCreateBestEffortBuffer("entity-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
-    this.clientNotifications = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
-    this.clientStatistics = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Serializable[].class);
+    this.entityNotifications = consumer.getOrCreateBestEffortBuffer("entity-notifications", config.getMaximumUnreadNotifications(), Message.class);
+    this.clientNotifications = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Message.class);
+    this.clientStatistics = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Message.class);
     this.platformNotifications = consumer.getOrCreatePlatformNotificationBuffer(config.getMaximumUnreadMutations());
   }
 
@@ -96,29 +94,24 @@ class TmsAgentImpl implements TmsAgent {
 
   @Override
   public synchronized Future<List<Message>> readMessages() {
-    List<Message> messages = new ArrayList<>();
+    // read entity and client notifications, plus stats
+    List<Message> messages = Stream.concat(
+        entityNotifications.stream(),
+        Stream.concat(
+            clientNotifications.stream(),
+            clientStatistics.stream()))
+        .collect(Collectors.toList());
+
     Cluster cluster = topologyBuilder.buildTopology();
 
     // reads platform notifications
     try {
       Collection<Notification> platformNotifications = getPlatformNotifications(cluster);
-      for (Notification platformNotification : platformNotifications) {
-        messages.add(platformNotification.toMessage());
-      }
+      platformNotifications.stream().map(Notification::toMessage).forEach(messages::add);
     } catch (BadIndexException e) {
       Stripe stripe = cluster.getStripes().values().iterator().next();
       messages.add(new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(stripe.getContext(), "LOST_NOTIFICATIONS")));
     }
-
-    // read entity and client notifications
-    Stream.concat(entityNotifications.stream(), clientNotifications.stream())
-        .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "NOTIFICATION", bucket[1]))
-        .forEach(messages::add);
-
-    // read stats coming client-side if any
-    clientStatistics.stream()
-        .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "STATISTICS", bucket[1]))
-        .forEach(messages::add);
 
     // in any case, whether there is at least one message, we add the cluster topology
     if (!messages.isEmpty()) {

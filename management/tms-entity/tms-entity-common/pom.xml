@@ -32,11 +32,6 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>cluster-messaging</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
       <artifactId>cluster-topology</artifactId>
       <version>${project.version}</version>
     </dependency>

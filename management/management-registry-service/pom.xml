@@ -107,9 +107,9 @@
               <shadedClassifierName>plugin</shadedClassifierName>
               <!-- we have to make sure no voltron api comes in the shaded jar -->
               <artifactSet>
-                <includes>
-                  <include>org.terracotta.management:sequence-generator</include>
-                </includes>
+                <excludes>
+                  <exclude>org.terracotta.management:sequence-generator</exclude>
+                </excludes>
               </artifactSet>
             </configuration>
           </execution>

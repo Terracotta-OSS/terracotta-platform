@@ -90,9 +90,7 @@
                    -->
                   <!--<include>org.terracotta.management:management-model</include>-->
                   <include>org.terracotta.management:tms-entity-common</include>
-                  <include>org.terracotta.management:sequence-generator</include>
                   <include>org.terracotta.management:cluster-topology</include>
-                  <include>org.terracotta.management:cluster-messaging</include>
                   <include>org.terracotta:voltron-proxy</include>
                 </includes>
               </artifactSet>
