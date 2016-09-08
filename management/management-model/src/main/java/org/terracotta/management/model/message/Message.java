@@ -17,10 +17,12 @@ package org.terracotta.management.model.message;
 
 import org.terracotta.management.sequence.Sequence;
 
+import java.io.Serializable;
+
 /**
  * @author Mathieu Carbou
  */
-public interface Message {
+public interface Message extends Serializable {
 
   <T> T unwrap(Class<T> type);
 

@@ -18,7 +18,6 @@ package org.terracotta.management.service.monitoring;
 import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -31,13 +30,13 @@ class DefaultPlatformNotification implements PlatformNotification {
   private static final AtomicLong NOTIFICATION_INDEX = new AtomicLong(Long.MIN_VALUE);
 
   private final Serializable source;
-  private final byte[] sequence;
+  private final Sequence sequence;
   private final Type type;
   private final long index;
 
   DefaultPlatformNotification(Sequence sequence, Type type, Serializable source) {
     this.index = NOTIFICATION_INDEX.getAndIncrement();
-    this.sequence = sequence.toBytes();
+    this.sequence = sequence;
     this.type = type;
     this.source = source;
   }
@@ -48,7 +47,7 @@ class DefaultPlatformNotification implements PlatformNotification {
   }
 
   @Override
-  public byte[] getSequence() {
+  public Sequence getSequence() {
     return sequence;
   }
 
@@ -66,7 +65,7 @@ class DefaultPlatformNotification implements PlatformNotification {
   public String toString() {
     return "DefaultPlatformNotification{" + "index=" + index +
         ", type=" + type +
-        ", sequence=" + Arrays.toString(sequence) +
+        ", sequence=" + sequence +
         ", source=" + source +
         '}';
   }

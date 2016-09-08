@@ -28,6 +28,7 @@ import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.SequenceGenerator;
@@ -35,7 +36,6 @@ import org.terracotta.management.service.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -47,6 +47,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.terracotta.management.entity.management.server.Utils.array;
 
 /**
  * Produces:
@@ -104,8 +106,10 @@ class ManagementAgentImpl implements ManagementAgent {
         statistic.setContext(statistic.getContext().with("clientId", clientIdentifier.getClientId()));
       }
       // store in voltron tree
-      Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), statistics};
-      producer.pushBestEffortsData("client-statistics", o);
+      producer.pushBestEffortsData("client-statistics", new DefaultMessage(
+          sequenceGenerator.next(),
+          "STATISTICS",
+          statistics));
     }
     return CompletableFuture.completedFuture(null);
   }
@@ -114,8 +118,10 @@ class ManagementAgentImpl implements ManagementAgent {
   public Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities) {
     ClientIdentifier clientIdentifier = findClientIdentifier((ClientDescriptor) clientDescriptor);
     // expose the registry into this entity tree
-    producer.addNode(Utils.array("management", "clients", clientIdentifier.getClientId(), "registry"), "contextContainer", contextContainer);
-    producer.addNode(Utils.array("management", "clients", clientIdentifier.getClientId(), "registry"), "capabilities", capabilities);
+    String[] path = array("management", "clients", clientIdentifier.getClientId(), "registry");
+    producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "registry", null);
+    producer.addNode(path, "contextContainer", contextContainer);
+    producer.addNode(path, "capabilities", capabilities);
     // marker that we keep, saying this client has a registry
     haveRegistry.put((ClientDescriptor) clientDescriptor, Void.TYPE);
     // fire notification
@@ -127,7 +133,7 @@ class ManagementAgentImpl implements ManagementAgent {
   public Future<Void> exposeTags(@ClientId Object clientDescriptor, String... tags) {
     ClientIdentifier clientIdentifier = findClientIdentifier((ClientDescriptor) clientDescriptor);
     // expose tags
-    producer.addNode(Utils.array("management", "clients", clientIdentifier.getClientId()), "tags", tags == null ? new String[0] : tags);
+    producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "tags", tags == null ? new String[0] : tags);
     // fire notification
     fireNotif(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED"));
     return CompletableFuture.completedFuture(null);
@@ -200,8 +206,10 @@ class ManagementAgentImpl implements ManagementAgent {
   }
 
   private void fireNotif(ContextualNotification notification) {
-    Serializable[] o = new Serializable[]{sequenceGenerator.next().toBytes(), notification};
-    producer.pushBestEffortsData("client-notifications", o);
+    producer.pushBestEffortsData("client-notifications", new DefaultMessage(
+        sequenceGenerator.next(),
+        "NOTIFICATION",
+        notification));
   }
 
   private ClientIdentifier findClientIdentifier(ClientDescriptor clientDescriptor) {

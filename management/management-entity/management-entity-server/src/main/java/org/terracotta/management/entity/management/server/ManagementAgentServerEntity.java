@@ -54,7 +54,6 @@ class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
         .orElseThrow(() -> new IllegalStateException("Invalid monitoring tree: cannot get " + PlatformConnectedClient.class.getSimpleName() + " from descriptor " + clientDescriptor));
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     producer.addNode(array("management", "clients"), clientIdentifier.getClientId(), null);
-    producer.addNode(array("management", "clients", clientIdentifier.getClientId()), "registry", null);
     managementAgent.connected(clientDescriptor, clientIdentifier);
   }
 

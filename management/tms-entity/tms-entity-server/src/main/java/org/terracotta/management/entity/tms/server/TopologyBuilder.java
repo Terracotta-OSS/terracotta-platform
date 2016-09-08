@@ -81,7 +81,7 @@ class TopologyBuilder {
       // find all entities and associate them to the active
       consumer.getPlatformEntities()
           //TODO: MATHIEU: call .setManagementRegistry() to add management registry on server entities
-          .map(platformEntity -> ServerEntity.create(platformEntity.name, platformEntity.typeName))
+          .map(platformEntity -> ServerEntity.create(platformEntity.name, platformEntity.typeName, platformEntity.consumerID))
           .forEach(active::addServerEntity);
 
       // iterate over all connections to create clients and connections to the active

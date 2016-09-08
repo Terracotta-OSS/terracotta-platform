@@ -26,8 +26,8 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>monitoring-service</artifactId>
-  <name>Terracotta Management :: Monitoring Service</name>
+  <artifactId>management-registry-service</artifactId>
+  <name>Terracotta Management :: Management Registry Service</name>
 
   <properties>
     <java.version>1.8</java.version>
@@ -45,6 +45,14 @@
       <groupId>org.terracotta.management</groupId>
       <artifactId>sequence-generator</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <!-- provided as a common server lib -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>management-registry</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron (server) -->
@@ -72,6 +80,12 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.10.19</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -93,7 +93,6 @@
                    -->
                   <!--<include>org.terracotta.management:management-model</include>-->
                   <include>org.terracotta.management:management-entity-common</include>
-                  <include>org.terracotta.management:sequence-generator</include>
                   <include>org.terracotta:voltron-proxy</include>
                 </includes>
               </artifactSet>

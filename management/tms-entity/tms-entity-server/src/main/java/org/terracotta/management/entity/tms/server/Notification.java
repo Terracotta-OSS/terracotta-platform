@@ -43,7 +43,7 @@ class Notification {
 
   Message toMessage() {
     return new DefaultMessage(
-        BoundaryFlakeSequence.fromBytes(platformNotification.getSequence()),
+        platformNotification.getSequence(),
         "NOTIFICATION",
         new ContextualNotification(context, platformNotification.getType().name(), attributes));
   }

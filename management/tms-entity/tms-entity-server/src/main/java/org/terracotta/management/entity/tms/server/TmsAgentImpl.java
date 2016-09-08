@@ -26,7 +26,6 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.sequence.BoundaryFlakeSequence;
 import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
 import org.terracotta.management.service.monitoring.PlatformNotification;
@@ -37,7 +36,6 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -46,6 +44,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.terracotta.management.entity.tms.server.Utils.toClientIdentifier;
 
@@ -71,8 +70,9 @@ class TmsAgentImpl implements TmsAgent {
 
   private final TopologyBuilder topologyBuilder;
   private final SequenceGenerator sequenceGenerator;
-  private final ReadOnlyBuffer<Serializable[]> clientNotifications;
-  private final ReadOnlyBuffer<Serializable[]> clientStatistics;
+  private final ReadOnlyBuffer<Message> entityNotifications;
+  private final ReadOnlyBuffer<Message> clientNotifications;
+  private final ReadOnlyBuffer<Message> clientStatistics;
   private final ReadOnlyBuffer<PlatformNotification> platformNotifications;
 
   private long nextExpectedIndex = Long.MIN_VALUE;
@@ -81,8 +81,9 @@ class TmsAgentImpl implements TmsAgent {
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator, "SequenceGenerator service is missing");
     String stripeName = config.getStripeName() != null ? config.getStripeName() : "stripe-1";
     this.topologyBuilder = new TopologyBuilder(consumer, stripeName);
-    this.clientNotifications = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Serializable[].class);
-    this.clientStatistics = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Serializable[].class);
+    this.entityNotifications = consumer.getOrCreateBestEffortBuffer("entity-notifications", config.getMaximumUnreadNotifications(), Message.class);
+    this.clientNotifications = consumer.getOrCreateBestEffortBuffer("client-notifications", config.getMaximumUnreadNotifications(), Message.class);
+    this.clientStatistics = consumer.getOrCreateBestEffortBuffer("client-statistics", config.getMaximumUnreadStatistics(), Message.class);
     this.platformNotifications = consumer.getOrCreatePlatformNotificationBuffer(config.getMaximumUnreadMutations());
   }
 
@@ -93,29 +94,34 @@ class TmsAgentImpl implements TmsAgent {
 
   @Override
   public synchronized Future<List<Message>> readMessages() {
-    List<Message> messages = new ArrayList<>();
     Cluster cluster = topologyBuilder.buildTopology();
+    Stripe stripe = cluster.getStripes().values().iterator().next();
+
+    // read entity and client notifications, plus stats
+    List<Message> messages = Stream.concat(
+        // While streaming the server-side messages, ensure to fix the context.
+        // Messages coming from voltron only have a consumerId.
+        // So this transform helps setting a better context from the current topology if we find the element into the current topo.
+        entityNotifications.stream().peek(message -> {
+          if ("NOTIFICATION".equals(message.getType())) {
+            ContextualNotification notification = message.unwrap(ContextualNotification.class);
+            stripe.getServerEntity(notification.getContext())
+                .map(ServerEntity::getContext)
+                .ifPresent(notification::setContext);
+          }
+        }),
+        Stream.concat(
+            clientNotifications.stream(),
+            clientStatistics.stream()))
+        .collect(Collectors.toList());
 
     // reads platform notifications
     try {
       Collection<Notification> platformNotifications = getPlatformNotifications(cluster);
-      for (Notification platformNotification : platformNotifications) {
-        messages.add(platformNotification.toMessage());
-      }
+      platformNotifications.stream().map(Notification::toMessage).forEach(messages::add);
     } catch (BadIndexException e) {
-      Stripe stripe = cluster.getStripes().values().iterator().next();
       messages.add(new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(stripe.getContext(), "LOST_NOTIFICATIONS")));
     }
-
-    // read notifications coming client-side if any
-    clientNotifications.stream()
-        .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "NOTIFICATION", bucket[1]))
-        .forEach(messages::add);
-
-    // read stats coming client-side if any
-    clientStatistics.stream()
-        .map(bucket -> new DefaultMessage(BoundaryFlakeSequence.fromBytes((byte[]) bucket[0]), "STATISTICS", bucket[1]))
-        .forEach(messages::add);
 
     // in any case, whether there is at least one message, we add the cluster topology
     if (!messages.isEmpty()) {
@@ -160,7 +166,7 @@ class TmsAgentImpl implements TmsAgent {
         case SERVER_ENTITY_DESTROYED: {
           PlatformEntity platformEntity = notification.getSource(PlatformEntity.class);
           notification.setContext(active.getContext()
-              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName).getContext()));
+              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName, platformEntity.consumerID).getContext()));
           break;
         }
 
@@ -191,7 +197,7 @@ class TmsAgentImpl implements TmsAgent {
           PlatformConnectedClient platformClient = (PlatformConnectedClient) bucket[0];
           PlatformEntity platformEntity = (PlatformEntity) bucket[1];
           Context context = active.getContext()
-              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName).getContext());
+              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName, platformEntity.consumerID).getContext());
           notification.setContext(context);
           notification.setAttribute(Client.KEY, toClientIdentifier(platformClient).getClientId());
           break;

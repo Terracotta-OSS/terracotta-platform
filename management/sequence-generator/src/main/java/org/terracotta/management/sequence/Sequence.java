@@ -15,12 +15,14 @@
  */
 package org.terracotta.management.sequence;
 
+import java.io.Serializable;
+
 /**
  * SEQUENCE = TIMESTAMP + NODE_ID + SEQUENCE_ID
  *
  * @author Mathieu Carbou
  */
-public interface Sequence extends Comparable<Sequence> {
+public interface Sequence extends Comparable<Sequence>, Serializable {
 
   long getTimestamp();
 

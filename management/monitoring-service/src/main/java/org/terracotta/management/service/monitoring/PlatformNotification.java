@@ -16,6 +16,7 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
 
@@ -41,7 +42,7 @@ public interface PlatformNotification extends Serializable {
     SERVER_STATE_CHANGED,
   }
 
-  byte[] getSequence();
+  Sequence getSequence();
 
   long getIndex();
 
