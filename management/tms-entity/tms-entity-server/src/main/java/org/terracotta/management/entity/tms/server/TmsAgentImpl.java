@@ -94,22 +94,32 @@ class TmsAgentImpl implements TmsAgent {
 
   @Override
   public synchronized Future<List<Message>> readMessages() {
+    Cluster cluster = topologyBuilder.buildTopology();
+    Stripe stripe = cluster.getStripes().values().iterator().next();
+
     // read entity and client notifications, plus stats
     List<Message> messages = Stream.concat(
-        entityNotifications.stream(),
+        // While streaming the server-side messages, ensure to fix the context.
+        // Messages coming from voltron only have a consumerId.
+        // So this transform helps setting a better context from the current topology if we find the element into the current topo.
+        entityNotifications.stream().peek(message -> {
+          if ("NOTIFICATION".equals(message.getType())) {
+            ContextualNotification notification = message.unwrap(ContextualNotification.class);
+            stripe.getServerEntity(notification.getContext())
+                .map(ServerEntity::getContext)
+                .ifPresent(notification::setContext);
+          }
+        }),
         Stream.concat(
             clientNotifications.stream(),
             clientStatistics.stream()))
         .collect(Collectors.toList());
-
-    Cluster cluster = topologyBuilder.buildTopology();
 
     // reads platform notifications
     try {
       Collection<Notification> platformNotifications = getPlatformNotifications(cluster);
       platformNotifications.stream().map(Notification::toMessage).forEach(messages::add);
     } catch (BadIndexException e) {
-      Stripe stripe = cluster.getStripes().values().iterator().next();
       messages.add(new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", new ContextualNotification(stripe.getContext(), "LOST_NOTIFICATIONS")));
     }
 

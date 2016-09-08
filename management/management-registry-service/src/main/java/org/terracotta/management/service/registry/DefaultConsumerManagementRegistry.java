@@ -33,15 +33,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class DefaultConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
 
-  private final long consumerId;
   private final IMonitoringProducer producer;
   private final SequenceGenerator sequenceGenerator;
   private final AtomicBoolean dirty = new AtomicBoolean();
+  private final ContextContainer contextContainer;
 
   DefaultConsumerManagementRegistry(long consumerId, IMonitoringProducer producer, SequenceGenerator sequenceGenerator) {
-    this.consumerId = consumerId;
     this.producer = Objects.requireNonNull(producer);
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
+    this.contextContainer = new ContextContainer("entityConsumerId", String.valueOf(consumerId));
   }
 
   @Override
@@ -66,7 +66,6 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
   public synchronized void refresh() {
     if (dirty.compareAndSet(true, false)) {
       String[] path = {"registry"};
-      ContextContainer contextContainer = getContextContainer();
       Collection<Capability> capabilities = getCapabilities();
       Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
 
@@ -88,7 +87,7 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
 
   @Override
   public ContextContainer getContextContainer() {
-    return new ContextContainer("entityConsumerId", String.valueOf(consumerId));
+    return contextContainer;
   }
 
 }
