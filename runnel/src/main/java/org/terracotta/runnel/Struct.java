@@ -18,6 +18,7 @@ package org.terracotta.runnel;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
 import org.terracotta.runnel.metadata.StructField;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.nio.ByteBuffer;
 
@@ -40,6 +41,6 @@ public class Struct {
   }
 
   public StructDecoder decoder(ByteBuffer byteBuffer) {
-    return new StructDecoder(root.subFields(), byteBuffer);
+    return new StructDecoder(root.subFields(), new ReadBuffer(byteBuffer));
   }
 }

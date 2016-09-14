@@ -15,6 +15,8 @@
  */
 package org.terracotta.runnel.metadata;
 
+import org.terracotta.runnel.utils.ReadBuffer;
+
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -37,18 +39,18 @@ public class ArrayField extends AbstractField {
   }
 
   @Override
-  public Object decode(ByteBuffer byteBuffer) {
-    throw new UnsupportedOperationException("todo");
+  public Object decode(ReadBuffer readBuffer) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
-  public int skip(ByteBuffer byteBuffer) {
+  public int skip(ReadBuffer readBuffer) {
     int skipped = 0;
-    int len = byteBuffer.getInt();
+    int len = readBuffer.getVlqInt();
     skipped += len;
 
     for (int i = 0; i < len; i++) {
-      skipped += arrayedField.skip(byteBuffer);
+      skipped += arrayedField.skip(readBuffer);
     }
     return skipped;
   }

@@ -16,13 +16,14 @@
 package org.terracotta.runnel.dataholders;
 
 import org.junit.Test;
+import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.runnel.dataholders.StringTest.readString;
 
 /**
  * @author Ludovic Orban
@@ -31,43 +32,43 @@ public class ArrayTest {
 
   @Test
   public void testWithIndex() throws Exception {
-    // (index)4 + (array len)4 + 10 + 10 + 14
     ArrayDataHolder arrayDataHolder = new ArrayDataHolder(Arrays.asList(new StringDataHolder("one", 3), new StringDataHolder("two", 6), new StringDataHolder("three", 9)), 7);
 
-    assertThat(arrayDataHolder.size(true), is(42));
+    assertThat(arrayDataHolder.size(true), is(27));
 
     ByteBuffer bb = ByteBuffer.allocate(arrayDataHolder.size(true));
-    arrayDataHolder.encode(bb, true);
-    assertThat(bb.position(), is(42));
+    arrayDataHolder.encode(new WriteBuffer(bb), true);
+    assertThat(bb.position(), is(27));
     bb.rewind();
-    assertThat(bb.getInt(), is(7));
-    assertThat(bb.getInt(), is(3));
-    assertThat(bb.getInt(), is(6));
-    assertThat(readString(bb, 6), is("one"));
-    assertThat(bb.getInt(), is(6));
-    assertThat(readString(bb, 6), is("two"));
-    assertThat(bb.getInt(), is(10));
-    assertThat(readString(bb, 10), is("three"));
+    ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getVlqInt(), is(7));
+    assertThat(readBuffer.getVlqInt(), is(3));
+    assertThat(readBuffer.getVlqInt(), is(6));
+    assertThat(readBuffer.getString(6), is("one"));
+    assertThat(readBuffer.getVlqInt(), is(6));
+    assertThat(readBuffer.getString(6), is("two"));
+    assertThat(readBuffer.getVlqInt(), is(10));
+    assertThat(readBuffer.getString(10), is("three"));
   }
 
   @Test
   public void testWithoutIndex() throws Exception {
-    // (array len)4 + 10 + 10 + 14
     ArrayDataHolder arrayDataHolder = new ArrayDataHolder(Arrays.asList(new StringDataHolder("one", 3), new StringDataHolder("two", 6), new StringDataHolder("three", 9)), 7);
 
-    assertThat(arrayDataHolder.size(false), is(38));
+    assertThat(arrayDataHolder.size(false), is(26));
 
     ByteBuffer bb = ByteBuffer.allocate(arrayDataHolder.size(true));
-    arrayDataHolder.encode(bb, false);
-    assertThat(bb.position(), is(38));
+    arrayDataHolder.encode(new WriteBuffer(bb), false);
+    assertThat(bb.position(), is(26));
     bb.rewind();
-    assertThat(bb.getInt(), is(3));
-    assertThat(bb.getInt(), is(6));
-    assertThat(readString(bb, 6), is("one"));
-    assertThat(bb.getInt(), is(6));
-    assertThat(readString(bb, 6), is("two"));
-    assertThat(bb.getInt(), is(10));
-    assertThat(readString(bb, 10), is("three"));
+    ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getVlqInt(), is(3));
+    assertThat(readBuffer.getVlqInt(), is(6));
+    assertThat(readBuffer.getString(6), is("one"));
+    assertThat(readBuffer.getVlqInt(), is(6));
+    assertThat(readBuffer.getString(6), is("two"));
+    assertThat(readBuffer.getVlqInt(), is(10));
+    assertThat(readBuffer.getString(10), is("three"));
   }
 
 }

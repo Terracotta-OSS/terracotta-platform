@@ -16,6 +16,8 @@
 package org.terracotta.runnel.dataholders;
 
 import org.junit.Test;
+import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -32,38 +34,32 @@ public class StringTest {
   public void testWithIndex() throws Exception {
     StringDataHolder stringDataHolder = new StringDataHolder("aNormalString", 5);
 
-    assertThat(stringDataHolder.size(true), is(34));
+    assertThat(stringDataHolder.size(true), is(28));
 
     ByteBuffer bb = ByteBuffer.allocate(stringDataHolder.size(true));
-    stringDataHolder.encode(bb, true);
-    assertThat(bb.position(), is(34));
+    stringDataHolder.encode(new WriteBuffer(bb), true);
+    assertThat(bb.position(), is(28));
     bb.rewind();
-    assertThat(bb.getInt(), is(5));
-    assertThat(bb.getInt(), is(26));
-    byte[] array = new byte[26];
-    bb.get(array);
-    assertThat(new String(array, "UTF-16"), is("aNormalString"));
+    ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getVlqInt(), is(5));
+    assertThat(readBuffer.getVlqInt(), is(26));
+    assertThat(readBuffer.getString(26), is("aNormalString"));
   }
 
   @Test
   public void testWithoutIndex() throws Exception {
     StringDataHolder stringDataHolder = new StringDataHolder("aNormalString", 5);
 
-    assertThat(stringDataHolder.size(false), is(30));
+    assertThat(stringDataHolder.size(false), is(27));
 
     ByteBuffer bb = ByteBuffer.allocate(stringDataHolder.size(true));
-    stringDataHolder.encode(bb, false);
-    assertThat(bb.position(), is(30));
+    stringDataHolder.encode(new WriteBuffer(bb), false);
+    assertThat(bb.position(), is(27));
     bb.rewind();
-    assertThat(bb.getInt(), is(26));
-    String s = readString(bb, 26);
+    ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getVlqInt(), is(26));
+    String s = readBuffer.getString(26);
     assertThat(s, is("aNormalString"));
-  }
-
-  static String readString(ByteBuffer bb, int len) throws UnsupportedEncodingException {
-    byte[] array = new byte[len];
-    bb.get(array);
-    return new String(array, "UTF-16");
   }
 
 }

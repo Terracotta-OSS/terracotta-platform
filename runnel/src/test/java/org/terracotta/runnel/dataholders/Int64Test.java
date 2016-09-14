@@ -16,6 +16,8 @@
 package org.terracotta.runnel.dataholders;
 
 import org.junit.Test;
+import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.nio.ByteBuffer;
 
@@ -31,14 +33,15 @@ public class Int64Test {
   public void testWithIndex() throws Exception {
     Int64DataHolder int64DataHolder = new Int64DataHolder(99L, 1);
 
-    assertThat(int64DataHolder.size(true), is(12));
+    assertThat(int64DataHolder.size(true), is(9));
 
     ByteBuffer bb = ByteBuffer.allocate(int64DataHolder.size(true));
-    int64DataHolder.encode(bb, true);
-    assertThat(bb.position(), is(12));
+    int64DataHolder.encode(new WriteBuffer(bb), true);
+    assertThat(bb.position(), is(9));
     bb.rewind();
-    assertThat(bb.getInt(), is(1));
-    assertThat(bb.getLong(), is(99L));
+    ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getVlqInt(), is(1));
+    assertThat(readBuffer.getLong(), is(99L));
   }
 
   @Test
@@ -48,10 +51,11 @@ public class Int64Test {
     assertThat(int64DataHolder.size(false), is(8));
 
     ByteBuffer bb = ByteBuffer.allocate(int64DataHolder.size(false));
-    int64DataHolder.encode(bb, false);
+    int64DataHolder.encode(new WriteBuffer(bb), false);
     assertThat(bb.position(), is(8));
     bb.rewind();
-    assertThat(bb.getLong(), is(99L));
+    ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getLong(), is(99L));
   }
 
 

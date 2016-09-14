@@ -41,11 +41,6 @@ public abstract class AbstractField implements Field {
   }
 
   @Override
-  public boolean isComposite() {
-    return subFields() != null;
-  }
-
-  @Override
   public List<? extends Field> subFields() {
     return null;
   }

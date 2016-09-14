@@ -15,6 +15,9 @@
  */
 package org.terracotta.runnel.dataholders;
 
+import org.terracotta.runnel.utils.VLQ;
+import org.terracotta.runnel.utils.WriteBuffer;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -38,21 +41,21 @@ public class ArrayDataHolder implements DataHolder {
       size += value.size(false);
     }
 
-    size += 4;
+    size += VLQ.encodedSize(size);
 
     if (withIndex) {
-      size += 4;
+      size += VLQ.encodedSize(index);
     }
 
     return size;
   }
 
-  public void encode(ByteBuffer byteBuffer, boolean withIndex) {
+  public void encode(WriteBuffer byteBuffer, boolean withIndex) {
     if (withIndex) {
-      byteBuffer.putInt(index);
+      byteBuffer.putVlqInt(index);
     }
 
-    byteBuffer.putInt(values.size());
+    byteBuffer.putVlqInt(values.size());
     for (DataHolder value : values) {
       value.encode(byteBuffer, false);
     }

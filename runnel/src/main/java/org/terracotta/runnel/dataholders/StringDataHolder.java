@@ -15,7 +15,8 @@
  */
 package org.terracotta.runnel.dataholders;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.VLQ;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 /**
  * @author Ludovic Orban
@@ -31,16 +32,15 @@ public class StringDataHolder implements DataHolder {
   }
 
   public int size(boolean withIndex) {
-    return value.length() * 2 + 4 + (withIndex ? 4 : 0);
+    int len = value.length() * 2;
+    return VLQ.encodedSize(len) + len + (withIndex ? VLQ.encodedSize(index) : 0);
   }
 
-  public void encode(ByteBuffer byteBuffer, boolean withIndex) {
+  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
     if (withIndex) {
-      byteBuffer.putInt(index);
+      writeBuffer.putVlqInt(index);
     }
-    byteBuffer.putInt(value.length() * 2);
-    for (int i = 0; i < value.length(); i++) {
-      byteBuffer.putChar(value.charAt(i));
-    }
+    writeBuffer.putVlqInt(value.length() * 2);
+    writeBuffer.putString(value);
   }
 }

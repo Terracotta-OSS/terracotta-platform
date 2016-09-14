@@ -15,7 +15,8 @@
  */
 package org.terracotta.runnel.metadata;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.VLQ;
 
 /**
  * @author Ludovic Orban
@@ -26,19 +27,15 @@ public class StringField extends AbstractField {
   }
 
   @Override
-  public Object decode(ByteBuffer byteBuffer) {
-    int len = byteBuffer.getInt();
-    char[] chars = new char[len / 2];
-    for (int i = 0; i < chars.length; i++) {
-      chars[i] = byteBuffer.getChar();
-    }
-    return new String(chars);
+  public Object decode(ReadBuffer readBuffer) {
+    int len = readBuffer.getVlqInt();
+    return readBuffer.getString(len);
   }
 
   @Override
-  public int skip(ByteBuffer byteBuffer) {
-    int len = byteBuffer.getInt();
-    byteBuffer.position(byteBuffer.position() + len);
-    return len + 4;
+  public int skip(ReadBuffer readBuffer) {
+    int len = readBuffer.getVlqInt();
+    readBuffer.skip(len);
+    return len + VLQ.encodedSize(len);
   }
 }

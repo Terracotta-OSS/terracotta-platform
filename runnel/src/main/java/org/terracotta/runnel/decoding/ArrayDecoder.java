@@ -16,8 +16,7 @@
 package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.metadata.Field;
-
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
  * @author Ludovic Orban
@@ -25,16 +24,16 @@ import java.nio.ByteBuffer;
 public class ArrayDecoder<T> {
 
   private final Field arrayedField;
-  private final ByteBuffer byteBuffer;
+  private final ReadBuffer readBuffer;
   private final StructDecoder parent;
   private final int size;
   private int i = 0;
 
-  ArrayDecoder(Field arrayedField, ByteBuffer byteBuffer, StructDecoder parent) {
+  ArrayDecoder(Field arrayedField, ReadBuffer readBuffer, StructDecoder parent) {
     this.arrayedField = arrayedField;
-    this.byteBuffer = byteBuffer;
+    this.readBuffer = readBuffer;
     this.parent = parent;
-    this.size = byteBuffer.getInt();
+    this.size = readBuffer.getVlqInt();
   }
 
   public int size() {
@@ -46,12 +45,12 @@ public class ArrayDecoder<T> {
       throw new RuntimeException("Array end reached");
     }
     i++;
-    return (T) arrayedField.decode(byteBuffer);
+    return (T) arrayedField.decode(readBuffer);
   }
 
   public StructDecoder end() {
     for (; i < size; i++) {
-      arrayedField.skip(byteBuffer);
+      arrayedField.skip(readBuffer);
     }
 
     return parent;

@@ -15,6 +15,8 @@
  */
 package org.terracotta.runnel.metadata;
 
+import org.terracotta.runnel.utils.ReadBuffer;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -27,13 +29,13 @@ public class Int32Field extends AbstractField {
   }
 
   @Override
-  public Object decode(ByteBuffer byteBuffer) {
-    return byteBuffer.getInt();
+  public Object decode(ReadBuffer readBuffer) {
+    return readBuffer.getInt();
   }
 
   @Override
-  public int skip(ByteBuffer byteBuffer) {
-    byteBuffer.position(byteBuffer.position() + 4);
+  public int skip(ReadBuffer readBuffer) {
+    readBuffer.skip(4);
     return 4;
   }
 }

@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.metadata;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
  * @author Ludovic Orban
@@ -27,13 +27,13 @@ public class Int64Field extends AbstractField {
   }
 
   @Override
-  public Object decode(ByteBuffer byteBuffer) {
-    return byteBuffer.getLong();
+  public Object decode(ReadBuffer readBuffer) {
+    return readBuffer.getLong();
   }
 
   @Override
-  public int skip(ByteBuffer byteBuffer) {
-    byteBuffer.position(byteBuffer.position() + 8);
+  public int skip(ReadBuffer readBuffer) {
+    readBuffer.skip(8);
     return 8;
   }
 }

@@ -15,6 +15,8 @@
  */
 package org.terracotta.runnel.metadata;
 
+import org.terracotta.runnel.utils.ReadBuffer;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -25,9 +27,8 @@ public interface Field {
 
   String name();
   int index();
-  boolean isComposite();
   List<? extends Field> subFields();
 
-  Object decode(ByteBuffer byteBuffer);
-  int skip(ByteBuffer byteBuffer);
+  Object decode(ReadBuffer readBuffer);
+  int skip(ReadBuffer readBuffer);
 }

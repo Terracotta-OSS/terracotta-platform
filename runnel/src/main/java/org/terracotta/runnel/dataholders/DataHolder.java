@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.dataholders;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 /**
  * @author Ludovic Orban
@@ -24,6 +24,6 @@ public interface DataHolder {
 
   int size(boolean withIndex);
 
-  void encode(ByteBuffer byteBuffer, boolean withIndex);
+  void encode(WriteBuffer writeBuffer, boolean withIndex);
 
 }

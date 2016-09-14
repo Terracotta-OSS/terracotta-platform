@@ -29,6 +29,8 @@ import org.terracotta.runnel.metadata.Int32Field;
 import org.terracotta.runnel.metadata.Int64Field;
 import org.terracotta.runnel.metadata.StringField;
 import org.terracotta.runnel.metadata.StructField;
+import org.terracotta.runnel.utils.VLQ;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -149,14 +151,15 @@ public class StructEncoder {
   }
 
   public ByteBuffer encode(ByteBuffer bb) {
+    WriteBuffer writeBuffer = new WriteBuffer(bb);
     int size = 0;
     for (DataHolder dataHolder : data) {
       size += dataHolder.size(true);
     }
-    bb.putInt(size);
+    writeBuffer.putVlqInt(size);
 
     for (DataHolder dataHolder : data) {
-      dataHolder.encode(bb, true);
+      dataHolder.encode(writeBuffer, true);
     }
 
     return bb;
@@ -168,12 +171,13 @@ public class StructEncoder {
       size += dataHolder.size(true);
     }
 
-    ByteBuffer bb = ByteBuffer.allocate(size + 4);
+    ByteBuffer bb = ByteBuffer.allocate(size + VLQ.encodedSize(size));
+    WriteBuffer writeBuffer = new WriteBuffer(bb);
 
-    bb.putInt(size);
+    writeBuffer.putVlqInt(size);
 
     for (DataHolder dataHolder : data) {
-      dataHolder.encode(bb, true);
+      dataHolder.encode(writeBuffer, true);
     }
 
     return bb;
