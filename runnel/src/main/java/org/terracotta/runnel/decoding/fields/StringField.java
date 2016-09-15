@@ -16,7 +16,6 @@
 package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
 
 /**
  * @author Ludovic Orban
@@ -32,10 +31,4 @@ public class StringField extends AbstractField {
     return readBuffer.getString(len);
   }
 
-  @Override
-  public int skip(ReadBuffer readBuffer) {
-    int len = readBuffer.getVlqInt();
-    readBuffer.skip(len);
-    return len + VLQ.encodedSize(len);
-  }
 }

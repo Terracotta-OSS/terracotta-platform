@@ -29,5 +29,4 @@ public interface Field {
   List<? extends Field> subFields();
 
   Object decode(ReadBuffer readBuffer);
-  int skip(ReadBuffer readBuffer);
 }

@@ -32,9 +32,4 @@ public class Int64Field extends AbstractField {
     return readBuffer.getLong();
   }
 
-  @Override
-  public int skip(ReadBuffer readBuffer) {
-    readBuffer.skip(8);
-    return 8;
-  }
 }

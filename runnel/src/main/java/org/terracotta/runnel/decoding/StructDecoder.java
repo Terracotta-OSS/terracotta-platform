@@ -88,45 +88,40 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     StructField field = metadata.nextField(name, StructField.class, null, readBuffer);
     if (field == null) {
       return null;
-    } else {
-      return new StructDecoder(field.subFields(), readBuffer, this);
     }
+    return new StructDecoder(field.subFields(), readBuffer, this);
   }
 
   public ArrayDecoder<Integer> int32s(String name) {
     ArrayField field = metadata.nextField(name, ArrayField.class, Int32Field.class, readBuffer);
     if (field == null) {
       return null;
-    } else {
-      return new ArrayDecoder<Integer>(field.subFields().get(0), readBuffer, this);
     }
+    return new ArrayDecoder<Integer>(field.subFields().get(0), readBuffer, this);
   }
 
   public ArrayDecoder<Long> int64s(String name) {
     ArrayField field = metadata.nextField(name, ArrayField.class, Int64Field.class, readBuffer);
     if (field == null) {
       return null;
-    } else {
-      return new ArrayDecoder<Long>(field.subFields().get(0), readBuffer, this);
     }
+    return new ArrayDecoder<Long>(field.subFields().get(0), readBuffer, this);
   }
 
   public ArrayDecoder<String> strings(String name) {
     ArrayField field = metadata.nextField(name, ArrayField.class, StringField.class, readBuffer);
     if (field == null) {
       return null;
-    } else {
-      return new ArrayDecoder<String>(field.subFields().get(0), readBuffer, this);
     }
+    return new ArrayDecoder<String>(field.subFields().get(0), readBuffer, this);
   }
 
   public StructArrayDecoder structs(String name) {
     ArrayField field = metadata.nextField(name, ArrayField.class, StructField.class, readBuffer);
     if (field == null) {
       return null;
-    } else {
-      return new StructArrayDecoder(field.subFields().get(0).subFields(), readBuffer, this);
     }
+    return new StructArrayDecoder(field.subFields().get(0).subFields(), readBuffer, this);
   }
 
   public StructDecoder end() {

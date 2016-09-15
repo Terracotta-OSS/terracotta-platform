@@ -16,7 +16,6 @@
 package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
 
 import java.util.List;
 
@@ -42,11 +41,4 @@ public class StructField extends AbstractField {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public int skip(ReadBuffer readBuffer) {
-    int size = readBuffer.getVlqInt();
-    size -= VLQ.encodedSize(size);
-    readBuffer.skip(size);
-    return size;
-  }
 }

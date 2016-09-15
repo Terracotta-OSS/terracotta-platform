@@ -42,15 +42,4 @@ public class ArrayField extends AbstractField {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public int skip(ReadBuffer readBuffer) {
-    int skipped = 0;
-    int len = readBuffer.getVlqInt();
-    skipped += len;
-
-    for (int i = 0; i < len; i++) {
-      skipped += arrayedField.skip(readBuffer);
-    }
-    return skipped;
-  }
 }
