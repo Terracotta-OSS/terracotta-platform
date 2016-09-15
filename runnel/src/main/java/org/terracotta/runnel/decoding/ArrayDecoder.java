@@ -17,7 +17,6 @@ package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.metadata.Field;
 import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
 
 /**
  * @author Ludovic Orban
@@ -28,17 +27,14 @@ public class ArrayDecoder<T> {
   private final ReadBuffer readBuffer;
   private final StructDecoder parent;
   private final int length;
-  private final int size;
-  private int i = 0;
-  private int currentlyRead = 0;
 
   ArrayDecoder(Field arrayedField, ReadBuffer readBuffer, StructDecoder parent) {
     this.arrayedField = arrayedField;
-    this.readBuffer = readBuffer;
     this.parent = parent;
-    this.size = readBuffer.getVlqInt();
+    int size = readBuffer.getVlqInt();
+    this.readBuffer = readBuffer.limit(size);
+
     this.length = readBuffer.getVlqInt();
-    currentlyRead += VLQ.encodedSize(length);
   }
 
   public int length() {
@@ -46,19 +42,11 @@ public class ArrayDecoder<T> {
   }
 
   public T value() {
-    if (i >= length) {
-      throw new RuntimeException("Array end reached");
-    }
-    i++;
-    int before = readBuffer.position();
-    T decoded = (T) arrayedField.decode(readBuffer);
-    int after = readBuffer.position();
-    currentlyRead += (after - before);
-    return decoded;
+    return (T) arrayedField.decode(readBuffer);
   }
 
   public StructDecoder end() {
-    readBuffer.skip(size - currentlyRead);
+    readBuffer.skipAll();
 
     return parent;
   }

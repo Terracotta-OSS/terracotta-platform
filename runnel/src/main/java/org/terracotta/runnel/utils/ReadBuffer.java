@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 public class ReadBuffer {
 
   private final ByteBuffer byteBuffer;
+  private final int origin;
   private final int limit;
 
   public ReadBuffer(ByteBuffer byteBuffer) {
@@ -31,7 +32,8 @@ public class ReadBuffer {
 
   private ReadBuffer(ByteBuffer byteBuffer, int limit) {
     this.byteBuffer = byteBuffer;
-    this.limit = byteBuffer.position() + limit;
+    this.origin = byteBuffer.position();
+    this.limit = origin + limit;
   }
 
   public long getLong() {
@@ -59,48 +61,63 @@ public class ReadBuffer {
     return byteBuffer.get();
   }
 
-  public ByteBuffer getByteBuffer(int len) {
-    if (byteBuffer.position() + len > limit) {
+  public ByteBuffer getByteBuffer(int size) {
+    if (byteBuffer.position() + size > limit) {
       throw new BufferLimitReachedException();
     }
     ByteBuffer slice = byteBuffer.slice();
-    slice.limit(len);
+    slice.limit(size);
     return slice;
   }
 
-  public String getString(int len) {
-    if (byteBuffer.position() + len > limit) {
+  public String getString(int size) {
+    if (byteBuffer.position() + size > limit) {
       throw new BufferLimitReachedException();
     }
-    char[] chars = new char[len / 2];
+    char[] chars = new char[size / 2];
     for (int i = 0; i < chars.length; i++) {
       chars[i] = byteBuffer.getChar();
     }
     return new String(chars);
   }
 
-  public void skip(int len) {
-    if (len < 0) {
-      throw new IllegalArgumentException("len cannot be < 0");
-    }
-    if (byteBuffer.position() + len > limit) {
+  public boolean limitReached() {
+    return byteBuffer.position() == limit;
+  }
+
+  public void skipAll() {
+    if (limit > byteBuffer.capacity()) {
       throw new BufferLimitReachedException();
     }
-    byteBuffer.position(byteBuffer.position() + len);
+    byteBuffer.position(limit);
   }
 
-  public void rewind(int len) {
-    if (len < 0) {
-      throw new IllegalArgumentException("len cannot be < 0");
+  public void skip(int size) {
+    if (size < 0) {
+      throw new IllegalArgumentException("size cannot be < 0");
     }
-    byteBuffer.position(byteBuffer.position() - len);
+    int targetPosition = byteBuffer.position() + size;
+    if (targetPosition > limit) {
+      throw new BufferLimitReachedException();
+    }
+    byteBuffer.position(targetPosition);
   }
 
-  public int position() {
-    return byteBuffer.position();
+  public void rewind(int size) {
+    if (size < 0) {
+      throw new IllegalArgumentException("size cannot be < 0");
+    }
+    int targetPosition = byteBuffer.position() - size;
+    if (targetPosition < origin) {
+      throw new BufferLimitReachedException();
+    }
+    byteBuffer.position(targetPosition);
   }
 
-  public ReadBuffer limit(int maxSize) {
-    return new ReadBuffer(byteBuffer, maxSize);
+  public ReadBuffer limit(int size) {
+    if (size < 0) {
+      throw new IllegalArgumentException("size cannot be < 0");
+    }
+    return new ReadBuffer(byteBuffer, size);
   }
 }

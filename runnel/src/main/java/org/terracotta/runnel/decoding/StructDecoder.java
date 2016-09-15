@@ -35,10 +35,8 @@ public class StructDecoder {
 
   private final List<? extends Field> metadata;
   private final ReadBuffer readBuffer;
-  private final int maxSize;
   private final StructDecoder parent;
   private int i = 0;
-  private int currentlyRead = 0;
 
   public StructDecoder(List<? extends Field> metadata, ReadBuffer readBuffer) {
     this(metadata, readBuffer, null);
@@ -47,8 +45,8 @@ public class StructDecoder {
   private StructDecoder(List<? extends Field> metadata, ReadBuffer readBuffer, StructDecoder parent) {
     this.metadata = metadata;
     this.parent = parent;
-    this.maxSize = readBuffer.getVlqInt();
-    this.readBuffer = readBuffer.limit(maxSize);
+    int size = readBuffer.getVlqInt();
+    this.readBuffer = readBuffer.limit(size);
   }
 
   public Integer int32(String name) {
@@ -56,11 +54,7 @@ public class StructDecoder {
     if (field == null) {
       return null;
     }
-    int before = readBuffer.position();
-    Integer decoded = (Integer) field.decode(readBuffer);
-    int after = readBuffer.position();
-    currentlyRead += (after - before);
-    return decoded;
+    return (Integer) field.decode(readBuffer);
   }
 
   public Long int64(String name) {
@@ -68,11 +62,7 @@ public class StructDecoder {
     if (field == null) {
       return null;
     }
-    int before = readBuffer.position();
-    Long decoded = (Long) field.decode(readBuffer);
-    int after = readBuffer.position();
-    currentlyRead += (after - before);
-    return decoded;
+    return (Long) field.decode(readBuffer);
   }
 
   public String string(String name) {
@@ -80,11 +70,7 @@ public class StructDecoder {
     if (field == null) {
       return null;
     }
-    int before = readBuffer.position();
-    String decoded = (String) field.decode(readBuffer);
-    int after = readBuffer.position();
-    currentlyRead += (after - before);
-    return decoded;
+    return (String) field.decode(readBuffer);
   }
 
   public ByteBuffer byteBuffer(String name) {
@@ -92,11 +78,7 @@ public class StructDecoder {
     if (field == null) {
       return null;
     }
-    int before = readBuffer.position();
-    ByteBuffer decoded = (ByteBuffer) field.decode(readBuffer);
-    int after = readBuffer.position();
-    currentlyRead += (after - before);
-    return decoded;
+    return (ByteBuffer) field.decode(readBuffer);
   }
 
   public StructDecoder struct(String name) {
@@ -149,51 +131,38 @@ public class StructDecoder {
       throw new RuntimeException("Cannot end root decoder");
     }
 
-    readBuffer.skip(maxSize - currentlyRead);
+    readBuffer.skipAll();
 
     return parent;
   }
 
   private <F extends Field> F findField(String name, Class<F> fieldClazz) {
     F field = findMetadataFor(name, fieldClazz);
-    if (currentlyRead >= maxSize) {
+    if (readBuffer.limitReached()) {
       return null;
     }
     int index = readBuffer.getVlqInt();
-    currentlyRead += VLQ.encodedSize(index);
-    if (currentlyRead == maxSize) {
+    if (readBuffer.limitReached()) {
       return field;
     }
 
     while (index < field.index()) {
       int fieldSize = readBuffer.getVlqInt();
       readBuffer.skip(fieldSize);
-      currentlyRead += fieldSize + VLQ.encodedSize(fieldSize);
-      if (currentlyRead >= maxSize) {
+      if (readBuffer.limitReached()) {
         return null;
       }
       index = readBuffer.getVlqInt();
-      currentlyRead += VLQ.encodedSize(index);
     }
 
     if (index > field.index()) {
       readBuffer.rewind(VLQ.encodedSize(index));
-      currentlyRead -= VLQ.encodedSize(index);
       return null;
     } else if (index != field.index()) {
       return null;
     } else {
       return field;
     }
-  }
-
-  private Field findMetadataFor(int index) {
-    for (Field field : metadata) {
-      if (field.index() == index) {
-        return field;
-      }
-    }
-    throw new RuntimeException("No field with index [" + index + "]");
   }
 
   private <F extends Field> F findMetadataFor(String name, Class<F> clazz) {
