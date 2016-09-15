@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class StructDecoder {
+public class StructDecoder implements PrimitiveDecodingSupport {
 
   private final Metadata metadata;
   private final ReadBuffer readBuffer;
@@ -48,6 +48,7 @@ public class StructDecoder {
     this.readBuffer = readBuffer.limit(size);
   }
 
+  @Override
   public Integer int32(String name) {
     Int32Field field = metadata.nextField(name, Int32Field.class, null, readBuffer);
     if (field == null) {
@@ -56,6 +57,7 @@ public class StructDecoder {
     return (Integer) field.decode(readBuffer);
   }
 
+  @Override
   public Long int64(String name) {
     Int64Field field = metadata.nextField(name, Int64Field.class, null, readBuffer);
     if (field == null) {
@@ -64,6 +66,7 @@ public class StructDecoder {
     return (Long) field.decode(readBuffer);
   }
 
+  @Override
   public String string(String name) {
     StringField field = metadata.nextField(name, StringField.class, null, readBuffer);
     if (field == null) {
@@ -72,6 +75,7 @@ public class StructDecoder {
     return (String) field.decode(readBuffer);
   }
 
+  @Override
   public ByteBuffer byteBuffer(String name) {
     ByteBufferField field = metadata.nextField(name, ByteBufferField.class, null, readBuffer);
     if (field == null) {

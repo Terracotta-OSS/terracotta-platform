@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class StructEncoder {
+public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
 
   private final Metadata metadata;
   private final List<DataHolder> data;
@@ -56,24 +56,28 @@ public class StructEncoder {
     this.parent = structEncoder;
   }
 
+  @Override
   public StructEncoder int32(String name, int value) {
     Field field = metadata.findField(name, Int32Field.class, null);
     data.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
+  @Override
   public StructEncoder int64(String name, long value) {
     Field field = metadata.findField(name, Int64Field.class, null);
     data.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
+  @Override
   public StructEncoder string(String name, String value) {
     Field field = metadata.findField(name, StringField.class, null);
     data.add(new StringDataHolder(value, field.index()));
     return this;
   }
 
+  @Override
   public StructEncoder byteBuffer(String name, ByteBuffer value) {
     Field field = metadata.findField(name, ByteBufferField.class, null);
     data.add(new ByteBufferDataHolder(value, field.index()));

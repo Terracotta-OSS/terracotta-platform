@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class StructArrayDecoder {
+public class StructArrayDecoder implements PrimitiveDecodingSupport {
   private final Metadata metadata;
   private final StructDecoder parent;
   private final ReadBuffer arrayReadBuffer;
@@ -53,6 +53,7 @@ public class StructArrayDecoder {
     }
   }
 
+  @Override
   public Integer int32(String name) {
     Int32Field field = metadata.nextField(name, Int32Field.class, null, structReadBuffer);
     if (field == null) {
@@ -61,6 +62,7 @@ public class StructArrayDecoder {
     return (Integer) field.decode(structReadBuffer);
   }
 
+  @Override
   public Long int64(String name) {
     Int64Field field = metadata.nextField(name, Int64Field.class, null, structReadBuffer);
     if (field == null) {
@@ -69,6 +71,7 @@ public class StructArrayDecoder {
     return (Long) field.decode(structReadBuffer);
   }
 
+  @Override
   public String string(String name) {
     StringField field = metadata.nextField(name, StringField.class, null, structReadBuffer);
     if (field == null) {
@@ -77,6 +80,7 @@ public class StructArrayDecoder {
     return (String) field.decode(structReadBuffer);
   }
 
+  @Override
   public ByteBuffer byteBuffer(String name) {
     ByteBufferField field = metadata.nextField(name, ByteBufferField.class, null, structReadBuffer);
     if (field == null) {
@@ -91,7 +95,6 @@ public class StructArrayDecoder {
 
   public StructDecoder end() {
     arrayReadBuffer.skipAll();
-    structReadBuffer = arrayReadBuffer.limit(0);
     return parent;
   }
 

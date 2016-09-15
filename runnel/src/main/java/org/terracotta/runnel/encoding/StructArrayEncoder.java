@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class StructArrayEncoder {
+public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayEncoder> {
   private static final int ARRAY_INITIAL_SIZE = 16;
 
   private final List<StructDataHolder> values;
@@ -50,24 +50,28 @@ public class StructArrayEncoder {
     this.currentData = new ArrayList<DataHolder>(ARRAY_INITIAL_SIZE);
   }
 
+  @Override
   public StructArrayEncoder int32(String name, int value) {
     Field field = metadata.findField(name, Int32Field.class, null);
     currentData.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
+  @Override
   public StructArrayEncoder int64(String name, long value) {
     Field field = metadata.findField(name, Int64Field.class, null);
     currentData.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
+  @Override
   public StructArrayEncoder string(String name, String value) {
     Field field = metadata.findField(name, StringField.class, null);
     currentData.add(new StringDataHolder(value, field.index()));
     return this;
   }
 
+  @Override
   public StructArrayEncoder byteBuffer(String name, ByteBuffer value) {
     Field field = metadata.findField(name, ByteBufferField.class, null);
     currentData.add(new ByteBufferDataHolder(value, field.index()));
