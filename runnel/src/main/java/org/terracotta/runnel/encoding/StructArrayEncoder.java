@@ -23,10 +23,9 @@ import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
 import org.terracotta.runnel.encoding.dataholders.StringDataHolder;
 import org.terracotta.runnel.encoding.dataholders.StructDataHolder;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.metadata.Metadata;
+import org.terracotta.runnel.metadata.FieldSearcher;
 import org.terracotta.runnel.decoding.fields.StringField;
 
 import java.nio.ByteBuffer;
@@ -41,47 +40,46 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
 
   private final List<StructDataHolder> values;
   private final StructEncoder parent;
-  private final Metadata metadata;
+  private final FieldSearcher fieldSearcher;
   private List<DataHolder> currentData;
 
   StructArrayEncoder(List<StructDataHolder> values, StructEncoder parent, StructField structField) {
     this.values = values;
     this.parent = parent;
-    this.metadata = structField.getMetadata();
-    metadata.reset();
+    this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.currentData = new ArrayList<DataHolder>(ARRAY_INITIAL_SIZE);
   }
 
   @Override
   public StructArrayEncoder int32(String name, int value) {
-    Field field = metadata.findField(name, Int32Field.class, null);
+    Int32Field field = fieldSearcher.findField(name, Int32Field.class, null);
     currentData.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructArrayEncoder int64(String name, long value) {
-    Field field = metadata.findField(name, Int64Field.class, null);
+    Int64Field field = fieldSearcher.findField(name, Int64Field.class, null);
     currentData.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructArrayEncoder string(String name, String value) {
-    Field field = metadata.findField(name, StringField.class, null);
+    StringField field = fieldSearcher.findField(name, StringField.class, null);
     currentData.add(new StringDataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructArrayEncoder byteBuffer(String name, ByteBuffer value) {
-    Field field = metadata.findField(name, ByteBufferField.class, null);
+    ByteBufferField field = fieldSearcher.findField(name, ByteBufferField.class, null);
     currentData.add(new ByteBufferDataHolder(value, field.index()));
     return this;
   }
 
   public StructArrayEncoder next() {
-    metadata.reset();
+    fieldSearcher.reset();
     values.add(new StructDataHolder(currentData, -1));
     currentData = new ArrayList<DataHolder>(ARRAY_INITIAL_SIZE);
     return this;

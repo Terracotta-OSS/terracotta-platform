@@ -37,7 +37,7 @@ public class Struct {
   }
 
   public StructEncoder encoder() {
-    return new StructEncoder(root.subFields());
+    return new StructEncoder(root);
   }
 
   public StructDecoder decoder(ByteBuffer byteBuffer) {

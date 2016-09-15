@@ -27,7 +27,7 @@ import org.terracotta.runnel.decoding.fields.ByteBufferField;
 import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.metadata.Metadata;
+import org.terracotta.runnel.metadata.FieldSearcher;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.utils.VLQ;
@@ -42,53 +42,53 @@ import java.util.List;
  */
 public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
 
-  private final Metadata metadata;
+  private final FieldSearcher fieldSearcher;
   private final List<DataHolder> data;
   private final StructEncoder parent;
 
-  public StructEncoder(List<? extends Field> fields) {
-    this(fields, new ArrayList<DataHolder>(), null);
+  public StructEncoder(StructField structField) {
+    this(structField, new ArrayList<DataHolder>(), null);
   }
 
-  private StructEncoder(List<? extends Field> fields, List<DataHolder> values, StructEncoder structEncoder) {
-    this.metadata = new Metadata(fields);
+  private StructEncoder(StructField structField, List<DataHolder> values, StructEncoder structEncoder) {
+    this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.data = values;
     this.parent = structEncoder;
   }
 
   @Override
   public StructEncoder int32(String name, int value) {
-    Field field = metadata.findField(name, Int32Field.class, null);
+    Field field = fieldSearcher.findField(name, Int32Field.class, null);
     data.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructEncoder int64(String name, long value) {
-    Field field = metadata.findField(name, Int64Field.class, null);
+    Field field = fieldSearcher.findField(name, Int64Field.class, null);
     data.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructEncoder string(String name, String value) {
-    Field field = metadata.findField(name, StringField.class, null);
+    Field field = fieldSearcher.findField(name, StringField.class, null);
     data.add(new StringDataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructEncoder byteBuffer(String name, ByteBuffer value) {
-    Field field = metadata.findField(name, ByteBufferField.class, null);
+    Field field = fieldSearcher.findField(name, ByteBufferField.class, null);
     data.add(new ByteBufferDataHolder(value, field.index()));
     return this;
   }
 
   public StructEncoder struct(String name) {
-    Field field = metadata.findField(name, StructField.class, null);
+    StructField field = fieldSearcher.findField(name, StructField.class, null);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new StructDataHolder(values, field.index()));
-    return new StructEncoder(field.subFields(), values, this);
+    return new StructEncoder(field, values, this);
   }
 
   public StructEncoder end() {
@@ -99,7 +99,7 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   }
 
   public ArrayEncoder<Integer> int32s(String name) {
-    final Field field = metadata.findField(name, ArrayField.class, Int32Field.class);
+    final Field field = fieldSearcher.findField(name, ArrayField.class, Int32Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Integer>(values, this) {
@@ -111,7 +111,7 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   }
 
   public ArrayEncoder<Long> int64s(String name) {
-    final Field field = metadata.findField(name, ArrayField.class, Int64Field.class);
+    final Field field = fieldSearcher.findField(name, ArrayField.class, Int64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Long>(values, this) {
@@ -123,7 +123,7 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   }
 
   public ArrayEncoder<String> strings(String name) {
-    final Field field = metadata.findField(name, ArrayField.class, StringField.class);
+    final Field field = fieldSearcher.findField(name, ArrayField.class, StringField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<String>(values, this) {
@@ -135,7 +135,7 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   }
 
   public StructArrayEncoder structs(String name) {
-    final Field field = metadata.findField(name, ArrayField.class, StructField.class);
+    final Field field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new StructArrayEncoder(values, this, ((StructField) field.subFields().get(0)));

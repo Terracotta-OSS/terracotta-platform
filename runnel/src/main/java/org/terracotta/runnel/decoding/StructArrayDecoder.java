@@ -16,29 +16,28 @@
 package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.metadata.Metadata;
+import org.terracotta.runnel.decoding.fields.StructField;
+import org.terracotta.runnel.metadata.FieldSearcher;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
 public class StructArrayDecoder implements PrimitiveDecodingSupport {
-  private final Metadata metadata;
+  private final FieldSearcher fieldSearcher;
   private final StructDecoder parent;
   private final ReadBuffer arrayReadBuffer;
   private final int arrayLength;
 
   private ReadBuffer structReadBuffer;
 
-  StructArrayDecoder(List<? extends Field> fields, ReadBuffer readBuffer, StructDecoder parent) {
-    this.metadata = new Metadata(fields);
+  StructArrayDecoder(StructField field, ReadBuffer readBuffer, StructDecoder parent) {
+    this.fieldSearcher = field.getMetadata().fieldSearcher();
     this.parent = parent;
 
     int arraySize = readBuffer.getVlqInt();
@@ -55,7 +54,7 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
 
   @Override
   public Integer int32(String name) {
-    Int32Field field = metadata.nextField(name, Int32Field.class, null, structReadBuffer);
+    Int32Field field = fieldSearcher.nextField(name, Int32Field.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
@@ -64,7 +63,7 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
 
   @Override
   public Long int64(String name) {
-    Int64Field field = metadata.nextField(name, Int64Field.class, null, structReadBuffer);
+    Int64Field field = fieldSearcher.nextField(name, Int64Field.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
@@ -73,7 +72,7 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
 
   @Override
   public String string(String name) {
-    StringField field = metadata.nextField(name, StringField.class, null, structReadBuffer);
+    StringField field = fieldSearcher.nextField(name, StringField.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
@@ -82,7 +81,7 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
 
   @Override
   public ByteBuffer byteBuffer(String name) {
-    ByteBufferField field = metadata.nextField(name, ByteBufferField.class, null, structReadBuffer);
+    ByteBufferField field = fieldSearcher.nextField(name, ByteBufferField.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
@@ -108,7 +107,7 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
     int structSize = arrayReadBuffer.getVlqInt();
     structReadBuffer = arrayReadBuffer.limit(structSize);
 
-    metadata.reset();
+    fieldSearcher.reset();
   }
 
 }
