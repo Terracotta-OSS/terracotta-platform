@@ -16,6 +16,7 @@
 package org.terracotta.management.service.monitoring;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Spliterators;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +76,11 @@ public class RingBuffer<V> implements ReadWriteBuffer<V> {
   @Override
   public V read() {
     return queue.poll();
+  }
+
+  @Override
+  public void drainTo(Collection<? super V> to) {
+    queue.drainTo(to);
   }
 
   @Override

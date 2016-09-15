@@ -17,6 +17,7 @@ package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -60,4 +61,5 @@ public interface ReadOnlyBuffer<V> {
 
   void clear();
 
+  void drainTo(Collection<? super V> to);
 }

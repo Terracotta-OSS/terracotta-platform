@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -67,6 +68,12 @@ public class TypedReadWriteBuffer<V> implements ReadWriteBuffer<V> {
   @Override
   public V take(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
     return type.cast(buffer.take(timeout, unit));
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public void drainTo(Collection<? super V> to) {
+    buffer.drainTo((Collection<? super Object>) to);
   }
 
 }
