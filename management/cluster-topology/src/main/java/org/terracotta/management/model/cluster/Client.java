@@ -18,6 +18,7 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -60,7 +61,7 @@ public final class Client extends AbstractNode<Cluster> implements Serializable 
     return this;
   }
 
-  public SortedSet<String> getTags() {
+  public Collection<String> getTags() {
     return tags;
   }
 
