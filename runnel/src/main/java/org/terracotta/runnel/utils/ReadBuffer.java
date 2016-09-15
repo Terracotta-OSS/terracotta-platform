@@ -27,13 +27,16 @@ public class ReadBuffer {
   private final int limit;
 
   public ReadBuffer(ByteBuffer byteBuffer) {
-    this(byteBuffer, Integer.MAX_VALUE);
+    this(byteBuffer, byteBuffer.position() + byteBuffer.capacity());
   }
 
   private ReadBuffer(ByteBuffer byteBuffer, int limit) {
     this.byteBuffer = byteBuffer;
     this.origin = byteBuffer.position();
     this.limit = origin + limit;
+    if (this.limit > byteBuffer.capacity()) {
+      throw new BufferLimitReachedException();
+    }
   }
 
   public long getLong() {
@@ -67,6 +70,7 @@ public class ReadBuffer {
     }
     ByteBuffer slice = byteBuffer.slice();
     slice.limit(size);
+    byteBuffer.position(byteBuffer.position() + size);
     return slice;
   }
 
@@ -86,9 +90,6 @@ public class ReadBuffer {
   }
 
   public void skipAll() {
-    if (limit > byteBuffer.capacity()) {
-      throw new BufferLimitReachedException();
-    }
     byteBuffer.position(limit);
   }
 

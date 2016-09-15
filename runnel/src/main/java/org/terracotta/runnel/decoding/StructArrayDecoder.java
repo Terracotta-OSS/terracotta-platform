@@ -99,11 +99,12 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
   }
 
   public void next() {
+    structReadBuffer.skipAll();
+
     if (arrayReadBuffer.limitReached()) {
       return;
     }
 
-    structReadBuffer.skipAll();
     int structSize = arrayReadBuffer.getVlqInt();
     structReadBuffer = arrayReadBuffer.limit(structSize);
 

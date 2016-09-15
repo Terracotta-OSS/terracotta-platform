@@ -62,7 +62,7 @@ public class ArrayDataHolder implements DataHolder {
     for (DataHolder value : values) {
       size += value.size(false);
     }
-    size += VLQ.encodedSize(size);
+    size += VLQ.encodedSize(values.size());
 
     byteBuffer.putVlqInt(size);
     byteBuffer.putVlqInt(values.size());
