@@ -33,11 +33,11 @@ public class VLQ {
     out.put((byte) (value & 0x7F));
   }
 
-  public static int decode(ByteBuffer in) {
+  public static int decode(ReadBuffer in) {
     int value = 0;
     int i = 0;
     int b;
-    while (((b = in.get()) & 0x80) != 0) {
+    while (((b = in.getByte()) & 0x80) != 0) {
       value |= (b & 0x7F) << i;
       i += 7;
       if (i > 35) {

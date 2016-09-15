@@ -13,28 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.metadata;
-
-import org.terracotta.runnel.utils.ReadBuffer;
+package org.terracotta.runnel.utils;
 
 /**
  * @author Ludovic Orban
  */
-public class Int64Field extends AbstractField {
-
-  public Int64Field(String name, int index) {
-    super(name, index);
-  }
-
-  @Override
-  public Object decode(ReadBuffer readBuffer) {
-    readBuffer.getVlqInt();
-    return readBuffer.getLong();
-  }
-
-  @Override
-  public int skip(ReadBuffer readBuffer) {
-    readBuffer.skip(8);
-    return 8;
-  }
+public class BufferLimitReachedException extends RuntimeException {
 }

@@ -59,7 +59,7 @@ public class Int32Test {
 
     assertThat(decoder.int32("x"), is(-1));
     ArrayDecoder<Integer> ad = decoder.int32s("y");
-    assertThat(ad.size(), is(3));
+    assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(-10));
     assertThat(ad.value(), is(-15));
     assertThat(ad.value(), is(-20));

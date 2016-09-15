@@ -63,7 +63,7 @@ public class PrimitiveArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
 
     ArrayDecoder<Long> adi = decoder.int64s("ids");
-    assertThat(adi.size(), is(3));
+    assertThat(adi.length(), is(3));
     assertThat(adi.value(), is(4L));
     assertThat(adi.value(), is(5L));
     assertThat(adi.value(), is(6L));
@@ -72,7 +72,7 @@ public class PrimitiveArrayStructBuilderTest {
     assertThat(decoder.string("address"), is("my street"));
 
     ArrayDecoder<String> ads = decoder.strings("colors");
-    assertThat(ads.size(), is(2));
+    assertThat(ads.length(), is(2));
     assertThat(ads.value(), is("blue"));
     assertThat(ads.value(), is("green"));
     ads.end();
@@ -134,14 +134,14 @@ public class PrimitiveArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
 
     ArrayDecoder<Long> ad = decoder.int64s("ids");
-    assertThat(ad.size(), is(3));
+    assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(4L));
     ad.end();
 
     assertThat(decoder.string("address"), is("my street"));
 
     ArrayDecoder<String> ads = decoder.strings("colors");
-    assertThat(ads.size(), is(2));
+    assertThat(ads.length(), is(2));
     assertThat(ads.value(), is("blue"));
     ads.end();
 

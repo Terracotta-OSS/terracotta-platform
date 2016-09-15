@@ -62,7 +62,7 @@ public class StructArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
 
     StructArrayDecoder sad = decoder.structs("mapEntry");
-    assertThat(sad.size(), is(2));
+    assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     assertThat(sad.string("value"), is("one"));
     sad.next();
@@ -94,7 +94,7 @@ public class StructArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
 
     StructArrayDecoder sad = decoder.structs("mapEntry");
-    assertThat(sad.size(), is(2));
+    assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     assertThat(sad.string("value"), is("one"));
     sad.end();
@@ -123,7 +123,7 @@ public class StructArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
 
     StructArrayDecoder sad = decoder.structs("mapEntry");
-    assertThat(sad.size(), is(2));
+    assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     sad.next();
     assertThat(sad.string("value"), is("two"));
@@ -153,7 +153,7 @@ public class StructArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
 
     StructArrayDecoder sad = decoder.structs("mapEntry");
-    assertThat(sad.size(), is(2));
+    assertThat(sad.length(), is(2));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -202,7 +202,7 @@ public class StructArrayStructBuilderTest {
 
     assertThat(decoder.string("name"), is("joe"));
     StructArrayDecoder sad = decoder.structs("mapEntry");
-    assertThat(sad.size(), is(2));
+    assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     assertThat(sad.string("value"), is("one"));
     sad.next();
@@ -229,7 +229,7 @@ public class StructArrayStructBuilderTest {
     StructDecoder decoder = struct.decoder(bb);
 
     StructArrayDecoder sad = decoder.structs("mapEntry");
-    assertThat(sad.size(), is(0));
+    assertThat(sad.length(), is(0));
     sad.end();
   }
 
@@ -254,7 +254,7 @@ public class StructArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
 
     StructArrayDecoder sad = decoder.structs("mapEntry");
-    assertThat(sad.size(), is(3));
+    assertThat(sad.length(), is(3));
     assertThat(sad.string("key"), is(nullValue()));
     assertThat(sad.string("value"), is("a"));
     sad.next();

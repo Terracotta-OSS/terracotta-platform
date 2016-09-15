@@ -33,14 +33,15 @@ public class Int64Test {
   public void testWithIndex() throws Exception {
     Int64DataHolder int64DataHolder = new Int64DataHolder(99L, 1);
 
-    assertThat(int64DataHolder.size(true), is(9));
+    assertThat(int64DataHolder.size(true), is(10));
 
     ByteBuffer bb = ByteBuffer.allocate(int64DataHolder.size(true));
     int64DataHolder.encode(new WriteBuffer(bb), true);
-    assertThat(bb.position(), is(9));
+    assertThat(bb.position(), is(10));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
     assertThat(readBuffer.getVlqInt(), is(1));
+    assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getLong(), is(99L));
   }
 
@@ -48,13 +49,14 @@ public class Int64Test {
   public void testWithoutIndex() throws Exception {
     Int64DataHolder int64DataHolder = new Int64DataHolder(99L, 1);
 
-    assertThat(int64DataHolder.size(false), is(8));
+    assertThat(int64DataHolder.size(false), is(9));
 
     ByteBuffer bb = ByteBuffer.allocate(int64DataHolder.size(false));
     int64DataHolder.encode(new WriteBuffer(bb), false);
-    assertThat(bb.position(), is(8));
+    assertThat(bb.position(), is(9));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getLong(), is(99L));
   }
 

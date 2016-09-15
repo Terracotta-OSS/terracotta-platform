@@ -32,13 +32,14 @@ public class Int32DataHolder implements DataHolder {
   }
 
   public int size(boolean withIndex) {
-    return 4 + (withIndex ? VLQ.encodedSize(index) : 0);
+    return 4 + VLQ.encodedSize(4) + (withIndex ? VLQ.encodedSize(index) : 0);
   }
 
   public void encode(WriteBuffer writeBuffer, boolean withIndex) {
     if (withIndex) {
       writeBuffer.putVlqInt(index);
     }
+    writeBuffer.putVlqInt(4);
     writeBuffer.putInt(value);
   }
 }

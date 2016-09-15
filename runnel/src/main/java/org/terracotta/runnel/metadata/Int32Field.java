@@ -30,6 +30,7 @@ public class Int32Field extends AbstractField {
 
   @Override
   public Object decode(ReadBuffer readBuffer) {
+    readBuffer.getVlqInt();
     return readBuffer.getInt();
   }
 

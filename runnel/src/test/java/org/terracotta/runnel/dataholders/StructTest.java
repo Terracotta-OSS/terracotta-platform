@@ -34,11 +34,11 @@ public class StructTest {
   public void testWithIndex() throws Exception {
     StructDataHolder structDataHolder = new StructDataHolder(Arrays.asList(new StringDataHolder("eins", 2), new Int64DataHolder(111L, 3), new StringDataHolder("deuxieme", 4)), 11);
 
-    assertThat(structDataHolder.size(true), is(39));
+    assertThat(structDataHolder.size(true), is(40));
 
     ByteBuffer bb = ByteBuffer.allocate(structDataHolder.size(true));
     structDataHolder.encode(new WriteBuffer(bb), true);
-    assertThat(bb.position(), is(39));
+    assertThat(bb.position(), is(40));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
     assertThat(readBuffer.getVlqInt(), is(11));
@@ -47,6 +47,7 @@ public class StructTest {
     assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getString(8), is("eins"));
     assertThat(readBuffer.getVlqInt(), is(3));
+    assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getLong(), is(111L));
     assertThat(readBuffer.getVlqInt(), is(4));
     assertThat(readBuffer.getVlqInt(), is(16));
@@ -57,11 +58,11 @@ public class StructTest {
   public void testWithoutIndex() throws Exception {
     StructDataHolder structDataHolder = new StructDataHolder(Arrays.asList(new StringDataHolder("eins", 2), new Int64DataHolder(111L, 3), new StringDataHolder("deuxieme", 4)), 11);
 
-    assertThat(structDataHolder.size(false), is(38));
+    assertThat(structDataHolder.size(false), is(39));
 
     ByteBuffer bb = ByteBuffer.allocate(structDataHolder.size(false));
     structDataHolder.encode(new WriteBuffer(bb), false);
-    assertThat(bb.position(), is(38));
+    assertThat(bb.position(), is(39));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
     assertThat(readBuffer.getVlqInt(), is(38));
@@ -69,6 +70,7 @@ public class StructTest {
     assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getString(8), is("eins"));
     assertThat(readBuffer.getVlqInt(), is(3));
+    assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getLong(), is(111L));
     assertThat(readBuffer.getVlqInt(), is(4));
     assertThat(readBuffer.getVlqInt(), is(16));

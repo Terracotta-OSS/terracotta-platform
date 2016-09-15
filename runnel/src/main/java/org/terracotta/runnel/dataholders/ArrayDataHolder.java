@@ -22,7 +22,10 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * @author Ludovic Orban
+ * Encoding is:
+ * <pre>
+ *   index:size:length:[field1 size:value][field2 size:value][field3 size:value]...
+ * </pre>
  */
 public class ArrayDataHolder implements DataHolder {
 
@@ -42,6 +45,7 @@ public class ArrayDataHolder implements DataHolder {
     }
 
     size += VLQ.encodedSize(size);
+    size += VLQ.encodedSize(values.size());
 
     if (withIndex) {
       size += VLQ.encodedSize(index);
@@ -55,6 +59,13 @@ public class ArrayDataHolder implements DataHolder {
       byteBuffer.putVlqInt(index);
     }
 
+    int size = 0;
+    for (DataHolder value : values) {
+      size += value.size(false);
+    }
+    size += VLQ.encodedSize(size);
+
+    byteBuffer.putVlqInt(size);
     byteBuffer.putVlqInt(values.size());
     for (DataHolder value : values) {
       value.encode(byteBuffer, false);

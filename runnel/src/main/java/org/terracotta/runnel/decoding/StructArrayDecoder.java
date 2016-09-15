@@ -34,21 +34,21 @@ public class StructArrayDecoder {
   private final List<? extends Field> metadata;
   private final ReadBuffer readBuffer;
   private final StructDecoder parent;
-  private final int size;
-  private int maxSize;
-  private int currentlyRead = 0;
+  private final int length;
+  private int elementMaxSize;
+  private int elementCurrentlyRead = 0;
   private int i = 0;
   private int arrayIndex = 0;
 
   StructArrayDecoder(Field structField, ReadBuffer readBuffer, StructDecoder parent) {
     this.structField = structField;
     this.metadata = structField.subFields();
-    this.readBuffer = readBuffer;
     this.parent = parent;
-    this.size = readBuffer.getVlqInt();
-    if (this.size > 0) {
-      this.maxSize = readBuffer.getVlqInt();
-      currentlyRead += VLQ.encodedSize(maxSize);
+    int totalSize = readBuffer.getVlqInt();
+    this.readBuffer = readBuffer.limit(totalSize);
+    this.length = readBuffer.getVlqInt();
+    if (this.length > 0) {
+      this.elementMaxSize = readBuffer.getVlqInt();
     }
   }
 
@@ -60,7 +60,7 @@ public class StructArrayDecoder {
     int before = readBuffer.position();
     Integer decoded = (Integer) field.decode(readBuffer);
     int after = readBuffer.position();
-    currentlyRead += (after - before);
+    elementCurrentlyRead += (after - before);
     return decoded;
   }
 
@@ -72,7 +72,7 @@ public class StructArrayDecoder {
     int before = readBuffer.position();
     Long decoded = (Long) field.decode(readBuffer);
     int after = readBuffer.position();
-    currentlyRead += (after - before);
+    elementCurrentlyRead += (after - before);
     return decoded;
   }
 
@@ -84,7 +84,7 @@ public class StructArrayDecoder {
     int before = readBuffer.position();
     String decoded = (String) field.decode(readBuffer);
     int after = readBuffer.position();
-    currentlyRead += (after - before);
+    elementCurrentlyRead += (after - before);
     return decoded;
   }
 
@@ -96,38 +96,37 @@ public class StructArrayDecoder {
     int before = readBuffer.position();
     ByteBuffer decoded = (ByteBuffer) field.decode(readBuffer);
     int after = readBuffer.position();
-    currentlyRead += (after - before);
+    elementCurrentlyRead += (after - before);
     return decoded;
   }
 
-  public int size() {
-    return size;
+  public int length() {
+    return length;
   }
 
   public StructDecoder end() {
-    while (arrayIndex < size-1) {
+    while (arrayIndex < length -1) {
       next();
     }
-    if (currentlyRead != maxSize) {
-      readBuffer.skip(maxSize - currentlyRead);
+    if (elementCurrentlyRead != elementMaxSize) {
+      readBuffer.skip(elementMaxSize - elementCurrentlyRead);
     }
     return parent;
   }
 
   public void next() {
-    if (arrayIndex >= size) {
+    if (arrayIndex >= length) {
       throw new RuntimeException("Last array element reached");
     }
     arrayIndex++;
 
-    if (currentlyRead != maxSize) {
-      readBuffer.skip(maxSize - currentlyRead);
+    if (elementCurrentlyRead != elementMaxSize) {
+      readBuffer.skip(elementMaxSize - elementCurrentlyRead);
     }
 
-    if (arrayIndex < size) {
-      currentlyRead = 0;
-      maxSize = readBuffer.getVlqInt();
-      currentlyRead += VLQ.encodedSize(maxSize);
+    if (arrayIndex < length) {
+      elementCurrentlyRead = 0;
+      elementMaxSize = readBuffer.getVlqInt();
 
       i = 0;
     }
@@ -136,24 +135,26 @@ public class StructArrayDecoder {
 
   private <F extends Field> F findField(String name, Class<F> fieldClazz) {
     F field = findMetadataFor(name, fieldClazz);
-    if (currentlyRead >= maxSize) {
+    if (elementCurrentlyRead >= elementMaxSize) {
       return null;
     }
     int index = readBuffer.getVlqInt();
-    currentlyRead += VLQ.encodedSize(index);
+    elementCurrentlyRead += VLQ.encodedSize(index);
 
     while (index < field.index()) {
-      currentlyRead += findMetadataFor(index).skip(readBuffer);
-      if (currentlyRead >= maxSize) {
+      int fieldSize = readBuffer.getVlqInt();
+      readBuffer.skip(fieldSize);
+      elementCurrentlyRead += fieldSize + VLQ.encodedSize(fieldSize);
+      if (elementCurrentlyRead >= elementMaxSize) {
         return null;
       }
       index = readBuffer.getVlqInt();
-      currentlyRead += VLQ.encodedSize(index);
+      elementCurrentlyRead += VLQ.encodedSize(index);
     }
 
     if (index > field.index()) {
       readBuffer.rewind(VLQ.encodedSize(index));
-      currentlyRead -= VLQ.encodedSize(index);
+      elementCurrentlyRead -= VLQ.encodedSize(index);
       return null;
     } else if (index != field.index()) {
       return null;

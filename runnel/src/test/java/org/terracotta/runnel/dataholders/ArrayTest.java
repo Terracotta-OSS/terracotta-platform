@@ -34,14 +34,15 @@ public class ArrayTest {
   public void testWithIndex() throws Exception {
     ArrayDataHolder arrayDataHolder = new ArrayDataHolder(Arrays.asList(new StringDataHolder("one", 3), new StringDataHolder("two", 6), new StringDataHolder("three", 9)), 7);
 
-    assertThat(arrayDataHolder.size(true), is(27));
+    assertThat(arrayDataHolder.size(true), is(28));
 
     ByteBuffer bb = ByteBuffer.allocate(arrayDataHolder.size(true));
     arrayDataHolder.encode(new WriteBuffer(bb), true);
-    assertThat(bb.position(), is(27));
+    assertThat(bb.position(), is(28));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
     assertThat(readBuffer.getVlqInt(), is(7));
+    assertThat(readBuffer.getVlqInt(), is(26));
     assertThat(readBuffer.getVlqInt(), is(3));
     assertThat(readBuffer.getVlqInt(), is(6));
     assertThat(readBuffer.getString(6), is("one"));
@@ -55,13 +56,14 @@ public class ArrayTest {
   public void testWithoutIndex() throws Exception {
     ArrayDataHolder arrayDataHolder = new ArrayDataHolder(Arrays.asList(new StringDataHolder("one", 3), new StringDataHolder("two", 6), new StringDataHolder("three", 9)), 7);
 
-    assertThat(arrayDataHolder.size(false), is(26));
+    assertThat(arrayDataHolder.size(false), is(27));
 
     ByteBuffer bb = ByteBuffer.allocate(arrayDataHolder.size(true));
     arrayDataHolder.encode(new WriteBuffer(bb), false);
-    assertThat(bb.position(), is(26));
+    assertThat(bb.position(), is(27));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
+    assertThat(readBuffer.getVlqInt(), is(26));
     assertThat(readBuffer.getVlqInt(), is(3));
     assertThat(readBuffer.getVlqInt(), is(6));
     assertThat(readBuffer.getString(6), is("one"));

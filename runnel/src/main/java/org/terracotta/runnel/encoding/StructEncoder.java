@@ -151,11 +151,12 @@ public class StructEncoder {
   }
 
   public ByteBuffer encode(ByteBuffer bb) {
-    WriteBuffer writeBuffer = new WriteBuffer(bb);
     int size = 0;
     for (DataHolder dataHolder : data) {
       size += dataHolder.size(true);
     }
+
+    WriteBuffer writeBuffer = new WriteBuffer(bb);
     writeBuffer.putVlqInt(size);
 
     for (DataHolder dataHolder : data) {
@@ -173,7 +174,6 @@ public class StructEncoder {
 
     ByteBuffer bb = ByteBuffer.allocate(size + VLQ.encodedSize(size));
     WriteBuffer writeBuffer = new WriteBuffer(bb);
-
     writeBuffer.putVlqInt(size);
 
     for (DataHolder dataHolder : data) {

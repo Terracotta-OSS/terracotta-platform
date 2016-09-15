@@ -46,10 +46,9 @@ public class StructDecoder {
 
   private StructDecoder(List<? extends Field> metadata, ReadBuffer readBuffer, StructDecoder parent) {
     this.metadata = metadata;
-    this.readBuffer = readBuffer;
-    this.maxSize = readBuffer.getVlqInt();
     this.parent = parent;
-    currentlyRead += VLQ.encodedSize(maxSize);
+    this.maxSize = readBuffer.getVlqInt();
+    this.readBuffer = readBuffer.limit(maxSize);
   }
 
   public Integer int32(String name) {
@@ -167,7 +166,9 @@ public class StructDecoder {
     }
 
     while (index < field.index()) {
-      currentlyRead += findMetadataFor(index).skip(readBuffer);
+      int fieldSize = readBuffer.getVlqInt();
+      readBuffer.skip(fieldSize);
+      currentlyRead += fieldSize + VLQ.encodedSize(fieldSize);
       if (currentlyRead >= maxSize) {
         return null;
       }

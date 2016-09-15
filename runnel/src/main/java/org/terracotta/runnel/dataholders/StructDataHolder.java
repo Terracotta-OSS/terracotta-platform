@@ -21,7 +21,10 @@ import org.terracotta.runnel.utils.WriteBuffer;
 import java.util.List;
 
 /**
- * @author Ludovic Orban
+ * Encoding is:
+ * <pre>
+ *   index:size:[field1 index:size:value][field2 index:size:value]...
+ * </pre>
  */
 public class StructDataHolder implements DataHolder {
 
@@ -53,7 +56,13 @@ public class StructDataHolder implements DataHolder {
     if (withIndex) {
       writeBuffer.putVlqInt(index);
     }
-    writeBuffer.putVlqInt(size(false));
+
+    int size = 0;
+    for (DataHolder value : values) {
+      size += value.size(true);
+    }
+    writeBuffer.putVlqInt(size);
+
     for (DataHolder value : values) {
       value.encode(writeBuffer, true);
     }

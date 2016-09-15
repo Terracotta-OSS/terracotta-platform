@@ -55,12 +55,10 @@ public class PrimitiveStructBuilderTest {
 
   @Test
   public void testLastFieldNull_skipMiddleField() throws Exception {
-    ByteBuffer bb = ByteBuffer.allocate(1024);
-
-    struct.encoder()
+    ByteBuffer bb = struct.encoder()
         .string("name", "joe")
         .int64("age", 30)
-        .encode(bb);
+        .encode();
 
     bb.rewind();
 
