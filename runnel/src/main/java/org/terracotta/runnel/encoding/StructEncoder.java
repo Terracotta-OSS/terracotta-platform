@@ -95,7 +95,7 @@ public class StructEncoder {
   }
 
   public ArrayEncoder<Integer> int32s(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class);
+    final Field field = findMetadataFor(name, ArrayField.class, Int32Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Integer>(values, this) {
@@ -107,7 +107,7 @@ public class StructEncoder {
   }
 
   public ArrayEncoder<Long> int64s(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class);
+    final Field field = findMetadataFor(name, ArrayField.class, Int64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Long>(values, this) {
@@ -119,7 +119,7 @@ public class StructEncoder {
   }
 
   public ArrayEncoder<String> strings(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class);
+    final Field field = findMetadataFor(name, ArrayField.class, StringField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<String>(values, this) {
@@ -131,18 +131,25 @@ public class StructEncoder {
   }
 
   public StructArrayEncoder structs(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class);
+    final Field field = findMetadataFor(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new StructArrayEncoder(values, this, field.subFields().get(0));
   }
 
   private Field findMetadataFor(String name, Class<? extends Field> clazz) {
+    return findMetadataFor(name, clazz, null);
+  }
+
+  private Field findMetadataFor(String name, Class<? extends Field> clazz, Class<? extends Field> subClazz) {
     for (; i < metadata.size(); i++) {
       Field field = metadata.get(i);
       if (field.name().equals(name)) {
         if (field.getClass() != clazz) {
           throw new RuntimeException("Invalid type for field '" + name + "', expected : '" + clazz.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");
+        }
+        if (subClazz != null && field.subFields().get(0).getClass() != subClazz) {
+          throw new RuntimeException("Invalid subtype for field '" + name + "', expected : '" + subClazz.getSimpleName() + "' but was '" + field.subFields().get(0).getClass().getSimpleName() + "'");
         }
         return field;
       }
