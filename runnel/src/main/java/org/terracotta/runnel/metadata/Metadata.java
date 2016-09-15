@@ -65,7 +65,7 @@ public class Metadata {
     }
   }
 
-  private  <T extends Field, S extends Field> T findField(String name, Class<T> typeClass, Class<S> subTypeClass) {
+  public <T extends Field, S extends Field> T findField(String name, Class<T> typeClass, Class<S> subTypeClass) {
     Field field = getByName(name);
     if (field.getClass() != typeClass) {
       throw new RuntimeException("Invalid type for field '" + name + "', expected : '" + typeClass.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");

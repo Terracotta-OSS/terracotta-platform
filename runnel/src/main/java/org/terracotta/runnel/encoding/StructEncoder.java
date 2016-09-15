@@ -27,6 +27,7 @@ import org.terracotta.runnel.metadata.ByteBufferField;
 import org.terracotta.runnel.metadata.Field;
 import org.terracotta.runnel.metadata.Int32Field;
 import org.terracotta.runnel.metadata.Int64Field;
+import org.terracotta.runnel.metadata.Metadata;
 import org.terracotta.runnel.metadata.StringField;
 import org.terracotta.runnel.metadata.StructField;
 import org.terracotta.runnel.utils.VLQ;
@@ -41,47 +42,46 @@ import java.util.List;
  */
 public class StructEncoder {
 
-  private final List<? extends Field> metadata;
+  private final Metadata metadata;
   private final List<DataHolder> data;
   private final StructEncoder parent;
-  private int i = 0;
 
-  public StructEncoder(List<? extends Field> metadata) {
-    this(metadata, new ArrayList<DataHolder>(), null);
+  public StructEncoder(List<? extends Field> fields) {
+    this(fields, new ArrayList<DataHolder>(), null);
   }
 
-  private StructEncoder(List<? extends Field> metadata, List<DataHolder> values, StructEncoder structEncoder) {
-    this.metadata = metadata;
+  private StructEncoder(List<? extends Field> fields, List<DataHolder> values, StructEncoder structEncoder) {
+    this.metadata = new Metadata(fields);
     this.data = values;
     this.parent = structEncoder;
   }
 
   public StructEncoder int32(String name, int value) {
-    Field field = findMetadataFor(name, Int32Field.class);
+    Field field = metadata.findField(name, Int32Field.class, null);
     data.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
   public StructEncoder int64(String name, long value) {
-    Field field = findMetadataFor(name, Int64Field.class);
+    Field field = metadata.findField(name, Int64Field.class, null);
     data.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
   public StructEncoder string(String name, String value) {
-    Field field = findMetadataFor(name, StringField.class);
+    Field field = metadata.findField(name, StringField.class, null);
     data.add(new StringDataHolder(value, field.index()));
     return this;
   }
 
   public StructEncoder byteBuffer(String name, ByteBuffer value) {
-    Field field = findMetadataFor(name, ByteBufferField.class);
+    Field field = metadata.findField(name, ByteBufferField.class, null);
     data.add(new ByteBufferDataHolder(value, field.index()));
     return this;
   }
 
   public StructEncoder struct(String name) {
-    Field field = findMetadataFor(name, StructField.class);
+    Field field = metadata.findField(name, StructField.class, null);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new StructDataHolder(values, field.index()));
     return new StructEncoder(field.subFields(), values, this);
@@ -95,7 +95,7 @@ public class StructEncoder {
   }
 
   public ArrayEncoder<Integer> int32s(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class, Int32Field.class);
+    final Field field = metadata.findField(name, ArrayField.class, Int32Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Integer>(values, this) {
@@ -107,7 +107,7 @@ public class StructEncoder {
   }
 
   public ArrayEncoder<Long> int64s(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class, Int64Field.class);
+    final Field field = metadata.findField(name, ArrayField.class, Int64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Long>(values, this) {
@@ -119,7 +119,7 @@ public class StructEncoder {
   }
 
   public ArrayEncoder<String> strings(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class, StringField.class);
+    final Field field = metadata.findField(name, ArrayField.class, StringField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<String>(values, this) {
@@ -131,30 +131,10 @@ public class StructEncoder {
   }
 
   public StructArrayEncoder structs(String name) {
-    final Field field = findMetadataFor(name, ArrayField.class, StructField.class);
+    final Field field = metadata.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new StructArrayEncoder(values, this, field.subFields().get(0));
-  }
-
-  private Field findMetadataFor(String name, Class<? extends Field> clazz) {
-    return findMetadataFor(name, clazz, null);
-  }
-
-  private Field findMetadataFor(String name, Class<? extends Field> clazz, Class<? extends Field> subClazz) {
-    for (; i < metadata.size(); i++) {
-      Field field = metadata.get(i);
-      if (field.name().equals(name)) {
-        if (field.getClass() != clazz) {
-          throw new RuntimeException("Invalid type for field '" + name + "', expected : '" + clazz.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");
-        }
-        if (subClazz != null && field.subFields().get(0).getClass() != subClazz) {
-          throw new RuntimeException("Invalid subtype for field '" + name + "', expected : '" + subClazz.getSimpleName() + "' but was '" + field.subFields().get(0).getClass().getSimpleName() + "'");
-        }
-        return field;
-      }
-    }
-    throw new RuntimeException("No such field left : '" + name + "'");
+    return new StructArrayEncoder(values, this, field.subFields().get(0).subFields());
   }
 
   public ByteBuffer encode(ByteBuffer bb) {
