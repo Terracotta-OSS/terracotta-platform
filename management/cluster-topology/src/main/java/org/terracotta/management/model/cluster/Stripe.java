@@ -114,8 +114,8 @@ public final class Stripe extends AbstractNode<Cluster> implements Serializable 
     return getActiveServer().flatMap(s -> s.getServerEntity(context));
   }
 
-  public Optional<ServerEntity> getServerEntity(long consumerId) {
-    return getActiveServer().flatMap(s -> s.getServerEntity(consumerId));
+  public Optional<ServerEntity> getServerEntity(ServerEntityIdentifier identifier) {
+    return getActiveServer().flatMap(s -> s.getServerEntity(identifier));
   }
 
   public Optional<ServerEntity> getServerEntity(String name, String type) {
@@ -123,6 +123,10 @@ public final class Stripe extends AbstractNode<Cluster> implements Serializable 
   }
 
   public Stream<ServerEntity> serverEntityStream() {
+    return serverStream().flatMap(Server::serverEntityStream);
+  }
+
+  public Stream<ServerEntity> activeServerEntityStream() {
     return getActiveServer().map(Server::serverEntityStream).orElse(Stream.empty());
   }
 

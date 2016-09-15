@@ -166,7 +166,7 @@ class TmsAgentImpl implements TmsAgent {
         case SERVER_ENTITY_DESTROYED: {
           PlatformEntity platformEntity = notification.getSource(PlatformEntity.class);
           notification.setContext(active.getContext()
-              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName, platformEntity.consumerID).getContext()));
+              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName).getContext()));
           break;
         }
 
@@ -197,7 +197,7 @@ class TmsAgentImpl implements TmsAgent {
           PlatformConnectedClient platformClient = (PlatformConnectedClient) bucket[0];
           PlatformEntity platformEntity = (PlatformEntity) bucket[1];
           Context context = active.getContext()
-              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName, platformEntity.consumerID).getContext());
+              .with(ServerEntity.create(platformEntity.name, platformEntity.typeName).getContext());
           notification.setContext(context);
           notification.setAttribute(Client.KEY, toClientIdentifier(platformClient).getClientId());
           break;

@@ -221,21 +221,17 @@ public final class Server extends AbstractNode<Stripe> implements Serializable {
     String id = context.get(ServerEntity.KEY);
     String type = context.get(ServerEntity.TYPE_KEY);
     String name = context.get(ServerEntity.NAME_KEY);
-    String cid = context.get(ServerEntity.CONSUMER_ID_KEY);
     if (id != null) {
       return getServerEntity(id);
     }
     if (type != null && name != null) {
       return getServerEntity(name, type);
     }
-    if (cid != null) {
-      return getServerEntity(Long.parseLong(cid));
-    }
     return Optional.empty();
   }
 
-  public final Optional<ServerEntity> getServerEntity(long consumerId) {
-    return serverEntities.values().stream().filter(serverEntity -> serverEntity.getConsumerId() == consumerId).findFirst();
+  public final Optional<ServerEntity> getServerEntity(ServerEntityIdentifier serverEntityIdentifier) {
+    return getServerEntity(serverEntityIdentifier.getId());
   }
 
   public final Optional<ServerEntity> getServerEntity(String id) {

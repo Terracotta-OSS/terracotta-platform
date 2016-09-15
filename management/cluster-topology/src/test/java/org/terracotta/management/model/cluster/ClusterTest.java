@@ -74,7 +74,7 @@ public class ClusterTest extends AbstractTest {
         "stripe-1/server-1/ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
         cluster1.getServerEntity(ehcache_server_entity.getContext()).get().getStringPath());
 
-    assertEquals(7, ehcache_server_entity.getContext().size());
+    assertEquals(6, ehcache_server_entity.getContext().size());
 
     assertEquals(3, cluster1.getNodes(ehcache_server_entity.getContext()).size());
     assertEquals("[stripe-1, server-1, ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity]", cluster1.getNodes(ehcache_server_entity.getContext()).toString());
@@ -186,7 +186,7 @@ public class ClusterTest extends AbstractTest {
     assertEquals(1, server.getServerEntityCount());
 
     try {
-      server.addServerEntity(ServerEntity.create(serverContextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity", 1));
+      server.addServerEntity(ServerEntity.create(serverContextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
       fail();
     } catch (Exception e) {
       assertEquals(IllegalArgumentException.class, e.getClass());
@@ -194,8 +194,8 @@ public class ClusterTest extends AbstractTest {
 
     assertEquals(1, server.getServerEntityCount());
 
-    server.addServerEntity(ServerEntity.create("other-cm-4", "org.ehcache.clustered.client.internal.EhcacheClientEntity", 1));
-    server.addServerEntity(ServerEntity.create("name", "OTHER_TYPE", 2));
+    server.addServerEntity(ServerEntity.create("other-cm-4", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    server.addServerEntity(ServerEntity.create("name", "OTHER_TYPE"));
 
     assertEquals(3, server.getServerEntityCount());
 

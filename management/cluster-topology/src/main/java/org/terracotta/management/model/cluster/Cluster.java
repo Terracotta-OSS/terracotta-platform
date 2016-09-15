@@ -162,6 +162,10 @@ public final class Cluster implements Contextual, Serializable {
     return stripeStream().flatMap(Stripe::serverEntityStream);
   }
 
+  public Stream<ServerEntity> activeServerEntityStream() {
+    return stripeStream().flatMap(Stripe::activeServerEntityStream);
+  }
+
   public Stream<Server> serverStream() {
     return stripeStream().flatMap(Stripe::serverStream);
   }

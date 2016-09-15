@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -75,13 +76,8 @@ public final class ManagementRegistry implements Serializable {
     return capabilities.values();
   }
 
-  public Capability findCapability(String capabilityName) {
-    for (Capability capability : capabilities.values()) {
-      if (capability.getName().equals(capabilityName)) {
-        return capability;
-      }
-    }
-    return null;
+  public Optional<Capability> getCapability(String capabilityName) {
+    return capabilities.values().stream().filter(capability -> capability.getName().equals(capabilityName)).findFirst();
   }
 
   public ContextContainer getContextContainer() {
