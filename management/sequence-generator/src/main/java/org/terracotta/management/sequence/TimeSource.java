@@ -15,9 +15,12 @@
  */
 package org.terracotta.management.sequence;
 
+import com.tc.classloader.CommonComponent;
+
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public interface TimeSource {
 
   TimeSource SYSTEM = Defaults.SYSTEM_TIME_SOURCE;

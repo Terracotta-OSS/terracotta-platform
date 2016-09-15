@@ -66,6 +66,18 @@
   </build>
 
   <dependencies>
+    <!-- provided by voltron (server) -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
