@@ -19,9 +19,9 @@ import org.terracotta.runnel.metadata.ByteBufferField;
 import org.terracotta.runnel.metadata.Field;
 import org.terracotta.runnel.metadata.Int32Field;
 import org.terracotta.runnel.metadata.Int64Field;
+import org.terracotta.runnel.metadata.Metadata;
 import org.terracotta.runnel.metadata.StringField;
 import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -30,16 +30,15 @@ import java.util.List;
  * @author Ludovic Orban
  */
 public class StructArrayDecoder {
-  private final List<? extends Field> metadata;
-  private final ReadBuffer arrayReadBuffer;
+  private final Metadata metadata;
   private final StructDecoder parent;
+  private final ReadBuffer arrayReadBuffer;
   private final int arrayLength;
 
   private ReadBuffer structReadBuffer;
-  private int i = 0;
 
-  StructArrayDecoder(Field structField, ReadBuffer readBuffer, StructDecoder parent) {
-    this.metadata = structField.subFields();
+  StructArrayDecoder(List<? extends Field> fields, ReadBuffer readBuffer, StructDecoder parent) {
+    this.metadata = new Metadata(fields);
     this.parent = parent;
 
     int arraySize = readBuffer.getVlqInt();
@@ -55,35 +54,35 @@ public class StructArrayDecoder {
   }
 
   public Integer int32(String name) {
-    Int32Field field = findField(name, Int32Field.class);
+    Int32Field field = metadata.nextField(name, Int32Field.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
-    return (Integer) field.decode(arrayReadBuffer);
+    return (Integer) field.decode(structReadBuffer);
   }
 
   public Long int64(String name) {
-    Int64Field field = findField(name, Int64Field.class);
+    Int64Field field = metadata.nextField(name, Int64Field.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
-    return (Long) field.decode(arrayReadBuffer);
+    return (Long) field.decode(structReadBuffer);
   }
 
   public String string(String name) {
-    StringField field = findField(name, StringField.class);
+    StringField field = metadata.nextField(name, StringField.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
-    return (String) field.decode(arrayReadBuffer);
+    return (String) field.decode(structReadBuffer);
   }
 
   public ByteBuffer byteBuffer(String name) {
-    ByteBufferField field = findField(name, ByteBufferField.class);
+    ByteBufferField field = metadata.nextField(name, ByteBufferField.class, null, structReadBuffer);
     if (field == null) {
       return null;
     }
-    return (ByteBuffer) field.decode(arrayReadBuffer);
+    return (ByteBuffer) field.decode(structReadBuffer);
   }
 
   public int length() {
@@ -92,7 +91,7 @@ public class StructArrayDecoder {
 
   public StructDecoder end() {
     arrayReadBuffer.skipAll();
-    structReadBuffer = null;
+    structReadBuffer = arrayReadBuffer.limit(0);
     return parent;
   }
 
@@ -105,47 +104,7 @@ public class StructArrayDecoder {
     int structSize = arrayReadBuffer.getVlqInt();
     structReadBuffer = arrayReadBuffer.limit(structSize);
 
-    i = 0;
-  }
-
-
-  private <F extends Field> F findField(String name, Class<F> fieldClazz) {
-    F field = findMetadataFor(name, fieldClazz);
-    if (arrayReadBuffer.limitReached()) {
-      return null;
-    }
-    int index = arrayReadBuffer.getVlqInt();
-
-    while (index < field.index()) {
-      int fieldSize = arrayReadBuffer.getVlqInt();
-      arrayReadBuffer.skip(fieldSize);
-      if (arrayReadBuffer.limitReached()) {
-        return null;
-      }
-      index = arrayReadBuffer.getVlqInt();
-    }
-
-    if (index > field.index()) {
-      arrayReadBuffer.rewind(VLQ.encodedSize(index));
-      return null;
-    } else if (index != field.index()) {
-      return null;
-    } else {
-      return field;
-    }
-  }
-
-  private <F extends Field> F findMetadataFor(String name, Class<F> clazz) {
-    for (; i < metadata.size(); i++) {
-      Field field = metadata.get(i);
-      if (field.name().equals(name)) {
-        if (field.getClass() != clazz) {
-          throw new RuntimeException("Invalid type for field '" + name + "', expected : '" + clazz.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");
-        }
-        return (F) field;
-      }
-    }
-    throw new RuntimeException("No such field left : '" + name + "'");
+    metadata.reset();
   }
 
 }
