@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.encoding;
 
+import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
@@ -43,10 +44,11 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
   private final Metadata metadata;
   private List<DataHolder> currentData;
 
-  StructArrayEncoder(List<StructDataHolder> values, StructEncoder parent, List<? extends Field> fields) {
+  StructArrayEncoder(List<StructDataHolder> values, StructEncoder parent, StructField structField) {
     this.values = values;
     this.parent = parent;
-    this.metadata = new Metadata(fields);
+    this.metadata = structField.getMetadata();
+    metadata.reset();
     this.currentData = new ArrayList<DataHolder>(ARRAY_INITIAL_SIZE);
   }
 

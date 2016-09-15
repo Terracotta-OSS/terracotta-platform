@@ -138,7 +138,7 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     final Field field = metadata.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new StructArrayEncoder(values, this, field.subFields().get(0).subFields());
+    return new StructArrayEncoder(values, this, ((StructField) field.subFields().get(0)));
   }
 
   public ByteBuffer encode(ByteBuffer bb) {

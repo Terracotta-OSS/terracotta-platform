@@ -17,16 +17,14 @@ package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.metadata.Metadata;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
+import org.terracotta.runnel.metadata.Metadata;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
  * @author Ludovic Orban
@@ -37,12 +35,13 @@ public class StructDecoder implements PrimitiveDecodingSupport {
   private final ReadBuffer readBuffer;
   private final StructDecoder parent;
 
-  public StructDecoder(List<? extends Field> fields, ReadBuffer readBuffer) {
-    this(fields, readBuffer, null);
+  public StructDecoder(StructField structField, ReadBuffer readBuffer) {
+    this(structField, readBuffer, null);
   }
 
-  private StructDecoder(List<? extends Field> fields, ReadBuffer readBuffer, StructDecoder parent) {
-    this.metadata = new Metadata(fields);
+  private StructDecoder(StructField structField, ReadBuffer readBuffer, StructDecoder parent) {
+    this.metadata = structField.getMetadata();
+    this.metadata.reset();
     this.parent = parent;
     int size = readBuffer.getVlqInt();
     this.readBuffer = readBuffer.limit(size);
@@ -89,7 +88,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new StructDecoder(field.subFields(), readBuffer, this);
+    return new StructDecoder(field, readBuffer, this);
   }
 
   public ArrayDecoder<Integer> int32s(String name) {
@@ -133,6 +132,5 @@ public class StructDecoder implements PrimitiveDecodingSupport {
 
     return parent;
   }
-
 
 }

@@ -41,6 +41,6 @@ public class Struct {
   }
 
   public StructDecoder decoder(ByteBuffer byteBuffer) {
-    return new StructDecoder(root.subFields(), new ReadBuffer(byteBuffer));
+    return new StructDecoder(root, new ReadBuffer(byteBuffer));
   }
 }

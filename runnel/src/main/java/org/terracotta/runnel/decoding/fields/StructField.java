@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.metadata.Metadata;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.util.List;
@@ -25,10 +26,16 @@ import java.util.List;
 public class StructField extends AbstractField {
 
   private final List<? extends Field> subFields;
+  private final Metadata metadata;
 
   public StructField(String name, int index, List<? extends Field> subFields) {
     super(name, index);
     this.subFields = subFields;
+    this.metadata = new Metadata(subFields);
+  }
+
+  public Metadata getMetadata() {
+    return metadata;
   }
 
   @Override
