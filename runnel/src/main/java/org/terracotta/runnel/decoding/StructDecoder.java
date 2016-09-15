@@ -143,7 +143,7 @@ public class StructDecoder {
     }
     int index = readBuffer.getVlqInt();
     if (readBuffer.limitReached()) {
-      return field;
+      return null;
     }
 
     while (index < field.index()) {
