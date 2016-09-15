@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.encoding;
 
-import org.terracotta.runnel.dataholders.DataHolder;
+import org.terracotta.runnel.encoding.dataholders.DataHolder;
 
 import java.util.List;
 

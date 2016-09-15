@@ -13,34 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.dataholders;
+package org.terracotta.runnel.encoding.dataholders;
 
-import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public class StringDataHolder implements DataHolder {
+public interface DataHolder {
 
-  private final String value;
-  private final int index;
+  int size(boolean withIndex);
 
-  public StringDataHolder(String value, int index) {
-    this.value = value;
-    this.index = index;
-  }
+  void encode(WriteBuffer writeBuffer, boolean withIndex);
 
-  public int size(boolean withIndex) {
-    int len = value.length() * 2;
-    return VLQ.encodedSize(len) + len + (withIndex ? VLQ.encodedSize(index) : 0);
-  }
-
-  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
-    if (withIndex) {
-      writeBuffer.putVlqInt(index);
-    }
-    writeBuffer.putVlqInt(value.length() * 2);
-    writeBuffer.putString(value);
-  }
 }

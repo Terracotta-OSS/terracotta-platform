@@ -16,6 +16,11 @@
 package org.terracotta.runnel.metadata;
 
 import org.junit.Test;
+import org.terracotta.runnel.decoding.fields.ArrayField;
+import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.Int64Field;
+import org.terracotta.runnel.decoding.fields.StringField;
+import org.terracotta.runnel.decoding.fields.StructField;
 
 import java.util.Arrays;
 

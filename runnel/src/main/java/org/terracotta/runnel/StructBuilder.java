@@ -15,13 +15,13 @@
  */
 package org.terracotta.runnel;
 
-import org.terracotta.runnel.metadata.ArrayField;
-import org.terracotta.runnel.metadata.ByteBufferField;
-import org.terracotta.runnel.metadata.Field;
-import org.terracotta.runnel.metadata.Int32Field;
-import org.terracotta.runnel.metadata.Int64Field;
-import org.terracotta.runnel.metadata.StringField;
-import org.terracotta.runnel.metadata.StructField;
+import org.terracotta.runnel.decoding.fields.ArrayField;
+import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.Int32Field;
+import org.terracotta.runnel.decoding.fields.Int64Field;
+import org.terracotta.runnel.decoding.fields.StringField;
+import org.terracotta.runnel.decoding.fields.StructField;
 
 import java.util.ArrayList;
 import java.util.HashSet;

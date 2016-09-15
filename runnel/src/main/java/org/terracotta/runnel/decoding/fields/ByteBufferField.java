@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.dataholders;
+package org.terracotta.runnel.decoding.fields;
 
-import org.terracotta.runnel.utils.WriteBuffer;
+import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.VLQ;
 
 /**
  * @author Ludovic Orban
  */
-public interface DataHolder {
+public class ByteBufferField extends AbstractField {
+  public ByteBufferField(String name, int index) {
+    super(name, index);
+  }
 
-  int size(boolean withIndex);
+  @Override
+  public Object decode(ReadBuffer readBuffer) {
+    int len = readBuffer.getVlqInt();
+    return readBuffer.getByteBuffer(len);
+  }
 
-  void encode(WriteBuffer writeBuffer, boolean withIndex);
-
+  @Override
+  public int skip(ReadBuffer readBuffer) {
+    int len = readBuffer.getVlqInt();
+    readBuffer.skip(len);
+    return len + VLQ.encodedSize(len);
+  }
 }

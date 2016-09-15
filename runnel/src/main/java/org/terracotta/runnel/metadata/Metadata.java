@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.metadata;
 
+import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.VLQ;
 

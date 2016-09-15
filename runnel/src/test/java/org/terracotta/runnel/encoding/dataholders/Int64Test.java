@@ -13,53 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.dataholders;
+package org.terracotta.runnel.encoding.dataholders;
 
 import org.junit.Test;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.WriteBuffer;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 /**
  * @author Ludovic Orban
  */
-public class StringTest {
+public class Int64Test {
 
   @Test
   public void testWithIndex() throws Exception {
-    StringDataHolder stringDataHolder = new StringDataHolder("aNormalString", 5);
+    Int64DataHolder int64DataHolder = new Int64DataHolder(99L, 1);
 
-    assertThat(stringDataHolder.size(true), is(28));
+    assertThat(int64DataHolder.size(true), is(10));
 
-    ByteBuffer bb = ByteBuffer.allocate(stringDataHolder.size(true));
-    stringDataHolder.encode(new WriteBuffer(bb), true);
-    assertThat(bb.position(), is(28));
+    ByteBuffer bb = ByteBuffer.allocate(int64DataHolder.size(true));
+    int64DataHolder.encode(new WriteBuffer(bb), true);
+    assertThat(bb.position(), is(10));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
-    assertThat(readBuffer.getVlqInt(), is(5));
-    assertThat(readBuffer.getVlqInt(), is(26));
-    assertThat(readBuffer.getString(26), is("aNormalString"));
+    assertThat(readBuffer.getVlqInt(), is(1));
+    assertThat(readBuffer.getVlqInt(), is(8));
+    assertThat(readBuffer.getLong(), is(99L));
   }
 
   @Test
   public void testWithoutIndex() throws Exception {
-    StringDataHolder stringDataHolder = new StringDataHolder("aNormalString", 5);
+    Int64DataHolder int64DataHolder = new Int64DataHolder(99L, 1);
 
-    assertThat(stringDataHolder.size(false), is(27));
+    assertThat(int64DataHolder.size(false), is(9));
 
-    ByteBuffer bb = ByteBuffer.allocate(stringDataHolder.size(true));
-    stringDataHolder.encode(new WriteBuffer(bb), false);
-    assertThat(bb.position(), is(27));
+    ByteBuffer bb = ByteBuffer.allocate(int64DataHolder.size(false));
+    int64DataHolder.encode(new WriteBuffer(bb), false);
+    assertThat(bb.position(), is(9));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
-    assertThat(readBuffer.getVlqInt(), is(26));
-    String s = readBuffer.getString(26);
-    assertThat(s, is("aNormalString"));
+    assertThat(readBuffer.getVlqInt(), is(8));
+    assertThat(readBuffer.getLong(), is(99L));
   }
+
 
 }

@@ -15,21 +15,21 @@
  */
 package org.terracotta.runnel.encoding;
 
-import org.terracotta.runnel.dataholders.ArrayDataHolder;
-import org.terracotta.runnel.dataholders.ByteBufferDataHolder;
-import org.terracotta.runnel.dataholders.DataHolder;
-import org.terracotta.runnel.dataholders.Int32DataHolder;
-import org.terracotta.runnel.dataholders.Int64DataHolder;
-import org.terracotta.runnel.dataholders.StringDataHolder;
-import org.terracotta.runnel.dataholders.StructDataHolder;
-import org.terracotta.runnel.metadata.ArrayField;
-import org.terracotta.runnel.metadata.ByteBufferField;
-import org.terracotta.runnel.metadata.Field;
-import org.terracotta.runnel.metadata.Int32Field;
-import org.terracotta.runnel.metadata.Int64Field;
+import org.terracotta.runnel.encoding.dataholders.ArrayDataHolder;
+import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
+import org.terracotta.runnel.encoding.dataholders.DataHolder;
+import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
+import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
+import org.terracotta.runnel.encoding.dataholders.StringDataHolder;
+import org.terracotta.runnel.encoding.dataholders.StructDataHolder;
+import org.terracotta.runnel.decoding.fields.ArrayField;
+import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.Int32Field;
+import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.metadata.Metadata;
-import org.terracotta.runnel.metadata.StringField;
-import org.terracotta.runnel.metadata.StructField;
+import org.terracotta.runnel.decoding.fields.StringField;
+import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 

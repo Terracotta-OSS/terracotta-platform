@@ -13,40 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.metadata;
-
-import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
+package org.terracotta.runnel.decoding.fields;
 
 import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
-public class StructField extends AbstractField {
+public abstract class AbstractField implements Field {
 
-  private final List<? extends Field> subFields;
+  private final String name;
+  private final int index;
 
-  public StructField(String name, int index, List<? extends Field> subFields) {
-    super(name, index);
-    this.subFields = subFields;
+  public AbstractField(String name, int index) {
+    this.name = name;
+    this.index = index;
+  }
+
+  @Override
+  public String name() {
+    return name;
+  }
+
+  @Override
+  public int index() {
+    return index;
   }
 
   @Override
   public List<? extends Field> subFields() {
-    return subFields;
-  }
-
-  @Override
-  public Object decode(ReadBuffer readBuffer) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int skip(ReadBuffer readBuffer) {
-    int size = readBuffer.getVlqInt();
-    size -= VLQ.encodedSize(size);
-    readBuffer.skip(size);
-    return size;
   }
 }

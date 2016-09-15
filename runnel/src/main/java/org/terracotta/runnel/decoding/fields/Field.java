@@ -13,35 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.metadata;
+package org.terracotta.runnel.decoding.fields;
+
+import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
-public abstract class AbstractField implements Field {
+public interface Field {
 
-  private final String name;
-  private final int index;
+  String name();
+  int index();
+  List<? extends Field> subFields();
 
-  public AbstractField(String name, int index) {
-    this.name = name;
-    this.index = index;
-  }
-
-  @Override
-  public String name() {
-    return name;
-  }
-
-  @Override
-  public int index() {
-    return index;
-  }
-
-  @Override
-  public List<? extends Field> subFields() {
-    return null;
-  }
+  Object decode(ReadBuffer readBuffer);
+  int skip(ReadBuffer readBuffer);
 }

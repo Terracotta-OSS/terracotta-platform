@@ -15,12 +15,12 @@
  */
 package org.terracotta.runnel.decoding;
 
-import org.terracotta.runnel.metadata.ByteBufferField;
-import org.terracotta.runnel.metadata.Field;
-import org.terracotta.runnel.metadata.Int32Field;
-import org.terracotta.runnel.metadata.Int64Field;
+import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.Int32Field;
+import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.metadata.Metadata;
-import org.terracotta.runnel.metadata.StringField;
+import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.nio.ByteBuffer;

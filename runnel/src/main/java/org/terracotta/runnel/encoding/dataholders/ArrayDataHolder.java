@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.dataholders;
+package org.terracotta.runnel.encoding.dataholders;
 
 import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 /**

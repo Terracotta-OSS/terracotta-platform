@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.metadata;
+package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.VLQ;
 
 /**
  * @author Ludovic Orban
  */
-public class Int64Field extends AbstractField {
-
-  public Int64Field(String name, int index) {
+public class StringField extends AbstractField {
+  public StringField(String name, int index) {
     super(name, index);
   }
 
   @Override
   public Object decode(ReadBuffer readBuffer) {
-    readBuffer.getVlqInt();
-    return readBuffer.getLong();
+    int len = readBuffer.getVlqInt();
+    return readBuffer.getString(len);
   }
 
   @Override
   public int skip(ReadBuffer readBuffer) {
-    readBuffer.skip(8);
-    return 8;
+    int len = readBuffer.getVlqInt();
+    readBuffer.skip(len);
+    return len + VLQ.encodedSize(len);
   }
 }

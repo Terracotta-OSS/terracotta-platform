@@ -13,29 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.metadata;
+package org.terracotta.runnel.encoding.dataholders;
 
-import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.VLQ;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public class ByteBufferField extends AbstractField {
-  public ByteBufferField(String name, int index) {
-    super(name, index);
+public class StringDataHolder implements DataHolder {
+
+  private final String value;
+  private final int index;
+
+  public StringDataHolder(String value, int index) {
+    this.value = value;
+    this.index = index;
   }
 
-  @Override
-  public Object decode(ReadBuffer readBuffer) {
-    int len = readBuffer.getVlqInt();
-    return readBuffer.getByteBuffer(len);
+  public int size(boolean withIndex) {
+    int len = value.length() * 2;
+    return VLQ.encodedSize(len) + len + (withIndex ? VLQ.encodedSize(index) : 0);
   }
 
-  @Override
-  public int skip(ReadBuffer readBuffer) {
-    int len = readBuffer.getVlqInt();
-    readBuffer.skip(len);
-    return len + VLQ.encodedSize(len);
+  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
+    if (withIndex) {
+      writeBuffer.putVlqInt(index);
+    }
+    writeBuffer.putVlqInt(value.length() * 2);
+    writeBuffer.putString(value);
   }
 }

@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.dataholders;
+package org.terracotta.runnel.decoding.fields;
 
-import org.terracotta.runnel.utils.VLQ;
-import org.terracotta.runnel.utils.WriteBuffer;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public class Int64DataHolder implements DataHolder {
+public class Int64Field extends AbstractField {
 
-  private final long value;
-  private final int index;
-
-  public Int64DataHolder(long value, int index) {
-    this.value = value;
-    this.index = index;
+  public Int64Field(String name, int index) {
+    super(name, index);
   }
 
-  public int size(boolean withIndex) {
-    return 8 + VLQ.encodedSize(8) + (withIndex ? VLQ.encodedSize(index) : 0);
+  @Override
+  public Object decode(ReadBuffer readBuffer) {
+    readBuffer.getVlqInt();
+    return readBuffer.getLong();
   }
 
-  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
-    if (withIndex) {
-      writeBuffer.putVlqInt(index);
-    }
-    writeBuffer.putVlqInt(8);
-    writeBuffer.putLong(value);
+  @Override
+  public int skip(ReadBuffer readBuffer) {
+    readBuffer.skip(8);
+    return 8;
   }
 }
