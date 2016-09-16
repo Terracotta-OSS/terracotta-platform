@@ -16,6 +16,7 @@
 package org.terracotta.management.service.monitoring;
 
 import org.terracotta.management.sequence.SequenceGenerator;
+import org.terracotta.monitoring.IStripeMonitoring;
 
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +38,7 @@ class VoltronMonitoringService {
     this.sequenceGenerator = sequenceGenerator;
   }
 
-  IMonitoringProducer getProducer(long callerConsumerID) {
+  IStripeMonitoring getProducer(long callerConsumerID) {
     return producers.computeIfAbsent(callerConsumerID, id -> id == PLATFORM_CONSUMERID ?
         new PlatformMonitoringProducer(id, consumers, producers, sequenceGenerator) :
         new DefaultMonitoringProducer(id, consumers));

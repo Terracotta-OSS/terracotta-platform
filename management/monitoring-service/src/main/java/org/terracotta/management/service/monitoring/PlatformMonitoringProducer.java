@@ -26,6 +26,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
 
+import static org.terracotta.management.service.monitoring.DefaultMonitoringConsumer.SERVERS_PATH;
+import static org.terracotta.management.service.monitoring.DefaultMonitoringConsumer.SERVERS_ROOT_NAME;
 import static org.terracotta.management.service.monitoring.Utils.array;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_ROOT_NAME;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_ROOT_NAME;
@@ -46,59 +48,74 @@ class PlatformMonitoringProducer extends DefaultMonitoringProducer {
   }
 
   @Override
-  public synchronized boolean addNode(String[] parents, String name, Serializable value) {
-    boolean ret = super.addNode(parents, name, value);
+  public synchronized boolean addNode(PlatformServer caller, String[] parents, String name, Serializable value) {
+    boolean ret = super.addNode(caller, parents, name, value);
     if (ret) {
-      if (value instanceof PlatformServer) {
-        fire(PlatformNotification.Type.SERVER_JOINED, value);
+      // hack to install the active server in the tree
+      if (PLATFORM_ROOT_NAME.equals(name)) {
+        if (currentActiveServer == null) {
+          throw new AssertionError("no active found");
+        }
+        if (currentActiveServer.getServerName() == null) {
+          throw new AssertionError("no server name");
+        }
+        addNode(caller, new String[]{PLATFORM_ROOT_NAME}, SERVERS_ROOT_NAME, null);
+        addNode(caller, SERVERS_PATH, currentActiveServer.getServerName(), currentActiveServer);
+
+      } else if (value instanceof PlatformServer) {
+        fire(caller, PlatformNotification.Type.SERVER_JOINED, value);
 
       } else if (value instanceof PlatformEntity) {
-        fire(PlatformNotification.Type.SERVER_ENTITY_CREATED, value);
+        fire(caller, PlatformNotification.Type.SERVER_ENTITY_CREATED, value);
 
       } else if (value instanceof PlatformConnectedClient) {
-        fire(PlatformNotification.Type.CLIENT_CONNECTED, value);
+        fire(caller, PlatformNotification.Type.CLIENT_CONNECTED, value);
 
       } else if (value instanceof ServerState) {
-        PlatformServer server = getValue(parents, PlatformServer.class);
-        fire(PlatformNotification.Type.SERVER_STATE_CHANGED, new Serializable[]{server, value});
+        if (parents.length == 1) { // if platform/state => move it to old place
+          addNode(caller, new String[]{PLATFORM_ROOT_NAME, SERVERS_ROOT_NAME, caller.getServerName()}, "state", value);
+        } else {
+          PlatformServer server = getValue(parents, PlatformServer.class);
+          fire(caller, PlatformNotification.Type.SERVER_STATE_CHANGED, new Serializable[]{server, value});
+        }
       } else if (value instanceof PlatformClientFetchedEntity) {
         PlatformClientFetchedEntity fetch = (PlatformClientFetchedEntity) value;
         PlatformConnectedClient client = getValue(array(PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, fetch.clientIdentifier), PlatformConnectedClient.class);
         PlatformEntity entity = getValue(array(PLATFORM_ROOT_NAME, ENTITIES_ROOT_NAME, fetch.entityIdentifier), PlatformEntity.class);
-        fire(PlatformNotification.Type.SERVER_ENTITY_FETCHED, new Serializable[]{client, entity});
+        fire(caller, PlatformNotification.Type.SERVER_ENTITY_FETCHED, new Serializable[]{client, entity});
       }
     }
     return ret;
   }
 
   @Override
-  public synchronized boolean removeNode(String[] parents, String name) {
+  public synchronized boolean removeNode(PlatformServer caller, String[] parents, String name) {
     Serializable value = getValueForNode(parents, name, Serializable.class).orElse(null);
-    boolean ret = super.removeNode(parents, name);
+    boolean ret = super.removeNode(caller, parents, name);
     if (ret && value != null) {
       if (value instanceof PlatformServer) {
-        fire(PlatformNotification.Type.SERVER_LEFT, value);
+        fire(caller, PlatformNotification.Type.SERVER_LEFT, value);
 
       } else if (value instanceof PlatformEntity) {
         // removes the eventual producer linked to this entity
         producers.remove(((PlatformEntity) value).consumerID);
-        fire(PlatformNotification.Type.SERVER_ENTITY_DESTROYED, value);
+        fire(caller, PlatformNotification.Type.SERVER_ENTITY_DESTROYED, value);
 
       } else if (value instanceof PlatformConnectedClient) {
-        fire(PlatformNotification.Type.CLIENT_DISCONNECTED, value);
+        fire(caller, PlatformNotification.Type.CLIENT_DISCONNECTED, value);
 
       } else if (value instanceof PlatformClientFetchedEntity) {
         PlatformClientFetchedEntity fetch = (PlatformClientFetchedEntity) value;
         PlatformConnectedClient client = getValue(array(PLATFORM_ROOT_NAME, CLIENTS_ROOT_NAME, fetch.clientIdentifier), PlatformConnectedClient.class);
         PlatformEntity entity = getValue(array(PLATFORM_ROOT_NAME, ENTITIES_ROOT_NAME, fetch.entityIdentifier), PlatformEntity.class);
-        fire(PlatformNotification.Type.SERVER_ENTITY_UNFETCHED, new Serializable[]{client, entity});
+        fire(caller, PlatformNotification.Type.SERVER_ENTITY_UNFETCHED, new Serializable[]{client, entity});
       }
     }
     return ret;
   }
 
-  private void fire(PlatformNotification.Type type, Serializable data) {
-    pushBestEffortsData(VoltronMonitoringService.PLATFORM_CATEGORY, new DefaultPlatformNotification(sequenceGenerator.next(), type, data));
+  private void fire(PlatformServer caller, PlatformNotification.Type type, Serializable data) {
+    pushBestEffortsData(caller, VoltronMonitoringService.PLATFORM_CATEGORY, new DefaultPlatformNotification(sequenceGenerator.next(), type, data));
   }
 
   private <T extends Serializable> T getValue(String[] path, Class<T> type) {

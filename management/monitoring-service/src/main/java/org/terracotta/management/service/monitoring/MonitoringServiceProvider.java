@@ -22,6 +22,8 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.SequenceGenerator;
+import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.IStripeMonitoring;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,8 +36,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
       IMonitoringConsumer.class,
-      IMonitoringProducer.class,
-      org.terracotta.monitoring.IMonitoringProducer.class
+      IStripeMonitoring.class
   );
 
   private final VoltronMonitoringService voltronMonitoringService;
@@ -56,7 +57,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
-    if (org.terracotta.monitoring.IMonitoringProducer.class.isAssignableFrom(serviceType)) {
+    if (IStripeMonitoring.class.isAssignableFrom(serviceType)) {
       return serviceType.cast(voltronMonitoringService.getProducer(consumerID));
     }
 

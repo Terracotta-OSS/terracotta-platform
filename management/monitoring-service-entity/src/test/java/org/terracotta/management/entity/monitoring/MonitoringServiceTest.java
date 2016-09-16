@@ -26,6 +26,7 @@ import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntit
 import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityClientService;
 import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityFactory;
 import org.terracotta.management.entity.monitoring.server.MonitoringServiceEntityServerService;
+import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
@@ -36,13 +37,15 @@ import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.monitoring.PlatformMonitoringConstants.SERVERS_PATH;
 
 /**
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
 public class MonitoringServiceTest {
+
+  private static final String SERVERS_ROOT_NAME = "servers";
+  private static final String[] SERVERS_PATH = {PlatformMonitoringConstants.PLATFORM_ROOT_NAME, SERVERS_ROOT_NAME};
 
   private PassthroughClusterControl stripeControl;
 

@@ -15,6 +15,9 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.terracotta.monitoring.IStripeMonitoring;
+import org.terracotta.monitoring.PlatformServer;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -25,18 +28,37 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.terracotta.management.service.monitoring.DefaultMonitoringConsumer.SERVERS_PATH;
+
 /**
  * @author Mathieu Carbou
  */
-class DefaultMonitoringProducer implements MonitoringTree, IMonitoringProducer {
+class DefaultMonitoringProducer implements MonitoringTree, IStripeMonitoring {
 
   private final Node tree = new Node();
   private final long consumerId;
   private final Map<Long, DefaultMonitoringConsumer> consumers;
 
+  protected PlatformServer currentActiveServer;
+
   DefaultMonitoringProducer(long consumerId, Map<Long, DefaultMonitoringConsumer> consumers) {
     this.consumerId = consumerId;
     this.consumers = consumers;
+  }
+
+  @Override
+  public void serverDidBecomeActive(PlatformServer server) {
+    this.currentActiveServer = server;
+  }
+
+  @Override
+  public void serverDidJoinStripe(PlatformServer server) {
+    addNode(server, SERVERS_PATH, server.getServerName(), server);
+  }
+
+  @Override
+  public void serverDidLeaveStripe(PlatformServer server) {
+    removeNode(server, SERVERS_PATH, server.getServerName());
   }
 
   @Override
@@ -45,7 +67,7 @@ class DefaultMonitoringProducer implements MonitoringTree, IMonitoringProducer {
   }
 
   @Override
-  public void pushBestEffortsData(String name, Serializable data) {
+  public void pushBestEffortsData(PlatformServer server, String name, Serializable data) {
     for (DefaultMonitoringConsumer consumer : consumers.values()) {
       consumer.push(name, data);
     }
@@ -96,7 +118,7 @@ class DefaultMonitoringProducer implements MonitoringTree, IMonitoringProducer {
   }
 
   @Override
-  public synchronized boolean addNode(String[] parents, String name, Serializable value) {
+  public synchronized boolean addNode(PlatformServer server, String[] parents, String name, Serializable value) {
     if (parents == null) {
       parents = new String[0];
     }
@@ -118,7 +140,7 @@ class DefaultMonitoringProducer implements MonitoringTree, IMonitoringProducer {
   }
 
   @Override
-  public synchronized boolean removeNode(String[] parents, String name) {
+  public synchronized boolean removeNode(PlatformServer server, String[] parents, String name) {
     if (parents == null) {
       parents = new String[0];
     }
