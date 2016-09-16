@@ -81,7 +81,9 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   @Override
   public StructEncoder string(String name, String value) {
     int fieldIndex = fieldSearcher.findFieldIndex(name, StringField.class, null);
-    data.add(new StringDataHolder(value, fieldIndex));
+    if (value != null) {
+      data.add(new StringDataHolder(value, fieldIndex));
+    }
     return this;
   }
 
