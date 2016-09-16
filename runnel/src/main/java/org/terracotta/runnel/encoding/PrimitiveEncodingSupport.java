@@ -26,6 +26,8 @@ public interface PrimitiveEncodingSupport<T> {
 
   T int64(String name, long value);
 
+  T fp64(String name, double value);
+
   T string(String name, String value);
 
   T byteBuffer(String name, ByteBuffer value);

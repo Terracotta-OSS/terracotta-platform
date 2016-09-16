@@ -43,6 +43,14 @@ public class ReadBuffer {
     }
   }
 
+  public Double getDouble() {
+    if (byteBuffer.position() + 8 > limit) {
+      throw new BufferLimitReachedException();
+    }
+    long aLong = byteBuffer.getLong();
+    return Double.longBitsToDouble(aLong);
+  }
+
   public Long getLong() {
     if (byteBuffer.position() + 8 > limit) {
       throw new BufferLimitReachedException();

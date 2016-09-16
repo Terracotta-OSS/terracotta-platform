@@ -28,6 +28,10 @@ public class WriteBuffer {
     this.byteBuffer = byteBuffer;
   }
 
+  public void putDouble(double value) {
+    byteBuffer.putLong(Double.doubleToRawLongBits(value));
+  }
+
   public void putLong(long value) {
     byteBuffer.putLong(value);
   }

@@ -15,9 +15,11 @@
  */
 package org.terracotta.runnel.encoding;
 
+import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
+import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
 import org.terracotta.runnel.encoding.dataholders.StringDataHolder;
@@ -61,6 +63,13 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
   public StructArrayEncoder int64(String name, long value) {
     int fieldIndex = fieldSearcher.findFieldIndex(name, Int64Field.class, null);
     currentData.add(new Int64DataHolder(value, fieldIndex));
+    return this;
+  }
+
+  @Override
+  public StructArrayEncoder fp64(String name, double value) {
+    FloatingPoint64Field field = fieldSearcher.findField(name, FloatingPoint64Field.class, null);
+    currentData.add(new FloatingPoint64DataHolder(value, field.index()));
     return this;
   }
 

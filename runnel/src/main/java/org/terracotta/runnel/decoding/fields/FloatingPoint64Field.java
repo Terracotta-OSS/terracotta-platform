@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.decoding;
+package org.terracotta.runnel.decoding.fields;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public interface PrimitiveDecodingSupport {
+public class FloatingPoint64Field extends AbstractField {
 
-  Integer int32(String name);
+  public FloatingPoint64Field(String name, int index) {
+    super(name, index);
+  }
 
-  Long int64(String name);
-
-  Double fp64(String name);
-
-  String string(String name);
-
-  ByteBuffer byteBuffer(String name);
+  @Override
+  public Object decode(ReadBuffer readBuffer) {
+    readBuffer.getVlqInt();
+    return readBuffer.getDouble();
+  }
 
 }

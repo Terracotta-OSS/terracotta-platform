@@ -15,21 +15,22 @@
  */
 package org.terracotta.runnel.encoding;
 
+import org.terracotta.runnel.decoding.fields.ArrayField;
+import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
+import org.terracotta.runnel.decoding.fields.Int32Field;
+import org.terracotta.runnel.decoding.fields.Int64Field;
+import org.terracotta.runnel.decoding.fields.StringField;
+import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ArrayDataHolder;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
+import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
 import org.terracotta.runnel.encoding.dataholders.StringDataHolder;
 import org.terracotta.runnel.encoding.dataholders.StructDataHolder;
-import org.terracotta.runnel.decoding.fields.ArrayField;
-import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.Field;
-import org.terracotta.runnel.decoding.fields.Int32Field;
-import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.metadata.FieldSearcher;
-import org.terracotta.runnel.decoding.fields.StringField;
-import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 
@@ -67,6 +68,13 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   public StructEncoder int64(String name, long value) {
     int fieldIndex = fieldSearcher.findFieldIndex(name, Int64Field.class, null);
     data.add(new Int64DataHolder(value, fieldIndex));
+    return this;
+  }
+
+  @Override
+  public StructEncoder fp64(String name, double value) {
+    int fieldIndex = fieldSearcher.findFieldIndex(name, FloatingPoint64Field.class, null);
+    data.add(new FloatingPoint64DataHolder(value, fieldIndex));
     return this;
   }
 
@@ -118,6 +126,18 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
       @Override
       protected DataHolder buildDataHolder(Long value) {
         return new Int64DataHolder(value, fieldIndex);
+      }
+    };
+  }
+
+  public ArrayEncoder<Double> fp64s(String name) {
+    final int fieldIndex = fieldSearcher.findFieldIndex(name, ArrayField.class, FloatingPoint64Field.class);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new ArrayDataHolder(values, fieldIndex));
+    return new ArrayEncoder<Double>(values, this) {
+      @Override
+      protected DataHolder buildDataHolder(Double value) {
+        return new FloatingPoint64DataHolder(value, fieldIndex);
       }
     };
   }

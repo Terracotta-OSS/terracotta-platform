@@ -17,6 +17,7 @@ package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
@@ -65,6 +66,15 @@ public class StructDecoder implements PrimitiveDecodingSupport {
   }
 
   @Override
+  public Double fp64(String name) {
+    FloatingPoint64Field field = fieldSearcher.nextField(name, FloatingPoint64Field.class, null, readBuffer);
+    if (field == null) {
+      return null;
+    }
+    return (Double) field.decode(readBuffer);
+  }
+
+  @Override
   public String string(String name) {
     StringField field = fieldSearcher.nextField(name, StringField.class, null, readBuffer);
     if (field == null) {
@@ -104,6 +114,14 @@ public class StructDecoder implements PrimitiveDecodingSupport {
       return null;
     }
     return new ArrayDecoder<Long>(field.subFields().get(0), readBuffer, this);
+  }
+
+  public ArrayDecoder<Double> fp64s(String name) {
+    ArrayField field = fieldSearcher.nextField(name, ArrayField.class, FloatingPoint64Field.class, readBuffer);
+    if (field == null) {
+      return null;
+    }
+    return new ArrayDecoder<Double>(field.subFields().get(0), readBuffer, this);
   }
 
   public ArrayDecoder<String> strings(String name) {

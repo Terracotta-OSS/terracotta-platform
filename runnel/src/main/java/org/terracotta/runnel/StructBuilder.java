@@ -18,6 +18,7 @@ package org.terracotta.runnel;
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
 import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
@@ -59,6 +60,12 @@ public class StructBuilder {
     return this;
   }
 
+  public StructBuilder fp64(String name, int index) {
+    checkIndex(index);
+    fields.add(new FloatingPoint64Field(name, index));
+    return this;
+  }
+
   public StructBuilder string(String name, int index) {
     checkIndex(index);
     fields.add(new StringField(name, index));
@@ -86,6 +93,12 @@ public class StructBuilder {
   public StructBuilder int64s(String name, int index) {
     checkIndex(index);
     fields.add(new ArrayField(name, index, new Int64Field(name, index)));
+    return this;
+  }
+
+  public StructBuilder fp64s(String name, int index) {
+    checkIndex(index);
+    fields.add(new ArrayField(name, index, new FloatingPoint64Field(name, index)));
     return this;
   }
 
