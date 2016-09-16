@@ -21,6 +21,7 @@ import org.terracotta.runnel.decoding.StructDecoder;
 
 import java.nio.ByteBuffer;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -36,6 +37,39 @@ public class PrimitiveArrayStructBuilderTest {
       .strings("colors", 4)
       .int64("age", 5)
       .build();
+
+  @Test
+  public void testEncodeNullArray() throws Exception {
+    ByteBuffer bb = ByteBuffer.allocate(1024);
+
+    struct.encoder()
+        .int64("age", 30)
+        .encode(bb);
+
+    bb.rewind();
+
+    StructDecoder decoder = struct.decoder(bb);
+
+    assertThat(decoder.int64s("ids"), is(nullValue()));
+  }
+
+  @Test
+  public void testEncodeEmptyArray() throws Exception {
+    ByteBuffer bb = ByteBuffer.allocate(1024);
+
+    struct.encoder()
+        .int64s("ids")
+        .end()
+        .encode(bb);
+
+    bb.rewind();
+
+    StructDecoder decoder = struct.decoder(bb);
+
+    ArrayDecoder<Long> ids = decoder.int64s("ids");
+    assertThat(ids.length(), is(0));
+  }
+
 
   @Test
   public void testReadAll() throws Exception {
