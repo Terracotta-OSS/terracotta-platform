@@ -22,7 +22,7 @@
     <parent>
         <artifactId>platform-root</artifactId>
         <groupId>org.terracotta</groupId>
-        <version>5.0-SNAPSHOT</version>
+        <version>5.0.7.beta</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
