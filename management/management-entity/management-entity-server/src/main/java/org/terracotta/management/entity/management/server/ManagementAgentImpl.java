@@ -32,7 +32,7 @@ import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.management.service.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 

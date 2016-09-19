@@ -19,6 +19,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
+import org.terracotta.monitoring.PlatformMonitoringConstants;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
@@ -37,13 +38,14 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_PAT
 import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_ROOT_NAME;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.FETCHED_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.PLATFORM_ROOT_NAME;
-import static org.terracotta.monitoring.PlatformMonitoringConstants.SERVERS_PATH;
-import static org.terracotta.monitoring.PlatformMonitoringConstants.SERVERS_ROOT_NAME;
 
 /**
  * @author Mathieu Carbou
  */
 class DefaultMonitoringConsumer implements IMonitoringConsumer {
+
+  static final String SERVERS_ROOT_NAME = "servers";
+  static final String[] SERVERS_PATH = {PlatformMonitoringConstants.PLATFORM_ROOT_NAME, SERVERS_ROOT_NAME};
 
   private final long consumerId;
   private final Map<Long, DefaultMonitoringConsumer> consumers;

@@ -21,7 +21,7 @@ import org.terracotta.management.entity.management.ManagementAgent;
 import org.terracotta.management.entity.management.ManagementEvent;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.management.service.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
