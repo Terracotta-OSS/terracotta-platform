@@ -19,9 +19,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * @author Ludovic Orban
@@ -34,36 +32,45 @@ public class EnmBuilderTest {
 
   @Test
   public void testMappings() throws Exception {
-    Enm<TestEnum> enm = EnmBuilder.<TestEnum>newEnumBuilder()
+    Enm<TestEnum> enm = EnmBuilder.newEnumBuilder(TestEnum.class)
         .mapping(TestEnum.A, 10)
         .mapping(TestEnum.B, 20)
+        .mapping(TestEnum.C, 30)
         .build();
 
     assertThat(enm.toInt(TestEnum.A), is(10));
     assertThat(enm.toInt(TestEnum.B), is(20));
-    try { enm.toInt(TestEnum.C); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    assertThat(enm.toInt(TestEnum.C), is(30));
 
     assertThat(enm.toEnum(10), CoreMatchers.<Enum>is(TestEnum.A));
     assertThat(enm.toEnum(20), CoreMatchers.<Enum>is(TestEnum.B));
-    assertThat(enm.toEnum(30), is(nullValue()));
+    assertThat(enm.toEnum(30), CoreMatchers.<Enum>is(TestEnum.C));
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testUnmappedEnumInvalid() throws Exception {
+    EnmBuilder.newEnumBuilder(TestEnum.class)
+        .mapping(TestEnum.A, 10)
+        .mapping(TestEnum.C, 30)
+        .build();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testNegativeIndexIsInvalid() throws Exception {
-    EnmBuilder.<TestEnum>newEnumBuilder()
+    EnmBuilder.newEnumBuilder(TestEnum.class)
         .mapping(TestEnum.A, -10);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testDuplicateIndexIsInvalid() throws Exception {
-    EnmBuilder.<TestEnum>newEnumBuilder()
+    EnmBuilder.newEnumBuilder(TestEnum.class)
         .mapping(TestEnum.A, 10)
         .mapping(TestEnum.B, 10);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testDuplicateEnumIsInvalid() throws Exception {
-    EnmBuilder.<TestEnum>newEnumBuilder()
+    EnmBuilder.newEnumBuilder(TestEnum.class)
         .mapping(TestEnum.A, 10)
         .mapping(TestEnum.A, 20);
   }

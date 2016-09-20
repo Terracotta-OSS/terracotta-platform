@@ -15,7 +15,10 @@
  */
 package org.terracotta.runnel;
 
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -23,17 +26,25 @@ import java.util.Map;
  */
 public class EnmBuilder<E extends Enum<E>> {
 
-  private final Map<E, Integer> enumToInteger = new HashMap<E, Integer>();
+  private final EnumMap<E, Integer> enumToInteger;
   private final Map<Integer, E> integerToEnum = new HashMap<Integer, E>();
+  private final Class<E> enumClass;
 
-  private EnmBuilder() {
+  private EnmBuilder(Class<E> enumClass) {
+    this.enumClass = enumClass;
+    this.enumToInteger = new EnumMap<E, Integer>(enumClass);
   }
 
-  public static <E extends Enum<E>> EnmBuilder<E> newEnumBuilder() {
-    return new EnmBuilder<E>();
+  public static <E extends Enum<E>> EnmBuilder<E> newEnumBuilder(Class<E> enumClass) {
+    return new EnmBuilder<E>(enumClass);
   }
 
   public Enm<E> build() {
+    HashSet<E> unregisteredEnums = new HashSet<E>(EnumSet.allOf(enumClass));
+    unregisteredEnums.removeAll(enumToInteger.keySet());
+    if (!unregisteredEnums.isEmpty()) {
+      throw new IllegalStateException("Missing enum mappings for : " + unregisteredEnums);
+    }
     return new Enm<E>(enumToInteger, integerToEnum);
   }
 

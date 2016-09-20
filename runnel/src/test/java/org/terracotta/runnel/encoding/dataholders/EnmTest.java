@@ -35,7 +35,7 @@ public class EnmTest {
     A,B,C
   }
 
-  private static final Enm<TestEnum> ENM = EnmBuilder.<TestEnum>newEnumBuilder()
+  private static final Enm<TestEnum> ENM = EnmBuilder.newEnumBuilder(TestEnum.class)
       .mapping(TestEnum.A, 1)
       .mapping(TestEnum.B, 2)
       .mapping(TestEnum.C, 3)

@@ -29,18 +29,22 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class VersionCompatibilityTest {
 
-  private enum TestEnum {
-    A,B,C
+  private enum TestEnum_v1 {
+    A,B
   }
 
-  private static final Enm<TestEnum> ENM_V1 = EnmBuilder.<TestEnum>newEnumBuilder()
-      .mapping(TestEnum.A, 10)
-      .mapping(TestEnum.B, 20)
+  private enum TestEnum_v2 {
+    A,C
+  }
+
+  private static final Enm<TestEnum_v1> ENM_V1 = EnmBuilder.newEnumBuilder(TestEnum_v1.class)
+      .mapping(TestEnum_v1.A, 10)
+      .mapping(TestEnum_v1.B, 20)
       .build();
 
-  private static final Enm<TestEnum> ENM_V2 = EnmBuilder.<TestEnum>newEnumBuilder()
-      .mapping(TestEnum.A, 10)
-      .mapping(TestEnum.C, 30)
+  private static final Enm<TestEnum_v2> ENM_V2 = EnmBuilder.newEnumBuilder(TestEnum_v2.class)
+      .mapping(TestEnum_v2.A, 10)
+      .mapping(TestEnum_v2.C, 30)
       .build();
 
   private static final Struct STRUCT_V1 = StructBuilder.newStructBuilder()
@@ -63,7 +67,7 @@ public class VersionCompatibilityTest {
         .int32("age", 30)
         .string("name", "john doe")
         .int64("id", 1234L)
-        .enm("letter", TestEnum.C)
+        .enm("letter", TestEnum_v2.C)
         .encode();
 
     encoded_v2.rewind();
@@ -71,7 +75,7 @@ public class VersionCompatibilityTest {
 
     assertThat(decoder_v1.int32("age"), is(30));
     assertThat(decoder_v1.int64("id"), is(1234L));
-    assertThat(decoder_v1.<TestEnum>enm("letter"), is(nullValue()));
+    assertThat(decoder_v1.<TestEnum_v1>enm("letter"), is(nullValue()));
   }
 
   @Test
@@ -79,7 +83,7 @@ public class VersionCompatibilityTest {
     ByteBuffer encoded_v1 = STRUCT_V1.encoder()
         .int32("age", 30)
         .int64("id", 1234L)
-        .enm("letter", TestEnum.B)
+        .enm("letter", TestEnum_v1.B)
         .encode();
 
     encoded_v1.rewind();
@@ -88,7 +92,7 @@ public class VersionCompatibilityTest {
     assertThat(decoder_v2.int32("age"), is(30));
     assertThat(decoder_v2.string("name"), is(nullValue()));
     assertThat(decoder_v2.int64("id"), is(1234L));
-    assertThat(decoder_v2.<TestEnum>enm("letter"), is(nullValue()));
+    assertThat(decoder_v2.<TestEnum_v1>enm("letter"), is(nullValue()));
   }
 
 }

@@ -29,7 +29,11 @@ public class StructBuilderTest {
   }
 
   private static final Struct STRUCT = StructBuilder.newStructBuilder().build();
-  private static final Enm<TestEnum> ENM = EnmBuilder.<TestEnum>newEnumBuilder().build();
+  private static final Enm<TestEnum> ENM = EnmBuilder.newEnumBuilder(TestEnum.class)
+      .mapping(TestEnum.A, 1)
+      .mapping(TestEnum.B, 2)
+      .mapping(TestEnum.C, 3)
+      .build();
 
   @Test
   public void checkIndexZeroIsInvalid() throws Exception {
