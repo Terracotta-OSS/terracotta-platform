@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 /**
  * @author Ludovic Orban
  */
-public class ByteBufferField extends AbstractField implements ValueField<ByteBuffer> {
+public class ByteBufferField extends AbstractValueField<ByteBuffer> {
   public ByteBufferField(String name, int index) {
     super(name, index);
   }

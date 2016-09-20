@@ -16,8 +16,11 @@
 package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.metadata.Metadata;
+import org.terracotta.runnel.utils.ReadBuffer;
 
+import java.io.PrintStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Ludovic Orban
@@ -41,4 +44,22 @@ public class StructField extends AbstractField {
     return subFields;
   }
 
+  @Override
+  public void dump(ReadBuffer parentBuffer, PrintStream out, int depth) {
+    int fieldSize = parentBuffer.getVlqInt();
+    out.append(" size: ").append(Integer.toString(fieldSize));
+    ReadBuffer readBuffer = parentBuffer.limit(fieldSize);
+
+    out.append(" type: ").append(getClass().getSimpleName());
+    out.append(" name: ").append(name());
+
+    Map<Integer, Field> fieldsByInteger = getMetadata().buildFieldsByIndexMap();
+    while (!readBuffer.limitReached()) {
+      out.append("\n  "); for (int j = 0; j < depth; j++) out.append("  ");
+      int index = readBuffer.getVlqInt();
+      out.append(" index: ").append(Integer.toString(index));
+      Field subField = fieldsByInteger.get(index);
+      subField.dump(readBuffer, out, depth + 1);
+    }
+  }
 }

@@ -20,7 +20,7 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public class StringField extends AbstractField implements ValueField<String> {
+public class StringField extends AbstractValueField<String> {
   public StringField(String name, int index) {
     super(name, index);
   }

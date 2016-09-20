@@ -21,7 +21,7 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public class FloatingPoint64Field extends AbstractField implements ValueField<Double> {
+public class FloatingPoint64Field extends AbstractValueField<Double> {
 
   public FloatingPoint64Field(String name, int index) {
     super(name, index);

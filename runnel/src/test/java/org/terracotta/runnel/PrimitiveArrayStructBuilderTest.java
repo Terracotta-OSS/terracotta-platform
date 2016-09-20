@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terracotta.runnel.decoding.ArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -112,6 +114,30 @@ public class PrimitiveArrayStructBuilderTest {
     ads.end();
 
     assertThat(decoder.int64("age"), is(30L));
+  }
+
+  @Test
+  public void testDump() throws Exception {
+    ByteBuffer bb = ByteBuffer.allocate(1024);
+
+    struct.encoder()
+        .string("name", "joe")
+        .int64s("ids")
+        .value(4L)
+        .value(5L)
+        .value(6L)
+        .end()
+        .string("address", "my street")
+        .strings("colors")
+        .value("blue")
+        .value("green")
+        .end()
+        .int64("age", 30)
+        .encode(bb);
+
+    bb.rewind();
+
+    struct.dump(bb, new PrintStream(new ByteArrayOutputStream()));
   }
 
   @Test

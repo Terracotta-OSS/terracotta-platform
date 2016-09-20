@@ -21,7 +21,7 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public class Int64Field extends AbstractField implements ValueField<Long> {
+public class Int64Field extends AbstractValueField<Long> {
 
   public Int64Field(String name, int index) {
     super(name, index);

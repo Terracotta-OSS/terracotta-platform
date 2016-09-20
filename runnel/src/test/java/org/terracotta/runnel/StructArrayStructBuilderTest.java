@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -71,6 +73,25 @@ public class StructArrayStructBuilderTest {
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
+  }
+
+  @Test
+  public void testDump() throws Exception {
+    ByteBuffer bb = struct.encoder()
+        .string("name", "joe")
+        .structs("mapEntry")
+        .string("key", "1")
+        .string("value", "one")
+        .next()
+        .string("key", "2")
+        .string("value", "two")
+        .end()
+        .int64("id", 999L)
+        .encode();
+
+    bb.rewind();
+
+    struct.dump(bb, new PrintStream(new ByteArrayOutputStream()));
   }
 
   @Test

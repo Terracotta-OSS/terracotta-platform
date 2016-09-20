@@ -15,7 +15,6 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
-import org.terracotta.runnel.Enm;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.io.PrintStream;
@@ -23,38 +22,18 @@ import java.io.PrintStream;
 /**
  * @author Ludovic Orban
  */
-public class EnmField<E extends Enum<E>> extends AbstractValueField<E> {
+public abstract class AbstractValueField<T> extends AbstractField implements ValueField<T> {
 
-  private final Enm<E> enm;
-
-  public EnmField(String name, int index, Enm<E> enm) {
+  protected AbstractValueField(String name, int index) {
     super(name, index);
-    this.enm = enm;
-  }
-
-  public Enm<E> getEnm() {
-    return enm;
-  }
-
-  @Override
-  public E decode(ReadBuffer readBuffer) {
-    readBuffer.getVlqInt();
-    int intValue = readBuffer.getVlqInt();
-    return enm.toEnum(intValue);
   }
 
   @Override
   public void dump(ReadBuffer readBuffer, PrintStream out, int depth) {
     out.append(" type: ").append(getClass().getSimpleName());
     out.append(" name: ").append(name());
-    out.append(" decoded: [");
-    readBuffer.getVlqInt();
-    int intValue = readBuffer.getVlqInt();
-    Object decoded = enm.toEnum(intValue);
-    if (decoded == null) {
-      decoded = intValue;
-    }
-    out.append(decoded.toString()).append("]");
+    T decoded = decode(readBuffer);
+    out.append(" decoded: [").append(decoded == null ? null : decoded.toString()).append("]");
   }
 
 }

@@ -18,6 +18,8 @@ package org.terracotta.runnel;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructDecoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -76,6 +78,9 @@ public class VersionCompatibilityTest {
     assertThat(decoder_v1.int32("age"), is(30));
     assertThat(decoder_v1.int64("id"), is(1234L));
     assertThat(decoder_v1.<TestEnum_v1>enm("letter"), is(nullValue()));
+
+    encoded_v2.rewind();
+    STRUCT_V1.dump(encoded_v2, new PrintStream(new ByteArrayOutputStream()));
   }
 
   @Test
@@ -93,6 +98,9 @@ public class VersionCompatibilityTest {
     assertThat(decoder_v2.string("name"), is(nullValue()));
     assertThat(decoder_v2.int64("id"), is(1234L));
     assertThat(decoder_v2.<TestEnum_v1>enm("letter"), is(nullValue()));
+
+    encoded_v1.rewind();
+    STRUCT_V2.dump(encoded_v1, new PrintStream(new ByteArrayOutputStream()));
   }
 
 }

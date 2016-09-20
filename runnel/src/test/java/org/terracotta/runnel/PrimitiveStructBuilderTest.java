@@ -18,6 +18,8 @@ package org.terracotta.runnel;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructDecoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -130,6 +132,20 @@ public class PrimitiveStructBuilderTest {
       assertThat(b, is((byte) 'X'));
     }
     assertThat(decoder.int32("id"), is(Integer.MIN_VALUE));
+  }
+
+  @Test
+  public void testDump() throws Exception {
+    ByteBuffer bb = struct.encoder()
+        .string("name", "joe")
+        .int64("age", 30)
+        .byteBuffer("blob", buffer(4096, 'X'))
+        .int32("id", Integer.MIN_VALUE)
+        .encode();
+
+    bb.rewind();
+
+    struct.dump(bb, new PrintStream(new ByteArrayOutputStream()));
   }
 
   @Test

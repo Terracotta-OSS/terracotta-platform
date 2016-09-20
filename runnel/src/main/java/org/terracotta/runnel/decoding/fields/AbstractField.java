@@ -23,7 +23,7 @@ public abstract class AbstractField implements Field {
   private final String name;
   private final int index;
 
-  public AbstractField(String name, int index) {
+  protected AbstractField(String name, int index) {
     this.name = name;
     this.index = index;
   }

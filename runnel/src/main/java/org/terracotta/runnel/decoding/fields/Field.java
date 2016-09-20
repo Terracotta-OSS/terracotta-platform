@@ -15,12 +15,19 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.ReadBuffer;
+
+import java.io.PrintStream;
+
 /**
  * @author Ludovic Orban
  */
 public interface Field {
 
   String name();
+
   int index();
+
+  void dump(ReadBuffer readBuffer, PrintStream out, int depth);
 
 }

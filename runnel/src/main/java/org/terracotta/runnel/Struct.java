@@ -16,13 +16,10 @@
 package org.terracotta.runnel;
 
 import org.terracotta.runnel.decoding.StructDecoder;
-import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.encoding.StructEncoder;
 import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
 
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
@@ -60,54 +57,19 @@ public class Struct {
 
     while (!readBuffer.limitReached()) {
       int index = readBuffer.getVlqInt();
-      out.print("index: "); out.print(index);
+      out.append("index: ").append(Integer.toString(index));
       Field field = fieldsByInteger.get(index);
-      dumpField(field, readBuffer, out, 0);
-      out.print("\n");
-    }
-  }
+      if (field != null) {
+        field.dump(readBuffer, out, 0);
+      } else {
+        int fieldSize = readBuffer.getVlqInt();
+        out.append(" size: ").append(Integer.toString(fieldSize));
+        ReadBuffer fieldReadBuffer = readBuffer.limit(fieldSize);
 
-  private void dumpField(Field field, ReadBuffer parentBuffer, PrintStream out, int depth) {
-    int fieldSize = parentBuffer.getVlqInt();
-    out.print(" size: "); out.print(fieldSize);
-    ReadBuffer readBuffer = parentBuffer.limit(fieldSize);
-
-    if (field instanceof ArrayField) {
-      out.print(" type: "); out.print(field.getClass().getSimpleName());
-
-      int length = readBuffer.getVlqInt();
-      out.print(" length: "); out.print(length);
-
-      ArrayField arrayField = (ArrayField) field;
-      Field subField = arrayField.subField();
-
-      for (int i = 0; i < length; i++) {
-        out.print("\n  "); for (int j = 0; j < depth; j++) out.print("  ");
-        dumpField(subField, readBuffer, out, depth + 1);
+        out.append(" type: ???");
+        fieldReadBuffer.skipAll();
       }
-    } else if (field instanceof StructField) {
-      out.print(" type: "); out.print(field.getClass().getSimpleName());
-      out.print(" name: "); out.print(field.name());
-
-      StructField structField = (StructField) field;
-      Map<Integer, Field> fieldsByInteger = structField.getMetadata().buildFieldsByIndexMap();
-      while (!readBuffer.limitReached()) {
-        out.print("\n  "); for (int j = 0; j < depth; j++) out.print("  ");
-        int index = readBuffer.getVlqInt();
-        out.print(" index: "); out.print(index);
-        Field subField = fieldsByInteger.get(index);
-        dumpField(subField, readBuffer, out, depth + 1);
-      }
-    } else if (field != null) {
-      ValueField valueField = (ValueField) field;
-      out.print(" type: "); out.print(field.getClass().getSimpleName());
-      out.print(" name: "); out.print(field.name());
-      parentBuffer.rewind(VLQ.encodedSize(fieldSize));
-      Object decoded = valueField.decode(readBuffer);
-      out.print(" decoded: ["); out.print(decoded); out.print("]");
-    } else {
-      out.print(" type: ???");
-      readBuffer.skipAll();
+      out.append("\n");
     }
   }
 
