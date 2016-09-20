@@ -15,15 +15,8 @@
  */
 package org.terracotta.runnel.metadata;
 
-import org.terracotta.runnel.decoding.ArrayDecoder;
-import org.terracotta.runnel.decoding.StructArrayDecoder;
-import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.Field;
-import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.decoding.fields.ValueField;
-import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
 
 /**
  * @author Ludovic Orban
@@ -47,68 +40,8 @@ public class FieldSearcher {
     return fieldWithIndex.fieldIndex;
   }
 
-  public StructArrayDecoder decodeStructArray(String name, ReadBuffer readBuffer, StructDecoder parent) {
-    ArrayField field = nextField(name, ArrayField.class, StructField.class, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new StructArrayDecoder(((StructField) field.subField()), readBuffer, parent);
-  }
-
-  public StructDecoder decodeStruct(String name, ReadBuffer readBuffer, StructDecoder parent) {
-    StructField field = nextField(name, StructField.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new StructDecoder(field, readBuffer, parent);
-  }
-
-  public <T> ArrayDecoder<T> decodeValueArray(String name, Class<? extends ValueField<T>> clazz, ReadBuffer readBuffer, StructDecoder parent) {
-    ArrayField field = nextField(name, ArrayField.class, clazz, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new ArrayDecoder<T>((ValueField<T>) field.subField(), readBuffer, parent);
-  }
-
-  public <T> T decodeValue(String name, Class<? extends ValueField<T>> clazz, ReadBuffer readBuffer) {
-    ValueField<T> field = nextField(name, clazz, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return field.decode(readBuffer);
-  }
-
-
   public void reset() {
     this.lastIndex = -1;
-  }
-
-  private  <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz, ReadBuffer readBuffer) {
-    Metadata.FieldWithIndex fieldWithIndex = findFieldWithIndex(name, fieldClazz, subFieldClazz);
-    if (readBuffer.limitReached()) {
-      return null;
-    }
-
-    int index = readBuffer.getVlqInt();
-    // skip all fields with a lower index than the requested field's
-    while (index < fieldWithIndex.fieldIndex) {
-      int fieldSize = readBuffer.getVlqInt();
-      readBuffer.skip(fieldSize);
-      if (readBuffer.limitReached()) {
-        return null;
-      }
-      index = readBuffer.getVlqInt();
-    }
-
-    if (index > fieldWithIndex.fieldIndex) {
-      readBuffer.rewind(VLQ.encodedSize(index));
-      return null;
-    } else if (index != fieldWithIndex.fieldIndex) {
-      return null;
-    } else {
-      return (T) fieldWithIndex.field;
-    }
   }
 
   private <T extends Field, S extends Field> Metadata.FieldWithIndex findFieldWithIndex(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {

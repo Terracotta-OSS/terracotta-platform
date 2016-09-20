@@ -16,6 +16,7 @@
 package org.terracotta.runnel.metadata;
 
 import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,10 @@ public class Metadata {
 
   public FieldSearcher fieldSearcher() {
     return new FieldSearcher(this);
+  }
+
+  public FieldDecoder fieldDecoder(ReadBuffer readBuffer) {
+    return new FieldDecoder(this, readBuffer);
   }
 
   public Map<Integer, Field> buildFieldsByIndexMap() {

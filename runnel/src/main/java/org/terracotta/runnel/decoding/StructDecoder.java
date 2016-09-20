@@ -22,7 +22,7 @@ import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.metadata.FieldSearcher;
+import org.terracotta.runnel.metadata.FieldDecoder;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.nio.ByteBuffer;
@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
  */
 public class StructDecoder implements PrimitiveDecodingSupport {
 
-  private final FieldSearcher fieldSearcher;
+  private final FieldDecoder fieldDecoder;
   private final ReadBuffer readBuffer;
   private final StructDecoder parent;
 
@@ -41,65 +41,65 @@ public class StructDecoder implements PrimitiveDecodingSupport {
   }
 
   public StructDecoder(StructField structField, ReadBuffer readBuffer, StructDecoder parent) {
-    this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.parent = parent;
     int size = readBuffer.getVlqInt();
     this.readBuffer = readBuffer.limit(size);
+    this.fieldDecoder = structField.getMetadata().fieldDecoder(this.readBuffer);
   }
 
   @Override
   public Integer int32(String name) {
-    return fieldSearcher.decodeValue(name, Int32Field.class, readBuffer);
+    return fieldDecoder.decodeValue(name, Int32Field.class);
   }
 
   @Override
   public <E extends Enum<E>> E enm(String name) {
-    return (E) fieldSearcher.decodeValue(name, (Class) EnmField.class, readBuffer);
+    return (E) fieldDecoder.decodeValue(name, (Class) EnmField.class);
   }
 
   @Override
   public Long int64(String name) {
-    return fieldSearcher.decodeValue(name, Int64Field.class, readBuffer);
+    return fieldDecoder.decodeValue(name, Int64Field.class);
   }
 
   @Override
   public Double fp64(String name) {
-    return fieldSearcher.decodeValue(name, FloatingPoint64Field.class, readBuffer);
+    return fieldDecoder.decodeValue(name, FloatingPoint64Field.class);
   }
 
   @Override
   public String string(String name) {
-    return fieldSearcher.decodeValue(name, StringField.class, readBuffer);
+    return fieldDecoder.decodeValue(name, StringField.class);
   }
 
   @Override
   public ByteBuffer byteBuffer(String name) {
-    return fieldSearcher.decodeValue(name, ByteBufferField.class, readBuffer);
+    return fieldDecoder.decodeValue(name, ByteBufferField.class);
   }
 
 
   public ArrayDecoder<Integer> int32s(String name) {
-    return fieldSearcher.decodeValueArray(name, Int32Field.class, readBuffer, this);
+    return fieldDecoder.decodeValueArray(name, Int32Field.class, this);
   }
 
   public ArrayDecoder<Long> int64s(String name) {
-    return fieldSearcher.decodeValueArray(name, Int64Field.class, readBuffer, this);
+    return fieldDecoder.decodeValueArray(name, Int64Field.class, this);
   }
 
   public ArrayDecoder<Double> fp64s(String name) {
-    return fieldSearcher.decodeValueArray(name, FloatingPoint64Field.class, readBuffer, this);
+    return fieldDecoder.decodeValueArray(name, FloatingPoint64Field.class, this);
   }
 
   public ArrayDecoder<String> strings(String name) {
-    return fieldSearcher.decodeValueArray(name, StringField.class, readBuffer, this);
+    return fieldDecoder.decodeValueArray(name, StringField.class, this);
   }
 
   public StructDecoder struct(String name) {
-    return fieldSearcher.decodeStruct(name, readBuffer, this);
+    return fieldDecoder.decodeStruct(name, this);
   }
 
   public StructArrayDecoder structs(String name) {
-    return fieldSearcher.decodeStructArray(name, readBuffer, this);
+    return fieldDecoder.decodeStructArray(name, this);
   }
 
   public StructDecoder end() {
