@@ -17,16 +17,18 @@ package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.utils.ReadBuffer;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Ludovic Orban
  */
-public class ByteBufferField extends AbstractField implements ValueField {
+public class ByteBufferField extends AbstractField implements ValueField<ByteBuffer> {
   public ByteBufferField(String name, int index) {
     super(name, index);
   }
 
   @Override
-  public Object decode(ReadBuffer readBuffer) {
+  public ByteBuffer decode(ReadBuffer readBuffer) {
     int len = readBuffer.getVlqInt();
     return readBuffer.getByteBuffer(len);
   }

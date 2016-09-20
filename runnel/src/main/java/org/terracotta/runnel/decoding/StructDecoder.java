@@ -15,7 +15,6 @@
  */
 package org.terracotta.runnel.decoding;
 
-import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
 import org.terracotta.runnel.decoding.fields.EnmField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
@@ -23,7 +22,6 @@ import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.metadata.FieldSearcher;
 import org.terracotta.runnel.utils.ReadBuffer;
 
@@ -42,7 +40,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     this(structField, readBuffer, null);
   }
 
-  private StructDecoder(StructField structField, ReadBuffer readBuffer, StructDecoder parent) {
+  public StructDecoder(StructField structField, ReadBuffer readBuffer, StructDecoder parent) {
     this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.parent = parent;
     int size = readBuffer.getVlqInt();
@@ -51,104 +49,57 @@ public class StructDecoder implements PrimitiveDecodingSupport {
 
   @Override
   public Integer int32(String name) {
-    Int32Field field = fieldSearcher.nextField(name, Int32Field.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (Integer) field.decode(readBuffer);
+    return fieldSearcher.decodeValue(name, Int32Field.class, readBuffer);
   }
 
   @Override
   public <E extends Enum<E>> E enm(String name) {
-    EnmField field = fieldSearcher.nextField(name, EnmField.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (E) field.decode(readBuffer);
+    return (E) fieldSearcher.decodeValue(name, (Class) EnmField.class, readBuffer);
   }
 
   @Override
   public Long int64(String name) {
-    Int64Field field = fieldSearcher.nextField(name, Int64Field.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (Long) field.decode(readBuffer);
+    return fieldSearcher.decodeValue(name, Int64Field.class, readBuffer);
   }
 
   @Override
   public Double fp64(String name) {
-    FloatingPoint64Field field = fieldSearcher.nextField(name, FloatingPoint64Field.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (Double) field.decode(readBuffer);
+    return fieldSearcher.decodeValue(name, FloatingPoint64Field.class, readBuffer);
   }
 
   @Override
   public String string(String name) {
-    StringField field = fieldSearcher.nextField(name, StringField.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (String) field.decode(readBuffer);
+    return fieldSearcher.decodeValue(name, StringField.class, readBuffer);
   }
 
   @Override
   public ByteBuffer byteBuffer(String name) {
-    ByteBufferField field = fieldSearcher.nextField(name, ByteBufferField.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (ByteBuffer) field.decode(readBuffer);
+    return fieldSearcher.decodeValue(name, ByteBufferField.class, readBuffer);
   }
 
-  public StructDecoder struct(String name) {
-    StructField field = fieldSearcher.nextField(name, StructField.class, null, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new StructDecoder(field, readBuffer, this);
-  }
 
   public ArrayDecoder<Integer> int32s(String name) {
-    ArrayField field = fieldSearcher.nextField(name, ArrayField.class, Int32Field.class, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new ArrayDecoder<Integer>((ValueField) field.subField(), readBuffer, this);
+    return fieldSearcher.decodeValueArray(name, Int32Field.class, readBuffer, this);
   }
 
   public ArrayDecoder<Long> int64s(String name) {
-    ArrayField field = fieldSearcher.nextField(name, ArrayField.class, Int64Field.class, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new ArrayDecoder<Long>((ValueField) field.subField(), readBuffer, this);
+    return fieldSearcher.decodeValueArray(name, Int64Field.class, readBuffer, this);
   }
 
   public ArrayDecoder<Double> fp64s(String name) {
-    ArrayField field = fieldSearcher.nextField(name, ArrayField.class, FloatingPoint64Field.class, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new ArrayDecoder<Double>((ValueField) field.subField(), readBuffer, this);
+    return fieldSearcher.decodeValueArray(name, FloatingPoint64Field.class, readBuffer, this);
   }
 
   public ArrayDecoder<String> strings(String name) {
-    ArrayField field = fieldSearcher.nextField(name, ArrayField.class, StringField.class, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new ArrayDecoder<String>((ValueField) field.subField(), readBuffer, this);
+    return fieldSearcher.decodeValueArray(name, StringField.class, readBuffer, this);
+  }
+
+  public StructDecoder struct(String name) {
+    return fieldSearcher.decodeStruct(name, readBuffer, this);
   }
 
   public StructArrayDecoder structs(String name) {
-    ArrayField field = fieldSearcher.nextField(name, ArrayField.class, StructField.class, readBuffer);
-    if (field == null) {
-      return null;
-    }
-    return new StructArrayDecoder(((StructField) field.subField()), readBuffer, this);
+    return fieldSearcher.decodeStructArray(name, readBuffer, this);
   }
 
   public StructDecoder end() {

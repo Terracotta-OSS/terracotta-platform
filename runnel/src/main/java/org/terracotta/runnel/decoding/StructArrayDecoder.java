@@ -38,7 +38,7 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
 
   private ReadBuffer structReadBuffer;
 
-  StructArrayDecoder(StructField field, ReadBuffer readBuffer, StructDecoder parent) {
+  public StructArrayDecoder(StructField field, ReadBuffer readBuffer, StructDecoder parent) {
     this.fieldSearcher = field.getMetadata().fieldSearcher();
     this.parent = parent;
 
@@ -56,56 +56,32 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
 
   @Override
   public Integer int32(String name) {
-    Int32Field field = fieldSearcher.nextField(name, Int32Field.class, null, structReadBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (Integer) field.decode(structReadBuffer);
+    return fieldSearcher.decodeValue(name, Int32Field.class, structReadBuffer);
   }
 
   @Override
   public <E extends Enum<E>> E enm(String name) {
-    EnmField field = fieldSearcher.nextField(name, EnmField.class, null, structReadBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (E) field.decode(structReadBuffer);
+    return (E) fieldSearcher.decodeValue(name, (Class) EnmField.class, structReadBuffer);
   }
 
   @Override
   public Long int64(String name) {
-    Int64Field field = fieldSearcher.nextField(name, Int64Field.class, null, structReadBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (Long) field.decode(structReadBuffer);
+    return fieldSearcher.decodeValue(name, Int64Field.class, structReadBuffer);
   }
 
   @Override
   public Double fp64(String name) {
-    FloatingPoint64Field field = fieldSearcher.nextField(name, FloatingPoint64Field.class, null, structReadBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (Double) field.decode(structReadBuffer);
+    return fieldSearcher.decodeValue(name, FloatingPoint64Field.class, structReadBuffer);
   }
 
   @Override
   public String string(String name) {
-    StringField field = fieldSearcher.nextField(name, StringField.class, null, structReadBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (String) field.decode(structReadBuffer);
+    return fieldSearcher.decodeValue(name, StringField.class, structReadBuffer);
   }
 
   @Override
   public ByteBuffer byteBuffer(String name) {
-    ByteBufferField field = fieldSearcher.nextField(name, ByteBufferField.class, null, structReadBuffer);
-    if (field == null) {
-      return null;
-    }
-    return (ByteBuffer) field.decode(structReadBuffer);
+    return fieldSearcher.decodeValue(name, ByteBufferField.class, structReadBuffer);
   }
 
   public int length() {

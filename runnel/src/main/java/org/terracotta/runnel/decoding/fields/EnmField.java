@@ -21,7 +21,7 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public class EnmField<E extends Enum<E>> extends AbstractField implements ValueField {
+public class EnmField<E extends Enum<E>> extends AbstractField implements ValueField<E> {
 
   private final Enm<E> enm;
 
@@ -35,7 +35,7 @@ public class EnmField<E extends Enum<E>> extends AbstractField implements ValueF
   }
 
   @Override
-  public Object decode(ReadBuffer readBuffer) {
+  public E decode(ReadBuffer readBuffer) {
     readBuffer.getVlqInt();
     int intValue = readBuffer.getVlqInt();
     return enm.toEnum(intValue);

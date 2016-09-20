@@ -21,14 +21,14 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public class Int32Field extends AbstractField implements ValueField {
+public class Int32Field extends AbstractField implements ValueField<Integer> {
 
   public Int32Field(String name, int index) {
     super(name, index);
   }
 
   @Override
-  public Object decode(ReadBuffer readBuffer) {
+  public Integer decode(ReadBuffer readBuffer) {
     int size = readBuffer.getVlqInt();
     if (size != 4) {
       throw new CorruptDataException("Expected field size of 4, read : " + size);

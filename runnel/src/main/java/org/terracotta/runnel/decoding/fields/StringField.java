@@ -20,13 +20,13 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public class StringField extends AbstractField implements ValueField {
+public class StringField extends AbstractField implements ValueField<String> {
   public StringField(String name, int index) {
     super(name, index);
   }
 
   @Override
-  public Object decode(ReadBuffer readBuffer) {
+  public String decode(ReadBuffer readBuffer) {
     int len = readBuffer.getVlqInt();
     return readBuffer.getString(len);
   }

@@ -86,7 +86,7 @@ public class StructBuilder {
 
   public StructBuilder struct(String name, int index, Struct struct) {
     checkParams(name, index);
-    fields.add(new StructField(name, index, struct.getRoot().subFields()));
+    fields.add(new StructField(name, index, struct.getRootSubFields()));
     return this;
   }
 
@@ -116,7 +116,7 @@ public class StructBuilder {
 
   public StructBuilder structs(String name, int index, Struct struct) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new StructField(name, index, struct.getRoot().subFields())));
+    fields.add(new ArrayField(name, index, new StructField(name, index, struct.getRootSubFields())));
     return this;
   }
 

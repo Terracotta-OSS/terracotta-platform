@@ -20,8 +20,8 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public interface ValueField extends Field {
+public interface ValueField<T> extends Field {
 
-  Object decode(ReadBuffer readBuffer);
+  T decode(ReadBuffer readBuffer);
 
 }

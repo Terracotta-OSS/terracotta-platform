@@ -26,6 +26,7 @@ import org.terracotta.runnel.utils.VLQ;
 
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,8 +39,8 @@ public class Struct {
     this.root = root;
   }
 
-  StructField getRoot() {
-    return root;
+  List<? extends Field> getRootSubFields() {
+    return root.subFields();
   }
 
   public StructEncoder encoder() {

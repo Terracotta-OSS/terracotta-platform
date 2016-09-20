@@ -37,7 +37,7 @@ public class Enm<E extends Enum<E>> {
     return integer;
   }
 
-  public Enum toEnum(int intValue) {
+  public E toEnum(int intValue) {
     return integerToEnum.get(intValue);
   }
 }

@@ -15,9 +15,13 @@
  */
 package org.terracotta.runnel.metadata;
 
+import org.terracotta.runnel.decoding.ArrayDecoder;
+import org.terracotta.runnel.decoding.StructArrayDecoder;
+import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.StructField;
+import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.VLQ;
 
@@ -33,7 +37,54 @@ public class FieldSearcher {
     this.metadata = metadata;
   }
 
-  public <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz, ReadBuffer readBuffer) {
+  public <T extends Field, S extends Field> T findField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
+    Metadata.FieldWithIndex fieldWithIndex = findFieldWithIndex(name, fieldClazz, subFieldClazz);
+    return (T) fieldWithIndex.field;
+  }
+
+  public <T extends Field, S extends Field> int findFieldIndex(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
+    Metadata.FieldWithIndex fieldWithIndex = findFieldWithIndex(name, fieldClazz, subFieldClazz);
+    return fieldWithIndex.fieldIndex;
+  }
+
+  public StructArrayDecoder decodeStructArray(String name, ReadBuffer readBuffer, StructDecoder parent) {
+    ArrayField field = nextField(name, ArrayField.class, StructField.class, readBuffer);
+    if (field == null) {
+      return null;
+    }
+    return new StructArrayDecoder(((StructField) field.subField()), readBuffer, parent);
+  }
+
+  public StructDecoder decodeStruct(String name, ReadBuffer readBuffer, StructDecoder parent) {
+    StructField field = nextField(name, StructField.class, null, readBuffer);
+    if (field == null) {
+      return null;
+    }
+    return new StructDecoder(field, readBuffer, parent);
+  }
+
+  public <T> ArrayDecoder<T> decodeValueArray(String name, Class<? extends ValueField<T>> clazz, ReadBuffer readBuffer, StructDecoder parent) {
+    ArrayField field = nextField(name, ArrayField.class, clazz, readBuffer);
+    if (field == null) {
+      return null;
+    }
+    return new ArrayDecoder<T>((ValueField<T>) field.subField(), readBuffer, parent);
+  }
+
+  public <T> T decodeValue(String name, Class<? extends ValueField<T>> clazz, ReadBuffer readBuffer) {
+    ValueField<T> field = nextField(name, clazz, null, readBuffer);
+    if (field == null) {
+      return null;
+    }
+    return field.decode(readBuffer);
+  }
+
+
+  public void reset() {
+    this.lastIndex = -1;
+  }
+
+  private  <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz, ReadBuffer readBuffer) {
     Metadata.FieldWithIndex fieldWithIndex = findFieldWithIndex(name, fieldClazz, subFieldClazz);
     if (readBuffer.limitReached()) {
       return null;
@@ -60,16 +111,6 @@ public class FieldSearcher {
     }
   }
 
-  public <T extends Field, S extends Field> T findField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
-    Metadata.FieldWithIndex fieldWithIndex = findFieldWithIndex(name, fieldClazz, subFieldClazz);
-    return (T) fieldWithIndex.field;
-  }
-
-  public <T extends Field, S extends Field> int findFieldIndex(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
-    Metadata.FieldWithIndex fieldWithIndex = findFieldWithIndex(name, fieldClazz, subFieldClazz);
-    return fieldWithIndex.fieldIndex;
-  }
-
   private <T extends Field, S extends Field> Metadata.FieldWithIndex findFieldWithIndex(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
     Metadata.FieldWithIndex fieldWithIndex = metadata.getFieldWithIndexByName(name);
     if (fieldWithIndex == null) {
@@ -84,27 +125,13 @@ public class FieldSearcher {
       throw new IllegalArgumentException("Invalid type for field '" + name + "', expected : '" + fieldClazz.getSimpleName() + "' but was '" + fieldWithIndex.field.getClass().getSimpleName() + "'");
     }
     if (subFieldClazz != null) {
-      if (fieldWithIndex.field instanceof StructField) {
-        StructField structField = (StructField) fieldWithIndex.field;
-        Field nextSubField = structField.subFields().get(0);
-        if (!nextSubField.getClass().equals(subFieldClazz)) {
-          throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
-        }
-      } else if (fieldWithIndex.field instanceof ArrayField) {
-        ArrayField arrayField = (ArrayField) fieldWithIndex.field;
-        Field nextSubField = arrayField.subField();
-        if (!nextSubField.getClass().equals(subFieldClazz)) {
-          throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
-        }
-      } else {
-        throw new AssertionError("Field '" + name + "' must be of type ArrayField nor StructField");
+      ArrayField arrayField = (ArrayField) fieldWithIndex.field;
+      Field nextSubField = arrayField.subField();
+      if (!nextSubField.getClass().equals(subFieldClazz)) {
+        throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
       }
     }
     return fieldWithIndex;
-  }
-
-  public void reset() {
-    this.lastIndex = -1;
   }
 
 }
