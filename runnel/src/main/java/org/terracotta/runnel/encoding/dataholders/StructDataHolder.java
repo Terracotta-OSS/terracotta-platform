@@ -15,7 +15,6 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
-import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.util.List;
@@ -26,43 +25,26 @@ import java.util.List;
  *   index:size:[field1 index:size:value][field2 index:size:value]...
  * </pre>
  */
-public class StructDataHolder implements DataHolder {
+public class StructDataHolder extends AbstractDataHolder {
 
   private final List<? extends DataHolder> values;
-  private final int index;
 
   public StructDataHolder(List<? extends DataHolder> values, int index) {
+    super(index);
     this.values = values;
-    this.index = index;
   }
 
-  public int size(boolean withIndex) {
+  @Override
+  protected int valueSize() {
     int size = 0;
-
     for (DataHolder value : values) {
       size += value.size(true);
     }
-
-    size += VLQ.encodedSize(size);
-
-    if (withIndex) {
-      size += VLQ.encodedSize(index);
-    }
-
     return size;
   }
 
-  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
-    if (withIndex) {
-      writeBuffer.putVlqInt(index);
-    }
-
-    int size = 0;
-    for (DataHolder value : values) {
-      size += value.size(true);
-    }
-    writeBuffer.putVlqInt(size);
-
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer) {
     for (DataHolder value : values) {
       value.encode(writeBuffer, true);
     }

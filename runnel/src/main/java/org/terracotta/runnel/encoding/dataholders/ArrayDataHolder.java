@@ -26,48 +26,30 @@ import java.util.List;
  *   index:size:length:[field1 size:value][field2 size:value][field3 size:value]...
  * </pre>
  */
-public class ArrayDataHolder implements DataHolder {
+public class ArrayDataHolder extends AbstractDataHolder {
 
   private final List<? extends DataHolder> values;
-  private int index;
 
   public ArrayDataHolder(List<? extends DataHolder> values, int index) {
+    super(index);
     this.values = values;
-    this.index = index;
   }
 
-  public int size(boolean withIndex) {
+  @Override
+  protected int valueSize() {
     int size = 0;
-
     for (DataHolder value : values) {
       size += value.size(false);
     }
-
-    size += VLQ.encodedSize(size);
-    size += VLQ.encodedSize(values.size());
-
-    if (withIndex) {
-      size += VLQ.encodedSize(index);
-    }
-
+    size += VLQ.encodedSize(values.size()); // length field
     return size;
   }
 
-  public void encode(WriteBuffer byteBuffer, boolean withIndex) {
-    if (withIndex) {
-      byteBuffer.putVlqInt(index);
-    }
-
-    int size = 0;
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer) {
+    writeBuffer.putVlqInt(values.size()); // length field
     for (DataHolder value : values) {
-      size += value.size(false);
-    }
-    size += VLQ.encodedSize(values.size());
-
-    byteBuffer.putVlqInt(size);
-    byteBuffer.putVlqInt(values.size());
-    for (DataHolder value : values) {
-      value.encode(byteBuffer, false);
+      value.encode(writeBuffer, false);
     }
   }
 }

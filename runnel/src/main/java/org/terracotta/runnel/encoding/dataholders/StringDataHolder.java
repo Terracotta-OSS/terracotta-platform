@@ -15,7 +15,6 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
-import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.nio.ByteBuffer;
@@ -24,28 +23,24 @@ import java.nio.charset.Charset;
 /**
  * @author Ludovic Orban
  */
-public class StringDataHolder implements DataHolder {
+public class StringDataHolder extends AbstractDataHolder {
 
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
   private final ByteBuffer encodedString;
-  private final int index;
 
   public StringDataHolder(String value, int index) {
+    super(index);
     this.encodedString = UTF8.encode(value);
-    this.index = index;
   }
 
-  public int size(boolean withIndex) {
-    int len = encodedString.remaining();
-    return VLQ.encodedSize(len) + len + (withIndex ? VLQ.encodedSize(index) : 0);
+  @Override
+  protected int valueSize() {
+    return encodedString.remaining();
   }
 
-  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
-    if (withIndex) {
-      writeBuffer.putVlqInt(index);
-    }
-    writeBuffer.putVlqInt(encodedString.remaining());
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer) {
     writeBuffer.putByteBuffer(encodedString);
   }
 }

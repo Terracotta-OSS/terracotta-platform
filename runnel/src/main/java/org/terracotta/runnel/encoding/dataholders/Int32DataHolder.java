@@ -15,31 +15,27 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
-import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public class Int32DataHolder implements DataHolder {
+public class Int32DataHolder extends AbstractDataHolder {
 
   private final int value;
-  private final int index;
 
   public Int32DataHolder(int value, int index) {
+    super(index);
     this.value = value;
-    this.index = index;
   }
 
-  public int size(boolean withIndex) {
-    return 4 + VLQ.encodedSize(4) + (withIndex ? VLQ.encodedSize(index) : 0);
+  @Override
+  protected int valueSize() {
+    return 4;
   }
 
-  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
-    if (withIndex) {
-      writeBuffer.putVlqInt(index);
-    }
-    writeBuffer.putVlqInt(4);
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer) {
     writeBuffer.putInt(value);
   }
 }

@@ -22,26 +22,22 @@ import org.terracotta.runnel.utils.WriteBuffer;
 /**
  * @author Ludovic Orban
  */
-public class EnmDataHolder<E extends Enum<E>> implements DataHolder {
+public class EnmDataHolder<E extends Enum<E>> extends AbstractDataHolder {
 
   private final int value;
-  private final int index;
 
   public EnmDataHolder(E value, int index, Enm<E> enm) {
+    super(index);
     this.value = enm.toInt(value);
-    this.index = index;
   }
 
-  public int size(boolean withIndex) {
-    int valueSize = VLQ.encodedSize(value);
-    return valueSize + VLQ.encodedSize(valueSize) + (withIndex ? VLQ.encodedSize(index) : 0);
+  @Override
+  protected int valueSize() {
+    return VLQ.encodedSize(value);
   }
 
-  public void encode(WriteBuffer writeBuffer, boolean withIndex) {
-    if (withIndex) {
-      writeBuffer.putVlqInt(index);
-    }
-    writeBuffer.putVlqInt(VLQ.encodedSize(value));
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer) {
     writeBuffer.putVlqInt(value);
   }
 }
