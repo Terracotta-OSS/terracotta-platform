@@ -17,39 +17,103 @@ package org.terracotta.runnel;
 
 import org.junit.Test;
 
+import static org.junit.Assert.fail;
+
 /**
  * @author Ludovic Orban
  */
 public class StructBuilderTest {
 
-  @Test(expected = IllegalArgumentException.class)
+  private static final Struct STRUCT = StructBuilder.newStructBuilder().build();
+
+  @Test
   public void checkIndexZeroIsInvalid() throws Exception {
-    StructBuilder.newStructBuilder().int32("a", 0);
+    try { StructBuilder.newStructBuilder().int32("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int32s("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64s("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().string("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().strings("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().byteBuffer("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64s("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().struct("a", 0, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().structs("a", 0, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void checkNegativeIndexIsInvalid() throws Exception {
-    StructBuilder.newStructBuilder().int32("a", -1);
+    try { StructBuilder.newStructBuilder().int32("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int32s("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64s("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().string("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().strings("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().byteBuffer("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64s("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().struct("a", -1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().structs("a", -1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void checkDuplicateIndexIsInvalid() throws Exception {
-    StructBuilder.newStructBuilder().int32("a", 1).int32("b", 1);
+    try { StructBuilder.newStructBuilder().int32("a", 1).int32("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int32s("a", 1).int32s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64("a", 1).int64("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64s("a", 1).int64s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().string("a", 1).string("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().strings("a", 1).strings("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().byteBuffer("a", 1).byteBuffer("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64("a", 1).fp64("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64s("a", 1).fp64s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().struct("a", 1, STRUCT).struct("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().structs("a", 1, STRUCT).structs("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void checkShrinkingIndexIsInvalid() throws Exception {
-    StructBuilder.newStructBuilder().int32("a", 2).int32("b", 1);
+    try { StructBuilder.newStructBuilder().int32("a", 2).int32("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int32s("a", 2).int32s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64("a", 2).int64("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64s("a", 2).int64s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().string("a", 2).string("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().strings("a", 2).strings("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().byteBuffer("a", 2).byteBuffer("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64("a", 2).fp64("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64s("a", 2).fp64s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().struct("a", 2, STRUCT).struct("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().structs("a", 2, STRUCT).structs("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void checkDuplicateNameIsInvalid() throws Exception {
-    StructBuilder.newStructBuilder().int32("a", 1).int32("a", 2);
+    try { StructBuilder.newStructBuilder().int32("a", 2).int32("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int32s("a", 2).int32s("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64("a", 2).int64("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().int64s("a", 2).int64s("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().string("a", 2).string("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().strings("a", 2).strings("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().byteBuffer("a", 2).byteBuffer("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64("a", 2).fp64("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().fp64s("a", 2).fp64s("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().struct("a", 2, STRUCT).struct("a", 3, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().structs("a", 2, STRUCT).structs("a", 3, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
   @Test
   public void checkValidConfigWorks() throws Exception {
-    StructBuilder.newStructBuilder().int32("a", 1).int32("b", 2);
+    StructBuilder.newStructBuilder().int32("a", 2).int32("b", 3);
+    StructBuilder.newStructBuilder().int32s("a", 2).int32s("b", 3);
+    StructBuilder.newStructBuilder().int64("a", 2).int64("b", 3);
+    StructBuilder.newStructBuilder().int64s("a", 2).int64s("b", 3);
+    StructBuilder.newStructBuilder().string("a", 2).string("b", 3);
+    StructBuilder.newStructBuilder().strings("a", 2).strings("b", 3);
+    StructBuilder.newStructBuilder().byteBuffer("a", 2).byteBuffer("b", 3);
+    StructBuilder.newStructBuilder().fp64("a", 2).fp64("b", 3);
+    StructBuilder.newStructBuilder().fp64s("a", 2).fp64s("b", 3);
+    StructBuilder.newStructBuilder().struct("a", 2, STRUCT).struct("b", 3, STRUCT);
+    StructBuilder.newStructBuilder().structs("a", 2, STRUCT).structs("b", 3, STRUCT);
   }
 
 }

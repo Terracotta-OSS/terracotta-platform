@@ -48,73 +48,77 @@ public class StructBuilder {
 
 
   public StructBuilder int32(String name, int index) {
-    checkIndex(index);
-    checkName(name);
+    checkParams(name, index);
     fields.add(new Int32Field(name, index));
     return this;
   }
 
   public StructBuilder int64(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new Int64Field(name, index));
     return this;
   }
 
   public StructBuilder fp64(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new FloatingPoint64Field(name, index));
     return this;
   }
 
   public StructBuilder string(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new StringField(name, index));
     return this;
   }
 
   public StructBuilder byteBuffer(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new ByteBufferField(name, index));
     return this;
   }
 
   public StructBuilder struct(String name, int index, Struct struct) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new StructField(name, index, struct.getRoot().subFields()));
     return this;
   }
 
   public StructBuilder int32s(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new ArrayField(name, index, new Int32Field(name, index)));
     return this;
   }
 
   public StructBuilder int64s(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new ArrayField(name, index, new Int64Field(name, index)));
     return this;
   }
 
   public StructBuilder fp64s(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new ArrayField(name, index, new FloatingPoint64Field(name, index)));
     return this;
   }
 
   public StructBuilder strings(String name, int index) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new ArrayField(name, index, new StringField(name, index)));
     return this;
   }
 
   public StructBuilder structs(String name, int index, Struct struct) {
-    checkIndex(index);
+    checkParams(name, index);
     fields.add(new ArrayField(name, index, new StructField(name, index, struct.getRoot().subFields())));
     return this;
   }
 
-  private void checkIndex(int index) {
+  private void checkParams(String name, int index) {
+    checkName(name);
+    advanceIndex(index);
+  }
+
+  private void advanceIndex(int index) {
     if (index <= 0) {
       throw new IllegalArgumentException("Index must be greater than zero : " + index);
     }
@@ -125,10 +129,9 @@ public class StructBuilder {
   }
 
   private void checkName(String name) {
-    if (names.contains(name)) {
+    if (!names.add(name)) {
       throw new IllegalArgumentException("Duplicate name : " + name);
     }
-    names.add(name);
   }
 
 }
