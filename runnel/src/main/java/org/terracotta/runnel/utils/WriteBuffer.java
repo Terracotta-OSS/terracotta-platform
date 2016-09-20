@@ -29,7 +29,7 @@ public class WriteBuffer {
   }
 
   public void putDouble(double value) {
-    byteBuffer.putLong(Double.doubleToRawLongBits(value));
+    byteBuffer.putDouble(value);
   }
 
   public void putLong(long value) {
