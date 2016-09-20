@@ -27,7 +27,6 @@ public class ReadBuffer {
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
   private final ByteBuffer byteBuffer;
-  private final int origin;
   private final int limit;
 
   public ReadBuffer(ByteBuffer byteBuffer) {
@@ -36,8 +35,7 @@ public class ReadBuffer {
 
   private ReadBuffer(ByteBuffer byteBuffer, int limit) {
     this.byteBuffer = byteBuffer;
-    this.origin = byteBuffer.position();
-    this.limit = origin + limit;
+    this.limit = byteBuffer.position() + limit;
     if (this.limit > byteBuffer.capacity()) {
       throw new LimitReachedException();
     }
@@ -113,17 +111,6 @@ public class ReadBuffer {
     }
     int targetPosition = byteBuffer.position() + size;
     if (targetPosition > limit) {
-      throw new LimitReachedException();
-    }
-    byteBuffer.position(targetPosition);
-  }
-
-  public void rewind(int size) {
-    if (size < 0) {
-      throw new IllegalArgumentException("size cannot be < 0");
-    }
-    int targetPosition = byteBuffer.position() - size;
-    if (targetPosition < origin) {
       throw new LimitReachedException();
     }
     byteBuffer.position(targetPosition);

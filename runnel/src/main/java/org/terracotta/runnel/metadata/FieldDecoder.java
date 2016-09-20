@@ -23,7 +23,6 @@ import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.utils.ReadBuffer;
-import org.terracotta.runnel.utils.VLQ;
 
 /**
  * @author Ludovic Orban
@@ -33,6 +32,7 @@ public class FieldDecoder {
   private final Metadata metadata;
   private ReadBuffer readBuffer;
   private int lastIndex = -1;
+  private int readAheadIndex = -1;
 
   FieldDecoder(Metadata metadata, ReadBuffer readBuffer) {
     this.metadata = metadata;
@@ -83,7 +83,8 @@ public class FieldDecoder {
       return null;
     }
 
-    int index = readBuffer.getVlqInt();
+    int index = readAheadIndex > 0 ? readAheadIndex : readBuffer.getVlqInt();
+    readAheadIndex = -1;
     // skip all fields with a lower index than the requested field's
     while (index < fieldWithIndex.fieldIndex) {
       int fieldSize = readBuffer.getVlqInt();
@@ -95,7 +96,7 @@ public class FieldDecoder {
     }
 
     if (index > fieldWithIndex.fieldIndex) {
-      readBuffer.rewind(VLQ.encodedSize(index));
+      readAheadIndex = index;
       return null;
     } else if (index != fieldWithIndex.fieldIndex) {
       return null;
