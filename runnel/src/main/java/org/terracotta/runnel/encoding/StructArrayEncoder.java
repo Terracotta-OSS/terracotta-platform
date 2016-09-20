@@ -68,8 +68,8 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
 
   @Override
   public StructArrayEncoder fp64(String name, double value) {
-    FloatingPoint64Field field = fieldSearcher.findField(name, FloatingPoint64Field.class, null);
-    currentData.add(new FloatingPoint64DataHolder(value, field.index()));
+    int fieldIndex = fieldSearcher.findFieldIndex(name, FloatingPoint64Field.class, null);
+    currentData.add(new FloatingPoint64DataHolder(value, fieldIndex));
     return this;
   }
 
