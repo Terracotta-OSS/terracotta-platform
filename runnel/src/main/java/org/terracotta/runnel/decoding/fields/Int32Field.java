@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.CorruptDataException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
@@ -28,7 +29,10 @@ public class Int32Field extends AbstractField {
 
   @Override
   public Object decode(ReadBuffer readBuffer) {
-    readBuffer.getVlqInt();
+    int size = readBuffer.getVlqInt();
+    if (size != 4) {
+      throw new CorruptDataException("Expected field size of 4, read : " + size);
+    }
     return readBuffer.getInt();
   }
 

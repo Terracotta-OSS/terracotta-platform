@@ -18,5 +18,5 @@ package org.terracotta.runnel.utils;
 /**
  * @author Ludovic Orban
  */
-public class BufferLimitReachedException extends RuntimeException {
+public class LimitReachedException extends RuntimeException {
 }

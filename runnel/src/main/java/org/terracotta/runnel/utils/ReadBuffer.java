@@ -39,13 +39,13 @@ public class ReadBuffer {
     this.origin = byteBuffer.position();
     this.limit = origin + limit;
     if (this.limit > byteBuffer.capacity()) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
   }
 
   public Double getDouble() {
     if (byteBuffer.position() + 8 > limit) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
     long aLong = byteBuffer.getLong();
     return Double.longBitsToDouble(aLong);
@@ -53,14 +53,14 @@ public class ReadBuffer {
 
   public Long getLong() {
     if (byteBuffer.position() + 8 > limit) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
     return byteBuffer.getLong();
   }
 
   public Integer getInt() {
     if (byteBuffer.position() + 4 > limit) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
     return byteBuffer.getInt();
   }
@@ -71,14 +71,14 @@ public class ReadBuffer {
 
   byte getByte() {
     if (byteBuffer.position() + 1 > limit) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
     return byteBuffer.get();
   }
 
   public ByteBuffer getByteBuffer(int size) {
     if (byteBuffer.position() + size > limit) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
     ByteBuffer slice = byteBuffer.slice();
     slice.limit(size);
@@ -88,7 +88,7 @@ public class ReadBuffer {
 
   public String getString(int size) {
     if (byteBuffer.position() + size > limit) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
 
     ByteBuffer slice = byteBuffer.slice();
@@ -114,7 +114,7 @@ public class ReadBuffer {
     }
     int targetPosition = byteBuffer.position() + size;
     if (targetPosition > limit) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
     byteBuffer.position(targetPosition);
   }
@@ -125,7 +125,7 @@ public class ReadBuffer {
     }
     int targetPosition = byteBuffer.position() - size;
     if (targetPosition < origin) {
-      throw new BufferLimitReachedException();
+      throw new LimitReachedException();
     }
     byteBuffer.position(targetPosition);
   }

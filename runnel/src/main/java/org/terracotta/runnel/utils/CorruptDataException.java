@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.decoding.fields;
-
-import org.terracotta.runnel.utils.CorruptDataException;
-import org.terracotta.runnel.utils.ReadBuffer;
+package org.terracotta.runnel.utils;
 
 /**
  * @author Ludovic Orban
  */
-public class Int64Field extends AbstractField {
-
-  public Int64Field(String name, int index) {
-    super(name, index);
+public class CorruptDataException extends RuntimeException {
+  public CorruptDataException(String msg) {
+    super(msg);
   }
-
-  @Override
-  public Object decode(ReadBuffer readBuffer) {
-    int size = readBuffer.getVlqInt();
-    if (size != 8) {
-      throw new CorruptDataException("Expected field size of 8, read : " + size);
-    }
-    return readBuffer.getLong();
-  }
-
 }
