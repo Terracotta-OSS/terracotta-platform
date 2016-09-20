@@ -41,6 +41,9 @@ public class EnmBuilder<E extends Enum<E>> {
     if (enumToInteger.containsKey(e)) {
       throw new IllegalArgumentException("Duplicate enum value : " + e);
     }
+    if (value < 0) {
+      throw new IllegalArgumentException("Int value must be >= 0, got : " + value);
+    }
     if (integerToEnum.containsKey(value)) {
       throw new IllegalArgumentException("Duplicate int value : " + value);
     }

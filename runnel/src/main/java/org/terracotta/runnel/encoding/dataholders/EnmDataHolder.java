@@ -24,28 +24,24 @@ import org.terracotta.runnel.utils.WriteBuffer;
  */
 public class EnmDataHolder<E extends Enum<E>> implements DataHolder {
 
-  private final E value;
+  private final int value;
   private final int index;
-  private final Enm<E> enm;
 
   public EnmDataHolder(E value, int index, Enm<E> enm) {
-    this.value = value;
+    this.value = enm.toInt(value);
     this.index = index;
-    this.enm = enm;
-    if (!enm.maps(value)) {
-      throw new IllegalArgumentException("Illegal enum value '" + value + "'");
-    }
   }
 
   public int size(boolean withIndex) {
-    return 4 + VLQ.encodedSize(4) + (withIndex ? VLQ.encodedSize(index) : 0);
+    int valueSize = VLQ.encodedSize(value);
+    return valueSize + VLQ.encodedSize(valueSize) + (withIndex ? VLQ.encodedSize(index) : 0);
   }
 
   public void encode(WriteBuffer writeBuffer, boolean withIndex) {
     if (withIndex) {
       writeBuffer.putVlqInt(index);
     }
-    writeBuffer.putVlqInt(4);
-    writeBuffer.putInt(enm.toInt(value));
+    writeBuffer.putVlqInt(VLQ.encodedSize(value));
+    writeBuffer.putVlqInt(value);
   }
 }

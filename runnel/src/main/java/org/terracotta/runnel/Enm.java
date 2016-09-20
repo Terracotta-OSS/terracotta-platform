@@ -29,10 +29,6 @@ public class Enm<E extends Enum<E>> {
     this.integerToEnum = integerToEnum;
   }
 
-  public boolean maps(E e) {
-    return enumToInteger.containsKey(e);
-  }
-
   public int toInt(E e) {
     Integer integer = enumToInteger.get(e);
     if (integer == null) {

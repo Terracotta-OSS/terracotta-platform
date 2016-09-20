@@ -16,6 +16,7 @@
 package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.Enm;
+import org.terracotta.runnel.utils.CorruptDataException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
@@ -37,7 +38,7 @@ public class EnmField<E extends Enum<E>> extends AbstractField {
   @Override
   public Object decode(ReadBuffer readBuffer) {
     readBuffer.getVlqInt();
-    int intValue = readBuffer.getInt();
+    int intValue = readBuffer.getVlqInt();
     return enm.toEnum(intValue);
   }
 

@@ -49,6 +49,12 @@ public class EnmBuilderTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void testNegativeIndexIsInvalid() throws Exception {
+    EnmBuilder.<TestEnum>newEnumBuilder()
+        .mapping(TestEnum.A, -10);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testDuplicateIndexIsInvalid() throws Exception {
     EnmBuilder.<TestEnum>newEnumBuilder()
         .mapping(TestEnum.A, 10)

@@ -45,31 +45,31 @@ public class EnmTest {
   public void testWithIndex() throws Exception {
     EnmDataHolder dataHolder = new EnmDataHolder<TestEnum>(TestEnum.B, 1, ENM);
 
-    assertThat(dataHolder.size(true), is(6));
+    assertThat(dataHolder.size(true), is(3));
 
     ByteBuffer bb = ByteBuffer.allocate(dataHolder.size(true));
     dataHolder.encode(new WriteBuffer(bb), true);
-    assertThat(bb.position(), is(6));
+    assertThat(bb.position(), is(3));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
     assertThat(readBuffer.getVlqInt(), is(1));
-    assertThat(readBuffer.getVlqInt(), is(4));
-    assertThat(readBuffer.getInt(), is(2));
+    assertThat(readBuffer.getVlqInt(), is(1));
+    assertThat(readBuffer.getVlqInt(), is(2));
   }
 
   @Test
   public void testWithoutIndex() throws Exception {
     EnmDataHolder dataHolder = new EnmDataHolder<TestEnum>(TestEnum.B, 1, ENM);
 
-    assertThat(dataHolder.size(false), is(5));
+    assertThat(dataHolder.size(false), is(2));
 
     ByteBuffer bb = ByteBuffer.allocate(dataHolder.size(false));
     dataHolder.encode(new WriteBuffer(bb), false);
-    assertThat(bb.position(), is(5));
+    assertThat(bb.position(), is(2));
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
-    assertThat(readBuffer.getVlqInt(), is(4));
-    assertThat(readBuffer.getInt(), is(2));
+    assertThat(readBuffer.getVlqInt(), is(1));
+    assertThat(readBuffer.getVlqInt(), is(2));
   }
 
 }

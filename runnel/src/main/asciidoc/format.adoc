@@ -43,10 +43,10 @@ Int64 always are encoded as eight bytes.
 
 == Enum
 |=======
-|index* |size* |1 |2 |3 |4
+|index* |size* |integer value*
 |=======
 
-Enums are encoded like Int32, i.e.: always four bytes.
+Enums are encoded as VLQ-encoded integers.
 
 == ByteBuffer
 |===
