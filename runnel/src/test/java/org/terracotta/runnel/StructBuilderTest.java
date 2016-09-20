@@ -24,7 +24,12 @@ import static org.junit.Assert.fail;
  */
 public class StructBuilderTest {
 
+  private enum TestEnum {
+    A, B, C
+  }
+
   private static final Struct STRUCT = StructBuilder.newStructBuilder().build();
+  private static final Enm<TestEnum> ENM = EnmBuilder.<TestEnum>newEnumBuilder().build();
 
   @Test
   public void checkIndexZeroIsInvalid() throws Exception {
@@ -39,6 +44,7 @@ public class StructBuilderTest {
     try { StructBuilder.newStructBuilder().fp64s("a", 0); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().struct("a", 0, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().structs("a", 0, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().enm("a", 0, ENM); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
   @Test
@@ -54,6 +60,7 @@ public class StructBuilderTest {
     try { StructBuilder.newStructBuilder().fp64s("a", -1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().struct("a", -1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().structs("a", -1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().enm("a", -1, ENM); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
   @Test
@@ -69,6 +76,7 @@ public class StructBuilderTest {
     try { StructBuilder.newStructBuilder().fp64s("a", 1).fp64s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().struct("a", 1, STRUCT).struct("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().structs("a", 1, STRUCT).structs("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().enm("a", 1, ENM).enm("b", 1, ENM); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
   @Test
@@ -84,6 +92,7 @@ public class StructBuilderTest {
     try { StructBuilder.newStructBuilder().fp64s("a", 2).fp64s("b", 1); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().struct("a", 2, STRUCT).struct("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().structs("a", 2, STRUCT).structs("b", 1, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().enm("a", 2, ENM).enm("b", 1, ENM); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
   @Test
@@ -99,6 +108,7 @@ public class StructBuilderTest {
     try { StructBuilder.newStructBuilder().fp64s("a", 2).fp64s("a", 3); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().struct("a", 2, STRUCT).struct("a", 3, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
     try { StructBuilder.newStructBuilder().structs("a", 2, STRUCT).structs("a", 3, STRUCT); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+    try { StructBuilder.newStructBuilder().enm("a", 2, ENM).enm("a", 3, ENM); fail(); } catch (IllegalArgumentException e) { /* expected */ }
   }
 
   @Test
@@ -114,6 +124,7 @@ public class StructBuilderTest {
     StructBuilder.newStructBuilder().fp64s("a", 2).fp64s("b", 3);
     StructBuilder.newStructBuilder().struct("a", 2, STRUCT).struct("b", 3, STRUCT);
     StructBuilder.newStructBuilder().structs("a", 2, STRUCT).structs("b", 3, STRUCT);
+    StructBuilder.newStructBuilder().enm("a", 2, ENM).enm("b", 3, ENM);
   }
 
 }

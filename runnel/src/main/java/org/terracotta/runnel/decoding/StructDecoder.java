@@ -17,6 +17,7 @@ package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.EnmField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
@@ -54,6 +55,15 @@ public class StructDecoder implements PrimitiveDecodingSupport {
       return null;
     }
     return (Integer) field.decode(readBuffer);
+  }
+
+  @Override
+  public <E extends Enum<E>> E enm(String name) {
+    EnmField field = fieldSearcher.nextField(name, EnmField.class, null, readBuffer);
+    if (field == null) {
+      return null;
+    }
+    return (E) field.decode(readBuffer);
   }
 
   @Override

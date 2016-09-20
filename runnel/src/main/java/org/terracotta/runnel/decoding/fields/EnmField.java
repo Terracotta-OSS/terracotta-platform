@@ -13,25 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.encoding;
+package org.terracotta.runnel.decoding.fields;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.Enm;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public interface PrimitiveEncodingSupport<T> {
+public class EnmField<E extends Enum<E>> extends AbstractField {
 
-  <E extends Enum<E>> T enm(String name, E value);
+  private final Enm<E> enm;
 
-  T int32(String name, int value);
+  public EnmField(String name, int index, Enm<E> enm) {
+    super(name, index);
+    this.enm = enm;
+  }
 
-  T int64(String name, long value);
+  public Enm<E> getEnm() {
+    return enm;
+  }
 
-  T fp64(String name, double value);
-
-  T string(String name, String value);
-
-  T byteBuffer(String name, ByteBuffer value);
+  @Override
+  public Object decode(ReadBuffer readBuffer) {
+    readBuffer.getVlqInt();
+    int intValue = readBuffer.getInt();
+    return enm.toEnum(intValue);
+  }
 
 }

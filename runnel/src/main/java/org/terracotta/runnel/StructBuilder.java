@@ -17,6 +17,7 @@ package org.terracotta.runnel;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.EnmField;
 import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
@@ -46,6 +47,12 @@ public class StructBuilder {
     return new StructBuilder();
   }
 
+
+  public StructBuilder enm(String name, int index, Enm enm) {
+    checkParams(name, index);
+    fields.add(new EnmField(name, index, enm));
+    return this;
+  }
 
   public StructBuilder int32(String name, int index) {
     checkParams(name, index);

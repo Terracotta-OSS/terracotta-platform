@@ -29,58 +29,66 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class VersionCompatibilityTest {
 
+  private enum TestEnum {
+    A,B,C
+  }
+
+  private static final Enm<TestEnum> ENM_V1 = EnmBuilder.<TestEnum>newEnumBuilder()
+      .mapping(TestEnum.A, 10)
+      .mapping(TestEnum.B, 20)
+      .build();
+
+  private static final Enm<TestEnum> ENM_V2 = EnmBuilder.<TestEnum>newEnumBuilder()
+      .mapping(TestEnum.A, 10)
+      .mapping(TestEnum.C, 30)
+      .build();
+
+  private static final Struct STRUCT_V1 = StructBuilder.newStructBuilder()
+      .int32("age", 100)
+      .int64("id", 200)
+      .enm("letter", 300, ENM_V1)
+      .build();
+
+  private static final Struct STRUCT_V2 = StructBuilder.newStructBuilder()
+      .int32("age", 100)
+      .string("name", 150)
+      .int64("id", 200)
+      .enm("letter", 300, ENM_V2)
+      .build();
+
+
   @Test
   public void testForward() throws Exception {
-    Struct struct_v1 = StructBuilder.newStructBuilder()
-        .int32("age", 100)
-        .int64("id", 200)
-        .build();
-
-    Struct struct_v2 = StructBuilder.newStructBuilder()
-        .int32("age", 100)
-        .string("name", 150)
-        .int64("id", 200)
-        .build();
-
-
-    ByteBuffer encoded_v2 = struct_v2.encoder()
+    ByteBuffer encoded_v2 = STRUCT_V2.encoder()
         .int32("age", 30)
         .string("name", "john doe")
         .int64("id", 1234L)
+        .enm("letter", TestEnum.C)
         .encode();
 
     encoded_v2.rewind();
-    StructDecoder decoder_v1 = struct_v1.decoder(encoded_v2);
+    StructDecoder decoder_v1 = STRUCT_V1.decoder(encoded_v2);
 
     assertThat(decoder_v1.int32("age"), is(30));
     assertThat(decoder_v1.int64("id"), is(1234L));
+    assertThat(decoder_v1.<TestEnum>enm("letter"), is(nullValue()));
   }
 
   @Test
   public void testBackward() throws Exception {
-    Struct struct_v1 = StructBuilder.newStructBuilder()
-        .int32("age", 100)
-        .int64("id", 200)
-        .build();
-
-    Struct struct_v2 = StructBuilder.newStructBuilder()
-        .int32("age", 100)
-        .string("name", 150)
-        .int64("id", 200)
-        .build();
-
-
-    ByteBuffer encoded_v1 = struct_v1.encoder()
+    ByteBuffer encoded_v1 = STRUCT_V1.encoder()
         .int32("age", 30)
         .int64("id", 1234L)
+        .enm("letter", TestEnum.B)
         .encode();
 
     encoded_v1.rewind();
-    StructDecoder decoder_v2 = struct_v2.decoder(encoded_v1);
+    StructDecoder decoder_v2 = STRUCT_V2.decoder(encoded_v1);
 
     assertThat(decoder_v2.int32("age"), is(30));
     assertThat(decoder_v2.string("name"), is(nullValue()));
     assertThat(decoder_v2.int64("id"), is(1234L));
+    assertThat(decoder_v2.<TestEnum>enm("letter"), is(nullValue()));
   }
 
 }
