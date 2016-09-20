@@ -23,6 +23,7 @@ import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
+import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.metadata.FieldSearcher;
 import org.terracotta.runnel.utils.ReadBuffer;
 
@@ -115,7 +116,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<Integer>(field.subField(), readBuffer, this);
+    return new ArrayDecoder<Integer>((ValueField) field.subField(), readBuffer, this);
   }
 
   public ArrayDecoder<Long> int64s(String name) {
@@ -123,7 +124,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<Long>(field.subField(), readBuffer, this);
+    return new ArrayDecoder<Long>((ValueField) field.subField(), readBuffer, this);
   }
 
   public ArrayDecoder<Double> fp64s(String name) {
@@ -131,7 +132,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<Double>(field.subField(), readBuffer, this);
+    return new ArrayDecoder<Double>((ValueField) field.subField(), readBuffer, this);
   }
 
   public ArrayDecoder<String> strings(String name) {
@@ -139,7 +140,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<String>(field.subField(), readBuffer, this);
+    return new ArrayDecoder<String>((ValueField) field.subField(), readBuffer, this);
   }
 
   public StructArrayDecoder structs(String name) {

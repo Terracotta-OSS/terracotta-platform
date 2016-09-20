@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.decoding;
 
-import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
@@ -23,12 +23,12 @@ import org.terracotta.runnel.utils.ReadBuffer;
  */
 public class ArrayDecoder<T> {
 
-  private final Field arrayedField;
+  private final ValueField arrayedField;
   private final ReadBuffer readBuffer;
   private final StructDecoder parent;
   private final int length;
 
-  ArrayDecoder(Field arrayedField, ReadBuffer readBuffer, StructDecoder parent) {
+  ArrayDecoder(ValueField arrayedField, ReadBuffer readBuffer, StructDecoder parent) {
     this.arrayedField = arrayedField;
     this.parent = parent;
     int size = readBuffer.getVlqInt();

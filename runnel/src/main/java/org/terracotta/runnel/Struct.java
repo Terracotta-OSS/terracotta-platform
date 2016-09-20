@@ -19,6 +19,7 @@ import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.StructField;
+import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.encoding.StructEncoder;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.VLQ;
@@ -97,10 +98,11 @@ public class Struct {
         dumpField(subField, readBuffer, out, depth + 1);
       }
     } else if (field != null) {
+      ValueField valueField = (ValueField) field;
       out.print(" type: "); out.print(field.getClass().getSimpleName());
       out.print(" name: "); out.print(field.name());
       parentBuffer.rewind(VLQ.encodedSize(fieldSize));
-      Object decoded = field.decode(readBuffer);
+      Object decoded = valueField.decode(readBuffer);
       out.print(" decoded: ["); out.print(decoded); out.print("]");
     } else {
       out.print(" type: ???");

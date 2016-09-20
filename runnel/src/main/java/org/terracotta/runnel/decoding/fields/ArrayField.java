@@ -15,8 +15,6 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
-import org.terracotta.runnel.utils.ReadBuffer;
-
 /**
  * @author Ludovic Orban
  */
@@ -31,11 +29,6 @@ public class ArrayField extends AbstractField {
 
   public Field subField() {
     return arrayedField;
-  }
-
-  @Override
-  public Object decode(ReadBuffer readBuffer) {
-    throw new UnsupportedOperationException();
   }
 
 }

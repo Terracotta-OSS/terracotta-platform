@@ -20,7 +20,7 @@ import org.terracotta.runnel.utils.ReadBuffer;
 /**
  * @author Ludovic Orban
  */
-public class ByteBufferField extends AbstractField {
+public class ByteBufferField extends AbstractField implements ValueField {
   public ByteBufferField(String name, int index) {
     super(name, index);
   }

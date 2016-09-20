@@ -16,13 +16,12 @@
 package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.Enm;
-import org.terracotta.runnel.utils.CorruptDataException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public class EnmField<E extends Enum<E>> extends AbstractField {
+public class EnmField<E extends Enum<E>> extends AbstractField implements ValueField {
 
   private final Enm<E> enm;
 

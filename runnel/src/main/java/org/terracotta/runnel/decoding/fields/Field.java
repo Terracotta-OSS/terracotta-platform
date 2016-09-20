@@ -15,8 +15,6 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
-import org.terracotta.runnel.utils.ReadBuffer;
-
 /**
  * @author Ludovic Orban
  */
@@ -25,5 +23,4 @@ public interface Field {
   String name();
   int index();
 
-  Object decode(ReadBuffer readBuffer);
 }

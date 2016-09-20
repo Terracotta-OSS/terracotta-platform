@@ -16,7 +16,6 @@
 package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.metadata.Metadata;
-import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.util.List;
 
@@ -40,11 +39,6 @@ public class StructField extends AbstractField {
 
   public List<? extends Field> subFields() {
     return subFields;
-  }
-
-  @Override
-  public Object decode(ReadBuffer readBuffer) {
-    throw new UnsupportedOperationException();
   }
 
 }
