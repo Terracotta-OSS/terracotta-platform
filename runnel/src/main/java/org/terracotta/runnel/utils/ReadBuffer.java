@@ -31,7 +31,7 @@ public class ReadBuffer {
   private final int limit;
 
   public ReadBuffer(ByteBuffer byteBuffer) {
-    this(byteBuffer, byteBuffer.position() + byteBuffer.capacity());
+    this(byteBuffer, byteBuffer.remaining());
   }
 
   private ReadBuffer(ByteBuffer byteBuffer, int limit) {
