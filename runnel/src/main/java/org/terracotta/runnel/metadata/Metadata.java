@@ -37,7 +37,7 @@ public class Metadata {
     int fieldIndex;
   }
 
-  final Map<String, FieldWithIndex> fieldsByName;
+  private final Map<String, FieldWithIndex> fieldsByName;
 
   public Metadata(List<? extends Field> metadata) {
     fieldsByName = new HashMap<String, FieldWithIndex>();
@@ -56,6 +56,10 @@ public class Metadata {
       map.put(fieldWithIndex.fieldIndex, fieldWithIndex.field);
     }
     return map;
+  }
+
+  FieldWithIndex getFieldWithIndexByName(String name) {
+    return fieldsByName.get(name);
   }
 
 }

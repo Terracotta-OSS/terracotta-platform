@@ -69,7 +69,7 @@ public class FieldSearcher {
   }
 
   private <T extends Field, S extends Field> Metadata.FieldWithIndex findFieldWithIndex(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
-    Metadata.FieldWithIndex fieldWithIndex = metadata.fieldsByName.get(name);
+    Metadata.FieldWithIndex fieldWithIndex = metadata.getFieldWithIndexByName(name);
     if (fieldWithIndex == null) {
       throw new IllegalArgumentException("No such field : " + name);
     }
