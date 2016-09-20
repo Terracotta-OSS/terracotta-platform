@@ -37,8 +37,7 @@ public class MetadataTest {
     StructField mapEntryStructField = new StructField("entry", 5, Arrays.asList(new StringField("key", 1), new StringField("val", 2), new Int64Field("longHash", 3)));
     ArrayField mapArrayField = new ArrayField("map", 5, mapEntryStructField);
 
-    assertThat(mapArrayField.subFields().size(), is(1));
-    Field f = mapArrayField.subFields().get(0);
+    StructField f = (StructField) mapArrayField.subField();
     assertThat(f.name(), is("entry"));
     assertThat(f.index(), is(5));
 

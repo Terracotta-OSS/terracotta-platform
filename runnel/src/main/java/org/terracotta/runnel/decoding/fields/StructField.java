@@ -38,7 +38,6 @@ public class StructField extends AbstractField {
     return metadata;
   }
 
-  @Override
   public List<? extends Field> subFields() {
     return subFields;
   }

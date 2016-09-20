@@ -15,8 +15,6 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
-import java.util.List;
-
 /**
  * @author Ludovic Orban
  */
@@ -40,8 +38,4 @@ public abstract class AbstractField implements Field {
     return index;
   }
 
-  @Override
-  public List<? extends Field> subFields() {
-    throw new UnsupportedOperationException();
-  }
 }

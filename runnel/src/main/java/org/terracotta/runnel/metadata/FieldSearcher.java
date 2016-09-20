@@ -15,7 +15,9 @@
  */
 package org.terracotta.runnel.metadata;
 
+import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.VLQ;
 
@@ -81,8 +83,22 @@ public class FieldSearcher {
     if (fieldWithIndex.field.getClass() != fieldClazz) {
       throw new IllegalArgumentException("Invalid type for field '" + name + "', expected : '" + fieldClazz.getSimpleName() + "' but was '" + fieldWithIndex.field.getClass().getSimpleName() + "'");
     }
-    if (subFieldClazz != null && fieldWithIndex.field.subFields().get(0).getClass() != subFieldClazz) {
-      throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + fieldWithIndex.field.subFields().get(0).getClass().getSimpleName() + "'");
+    if (subFieldClazz != null) {
+      if (fieldWithIndex.field instanceof StructField) {
+        StructField structField = (StructField) fieldWithIndex.field;
+        Field nextSubField = structField.subFields().get(0);
+        if (!nextSubField.getClass().equals(subFieldClazz)) {
+          throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
+        }
+      } else if (fieldWithIndex.field instanceof ArrayField) {
+        ArrayField arrayField = (ArrayField) fieldWithIndex.field;
+        Field nextSubField = arrayField.subField();
+        if (!nextSubField.getClass().equals(subFieldClazz)) {
+          throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
+        }
+      } else {
+        throw new AssertionError("Field '" + name + "' must be of type ArrayField nor StructField");
+      }
     }
     return fieldWithIndex;
   }

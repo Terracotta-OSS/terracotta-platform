@@ -17,9 +17,6 @@ package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.utils.ReadBuffer;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author Ludovic Orban
  */
@@ -32,9 +29,8 @@ public class ArrayField extends AbstractField {
     this.arrayedField = arrayedField;
   }
 
-  @Override
-  public List<? extends Field> subFields() {
-    return Collections.singletonList(arrayedField);
+  public Field subField() {
+    return arrayedField;
   }
 
   @Override

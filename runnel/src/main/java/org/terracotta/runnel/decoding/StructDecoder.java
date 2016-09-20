@@ -115,7 +115,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<Integer>(field.subFields().get(0), readBuffer, this);
+    return new ArrayDecoder<Integer>(field.subField(), readBuffer, this);
   }
 
   public ArrayDecoder<Long> int64s(String name) {
@@ -123,7 +123,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<Long>(field.subFields().get(0), readBuffer, this);
+    return new ArrayDecoder<Long>(field.subField(), readBuffer, this);
   }
 
   public ArrayDecoder<Double> fp64s(String name) {
@@ -131,7 +131,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<Double>(field.subFields().get(0), readBuffer, this);
+    return new ArrayDecoder<Double>(field.subField(), readBuffer, this);
   }
 
   public ArrayDecoder<String> strings(String name) {
@@ -139,7 +139,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<String>(field.subFields().get(0), readBuffer, this);
+    return new ArrayDecoder<String>(field.subField(), readBuffer, this);
   }
 
   public StructArrayDecoder structs(String name) {
@@ -147,7 +147,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     if (field == null) {
       return null;
     }
-    return new StructArrayDecoder(((StructField) field.subFields().get(0)), readBuffer, this);
+    return new StructArrayDecoder(((StructField) field.subField()), readBuffer, this);
   }
 
   public StructDecoder end() {

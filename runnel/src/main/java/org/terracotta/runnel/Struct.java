@@ -77,7 +77,7 @@ public class Struct {
       out.print(" length: "); out.print(length);
 
       ArrayField arrayField = (ArrayField) field;
-      Field subField = arrayField.subFields().get(0);
+      Field subField = arrayField.subField();
 
       for (int i = 0; i < length; i++) {
         out.print("\n  "); for (int j = 0; j < depth; j++) out.print("  ");
