@@ -39,11 +39,15 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
  */
 public class ManagementAgentService implements Closeable {
+
+  private static final Logger LOGGER = Logger.getLogger(ManagementAgentService.class.getName());
 
   private final ManagementAgentEntity entity;
   private final ClientIdentifier clientIdentifier;
@@ -89,18 +93,22 @@ public class ManagementAgentService implements Closeable {
           managementCallExecutor.execute(new Runnable() {
             @Override
             public void run() {
-              // check again because in another thread
-              if (bridging) {
-                ContextualReturn<?> aReturn = registry.withCapability(e.getCapabilityName())
-                    .call(e.getMethodName(), e.getReturnType(), e.getParameters())
-                    .on(e.getContext())
-                    .build()
-                    .execute()
-                    .getSingleResult();
-                // check again in case the management call takes some time
+              try {
+                // check again because in another thread
                 if (bridging) {
-                  get(entity.callReturn(null, e.getFrom(), e.getId(), aReturn), timeout);
+                  ContextualReturn<?> aReturn = registry.withCapability(e.getCapabilityName())
+                      .call(e.getMethodName(), e.getReturnType(), e.getParameters())
+                      .on(e.getContext())
+                      .build()
+                      .execute()
+                      .getSingleResult();
+                  // check again in case the management call takes some time
+                  if (bridging) {
+                    get(entity.callReturn(null, e.getFrom(), e.getId(), aReturn), timeout);
+                  }
                 }
+              } catch (RuntimeException err) {
+                LOGGER.log(Level.WARNING, "Error on management call execution or result sending for " + e + ". Error: " + err.getMessage(), e);
               }
             }
           });
@@ -110,7 +118,11 @@ public class ManagementAgentService implements Closeable {
           managementCallExecutor.execute(new Runnable() {
             @Override
             public void run() {
-              contextualReturnListener.onContextualReturn(e.getFrom(), e.getId(), e.getContextualReturn());
+              try {
+                contextualReturnListener.onContextualReturn(e.getFrom(), e.getId(), e.getContextualReturn());
+              } catch (RuntimeException err) {
+                LOGGER.log(Level.WARNING, "Error on management call result listener for " + e + ". Error: " + err.getMessage(), e);
+              }
             }
           });
         }
