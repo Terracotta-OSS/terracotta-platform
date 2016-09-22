@@ -1,0 +1,81 @@
+---
+---
+== Encoding format
+ifndef::sourcedir[]
+include::common.adoc[]
+endif::sourcedir[]
+
+== Intro
+
+This is the description of the Runnel encoding format.
+
+== Prefix common to all fields
+
+Every field has an *index* and a *size*. The *index* is used to lookup the field type from the structure metadata while
+the *size* indicates how many bytes the field is made of after the index and size.
+
+|===
+|index* |size* |<field specific>
+|===
+
+*: Encoded as VLQ (https://en.wikipedia.org/wiki/Variable-length_quantity)
+
+These two are always present, even if the size of some field types is fixed. The reason behind that is because the
+structure metadata can change when the data structure changes and may not contain all the indices. When an
+index is unknown to the decoder, it can simply skip the field thanks to the guarantee that the field size is always
+present.
+
+== Primitive fields
+
+== Int32
+|===
+|index* |size* |1 |2 |3 |4
+|===
+
+Int32 always are encoded as four bytes.
+
+== Int64
+|===
+|index* |size* |1 |2 |3 |4 |5 |6 |7 |8
+|===
+
+Int64 always are encoded as eight bytes.
+
+== Enum
+|=======
+|index* |size* |integer value*
+|=======
+
+Enums are encoded as VLQ-encoded integers.
+
+== ByteBuffer
+|===
+|index* |size* |(bytes) |...
+|===
+
+The bytes are just that: plain bytes.
+
+== String
+|===
+|index* |size* |(bytes) |...
+|===
+
+The bytes are the UTF-8-encoded string characters.
+
+== Composite fields
+
+== Array
+|===
+|index* |size* |length* |entry size* |(entry bytes) |...
+|===
+
+The *length* is the array length as is VLQ-encoded.
+
+*entry size* and *entry bytes* actually are the encoded primitive field, minus the index.
+
+== Struct
+|===
+|index* |size* |field index* |field size* |(field bytes) |...
+|===
+
+*field index*, *field size* and *field bytes* actually are the encoded field.

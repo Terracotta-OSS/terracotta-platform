@@ -42,6 +42,7 @@
     <module>client-communicator-support</module>
     <module>healthchecker-entity</module>
     <module>management</module>
+    <module>runnel</module>
   </modules>
 
   <dependencyManagement>
