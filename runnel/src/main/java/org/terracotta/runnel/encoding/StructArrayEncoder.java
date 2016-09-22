@@ -63,36 +63,36 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
 
   @Override
   public StructArrayEncoder int32(String name, int value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, Int32Field.class, null);
-    currentData.add(new Int32DataHolder(value, fieldIndex));
+    Int32Field field = fieldSearcher.findField(name, Int32Field.class, null);
+    currentData.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructArrayEncoder int64(String name, long value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, Int64Field.class, null);
-    currentData.add(new Int64DataHolder(value, fieldIndex));
+    Int64Field field = fieldSearcher.findField(name, Int64Field.class, null);
+    currentData.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructArrayEncoder fp64(String name, double value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, FloatingPoint64Field.class, null);
-    currentData.add(new FloatingPoint64DataHolder(value, fieldIndex));
+    FloatingPoint64Field field = fieldSearcher.findField(name, FloatingPoint64Field.class, null);
+    currentData.add(new FloatingPoint64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructArrayEncoder string(String name, String value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, StringField.class, null);
-    currentData.add(new StringDataHolder(value, fieldIndex));
+    StringField field = fieldSearcher.findField(name, StringField.class, null);
+    currentData.add(new StringDataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructArrayEncoder byteBuffer(String name, ByteBuffer value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, ByteBufferField.class, null);
-    currentData.add(new ByteBufferDataHolder(value, fieldIndex));
+    ByteBufferField field = fieldSearcher.findField(name, ByteBufferField.class, null);
+    currentData.add(new ByteBufferDataHolder(value, field.index()));
     return this;
   }
 

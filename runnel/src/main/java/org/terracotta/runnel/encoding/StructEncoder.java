@@ -68,38 +68,38 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
 
   @Override
   public StructEncoder int32(String name, int value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, Int32Field.class, null);
-    data.add(new Int32DataHolder(value, fieldIndex));
+    Int32Field field = fieldSearcher.findField(name, Int32Field.class, null);
+    data.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructEncoder int64(String name, long value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, Int64Field.class, null);
-    data.add(new Int64DataHolder(value, fieldIndex));
+    Int64Field field = fieldSearcher.findField(name, Int64Field.class, null);
+    data.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructEncoder fp64(String name, double value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, FloatingPoint64Field.class, null);
-    data.add(new FloatingPoint64DataHolder(value, fieldIndex));
+    FloatingPoint64Field field = fieldSearcher.findField(name, FloatingPoint64Field.class, null);
+    data.add(new FloatingPoint64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
   public StructEncoder string(String name, String value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, StringField.class, null);
+    StringField field = fieldSearcher.findField(name, StringField.class, null);
     if (value != null) {
-      data.add(new StringDataHolder(value, fieldIndex));
+      data.add(new StringDataHolder(value, field.index()));
     }
     return this;
   }
 
   @Override
   public StructEncoder byteBuffer(String name, ByteBuffer value) {
-    int fieldIndex = fieldSearcher.findFieldIndex(name, ByteBufferField.class, null);
-    data.add(new ByteBufferDataHolder(value, fieldIndex));
+    ByteBufferField field = fieldSearcher.findField(name, ByteBufferField.class, null);
+    data.add(new ByteBufferDataHolder(value, field.index()));
     return this;
   }
 
@@ -118,49 +118,49 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   }
 
   public ArrayEncoder<Integer> int32s(String name) {
-    final int fieldIndex = fieldSearcher.findFieldIndex(name, ArrayField.class, Int32Field.class);
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int32Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, fieldIndex));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Integer>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Integer value) {
-        return new Int32DataHolder(value, fieldIndex);
+        return new Int32DataHolder(value, field.index());
       }
     };
   }
 
   public ArrayEncoder<Long> int64s(String name) {
-    final int fieldIndex = fieldSearcher.findFieldIndex(name, ArrayField.class, Int64Field.class);
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, fieldIndex));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Long>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Long value) {
-        return new Int64DataHolder(value, fieldIndex);
+        return new Int64DataHolder(value, field.index());
       }
     };
   }
 
   public ArrayEncoder<Double> fp64s(String name) {
-    final int fieldIndex = fieldSearcher.findFieldIndex(name, ArrayField.class, FloatingPoint64Field.class);
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, FloatingPoint64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, fieldIndex));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Double>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Double value) {
-        return new FloatingPoint64DataHolder(value, fieldIndex);
+        return new FloatingPoint64DataHolder(value, field.index());
       }
     };
   }
 
   public ArrayEncoder<String> strings(String name) {
-    final int fieldIndex = fieldSearcher.findFieldIndex(name, ArrayField.class, StringField.class);
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StringField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, fieldIndex));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<String>(values, this) {
       @Override
       protected DataHolder buildDataHolder(String value) {
-        return new StringDataHolder(value, fieldIndex);
+        return new StringDataHolder(value, field.index());
       }
     };
   }

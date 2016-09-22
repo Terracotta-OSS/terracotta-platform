@@ -78,7 +78,7 @@ public class FieldDecoder {
   }
 
   private  <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
-    Metadata.FieldWithIndex fieldWithIndex = findFieldWithIndex(name, fieldClazz, subFieldClazz);
+    Field field = findFieldWithIndex(name, fieldClazz, subFieldClazz);
     if (readBuffer.limitReached()) {
       return null;
     }
@@ -86,7 +86,7 @@ public class FieldDecoder {
     int index = readAheadIndex > 0 ? readAheadIndex : readBuffer.getVlqInt();
     readAheadIndex = -1;
     // skip all fields with a lower index than the requested field's
-    while (index < fieldWithIndex.fieldIndex) {
+    while (index < field.index()) {
       int fieldSize = readBuffer.getVlqInt();
       readBuffer.skip(fieldSize);
       if (readBuffer.limitReached()) {
@@ -95,37 +95,37 @@ public class FieldDecoder {
       index = readBuffer.getVlqInt();
     }
 
-    if (index > fieldWithIndex.fieldIndex) {
+    if (index > field.index()) {
       readAheadIndex = index;
       return null;
-    } else if (index != fieldWithIndex.fieldIndex) {
+    } else if (index != field.index()) {
       return null;
     } else {
-      return (T) fieldWithIndex.field;
+      return (T) field;
     }
   }
 
-  private <T extends Field, S extends Field> Metadata.FieldWithIndex findFieldWithIndex(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
-    Metadata.FieldWithIndex fieldWithIndex = metadata.getFieldWithIndexByName(name);
-    if (fieldWithIndex == null) {
+  private <T extends Field, S extends Field> Field findFieldWithIndex(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
+    Field field = metadata.getFieldByName(name);
+    if (field == null) {
       throw new IllegalArgumentException("No such field : " + name);
     }
-    if (fieldWithIndex.fieldIndex <= lastIndex) {
+    if (field.index() <= lastIndex) {
       throw new IllegalArgumentException("No such field left : '" + name + "'");
     }
-    lastIndex = fieldWithIndex.fieldIndex;
+    lastIndex = field.index();
 
-    if (fieldWithIndex.field.getClass() != fieldClazz) {
-      throw new IllegalArgumentException("Invalid type for field '" + name + "', expected : '" + fieldClazz.getSimpleName() + "' but was '" + fieldWithIndex.field.getClass().getSimpleName() + "'");
+    if (field.getClass() != fieldClazz) {
+      throw new IllegalArgumentException("Invalid type for field '" + name + "', expected : '" + fieldClazz.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");
     }
     if (subFieldClazz != null) {
-      ArrayField arrayField = (ArrayField) fieldWithIndex.field;
+      ArrayField arrayField = (ArrayField) field;
       Field nextSubField = arrayField.subField();
       if (!nextSubField.getClass().equals(subFieldClazz)) {
         throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
       }
     }
-    return fieldWithIndex;
+    return field;
   }
 
 }

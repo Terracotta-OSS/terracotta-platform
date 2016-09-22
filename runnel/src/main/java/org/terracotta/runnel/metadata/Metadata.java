@@ -27,23 +27,12 @@ import java.util.Map;
  */
 public class Metadata {
 
-  // yes, you need this weirdo holder class because every Field.index() call is megamorphic, hence very expensive
-  static class FieldWithIndex {
-    FieldWithIndex(Field field) {
-      this.field = field;
-      this.fieldIndex = field.index();
-    }
-
-    Field field;
-    int fieldIndex;
-  }
-
-  private final Map<String, FieldWithIndex> fieldsByName;
+  private final Map<String, Field> fieldsByName;
 
   public Metadata(List<? extends Field> metadata) {
-    fieldsByName = new HashMap<String, FieldWithIndex>();
+    fieldsByName = new HashMap<String, Field>();
     for (Field field : metadata) {
-      fieldsByName.put(field.name(), new FieldWithIndex(field));
+      fieldsByName.put(field.name(), field);
     }
   }
 
@@ -57,13 +46,13 @@ public class Metadata {
 
   public Map<Integer, Field> buildFieldsByIndexMap() {
     Map<Integer, Field> map = new HashMap<Integer, Field>();
-    for (FieldWithIndex fieldWithIndex : fieldsByName.values()) {
-      map.put(fieldWithIndex.fieldIndex, fieldWithIndex.field);
+    for (Field field : fieldsByName.values()) {
+      map.put(field.index(), field);
     }
     return map;
   }
 
-  FieldWithIndex getFieldWithIndexByName(String name) {
+  Field getFieldByName(String name) {
     return fieldsByName.get(name);
   }
 
