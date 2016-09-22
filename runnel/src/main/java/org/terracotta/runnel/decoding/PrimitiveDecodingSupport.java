@@ -24,7 +24,7 @@ public interface PrimitiveDecodingSupport {
 
   Integer int32(String name);
 
-  <E extends Enum<E>> E enm(String name);
+  <E> E enm(String name);
 
   Long int64(String name);
 

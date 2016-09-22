@@ -36,11 +36,11 @@ public class EnumMappingTest {
         .mapping(TestEnum1.C, 3)
         .build();
 
-    EnumMapping<TestEnum2> enm2 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum2.class)
-        .mapping(TestEnum2.W, 1)
-        .mapping(TestEnum2.X, 2)
-        .mapping(TestEnum2.Y, 3)
-        .mapping(TestEnum2.Z, 4)
+    EnumMapping<Character> enm2 = EnumMappingBuilder.newEnumMappingBuilder(Character.class)
+        .mapping(W, 1)
+        .mapping(X, 2)
+        .mapping(Y, 3)
+        .mapping(Z, 4)
         .build();
 
     Struct subStruct = StructBuilder.newStructBuilder()
@@ -54,22 +54,22 @@ public class EnumMappingTest {
         .build();
 
     ByteBuffer encoded = struct.encoder()
-        .enm("myEnum2", TestEnum2.W)
+        .enm("myEnum2", W)
         .struct("z")
           .enm("myEnum1", TestEnum1.A)
         .end()
-        .enm("myEnum2bis", TestEnum2.X)
+        .enm("myEnum2bis", X)
         .encode();
 
     encoded.rewind();
 
     StructDecoder decoder = struct.decoder(encoded);
 
-    assertThat(decoder.<TestEnum2>enm("myEnum2"), is(TestEnum2.W));
+    assertThat(decoder.<Character>enm("myEnum2"), is(W));
     StructDecoder sd = decoder.struct("z");
     assertThat(sd.<TestEnum1>enm("myEnum1"), is(TestEnum1.A));
     sd.end();
-    assertThat(decoder.<TestEnum2>enm("myEnum2bis"), is(TestEnum2.X));
+    assertThat(decoder.<Character>enm("myEnum2bis"), is(X));
   }
 
   @Test
@@ -80,11 +80,11 @@ public class EnumMappingTest {
         .mapping(TestEnum1.C, 3)
         .build();
 
-    EnumMapping<TestEnum2> enm2 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum2.class)
-        .mapping(TestEnum2.W, 1)
-        .mapping(TestEnum2.X, 2)
-        .mapping(TestEnum2.Y, 3)
-        .mapping(TestEnum2.Z, 4)
+    EnumMapping<Character> enm2 = EnumMappingBuilder.newEnumMappingBuilder(Character.class)
+        .mapping(W, 1)
+        .mapping(X, 2)
+        .mapping(Y, 3)
+        .mapping(Z, 4)
         .build();
 
     Struct subStruct = StructBuilder.newStructBuilder()
@@ -98,18 +98,18 @@ public class EnumMappingTest {
         .build();
 
     ByteBuffer encoded = struct.encoder()
-        .enm("myEnum2", TestEnum2.W)
+        .enm("myEnum2", W)
         .struct("z")
           .enm("myEnum1", TestEnum1.A)
         .end()
-        .enm("myEnum2bis", TestEnum2.X)
+        .enm("myEnum2bis", X)
         .encode();
 
     encoded.rewind();
 
     StructDecoder decoder = struct.decoder(encoded);
 
-    assertThat(decoder.<TestEnum2>enm("myEnum2bis"), is(TestEnum2.X));
+    assertThat(decoder.<Character>enm("myEnum2bis"), is(X));
   }
 
   private enum TestEnum1 {
@@ -118,11 +118,9 @@ public class EnumMappingTest {
     C,
   }
 
-  private enum TestEnum2 {
-    W,
-    X,
-    Y,
-    Z,
-  }
+  private static final Character W = 'w';
+  private static final Character X = 'x';
+  private static final Character Y = 'y';
+  private static final Character Z = 'z';
 
 }

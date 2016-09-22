@@ -19,7 +19,9 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * @author Ludovic Orban
@@ -28,6 +30,45 @@ public class EnumMappingBuilderTest {
 
   private enum TestEnum {
     A,B,C
+  }
+
+  private static final Character X = 'x';
+  private static final Character Y = 'y';
+  private static final Character Z = 'z';
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testDuplicateEnumIsInvalidWithNonEnum() throws Exception {
+    EnumMappingBuilder.newEnumMappingBuilder(Character.class)
+        .mapping(X, 1)
+        .mapping(X, 2)
+        ;
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testDuplicateIndexIsInvalidWithNonEnum() throws Exception {
+    EnumMappingBuilder.newEnumMappingBuilder(Character.class)
+        .mapping(X, 1)
+        .mapping(Y, 1)
+        ;
+  }
+
+  @Test
+  public void testNonEnumTypeEnum() throws Exception {
+    EnumMapping<Character> enm = EnumMappingBuilder.newEnumMappingBuilder(Character.class)
+        .mapping(X, 1)
+        .mapping(Y, 2)
+        .mapping(Z, 3)
+        .build();
+
+    assertThat(enm.toInt(X), is(1));
+    assertThat(enm.toInt(Y), is(2));
+    assertThat(enm.toInt(Z), is(3));
+    try { enm.toInt('1'); fail(); } catch (IllegalArgumentException e) { /* expected */ }
+
+    assertThat(enm.toEnum(1), is(X));
+    assertThat(enm.toEnum(2), is(Y));
+    assertThat(enm.toEnum(3), is(Z));
+    assertThat(enm.toEnum(100), is(nullValue()));
   }
 
   @Test

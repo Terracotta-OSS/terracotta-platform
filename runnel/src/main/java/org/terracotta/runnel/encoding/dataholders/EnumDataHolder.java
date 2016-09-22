@@ -22,7 +22,7 @@ import org.terracotta.runnel.utils.WriteBuffer;
 /**
  * @author Ludovic Orban
  */
-public class EnumDataHolder<E extends Enum<E>> extends AbstractDataHolder {
+public class EnumDataHolder<E> extends AbstractDataHolder {
 
   private final int value;
 

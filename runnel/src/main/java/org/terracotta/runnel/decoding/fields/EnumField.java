@@ -23,7 +23,7 @@ import java.io.PrintStream;
 /**
  * @author Ludovic Orban
  */
-public class EnumField<E extends Enum<E>> extends AbstractValueField<E> {
+public class EnumField<E> extends AbstractValueField<E> {
 
   private final EnumMapping<E> enumMapping;
 

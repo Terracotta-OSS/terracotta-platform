@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * @author Ludovic Orban
  */
-public class EnumMapping<E extends Enum<E>> {
+public class EnumMapping<E> {
   private final Map<E, Integer> enumToInteger;
   private final Map<Integer, E> integerToEnum;
 

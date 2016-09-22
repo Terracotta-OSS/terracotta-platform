@@ -60,9 +60,9 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   }
 
   @Override
-  public StructEncoder enm(String name, Enum value) {
-    EnumField field = fieldSearcher.findField(name, EnumField.class, null);
-    data.add(new EnumDataHolder(value, field.index(), field.getEnumMapping()));
+  public <E> StructEncoder enm(String name, E value) {
+    EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);
+    data.add(new EnumDataHolder<E>(value, field.index(), field.getEnumMapping()));
     return this;
   }
 

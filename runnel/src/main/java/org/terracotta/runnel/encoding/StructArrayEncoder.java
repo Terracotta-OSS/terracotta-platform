@@ -55,7 +55,7 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
   }
 
   @Override
-  public <E extends Enum<E>> StructArrayEncoder enm(String name, E value) {
+  public <E> StructArrayEncoder enm(String name, E value) {
     EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);
     currentData.add(new EnumDataHolder<E>(value, field.index(), field.getEnumMapping()));
     return this;

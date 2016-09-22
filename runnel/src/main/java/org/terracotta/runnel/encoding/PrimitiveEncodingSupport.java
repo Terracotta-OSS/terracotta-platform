@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
  */
 public interface PrimitiveEncodingSupport<T> {
 
-  <E extends Enum<E>> T enm(String name, E value);
+  <E> T enm(String name, E value);
 
   T int32(String name, int value);
 

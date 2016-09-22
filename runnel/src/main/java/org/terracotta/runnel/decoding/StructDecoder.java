@@ -53,7 +53,7 @@ public class StructDecoder implements PrimitiveDecodingSupport {
   }
 
   @Override
-  public <E extends Enum<E>> E enm(String name) {
+  public <E> E enm(String name) {
     return (E) fieldDecoder.decodeValue(name, (Class) EnumField.class);
   }
 

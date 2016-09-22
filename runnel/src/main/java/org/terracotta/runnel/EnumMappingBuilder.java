@@ -24,26 +24,32 @@ import java.util.Map;
 /**
  * @author Ludovic Orban
  */
-public class EnumMappingBuilder<E extends Enum<E>> {
+public class EnumMappingBuilder<E> {
 
-  private final EnumMap<E, Integer> enumToInteger;
+  private final Map<E, Integer> enumToInteger;
   private final Map<Integer, E> integerToEnum = new HashMap<Integer, E>();
   private final Class<E> enumClass;
 
   private EnumMappingBuilder(Class<E> enumClass) {
     this.enumClass = enumClass;
-    this.enumToInteger = new EnumMap<E, Integer>(enumClass);
+    if (Enum.class.isAssignableFrom(enumClass)) {
+      this.enumToInteger = new EnumMap(enumClass);
+    } else {
+      this.enumToInteger = new HashMap<E, Integer>();
+    }
   }
 
-  public static <E extends Enum<E>> EnumMappingBuilder<E> newEnumMappingBuilder(Class<E> enumClass) {
+  public static <E> EnumMappingBuilder<E> newEnumMappingBuilder(Class<E> enumClass) {
     return new EnumMappingBuilder<E>(enumClass);
   }
 
   public EnumMapping<E> build() {
-    HashSet<E> unregisteredEnums = new HashSet<E>(EnumSet.allOf(enumClass));
-    unregisteredEnums.removeAll(enumToInteger.keySet());
-    if (!unregisteredEnums.isEmpty()) {
-      throw new IllegalStateException("Missing enum mappings for : " + unregisteredEnums);
+    if (Enum.class.isAssignableFrom(enumClass)) {
+      HashSet<Enum> unregisteredEnums = new HashSet<Enum>(EnumSet.allOf((Class)enumClass));
+      unregisteredEnums.removeAll(enumToInteger.keySet());
+      if (!unregisteredEnums.isEmpty()) {
+        throw new IllegalStateException("Missing enum mappings for : " + unregisteredEnums);
+      }
     }
     return new EnumMapping<E>(enumToInteger, integerToEnum);
   }
