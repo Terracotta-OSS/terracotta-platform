@@ -16,8 +16,8 @@
 package org.terracotta.runnel.encoding.dataholders;
 
 import org.junit.Test;
-import org.terracotta.runnel.Enm;
-import org.terracotta.runnel.EnmBuilder;
+import org.terracotta.runnel.EnumMapping;
+import org.terracotta.runnel.EnumMappingBuilder;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.WriteBuffer;
 
@@ -29,13 +29,13 @@ import static org.hamcrest.core.Is.is;
 /**
  * @author Ludovic Orban
  */
-public class EnmTest {
+public class EnumMappingTest {
 
   private enum TestEnum {
     A,B,C
   }
 
-  private static final Enm<TestEnum> ENM = EnmBuilder.newEnumBuilder(TestEnum.class)
+  private static final EnumMapping<TestEnum> ENM = EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
       .mapping(TestEnum.A, 1)
       .mapping(TestEnum.B, 2)
       .mapping(TestEnum.C, 3)
@@ -43,7 +43,7 @@ public class EnmTest {
 
   @Test
   public void testWithIndex() throws Exception {
-    EnmDataHolder dataHolder = new EnmDataHolder<TestEnum>(TestEnum.B, 1, ENM);
+    EnumDataHolder dataHolder = new EnumDataHolder<TestEnum>(TestEnum.B, 1, ENM);
 
     assertThat(dataHolder.size(true), is(3));
 
@@ -59,7 +59,7 @@ public class EnmTest {
 
   @Test
   public void testWithoutIndex() throws Exception {
-    EnmDataHolder dataHolder = new EnmDataHolder<TestEnum>(TestEnum.B, 1, ENM);
+    EnumDataHolder dataHolder = new EnumDataHolder<TestEnum>(TestEnum.B, 1, ENM);
 
     assertThat(dataHolder.size(false), is(2));
 

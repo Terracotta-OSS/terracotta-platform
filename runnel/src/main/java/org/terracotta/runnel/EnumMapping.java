@@ -20,11 +20,11 @@ import java.util.Map;
 /**
  * @author Ludovic Orban
  */
-public class Enm<E extends Enum<E>> {
+public class EnumMapping<E extends Enum<E>> {
   private final Map<E, Integer> enumToInteger;
   private final Map<Integer, E> integerToEnum;
 
-  Enm(Map<E, Integer> enumToInteger, Map<Integer, E> integerToEnum) {
+  EnumMapping(Map<E, Integer> enumToInteger, Map<Integer, E> integerToEnum) {
     this.enumToInteger = enumToInteger;
     this.integerToEnum = integerToEnum;
   }

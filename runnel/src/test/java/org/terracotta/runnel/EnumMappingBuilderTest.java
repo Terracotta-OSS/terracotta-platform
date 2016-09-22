@@ -24,7 +24,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Ludovic Orban
  */
-public class EnmBuilderTest {
+public class EnumMappingBuilderTest {
 
   private enum TestEnum {
     A,B,C
@@ -32,7 +32,7 @@ public class EnmBuilderTest {
 
   @Test
   public void testMappings() throws Exception {
-    Enm<TestEnum> enm = EnmBuilder.newEnumBuilder(TestEnum.class)
+    EnumMapping<TestEnum> enm = EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
         .mapping(TestEnum.A, 10)
         .mapping(TestEnum.B, 20)
         .mapping(TestEnum.C, 30)
@@ -49,7 +49,7 @@ public class EnmBuilderTest {
 
   @Test(expected = IllegalStateException.class)
   public void testUnmappedEnumInvalid() throws Exception {
-    EnmBuilder.newEnumBuilder(TestEnum.class)
+    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
         .mapping(TestEnum.A, 10)
         .mapping(TestEnum.C, 30)
         .build();
@@ -57,20 +57,20 @@ public class EnmBuilderTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNegativeIndexIsInvalid() throws Exception {
-    EnmBuilder.newEnumBuilder(TestEnum.class)
+    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
         .mapping(TestEnum.A, -10);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testDuplicateIndexIsInvalid() throws Exception {
-    EnmBuilder.newEnumBuilder(TestEnum.class)
+    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
         .mapping(TestEnum.A, 10)
         .mapping(TestEnum.B, 10);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testDuplicateEnumIsInvalid() throws Exception {
-    EnmBuilder.newEnumBuilder(TestEnum.class)
+    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
         .mapping(TestEnum.A, 10)
         .mapping(TestEnum.A, 20);
   }

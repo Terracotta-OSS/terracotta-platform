@@ -29,7 +29,7 @@ public class StructBuilderTest {
   }
 
   private static final Struct STRUCT = StructBuilder.newStructBuilder().build();
-  private static final Enm<TestEnum> ENM = EnmBuilder.newEnumBuilder(TestEnum.class)
+  private static final EnumMapping<TestEnum> ENM = EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
       .mapping(TestEnum.A, 1)
       .mapping(TestEnum.B, 2)
       .mapping(TestEnum.C, 3)

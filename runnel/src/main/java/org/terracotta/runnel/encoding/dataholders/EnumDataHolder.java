@@ -15,20 +15,20 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
-import org.terracotta.runnel.Enm;
+import org.terracotta.runnel.EnumMapping;
 import org.terracotta.runnel.utils.VLQ;
 import org.terracotta.runnel.utils.WriteBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public class EnmDataHolder<E extends Enum<E>> extends AbstractDataHolder {
+public class EnumDataHolder<E extends Enum<E>> extends AbstractDataHolder {
 
   private final int value;
 
-  public EnmDataHolder(E value, int index, Enm<E> enm) {
+  public EnumDataHolder(E value, int index, EnumMapping<E> enumMapping) {
     super(index);
-    this.value = enm.toInt(value);
+    this.value = enumMapping.toInt(value);
   }
 
   @Override

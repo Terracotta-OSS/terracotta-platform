@@ -39,12 +39,12 @@ public class VersionCompatibilityTest {
     A,C
   }
 
-  private static final Enm<TestEnum_v1> ENM_V1 = EnmBuilder.newEnumBuilder(TestEnum_v1.class)
+  private static final EnumMapping<TestEnum_v1> ENM_V1 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum_v1.class)
       .mapping(TestEnum_v1.A, 10)
       .mapping(TestEnum_v1.B, 20)
       .build();
 
-  private static final Enm<TestEnum_v2> ENM_V2 = EnmBuilder.newEnumBuilder(TestEnum_v2.class)
+  private static final EnumMapping<TestEnum_v2> ENM_V2 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum_v2.class)
       .mapping(TestEnum_v2.A, 10)
       .mapping(TestEnum_v2.C, 30)
       .build();

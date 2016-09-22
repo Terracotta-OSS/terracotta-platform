@@ -15,12 +15,12 @@
  */
 package org.terracotta.runnel.encoding;
 
-import org.terracotta.runnel.decoding.fields.EnmField;
+import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
-import org.terracotta.runnel.encoding.dataholders.EnmDataHolder;
+import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
 import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
@@ -56,8 +56,8 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
 
   @Override
   public <E extends Enum<E>> StructArrayEncoder enm(String name, E value) {
-    EnmField<E> field = (EnmField<E>) fieldSearcher.findField(name, EnmField.class, null);
-    currentData.add(new EnmDataHolder<E>(value, field.index(), field.getEnm()));
+    EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);
+    currentData.add(new EnumDataHolder<E>(value, field.index(), field.getEnumMapping()));
     return this;
   }
 

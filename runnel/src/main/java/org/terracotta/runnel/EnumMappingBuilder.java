@@ -24,31 +24,31 @@ import java.util.Map;
 /**
  * @author Ludovic Orban
  */
-public class EnmBuilder<E extends Enum<E>> {
+public class EnumMappingBuilder<E extends Enum<E>> {
 
   private final EnumMap<E, Integer> enumToInteger;
   private final Map<Integer, E> integerToEnum = new HashMap<Integer, E>();
   private final Class<E> enumClass;
 
-  private EnmBuilder(Class<E> enumClass) {
+  private EnumMappingBuilder(Class<E> enumClass) {
     this.enumClass = enumClass;
     this.enumToInteger = new EnumMap<E, Integer>(enumClass);
   }
 
-  public static <E extends Enum<E>> EnmBuilder<E> newEnumBuilder(Class<E> enumClass) {
-    return new EnmBuilder<E>(enumClass);
+  public static <E extends Enum<E>> EnumMappingBuilder<E> newEnumMappingBuilder(Class<E> enumClass) {
+    return new EnumMappingBuilder<E>(enumClass);
   }
 
-  public Enm<E> build() {
+  public EnumMapping<E> build() {
     HashSet<E> unregisteredEnums = new HashSet<E>(EnumSet.allOf(enumClass));
     unregisteredEnums.removeAll(enumToInteger.keySet());
     if (!unregisteredEnums.isEmpty()) {
       throw new IllegalStateException("Missing enum mappings for : " + unregisteredEnums);
     }
-    return new Enm<E>(enumToInteger, integerToEnum);
+    return new EnumMapping<E>(enumToInteger, integerToEnum);
   }
 
-  public EnmBuilder<E> mapping(E e, int value) {
+  public EnumMappingBuilder<E> mapping(E e, int value) {
     if (enumToInteger.containsKey(e)) {
       throw new IllegalArgumentException("Duplicate enum value : " + e);
     }

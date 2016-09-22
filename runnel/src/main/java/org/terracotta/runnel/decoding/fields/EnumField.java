@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
-import org.terracotta.runnel.Enm;
+import org.terracotta.runnel.EnumMapping;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.io.PrintStream;
@@ -23,24 +23,24 @@ import java.io.PrintStream;
 /**
  * @author Ludovic Orban
  */
-public class EnmField<E extends Enum<E>> extends AbstractValueField<E> {
+public class EnumField<E extends Enum<E>> extends AbstractValueField<E> {
 
-  private final Enm<E> enm;
+  private final EnumMapping<E> enumMapping;
 
-  public EnmField(String name, int index, Enm<E> enm) {
+  public EnumField(String name, int index, EnumMapping<E> enumMapping) {
     super(name, index);
-    this.enm = enm;
+    this.enumMapping = enumMapping;
   }
 
-  public Enm<E> getEnm() {
-    return enm;
+  public EnumMapping<E> getEnumMapping() {
+    return enumMapping;
   }
 
   @Override
   public E decode(ReadBuffer readBuffer) {
     readBuffer.getVlqInt();
     int intValue = readBuffer.getVlqInt();
-    return enm.toEnum(intValue);
+    return enumMapping.toEnum(intValue);
   }
 
   @Override
@@ -50,7 +50,7 @@ public class EnmField<E extends Enum<E>> extends AbstractValueField<E> {
     out.append(" decoded: [");
     readBuffer.getVlqInt();
     int intValue = readBuffer.getVlqInt();
-    Object decoded = enm.toEnum(intValue);
+    Object decoded = enumMapping.toEnum(intValue);
     if (decoded == null) {
       decoded = intValue;
     }

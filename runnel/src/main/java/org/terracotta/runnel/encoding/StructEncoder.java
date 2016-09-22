@@ -17,7 +17,7 @@ package org.terracotta.runnel.encoding;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.EnmField;
+import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
@@ -26,7 +26,7 @@ import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ArrayDataHolder;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
-import org.terracotta.runnel.encoding.dataholders.EnmDataHolder;
+import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
 import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
 import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
@@ -61,8 +61,8 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
 
   @Override
   public StructEncoder enm(String name, Enum value) {
-    EnmField field = fieldSearcher.findField(name, EnmField.class, null);
-    data.add(new EnmDataHolder(value, field.index(), field.getEnm()));
+    EnumField field = fieldSearcher.findField(name, EnumField.class, null);
+    data.add(new EnumDataHolder(value, field.index(), field.getEnumMapping()));
     return this;
   }
 

@@ -26,17 +26,17 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Ludovic Orban
  */
-public class EnmTest {
+public class EnumMappingTest {
 
   @Test
   public void testStructWithEnum() throws Exception {
-    Enm<TestEnum1> enm1 = EnmBuilder.newEnumBuilder(TestEnum1.class)
+    EnumMapping<TestEnum1> enm1 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum1.class)
         .mapping(TestEnum1.A, 1)
         .mapping(TestEnum1.B, 2)
         .mapping(TestEnum1.C, 3)
         .build();
 
-    Enm<TestEnum2> enm2 = EnmBuilder.newEnumBuilder(TestEnum2.class)
+    EnumMapping<TestEnum2> enm2 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum2.class)
         .mapping(TestEnum2.W, 1)
         .mapping(TestEnum2.X, 2)
         .mapping(TestEnum2.Y, 3)
@@ -74,13 +74,13 @@ public class EnmTest {
 
   @Test
   public void testSkipEnum() throws Exception {
-    Enm<TestEnum1> enm1 = EnmBuilder.newEnumBuilder(TestEnum1.class)
+    EnumMapping<TestEnum1> enm1 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum1.class)
         .mapping(TestEnum1.A, 1)
         .mapping(TestEnum1.B, 2)
         .mapping(TestEnum1.C, 3)
         .build();
 
-    Enm<TestEnum2> enm2 = EnmBuilder.newEnumBuilder(TestEnum2.class)
+    EnumMapping<TestEnum2> enm2 = EnumMappingBuilder.newEnumMappingBuilder(TestEnum2.class)
         .mapping(TestEnum2.W, 1)
         .mapping(TestEnum2.X, 2)
         .mapping(TestEnum2.Y, 3)
