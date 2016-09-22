@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 
-class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, MapResponse>  {
+public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, MapResponse>  {
 
   private static final int CONCURRENCY_KEY = 42;
 
@@ -70,8 +70,6 @@ class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOperation, M
   public void disconnected(ClientDescriptor clientDescriptor) {
   }
 
-  // Note that we suppress deprecation since we have the size method.
-  @SuppressWarnings("deprecation")
   @Override
   public MapResponse invoke(ClientDescriptor clientDescriptor, MapOperation input) {
     MapResponse response;
