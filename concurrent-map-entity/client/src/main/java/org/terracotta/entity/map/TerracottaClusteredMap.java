@@ -52,7 +52,7 @@ import java.util.Set;
 import static org.terracotta.entity.map.ValueCodecFactory.getCodecForClass;
 
 @SuppressWarnings("unchecked")
-class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
+public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
 
   private final EntityClientEndpoint<MapOperation, MapResponse> endpoint;
 
@@ -61,7 +61,7 @@ class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V> {
   private ValueCodec<K> keyValueCodec;
   private ValueCodec<V> valueValueCodec;
 
-  TerracottaClusteredMap(EntityClientEndpoint<MapOperation, MapResponse> endpoint) {
+  public TerracottaClusteredMap(EntityClientEndpoint<MapOperation, MapResponse> endpoint) {
     this.endpoint = endpoint;
   }
 
