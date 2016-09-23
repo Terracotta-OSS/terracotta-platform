@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.encoding;
+package org.terracotta.runnel.encoding.dataholders;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.WriteBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public interface PrimitiveEncodingSupport<T> {
+public class CharDataHolder extends AbstractDataHolder {
 
-  T bool(String name, boolean value);
+  private final char value;
 
-  T chr(String name, char value);
+  public CharDataHolder(char value, int index) {
+    super(index);
+    this.value = value;
+  }
 
-  <E> T enm(String name, E value);
+  @Override
+  protected int valueSize() {
+    return 2;
+  }
 
-  T int32(String name, int value);
-
-  T int64(String name, long value);
-
-  T fp64(String name, double value);
-
-  T string(String name, String value);
-
-  T byteBuffer(String name, ByteBuffer value);
-
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer) {
+    writeBuffer.putChar(value);
+  }
 }

@@ -34,6 +34,13 @@ present.
 
 Bool always are encoded as one byte.
 
+== Char
+|===
+|index* |size* |1 |2
+|===
+
+Char are java chars, always encoded as two bytes.
+
 == Int32
 |===
 |index* |size* |1 |2 |3 |4

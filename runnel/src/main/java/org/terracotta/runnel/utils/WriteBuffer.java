@@ -32,6 +32,10 @@ public class WriteBuffer {
     byteBuffer.put(value ? (byte) 1 : (byte) 0);
   }
 
+  public void putChar(char value) {
+    byteBuffer.putChar(value);
+  }
+
   public void putDouble(double value) {
     byteBuffer.putDouble(value);
   }

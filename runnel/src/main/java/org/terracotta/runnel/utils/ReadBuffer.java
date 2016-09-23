@@ -58,6 +58,13 @@ public class ReadBuffer {
     return byteBuffer.getLong();
   }
 
+  public Character getChar() {
+    if (byteBuffer.position() + 2 > limit) {
+      throw new LimitReachedException();
+    }
+    return byteBuffer.getChar();
+  }
+
   public Integer getInt() {
     if (byteBuffer.position() + 4 > limit) {
       throw new LimitReachedException();

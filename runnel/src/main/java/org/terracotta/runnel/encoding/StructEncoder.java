@@ -18,6 +18,7 @@ package org.terracotta.runnel.encoding;
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.CharField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
@@ -27,6 +28,7 @@ import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ArrayDataHolder;
 import org.terracotta.runnel.encoding.dataholders.BoolDataHolder;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
+import org.terracotta.runnel.encoding.dataholders.CharDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
 import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
 import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
@@ -65,6 +67,13 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   public StructEncoder bool(String name, boolean value) {
     BoolField field = fieldSearcher.findField(name, BoolField.class, null);
     data.add(new BoolDataHolder(value, field.index()));
+    return this;
+  }
+
+  @Override
+  public StructEncoder chr(String name, char value) {
+    CharField field = fieldSearcher.findField(name, CharField.class, null);
+    data.add(new CharDataHolder(value, field.index()));
     return this;
   }
 
@@ -144,6 +153,18 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
       @Override
       protected DataHolder buildDataHolder(Boolean value) {
         return new BoolDataHolder(value, field.index());
+      }
+    };
+  }
+
+  public ArrayEncoder<Character> chrs(String name) {
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, CharField.class);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new ArrayDataHolder(values, field.index()));
+    return new ArrayEncoder<Character>(values, this) {
+      @Override
+      protected DataHolder buildDataHolder(Character value) {
+        return new CharDataHolder(value, field.index());
       }
     };
   }

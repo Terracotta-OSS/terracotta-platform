@@ -17,6 +17,7 @@ package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.CharField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
@@ -51,6 +52,11 @@ public class StructDecoder implements PrimitiveDecodingSupport {
   @Override
   public Boolean bool(String name) {
     return fieldDecoder.decodeValue(name, BoolField.class);
+  }
+
+  @Override
+  public Character chr(String name) {
+    return fieldDecoder.decodeValue(name, CharField.class);
   }
 
   @Override
@@ -90,6 +96,10 @@ public class StructDecoder implements PrimitiveDecodingSupport {
 
   public ArrayDecoder<Boolean> bools(String name) {
     return fieldDecoder.decodeValueArray(name, BoolField.class, this);
+  }
+
+  public ArrayDecoder<Character> chrs(String name) {
+    return fieldDecoder.decodeValueArray(name, CharField.class, this);
   }
 
   public ArrayDecoder<Long> int64s(String name) {

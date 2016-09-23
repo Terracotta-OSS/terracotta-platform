@@ -24,6 +24,8 @@ public interface PrimitiveDecodingSupport {
 
   Boolean bool(String name);
 
+  Character chr(String name);
+
   Integer int32(String name);
 
   <E> E enm(String name);
