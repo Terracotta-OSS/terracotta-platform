@@ -18,6 +18,8 @@ package org.terracotta.runnel;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.encoding.StructArrayEncoder;
+import org.terracotta.runnel.encoding.StructArrayEncoderFunction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -54,6 +56,42 @@ public class StructArrayStructBuilderTest {
           .string("key", "2")
           .string("value", "two")
         .end()
+        .int64("id", 999L)
+        .encode();
+
+    bb.rewind();
+
+    StructDecoder decoder = struct.decoder(bb);
+
+    assertThat(decoder.string("name"), is("joe"));
+
+    StructArrayDecoder sad = decoder.structs("mapEntry");
+    assertThat(sad.length(), is(2));
+    assertThat(sad.string("key"), is("1"));
+    assertThat(sad.string("value"), is("one"));
+    sad.next();
+    assertThat(sad.string("key"), is("2"));
+    assertThat(sad.string("value"), is("two"));
+    sad.end();
+
+    assertThat(decoder.int64("id"), is(999L));
+  }
+
+  @Test
+  public void testReadAll_withLambda() throws Exception {
+    ByteBuffer bb = struct.encoder()
+        .string("name", "joe")
+        .structs("mapEntry", new StructArrayEncoderFunction() {
+          @Override
+          public void encode(StructArrayEncoder encoder) {
+            encoder
+                  .string("key", "1")
+                  .string("value", "one")
+                .next()
+                  .string("key", "2")
+                  .string("value", "two");
+          }
+        })
         .int64("id", 999L)
         .encode();
 

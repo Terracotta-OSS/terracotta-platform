@@ -103,6 +103,16 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     return this;
   }
 
+  public StructEncoder struct(String name, StructEncoderFunction function) {
+    StructField field = fieldSearcher.findField(name, StructField.class, null);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new StructDataHolder(values, field.index()));
+    StructEncoder subStructEncoder = new StructEncoder(field, values, this);
+    function.encode(subStructEncoder);
+    subStructEncoder.end();
+    return this;
+  }
+
   public StructEncoder struct(String name) {
     StructField field = fieldSearcher.findField(name, StructField.class, null);
     List<DataHolder> values = new ArrayList<DataHolder>();
@@ -171,6 +181,17 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     data.add(new ArrayDataHolder(values, field.index()));
     return new StructArrayEncoder(values, this, ((StructField) field.subField()));
   }
+
+  public StructEncoder structs(String name, StructArrayEncoderFunction function) {
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
+    List<StructDataHolder> values = new ArrayList<StructDataHolder>();
+    data.add(new ArrayDataHolder(values, field.index()));
+    StructArrayEncoder subStructArrayEncoder = new StructArrayEncoder(values, this, ((StructField) field.subField()));
+    function.encode(subStructArrayEncoder);
+    subStructArrayEncoder.end();
+    return this;
+  }
+
 
   /**
    * Encode the structure in the passed byte buffer.
