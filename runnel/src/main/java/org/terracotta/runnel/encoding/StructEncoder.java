@@ -199,6 +199,9 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
    * @return the passed-in byte buffer.
    */
   public ByteBuffer encode(ByteBuffer bb) {
+    if (parent != null) {
+      throw new IllegalStateException("Cannot encode non-root encoder");
+    }
     int size = calculateSize();
     return performEncoding(bb, size);
   }
@@ -209,6 +212,9 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
    * @return the encoded structure in a new byte buffer.
    */
   public ByteBuffer encode() {
+    if (parent != null) {
+      throw new IllegalStateException("Cannot encode non-root encoder");
+    }
     int size = calculateSize();
     ByteBuffer bb = ByteBuffer.allocate(size + VLQ.encodedSize(size));
     return performEncoding(bb, size);

@@ -42,6 +42,15 @@ public class StructStructBuilderTest {
       .int64("id", 3)
       .build();
 
+  @Test(expected = IllegalStateException.class)
+  public void testCannotEncodeNonRoot() throws Exception {
+    struct.encoder()
+        .struct("mapEntry")
+          .string("key", "1")
+          .string("value", "one")
+        .encode();
+  }
+
   @Test
   public void testReadAll() throws Exception {
     ByteBuffer bb = struct.encoder()
