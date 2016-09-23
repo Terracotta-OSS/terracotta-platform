@@ -15,9 +15,11 @@
  */
 package org.terracotta.runnel.encoding;
 
+import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.StructField;
+import org.terracotta.runnel.encoding.dataholders.BoolDataHolder;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
 import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
@@ -52,6 +54,13 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
     this.parent = parent;
     this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.currentData = new ArrayList<DataHolder>(ARRAY_INITIAL_SIZE);
+  }
+
+  @Override
+  public StructArrayEncoder bool(String name, boolean value) {
+    BoolField field = fieldSearcher.findField(name, BoolField.class, null);
+    currentData.add(new BoolDataHolder(value, field.index()));
+    return this;
   }
 
   @Override

@@ -28,6 +28,10 @@ public class WriteBuffer {
     this.byteBuffer = byteBuffer;
   }
 
+  public void putBoolean(boolean value) {
+    byteBuffer.put(value ? (byte) 1 : (byte) 0);
+  }
+
   public void putDouble(double value) {
     byteBuffer.putDouble(value);
   }

@@ -27,6 +27,13 @@ present.
 
 == Primitive fields
 
+== Bool
+|===
+|index* |size* |1
+|===
+
+Bool always are encoded as one byte.
+
 == Int32
 |===
 |index* |size* |1 |2 |3 |4

@@ -16,6 +16,7 @@
 package org.terracotta.runnel;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
+import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.Field;
@@ -47,6 +48,12 @@ public class StructBuilder {
     return new StructBuilder();
   }
 
+
+  public StructBuilder bool(String name, int index) {
+    checkParams(name, index);
+    fields.add(new BoolField(name, index));
+    return this;
+  }
 
   public StructBuilder enm(String name, int index, EnumMapping enumMapping) {
     checkParams(name, index);
@@ -87,6 +94,12 @@ public class StructBuilder {
   public StructBuilder struct(String name, int index, Struct struct) {
     checkParams(name, index);
     fields.add(new StructField(name, index, struct.getRootSubFields()));
+    return this;
+  }
+
+  public StructBuilder bools(String name, int index) {
+    checkParams(name, index);
+    fields.add(new ArrayField(name, index, new BoolField(name, index)));
     return this;
   }
 

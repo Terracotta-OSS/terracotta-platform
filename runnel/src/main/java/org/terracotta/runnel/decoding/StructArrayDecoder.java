@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding;
 
+import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
@@ -52,6 +53,11 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
       structReadBuffer = arrayReadBuffer.limit(0);
     }
     this.fieldDecoder = field.getMetadata().fieldDecoder(structReadBuffer);
+  }
+
+  @Override
+  public Boolean bool(String name) {
+    return fieldDecoder.decodeValue(name, BoolField.class);
   }
 
   @Override

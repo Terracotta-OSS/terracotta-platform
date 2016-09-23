@@ -37,6 +37,13 @@ public class ReadBuffer {
     }
   }
 
+  public Boolean getBoolean() {
+    if (byteBuffer.position() + 1 > limit) {
+      throw new LimitReachedException();
+    }
+    return byteBuffer.get() == (byte) 0 ? Boolean.FALSE : Boolean.TRUE;
+  }
+
   public Double getDouble() {
     if (byteBuffer.position() + 8 > limit) {
       throw new LimitReachedException();

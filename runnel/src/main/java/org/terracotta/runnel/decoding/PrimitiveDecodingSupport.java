@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
  */
 public interface PrimitiveDecodingSupport {
 
+  Boolean bool(String name);
+
   Integer int32(String name);
 
   <E> E enm(String name);

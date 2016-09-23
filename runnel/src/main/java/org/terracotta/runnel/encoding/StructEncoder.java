@@ -16,6 +16,7 @@
 package org.terracotta.runnel.encoding;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
+import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
@@ -24,6 +25,7 @@ import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ArrayDataHolder;
+import org.terracotta.runnel.encoding.dataholders.BoolDataHolder;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
 import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
@@ -57,6 +59,13 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.data = values;
     this.parent = structEncoder;
+  }
+
+  @Override
+  public StructEncoder bool(String name, boolean value) {
+    BoolField field = fieldSearcher.findField(name, BoolField.class, null);
+    data.add(new BoolDataHolder(value, field.index()));
+    return this;
   }
 
   @Override
@@ -125,6 +134,18 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
       throw new IllegalStateException("Cannot end root encoder");
     }
     return parent;
+  }
+
+  public ArrayEncoder<Boolean> bools(String name) {
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, BoolField.class);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new ArrayDataHolder(values, field.index()));
+    return new ArrayEncoder<Boolean>(values, this) {
+      @Override
+      protected DataHolder buildDataHolder(Boolean value) {
+        return new BoolDataHolder(value, field.index());
+      }
+    };
   }
 
   public ArrayEncoder<Integer> int32s(String name) {
