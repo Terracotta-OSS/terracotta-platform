@@ -19,12 +19,14 @@ import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
-import org.terracotta.runnel.encoding.StructArrayEncoder;
+import org.terracotta.runnel.encoding.PrimitiveEncodingSupport;
 import org.terracotta.runnel.encoding.StructArrayEncoderFunction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -82,11 +84,11 @@ public class StructArrayStructBuilderTest {
     StructArrayDecoder sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
-    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.<Type>enm("type").get(), is(Type.STRING));
     assertThat(sad.string("string"), is("one"));
     sad.next();
     assertThat(sad.string("key"), is("2"));
-    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.<Type>enm("type").get(), is(Type.STRING));
     assertThat(sad.string("string"), is("two"));
     sad.end();
 
@@ -95,19 +97,19 @@ public class StructArrayStructBuilderTest {
 
   @Test
   public void testReadAll_withLambda() throws Exception {
+    Map<String, String> stuff = new LinkedHashMap<String, String>();
+    stuff.put("1", "one");
+    stuff.put("2", "two");
+
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry", new StructArrayEncoderFunction() {
+        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>>() {
           @Override
-          public void encode(StructArrayEncoder encoder) {
+          public void encode(PrimitiveEncodingSupport<PrimitiveEncodingSupport> encoder, Map.Entry<String, String> entry) {
             encoder
-                  .string("key", "1")
-                  .enm("type", Type.STRING)
-                  .string("string", "one")
-                .next()
-                  .string("key", "2")
-                  .enm("type", Type.STRING)
-                  .string("string", "two");
+                .string("key", entry.getKey())
+                .enm("type", Type.STRING)
+                .string("string", entry.getValue());
           }
         })
         .int64("id", 999L)
