@@ -104,10 +104,12 @@ class TmsAgentImpl implements TmsAgent {
         // So this transform helps setting a better context from the current topology if we find the element into the current topo.
         entityNotifications.stream().peek(message -> {
           if ("NOTIFICATION".equals(message.getType())) {
-            ContextualNotification notification = message.unwrap(ContextualNotification.class);
-            stripe.getServerEntity(notification.getContext())
-                .map(ServerEntity::getContext)
-                .ifPresent(notification::setContext);
+            Collection<ContextualNotification> notifications = message.unwrap(ContextualNotification.class);
+            for (ContextualNotification notification : notifications) {
+              stripe.getServerEntity(notification.getContext())
+                  .map(ServerEntity::getContext)
+                  .ifPresent(notification::setContext);
+            }
           }
         }),
         Stream.concat(

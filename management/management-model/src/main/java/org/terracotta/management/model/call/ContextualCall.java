@@ -17,6 +17,7 @@ package org.terracotta.management.model.call;
 
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.Contextual;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -24,11 +25,11 @@ import java.util.Arrays;
 /**
  * @author Mathieu Carbou
  */
-public class ContextualCall implements Serializable {
+public class ContextualCall implements Serializable, Contextual {
 
   private static final long serialVersionUID = 1;
 
-  private final Context context;
+  private Context context;
   private final String capability;
   private final String methodName;
   private final Class<?> returnType;
@@ -46,8 +47,14 @@ public class ContextualCall implements Serializable {
     return capability;
   }
 
+  @Override
   public Context getContext() {
     return context;
+  }
+
+  @Override
+  public void setContext(Context context) {
+    this.context = Objects.requireNonNull(context);
   }
 
   public String getMethodName() {

@@ -16,12 +16,14 @@
 package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.Contextual;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -63,6 +65,13 @@ public final class Cluster implements Contextual, Serializable {
 
   public int getStripeCount() {
     return stripes.size();
+  }
+
+  public Stripe getSingleStripe() throws NoSuchElementException {
+    if (getStripeCount() != 1) {
+      throw new NoSuchElementException();
+    }
+    return stripeStream().findFirst().get();
   }
 
   public Cluster addClient(Client client) {
@@ -173,6 +182,11 @@ public final class Cluster implements Contextual, Serializable {
   @Override
   public Context getContext() {
     return Context.empty();
+  }
+
+  @Override
+  public void setContext(Context context) {
+    // do nothing: we do not change teh context of a cluster object
   }
 
   @Override

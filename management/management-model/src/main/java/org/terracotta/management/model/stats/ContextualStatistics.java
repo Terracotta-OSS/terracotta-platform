@@ -17,6 +17,7 @@ package org.terracotta.management.model.stats;
 
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.Contextual;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -30,7 +31,7 @@ import java.util.NoSuchElementException;
  *
  * @author Mathieu Carbou
  */
-public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Serializable {
+public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Serializable, Contextual {
 
   private static final long serialVersionUID = 1;
 
@@ -105,10 +106,12 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Se
     return filtered;
   }
 
+  @Override
   public void setContext(Context context) {
     this.context = Objects.requireNonNull(context);
   }
 
+  @Override
   public Context getContext() {
     return context;
   }

@@ -17,6 +17,7 @@ package org.terracotta.management.model.message;
 
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.cluster.ClientIdentifier;
+import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
@@ -31,7 +32,7 @@ public class DefaultManagementCallMessage extends DefaultMessage implements Mana
   private final String managementCallIdentifier;
   private final ClientIdentifier from;
 
-  public DefaultManagementCallMessage(ClientIdentifier from, String managementCallIdentifier, Sequence sequence, String messageType, Serializable data) {
+  public DefaultManagementCallMessage(ClientIdentifier from, String managementCallIdentifier, Sequence sequence, String messageType, Contextual... data) {
     super(sequence, messageType, data);
     this.managementCallIdentifier = Objects.requireNonNull(managementCallIdentifier);
     this.from = Objects.requireNonNull(from);

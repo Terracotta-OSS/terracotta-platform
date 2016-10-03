@@ -49,6 +49,7 @@ import org.terracotta.passthrough.PassthroughServer;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -133,10 +134,10 @@ public class ManagementAgentServiceTest {
       assertNotNull(clientIdentifier.getConnectionUid());
 
       managementAgent.bridge(registry);
-      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_REGISTRY_UPDATED")));
+      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(Collections.singletonList(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_REGISTRY_UPDATED"))));
 
       managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
-      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED")));
+      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(Collections.singletonList(new ContextualNotification(Context.create("clientId", clientIdentifier.getClientId()), "CLIENT_TAGS_UPDATED"))));
 
       ContextualNotification notif = new ContextualNotification(Context.create("key", "value"), "EXPLODED");
       ContextualStatistics stat = new ContextualStatistics("my-capability", Context.create("key", "value"), Collections.singletonMap("my-stat", new Counter(1L, NumberUnit.COUNT)));
@@ -164,8 +165,8 @@ public class ManagementAgentServiceTest {
       assertArrayEquals(registry.getCapabilities().toArray(new Capability[0]), (Capability[]) children.get("capabilities"));
       assertEquals(registry.getContextContainer(), children.get("contextContainer"));
 
-      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(notif));
-      assertThat(consumer.readBuffer("client-statistics", Message.class).unwrap(ContextualStatistics[].class), equalTo(new ContextualStatistics[]{stat, stat}));
+      assertThat(consumer.readBuffer("client-notifications", Message.class).unwrap(ContextualNotification.class), equalTo(Collections.singletonList(notif)));
+      assertThat(consumer.readBuffer("client-statistics", Message.class).unwrap(ContextualStatistics.class), equalTo(Arrays.asList(stat, stat)));
 
       runManagementCallFromAnotherClient(clientIdentifier);
     }

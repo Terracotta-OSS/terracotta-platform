@@ -15,10 +15,12 @@
  */
 package org.terracotta.management.model.message;
 
+import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Mathieu Carbou
@@ -27,19 +29,20 @@ public class DefaultMessage implements Message, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  private final Serializable data;
+  private final Contextual[] data;
   private final Sequence sequence;
   private final String messageType;
 
-  public DefaultMessage(Sequence sequence, String messageType, Serializable data) {
+  public DefaultMessage(Sequence sequence, String messageType, Contextual... data) {
     this.sequence = sequence;
     this.messageType = messageType;
     this.data = data;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public <T> T unwrap(Class<T> type) {
-    return type.cast(data);
+  public <T extends Contextual> List<T> unwrap(Class<T> type) {
+    return (List<T>) Arrays.asList(data);
   }
 
   @Override

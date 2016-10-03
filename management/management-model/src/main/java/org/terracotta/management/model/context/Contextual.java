@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.model.cluster;
+package org.terracotta.management.model.context;
 
-import org.terracotta.management.model.context.Context;
+import java.io.Serializable;
 
 /**
  * @author Mathieu Carbou
  */
-public interface Contextual {
+public interface Contextual extends Serializable {
   Context getContext();
+
+  void setContext(Context context);
 }

@@ -175,15 +175,15 @@ public class TmsAgentTest {
       System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
 
       assertEquals("TOPOLOGY", messages.get(messages.size() - 1).getType());
-      assertEquals(cluster, messages.get(messages.size() - 1).unwrap(Cluster.class));
+      assertEquals(cluster, messages.get(messages.size() - 1).unwrap(Cluster.class).get(0));
 
       assertEquals("NOTIFICATION", messages.get(0).getType());
-      ContextualNotification firstNotif = messages.get(0).unwrap(ContextualNotification.class);
+      ContextualNotification firstNotif = messages.get(0).unwrap(ContextualNotification.class).get(0);
       assertEquals("SERVER_ENTITY_CREATED", firstNotif.getType());
       assertEquals(expectedCluster.serverEntityStream().findFirst().get().getContext(), firstNotif.getContext());
 
       assertEquals("NOTIFICATION", messages.get(1).getType());
-      ContextualNotification secondNotif = messages.get(1).unwrap(ContextualNotification.class);
+      ContextualNotification secondNotif = messages.get(1).unwrap(ContextualNotification.class).get(0);
       assertEquals("SERVER_ENTITY_FETCHED", secondNotif.getType());
       assertEquals(expectedCluster.serverEntityStream().findFirst().get().getContext(), firstNotif.getContext());
       assertEquals(
@@ -222,11 +222,11 @@ public class TmsAgentTest {
         for (int i = 0; i < 5; i++) {
           assertEquals("NOTIFICATION", messages.get(0).getType());
         }
-        assertEquals("CLIENT_CONNECTED", messages.get(0).unwrap(ContextualNotification.class).getType());
-        assertEquals("SERVER_ENTITY_CREATED", messages.get(1).unwrap(ContextualNotification.class).getType());
-        assertEquals("SERVER_ENTITY_FETCHED", messages.get(2).unwrap(ContextualNotification.class).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(3).unwrap(ContextualNotification.class).getType());
-        assertEquals("CLIENT_TAGS_UPDATED", messages.get(4).unwrap(ContextualNotification.class).getType());
+        assertEquals("CLIENT_CONNECTED", messages.get(0).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("SERVER_ENTITY_CREATED", messages.get(1).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("SERVER_ENTITY_FETCHED", messages.get(2).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(3).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("CLIENT_TAGS_UPDATED", messages.get(4).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("TOPOLOGY", messages.get(5).getType());
 
         registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
@@ -237,8 +237,8 @@ public class TmsAgentTest {
         assertEquals(3, messages.size());
         assertEquals("NOTIFICATION", messages.get(0).getType());
         assertEquals("NOTIFICATION", messages.get(1).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(0).unwrap(ContextualNotification.class).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(1).unwrap(ContextualNotification.class).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(0).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(1).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("TOPOLOGY", messages.get(2).getType());
       }
 
