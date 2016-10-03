@@ -15,14 +15,14 @@
  */
 package org.terracotta.management.entity.monitoring.client;
 
-import org.terracotta.management.entity.monitoring.MonitoringService;
+import org.terracotta.management.entity.monitoring.MonitoringServiceProxy;
 import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
 
 /**
  * @author Mathieu Carbou
  */
-public class MonitoringServiceEntityClientService extends ProxyEntityClientService<MonitoringServiceEntity, Void> {
+public class MonitoringServiceEntityClientService extends ProxyEntityClientService<MonitoringServiceProxyEntity, Void> {
   public MonitoringServiceEntityClientService() {
-    super(MonitoringServiceEntity.class, MonitoringService.class, Void.class);
+    super(MonitoringServiceProxyEntity.class, MonitoringServiceProxy.class, Void.class);
   }
 }

@@ -22,65 +22,59 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntity;
 import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityClientService;
 import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityFactory;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceProxyEntity;
 import org.terracotta.management.entity.monitoring.server.MonitoringServiceEntityServerService;
-import org.terracotta.monitoring.PlatformMonitoringConstants;
-import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
 import java.net.URI;
-import java.util.Collection;
 import java.util.Properties;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
-public class MonitoringServiceTest {
-
-  private static final String SERVERS_ROOT_NAME = "servers";
-  private static final String[] SERVERS_PATH = {PlatformMonitoringConstants.PLATFORM_ROOT_NAME, SERVERS_ROOT_NAME};
+public class MonitoringServiceProxyTest {
 
   private PassthroughClusterControl stripeControl;
 
   @Before
   public void setUp() throws Exception {
     PassthroughServer activeServer = new PassthroughServer();
+    activeServer.setServerName("server-1");
 
     activeServer.registerServerEntityService(new MonitoringServiceEntityServerService());
     activeServer.registerClientEntityService(new MonitoringServiceEntityClientService());
 
-    stripeControl = new PassthroughClusterControl("server-1", activeServer);
+    stripeControl = new PassthroughClusterControl("stripe-1", activeServer);
   }
 
   @After
   public void tearDown() throws Exception {
-    if(stripeControl != null) {
+    if (stripeControl != null) {
       stripeControl.tearDown();
     }
   }
 
   @Test
   public void test_read_tree() throws Exception {
-    try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+    try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
 
       // create, fetch and use the custom entity
 
       MonitoringServiceEntityFactory monitoringServiceEntityFactory = new MonitoringServiceEntityFactory(connection);
-      MonitoringServiceEntity entity = monitoringServiceEntityFactory.retrieveOrCreate(getClass().getSimpleName());
+      MonitoringServiceProxyEntity entity = monitoringServiceEntityFactory.retrieveOrCreate(getClass().getSimpleName());
 
-      // 0 is a special number: its the consumer ID of the platform
-      Collection<String> serverNodeIds = entity.getChildNamesForNode(0, SERVERS_PATH);
-
-      Object o = entity.getValueForNode(0, SERVERS_PATH, serverNodeIds.iterator().next());
-      System.out.println(o);
-      assertThat(o, instanceOf(PlatformServer.class));
+      Cluster cluster = entity.readTopology();
+      assertThat(cluster.getStripeCount(), equalTo(1));
+      assertThat(cluster.getStripes().values().iterator().next().getServerCount(), equalTo(1));
+      assertThat(cluster.serverStream().findAny().get().getServerName(), equalTo("server-1"));
     }
   }
 

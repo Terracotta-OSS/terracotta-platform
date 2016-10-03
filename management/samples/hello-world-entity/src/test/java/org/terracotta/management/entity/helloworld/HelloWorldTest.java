@@ -22,29 +22,28 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.management.entity.management.ManagementAgentConfig;
-import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
-import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
-import org.terracotta.management.entity.management.client.ManagementAgentService;
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntity;
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntityClientService;
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntityFactory;
 import org.terracotta.management.entity.helloworld.client.management.HelloWorldManagementRegistry;
 import org.terracotta.management.entity.helloworld.server.HelloWorldEntityServerService;
-import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntity;
+import org.terracotta.management.entity.management.ManagementAgentConfig;
+import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
+import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
+import org.terracotta.management.entity.management.client.ManagementAgentService;
+import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
 import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityClientService;
 import org.terracotta.management.entity.monitoring.client.MonitoringServiceEntityFactory;
+import org.terracotta.management.entity.monitoring.client.MonitoringServiceProxyEntity;
 import org.terracotta.management.entity.monitoring.server.MonitoringServiceEntityServerService;
-import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
 import org.terracotta.management.model.call.Parameter;
-import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.cluster.Client;
+import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -70,7 +69,7 @@ public class HelloWorldTest {
     activeServer.registerServerEntityService(new MonitoringServiceEntityServerService());
     activeServer.registerClientEntityService(new MonitoringServiceEntityClientService());
 
-    stripeControl = new PassthroughClusterControl("server-1", activeServer);
+    stripeControl = new PassthroughClusterControl("stripe-1", activeServer);
   }
 
   @After
@@ -80,7 +79,7 @@ public class HelloWorldTest {
 
   @Test
   public void test_hello_world_management() throws Exception {
-    try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+    try (Connection connection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
 
       // create, fetch and use the custom entity
 
@@ -113,15 +112,17 @@ public class HelloWorldTest {
       // check it has been exposed properly
 
       MonitoringServiceEntityFactory entityFactory = new MonitoringServiceEntityFactory(connection);
-      MonitoringServiceEntity consumerEntity = entityFactory.retrieveOrCreate(getClass().getSimpleName());
-      long consumerId = consumerEntity.getConsumerId(ManagementAgentConfig.ENTITY_TYPE, ManagementAgentEntityFactory.ENTITYNAME);
-      String clientIdentifier = consumerEntity.getChildNamesForNode(consumerId, "management", "clients").iterator().next();
+      MonitoringServiceProxyEntity consumerEntity = entityFactory.retrieveOrCreate(getClass().getSimpleName());
 
-      ContextContainer contextContainer = (ContextContainer) consumerEntity.getValueForNode(consumerId, "management", "clients", clientIdentifier, "registry", "contextContainer");
-      Capability[] capabilities = (Capability[]) consumerEntity.getValueForNode(consumerId, "management", "clients", clientIdentifier, "registry", "capabilities");
+      ManagementRegistry registry = consumerEntity.readTopology()
+          .clientStream()
+          .filter(Client::isManageable)
+          .map(client -> client.getManagementRegistry().get())
+          .findFirst()
+          .get();
 
-      assertEquals(managementRegistry.getContextContainer(), contextContainer);
-      assertEquals(managementRegistry.getCapabilities(), Arrays.asList(capabilities));
+      assertEquals(managementRegistry.getContextContainer(), registry.getContextContainer());
+      assertEquals(managementRegistry.getCapabilities(), registry.getCapabilities());
     }
   }
 

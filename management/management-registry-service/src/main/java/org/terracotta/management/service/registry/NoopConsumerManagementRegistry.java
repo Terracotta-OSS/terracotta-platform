@@ -17,16 +17,17 @@ package org.terracotta.management.service.registry;
 
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.AbstractManagementRegistry;
+import org.terracotta.management.registry.ManagementProvider;
 
 /**
  * @author Mathieu Carbou
  */
 class NoopConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
 
-  private final long consumerId;
+  private final ConsumerManagementRegistryConfiguration configuration;
 
-  NoopConsumerManagementRegistry(long consumerId) {
-    this.consumerId = consumerId;
+  NoopConsumerManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
+    this.configuration = configuration;
   }
 
   @Override
@@ -35,11 +36,12 @@ class NoopConsumerManagementRegistry extends AbstractManagementRegistry implemen
 
   @Override
   public void close() {
+    configuration.getProviders().forEach(ManagementProvider::close);
   }
 
   @Override
   public ContextContainer getContextContainer() {
-    return new ContextContainer("entityConsumerId", String.valueOf(consumerId));
+    throw new UnsupportedOperationException();
   }
 
 }

@@ -17,12 +17,12 @@ package org.terracotta.management.entity.management.client;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.management.entity.management.ManagementAgent;
-import org.terracotta.management.entity.management.ManagementEvent;
+import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.voltron.proxy.client.messages.ServerMessageAware;
 
 /**
  * @author Mathieu Carbou
  */
-public interface ManagementAgentEntity extends ManagementAgent, Entity, ServerMessageAware<ManagementEvent> {
+public interface ManagementAgentEntity extends ManagementAgent, Entity, ServerMessageAware<ManagementCallMessage> {
 
 }

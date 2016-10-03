@@ -13,40 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.entity.monitoring;
 
-import com.tc.classloader.CommonComponent;
-import org.terracotta.management.sequence.Sequence;
+import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.message.Message;
 
-import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
-public interface PlatformNotification extends Serializable {
+public interface MonitoringServiceProxy {
 
-  @CommonComponent
-  enum Type {
-    SERVER_ENTITY_CREATED,
-    SERVER_ENTITY_DESTROYED,
+  Cluster readTopology();
 
-    SERVER_ENTITY_FETCHED,
-    SERVER_ENTITY_UNFETCHED,
+  void createMessageBuffer(int size);
 
-    CLIENT_CONNECTED,
-    CLIENT_DISCONNECTED,
+  Message readMessageBuffer();
 
-    SERVER_JOINED,
-    SERVER_LEFT,
-    SERVER_STATE_CHANGED,
-  }
+  List<Message> drainMessageBuffer();
 
-  Sequence getSequence();
+  void clearMessageBuffer();
 
-  long getIndex();
-
-  Type getType();
-
-  <T extends Serializable> T getSource(Class<T> type);
 }

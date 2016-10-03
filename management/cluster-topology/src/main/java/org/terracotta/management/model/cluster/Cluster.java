@@ -137,8 +137,8 @@ public final class Cluster implements Contextual, Serializable {
     return stripe;
   }
 
-  public Optional<ServerEntity> getServerEntity(Context context) {
-    return getStripe(context).flatMap(s -> s.getServerEntity(context));
+  public Optional<ServerEntity> getActiveServerEntity(Context context) {
+    return getStripe(context).flatMap(s -> s.getActiveServerEntity(context));
   }
 
   public Optional<Server> getServer(Context context) {

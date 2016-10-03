@@ -180,6 +180,9 @@ public final class Connection extends AbstractNode<Client> implements Serializab
   }
 
   public static Connection create(String logicalConnectionUid, Server server, Endpoint clientEndpoint) {
+    Objects.requireNonNull(logicalConnectionUid);
+    Objects.requireNonNull(server);
+    Objects.requireNonNull(clientEndpoint);
     return new Connection(
         key(logicalConnectionUid, server, clientEndpoint),
         logicalConnectionUid,

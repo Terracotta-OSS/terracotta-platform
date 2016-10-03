@@ -15,26 +15,20 @@
  */
 package org.terracotta.management.entity.monitoring.server;
 
-import org.terracotta.management.entity.monitoring.MonitoringService;
-import org.terracotta.management.service.monitoring.IMonitoringConsumer;
+import org.terracotta.management.entity.monitoring.MonitoringServiceProxy;
+import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 /**
  * @author Mathieu Carbou
  */
-class MonitoringServiceEntity extends ProxiedServerEntity<MonitoringService> {
+class MonitoringServiceEntity extends ProxiedServerEntity<MonitoringServiceProxy> {
 
-  private final IMonitoringConsumer monitoringConsumer;
+  private final MonitoringService monitoringService;
 
-  MonitoringServiceEntity(IMonitoringConsumer monitoringConsumer) {
-    super(new MonitoringServiceImpl(monitoringConsumer));
-    this.monitoringConsumer = monitoringConsumer;
-  }
-
-  @Override
-  public void destroy() {
-    monitoringConsumer.close();
-    super.destroy();
+  MonitoringServiceEntity(MonitoringService monitoringService) {
+    super(new MonitoringServiceProxyImpl(monitoringService));
+    this.monitoringService = monitoringService;
   }
 
 }

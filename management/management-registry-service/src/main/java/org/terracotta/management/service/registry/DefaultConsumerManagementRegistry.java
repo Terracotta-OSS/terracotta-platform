@@ -16,13 +16,10 @@
 package org.terracotta.management.service.registry;
 
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.model.message.DefaultMessage;
-import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.registry.AbstractManagementRegistry;
-import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -31,17 +28,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
+class DefaultConsumerManagementRegistry extends NoopConsumerManagementRegistry {
 
-  private final IMonitoringProducer producer;
-  private final SequenceGenerator sequenceGenerator;
   private final AtomicBoolean dirty = new AtomicBoolean();
   private final ContextContainer contextContainer;
+  private final MonitoringService monitoringService;
 
-  DefaultConsumerManagementRegistry(long consumerId, IMonitoringProducer producer, SequenceGenerator sequenceGenerator) {
-    this.producer = Objects.requireNonNull(producer);
-    this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
-    this.contextContainer = new ContextContainer("entityConsumerId", String.valueOf(consumerId));
+  DefaultConsumerManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
+    super(configuration);
+    this.monitoringService = Objects.requireNonNull(configuration.getServiceRegistry().getService(new MonitoringServiceConfiguration(configuration.getServiceRegistry())));
+    this.contextContainer = new ContextContainer(ServerEntity.KEY, this.monitoringService.getServerEntityIdentifier().getId());
+    configuration.getProviders().forEach(this::addManagementProvider);
   }
 
   @Override
@@ -65,24 +62,10 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
   @Override
   public synchronized void refresh() {
     if (dirty.compareAndSet(true, false)) {
-      String[] path = {"registry"};
       Collection<Capability> capabilities = getCapabilities();
       Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
-
-      producer.addNode(new String[0], path[0], null);
-      producer.addNode(path, "contextContainer", contextContainer);
-      producer.addNode(path, "capabilities", capabilitiesArray);
-
-      producer.pushBestEffortsData("entity-notifications", new DefaultMessage(
-          sequenceGenerator.next(),
-          "NOTIFICATION",
-          new ContextualNotification(Context.create(contextContainer.getName(), contextContainer.getValue()), "ENTITY_REGISTRY_UPDATED")));
+      monitoringService.exposeServerEntityManagementRegistry(contextContainer, capabilitiesArray);
     }
-  }
-
-  @Override
-  public void close() {
-    producer.removeNode(new String[0], "registry");
   }
 
   @Override

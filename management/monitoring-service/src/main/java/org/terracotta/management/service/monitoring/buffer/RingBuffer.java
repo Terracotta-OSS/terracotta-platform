@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.service.monitoring.buffer;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -50,13 +50,15 @@ public class RingBuffer<V> implements ReadWriteBuffer<V> {
   }
 
   @Override
-  public void put(V value) {
+  public V put(V value) {
     if (value == null) {
       throw new NullPointerException();
     }
+    V removed = null;
     while (!queue.offer(value)) {
-      queue.poll();
+      removed = queue.poll();
     }
+    return removed;
   }
 
   @Override

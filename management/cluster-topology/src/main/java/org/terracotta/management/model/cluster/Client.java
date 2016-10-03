@@ -61,6 +61,11 @@ public final class Client extends AbstractNode<Cluster> implements Serializable 
     return this;
   }
 
+
+  public boolean isManageable() {
+    return managementRegistry != null;
+  }
+
   public Collection<String> getTags() {
     return tags;
   }

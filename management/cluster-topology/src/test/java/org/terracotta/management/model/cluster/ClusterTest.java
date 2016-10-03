@@ -69,10 +69,10 @@ public class ClusterTest extends AbstractTest {
 
   @Test
   public void test_nodes_path() throws UnknownHostException {
-    assertEquals(3, cluster1.getServerEntity(ehcache_server_entity.getContext()).get().getNodePath().size());
+    assertEquals(3, cluster1.getActiveServerEntity(ehcache_server_entity.getContext()).get().getNodePath().size());
     assertEquals(
         "stripe-1/server-1/ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-        cluster1.getServerEntity(ehcache_server_entity.getContext()).get().getStringPath());
+        cluster1.getActiveServerEntity(ehcache_server_entity.getContext()).get().getStringPath());
 
     assertEquals(6, ehcache_server_entity.getContext().size());
 

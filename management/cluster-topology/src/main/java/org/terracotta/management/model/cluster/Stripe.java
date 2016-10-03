@@ -110,15 +110,15 @@ public final class Stripe extends AbstractNode<Cluster> implements Serializable 
     return server;
   }
 
-  public Optional<ServerEntity> getServerEntity(Context context) {
+  public Optional<ServerEntity> getActiveServerEntity(Context context) {
     return getActiveServer().flatMap(s -> s.getServerEntity(context));
   }
 
-  public Optional<ServerEntity> getServerEntity(ServerEntityIdentifier identifier) {
+  public Optional<ServerEntity> getActiveServerEntity(ServerEntityIdentifier identifier) {
     return getActiveServer().flatMap(s -> s.getServerEntity(identifier));
   }
 
-  public Optional<ServerEntity> getServerEntity(String name, String type) {
+  public Optional<ServerEntity> getActiveServerEntity(String name, String type) {
     return getActiveServer().flatMap(s -> s.getServerEntity(name, type));
   }
 

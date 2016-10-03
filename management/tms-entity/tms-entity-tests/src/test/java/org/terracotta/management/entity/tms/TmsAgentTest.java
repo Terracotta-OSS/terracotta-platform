@@ -85,7 +85,7 @@ public class TmsAgentTest {
     activeServer.registerClientEntityService(new TmsAgentEntityClientService());
     activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
     activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
-    stripeControl = new PassthroughClusterControl("server-1", activeServer);
+    stripeControl = new PassthroughClusterControl("stripe-1", activeServer);
 
     clientIdentifier = ClientIdentifier.create(
         Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]),
@@ -94,7 +94,7 @@ public class TmsAgentTest {
         "uuid");
 
     expectedCluster = Cluster.create()
-        .addStripe(Stripe.create("stripe-1")
+        .addStripe(Stripe.create("SINGLE")
             .addServer(Server.create("server-1")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(9510)
@@ -113,7 +113,7 @@ public class TmsAgentTest {
     client = expectedCluster.getClients().values().iterator().next();
     connection = Connection.create(
         "uuid",
-        expectedCluster.getStripe("stripe-1").get().getServerByName("server-1").get(),
+        expectedCluster.getStripe("SINGLE").get().getServerByName("server-1").get(),
         Endpoint.create(InetAddress.getLocalHost().getHostAddress(), -1) // values set by passthrough system
     );
     client.addConnection(connection);
@@ -134,7 +134,7 @@ public class TmsAgentTest {
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
-    try (org.terracotta.connection.Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+    try (org.terracotta.connection.Connection connection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
       EntityRef<TmsAgentEntity, TmsAgentConfig> ref = connection.getEntityRef(TmsAgentEntity.class, TmsAgentVersion.LATEST.version(), getClass().getSimpleName());
       ref.create(new TmsAgentConfig());
 
@@ -144,7 +144,7 @@ public class TmsAgentTest {
 
       // reset runtime data
       expectedCluster.serverStream().forEach(expectedServer -> {
-        Server server = cluster.getStripe("stripe-1").get().getServerByName(expectedServer.getServerName()).get();
+        Server server = cluster.getSingleStripe().getServerByName(expectedServer.getServerName()).get();
         expectedServer.setUpTimeSec(server.getUpTimeSec());
         expectedServer.setStartTime(server.getStartTime());
         expectedServer.setActivateTime(server.getActivateTime());
@@ -202,7 +202,7 @@ public class TmsAgentTest {
       };
       registry.addManagementProvider(new MyManagementProvider());
 
-      try (org.terracotta.connection.Connection secondConnection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+      try (org.terracotta.connection.Connection secondConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
 
         ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(secondConnection).retrieveOrCreate(new ManagementAgentConfig()));
         managementAgent.setManagementCallExecutor(executorService);

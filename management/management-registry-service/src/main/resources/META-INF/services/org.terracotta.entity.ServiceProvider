@@ -13,4 +13,4 @@
 #  limitations under the License.
 #
 
-org.terracotta.management.service.registry.ManagementRegistryServiceProvider
+org.terracotta.management.service.registry.ConsumerManagementRegistryProvider

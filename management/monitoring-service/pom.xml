@@ -42,8 +42,25 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>voltron-proxy</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- these libs are on server classpath -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>management-model</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>sequence-generator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>cluster-topology</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -56,11 +73,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tc-config-parser</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -95,6 +107,8 @@
               <artifactSet>
                 <excludes>
                   <exclude>org.terracotta.management:sequence-generator</exclude>
+                  <exclude>org.terracotta.management:management-model</exclude>
+                  <exclude>org.terracotta.management:cluster-topology</exclude>
                 </excludes>
               </artifactSet>
             </configuration>

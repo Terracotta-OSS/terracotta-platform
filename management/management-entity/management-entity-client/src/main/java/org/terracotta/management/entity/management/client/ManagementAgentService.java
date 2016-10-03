@@ -15,16 +15,15 @@
  */
 package org.terracotta.management.entity.management.client;
 
-import org.terracotta.management.entity.management.ManagementCallEvent;
-import org.terracotta.management.entity.management.ManagementCallReturnEvent;
-import org.terracotta.management.entity.management.ManagementEvent;
 import org.terracotta.management.model.Objects;
+import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.ManagementProvider;
@@ -85,43 +84,43 @@ public class ManagementAgentService implements Closeable {
   public ManagementAgentService(final ManagementAgentEntity entity) {
     this.clientIdentifier = get(entity.getClientIdentifier(null), 20000);
     this.entity = Objects.requireNonNull(entity);
-    this.entity.registerListener(new MessageListener<ManagementEvent>() {
+    this.entity.registerListener(new MessageListener<ManagementCallMessage>() {
       @Override
-      public void onMessage(ManagementEvent message) {
-        if (message instanceof ManagementCallEvent) {
-          final ManagementCallEvent e = (ManagementCallEvent) message;
+      public void onMessage(final ManagementCallMessage message) {
+        if (message.getType().equals("MANAGEMENT_CALL")) {
+          final ContextualCall contextualCall = message.unwrap(ContextualCall.class).get(0);
           managementCallExecutor.execute(new Runnable() {
             @Override
             public void run() {
               try {
                 // check again because in another thread
                 if (bridging) {
-                  ContextualReturn<?> aReturn = registry.withCapability(e.getCapabilityName())
-                      .call(e.getMethodName(), e.getReturnType(), e.getParameters())
-                      .on(e.getContext())
+                  ContextualReturn<?> aReturn = registry.withCapability(contextualCall.getCapability())
+                      .call(contextualCall.getMethodName(), contextualCall.getReturnType(), contextualCall.getParameters())
+                      .on(contextualCall.getContext())
                       .build()
                       .execute()
                       .getSingleResult();
                   // check again in case the management call takes some time
                   if (bridging) {
-                    get(entity.callReturn(null, e.getFrom(), e.getId(), aReturn), timeout);
+                    get(entity.callReturn(null, message.getFrom(), message.getManagementCallIdentifier(), aReturn), timeout);
                   }
                 }
               } catch (RuntimeException err) {
-                LOGGER.log(Level.WARNING, "Error on management call execution or result sending for " + e + ". Error: " + err.getMessage(), e);
+                LOGGER.log(Level.WARNING, "Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
               }
             }
           });
 
-        } else if (message instanceof ManagementCallReturnEvent) {
-          final ManagementCallReturnEvent e = (ManagementCallReturnEvent) message;
+        } else if (message.getType().equals("MANAGEMENT_CALL_RETURN")) {
+          final ContextualReturn<?> aReturn = message.unwrap(ContextualReturn.class).get(0);
           managementCallExecutor.execute(new Runnable() {
             @Override
             public void run() {
               try {
-                contextualReturnListener.onContextualReturn(e.getFrom(), e.getId(), e.getContextualReturn());
+                contextualReturnListener.onContextualReturn(message.getFrom(), message.getManagementCallIdentifier(), aReturn);
               } catch (RuntimeException err) {
-                LOGGER.log(Level.WARNING, "Error on management call result listener for " + e + ". Error: " + err.getMessage(), e);
+                LOGGER.log(Level.WARNING, "Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
               }
             }
           });

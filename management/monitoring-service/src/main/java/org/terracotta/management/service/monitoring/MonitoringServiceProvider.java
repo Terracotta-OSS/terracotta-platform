@@ -22,33 +22,34 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.management.service.monitoring.platform.IStripeMonitoringAdapter;
 import org.terracotta.monitoring.IStripeMonitoring;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 /**
+ * Provides 2 services: {@link IStripeMonitoring} for the platform, {@link MonitoringService} for the consumers (server entities)
+ *
  * @author Mathieu Carbou
  */
 @BuiltinService
 public class MonitoringServiceProvider implements ServiceProvider {
 
+  private static final long PLATFORM_CONSUMERID = 0;
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
-      IMonitoringConsumer.class,
-      IStripeMonitoring.class
+      MonitoringService.class,
+      IStripeMonitoring.class,
+      org.terracotta.management.service.monitoring.platform.IStripeMonitoring.class
   );
 
-  private final VoltronMonitoringService voltronMonitoringService;
-
-  public MonitoringServiceProvider() {
-    SequenceGenerator generator = new BoundaryFlakeSequenceGenerator();
-    this.voltronMonitoringService = new VoltronMonitoringService(generator);
-  }
+  private final SequenceGenerator defaultSequenceGenerator = new BoundaryFlakeSequenceGenerator();
+  private final DefaultStripeMonitoring stripeMonitoring = new DefaultStripeMonitoring(defaultSequenceGenerator);
+  private final IStripeMonitoringAdapter adapter = new IStripeMonitoringAdapter(stripeMonitoring);
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration) {
-    // useless for a @BuiltinService
+    // useless for a @BuiltinService until https://github.com/Terracotta-OSS/terracotta-apis/issues/152 is fixed
     return true;
   }
 
@@ -57,15 +58,27 @@ public class MonitoringServiceProvider implements ServiceProvider {
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
-    if (IStripeMonitoring.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(voltronMonitoringService.getProducer(consumerID));
+    // adapt the IStripeMonitoring interface for platform since this is not the one we would expect to use at the moment
+    if (IStripeMonitoring.class.isAssignableFrom(serviceType) && consumerID == PLATFORM_CONSUMERID) {
+      return serviceType.cast(adapter);
     }
 
-    if (IMonitoringConsumer.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(voltronMonitoringService.getConsumer(consumerID));
+    if (org.terracotta.management.service.monitoring.platform.IStripeMonitoring.class.isAssignableFrom(serviceType) && consumerID == PLATFORM_CONSUMERID) {
+      return serviceType.cast(stripeMonitoring);
     }
 
-    throw new IllegalStateException("Unknown service type " + serviceType.getName());
+    if (MonitoringService.class.isAssignableFrom(serviceType)) {
+
+      if (configuration instanceof MonitoringServiceConfiguration) {
+        return serviceType.cast(stripeMonitoring.getOrCreateMonitoringService(consumerID, (MonitoringServiceConfiguration) configuration));
+
+      } else {
+        throw new IllegalArgumentException("Missing configuration: " + MonitoringServiceConfiguration.class.getSimpleName());
+      }
+
+    } else {
+      throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
+    }
   }
 
   @Override
@@ -75,7 +88,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   @Override
   public void clear() throws ServiceProviderCleanupException {
-    voltronMonitoringService.clear();
+    stripeMonitoring.clear();
   }
 
 }

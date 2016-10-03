@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.service.monitoring.buffer;
+
+import com.tc.classloader.CommonComponent;
 
 /**
  * @author Mathieu Carbou
  */
-class Config {
+@CommonComponent
+public interface ReadWriteBuffer<V> extends ReadOnlyBuffer<V> {
 
-  static final boolean DEBUG = Boolean.getBoolean("org.terracotta.management.service.monitoring.VoltronMonitoringService.DEBUG");
+  /**
+   * Put a value in the buffer, making some space by discarding some other values if necessary
+   *
+   * @return The value that has been removed, or null if none
+   */
+  V put(V value);
 
 }

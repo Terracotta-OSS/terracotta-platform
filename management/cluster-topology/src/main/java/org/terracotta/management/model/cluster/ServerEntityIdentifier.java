@@ -26,8 +26,8 @@ public class ServerEntityIdentifier implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private final String type; // type (service, client entity, server entity, etc)
-  private final String name; // type (entity type name)
+  private final String type; // the type of the entity (class type usually)
+  private final String name; // the name of the entity
 
   private ServerEntityIdentifier(String name, String type) {
     this.type = Objects.requireNonNull(type);
