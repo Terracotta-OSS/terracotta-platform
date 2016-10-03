@@ -75,7 +75,7 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
   public <E> Enm<E> enm(String name) {
     Enm<E> enm = (Enm<E>) fieldDecoder.decodeValue(name, (Class) EnumField.class);
     if (enm == null) {
-      return new Enm<E>();
+      return new Enm<E>(name);
     }
     return enm;
   }

@@ -21,17 +21,20 @@ import java.util.NoSuchElementException;
  * @author Ludovic Orban
  */
 public class Enm<E> {
+  private final String fieldName;
   private final boolean found;
   private final int raw;
   private final E value;
 
-  public Enm() {
+  public Enm(String fieldName) {
+    this.fieldName = fieldName;
     this.found = false;
     this.raw = 0;
     this.value = null;
   }
 
-  public Enm(int raw, E value) {
+  public Enm(String fieldName, int raw, E value) {
+    this.fieldName = fieldName;
     this.found = true;
     this.raw = raw;
     this.value = value;
@@ -39,10 +42,10 @@ public class Enm<E> {
 
   public E get() throws NoSuchElementException {
     if (!found) {
-      throw new NoSuchElementException("Enum was not found in stream");
+      throw new NoSuchElementException("Enum '" + fieldName + "' was not found in stream");
     }
     if (value == null) {
-      throw new NoSuchElementException("Enum '" + raw + "' cannot be mapped");
+      throw new NoSuchElementException("Enum '" + fieldName + "' value '" + raw + "' cannot be mapped");
     }
     return value;
   }
@@ -57,7 +60,7 @@ public class Enm<E> {
 
   public int raw() throws NoSuchElementException {
     if (!found) {
-      throw new NoSuchElementException("Enum was not found in stream");
+      throw new NoSuchElementException("Enum '" + fieldName + "' was not found in stream");
     }
     return raw;
   }
