@@ -65,8 +65,12 @@ public class StructDecoder implements PrimitiveDecodingSupport {
   }
 
   @Override
-  public <E> E enm(String name) {
-    return (E) fieldDecoder.decodeValue(name, (Class) EnumField.class);
+  public <E> Enm<E> enm(String name) {
+    Enm<E> enm = (Enm<E>) fieldDecoder.decodeValue(name, (Class) EnumField.class);
+    if (enm == null) {
+      return new Enm<E>();
+    }
+    return enm;
   }
 
   @Override
