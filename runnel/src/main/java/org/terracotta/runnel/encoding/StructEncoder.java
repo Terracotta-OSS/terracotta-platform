@@ -16,7 +16,9 @@
 package org.terracotta.runnel.encoding;
 
 import org.terracotta.runnel.decoding.fields.ArrayField;
+import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.CharField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
@@ -24,7 +26,9 @@ import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.encoding.dataholders.ArrayDataHolder;
+import org.terracotta.runnel.encoding.dataholders.BoolDataHolder;
 import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
+import org.terracotta.runnel.encoding.dataholders.CharDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
 import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
 import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
@@ -57,6 +61,20 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.data = values;
     this.parent = structEncoder;
+  }
+
+  @Override
+  public StructEncoder bool(String name, boolean value) {
+    BoolField field = fieldSearcher.findField(name, BoolField.class, null);
+    data.add(new BoolDataHolder(value, field.index()));
+    return this;
+  }
+
+  @Override
+  public StructEncoder chr(String name, char value) {
+    CharField field = fieldSearcher.findField(name, CharField.class, null);
+    data.add(new CharDataHolder(value, field.index()));
+    return this;
   }
 
   @Override
@@ -103,6 +121,16 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     return this;
   }
 
+  public StructEncoder struct(String name, StructEncoderFunction function) {
+    StructField field = fieldSearcher.findField(name, StructField.class, null);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new StructDataHolder(values, field.index()));
+    StructEncoder subStructEncoder = new StructEncoder(field, values, this);
+    function.encode(subStructEncoder);
+    subStructEncoder.end();
+    return this;
+  }
+
   public StructEncoder struct(String name) {
     StructField field = fieldSearcher.findField(name, StructField.class, null);
     List<DataHolder> values = new ArrayList<DataHolder>();
@@ -115,6 +143,30 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
       throw new IllegalStateException("Cannot end root encoder");
     }
     return parent;
+  }
+
+  public ArrayEncoder<Boolean> bools(String name) {
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, BoolField.class);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new ArrayDataHolder(values, field.index()));
+    return new ArrayEncoder<Boolean>(values, this) {
+      @Override
+      protected DataHolder buildDataHolder(Boolean value) {
+        return new BoolDataHolder(value, field.index());
+      }
+    };
+  }
+
+  public ArrayEncoder<Character> chrs(String name) {
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, CharField.class);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new ArrayDataHolder(values, field.index()));
+    return new ArrayEncoder<Character>(values, this) {
+      @Override
+      protected DataHolder buildDataHolder(Character value) {
+        return new CharDataHolder(value, field.index());
+      }
+    };
   }
 
   public ArrayEncoder<Integer> int32s(String name) {
@@ -172,12 +224,26 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     return new StructArrayEncoder(values, this, ((StructField) field.subField()));
   }
 
+  public StructEncoder structs(String name, StructArrayEncoderFunction function) {
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
+    List<StructDataHolder> values = new ArrayList<StructDataHolder>();
+    data.add(new ArrayDataHolder(values, field.index()));
+    StructArrayEncoder subStructArrayEncoder = new StructArrayEncoder(values, this, ((StructField) field.subField()));
+    function.encode(subStructArrayEncoder);
+    subStructArrayEncoder.end();
+    return this;
+  }
+
+
   /**
    * Encode the structure in the passed byte buffer.
    * @param bb the byte buffer to fill with the encoded structure.
    * @return the passed-in byte buffer.
    */
   public ByteBuffer encode(ByteBuffer bb) {
+    if (parent != null) {
+      throw new IllegalStateException("Cannot encode non-root encoder");
+    }
     int size = calculateSize();
     return performEncoding(bb, size);
   }
@@ -188,6 +254,9 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
    * @return the encoded structure in a new byte buffer.
    */
   public ByteBuffer encode() {
+    if (parent != null) {
+      throw new IllegalStateException("Cannot encode non-root encoder");
+    }
     int size = calculateSize();
     ByteBuffer bb = ByteBuffer.allocate(size + VLQ.encodedSize(size));
     return performEncoding(bb, size);

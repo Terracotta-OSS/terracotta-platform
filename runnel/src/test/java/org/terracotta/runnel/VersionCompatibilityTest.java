@@ -16,15 +16,18 @@
 package org.terracotta.runnel;
 
 import org.junit.Test;
+import org.terracotta.runnel.decoding.Enm;
 import org.terracotta.runnel.decoding.StructDecoder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
+import java.util.NoSuchElementException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * @author Ludovic Orban
@@ -60,6 +63,7 @@ public class VersionCompatibilityTest {
       .string("name", 150)
       .int64("id", 200)
       .enm("letter", 300, ENM_V2)
+      .enm("2ndLetter", 400, ENM_V2)
       .build();
 
 
@@ -70,6 +74,7 @@ public class VersionCompatibilityTest {
         .string("name", "john doe")
         .int64("id", 1234L)
         .enm("letter", TestEnum_v2.C)
+        .enm("2ndLetter", TestEnum_v2.A)
         .encode();
 
     encoded_v2.rewind();
@@ -77,7 +82,16 @@ public class VersionCompatibilityTest {
 
     assertThat(decoder_v1.int32("age"), is(30));
     assertThat(decoder_v1.int64("id"), is(1234L));
-    assertThat(decoder_v1.<TestEnum_v1>enm("letter"), is(nullValue()));
+    Enm<TestEnum_v1> letter = decoder_v1.enm("letter");
+    try {
+      letter.get();
+      fail();
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    assertThat(letter.isValid(), is(false));
+    assertThat(letter.isFound(), is(true));
+    assertThat(letter.raw(), is(30));
 
     encoded_v2.rewind();
     STRUCT_V1.dump(encoded_v2, new PrintStream(new ByteArrayOutputStream()));
@@ -97,7 +111,32 @@ public class VersionCompatibilityTest {
     assertThat(decoder_v2.int32("age"), is(30));
     assertThat(decoder_v2.string("name"), is(nullValue()));
     assertThat(decoder_v2.int64("id"), is(1234L));
-    assertThat(decoder_v2.<TestEnum_v1>enm("letter"), is(nullValue()));
+    Enm<TestEnum_v1> letter = decoder_v2.enm("letter");
+    try {
+      letter.get();
+      fail();
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    assertThat(letter.isValid(), is(false));
+    assertThat(letter.isFound(), is(true));
+    assertThat(letter.raw(), is(20));
+
+    Enm<Object> secondLetter = decoder_v2.enm("2ndLetter");
+    try {
+      secondLetter.get();
+      fail();
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    try {
+      secondLetter.raw();
+      fail();
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    assertThat(secondLetter.isFound(), is(false));
+    assertThat(secondLetter.isValid(), is(false));
 
     encoded_v1.rewind();
     STRUCT_V2.dump(encoded_v1, new PrintStream(new ByteArrayOutputStream()));

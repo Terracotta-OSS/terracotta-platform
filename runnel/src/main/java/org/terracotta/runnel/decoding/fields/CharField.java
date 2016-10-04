@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.encoding;
+package org.terracotta.runnel.decoding.fields;
 
-import java.nio.ByteBuffer;
+import org.terracotta.runnel.utils.CorruptDataException;
+import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
  * @author Ludovic Orban
  */
-public interface PrimitiveEncodingSupport<T> {
+public class CharField extends AbstractValueField<Character> {
 
-  T bool(String name, boolean value);
+  public CharField(String name, int index) {
+    super(name, index);
+  }
 
-  T chr(String name, char value);
-
-  <E> T enm(String name, E value);
-
-  T int32(String name, int value);
-
-  T int64(String name, long value);
-
-  T fp64(String name, double value);
-
-  T string(String name, String value);
-
-  T byteBuffer(String name, ByteBuffer value);
+  @Override
+  public Character decode(ReadBuffer readBuffer) {
+    int size = readBuffer.getVlqInt();
+    if (size != 2) {
+      throw new CorruptDataException("Expected field size of 2, read : " + size);
+    }
+    return readBuffer.getChar();
+  }
 
 }

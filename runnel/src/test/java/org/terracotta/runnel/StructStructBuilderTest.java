@@ -17,6 +17,8 @@ package org.terracotta.runnel;
 
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.encoding.StructEncoder;
+import org.terracotta.runnel.encoding.StructEncoderFunction;
 
 import java.nio.ByteBuffer;
 
@@ -40,6 +42,15 @@ public class StructStructBuilderTest {
       .int64("id", 3)
       .build();
 
+  @Test(expected = IllegalStateException.class)
+  public void testCannotEncodeNonRoot() throws Exception {
+    struct.encoder()
+        .struct("mapEntry")
+          .string("key", "1")
+          .string("value", "one")
+        .encode();
+  }
+
   @Test
   public void testReadAll() throws Exception {
     ByteBuffer bb = struct.encoder()
@@ -48,6 +59,34 @@ public class StructStructBuilderTest {
           .string("key", "1")
           .string("value", "one")
         .end()
+        .int64("id", 999L)
+        .encode();
+
+    bb.rewind();
+
+    StructDecoder decoder = struct.decoder(bb);
+
+    assertThat(decoder.string("name"), is("joe"));
+
+    decoder = decoder.struct("mapEntry");
+    assertThat(decoder.string("key"), is("1"));
+    assertThat(decoder.string("value"), is("one"));
+    decoder = decoder.end();
+
+    assertThat(decoder.int64("id"), is(999L));
+  }
+
+  @Test
+  public void testReadAll_withLambda() throws Exception {
+    ByteBuffer bb = struct.encoder()
+        .string("name", "joe")
+        .struct("mapEntry", new StructEncoderFunction() {
+          @Override
+          public void encode(StructEncoder encoder) {
+            encoder.string("key", "1")
+                .string("value", "one");
+          }
+        })
         .int64("id", 999L)
         .encode();
 

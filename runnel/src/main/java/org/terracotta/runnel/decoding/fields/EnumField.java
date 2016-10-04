@@ -16,6 +16,7 @@
 package org.terracotta.runnel.decoding.fields;
 
 import org.terracotta.runnel.EnumMapping;
+import org.terracotta.runnel.decoding.Enm;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.io.PrintStream;
@@ -23,7 +24,7 @@ import java.io.PrintStream;
 /**
  * @author Ludovic Orban
  */
-public class EnumField<E> extends AbstractValueField<E> {
+public class EnumField<E> extends AbstractValueField<Enm<E>> {
 
   private final EnumMapping<E> enumMapping;
 
@@ -37,10 +38,11 @@ public class EnumField<E> extends AbstractValueField<E> {
   }
 
   @Override
-  public E decode(ReadBuffer readBuffer) {
+  public Enm<E> decode(ReadBuffer readBuffer) {
     readBuffer.getVlqInt();
     int intValue = readBuffer.getVlqInt();
-    return enumMapping.toEnum(intValue);
+    E e = enumMapping.toEnum(intValue);
+    return new Enm<E>(intValue, e);
   }
 
   @Override

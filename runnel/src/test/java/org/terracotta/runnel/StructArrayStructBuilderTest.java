@@ -15,9 +15,12 @@
  */
 package org.terracotta.runnel;
 
+import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.encoding.StructArrayEncoder;
+import org.terracotta.runnel.encoding.StructArrayEncoderFunction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -32,9 +35,20 @@ import static org.hamcrest.core.Is.is;
  */
 public class StructArrayStructBuilderTest {
 
+  enum Type {
+    STRING, INT
+  }
+
+  private final EnumMapping<Type> typeEnumMapping = EnumMappingBuilder.newEnumMappingBuilder(Type.class)
+      .mapping(Type.STRING, 0)
+      .mapping(Type.INT, 1)
+      .build();
+
   private final Struct mapEntry = StructBuilder.newStructBuilder()
       .string("key", 1)
-      .string("value", 2)
+      .enm("type", 2, typeEnumMapping)
+      .string("string", 10)
+      .string("int", 11)
       .build();
 
   private final Struct struct = StructBuilder.newStructBuilder()
@@ -49,10 +63,12 @@ public class StructArrayStructBuilderTest {
         .string("name", "joe")
         .structs("mapEntry")
           .string("key", "1")
-          .string("value", "one")
+          .enm("type", Type.STRING)
+          .string("string", "one")
         .next()
           .string("key", "2")
-          .string("value", "two")
+          .enm("type", Type.STRING)
+          .string("string", "two")
         .end()
         .int64("id", 999L)
         .encode();
@@ -66,10 +82,52 @@ public class StructArrayStructBuilderTest {
     StructArrayDecoder sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
-    assertThat(sad.string("value"), is("one"));
+    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.string("string"), is("one"));
     sad.next();
     assertThat(sad.string("key"), is("2"));
-    assertThat(sad.string("value"), is("two"));
+    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.string("string"), is("two"));
+    sad.end();
+
+    assertThat(decoder.int64("id"), is(999L));
+  }
+
+  @Test
+  public void testReadAll_withLambda() throws Exception {
+    ByteBuffer bb = struct.encoder()
+        .string("name", "joe")
+        .structs("mapEntry", new StructArrayEncoderFunction() {
+          @Override
+          public void encode(StructArrayEncoder encoder) {
+            encoder
+                  .string("key", "1")
+                  .enm("type", Type.STRING)
+                  .string("string", "one")
+                .next()
+                  .string("key", "2")
+                  .enm("type", Type.STRING)
+                  .string("string", "two");
+          }
+        })
+        .int64("id", 999L)
+        .encode();
+
+    bb.rewind();
+
+    StructDecoder decoder = struct.decoder(bb);
+
+    assertThat(decoder.string("name"), is("joe"));
+
+    StructArrayDecoder sad = decoder.structs("mapEntry");
+    assertThat(sad.length(), is(2));
+    assertThat(sad.string("key"), is("1"));
+    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.string("string"), is("one"));
+    sad.next();
+    assertThat(sad.string("key"), is("2"));
+    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.string("string"), is("two"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -80,11 +138,12 @@ public class StructArrayStructBuilderTest {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
         .structs("mapEntry")
-        .string("key", "1")
-        .string("value", "one")
+          .string("key", "1")
+          .enm("type", Type.STRING)
+          .string("string", "one")
         .next()
-        .string("key", "2")
-        .string("value", "two")
+          .string("key", "2")
+          .string("string", "two")
         .end()
         .int64("id", 999L)
         .encode();
@@ -100,10 +159,12 @@ public class StructArrayStructBuilderTest {
         .string("name", "joe")
         .structs("mapEntry")
           .string("key", "1")
-          .string("value", "one")
+          .enm("type", Type.STRING)
+          .string("string", "one")
         .next()
           .string("key", "2")
-          .string("value", "two")
+          .enm("type", Type.STRING)
+          .string("string", "two")
         .end()
         .int64("id", 999L)
         .encode();
@@ -117,7 +178,8 @@ public class StructArrayStructBuilderTest {
     StructArrayDecoder sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
-    assertThat(sad.string("value"), is("one"));
+    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.string("string"), is("one"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -129,10 +191,11 @@ public class StructArrayStructBuilderTest {
         .string("name", "joe")
         .structs("mapEntry")
           .string("key", "1")
-          .string("value", "one")
+          .enm("type", Type.STRING)
+          .string("string", "one")
         .next()
           .string("key", "2")
-          .string("value", "two")
+          .string("string", "two")
         .end()
         .int64("id", 999L)
         .encode();
@@ -147,7 +210,7 @@ public class StructArrayStructBuilderTest {
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     sad.next();
-    assertThat(sad.string("value"), is("two"));
+    assertThat(sad.string("string"), is("two"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -159,10 +222,12 @@ public class StructArrayStructBuilderTest {
         .string("name", "joe")
         .structs("mapEntry")
           .string("key", "1")
-          .string("value", "one")
+          .enm("type", Type.STRING)
+          .string("string", "one")
         .next()
           .string("key", "2")
-          .string("value", "two")
+          .enm("type", Type.STRING)
+          .string("string", "two")
         .end()
         .int64("id", 999L)
         .encode();
@@ -186,10 +251,11 @@ public class StructArrayStructBuilderTest {
         .string("name", "joe")
         .structs("mapEntry")
           .string("key", "1")
-          .string("value", "one")
+          .enm("type", Type.STRING)
+          .string("string", "one")
         .next()
           .string("key", "2")
-          .string("value", "two")
+          .string("string", "two")
         .end()
         .int64("id", 999L)
         .encode();
@@ -207,11 +273,12 @@ public class StructArrayStructBuilderTest {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
         .structs("mapEntry")
-        .string("key", "1")
-        .string("value", "one")
+          .string("key", "1")
+          .enm("type", Type.STRING)
+          .string("string", "one")
         .next()
-        .string("key", "2")
-        .string("value", "two")
+          .string("key", "2")
+          .string("string", "two")
         .next()
         .end()
         .int64("id", 999L)
@@ -225,10 +292,12 @@ public class StructArrayStructBuilderTest {
     StructArrayDecoder sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
-    assertThat(sad.string("value"), is("one"));
+    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(sad.string("string"), is("one"));
     sad.next();
     assertThat(sad.string("key"), is("2"));
-    assertThat(sad.string("value"), is("two"));
+    assertThat(sad.enm("type").isValid(), is(false));
+    assertThat(sad.string("string"), is("two"));
     sad.next();
     sad.end();
     assertThat(decoder.int64("id"), is(999L));
@@ -259,11 +328,11 @@ public class StructArrayStructBuilderTest {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
         .structs("mapEntry")
-          .string("value", "a")
+          .string("string", "a")
         .next()
-          .string("value", "b")
+          .string("string", "b")
         .next()
-          .string("value", "c")
+          .string("string", "c")
         .end()
         .int64("id", 999L)
         .encode();
@@ -277,13 +346,16 @@ public class StructArrayStructBuilderTest {
     StructArrayDecoder sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(3));
     assertThat(sad.string("key"), is(nullValue()));
-    assertThat(sad.string("value"), is("a"));
+    assertThat(sad.enm("type").isFound(), is(false));
+    assertThat(sad.string("string"), is("a"));
     sad.next();
     assertThat(sad.string("key"), is(nullValue()));
-    assertThat(sad.string("value"), is("b"));
+    assertThat(sad.enm("type").isFound(), is(false));
+    assertThat(sad.string("string"), is("b"));
     sad.next();
     assertThat(sad.string("key"), is(nullValue()));
-    assertThat(sad.string("value"), is("c"));
+    assertThat(sad.enm("type").isFound(), is(false));
+    assertThat(sad.string("string"), is("c"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));

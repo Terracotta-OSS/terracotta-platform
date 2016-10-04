@@ -15,7 +15,9 @@
  */
 package org.terracotta.runnel.decoding;
 
+import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
+import org.terracotta.runnel.decoding.fields.CharField;
 import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
@@ -55,13 +57,27 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
   }
 
   @Override
+  public Boolean bool(String name) {
+    return fieldDecoder.decodeValue(name, BoolField.class);
+  }
+
+  @Override
+  public Character chr(String name) {
+    return fieldDecoder.decodeValue(name, CharField.class);
+  }
+
+  @Override
   public Integer int32(String name) {
     return fieldDecoder.decodeValue(name, Int32Field.class);
   }
 
   @Override
-  public <E> E enm(String name) {
-    return (E) fieldDecoder.decodeValue(name, (Class) EnumField.class);
+  public <E> Enm<E> enm(String name) {
+    Enm<E> enm = (Enm<E>) fieldDecoder.decodeValue(name, (Class) EnumField.class);
+    if (enm == null) {
+      return new Enm<E>();
+    }
+    return enm;
   }
 
   @Override
