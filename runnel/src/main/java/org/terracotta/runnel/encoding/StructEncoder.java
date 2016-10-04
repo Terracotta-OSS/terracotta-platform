@@ -42,6 +42,7 @@ import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -224,12 +225,19 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     return new StructArrayEncoder(values, this, ((StructField) field.subField()));
   }
 
-  public StructEncoder structs(String name, StructArrayEncoderFunction function) {
+  public <T> StructEncoder structs(String name, T[] array, StructArrayEncoderFunction<T> function) {
+    return structs(name, Arrays.asList(array), function);
+  }
+
+  public <T> StructEncoder structs(String name, Iterable<T> iterable, StructArrayEncoderFunction<T> function) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
     StructArrayEncoder subStructArrayEncoder = new StructArrayEncoder(values, this, ((StructField) field.subField()));
-    function.encode(subStructArrayEncoder);
+    for (T t : iterable) {
+      function.encode((PrimitiveEncodingSupport) subStructArrayEncoder, t);
+      subStructArrayEncoder.next();
+    }
     subStructArrayEncoder.end();
     return this;
   }

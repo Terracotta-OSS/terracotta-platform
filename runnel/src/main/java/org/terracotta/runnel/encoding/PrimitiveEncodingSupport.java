@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 /**
  * @author Ludovic Orban
  */
-public interface PrimitiveEncodingSupport<T> {
+public interface PrimitiveEncodingSupport<T extends PrimitiveEncodingSupport> {
 
   T bool(String name, boolean value);
 
