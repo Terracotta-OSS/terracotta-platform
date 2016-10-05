@@ -107,7 +107,9 @@ public class ManagementAgentService implements Closeable {
                   }
                 }
               } catch (RuntimeException err) {
-                LOGGER.log(Level.WARNING, "Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
+                if(LOGGER.isLoggable(Level.WARNING)) {
+                  LOGGER.log(Level.WARNING, "Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
+                }
               }
             }
           });
@@ -120,7 +122,9 @@ public class ManagementAgentService implements Closeable {
               try {
                 contextualReturnListener.onContextualReturn(message.getFrom(), message.getManagementCallIdentifier(), aReturn);
               } catch (RuntimeException err) {
-                LOGGER.log(Level.WARNING, "Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
+                if (LOGGER.isLoggable(Level.WARNING)) {
+                  LOGGER.log(Level.WARNING, "Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
+                }
               }
             }
           });

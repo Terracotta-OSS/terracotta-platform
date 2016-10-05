@@ -23,6 +23,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -48,7 +49,9 @@ public class ConsumerManagementRegistryProvider implements ServiceProvider {
         ConsumerManagementRegistryProvider.class.getClassLoader().loadClass(dep);
       } catch (ClassNotFoundException ignored) {
         noop = true;
-        LOGGER.warning("CNFE: " + dep);
+        if(LOGGER.isLoggable(Level.WARNING)) {
+          LOGGER.warning("CNFE: " + dep);
+        }
       }
     }
     NOOP = noop;
