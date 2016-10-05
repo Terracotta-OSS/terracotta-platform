@@ -20,10 +20,9 @@ import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
 import java.time.Clock;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,12 +31,12 @@ import java.util.stream.Stream;
  */
 public final class Server extends AbstractNode<Stripe> implements Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   public static final String KEY = "serverId";
   public static final String NAME_KEY = "serverName";
 
-  private final ConcurrentMap<String, ServerEntity> serverEntities = new ConcurrentHashMap<>();
+  private final Map<String, ServerEntity> serverEntities = new HashMap<>();
   private final String serverName; // matches xml config
 
   private String hostName; // matches xml config

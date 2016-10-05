@@ -19,14 +19,13 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,10 +34,10 @@ import java.util.stream.Stream;
  */
 public final class Cluster implements Contextual, Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
-  private final ConcurrentMap<String, Client> clients = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, Stripe> stripes = new ConcurrentHashMap<>();
+  private final Map<String, Client> clients = new HashMap<>();
+  private final Map<String, Stripe> stripes = new HashMap<>();
 
   private Cluster() {
   }

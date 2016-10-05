@@ -16,13 +16,12 @@
 package org.terracotta.management.model.cluster;
 
 
-
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Stream;
 
 /**
@@ -30,11 +29,11 @@ import java.util.stream.Stream;
  */
 public final class Connection extends AbstractNode<Client> implements Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   public static final String KEY = "connectionId";
 
-  private final Collection<String> serverEntityIds = new ConcurrentSkipListSet<>();
+  private final Collection<String> serverEntityIds = new HashSet<>();
   private final Endpoint clientEndpoint;
   private final String stripeId;
   private final String serverId;

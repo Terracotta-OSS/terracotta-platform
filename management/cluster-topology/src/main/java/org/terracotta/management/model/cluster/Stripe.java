@@ -18,10 +18,9 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,11 +29,11 @@ import java.util.stream.Stream;
  */
 public final class Stripe extends AbstractNode<Cluster> implements Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   public static final String KEY = "stripeId";
 
-  private final ConcurrentMap<String, Server> servers = new ConcurrentHashMap<String, Server>();
+  private final Map<String, Server> servers = new HashMap<>();
 
   private Stripe(String name) {
     super(name);
