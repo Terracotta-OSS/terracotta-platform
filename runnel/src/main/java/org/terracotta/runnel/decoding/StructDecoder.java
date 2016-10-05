@@ -49,6 +49,12 @@ public class StructDecoder implements PrimitiveDecodingSupport {
     this.fieldDecoder = structField.getMetadata().fieldDecoder(this.readBuffer);
   }
 
+  public StructDecoder(StructField structField, StructDecoder sourceDecoder) {
+    this.parent = null;
+    this.readBuffer = sourceDecoder.readBuffer;
+    this.fieldDecoder = structField.getMetadata().fieldDecoder(sourceDecoder.fieldDecoder);
+  }
+
   @Override
   public Boolean bool(String name) {
     return fieldDecoder.decodeValue(name, BoolField.class);

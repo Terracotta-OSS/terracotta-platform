@@ -39,6 +39,14 @@ public class FieldDecoder {
     this.readBuffer = readBuffer;
   }
 
+  FieldDecoder(Metadata metadata, FieldDecoder sourceDecoder) {
+    this.metadata = metadata;
+    this.readBuffer = sourceDecoder.readBuffer;
+    this.lastIndex = sourceDecoder.lastIndex;
+    this.readAheadIndex = sourceDecoder.readAheadIndex;
+    sourceDecoder.lastIndex = Integer.MAX_VALUE;
+  }
+
   public StructArrayDecoder decodeStructArray(String name, StructDecoder parent) {
     ArrayField field = nextField(name, ArrayField.class, StructField.class);
     if (field == null) {
