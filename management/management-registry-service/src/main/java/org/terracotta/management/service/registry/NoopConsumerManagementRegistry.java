@@ -22,11 +22,11 @@ import org.terracotta.management.registry.ManagementProvider;
 /**
  * @author Mathieu Carbou
  */
-class NoopConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
+public class NoopConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
 
   private final ConsumerManagementRegistryConfiguration configuration;
 
-  NoopConsumerManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
+  public NoopConsumerManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
     this.configuration = configuration;
   }
 
