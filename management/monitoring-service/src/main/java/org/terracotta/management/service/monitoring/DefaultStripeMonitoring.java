@@ -139,7 +139,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
     // do not use .ifPresent() because we want to fail if the server is not there!
     Server server = stripe.getServerByName(sender.getServerName())
-        .orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
     ServerEntity entity = ServerEntity.create(platformEntity.name, platformEntity.typeName);
 
     server.addServerEntity(entity);
@@ -219,11 +219,11 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
     // do not use .ifPresent() because we want to fail if the server is not there!
     Client client = cluster.getClient(clientIdentifier)
-        .orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
     Connection connection = client.getConnection(currentActive, endpoint)
-        .orElseThrow(() -> newIllegalTopologyState("Missing connection between server " + currentActive + " and client " + clientIdentifier));
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing connection between server " + currentActive + " and client " + clientIdentifier));
     ServerEntity entity = currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
-        .orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
 
     if (!connection.fetchServerEntity(platformEntity.name, platformEntity.typeName)) {
       throw new IllegalStateException();
@@ -248,7 +248,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
     // do not use .ifPresent() because we want to fail if the server is not there!
     ServerEntity entity = currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
-        .orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
 
     cluster.getClient(clientIdentifier)
         .ifPresent(client -> client.getConnection(currentActive, endpoint)

@@ -147,7 +147,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     stripeMonitoring.consumeCluster(cluster -> {
       ServerEntityIdentifier serverEntityIdentifier = getServerEntityIdentifier();
       ServerEntity serverEntity = cluster.getSingleStripe().getActiveServerEntity(serverEntityIdentifier)
-          .orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityIdentifier));
+          .<IllegalStateException>orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityIdentifier));
       serverEntity.setManagementRegistry(registry);
       stripeMonitoring.fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_UPDATED"));
     });
@@ -199,7 +199,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     ClientIdentifier callerClientIdentifier = getConnectedClientIdentifier(caller);
     ClientDescriptor toClientDescriptor = getClientDescriptor(to);
 
-    Client targetClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(to).orElseThrow(() -> new IllegalStateException(to.toString())));
+    Client targetClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(to)
+        .<IllegalStateException>orElseThrow(() -> new IllegalStateException(to.toString())));
 
     if (!targetClient.isManageable()) {
       throw new SecurityException("Client " + to + " is not manageable");
@@ -231,7 +232,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     ClientIdentifier calledClientIdentifier = getConnectedClientIdentifier(calledDescriptor);
     ClientDescriptor callerClientDescriptor = getClientDescriptor(caller);
 
-    Client targettedClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(caller).orElseThrow(() -> new IllegalStateException(caller.toString())));
+    Client targettedClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(caller).<IllegalStateException>orElseThrow(() -> new IllegalStateException(caller.toString())));
 
     contextualReturn.setContext(contextualReturn.getContext().with(targettedClient.getContext()));
 
@@ -243,7 +244,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
         contextualReturn);
 
     if (Optional.ofNullable(pendingCalls.get(callerClientDescriptor))
-        .orElseThrow(() -> new SecurityException("Client " + caller + " did not ask for a management call"))
+        .<SecurityException>orElseThrow(() -> new SecurityException("Client " + caller + " did not ask for a management call"))
         .getAndUpdate(current -> Math.max(0, current - 1)) <= 0) {
       throw new SecurityException("Client " + caller + " did not ask for a management call");
     }
@@ -289,7 +290,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     return stripeMonitoring.applyCluster(cluster -> {
       Context serverEntityContext = getServerEntityContext();
       return cluster.getSingleStripe().getActiveServerEntity(serverEntityContext)
-          .orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityContext))
+          .<IllegalStateException>orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityContext))
           .getContext();
     });
   }
