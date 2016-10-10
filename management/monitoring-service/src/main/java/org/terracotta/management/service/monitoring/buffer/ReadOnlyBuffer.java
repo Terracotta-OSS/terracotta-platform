@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.service.monitoring.buffer;
 
 import com.tc.classloader.CommonComponent;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -60,4 +61,5 @@ public interface ReadOnlyBuffer<V> {
 
   void clear();
 
+  void drainTo(Collection<? super V> to);
 }

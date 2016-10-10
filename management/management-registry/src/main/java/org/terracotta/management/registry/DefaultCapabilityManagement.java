@@ -17,7 +17,6 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.model.call.Parameter;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 

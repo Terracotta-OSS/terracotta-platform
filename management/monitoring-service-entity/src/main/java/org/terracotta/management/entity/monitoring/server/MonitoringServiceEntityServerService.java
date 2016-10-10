@@ -15,10 +15,10 @@
  */
 package org.terracotta.management.entity.monitoring.server;
 
-import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.management.entity.monitoring.MonitoringService;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.management.service.monitoring.IMonitoringConsumer;
+import org.terracotta.management.entity.monitoring.MonitoringServiceProxy;
+import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
@@ -27,13 +27,13 @@ import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
  */
 public class MonitoringServiceEntityServerService extends ProxyServerEntityService<Void> {
   public MonitoringServiceEntityServerService() {
-    super(MonitoringService.class, Void.class, new SerializationCodec());
+    super(MonitoringServiceProxy.class, Void.class, new SerializationCodec());
   }
 
   @Override
   public MonitoringServiceEntity createActiveEntity(ServiceRegistry registry, Void config) {
-    IMonitoringConsumer monitoringConsumer = registry.getService(new BasicServiceConfiguration<>(IMonitoringConsumer.class));
-    return new MonitoringServiceEntity(monitoringConsumer);
+    MonitoringService monitoringService = registry.getService(new MonitoringServiceConfiguration());
+    return new MonitoringServiceEntity(monitoringService);
   }
 
   @Override
@@ -43,7 +43,7 @@ public class MonitoringServiceEntityServerService extends ProxyServerEntityServi
 
   @Override
   public boolean handlesEntityType(String typeName) {
-    return "org.terracotta.management.entity.monitoring.client.MonitoringServiceEntity".equals(typeName);
+    return "org.terracotta.management.entity.monitoring.client.MonitoringServiceProxyEntity".equals(typeName);
   }
 
 }

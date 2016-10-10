@@ -17,12 +17,11 @@ package org.terracotta.management.service.registry;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
@@ -30,15 +29,15 @@ import java.util.Objects;
 @CommonComponent
 public class ConsumerManagementRegistryConfiguration implements ServiceConfiguration<ConsumerManagementRegistry> {
 
-  private final IMonitoringProducer monitoringProducer;
+  private final ServiceRegistry serviceRegistry;
   private final Collection<ManagementProvider<?>> providers = new HashSet<>();
 
-  public ConsumerManagementRegistryConfiguration(IMonitoringProducer monitoringProducer) {
-    this.monitoringProducer = Objects.requireNonNull(monitoringProducer);
+  public ConsumerManagementRegistryConfiguration(ServiceRegistry serviceRegistry) {
+    this.serviceRegistry = serviceRegistry;
   }
 
-  public IMonitoringProducer getMonitoringProducer() {
-    return monitoringProducer;
+  public ServiceRegistry getServiceRegistry() {
+    return serviceRegistry;
   }
 
   public Collection<ManagementProvider<?>> getProviders() {

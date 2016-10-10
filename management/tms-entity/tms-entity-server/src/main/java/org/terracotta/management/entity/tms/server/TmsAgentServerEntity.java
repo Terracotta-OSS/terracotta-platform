@@ -15,11 +15,10 @@
  */
 package org.terracotta.management.entity.tms.server;
 
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.management.service.monitoring.IMonitoringConsumer;
+import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,17 +28,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
 
-  private final IMonitoringConsumer consumer;
   private final AtomicBoolean connected  = new AtomicBoolean();
 
-  TmsAgentServerEntity(TmsAgentConfig config, IMonitoringConsumer consumer, SequenceGenerator sequenceGenerator) {
-    super(new TmsAgentImpl(config, consumer, sequenceGenerator));
-    this.consumer = consumer;
+  TmsAgentServerEntity(TmsAgentConfig config, MonitoringService monitoringService) {
+    super(new TmsAgentImpl(config, monitoringService));
   }
 
   @Override
   public void destroy() {
-    consumer.close();
     super.destroy();
   }
 
@@ -56,4 +52,5 @@ class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
     connected.set(false);
     super.disconnected(clientDescriptor);
   }
+
 }

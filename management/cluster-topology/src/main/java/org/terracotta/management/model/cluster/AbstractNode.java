@@ -16,6 +16,7 @@
 package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.Contextual;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -60,6 +61,11 @@ abstract class AbstractNode<P extends Contextual> implements Node, Serializable 
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("id", getId());
     return map;
+  }
+
+  @Override
+  public void setContext(Context context) {
+    // nothing: we do not replace the context of a topology
   }
 
   @Override

@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.model.message;
+
+import org.terracotta.management.model.cluster.ClientIdentifier;
 
 /**
  * @author Mathieu Carbou
  */
-class Config {
+public interface ManagementCallMessage extends Message {
 
-  static final boolean DEBUG = Boolean.getBoolean("org.terracotta.management.service.monitoring.VoltronMonitoringService.DEBUG");
+  String getManagementCallIdentifier();
+
+  ClientIdentifier getFrom();
 
 }

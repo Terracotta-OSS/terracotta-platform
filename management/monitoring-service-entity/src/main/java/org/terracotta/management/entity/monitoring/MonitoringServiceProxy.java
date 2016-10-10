@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.entity.monitoring;
 
-import com.tc.classloader.CommonComponent;
+import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.message.Message;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
-public interface ReadWriteBuffer<V> extends ReadOnlyBuffer<V> {
+public interface MonitoringServiceProxy {
 
-  /**
-   * Put a value in the buffer, making some space by discarding some other values if necessary
-   */
-  void put(V value);
+  Cluster readTopology();
+
+  void createMessageBuffer(int size);
+
+  Message readMessageBuffer();
+
+  List<Message> drainMessageBuffer();
+
+  void clearMessageBuffer();
 
 }

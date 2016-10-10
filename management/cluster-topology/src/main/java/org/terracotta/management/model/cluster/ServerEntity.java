@@ -19,7 +19,6 @@ import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -32,19 +31,14 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
   public static final String KEY = "entityId";
   public static final String TYPE_KEY = "entityType";
   public static final String NAME_KEY = "entityName";
-  public static final String CONSUMER_ID_KEY = "entityConsumerId";
 
-  private final String type; // type (service, client entity, server entity, etc)
-  private final String name; // type (entity type name)
-  private final long consumerId; // consumerId (entity consumerId)
+  private final ServerEntityIdentifier identifier;
   private ManagementRegistry managementRegistry;
 
   // matches management registry config, or entity id, or service type
-  private ServerEntity(String id, String name, String type, long consumerId) {
-    super(id);
-    this.type = Objects.requireNonNull(type);
-    this.name = Objects.requireNonNull(name);
-    this.consumerId = consumerId;
+  private ServerEntity(ServerEntityIdentifier identifier) {
+    super(identifier.getId());
+    this.identifier = identifier;
   }
 
   public Optional<ManagementRegistry> getManagementRegistry() {
@@ -56,28 +50,27 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
     return this;
   }
 
-  public long getConsumerId() {
-    return consumerId;
+  public ServerEntityIdentifier getServerEntityIdentifier() {
+    return identifier;
   }
 
   public String getType() {
-    return type;
+    return identifier.getType();
   }
 
   public boolean isType(String type) {
-    return this.type.equals(type);
+    return getType().equals(type);
   }
 
   public String getName() {
-    return name;
+    return identifier.getName();
   }
 
   @Override
   public Context getContext() {
     return super.getContext()
-        .with(NAME_KEY, name)
-        .with(TYPE_KEY, type)
-        .with(CONSUMER_ID_KEY, String.valueOf(consumerId));
+        .with(NAME_KEY, getName())
+        .with(TYPE_KEY, getType());
   }
 
   @Override
@@ -98,7 +91,11 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
   }
 
   public boolean is(String name, String type) {
-    return this.name.equals(name) && this.type.equals(type);
+    return this.getName().equals(name) && this.getType().equals(type);
+  }
+
+  public boolean is(ServerEntityIdentifier identifier) {
+    return this.identifier.equals(identifier);
   }
 
   @Override
@@ -109,9 +106,7 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
 
     ServerEntity that = (ServerEntity) o;
 
-    if (consumerId != that.consumerId) return false;
-    if (!type.equals(that.type)) return false;
-    if (!name.equals(that.name)) return false;
+    if (!identifier.equals(that.identifier)) return false;
     return managementRegistry != null ? managementRegistry.equals(that.managementRegistry) : that.managementRegistry == null;
 
   }
@@ -119,9 +114,7 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = (int) (31 * consumerId);
-    result = 31 * result + type.hashCode();
-    result = 31 * result + name.hashCode();
+    result = 31 * result + identifier.hashCode();
     result = 31 * result + (managementRegistry != null ? managementRegistry.hashCode() : 0);
     return result;
   }
@@ -131,13 +124,16 @@ public final class ServerEntity extends AbstractNode<Server> implements Serializ
     Map<String, Object> map = super.toMap();
     map.put("type", getType());
     map.put("name", getName());
-    map.put("consumerId", getConsumerId());
     map.put("managementRegistry", managementRegistry == null ? null : managementRegistry.toMap());
     return map;
   }
 
-  public static ServerEntity create(String serverEntityName, String type, long consumerId) {
-    return new ServerEntity(key(serverEntityName, type), serverEntityName, type, consumerId);
+  public static ServerEntity create(String serverEntityName, String type) {
+    return create(ServerEntityIdentifier.create(serverEntityName, type));
+  }
+
+  public static ServerEntity create(ServerEntityIdentifier serverEntityIdentifier) {
+    return new ServerEntity(serverEntityIdentifier);
   }
 
   public static String key(String serverEntityName, String type) {

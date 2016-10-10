@@ -85,7 +85,7 @@ public class TmsAgentTest {
     activeServer.registerClientEntityService(new TmsAgentEntityClientService());
     activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
     activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
-    stripeControl = new PassthroughClusterControl("server-1", activeServer);
+    stripeControl = new PassthroughClusterControl("stripe-1", activeServer);
 
     clientIdentifier = ClientIdentifier.create(
         Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]),
@@ -94,7 +94,7 @@ public class TmsAgentTest {
         "uuid");
 
     expectedCluster = Cluster.create()
-        .addStripe(Stripe.create("stripe-1")
+        .addStripe(Stripe.create("SINGLE")
             .addServer(Server.create("server-1")
                 .setBindAddress("0.0.0.0")
                 .setBindPort(9510)
@@ -106,14 +106,14 @@ public class TmsAgentTest {
                 .setVersion("Version Passthrough 5.0.0-SNAPSHOT")
                 .setBuildId("Build ID")
                 .setState(Server.State.ACTIVE)
-                .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName(), 1))))
+                .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName()))))
         .addClient(Client.create(clientIdentifier)
             .setHostName(InetAddress.getLocalHost().getHostName()));
 
     client = expectedCluster.getClients().values().iterator().next();
     connection = Connection.create(
         "uuid",
-        expectedCluster.getStripe("stripe-1").get().getServerByName("server-1").get(),
+        expectedCluster.getStripe("SINGLE").get().getServerByName("server-1").get(),
         Endpoint.create(InetAddress.getLocalHost().getHostAddress(), -1) // values set by passthrough system
     );
     client.addConnection(connection);
@@ -134,7 +134,7 @@ public class TmsAgentTest {
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
-    try (org.terracotta.connection.Connection connection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+    try (org.terracotta.connection.Connection connection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
       EntityRef<TmsAgentEntity, TmsAgentConfig> ref = connection.getEntityRef(TmsAgentEntity.class, TmsAgentVersion.LATEST.version(), getClass().getSimpleName());
       ref.create(new TmsAgentConfig());
 
@@ -144,7 +144,7 @@ public class TmsAgentTest {
 
       // reset runtime data
       expectedCluster.serverStream().forEach(expectedServer -> {
-        Server server = cluster.getStripe("stripe-1").get().getServerByName(expectedServer.getServerName()).get();
+        Server server = cluster.getSingleStripe().getServerByName(expectedServer.getServerName()).get();
         expectedServer.setUpTimeSec(server.getUpTimeSec());
         expectedServer.setStartTime(server.getStartTime());
         expectedServer.setActivateTime(server.getActivateTime());
@@ -175,15 +175,15 @@ public class TmsAgentTest {
       System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
 
       assertEquals("TOPOLOGY", messages.get(messages.size() - 1).getType());
-      assertEquals(cluster, messages.get(messages.size() - 1).unwrap(Cluster.class));
+      assertEquals(cluster, messages.get(messages.size() - 1).unwrap(Cluster.class).get(0));
 
       assertEquals("NOTIFICATION", messages.get(0).getType());
-      ContextualNotification firstNotif = messages.get(0).unwrap(ContextualNotification.class);
+      ContextualNotification firstNotif = messages.get(0).unwrap(ContextualNotification.class).get(0);
       assertEquals("SERVER_ENTITY_CREATED", firstNotif.getType());
       assertEquals(expectedCluster.serverEntityStream().findFirst().get().getContext(), firstNotif.getContext());
 
       assertEquals("NOTIFICATION", messages.get(1).getType());
-      ContextualNotification secondNotif = messages.get(1).unwrap(ContextualNotification.class);
+      ContextualNotification secondNotif = messages.get(1).unwrap(ContextualNotification.class).get(0);
       assertEquals("SERVER_ENTITY_FETCHED", secondNotif.getType());
       assertEquals(expectedCluster.serverEntityStream().findFirst().get().getContext(), firstNotif.getContext());
       assertEquals(
@@ -202,7 +202,7 @@ public class TmsAgentTest {
       };
       registry.addManagementProvider(new MyManagementProvider());
 
-      try (org.terracotta.connection.Connection secondConnection = ConnectionFactory.connect(URI.create("passthrough://server-1:9510/cluster-1"), new Properties())) {
+      try (org.terracotta.connection.Connection secondConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
 
         ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(secondConnection).retrieveOrCreate(new ManagementAgentConfig()));
         managementAgent.setManagementCallExecutor(executorService);
@@ -222,11 +222,11 @@ public class TmsAgentTest {
         for (int i = 0; i < 5; i++) {
           assertEquals("NOTIFICATION", messages.get(0).getType());
         }
-        assertEquals("CLIENT_CONNECTED", messages.get(0).unwrap(ContextualNotification.class).getType());
-        assertEquals("SERVER_ENTITY_CREATED", messages.get(1).unwrap(ContextualNotification.class).getType());
-        assertEquals("SERVER_ENTITY_FETCHED", messages.get(2).unwrap(ContextualNotification.class).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(3).unwrap(ContextualNotification.class).getType());
-        assertEquals("CLIENT_TAGS_UPDATED", messages.get(4).unwrap(ContextualNotification.class).getType());
+        assertEquals("CLIENT_CONNECTED", messages.get(0).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("SERVER_ENTITY_CREATED", messages.get(1).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("SERVER_ENTITY_FETCHED", messages.get(2).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(3).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("CLIENT_TAGS_UPDATED", messages.get(4).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("TOPOLOGY", messages.get(5).getType());
 
         registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
@@ -237,8 +237,8 @@ public class TmsAgentTest {
         assertEquals(3, messages.size());
         assertEquals("NOTIFICATION", messages.get(0).getType());
         assertEquals("NOTIFICATION", messages.get(1).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(0).unwrap(ContextualNotification.class).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(1).unwrap(ContextualNotification.class).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(0).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(1).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("TOPOLOGY", messages.get(2).getType());
       }
 

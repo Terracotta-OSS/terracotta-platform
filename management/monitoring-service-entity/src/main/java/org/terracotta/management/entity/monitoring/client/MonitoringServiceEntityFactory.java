@@ -33,7 +33,7 @@ public class MonitoringServiceEntityFactory {
     this.connection = connection;
   }
 
-  public MonitoringServiceEntity retrieveOrCreate(String entityName) {
+  public MonitoringServiceProxyEntity retrieveOrCreate(String entityName) {
     try {
       return retrieve(entityName);
     } catch (EntityNotFoundException e) {
@@ -45,7 +45,7 @@ public class MonitoringServiceEntityFactory {
     }
   }
 
-  public MonitoringServiceEntity retrieve(String entityName) throws EntityNotFoundException {
+  public MonitoringServiceProxyEntity retrieve(String entityName) throws EntityNotFoundException {
     try {
       return getEntityRef(entityName).fetchEntity();
     } catch (EntityVersionMismatchException e) {
@@ -53,8 +53,8 @@ public class MonitoringServiceEntityFactory {
     }
   }
 
-  public MonitoringServiceEntity create(final String identifier) throws EntityAlreadyExistsException {
-    EntityRef<MonitoringServiceEntity, Void> ref = getEntityRef(identifier);
+  public MonitoringServiceProxyEntity create(final String identifier) throws EntityAlreadyExistsException {
+    EntityRef<MonitoringServiceProxyEntity, Void> ref = getEntityRef(identifier);
     try {
       ref.create(null);
       return ref.fetchEntity();
@@ -63,9 +63,9 @@ public class MonitoringServiceEntityFactory {
     }
   }
 
-  private EntityRef<MonitoringServiceEntity, Void> getEntityRef(String entityName) {
+  private EntityRef<MonitoringServiceProxyEntity, Void> getEntityRef(String entityName) {
     try {
-      return connection.getEntityRef(MonitoringServiceEntity.class, 1, entityName);
+      return connection.getEntityRef(MonitoringServiceProxyEntity.class, 1, entityName);
     } catch (EntityNotProvidedException e) {
       throw new AssertionError(e);
     }

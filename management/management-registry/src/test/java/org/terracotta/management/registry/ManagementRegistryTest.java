@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

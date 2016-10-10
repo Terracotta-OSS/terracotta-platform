@@ -43,15 +43,21 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>sequence-generator</artifactId>
+      <artifactId>management-registry</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>management-model</artifactId>
       <version>${project.version}</version>
     </dependency>
 
-    <!-- provided as a common server lib -->
+    <!-- on voltron common classpath -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>management-registry</artifactId>
+      <artifactId>monitoring-service</artifactId>
       <version>${project.version}</version>
+      <classifier>plugin</classifier>
       <scope>provided</scope>
     </dependency>
 
@@ -108,7 +114,8 @@
               <!-- we have to make sure no voltron api comes in the shaded jar -->
               <artifactSet>
                 <excludes>
-                  <exclude>org.terracotta.management:sequence-generator</exclude>
+                  <exclude>org.terracotta.management:management-registry</exclude>
+                  <exclude>org.terracotta.management:management-model</exclude>
                 </excludes>
               </artifactSet>
             </configuration>

@@ -15,16 +15,18 @@
  */
 package org.terracotta.management.model.message;
 
+import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Mathieu Carbou
  */
 public interface Message extends Serializable {
 
-  <T> T unwrap(Class<T> type);
+  <T extends Contextual> List<T> unwrap(Class<T> type);
 
   String getType();
 

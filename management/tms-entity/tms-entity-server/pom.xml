@@ -35,26 +35,11 @@
       <artifactId>tms-entity-common</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>sequence-generator</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <!-- provided by voltron (server) -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>standard-cluster-services</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>monitoring-support</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -88,9 +73,7 @@
                     management-model must be set as an api library in voltron
                     it is used by the management entity and other entities
                    -->
-                  <!--<include>org.terracotta.management:management-model</include>-->
                   <include>org.terracotta.management:tms-entity-common</include>
-                  <include>org.terracotta.management:cluster-topology</include>
                   <include>org.terracotta:voltron-proxy</include>
                 </includes>
               </artifactSet>

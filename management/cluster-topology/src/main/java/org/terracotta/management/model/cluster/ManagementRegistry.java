@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -40,10 +41,10 @@ import java.util.stream.Collectors;
  */
 public final class ManagementRegistry implements Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   private final ContextContainer contextContainer;
-  private final Map<String, Capability> capabilities = new LinkedHashMap<>();
+  private final Collection<Capability> capabilities = new ArrayList<>();
 
   private ManagementRegistry(ContextContainer contextContainer) {
     this.contextContainer = Objects.requireNonNull(contextContainer);
@@ -60,7 +61,7 @@ public final class ManagementRegistry implements Serializable {
   }
 
   public ManagementRegistry addCapability(Capability capability) {
-    this.capabilities.put(capability.getName(), capability);
+    this.capabilities.add(capability);
     return this;
   }
 
@@ -72,16 +73,11 @@ public final class ManagementRegistry implements Serializable {
   }
 
   public Collection<Capability> getCapabilities() {
-    return capabilities.values();
+    return capabilities;
   }
 
-  public Capability findCapability(String capabilityName) {
-    for (Capability capability : capabilities.values()) {
-      if (capability.getName().equals(capabilityName)) {
-        return capability;
-      }
-    }
-    return null;
+  public Optional<Capability> getCapability(String capabilityName) {
+    return capabilities.stream().filter(capability -> capability.getName().equals(capabilityName)).findFirst();
   }
 
   public ContextContainer getContextContainer() {
@@ -115,7 +111,7 @@ public final class ManagementRegistry implements Serializable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("contextContainer", toMap(contextContainer));
-    map.put("capabilities", this.capabilities.values().stream().map(ManagementRegistry::toMap).collect(Collectors.toList()));
+    map.put("capabilities", this.capabilities.stream().map(ManagementRegistry::toMap).collect(Collectors.toList()));
     return map;
   }
 

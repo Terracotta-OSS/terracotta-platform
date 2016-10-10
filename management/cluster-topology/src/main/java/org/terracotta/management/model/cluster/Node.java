@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.model.cluster;
 
+import org.terracotta.management.model.context.Contextual;
+
 import java.util.List;
 
 /**

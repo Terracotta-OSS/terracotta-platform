@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management;
+package org.terracotta.management.model.call;
 
 import org.terracotta.management.model.Objects;
-import org.terracotta.management.model.call.Parameter;
-import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.Contextual;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -26,31 +25,36 @@ import java.util.Arrays;
 /**
  * @author Mathieu Carbou
  */
-public class ManagementCallEvent extends ManagementEvent implements Serializable {
+public class ContextualCall implements Serializable, Contextual {
 
   private static final long serialVersionUID = 1;
 
-  private final Context context;
-  private final String capabilityName;
+  private Context context;
+  private final String capability;
   private final String methodName;
   private final Class<?> returnType;
   private final Parameter[] parameters;
 
-  public ManagementCallEvent(String id, ClientIdentifier from, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter[] parameters) {
-    super(id, from);
+  public ContextualCall(Context context, String capability, String methodName, Class<?> returnType, Parameter... parameters) {
     this.context = Objects.requireNonNull(context);
-    this.capabilityName = Objects.requireNonNull(capabilityName);
+    this.capability = Objects.requireNonNull(capability);
     this.methodName = Objects.requireNonNull(methodName);
     this.returnType = Objects.requireNonNull(returnType);
     this.parameters = Objects.requireNonNull(parameters);
   }
 
-  public String getCapabilityName() {
-    return capabilityName;
+  public String getCapability() {
+    return capability;
   }
 
+  @Override
   public Context getContext() {
     return context;
+  }
+
+  @Override
+  public void setContext(Context context) {
+    this.context = Objects.requireNonNull(context);
   }
 
   public String getMethodName() {
@@ -71,10 +75,10 @@ public class ManagementCallEvent extends ManagementEvent implements Serializable
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    ManagementCallEvent that = (ManagementCallEvent) o;
+    ContextualCall that = (ContextualCall) o;
 
     if (!context.equals(that.context)) return false;
-    if (!capabilityName.equals(that.capabilityName)) return false;
+    if (!capability.equals(that.capability)) return false;
     if (!methodName.equals(that.methodName)) return false;
     if (!returnType.equals(that.returnType)) return false;
     // Probably incorrect - comparing Object[] arrays with Arrays.equals
@@ -86,7 +90,7 @@ public class ManagementCallEvent extends ManagementEvent implements Serializable
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + context.hashCode();
-    result = 31 * result + capabilityName.hashCode();
+    result = 31 * result + capability.hashCode();
     result = 31 * result + methodName.hashCode();
     result = 31 * result + returnType.hashCode();
     result = 31 * result + Arrays.hashCode(parameters);
@@ -95,15 +99,14 @@ public class ManagementCallEvent extends ManagementEvent implements Serializable
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("ManagementCallEvent{");
-    sb.append("id='").append(getId()).append('\'');
-    sb.append(", from=").append(getFrom());
-    sb.append(", context=").append(context);
-    sb.append(", capabilityName='").append(capabilityName).append('\'');
+    final StringBuilder sb = new StringBuilder("ContextualCall{");
+    sb.append("context=").append(context);
+    sb.append(", capability='").append(capability).append('\'');
     sb.append(", methodName='").append(methodName).append('\'');
     sb.append(", returnType=").append(returnType);
     sb.append(", parameters=").append(Arrays.toString(parameters));
     sb.append('}');
     return sb.toString();
   }
+
 }

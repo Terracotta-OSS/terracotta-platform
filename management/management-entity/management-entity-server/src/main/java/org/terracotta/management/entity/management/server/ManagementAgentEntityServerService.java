@@ -21,14 +21,13 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.management.ManagementAgent;
 import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.ManagementAgentVersion;
-import org.terracotta.management.entity.management.ManagementEvent;
-import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
-import org.terracotta.management.sequence.NodeIdSource;
-import org.terracotta.management.sequence.TimeSource;
-import org.terracotta.management.service.monitoring.IMonitoringConsumer;
-import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.management.model.message.ManagementCallMessage;
+import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
+
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
@@ -37,17 +36,15 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
 
   public ManagementAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec(), ManagementEvent.class);
+    super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec(), ManagementCallMessage.class);
   }
 
   @Override
   public ManagementAgentServerEntity createActiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
-    ClientCommunicator communicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
-    IMonitoringProducer producer = registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
-    IMonitoringConsumer consumer = registry.getService(new BasicServiceConfiguration<>(IMonitoringConsumer.class));
-    BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST);
-    ManagementAgentImpl managementAgent = new ManagementAgentImpl(producer, sequenceGenerator, communicator);
-    return new ManagementAgentServerEntity(managementAgent, consumer, producer, communicator);
+    ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
+    MonitoringService monitoringService = Objects.requireNonNull(registry.getService(new MonitoringServiceConfiguration(registry)));
+    ManagementAgentImpl managementAgent = new ManagementAgentImpl(monitoringService);
+    return new ManagementAgentServerEntity(managementAgent, communicator);
   }
 
   @Override

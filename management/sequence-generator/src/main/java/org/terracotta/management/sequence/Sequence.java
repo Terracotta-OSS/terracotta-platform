@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.sequence;
 
+import com.tc.classloader.CommonComponent;
+
 import java.io.Serializable;
 
 /**
@@ -22,6 +24,7 @@ import java.io.Serializable;
  *
  * @author Mathieu Carbou
  */
+@CommonComponent
 public interface Sequence extends Comparable<Sequence>, Serializable {
 
   long getTimestamp();

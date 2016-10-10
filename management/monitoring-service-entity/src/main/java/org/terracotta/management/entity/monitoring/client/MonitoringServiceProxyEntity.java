@@ -15,12 +15,12 @@
  */
 package org.terracotta.management.entity.monitoring.client;
 
-import org.terracotta.management.entity.monitoring.MonitoringService;
+import org.terracotta.management.entity.monitoring.MonitoringServiceProxy;
 import org.terracotta.connection.entity.Entity;
 
 /**
  * @author Mathieu Carbou
  */
-public interface MonitoringServiceEntity extends MonitoringService, Entity {
+public interface MonitoringServiceProxyEntity extends MonitoringServiceProxy, Entity {
 
 }

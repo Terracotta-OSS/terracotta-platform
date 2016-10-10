@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry;
+package org.terracotta.management.sequence.support.voltron;
 
 import com.tc.classloader.BuiltinService;
 import org.terracotta.entity.ServiceConfiguration;
@@ -22,8 +22,10 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
+import org.terracotta.management.sequence.SequenceGenerator;
 import org.terracotta.management.sequence.TimeSource;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -31,13 +33,14 @@ import java.util.Collections;
  * @author Mathieu Carbou
  */
 @BuiltinService
-public class ManagementRegistryServiceProvider implements ServiceProvider {
+public class SequenceGeneratorServiceProvider implements ServiceProvider {
 
-  private final ManagementRegistryService managementRegistryService = new ManagementRegistryService(new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST));
+  private static final ArrayList<Class<?>> SERVICE_TYPES = new ArrayList<Class<?>>(Collections.singletonList(SequenceGenerator.class));
+
+  private final SequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST);
 
   @Override
   public void clear() throws ServiceProviderCleanupException {
-    managementRegistryService.clear();
   }
 
   @Override
@@ -50,14 +53,8 @@ public class ManagementRegistryServiceProvider implements ServiceProvider {
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
-    if (ConsumerManagementRegistry.class == serviceType) {
-      if (configuration instanceof ConsumerManagementRegistryConfiguration) {
-        ConsumerManagementRegistryConfiguration config = (ConsumerManagementRegistryConfiguration) configuration;
-        return serviceType.cast(managementRegistryService.getManagementRegistry(consumerID, config));
-
-      } else {
-        return serviceType.cast(managementRegistryService.getNoopManagementRegistry(consumerID));
-      }
+    if (SequenceGenerator.class == serviceType) {
+      return serviceType.cast(sequenceGenerator);
     }
 
     throw new IllegalStateException("Unknown service type " + serviceType.getName());
@@ -65,7 +62,7 @@ public class ManagementRegistryServiceProvider implements ServiceProvider {
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Collections.singletonList(ConsumerManagementRegistry.class);
+    return SERVICE_TYPES;
   }
 
 }

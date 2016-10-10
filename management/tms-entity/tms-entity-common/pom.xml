@@ -36,6 +36,16 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>management-model</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>sequence-generator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>voltron-proxy</artifactId>
       <version>${project.version}</version>

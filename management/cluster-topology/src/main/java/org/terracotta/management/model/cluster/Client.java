@@ -18,14 +18,14 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,12 +34,12 @@ import java.util.stream.Stream;
  */
 public final class Client extends AbstractNode<Cluster> implements Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   public static final String KEY = "clientId";
 
   // physical connections to stripes (active server)
-  private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
+  private final Map<String, Connection> connections = new HashMap<>();
 
   private final ClientIdentifier clientIdentifier;
   private final SortedSet<String> tags = new TreeSet<>();
@@ -60,7 +60,12 @@ public final class Client extends AbstractNode<Cluster> implements Serializable 
     return this;
   }
 
-  public SortedSet<String> getTags() {
+
+  public boolean isManageable() {
+    return managementRegistry != null;
+  }
+
+  public Collection<String> getTags() {
     return tags;
   }
 

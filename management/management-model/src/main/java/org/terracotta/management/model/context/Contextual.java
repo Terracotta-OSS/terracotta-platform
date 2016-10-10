@@ -13,40 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
-
-import com.tc.classloader.CommonComponent;
-import org.terracotta.management.sequence.Sequence;
+package org.terracotta.management.model.context;
 
 import java.io.Serializable;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
-public interface PlatformNotification extends Serializable {
+public interface Contextual extends Serializable {
+  Context getContext();
 
-  @CommonComponent
-  enum Type {
-    SERVER_ENTITY_CREATED,
-    SERVER_ENTITY_DESTROYED,
-
-    SERVER_ENTITY_FETCHED,
-    SERVER_ENTITY_UNFETCHED,
-
-    CLIENT_CONNECTED,
-    CLIENT_DISCONNECTED,
-
-    SERVER_JOINED,
-    SERVER_LEFT,
-    SERVER_STATE_CHANGED,
-  }
-
-  Sequence getSequence();
-
-  long getIndex();
-
-  Type getType();
-
-  <T extends Serializable> T getSource(Class<T> type);
+  void setContext(Context context);
 }

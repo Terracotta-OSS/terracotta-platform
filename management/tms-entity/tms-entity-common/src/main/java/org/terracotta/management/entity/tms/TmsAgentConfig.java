@@ -27,79 +27,20 @@ public final class TmsAgentConfig implements Serializable {
   // name must be hardcoded because it reference a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.tms.client.TmsAgentEntity";
 
-  private String stripeName;
-  private int maximumUnreadMutations = 1024 * 1024;
-  private int maximumUnreadNotifications = 1024 * 1024;
-  private int maximumUnreadStatistics = 1024 * 1024;
+  private int maximumUnreadMessages = 1024 * 1024;
 
-  public int getMaximumUnreadMutations() {
-    return maximumUnreadMutations;
+  public int getMaximumUnreadMessages() {
+    return maximumUnreadMessages;
   }
 
-  public TmsAgentConfig setMaximumUnreadMutations(int maximumUnreadMutations) {
-    this.maximumUnreadMutations = maximumUnreadMutations;
+  public TmsAgentConfig setMaximumUnreadMessages(int maximumUnreadMessages) {
+    this.maximumUnreadMessages = maximumUnreadMessages;
     return this;
-  }
-
-  public String getStripeName() {
-    return stripeName;
-  }
-
-  public TmsAgentConfig setStripeName(String stripeName) {
-    this.stripeName = stripeName;
-    return this;
-  }
-
-  public int getMaximumUnreadNotifications() {
-    return maximumUnreadNotifications;
-  }
-
-  public TmsAgentConfig setMaximumUnreadNotifications(int maximumUnreadNotifications) {
-    this.maximumUnreadNotifications = maximumUnreadNotifications;
-    return this;
-  }
-
-  public int getMaximumUnreadStatistics() {
-    return maximumUnreadStatistics;
-  }
-
-  public TmsAgentConfig setMaximumUnreadStatistics(int maximumUnreadStatistics) {
-    this.maximumUnreadStatistics = maximumUnreadStatistics;
-    return this;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    TmsAgentConfig that = (TmsAgentConfig) o;
-
-    if (maximumUnreadMutations != that.maximumUnreadMutations) return false;
-    if (maximumUnreadNotifications != that.maximumUnreadNotifications) return false;
-    if (maximumUnreadStatistics != that.maximumUnreadStatistics) return false;
-    return stripeName != null ? stripeName.equals(that.stripeName) : that.stripeName == null;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = stripeName != null ? stripeName.hashCode() : 0;
-    result = 31 * result + maximumUnreadMutations;
-    result = 31 * result + maximumUnreadNotifications;
-    result = 31 * result + maximumUnreadStatistics;
-    return result;
   }
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("TmsAgentConfig{");
-    sb.append("stripeName='").append(stripeName).append('\'');
-    sb.append(", maximumUnreadMutations=").append(maximumUnreadMutations);
-    sb.append(", maximumUnreadNotifications=").append(maximumUnreadNotifications);
-    sb.append(", maximumUnreadStatistics=").append(maximumUnreadStatistics);
-    sb.append('}');
-    return sb.toString();
+    return "TmsAgentConfig{" + "maximumUnreadMessages=" + maximumUnreadMessages + '}';
   }
-  
+
 }
