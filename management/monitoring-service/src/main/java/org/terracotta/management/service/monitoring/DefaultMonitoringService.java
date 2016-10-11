@@ -288,9 +288,10 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   private Context getServerEntityContext() {
     return stripeMonitoring.applyCluster(cluster -> {
-      Context serverEntityContext = getServerEntityContext();
-      return cluster.getSingleStripe().getActiveServerEntity(serverEntityContext)
-          .<IllegalStateException>orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityContext))
+      ServerEntityIdentifier serverEntityIdentifier = stripeMonitoring.getServerEntityIdentifier(consumerId);
+      return cluster.getSingleStripe()
+          .getActiveServerEntity(serverEntityIdentifier)
+          .<IllegalStateException>orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityIdentifier))
           .getContext();
     });
   }
