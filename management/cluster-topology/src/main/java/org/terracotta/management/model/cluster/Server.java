@@ -18,7 +18,6 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 
-import java.io.Serializable;
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-public final class Server extends AbstractNode<Stripe> implements Serializable {
+public final class Server extends AbstractNode<Stripe> {
 
   private static final long serialVersionUID = 2;
 

@@ -17,14 +17,13 @@ package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
 
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
  */
-public final class ServerEntity extends AbstractNode<Server> implements Serializable {
+public final class ServerEntity extends AbstractNode<Server> {
 
   private static final long serialVersionUID = 2;
 

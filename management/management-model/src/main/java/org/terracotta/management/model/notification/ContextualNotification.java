@@ -19,7 +19,6 @@ import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +26,7 @@ import java.util.Map;
 /**
  * @author Mathieu Carbou
  */
-public final class ContextualNotification implements Serializable, Contextual {
+public final class ContextualNotification implements Contextual {
 
   private static final long serialVersionUID = 1;
 

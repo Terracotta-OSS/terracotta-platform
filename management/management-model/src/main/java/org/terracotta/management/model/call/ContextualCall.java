@@ -19,13 +19,12 @@ import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
-import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * @author Mathieu Carbou
  */
-public class ContextualCall implements Serializable, Contextual {
+public class ContextualCall implements Contextual {
 
   private static final long serialVersionUID = 1;
 

@@ -18,7 +18,6 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -29,7 +28,7 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-abstract class AbstractNode<P extends Contextual> implements Node, Serializable {
+abstract class AbstractNode<P extends Contextual> implements Node {
 
   private static final long serialVersionUID = 1;
 

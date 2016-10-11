@@ -17,7 +17,6 @@ package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -27,7 +26,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-public final class Stripe extends AbstractNode<Cluster> implements Serializable {
+public final class Stripe extends AbstractNode<Cluster> {
 
   private static final long serialVersionUID = 2;
 
