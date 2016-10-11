@@ -16,14 +16,19 @@
 package org.terracotta.runnel.encoding.dataholders;
 
 import org.junit.Test;
+import org.terracotta.runnel.Struct;
+import org.terracotta.runnel.StructBuilder;
+import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * @author Ludovic Orban
@@ -75,6 +80,67 @@ public class StructTest {
     assertThat(readBuffer.getVlqInt(), is(4));
     assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getString(8), is("deuxieme"));
+  }
+
+  @Test
+  public void testFromDecoder() throws Exception {
+    Struct messageBase = StructBuilder.newStructBuilder().int32("opcode", 10).build();
+    Struct messageCacheCreate = StructBuilder.newStructBuilder().int32("opcode", 10).string("cache", 20).build();
+    Struct messageGet = StructBuilder.newStructBuilder().int32("opcode", 10).int64("key", 20).build();
+
+
+    ByteBuffer encoded1 = messageCacheCreate.encoder().int32("opcode", 24).string("cache", "oh my cache!").encode();
+    encoded1.flip();
+
+    ByteBuffer encoded2 = messageGet.encoder().int32("opcode", 42).int64("key", 42L).encode();
+    encoded2.flip();
+
+
+    // Decode base
+    StructDecoder decoder = messageBase.decoder(encoded1);
+    Integer opcode = decoder.int32("opcode");
+    assertThat(opcode, is(24));
+
+    // Transform decoder to handle cacheCreate
+    StructDecoder cacheCreateDecoder = messageCacheCreate.fromDecoder(decoder);
+    assertThat(cacheCreateDecoder.string("cache"), is("oh my cache!"));
+
+    // Decode base
+    decoder = messageBase.decoder(encoded2);
+    opcode = decoder.int32("opcode");
+    assertThat(opcode, is(42));
+
+    // Transform decode to handle get
+    StructDecoder getDecoder = messageGet.fromDecoder(decoder);
+    assertThat(getDecoder.int64("key"), is(42L));
+  }
+
+  @Test
+  public void testFromDecoderInvalid() throws Exception {
+    Struct messageBase = StructBuilder.newStructBuilder().int32("opcode", 10).build();
+    Struct messageCacheCreate = StructBuilder.newStructBuilder().int32("opcode", 10).string("cache", 20).build();
+
+
+    ByteBuffer encoded1 = messageCacheCreate.encoder().int32("opcode", 24).string("cache", "oh my cache!").encode();
+    encoded1.flip();
+
+    StructDecoder decoder = messageBase.decoder(encoded1);
+    Integer opcode = decoder.int32("opcode");
+
+    try {
+      decoder.string("cache");
+      fail("Field should not be readable - messageBase does not define \"cache\"");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), containsString("No such field"));
+    }
+
+    StructDecoder cacheCreateDecoder = messageCacheCreate.fromDecoder(decoder);
+    try {
+      cacheCreateDecoder.int32("opcode");
+      fail("Field should no longer be readable - was read already");
+    } catch (IllegalArgumentException e){
+      assertThat(e.getMessage(), containsString("No such field left"));
+    }
   }
 
 }

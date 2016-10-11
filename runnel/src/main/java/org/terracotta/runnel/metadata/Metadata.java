@@ -44,6 +44,10 @@ public class Metadata {
     return new FieldDecoder(this, readBuffer);
   }
 
+  public FieldDecoder fieldDecoder(FieldDecoder sourceDecoder) {
+    return new FieldDecoder(this, sourceDecoder);
+  }
+
   public Map<Integer, Field> buildFieldsByIndexMap() {
     Map<Integer, Field> map = new HashMap<Integer, Field>();
     for (Field field : fieldsByName.values()) {

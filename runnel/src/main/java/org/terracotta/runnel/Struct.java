@@ -48,6 +48,10 @@ public class Struct {
     return new StructDecoder(root, new ReadBuffer(byteBuffer));
   }
 
+  public StructDecoder fromDecoder(StructDecoder otherDecoder) {
+    return new StructDecoder(root, otherDecoder);
+  }
+
   public void dump(ByteBuffer byteBuffer, PrintStream out) {
     Map<Integer, Field> fieldsByInteger = root.getMetadata().buildFieldsByIndexMap();
 
