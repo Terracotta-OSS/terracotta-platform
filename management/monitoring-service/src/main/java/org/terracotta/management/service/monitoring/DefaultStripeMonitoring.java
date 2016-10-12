@@ -137,6 +137,14 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
       LOGGER.log(Level.FINEST, "serverEntityCreated(" + sender + ", " + platformEntity + "):\n" + cluster);
     }
 
+    if (platformEntity.isActive && !sender.getServerName().equals(currentActive.getServerName())) {
+      throw new IllegalStateException("Server " + sender + " is not current active server but it created an active entity " + platformEntity);
+    }
+
+    if (!platformEntity.isActive && sender.getServerName().equals(currentActive.getServerName())) {
+      throw new IllegalStateException("Server " + sender + " is the current active server but it created a passive entity " + platformEntity);
+    }
+
     // do not use .ifPresent() because we want to fail if the server is not there!
     Server server = stripe.getServerByName(sender.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
@@ -153,6 +161,14 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
   public synchronized void serverEntityDestroyed(PlatformServer sender, PlatformEntity platformEntity) {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.log(Level.FINEST, "serverEntityDestroyed(" + sender + ", " + platformEntity + "):\n" + cluster);
+    }
+
+    if (platformEntity.isActive && !sender.getServerName().equals(currentActive.getServerName())) {
+      throw new IllegalStateException("Server " + sender + " is not current active server but it destroyed an active entity " + platformEntity);
+    }
+
+    if (!platformEntity.isActive && sender.getServerName().equals(currentActive.getServerName())) {
+      throw new IllegalStateException("Server " + sender + " is the current active server but it destroyed a passive entity " + platformEntity);
     }
 
     stripe.getServerByName(sender.getServerName())
