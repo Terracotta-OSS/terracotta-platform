@@ -327,7 +327,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
       case TOPIC_SERVER_ENTITY_NOTIFICATION: {
         Serializable[] o = (Serializable[]) data;
-        long consumerId = (long) o[0];
+        long consumerId = ((Number) o[0]).longValue();
         ContextualNotification notification = (ContextualNotification) o[1];
         Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
         notification.setContext(notification.getContext().with(serverEntityContext));
@@ -337,7 +337,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
       case TOPIC_SERVER_ENTITY_STATISTICS: {
         Serializable[] o = (Serializable[]) data;
-        long consumerId = (long) o[0];
+        long consumerId = ((Number) o[0]).longValue();
         ContextualStatistics[] statistics = (ContextualStatistics[]) o[1];
         Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
         for (ContextualStatistics statistic : statistics) {
