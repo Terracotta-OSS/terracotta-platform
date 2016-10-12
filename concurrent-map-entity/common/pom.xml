@@ -34,10 +34,12 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-common-api</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 
