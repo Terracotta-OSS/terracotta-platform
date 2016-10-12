@@ -36,10 +36,12 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

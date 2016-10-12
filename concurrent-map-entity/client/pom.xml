@@ -40,10 +40,12 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-common-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
