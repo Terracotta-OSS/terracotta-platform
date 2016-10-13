@@ -22,6 +22,8 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
+import java.io.Serializable;
+
 /**
  * The interface which must be implemented by a monitoring component in order to receive the data entities passed into
  * IMonitoringProducer, on a server within the stripe.
@@ -62,6 +64,22 @@ public interface IStripeMonitoring {
    */
   void serverDidLeaveStripe(PlatformServer server);
 
+  /**
+   * Makes a best-efforts attempt to push named data to the interface.  This method differs from the add/remove node methods
+   *  in that the implementation is allowed to drop, ignore, or overwrite the data at any time.
+   * This interface is more appropriate for information such as statistics or other sampling information which may be dropped
+   *  if the system is busy or otherwise saturated.
+   * The implementation is free to impose whatever limiting heuristics it desires, meaning that the limiting may be based on
+   *  storage size, element count, staleness before send, or any other approach.  Additionally, the limit may be applied
+   *  globally or on a per-name basis.
+   *
+   * @param sender The description of the server where the call originated.
+   * @param name A name given to identify the data.  An implementation may use this as its limiting heuristic, to ensure that
+   *  infrequent data is not disproportionately over-written by very frequent data.
+   * @param data The object to push.
+   */
+  void pushBestEffortsData(PlatformServer sender, String name, Serializable data);
+
   void serverEntityCreated(PlatformServer sender, PlatformEntity entity);
 
   void serverEntityDestroyed(PlatformServer sender, PlatformEntity entity);
@@ -76,4 +94,5 @@ public interface IStripeMonitoring {
 
   void clientUnfetch(PlatformConnectedClient client, PlatformEntity entity, ClientDescriptor clientDescriptor);
 
+  void setState(PlatformServer sender, String[] path, Serializable data);
 }

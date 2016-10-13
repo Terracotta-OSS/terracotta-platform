@@ -16,7 +16,6 @@
 package org.terracotta.management.service.registry;
 
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
@@ -37,7 +36,7 @@ class DefaultConsumerManagementRegistry extends NoopConsumerManagementRegistry {
   DefaultConsumerManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
     super(configuration);
     this.monitoringService = Objects.requireNonNull(configuration.getServiceRegistry().getService(new MonitoringServiceConfiguration(configuration.getServiceRegistry())));
-    this.contextContainer = new ContextContainer(ServerEntity.KEY, this.monitoringService.getServerEntityIdentifier().getId());
+    this.contextContainer = new ContextContainer("entityConsumerId", String.valueOf(this.monitoringService.getConsumerId()));
     configuration.getProviders().forEach(this::addManagementProvider);
   }
 

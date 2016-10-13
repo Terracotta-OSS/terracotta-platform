@@ -26,8 +26,6 @@ import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ManagementRegistry;
-import org.terracotta.management.model.cluster.ServerEntity;
-import org.terracotta.management.model.cluster.ServerEntityIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.DefaultManagementCallMessage;
@@ -40,6 +38,7 @@ import org.terracotta.management.sequence.Sequence;
 import org.terracotta.management.service.monitoring.buffer.ReadOnlyBuffer;
 import org.terracotta.management.service.monitoring.buffer.ReadWriteBuffer;
 import org.terracotta.management.service.monitoring.buffer.RingBuffer;
+import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.io.ByteArrayInputStream;
@@ -48,12 +47,16 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A monitoring service is created per entity, and contains some states related to the entity that requested this service
@@ -62,17 +65,21 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 class DefaultMonitoringService implements MonitoringService, Closeable {
 
+  private static final Logger LOGGER = Logger.getLogger(DefaultStripeMonitoring.class.getName());
+
   private final DefaultStripeMonitoring stripeMonitoring;
   private final long consumerId;
+  private final IMonitoringProducer monitoringProducer;
   private final ClientCommunicator clientCommunicator;
   private final Map<ClientDescriptor, ClientIdentifier> fetches = new ConcurrentHashMap<>();
   private final ConcurrentMap<ClientDescriptor, AtomicLong> pendingCalls = new ConcurrentHashMap<>();
 
   private volatile ReadWriteBuffer<Message> buffer;
 
-  DefaultMonitoringService(DefaultStripeMonitoring stripeMonitoring, long consumerId, ClientCommunicator clientCommunicator) {
+  DefaultMonitoringService(DefaultStripeMonitoring stripeMonitoring, long consumerId, IMonitoringProducer monitoringProducer, ClientCommunicator clientCommunicator) {
     this.stripeMonitoring = stripeMonitoring;
     this.consumerId = consumerId;
+    this.monitoringProducer = monitoringProducer;
     this.clientCommunicator = clientCommunicator;
   }
 
@@ -87,16 +94,35 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{" + "\ncontext=" + getServerEntityContext() + ", \nfetches=" + fetches + ", \ncalls=" + pendingCalls + '}';
+    return getClass().getSimpleName() + "{" + "\nconsumerId=" + consumerId + ", \nfetches=" + fetches + ", \ncalls=" + pendingCalls + '}';
   }
 
   @Override
+  public long getConsumerId() {
+    return consumerId;
+  }
+
+  // ===================
+  // ACTIVE-ONLY methods
+  // ===================
+
+  @Override
   public ClientIdentifier getClientIdentifier(ClientDescriptor clientDescriptor) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] getClientIdentifier(" + clientDescriptor + ")");
+    }
+
+    ensureAliveOnActive();
     return getConnectedClientIdentifier(clientDescriptor);
   }
 
   @Override
   public void pushClientNotification(ClientDescriptor from, ContextualNotification notification) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushClientNotification(" + from + ", " + notification + ")");
+    }
+
+    ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
     stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
         .ifPresent(client -> {
@@ -107,6 +133,11 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void pushClientStatistics(ClientDescriptor from, ContextualStatistics... statistics) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushClientStatistics(" + from + ", " + Arrays.toString(statistics) + ")");
+    }
+
+    ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
     stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
         .ifPresent(client -> {
@@ -120,6 +151,11 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void exposeClientTags(ClientDescriptor from, String... tags) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] exposeClientTags(" + from + ", " + Arrays.toString(tags) + ")");
+    }
+
+    ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
     stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
         .ifPresent(client -> {
@@ -129,8 +165,13 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
-  public void exposeClientManagementRegistry(ClientDescriptor caller, ContextContainer contextContainer, Capability... capabilities) {
-    ClientIdentifier clientIdentifier = getConnectedClientIdentifier(caller);
+  public void exposeClientManagementRegistry(ClientDescriptor from, ContextContainer contextContainer, Capability... capabilities) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] exposeClientManagementRegistry(" + from + ", " + contextContainer + ", " + Arrays.toString(capabilities) + ")");
+    }
+
+    ensureAliveOnActive();
+    ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
     stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
         .ifPresent(client -> {
           ManagementRegistry registry = ManagementRegistry.create(contextContainer);
@@ -141,35 +182,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
-  public void exposeServerEntityManagementRegistry(ContextContainer contextContainer, Capability... capabilities) {
-    ManagementRegistry registry = ManagementRegistry.create(contextContainer);
-    registry.addCapabilities(capabilities);
-    stripeMonitoring.consumeCluster(cluster -> {
-      ServerEntityIdentifier serverEntityIdentifier = getServerEntityIdentifier();
-      ServerEntity serverEntity = cluster.getSingleStripe().getActiveServerEntity(serverEntityIdentifier)
-          .<IllegalStateException>orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityIdentifier));
-      serverEntity.setManagementRegistry(registry);
-      stripeMonitoring.fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_UPDATED"));
-    });
-  }
-
-  @Override
-  public void pushServerEntityNotification(ContextualNotification notification) {
-    notification.setContext(notification.getContext().with(getServerEntityContext()));
-    stripeMonitoring.fireNotification(notification);
-  }
-
-  @Override
-  public void pushServerEntityStatistics(ContextualStatistics... statistics) {
-    Context context = getServerEntityContext();
-    for (ContextualStatistics statistic : statistics) {
-      statistic.setContext(statistic.getContext().with(context));
-    }
-    stripeMonitoring.fireStatistics(statistics);
-  }
-
-  @Override
   public Cluster readTopology() {
+    ensureAliveOnActive();
     return stripeMonitoring.applyCluster(o -> {
       try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
         try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
@@ -186,17 +200,18 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
-  public ServerEntityIdentifier getServerEntityIdentifier() {
-    return stripeMonitoring.getServerEntityIdentifier(consumerId);
-  }
+  public String sendManagementCallRequest(ClientDescriptor from, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] sendManagementCallRequest(" + from + ", " + to + ", " + context + ", " + capabilityName + ", " + methodName + ")");
+    }
 
-  @Override
-  public String sendManagementCallRequest(ClientDescriptor caller, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
+    ensureAliveOnActive();
+
     if (clientCommunicator == null) {
       throw new IllegalStateException("No " + ClientCommunicator.class.getSimpleName());
     }
 
-    ClientIdentifier callerClientIdentifier = getConnectedClientIdentifier(caller);
+    ClientIdentifier callerClientIdentifier = getConnectedClientIdentifier(from);
     ClientDescriptor toClientDescriptor = getClientDescriptor(to);
 
     Client targetClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(to)
@@ -216,7 +231,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
         new ContextualCall(context.with(targetClient.getContext()), capabilityName, methodName, returnType, parameters));
 
     // atomically increase the counter of management calls made by this client
-    pendingCalls.computeIfAbsent(caller, descriptor -> new AtomicLong()).incrementAndGet();
+    pendingCalls.computeIfAbsent(from, descriptor -> new AtomicLong()).incrementAndGet();
 
     try {
       clientCommunicator.sendNoResponse(toClientDescriptor, ProxyEntityResponse.response(ManagementCallMessage.class, message));
@@ -228,8 +243,14 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
-  public void answerManagementCall(ClientDescriptor calledDescriptor, ClientIdentifier caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
-    ClientIdentifier calledClientIdentifier = getConnectedClientIdentifier(calledDescriptor);
+  public void answerManagementCall(ClientDescriptor from, ClientIdentifier caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] answerManagementCall(" + from + ", " + caller + ", " + managementCallIdentifier + ")");
+    }
+
+    ensureAliveOnActive();
+
+    ClientIdentifier calledClientIdentifier = getConnectedClientIdentifier(from);
     ClientDescriptor callerClientDescriptor = getClientDescriptor(caller);
 
     Client targettedClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(caller).<IllegalStateException>orElseThrow(() -> new IllegalStateException(caller.toString())));
@@ -257,49 +278,16 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
-  public synchronized ReadOnlyBuffer<Message> createMessageBuffer(int maxBufferSize) {
-    if (buffer == null) {
-      buffer = new RingBuffer<>(maxBufferSize);
-    }
-    return buffer;
-  }
-
-  @Override
   public Sequence nextSequence() {
+    ensureAliveOnActive();
+
     return stripeMonitoring.nextSequence();
-  }
-
-  void push(Message message) {
-    if (buffer != null) {
-      if (buffer.put(message) != null) {
-        // notify the loss of messages if the ring buffer is full
-        buffer.put(new DefaultMessage(nextSequence(), "NOTIFICATION", new ContextualNotification(getServerEntityContext(), "LOST_NOTIFICATIONS")));
-      }
-    }
-  }
-
-  void addFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
-    fetches.put(clientDescriptor, clientIdentifier);
-  }
-
-  void removeFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
-    fetches.remove(clientDescriptor, clientIdentifier);
-  }
-
-  private Context getServerEntityContext() {
-    return stripeMonitoring.applyCluster(cluster -> {
-      ServerEntityIdentifier serverEntityIdentifier = stripeMonitoring.getServerEntityIdentifier(consumerId);
-      return cluster.getSingleStripe()
-          .getActiveServerEntity(serverEntityIdentifier)
-          .<IllegalStateException>orElseThrow(() -> stripeMonitoring.newIllegalTopologyState("Missing entity: " + serverEntityIdentifier))
-          .getContext();
-    });
   }
 
   private ClientIdentifier getConnectedClientIdentifier(ClientDescriptor from) {
     ClientIdentifier clientIdentifier = fetches.get(from);
     if (clientIdentifier == null) {
-      throw new SecurityException("Descriptor " + from + " is not a client of entity " + getServerEntityIdentifier() + " (consumerId=" + consumerId + ")");
+      throw new SecurityException("Descriptor " + from + " is not a client of entity " + stripeMonitoring.getCurrentActiveServerEntity(consumerId).getServerEntityIdentifier() + " (consumerId=" + consumerId + ")");
     }
     return clientIdentifier;
   }
@@ -313,9 +301,90 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
       }
     }
     if (toClientDescriptor == null) {
-      throw new SecurityException("Client identifier " + to + " is not a client of entity " + getServerEntityIdentifier() + " (consumerId=" + consumerId + ")");
+      throw new SecurityException("Client identifier " + to + " is not a client of entity " + stripeMonitoring.getCurrentActiveServerEntity(consumerId).getServerEntityIdentifier() + " (consumerId=" + consumerId + ")");
     }
     return toClientDescriptor;
+  }
+
+  private void ensureAliveOnActive() {
+    // this call throws an exception if the current server is not active and does not have the active entity with this consumer id
+    stripeMonitoring.getCurrentActiveServerEntity(consumerId);
+  }
+
+  // ==========================
+  // ACTIVE and PASSIVE methods
+  // ==========================
+
+  @Override
+  public void exposeServerEntityManagementRegistry(ContextContainer contextContainer, Capability... capabilities) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] exposeServerEntityManagementRegistry(" + contextContainer + ", " + Arrays.toString(capabilities) + ")");
+    }
+
+    ManagementRegistry registry = ManagementRegistry.create(contextContainer);
+    registry.addCapabilities(capabilities);
+
+    // this call will be routed to the current active server by voltron
+    monitoringProducer.addNode(new String[]{"management", "consumers", String.valueOf(consumerId)}, "registry", registry);
+  }
+
+  @Override
+  public void pushServerEntityNotification(ContextualNotification notification) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushServerEntityNotification(" + notification + ")");
+    }
+
+    // this call will be routed to the current active server by voltron
+    monitoringProducer.pushBestEffortsData(DefaultStripeMonitoring.TOPIC_SERVER_ENTITY_NOTIFICATION, new Serializable[]{consumerId, notification});
+  }
+
+  @Override
+  public void pushServerEntityStatistics(ContextualStatistics... statistics) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushServerEntityStatistics(" + Arrays.toString(statistics) + ")");
+    }
+
+    // this call will be routed to the current active server by voltron
+    monitoringProducer.pushBestEffortsData(DefaultStripeMonitoring.TOPIC_SERVER_ENTITY_STATISTICS, new Serializable[]{consumerId, statistics});
+  }
+
+  @Override
+  public synchronized ReadOnlyBuffer<Message> createMessageBuffer(int maxBufferSize) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "[" + consumerId + "] createMessageBuffer(" + maxBufferSize + ")");
+    }
+
+    if (buffer == null) {
+      buffer = new RingBuffer<>(maxBufferSize);
+    }
+    return buffer;
+  }
+
+  // =============================================
+  // CALLED IN ACTIVE FROM DefaultStripeMonitoring
+  // =============================================
+
+  void push(Message message) {
+    if (buffer != null) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.log(Level.FINEST, "[" + consumerId + "] push(" + message + ")");
+      }
+      if (buffer.put(message) != null) {
+        // notify the loss of messages if the ring buffer is full
+        buffer.put(new DefaultMessage(
+            nextSequence(),
+            "NOTIFICATION",
+            new ContextualNotification(stripeMonitoring.getCurrentActiveServerEntity(consumerId).getContext(), "LOST_NOTIFICATIONS")));
+      }
+    }
+  }
+
+  void addFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
+    fetches.put(clientDescriptor, clientIdentifier);
+  }
+
+  void removeFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
+    fetches.remove(clientDescriptor, clientIdentifier);
   }
 
 }

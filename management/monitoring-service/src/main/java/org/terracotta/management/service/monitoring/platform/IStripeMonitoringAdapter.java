@@ -22,6 +22,7 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -69,7 +70,7 @@ public final class IStripeMonitoringAdapter implements org.terracotta.monitoring
 
   @Override
   public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
-    throw new UnsupportedOperationException("pushBestEffortsData(" + name + ") from server " + sender + ", data: " + data);
+    delegate.pushBestEffortsData(sender, name, data);
   }
 
   @Override
@@ -79,54 +80,62 @@ public final class IStripeMonitoringAdapter implements org.terracotta.monitoring
       return true;
     }
 
-    // handle platform/state compared to platform/[clients|entities|fetched]/<id>
-    String entryType = "state".equals(name) ? "state" : parents[parents.length - 1];
+    if ("platform".equals(parents[0])) {
+      // handle platform/state compared to platform/[clients|entities|fetched]/<id>
+      String entryType = "state".equals(name) ? name : parents[parents.length - 1];
 
-    switch (entryType) {
+      switch (entryType) {
 
-      case "entities": {
-        requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
-            .put(name, (PlatformEntity) value);
-        delegate.serverEntityCreated(sender, (PlatformEntity) value);
-        return true;
-      }
-
-      case "clients": {
-        clients.put(name, (PlatformConnectedClient) value);
-        delegate.clientConnected((PlatformConnectedClient) value);
-        return true;
-      }
-
-      case "state": {
-        delegate.serverStateChanged(sender, (ServerState) value);
-        return true;
-      }
-
-      case "fetched": {
-        PlatformClientFetchedEntity fetch = (PlatformClientFetchedEntity) value;
-        PlatformConnectedClient client = clients.get(fetch.clientIdentifier);
-        if (client == null) {
-          throw new IllegalStateException("No " + PlatformConnectedClient.class.getSimpleName() + " has been added before with identifier " + fetch.clientIdentifier);
-        }
-        PlatformEntity entity = requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
-            .get(fetch.entityIdentifier);
-        requireNonNull(entity, "Inconsistent monitoring tree: entity " + fetch.entityIdentifier + " is not on server " + sender);
-        fetches.put(name, (PlatformClientFetchedEntity) value);
-        delegate.clientFetch(client, entity, fetch.clientDescriptor);
-        return true;
-      }
-
-      default: {
-        if (value != null) {
-          // oups, we miss something ?
-          throw new UnsupportedOperationException("addNode(" + String.join("/", (CharSequence[]) parents) + "/" + name + ") from server " + sender + ", data: " + value);
-
-        } else {
-          // old calls to create the tree structure
+        case "entities": {
+          requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
+              .put(name, (PlatformEntity) value);
+          delegate.serverEntityCreated(sender, (PlatformEntity) value);
           return true;
         }
+
+        case "clients": {
+          clients.put(name, (PlatformConnectedClient) value);
+          delegate.clientConnected((PlatformConnectedClient) value);
+          return true;
+        }
+
+        case "state": {
+          delegate.serverStateChanged(sender, (ServerState) value);
+          return true;
+        }
+
+        case "fetched": {
+          PlatformClientFetchedEntity fetch = (PlatformClientFetchedEntity) value;
+          PlatformConnectedClient client = clients.get(fetch.clientIdentifier);
+          if (client == null) {
+            throw new IllegalStateException("No " + PlatformConnectedClient.class.getSimpleName() + " has been added before with identifier " + fetch.clientIdentifier);
+          }
+          PlatformEntity entity = requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
+              .get(fetch.entityIdentifier);
+          requireNonNull(entity, "Inconsistent monitoring tree: entity " + fetch.entityIdentifier + " is not on server " + sender);
+          fetches.put(name, (PlatformClientFetchedEntity) value);
+          delegate.clientFetch(client, entity, fetch.clientDescriptor);
+          return true;
+        }
+
+        default: {
+          if (value != null) {
+            // oups, we miss something ?
+            throw new UnsupportedOperationException("addNode(" + String.join("/", (CharSequence[]) parents) + "/" + name + ") from server " + sender + ", data: " + value);
+
+          } else {
+            // calls to create the tree structure
+            return true;
+          }
+        }
+
       }
 
+    } else {
+      String[] path = Arrays.copyOf(parents, parents.length + 1);
+      path[parents.length] = name;
+      delegate.setState(sender, path, value);
+      return true;
     }
   }
 

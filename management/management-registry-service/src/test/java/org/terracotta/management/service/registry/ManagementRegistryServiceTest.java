@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -26,16 +28,23 @@ import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
 import org.terracotta.management.service.monitoring.buffer.ReadOnlyBuffer;
-import org.terracotta.management.service.monitoring.platform.IStripeMonitoring;
+import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
+import java.io.Serializable;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_PATH;
+import static org.terracotta.monitoring.PlatformMonitoringConstants.PLATFORM_PATH;
+import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_NAME;
 
 /**
  * @author Mathieu Carbou
@@ -43,26 +52,62 @@ import static org.mockito.Mockito.when;
 @RunWith(JUnit4.class)
 public class ManagementRegistryServiceTest {
 
+  ConsumerManagementRegistryProvider provider = new ConsumerManagementRegistryProvider();
+  MonitoringServiceProvider serviceProvider = new MonitoringServiceProvider();
+  MonitoringService monitoringService;
+  ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
+  IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
+  IStripeMonitoring stripeMonitoring = serviceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+  long now = System.currentTimeMillis();
+  PlatformServer server = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9520, "version", "build", now);
+
   @Test
   public void test_management_info_pushed() {
-    ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
-    MonitoringServiceProvider serviceProvider = new MonitoringServiceProvider();
-    IStripeMonitoring stripeMonitoring = serviceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+    doAnswer(invocation -> {
+      Class<?> type = ((ServiceConfiguration) invocation.getArguments()[0]).getServiceType();
+      if (type == IMonitoringProducer.class) {
+        return monitoringProducer;
+      }
+      if (type == MonitoringService.class) {
+        return monitoringService;
+      }
+      if (type == ClientCommunicator.class) {
+        return null;
+      }
+      throw new AssertionError(invocation + "\ntype=" + type);
+    }).when(serviceRegistry).getService(any(ServiceConfiguration.class));
+
+    doAnswer(invocation -> {
+      stripeMonitoring.pushBestEffortsData(
+          server,
+          (String) invocation.getArguments()[0],
+          (Serializable) invocation.getArguments()[1]);
+      return null;
+    }).when(monitoringProducer).pushBestEffortsData(anyString(), any(Serializable.class));
+
+    doAnswer(invocation -> stripeMonitoring.addNode(
+        server,
+        (String[]) invocation.getArguments()[0],
+        (String) invocation.getArguments()[1],
+        (Serializable) invocation.getArguments()[2])
+    ).when(monitoringProducer).addNode(any(String[].class), anyString(), any(Serializable.class));
+
+    doAnswer(invocation -> stripeMonitoring.removeNode(
+        server,
+        (String[]) invocation.getArguments()[0],
+        (String) invocation.getArguments()[1])
+    ).when(monitoringProducer).removeNode(any(String[].class), anyString());
 
     // simulate platform calls
-    long now = System.currentTimeMillis();
-    PlatformServer server = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9520, "version", "build", now);
     stripeMonitoring.serverDidBecomeActive(server);
-    stripeMonitoring.serverStateChanged(server, new ServerState("ACTIVE", now, now));
-    stripeMonitoring.serverEntityCreated(server, new PlatformEntity("entityType", "entityName", 1, true));
+    stripeMonitoring.addNode(server, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", now, now));
+    stripeMonitoring.addNode(server, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName", 1, true));
 
-    MonitoringService monitoringService = serviceProvider.getService(1, new MonitoringServiceConfiguration(serviceRegistry));
-    when(serviceRegistry.getService(any(MonitoringServiceConfiguration.class))).thenReturn(monitoringService);
+    monitoringService = serviceProvider.getService(1, new MonitoringServiceConfiguration(serviceRegistry));
     ReadOnlyBuffer<Message> buffer = monitoringService.createMessageBuffer(100);
 
     // a consumer asks for a service
-    ConsumerManagementRegistryProvider provider = new ConsumerManagementRegistryProvider();
-    ConsumerManagementRegistry registry = provider.getService(0, new ConsumerManagementRegistryConfiguration(serviceRegistry)
+    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(serviceRegistry)
         .addProvider(new MyManagementProvider()));
 
     // then register some objects

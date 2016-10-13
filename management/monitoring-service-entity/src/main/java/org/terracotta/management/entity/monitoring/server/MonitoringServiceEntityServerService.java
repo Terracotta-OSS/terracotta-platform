@@ -32,7 +32,7 @@ public class MonitoringServiceEntityServerService extends ProxyServerEntityServi
 
   @Override
   public MonitoringServiceEntity createActiveEntity(ServiceRegistry registry, Void config) {
-    MonitoringService monitoringService = registry.getService(new MonitoringServiceConfiguration());
+    MonitoringService monitoringService = registry.getService(new MonitoringServiceConfiguration(registry));
     return new MonitoringServiceEntity(monitoringService);
   }
 
