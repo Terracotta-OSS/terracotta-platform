@@ -16,6 +16,7 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.BuiltinService;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
@@ -47,7 +48,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
   private final IStripeMonitoringAdapter adapter = new IStripeMonitoringAdapter(stripeMonitoring);
 
   @Override
-  public boolean initialize(ServiceProviderConfiguration configuration) {
+  public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     // useless for a @BuiltinService until https://github.com/Terracotta-OSS/terracotta-apis/issues/152 is fixed
     return true;
   }

@@ -43,7 +43,7 @@ public class OffHeapResourcesProviderTest {
       public Class<? extends ServiceProvider> getServiceProviderType() {
         return OffHeapResourcesProvider.class;
       }
-    }), is(false));
+    }, null), is(false));
   }
 
   @Test
@@ -57,7 +57,7 @@ public class OffHeapResourcesProviderTest {
     when(config.getResources()).thenReturn(Collections.singleton(resourceConfig));
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
-    provider.initialize(config);
+    provider.initialize(config, null);
 
     assertThat(provider.getService(42L, OffHeapResourceIdentifier.identifier("foo")), notNullValue());
     assertThat(provider.getService(42L, OffHeapResourceIdentifier.identifier("foo")).available(), is(2L * 1024 * 1024));
@@ -74,9 +74,9 @@ public class OffHeapResourcesProviderTest {
     when(config.getResources()).thenReturn(Collections.singleton(resourceConfig));
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
-    provider.initialize(config);
+    provider.initialize(config, null);
     try {
-      provider.initialize(config);
+      provider.initialize(config, null);
       fail("Expected IllegalStateException");
     } catch (IllegalStateException e) {
       //expected
@@ -94,7 +94,7 @@ public class OffHeapResourcesProviderTest {
     when(config.getResources()).thenReturn(Collections.singleton(resourceConfig));
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
-    provider.initialize(config);
+    provider.initialize(config, null);
 
     assertThat(provider.getService(42L, OffHeapResourceIdentifier.identifier("bar")), nullValue());
   }
@@ -111,7 +111,7 @@ public class OffHeapResourcesProviderTest {
     when(config.getResources()).thenReturn(Collections.singleton(resourceConfig));
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
-    provider.initialize(config);
+    provider.initialize(config, null);
     provider.clear();
     assertThat(provider.getService(42L, OffHeapResourceIdentifier.identifier("foo")), nullValue());
   }
@@ -128,7 +128,7 @@ public class OffHeapResourcesProviderTest {
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
     try {
-      provider.initialize(config);
+      provider.initialize(config, null);
       fail();
     } catch (ArithmeticException e) {
       // expected
@@ -149,7 +149,7 @@ public class OffHeapResourcesProviderTest {
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
     try {
-      provider.initialize(config);
+      provider.initialize(config, null);
     } finally {
       provider.clear();
     }
