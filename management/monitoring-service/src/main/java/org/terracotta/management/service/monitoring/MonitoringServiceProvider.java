@@ -36,7 +36,6 @@ import java.util.Collection;
 @BuiltinService
 public class MonitoringServiceProvider implements ServiceProvider {
 
-  private static final long PLATFORM_CONSUMERID = 0;
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
       MonitoringService.class,
       IStripeMonitoring.class,
@@ -59,11 +58,11 @@ public class MonitoringServiceProvider implements ServiceProvider {
     Class<T> serviceType = configuration.getServiceType();
 
     // adapt the IStripeMonitoring interface for platform since this is not the one we would expect to use at the moment
-    if (IStripeMonitoring.class.isAssignableFrom(serviceType) && consumerID == PLATFORM_CONSUMERID) {
+    if (IStripeMonitoring.class.isAssignableFrom(serviceType)) {
       return serviceType.cast(adapter);
     }
 
-    if (org.terracotta.management.service.monitoring.platform.IStripeMonitoring.class.isAssignableFrom(serviceType) && consumerID == PLATFORM_CONSUMERID) {
+    if (org.terracotta.management.service.monitoring.platform.IStripeMonitoring.class.isAssignableFrom(serviceType)) {
       return serviceType.cast(stripeMonitoring);
     }
 
