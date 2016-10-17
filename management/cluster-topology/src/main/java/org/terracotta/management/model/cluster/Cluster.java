@@ -18,7 +18,6 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -32,7 +31,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-public final class Cluster implements Contextual, Serializable {
+public final class Cluster implements Contextual {
 
   private static final long serialVersionUID = 2;
 

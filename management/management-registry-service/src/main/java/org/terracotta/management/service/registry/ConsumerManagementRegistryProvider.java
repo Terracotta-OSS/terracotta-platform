@@ -23,6 +23,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,15 +45,19 @@ public class ConsumerManagementRegistryProvider implements ServiceProvider {
   // detects if the monitoring service and management stack is there. If not, a NOOP implementation is returned
   static {
     boolean noop = false;
+    Collection<String> missingDependencies = new TreeSet<>();
     for (String dep : DEPS) {
       try {
         ConsumerManagementRegistryProvider.class.getClassLoader().loadClass(dep);
       } catch (ClassNotFoundException ignored) {
         noop = true;
-        if(LOGGER.isLoggable(Level.WARNING)) {
-          LOGGER.warning("CNFE: " + dep);
-        }
+        missingDependencies.add(dep);
       }
+    }
+    if (noop && LOGGER.isLoggable(Level.WARNING)) {
+      LOGGER.warning("A no-op " + ConsumerManagementRegistry.class.getSimpleName()
+          + " will be used due to missing dependencies from the classpath: "
+          + String.join(", ", missingDependencies));
     }
     NOOP = noop;
   }

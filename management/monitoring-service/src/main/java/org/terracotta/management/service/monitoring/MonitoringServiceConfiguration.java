@@ -20,6 +20,7 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.Optional;
 
@@ -31,16 +32,17 @@ public class MonitoringServiceConfiguration implements ServiceConfiguration<Moni
 
   private final ServiceRegistry serviceRegistry;
 
-  public MonitoringServiceConfiguration() {
-    this(null);
-  }
-
   public MonitoringServiceConfiguration(ServiceRegistry serviceRegistry) {
     this.serviceRegistry = serviceRegistry;
   }
 
   public Optional<ClientCommunicator> getClientCommunicator() {
     return getRegistry().map(registry -> registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
+  }
+
+  public IMonitoringProducer getMonitoringProducer() {
+    return getRegistry().map(registry -> registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)))
+        .orElseThrow(() -> new IllegalStateException("Missing service " + IMonitoringProducer.class.getName()));
   }
 
   @Override

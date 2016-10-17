@@ -21,6 +21,7 @@ import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Connection;
 import org.terracotta.management.model.cluster.Endpoint;
+import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.cluster.ServerEntityIdentifier;
@@ -37,10 +38,10 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
-import java.util.Collections;
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -57,11 +58,16 @@ import static org.terracotta.management.service.monitoring.DefaultStripeMonitori
 import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_STATE_CHANGED;
 
 /**
+ * Implementors WARNING: all methods mutating or accessing the live topology should be synchronized
+ *
  * @author Mathieu Carbou
  */
 class DefaultStripeMonitoring implements IStripeMonitoring {
 
   private static final Logger LOGGER = Logger.getLogger(DefaultStripeMonitoring.class.getName());
+
+  static final String TOPIC_SERVER_ENTITY_NOTIFICATION = "server-entity-notification";
+  static final String TOPIC_SERVER_ENTITY_STATISTICS = "server-entity-statistics";
 
   private final SequenceGenerator sequenceGenerator;
   private final Cluster cluster;
@@ -77,11 +83,17 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
     this.cluster = Cluster.create().addStripe(stripe = Stripe.create("SINGLE"));
   }
 
+  // ================================================
+  // PLATFORM CALLBACKS: only called on active server
+  // ================================================
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public synchronized void serverDidBecomeActive(PlatformServer self) {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.log(Level.FINEST, "serverDidBecomeActive(" + self + ")");
     }
+
     serverDidJoinStripe(self);
 
     currentActive = stripe.getServerByName(self.getServerName()).get();
@@ -110,7 +122,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
     entities.putIfAbsent(server.getServerName(), new HashMap<>());
 
-    fireNotification(SERVER_JOINED, server.getContext());
+    fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
   }
 
   @Override
@@ -127,7 +139,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
           entities.remove(server.getServerName());
 
-          fireNotification(SERVER_LEFT, context);
+          fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
         });
   }
 
@@ -135,6 +147,14 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
   public synchronized void serverEntityCreated(PlatformServer sender, PlatformEntity platformEntity) {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.log(Level.FINEST, "serverEntityCreated(" + sender + ", " + platformEntity + "):\n" + cluster);
+    }
+
+    if (platformEntity.isActive && !sender.getServerName().equals(getCurrentActive().getServerName())) {
+      throw newIllegalTopologyState("Server " + sender + " is not current active server but it created an active entity " + platformEntity);
+    }
+
+    if (!platformEntity.isActive && sender.getServerName().equals(getCurrentActive().getServerName())) {
+      throw newIllegalTopologyState("Server " + sender + " is the current active server but it created a passive entity " + platformEntity);
     }
 
     // do not use .ifPresent() because we want to fail if the server is not there!
@@ -146,13 +166,21 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
     entities.get(server.getServerName()).put(platformEntity.consumerID, entity.getServerEntityIdentifier());
 
-    fireNotification(SERVER_ENTITY_CREATED, entity.getContext());
+    fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
   }
 
   @Override
   public synchronized void serverEntityDestroyed(PlatformServer sender, PlatformEntity platformEntity) {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.log(Level.FINEST, "serverEntityDestroyed(" + sender + ", " + platformEntity + "):\n" + cluster);
+    }
+
+    if (platformEntity.isActive && !sender.getServerName().equals(getCurrentActive().getServerName())) {
+      throw newIllegalTopologyState("Server " + sender + " is not current active server but it destroyed an active entity " + platformEntity);
+    }
+
+    if (!platformEntity.isActive && sender.getServerName().equals(getCurrentActive().getServerName())) {
+      throw newIllegalTopologyState("Server " + sender + " is the current active server but it destroyed a passive entity " + platformEntity);
     }
 
     stripe.getServerByName(sender.getServerName())
@@ -167,7 +195,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
                 entities.get(server.getServerName()).remove(platformEntity.consumerID);
 
-                fireNotification(SERVER_ENTITY_DESTROYED, context);
+                fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
               });
         });
   }
@@ -186,9 +214,9 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
         .setHostName(platformConnectedClient.remoteAddress.getHostName());
     cluster.addClient(client);
 
-    client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), currentActive, endpoint));
+    client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getCurrentActive(), endpoint));
 
-    fireNotification(CLIENT_CONNECTED, client.getContext());
+    fireNotification(new ContextualNotification(client.getContext(), CLIENT_CONNECTED.name()));
   }
 
   @Override
@@ -204,7 +232,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
           Context context = client.getContext();
           client.remove();
 
-          fireNotification(CLIENT_DISCONNECTED, context);
+          fireNotification(new ContextualNotification(context, CLIENT_DISCONNECTED.name()));
         });
   }
 
@@ -214,19 +242,21 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
       LOGGER.log(Level.FINEST, "clientFetch(" + platformConnectedClient + ", " + platformEntity + "):\n" + cluster);
     }
 
+    Server currentActive = getCurrentActive();
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
     // do not use .ifPresent() because we want to fail if the server is not there!
     Client client = cluster.getClient(clientIdentifier)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
+
     Connection connection = client.getConnection(currentActive, endpoint)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing connection between server " + currentActive + " and client " + clientIdentifier));
     ServerEntity entity = currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
 
     if (!connection.fetchServerEntity(platformEntity.name, platformEntity.typeName)) {
-      throw new IllegalStateException();
+      throw newIllegalTopologyState("Unable to fetch entity " + platformEntity + " from client " + client);
     }
 
     DefaultMonitoringService monitoringService = monitoringServices.get(platformEntity.consumerID);
@@ -234,7 +264,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
       monitoringService.addFetch(clientDescriptor, clientIdentifier);
     }
 
-    fireNotification(SERVER_ENTITY_FETCHED, entity.getContext(), client.getContext());
+    fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
   }
 
   @Override
@@ -243,6 +273,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
       LOGGER.log(Level.FINEST, "clientUnfetch(" + platformConnectedClient + ", " + platformEntity + "):\n" + cluster);
     }
 
+    Server currentActive = getCurrentActive();
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
@@ -260,9 +291,8 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
               }
 
               if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
-                fireNotification(SERVER_ENTITY_UNFETCHED, entity.getContext(), client.getContext());
+                fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
               }
-
             }));
   }
 
@@ -282,15 +312,73 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
           attrs.put("state", serverState.getState());
           attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
 
-          fireNotification(SERVER_STATE_CHANGED, server.getContext(), attrs);
+          fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
         });
   }
 
-  synchronized MonitoringService getOrCreateMonitoringService(long consumerID, MonitoringServiceConfiguration config) {
+  @Override
+  public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "pushBestEffortsData(" + sender + ", " + name + ", " + data + ")");
+    }
 
+    // handles data coming from DefaultMonitoringService.pushServerEntityNotification() and DefaultMonitoringService.pushServerEntityStatistics()
+    switch (name) {
+
+      case TOPIC_SERVER_ENTITY_NOTIFICATION: {
+        Serializable[] o = (Serializable[]) data;
+        long consumerId = ((Number) o[0]).longValue();
+        ContextualNotification notification = (ContextualNotification) o[1];
+        Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
+        notification.setContext(notification.getContext().with(serverEntityContext));
+        fireNotification(notification);
+        break;
+      }
+
+      case TOPIC_SERVER_ENTITY_STATISTICS: {
+        Serializable[] o = (Serializable[]) data;
+        long consumerId = ((Number) o[0]).longValue();
+        ContextualStatistics[] statistics = (ContextualStatistics[]) o[1];
+        Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
+        for (ContextualStatistics statistic : statistics) {
+          statistic.setContext(statistic.getContext().with(serverEntityContext));
+        }
+        fireStatistics(statistics);
+        break;
+      }
+
+      default: {
+        throw new IllegalArgumentException(name);
+      }
+    }
+
+  }
+
+  @Override
+  public synchronized void setState(PlatformServer sender, String[] path, Serializable data) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.FINEST, "setState(" + sender + ", " + Arrays.toString(path) + ", " + data + ")");
+    }
+
+    // handles data coming from DefaultMonitoringService.exposeServerEntityManagementRegistry()
+    if (path.length == 4 && path[0].equals("management") && path[1].equals("consumers") && path[3].equals("registry")) {
+      long consumerId = Long.parseLong(path[2]);
+      ManagementRegistry registry = (ManagementRegistry) data;
+      ServerEntity serverEntity = getServerEntity(sender.getServerName(), consumerId);
+      serverEntity.setManagementRegistry(registry);
+      fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_UPDATED"));
+    }
+  }
+
+  // ===================================
+  // Called by MonitoringServiceProvider
+  // ===================================
+
+  synchronized MonitoringService getOrCreateMonitoringService(long consumerID, MonitoringServiceConfiguration config) {
     return monitoringServices.computeIfAbsent(consumerID, id -> new DefaultMonitoringService(
         this,
         consumerID,
+        config.getMonitoringProducer(),
         config.getClientCommunicator().orElse(null)));
   }
 
@@ -299,6 +387,10 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
       closeMonitoringService(monitoringServices.keySet().iterator().next());
     }
   }
+
+  // ====================================
+  // Called from DefaultMonitoringService
+  // ====================================
 
   synchronized <V> V applyCluster(Function<Cluster, V> fn) {
     // cannot do a simple getCluster() method because Cluster object might be mutated, and it must be mutated within a synchronized method
@@ -310,23 +402,17 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
     consumer.accept(cluster);
   }
 
-  ServerEntityIdentifier getServerEntityIdentifier(long consumerId) {
-    Objects.requireNonNull(currentActive);
-    ServerEntityIdentifier serverEntityIdentifier = entities.get(currentActive.getServerName()).get(consumerId);
-    if (serverEntityIdentifier == null) {
-      throw newIllegalTopologyState("Missing consumer ID: " + consumerId + " on server " + currentActive.getServerName());
-    }
-    return serverEntityIdentifier;
+  Sequence nextSequence() {
+    return sequenceGenerator.next();
   }
 
-  synchronized IllegalStateException newIllegalTopologyState(String message) {
-    return new IllegalStateException("Illegal monitoring topology state: " + message + "\n"
-        + "- currentActive: " + currentActive
-        + "\n- cluster:\n"
-        + cluster
-        + "\n- monitoring services:"
-        + monitoringServices.values().stream().map(DefaultMonitoringService::toString).reduce((s, s2) -> s + "\n   * " + s2).orElse(" 0"));
+  ServerEntity getCurrentActiveServerEntity(long consumerId) {
+    return getServerEntity(getCurrentActive().getServerName(), consumerId);
   }
+
+  // =====================
+  // Global firing methods
+  // =====================
 
   void fireNotification(ContextualNotification notification) {
     DefaultMessage message = new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", notification);
@@ -338,21 +424,36 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
     monitoringServices.values().forEach(defaultMonitoringService -> defaultMonitoringService.push(message));
   }
 
-  Sequence nextSequence() {
-    return sequenceGenerator.next();
-  }
+  // =========
+  // Utilities
+  // =========
 
   private void closeMonitoringService(long consumerId) {
     DefaultMonitoringService monitoringService = monitoringServices.remove(consumerId);
-    monitoringService.close();
+    if (monitoringService != null) {
+      monitoringService.close();
+    }
   }
 
-  private void fireNotification(Notification notification, Context context) {
-    fireNotification(notification, context, Collections.emptyMap());
+  private synchronized ServerEntity getServerEntity(String serverName, long consumerId) {
+    Map<Long, ServerEntityIdentifier> map = entities.get(serverName);
+    if (map == null) {
+      throw newIllegalTopologyState("Server " + serverName + " is missing!");
+    }
+    ServerEntityIdentifier serverEntityIdentifier = map.get(consumerId);
+    if (serverEntityIdentifier == null) {
+      throw newIllegalTopologyState("Missing consumer ID: " + consumerId + " on server " + serverName);
+    }
+    return stripe.getServerByName(serverName)
+        .flatMap(server -> server.getServerEntity(serverEntityIdentifier))
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Server entity " + consumerId + " not found on server " + serverName + " within the current topology on active server " + getCurrentActive().getServerName()));
   }
 
-  private void fireNotification(Notification notification, Context context, Map<String, String> attrs) {
-    fireNotification(new ContextualNotification(context, notification.name(), attrs));
+  private Server getCurrentActive() {
+    if (currentActive == null) {
+      throw newIllegalTopologyState("Current server is not active!");
+    }
+    return currentActive;
   }
 
   private static ClientIdentifier toClientIdentifier(PlatformConnectedClient connection) {
@@ -361,6 +462,15 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
         connection.remoteAddress.getHostAddress(),
         connection.name == null || connection.name.isEmpty() ? "UNKNOWN" : connection.name,
         connection.uuid);
+  }
+
+  private synchronized IllegalStateException newIllegalTopologyState(String message) {
+    return new IllegalStateException("Illegal monitoring topology state: " + message + "\n"
+        + "- currentActive: " + currentActive
+        + "\n- cluster:\n"
+        + cluster
+        + "\n- monitoring services:"
+        + monitoringServices.values().stream().map(DefaultMonitoringService::toString).reduce((s, s2) -> s + "\n   * " + s2).orElse(" 0"));
   }
 
   enum Notification {

@@ -66,7 +66,7 @@ public class DefaultMessage implements Message, Serializable {
         "{" +
         "sequence=" + sequence +
         ", type=" + messageType +
-        ", data=" + (data == null ? null : data.getClass().isArray() ? Arrays.deepToString((Object[]) data) : data) +
+        ", data=" + (data == null ? null : Arrays.deepToString(data)) +
         '}';
   }
 
@@ -74,23 +74,16 @@ public class DefaultMessage implements Message, Serializable {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     DefaultMessage that = (DefaultMessage) o;
-
     if (!sequence.equals(that.sequence)) return false;
     if (data.getClass() != that.data.getClass()) return false;
-    if (data.getClass().isArray()) {
-      if (!Arrays.equals((Object[]) data, (Object[]) that.data)) return false;
-    } else {
-      if (!data.equals(that.data)) return false;
-    }
+    if (!Arrays.equals(data, that.data)) return false;
     return messageType.equals(that.messageType);
-
   }
 
   @Override
   public int hashCode() {
-    int result = data.getClass().isArray() ? Arrays.hashCode((Object[]) data) : data.hashCode();
+    int result = Arrays.hashCode(data);
     result = 31 * result + sequence.hashCode();
     result = 31 * result + messageType.hashCode();
     return result;

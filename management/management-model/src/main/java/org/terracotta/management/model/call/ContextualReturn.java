@@ -19,7 +19,6 @@ import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
-import java.io.Serializable;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
@@ -33,7 +32,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Mathieu Carbou
  */
-public final class ContextualReturn<T> implements Serializable, Contextual {
+public final class ContextualReturn<T> implements Contextual {
 
   private static final long serialVersionUID = 1;
 
