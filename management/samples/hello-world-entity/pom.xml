@@ -43,7 +43,7 @@
       <version>${project.version}</version>
     </dependency>
 
-    <!-- provided by voltron-management module (client) -->
+    <!-- provided by voltron (client) -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>

@@ -15,12 +15,14 @@
  */
 package org.terracotta.voltron.proxy.server.messages;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.EntityResponse;
 
 /**
  *
  * @author cdennis
  */
+@CommonComponent
 public final class ProxyEntityResponse implements EntityResponse {
 
   public static ProxyEntityResponse response(Class<?> type, Object reponse) {

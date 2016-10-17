@@ -22,8 +22,10 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
-import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.management.service.monitoring.platform.IStripeMonitoringAdapter;
+import org.terracotta.management.sequence.NodeIdSource;
+import org.terracotta.management.sequence.TimeSource;
+import org.terracotta.management.service.monitoring.platform.DataListenerAdapter;
+import org.terracotta.management.service.monitoring.platform.PlatformListenerAdapter;
 import org.terracotta.monitoring.IStripeMonitoring;
 
 import java.util.Arrays;
@@ -39,13 +41,11 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
       MonitoringService.class,
-      IStripeMonitoring.class,
-      org.terracotta.management.service.monitoring.platform.IStripeMonitoring.class
+      IStripeMonitoring.class
   );
 
-  private final SequenceGenerator defaultSequenceGenerator = new BoundaryFlakeSequenceGenerator();
-  private final DefaultStripeMonitoring stripeMonitoring = new DefaultStripeMonitoring(defaultSequenceGenerator);
-  private final IStripeMonitoringAdapter adapter = new IStripeMonitoringAdapter(stripeMonitoring);
+  private final DefaultListener listener = new DefaultListener(new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST));
+  private final PlatformListenerAdapter platformListenerAdapter = new PlatformListenerAdapter(listener);
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
@@ -58,19 +58,14 @@ public class MonitoringServiceProvider implements ServiceProvider {
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
-    // adapt the IStripeMonitoring interface for platform since this is not the one we would expect to use at the moment
     if (IStripeMonitoring.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(adapter);
-    }
-
-    if (org.terracotta.management.service.monitoring.platform.IStripeMonitoring.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(stripeMonitoring);
+      return serviceType.cast(consumerID == PLATFORM_CONSUMER_ID ? platformListenerAdapter : new DataListenerAdapter(listener, consumerID));
     }
 
     if (MonitoringService.class.isAssignableFrom(serviceType)) {
 
       if (configuration instanceof MonitoringServiceConfiguration) {
-        return serviceType.cast(stripeMonitoring.getOrCreateMonitoringService(consumerID, (MonitoringServiceConfiguration) configuration));
+        return serviceType.cast(listener.getOrCreateMonitoringService(consumerID, (MonitoringServiceConfiguration) configuration));
 
       } else {
         throw new IllegalArgumentException("Missing configuration: " + MonitoringServiceConfiguration.class.getSimpleName());
@@ -88,7 +83,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   @Override
   public void clear() throws ServiceProviderCleanupException {
-    stripeMonitoring.clear();
+    listener.clear();
   }
 
 }

@@ -30,6 +30,7 @@
   <name>Terracotta Management :: Management Entity :: Common</name>
 
   <dependencies>
+    <!-- all these libs will be in common server classpath -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>management-model</artifactId>
@@ -40,6 +41,8 @@
       <artifactId>sequence-generator</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- will be inside the entity jar -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>voltron-proxy</artifactId>

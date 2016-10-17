@@ -41,13 +41,14 @@
   </licenses>
 
   <dependencies>
+    <!-- will be inside entity jar -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>voltron-proxy</artifactId>
       <version>${project.version}</version>
     </dependency>
 
-    <!-- these libs are on server classpath -->
+    <!-- all these libs will be in common server classpath -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>management-model</artifactId>
