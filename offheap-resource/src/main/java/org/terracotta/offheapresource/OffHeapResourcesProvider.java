@@ -27,6 +27,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -48,7 +49,7 @@ public class OffHeapResourcesProvider implements ServiceProvider {
   private final Map<OffHeapResourceIdentifier, OffHeapResource> resources = new HashMap<OffHeapResourceIdentifier, OffHeapResource>();
 
   @Override
-  public synchronized boolean initialize(ServiceProviderConfiguration unknownConfig) {
+  public synchronized boolean initialize(ServiceProviderConfiguration unknownConfig, PlatformConfiguration platformConfiguration) {
     if (unknownConfig instanceof OffHeapResourcesConfiguration) {
       OffHeapResourcesConfiguration configuration = (OffHeapResourcesConfiguration) unknownConfig;
       if (resources.isEmpty()) {

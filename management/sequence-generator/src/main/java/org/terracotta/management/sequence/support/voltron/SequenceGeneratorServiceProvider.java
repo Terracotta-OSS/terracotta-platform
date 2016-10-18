@@ -16,6 +16,7 @@
 package org.terracotta.management.sequence.support.voltron;
 
 import com.tc.classloader.BuiltinService;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
@@ -44,8 +45,8 @@ public class SequenceGeneratorServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public boolean initialize(ServiceProviderConfiguration configuration) {
-    // @BuiltinService cannot be initialized
+  public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
+    // useless for a @BuiltinService until https://github.com/Terracotta-OSS/terracotta-apis/issues/152 is fixed
     return true;
   }
 
