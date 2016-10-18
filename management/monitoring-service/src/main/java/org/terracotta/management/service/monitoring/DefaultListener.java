@@ -32,7 +32,6 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.Sequence;
 import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.management.service.monitoring.platform.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformServer;
@@ -47,24 +46,24 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.CLIENT_CONNECTED;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.CLIENT_DISCONNECTED;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_ENTITY_CREATED;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_ENTITY_DESTROYED;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_ENTITY_FETCHED;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_ENTITY_UNFETCHED;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_JOINED;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_LEFT;
-import static org.terracotta.management.service.monitoring.DefaultStripeMonitoring.Notification.SERVER_STATE_CHANGED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.CLIENT_CONNECTED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.CLIENT_DISCONNECTED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.SERVER_ENTITY_CREATED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.SERVER_ENTITY_DESTROYED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.SERVER_ENTITY_FETCHED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.SERVER_ENTITY_UNFETCHED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.SERVER_JOINED;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.SERVER_LEFT;
+import static org.terracotta.management.service.monitoring.DefaultListener.Notification.SERVER_STATE_CHANGED;
 
 /**
  * Implementors WARNING: all methods mutating or accessing the live topology should be synchronized
  *
  * @author Mathieu Carbou
  */
-class DefaultStripeMonitoring implements IStripeMonitoring {
+class DefaultListener implements PlatformListener, DataListener {
 
-  private static final Logger LOGGER = Logger.getLogger(DefaultStripeMonitoring.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(DefaultListener.class.getName());
 
   static final String TOPIC_SERVER_ENTITY_NOTIFICATION = "server-entity-notification";
   static final String TOPIC_SERVER_ENTITY_STATISTICS = "server-entity-statistics";
@@ -78,7 +77,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
 
   private volatile Server currentActive;
 
-  DefaultStripeMonitoring(SequenceGenerator sequenceGenerator) {
+  DefaultListener(SequenceGenerator sequenceGenerator) {
     this.sequenceGenerator = sequenceGenerator;
     this.cluster = Cluster.create().addStripe(stripe = Stripe.create("SINGLE"));
   }
@@ -316,8 +315,12 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
         });
   }
 
+  // ===============================================
+  // CALLBACK: for data sent from passive and active
+  // ===============================================
+
   @Override
-  public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
+  public void pushBestEffortsData(long consumerId, PlatformServer sender, String name, Serializable data) {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.log(Level.FINEST, "pushBestEffortsData(" + sender + ", " + name + ", " + data + ")");
     }
@@ -326,9 +329,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
     switch (name) {
 
       case TOPIC_SERVER_ENTITY_NOTIFICATION: {
-        Serializable[] o = (Serializable[]) data;
-        long consumerId = ((Number) o[0]).longValue();
-        ContextualNotification notification = (ContextualNotification) o[1];
+        ContextualNotification notification = (ContextualNotification) data;
         Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
         notification.setContext(notification.getContext().with(serverEntityContext));
         fireNotification(notification);
@@ -336,9 +337,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
       }
 
       case TOPIC_SERVER_ENTITY_STATISTICS: {
-        Serializable[] o = (Serializable[]) data;
-        long consumerId = ((Number) o[0]).longValue();
-        ContextualStatistics[] statistics = (ContextualStatistics[]) o[1];
+        ContextualStatistics[] statistics = (ContextualStatistics[]) data;
         Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
         for (ContextualStatistics statistic : statistics) {
           statistic.setContext(statistic.getContext().with(serverEntityContext));
@@ -355,14 +354,13 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
   }
 
   @Override
-  public synchronized void setState(PlatformServer sender, String[] path, Serializable data) {
+  public synchronized void setState(long consumerId, PlatformServer sender, String[] path, Serializable data) {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.log(Level.FINEST, "setState(" + sender + ", " + Arrays.toString(path) + ", " + data + ")");
     }
 
     // handles data coming from DefaultMonitoringService.exposeServerEntityManagementRegistry()
-    if (path.length == 4 && path[0].equals("management") && path[1].equals("consumers") && path[3].equals("registry")) {
-      long consumerId = Long.parseLong(path[2]);
+    if (path.length == 1 && path[0].equals("registry")) {
       ManagementRegistry registry = (ManagementRegistry) data;
       ServerEntity serverEntity = getServerEntity(sender.getServerName(), consumerId);
       serverEntity.setManagementRegistry(registry);
@@ -379,7 +377,7 @@ class DefaultStripeMonitoring implements IStripeMonitoring {
         this,
         consumerID,
         config.getMonitoringProducer(),
-        config.getClientCommunicator().orElse(null)));
+        config.getManagementCommunicator().orElse(null)));
   }
 
   synchronized void clear() {

@@ -57,12 +57,16 @@ public class ManagementRegistryServiceTest {
   MonitoringService monitoringService;
   ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
   IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
-  IStripeMonitoring stripeMonitoring = serviceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+  IStripeMonitoring platformListener = serviceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+  IStripeMonitoring dataListener;
   long now = System.currentTimeMillis();
   PlatformServer server = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9520, "version", "build", now);
 
   @Test
   public void test_management_info_pushed() {
+
+    // service registry
+
     doAnswer(invocation -> {
       Class<?> type = ((ServiceConfiguration) invocation.getArguments()[0]).getServiceType();
       if (type == IMonitoringProducer.class) {
@@ -77,32 +81,36 @@ public class ManagementRegistryServiceTest {
       throw new AssertionError(invocation + "\ntype=" + type);
     }).when(serviceRegistry).getService(any(ServiceConfiguration.class));
 
+    // dataListener => per entity
+
     doAnswer(invocation -> {
-      stripeMonitoring.pushBestEffortsData(
+      dataListener.pushBestEffortsData(
           server,
           (String) invocation.getArguments()[0],
           (Serializable) invocation.getArguments()[1]);
       return null;
     }).when(monitoringProducer).pushBestEffortsData(anyString(), any(Serializable.class));
 
-    doAnswer(invocation -> stripeMonitoring.addNode(
+    doAnswer(invocation -> dataListener.addNode(
         server,
         (String[]) invocation.getArguments()[0],
         (String) invocation.getArguments()[1],
         (Serializable) invocation.getArguments()[2])
     ).when(monitoringProducer).addNode(any(String[].class), anyString(), any(Serializable.class));
 
-    doAnswer(invocation -> stripeMonitoring.removeNode(
+    doAnswer(invocation -> dataListener.removeNode(
         server,
         (String[]) invocation.getArguments()[0],
         (String) invocation.getArguments()[1])
     ).when(monitoringProducer).removeNode(any(String[].class), anyString());
 
     // simulate platform calls
-    stripeMonitoring.serverDidBecomeActive(server);
-    stripeMonitoring.addNode(server, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", now, now));
-    stripeMonitoring.addNode(server, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName", 1, true));
 
+    platformListener.serverDidBecomeActive(server);
+    platformListener.addNode(server, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", now, now));
+    platformListener.addNode(server, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName", 1, true));
+
+    dataListener = serviceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
     monitoringService = serviceProvider.getService(1, new MonitoringServiceConfiguration(serviceRegistry));
     ReadOnlyBuffer<Message> buffer = monitoringService.createMessageBuffer(100);
 

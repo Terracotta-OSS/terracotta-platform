@@ -15,9 +15,7 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
@@ -30,7 +28,6 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.DefaultManagementCallMessage;
 import org.terracotta.management.model.message.DefaultMessage;
-import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -39,7 +36,6 @@ import org.terracotta.management.service.monitoring.buffer.ReadOnlyBuffer;
 import org.terracotta.management.service.monitoring.buffer.ReadWriteBuffer;
 import org.terracotta.management.service.monitoring.buffer.RingBuffer;
 import org.terracotta.monitoring.IMonitoringProducer;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,7 +43,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -65,22 +60,22 @@ import java.util.logging.Logger;
  */
 class DefaultMonitoringService implements MonitoringService, Closeable {
 
-  private static final Logger LOGGER = Logger.getLogger(DefaultStripeMonitoring.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(DefaultListener.class.getName());
 
-  private final DefaultStripeMonitoring stripeMonitoring;
+  private final DefaultListener stripeMonitoring;
   private final long consumerId;
   private final IMonitoringProducer monitoringProducer;
-  private final ClientCommunicator clientCommunicator;
+  private final ManagementCommunicator managementCommunicator;
   private final Map<ClientDescriptor, ClientIdentifier> fetches = new ConcurrentHashMap<>();
   private final ConcurrentMap<ClientDescriptor, AtomicLong> pendingCalls = new ConcurrentHashMap<>();
 
   private volatile ReadWriteBuffer<Message> buffer;
 
-  DefaultMonitoringService(DefaultStripeMonitoring stripeMonitoring, long consumerId, IMonitoringProducer monitoringProducer, ClientCommunicator clientCommunicator) {
+  DefaultMonitoringService(DefaultListener stripeMonitoring, long consumerId, IMonitoringProducer monitoringProducer, ManagementCommunicator managementCommunicator) {
     this.stripeMonitoring = stripeMonitoring;
     this.consumerId = consumerId;
     this.monitoringProducer = monitoringProducer;
-    this.clientCommunicator = clientCommunicator;
+    this.managementCommunicator = managementCommunicator;
   }
 
   @Override
@@ -207,8 +202,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
 
-    if (clientCommunicator == null) {
-      throw new IllegalStateException("No " + ClientCommunicator.class.getSimpleName());
+    if (managementCommunicator == null) {
+      throw new IllegalStateException("No " + ManagementCommunicator.class.getSimpleName());
     }
 
     ClientIdentifier callerClientIdentifier = getConnectedClientIdentifier(from);
@@ -233,11 +228,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     // atomically increase the counter of management calls made by this client
     pendingCalls.computeIfAbsent(from, descriptor -> new AtomicLong()).incrementAndGet();
 
-    try {
-      clientCommunicator.sendNoResponse(toClientDescriptor, ProxyEntityResponse.response(ManagementCallMessage.class, message));
-    } catch (MessageCodecException e) {
-      throw new RuntimeException(e);
-    }
+    managementCommunicator.send(toClientDescriptor, message);
 
     return id;
   }
@@ -270,11 +261,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
       throw new SecurityException("Client " + caller + " did not ask for a management call");
     }
 
-    try {
-      clientCommunicator.sendNoResponse(callerClientDescriptor, ProxyEntityResponse.response(ManagementCallMessage.class, message));
-    } catch (MessageCodecException e) {
-      throw new RuntimeException(e);
-    }
+    managementCommunicator.send(callerClientDescriptor, message);
   }
 
   @Override
@@ -325,7 +312,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     registry.addCapabilities(capabilities);
 
     // this call will be routed to the current active server by voltron
-    monitoringProducer.addNode(new String[]{"management", "consumers", String.valueOf(consumerId)}, "registry", registry);
+    monitoringProducer.addNode(null, "registry", registry);
   }
 
   @Override
@@ -335,7 +322,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     }
 
     // this call will be routed to the current active server by voltron
-    monitoringProducer.pushBestEffortsData(DefaultStripeMonitoring.TOPIC_SERVER_ENTITY_NOTIFICATION, new Serializable[]{consumerId, notification});
+    monitoringProducer.pushBestEffortsData(DefaultListener.TOPIC_SERVER_ENTITY_NOTIFICATION, notification);
   }
 
   @Override
@@ -345,7 +332,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     }
 
     // this call will be routed to the current active server by voltron
-    monitoringProducer.pushBestEffortsData(DefaultStripeMonitoring.TOPIC_SERVER_ENTITY_STATISTICS, new Serializable[]{consumerId, statistics});
+    monitoringProducer.pushBestEffortsData(DefaultListener.TOPIC_SERVER_ENTITY_STATISTICS, statistics);
   }
 
   @Override
@@ -361,7 +348,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   // =============================================
-  // CALLED IN ACTIVE FROM DefaultStripeMonitoring
+  // CALLED IN ACTIVE FROM DefaultListener
   // =============================================
 
   void push(Message message) {

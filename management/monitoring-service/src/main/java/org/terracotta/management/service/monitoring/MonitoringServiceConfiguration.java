@@ -36,12 +36,15 @@ public class MonitoringServiceConfiguration implements ServiceConfiguration<Moni
     this.serviceRegistry = serviceRegistry;
   }
 
-  public Optional<ClientCommunicator> getClientCommunicator() {
-    return getRegistry().map(registry -> registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
+  public Optional<ManagementCommunicator> getManagementCommunicator() {
+    return getRegistry()
+        .map(registry -> registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)))
+        .map(ManagementCommunicator::new);
   }
 
   public IMonitoringProducer getMonitoringProducer() {
-    return getRegistry().map(registry -> registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)))
+    return getRegistry()
+        .map(registry -> registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)))
         .orElseThrow(() -> new IllegalStateException("Missing service " + IMonitoringProducer.class.getName()));
   }
 

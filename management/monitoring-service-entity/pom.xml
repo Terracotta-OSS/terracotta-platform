@@ -35,9 +35,17 @@
   </properties>
 
   <dependencies>
+    <!-- will be inside entity jar -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>voltron-proxy</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- all these libs will be in common server classpath -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>cluster-topology</artifactId>
       <version>${project.version}</version>
     </dependency>
 

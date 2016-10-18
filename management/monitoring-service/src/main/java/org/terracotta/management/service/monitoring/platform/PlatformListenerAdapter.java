@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.service.monitoring.platform;
 
+import org.terracotta.management.service.monitoring.PlatformListener;
+import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
@@ -22,37 +24,33 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.util.Objects.requireNonNull;
 
 /**
- * Adapts the API-wanted {@link IStripeMonitoring} into the current existing one ({@link org.terracotta.monitoring.IStripeMonitoring}),
+ * Adapts the API-wanted {@link PlatformListener} into the current existing ({@link org.terracotta.monitoring.IStripeMonitoring}),
  * that is still currently using addNode / removeNode methods linked to a tree structure
  * <p>
- * This class's goal is to be removed when the wanted methods will be in tc-api.
+ * This class's goal is to receive platform0only events (consumer id 0)
  *
  * @author Mathieu Carbou
  */
-public final class IStripeMonitoringAdapter implements org.terracotta.monitoring.IStripeMonitoring {
+public final class PlatformListenerAdapter implements IStripeMonitoring {
 
-  private final IStripeMonitoring delegate;
+  private final PlatformListener delegate;
   private final ConcurrentMap<PlatformServer, ConcurrentMap<String, PlatformEntity>> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformConnectedClient> clients = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformClientFetchedEntity> fetches = new ConcurrentHashMap<>();
 
-  private volatile PlatformServer currentActive;
-
-  public IStripeMonitoringAdapter(IStripeMonitoring delegate) {
+  public PlatformListenerAdapter(PlatformListener delegate) {
     this.delegate = delegate;
   }
 
   @Override
   public void serverDidBecomeActive(PlatformServer self) {
-    this.currentActive = self;
-    entities.put(currentActive, new ConcurrentHashMap<>());
+    entities.put(self, new ConcurrentHashMap<>());
     delegate.serverDidBecomeActive(self);
   }
 
@@ -69,12 +67,6 @@ public final class IStripeMonitoringAdapter implements org.terracotta.monitoring
   }
 
   @Override
-  public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
-    delegate.pushBestEffortsData(sender, name, data);
-  }
-
-  @Override
-  @Deprecated
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
     if (parents == null || parents.length == 0) {
       return true;
@@ -119,28 +111,19 @@ public final class IStripeMonitoringAdapter implements org.terracotta.monitoring
         }
 
         default: {
-          if (value != null) {
-            // oups, we miss something ?
-            throw new UnsupportedOperationException("addNode(" + String.join("/", (CharSequence[]) parents) + "/" + name + ") from server " + sender + ", data: " + value);
-
-          } else {
-            // calls to create the tree structure
+          if (value == null) {
             return true;
           }
         }
 
       }
 
-    } else {
-      String[] path = Arrays.copyOf(parents, parents.length + 1);
-      path[parents.length] = name;
-      delegate.setState(sender, path, value);
-      return true;
     }
+
+    throw new UnsupportedOperationException("addNode(" + String.join("/", (CharSequence[]) parents) + "/" + name + ") from server " + sender + ", data: " + value);
   }
 
   @Override
-  @Deprecated
   public boolean removeNode(PlatformServer sender, String[] parents, String name) {
     if (parents == null || parents.length == 0) {
       return true;
@@ -182,6 +165,11 @@ public final class IStripeMonitoringAdapter implements org.terracotta.monitoring
       }
 
     }
+  }
+
+  @Override
+  public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
+    throw new UnsupportedOperationException();
   }
 
 }
