@@ -45,13 +45,33 @@
     <!-- all these libs will be in common server classpath -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>cluster-topology</artifactId>
+      <artifactId>management-model</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.management</groupId>
+      <artifactId>sequence-generator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>cluster-topology</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!--
+    Provided on common server classpath.
+    This dependency is scoped provided because this entity's purpose
+    is to be used in testing to access the monitoring service.
+    So the monitoring service will be installed on server, and on
+    client-side, having this dependency provided prevent the client's
+    classpath to be polluted by server dependencies
+    -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
       <artifactId>monitoring-service-api</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron (client) -->
