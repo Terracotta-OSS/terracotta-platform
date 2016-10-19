@@ -34,6 +34,14 @@
   </properties>
 
   <dependencies>
+    <!-- in common server classpath -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- inside jar -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>management-entity-common</artifactId>
@@ -49,12 +57,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>standard-cluster-services</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

@@ -377,7 +377,7 @@ class DefaultListener implements PlatformListener, DataListener {
         this,
         consumerID,
         config.getMonitoringProducer(),
-        config.getManagementCommunicator().orElse(null)));
+        config.getClientCommunicator().map(ManagementCommunicator::new).orElse(null)));
   }
 
   synchronized void clear() {

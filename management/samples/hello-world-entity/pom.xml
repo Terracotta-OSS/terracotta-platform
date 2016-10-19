@@ -37,6 +37,7 @@
   </properties>
 
   <dependencies>
+    <!-- inside jar -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>voltron-proxy</artifactId>

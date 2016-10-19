@@ -20,27 +20,41 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>tms-entity</artifactId>
+    <artifactId>terracotta-management</artifactId>
     <groupId>org.terracotta.management</groupId>
     <version>5.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>tms-entity-server</artifactId>
-  <name>Terracotta Management :: TMS Entity :: Server</name>
+  <artifactId>monitoring-service-api</artifactId>
+  <name>Terracotta Management :: Monitoring Service</name>
+
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
 
   <dependencies>
-    <!-- common server classpath -->
+    <!-- all these libs will be in common server classpath -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service-api</artifactId>
+      <artifactId>management-model</artifactId>
       <version>${project.version}</version>
     </dependency>
-
-    <!-- inside jar -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>tms-entity-common</artifactId>
+      <artifactId>sequence-generator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>cluster-topology</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -50,40 +64,11 @@
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>plugin</shadedClassifierName>
-              <!-- we have to make sure no voltron api comes in the shaded jar -->
-              <artifactSet>
-                <includes>
-                  <!--
-                    management-model must be set as an api library in voltron
-                    it is used by the management entity and other entities
-                   -->
-                  <include>org.terracotta.management:tms-entity-common</include>
-                  <include>org.terracotta:voltron-proxy</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>

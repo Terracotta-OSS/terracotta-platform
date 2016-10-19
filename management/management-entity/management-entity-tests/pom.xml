@@ -72,13 +72,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -99,6 +92,13 @@
       <artifactId>monitoring-service-entity</artifactId>
       <classifier>plugin</classifier>
       <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service</artifactId>
+      <version>${project.version}</version>
+      <classifier>plugin</classifier>
       <scope>test</scope>
     </dependency>
   </dependencies>

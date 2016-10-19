@@ -27,7 +27,7 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
-import org.terracotta.management.service.monitoring.buffer.ReadOnlyBuffer;
+import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformEntity;

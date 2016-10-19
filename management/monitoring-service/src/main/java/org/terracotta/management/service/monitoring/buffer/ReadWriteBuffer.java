@@ -16,6 +16,7 @@
 package org.terracotta.management.service.monitoring.buffer;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 
 /**
  * @author Mathieu Carbou

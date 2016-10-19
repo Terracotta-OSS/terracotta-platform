@@ -48,6 +48,11 @@
       <artifactId>cluster-topology</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- provided by voltron (client) -->
     <dependency>
@@ -62,13 +67,6 @@
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
-      <classifier>plugin</classifier>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
@@ -78,6 +76,13 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>passthrough-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service</artifactId>
+      <version>${project.version}</version>
+      <classifier>plugin</classifier>
       <scope>test</scope>
     </dependency>
   </dependencies>

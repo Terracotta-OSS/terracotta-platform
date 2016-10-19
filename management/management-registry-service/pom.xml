@@ -41,24 +41,16 @@
   </licenses>
 
   <dependencies>
+    <!-- on voltron common classpath -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>management-registry</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-model</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- on voltron common classpath -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
-      <classifier>plugin</classifier>
-      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron (server) -->
@@ -92,6 +84,13 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>1.10.19</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service</artifactId>
+      <version>${project.version}</version>
+      <classifier>plugin</classifier>
       <scope>test</scope>
     </dependency>
   </dependencies>

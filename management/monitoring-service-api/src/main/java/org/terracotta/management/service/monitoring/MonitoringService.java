@@ -28,7 +28,6 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.Sequence;
-import org.terracotta.management.service.monitoring.buffer.ReadOnlyBuffer;
 
 /**
  * @author Mathieu Carbou
