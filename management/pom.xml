@@ -40,6 +40,7 @@
     <module>monitoring-service-api</module>
     <module>monitoring-service</module>
     <module>monitoring-service-entity</module>
+    <module>management-registry-service-api</module>
     <module>management-registry-service</module>
     <module>management-entity</module>
     <module>tms-entity</module>

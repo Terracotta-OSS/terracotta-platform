@@ -49,7 +49,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>management-registry</artifactId>
+      <artifactId>management-registry-service-api</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -112,10 +112,8 @@
               <shadedClassifierName>plugin</shadedClassifierName>
               <!-- we have to make sure no voltron api comes in the shaded jar -->
               <artifactSet>
-                <excludes>
-                  <exclude>org.terracotta.management:management-registry</exclude>
-                  <exclude>org.terracotta.management:management-model</exclude>
-                </excludes>
+                <includes>
+                </includes>
               </artifactSet>
             </configuration>
           </execution>

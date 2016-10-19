@@ -17,27 +17,29 @@ package org.terracotta.management.service.registry;
 
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.service.monitoring.MonitoringService;
-import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
  */
 class DefaultConsumerManagementRegistry extends NoopConsumerManagementRegistry {
 
-  private final AtomicBoolean dirty = new AtomicBoolean();
-  private final ContextContainer contextContainer;
-  private final MonitoringService monitoringService;
+  private static final Logger LOGGER = Logger.getLogger(ConsumerManagementRegistryProvider.class.getName());
 
-  DefaultConsumerManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
-    super(configuration);
-    this.monitoringService = Objects.requireNonNull(configuration.getServiceRegistry().getService(new MonitoringServiceConfiguration(configuration.getServiceRegistry())));
+  private final AtomicBoolean dirty = new AtomicBoolean();
+  private final MonitoringService monitoringService;
+  private final ContextContainer contextContainer;
+
+  DefaultConsumerManagementRegistry(MonitoringService monitoringService, Collection<ManagementProvider<?>> providers) {
+    super(providers);
+    this.monitoringService = monitoringService;
     this.contextContainer = new ContextContainer("entityConsumerId", String.valueOf(this.monitoringService.getConsumerId()));
-    configuration.getProviders().forEach(this::addManagementProvider);
   }
 
   @Override
@@ -61,6 +63,9 @@ class DefaultConsumerManagementRegistry extends NoopConsumerManagementRegistry {
   @Override
   public synchronized void refresh() {
     if (dirty.compareAndSet(true, false)) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.finest("refresh(): " + contextContainer);
+      }
       Collection<Capability> capabilities = getCapabilities();
       Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
       monitoringService.exposeServerEntityManagementRegistry(contextContainer, capabilitiesArray);
@@ -70,6 +75,15 @@ class DefaultConsumerManagementRegistry extends NoopConsumerManagementRegistry {
   @Override
   public ContextContainer getContextContainer() {
     return contextContainer;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("DefaultConsumerManagementRegistry{");
+    sb.append("contextContainer=").append(contextContainer);
+    sb.append(", monitoringService=").append(monitoringService);
+    sb.append('}');
+    return sb.toString();
   }
 
 }

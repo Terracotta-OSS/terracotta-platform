@@ -19,15 +19,18 @@ import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementProvider;
 
+import java.util.Collection;
+
 /**
  * @author Mathieu Carbou
  */
-public class NoopConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
+class NoopConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
 
-  private final ConsumerManagementRegistryConfiguration configuration;
+  private final Collection<ManagementProvider<?>> providers;
 
-  public NoopConsumerManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
-    this.configuration = configuration;
+  NoopConsumerManagementRegistry(Collection<ManagementProvider<?>> providers) {
+    this.providers = providers;
+    providers.forEach(this::addManagementProvider);
   }
 
   @Override
@@ -36,7 +39,8 @@ public class NoopConsumerManagementRegistry extends AbstractManagementRegistry i
 
   @Override
   public void close() {
-    configuration.getProviders().forEach(ManagementProvider::close);
+    providers.forEach(ManagementProvider::close);
+    providers.clear();
   }
 
   @Override
