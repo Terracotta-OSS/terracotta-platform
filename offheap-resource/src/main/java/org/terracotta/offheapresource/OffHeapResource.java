@@ -54,4 +54,9 @@ public interface OffHeapResource {
    * @return the remaining resource size
    */
   long available();
+
+  /**
+   * @return the resource initial capacity
+   */
+  long capacity();
 }
