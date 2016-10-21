@@ -15,12 +15,9 @@
  */
 package org.terracotta.management.sequence;
 
-import com.tc.classloader.CommonComponent;
-
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface SequenceGenerator {
   TimeSource getTimeSource();
 
