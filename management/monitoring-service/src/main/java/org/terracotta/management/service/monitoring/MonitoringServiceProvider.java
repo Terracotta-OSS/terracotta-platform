@@ -24,8 +24,6 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
-import org.terracotta.management.service.monitoring.platform.DataListenerAdapter;
-import org.terracotta.management.service.monitoring.platform.PlatformListenerAdapter;
 import org.terracotta.monitoring.IStripeMonitoring;
 
 import java.util.Arrays;

@@ -16,8 +16,6 @@
 package org.terracotta.management.service.monitoring;
 
 import org.junit.Test;
-import org.terracotta.management.service.monitoring.buffer.ReadWriteBuffer;
-import org.terracotta.management.service.monitoring.buffer.RingBuffer;
 
 import java.util.List;
 import java.util.stream.Collectors;

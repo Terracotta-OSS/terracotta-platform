@@ -32,8 +32,6 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.Sequence;
-import org.terracotta.management.service.monitoring.buffer.ReadWriteBuffer;
-import org.terracotta.management.service.monitoring.buffer.RingBuffer;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.io.ByteArrayInputStream;
@@ -168,10 +166,13 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
     stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
         .ifPresent(client -> {
-          ManagementRegistry registry = ManagementRegistry.create(contextContainer);
-          registry.addCapabilities(capabilities);
-          client.setManagementRegistry(registry);
-          stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_REGISTRY_UPDATED"));
+          ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
+          newRegistry.addCapabilities(capabilities);
+          String notif = client.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "CLIENT_REGISTRY_UPDATED").orElse("CLIENT_REGISTRY_AVAILABLE");
+          if(!notif.isEmpty()) {
+            client.setManagementRegistry(newRegistry);
+            stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), notif));
+          }
         }));
   }
 

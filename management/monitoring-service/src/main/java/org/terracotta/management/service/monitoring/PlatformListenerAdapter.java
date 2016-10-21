@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring.platform;
+package org.terracotta.management.service.monitoring;
 
-import org.terracotta.management.service.monitoring.PlatformListener;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
@@ -37,14 +36,14 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-public final class PlatformListenerAdapter implements IStripeMonitoring {
+final class PlatformListenerAdapter implements IStripeMonitoring {
 
   private final PlatformListener delegate;
   private final ConcurrentMap<PlatformServer, ConcurrentMap<String, PlatformEntity>> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformConnectedClient> clients = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformClientFetchedEntity> fetches = new ConcurrentHashMap<>();
 
-  public PlatformListenerAdapter(PlatformListener delegate) {
+  PlatformListenerAdapter(PlatformListener delegate) {
     this.delegate = delegate;
   }
 

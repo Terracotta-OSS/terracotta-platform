@@ -361,10 +361,13 @@ class DefaultListener implements PlatformListener, DataListener {
 
     // handles data coming from DefaultMonitoringService.exposeServerEntityManagementRegistry()
     if (path.length == 1 && path[0].equals("registry")) {
-      ManagementRegistry registry = (ManagementRegistry) data;
+      ManagementRegistry newRegistry = (ManagementRegistry) data;
       ServerEntity serverEntity = getServerEntity(sender.getServerName(), consumerId);
-      serverEntity.setManagementRegistry(registry);
-      fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_UPDATED"));
+      String notif = serverEntity.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "ENTITY_REGISTRY_UPDATED").orElse("ENTITY_REGISTRY_AVAILABLE");
+      if(!notif.isEmpty()) {
+        serverEntity.setManagementRegistry(newRegistry);
+        fireNotification(new ContextualNotification(serverEntity.getContext(), notif));
+      }
     }
   }
 

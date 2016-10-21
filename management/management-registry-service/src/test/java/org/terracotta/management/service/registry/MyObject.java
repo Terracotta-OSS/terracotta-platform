@@ -25,10 +25,10 @@ import org.terracotta.management.registry.action.Named;
  */
 public class MyObject implements ExposedObject<MyObject> {
 
-  private final String cmName;
-  private final String cName;
+  final String cmName;
+  final String cName;
 
-  public MyObject(String cmName, String cName) {
+  MyObject(String cmName, String cName) {
     this.cmName = cmName;
     this.cName = cName;
   }

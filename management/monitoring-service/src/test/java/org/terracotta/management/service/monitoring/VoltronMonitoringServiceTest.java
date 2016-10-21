@@ -281,7 +281,7 @@ public class VoltronMonitoringServiceTest {
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION")));
-    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_REGISTRY_UPDATED")));
+    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_REGISTRY_AVAILABLE")));
   }
 
   @Test
@@ -293,7 +293,7 @@ public class VoltronMonitoringServiceTest {
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION")));
-    assertThat(notificationTypes(messages), equalTo(Arrays.asList("ENTITY_REGISTRY_UPDATED")));
+    assertThat(notificationTypes(messages), equalTo(Arrays.asList("ENTITY_REGISTRY_AVAILABLE")));
   }
 
   @Test
@@ -327,6 +327,23 @@ public class VoltronMonitoringServiceTest {
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION")));
+    assertThat(notificationTypes(messages), equalTo(Arrays.asList("ENTITY_REGISTRY_AVAILABLE")));
+
+    // no update
+    monitoringServiceEntity3.exposeServerEntityManagementRegistry(
+        new ContextContainer("k", "v"),
+        new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
+
+    messages = messages();
+    assertThat(messages.size(), equalTo(0));
+
+    // update
+    monitoringServiceEntity3.exposeServerEntityManagementRegistry(
+        new ContextContainer("w", "w"),
+        new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
+
+    messages = messages();
+    assertThat(messages.size(), equalTo(1));
     assertThat(notificationTypes(messages), equalTo(Arrays.asList("ENTITY_REGISTRY_UPDATED")));
   }
 

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring.platform;
+package org.terracotta.management.service.monitoring;
 
-import org.terracotta.management.service.monitoring.DataListener;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
 
@@ -30,12 +29,12 @@ import java.util.Arrays;
  *
  * @author Mathieu Carbou
  */
-public final class DataListenerAdapter implements IStripeMonitoring {
+final class DataListenerAdapter implements IStripeMonitoring {
 
   private final DataListener delegate;
   private final long consumerId;
 
-  public DataListenerAdapter(DataListener delegate, long consumerId) {
+  DataListenerAdapter(DataListener delegate, long consumerId) {
     this.delegate = delegate;
     this.consumerId = consumerId;
   }
