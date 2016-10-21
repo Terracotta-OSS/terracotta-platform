@@ -27,7 +27,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>management-registry-service-api</artifactId>
-  <name>Terracotta Management :: Management Registry Service API</name>
+  <name>Terracotta Management :: Registry Service API</name>
 
   <properties>
     <java.version>1.8</java.version>
