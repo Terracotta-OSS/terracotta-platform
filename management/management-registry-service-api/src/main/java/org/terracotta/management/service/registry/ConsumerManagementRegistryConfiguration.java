@@ -18,10 +18,6 @@ package org.terracotta.management.service.registry;
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.management.registry.ManagementProvider;
-
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * @author Mathieu Carbou
@@ -30,7 +26,6 @@ import java.util.HashSet;
 public class ConsumerManagementRegistryConfiguration implements ServiceConfiguration<ConsumerManagementRegistry> {
 
   private final ServiceRegistry serviceRegistry;
-  private final Collection<ManagementProvider<?>> providers = new HashSet<>();
 
   public ConsumerManagementRegistryConfiguration(ServiceRegistry serviceRegistry) {
     this.serviceRegistry = serviceRegistry;
@@ -40,18 +35,9 @@ public class ConsumerManagementRegistryConfiguration implements ServiceConfigura
     return serviceRegistry;
   }
 
-  public Collection<ManagementProvider<?>> getProviders() {
-    return providers;
-  }
-
   @Override
   public Class<ConsumerManagementRegistry> getServiceType() {
     return ConsumerManagementRegistry.class;
-  }
-
-  public ConsumerManagementRegistryConfiguration addProvider(ManagementProvider<?> provider) {
-    providers.add(provider);
-    return this;
   }
 
 }

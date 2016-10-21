@@ -17,59 +17,76 @@ package org.terracotta.management.service.registry;
 
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.registry.provider.ConsumerManagementProvider;
 
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry extends NoopConsumerManagementRegistry {
+class DefaultConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
 
   private static final Logger LOGGER = Logger.getLogger(ConsumerManagementRegistryProvider.class.getName());
 
-  private final AtomicBoolean dirty = new AtomicBoolean();
   private final MonitoringService monitoringService;
   private final ContextContainer contextContainer;
+  private final MonitoringResolver resolver;
 
-  DefaultConsumerManagementRegistry(MonitoringService monitoringService, Collection<ManagementProvider<?>> providers) {
-    super(providers);
-    this.monitoringService = monitoringService;
-    this.contextContainer = new ContextContainer("entityConsumerId", String.valueOf(this.monitoringService.getConsumerId()));
+  private Collection<Capability> previouslyExposed = Collections.emptyList();
+
+  DefaultConsumerManagementRegistry(MonitoringService monitoringService) {
+    this.monitoringService = Objects.requireNonNull(monitoringService);
+    this.resolver = new DefaultMonitoringResolver(monitoringService);
+    this.contextContainer = new ContextContainer("consumerId", String.valueOf(this.monitoringService.getConsumerId()));
   }
 
   @Override
-  public boolean register(Object managedObject) {
-    boolean b = super.register(managedObject);
-    if (b) {
-      dirty.set(true);
-    }
-    return b;
+  public void close() {
+    managementProviders.forEach(ManagementProvider::close);
+    managementProviders.clear();
   }
 
   @Override
-  public boolean unregister(Object managedObject) {
-    boolean b = super.unregister(managedObject);
-    if (b) {
-      dirty.set(true);
+  public void addManagementProvider(ManagementProvider<?> provider) {
+    if (provider instanceof ConsumerManagementProvider<?>) {
+      ((ConsumerManagementProvider<?>) provider).accept(resolver);
     }
-    return b;
+    super.addManagementProvider(provider);
   }
 
   @Override
   public synchronized void refresh() {
-    if (dirty.compareAndSet(true, false)) {
-      if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.finest("refresh(): " + contextContainer);
-      }
-      Collection<Capability> capabilities = getCapabilities();
-      Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
-      monitoringService.exposeServerEntityManagementRegistry(contextContainer, capabilitiesArray);
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("refresh(): " + contextContainer);
     }
+    Collection<Capability> capabilities = getCapabilities();
+    if (!previouslyExposed.equals(capabilities)) {
+      Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
+      // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
+      monitoringService.exposeServerEntityManagementRegistry(contextContainer, capabilitiesArray);
+      previouslyExposed = capabilities;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean pushServerEntityNotification(Object managedObjectSource, String type, Map<String, String> attrs) {
+    for (ManagementProvider managementProvider : managementProviders) {
+      if (managementProvider instanceof ConsumerManagementProvider && managementProvider.getManagedType().isInstance(managedObjectSource)) {
+        if (((ConsumerManagementProvider<Object>) managementProvider).pushServerEntityNotification(managedObjectSource, type, attrs)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override

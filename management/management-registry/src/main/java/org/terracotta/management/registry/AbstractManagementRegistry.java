@@ -52,8 +52,7 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
     boolean b = false;
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
-        managementProvider.register(managedObject);
-        b = true;
+        b |= managementProvider.register(managedObject) != null;
       }
     }
     return b;
@@ -65,8 +64,7 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
     boolean b = false;
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
-        managementProvider.unregister(managedObject);
-        b = true;
+        b |= managementProvider.unregister(managedObject) != null;
       }
     }
     return b;

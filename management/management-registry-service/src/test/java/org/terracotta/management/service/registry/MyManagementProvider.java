@@ -15,16 +15,10 @@
  */
 package org.terracotta.management.service.registry;
 
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
-import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.registry.AbstractManagementProvider;
-import org.terracotta.management.registry.action.AbstractActionManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
 import org.terracotta.management.registry.action.RequiredContext;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author Mathieu Carbou
@@ -39,14 +33,5 @@ public class MyManagementProvider extends AbstractManagementProvider<MyObject> {
   @Override
   protected ExposedObject<MyObject> wrap(MyObject managedObject) {
     return managedObject;
-  }
-
-  @Override
-  public Collection<Descriptor> getDescriptors() {
-    Collection<Descriptor> descriptors = new ArrayList<>(managedObjects.size());
-    for (ExposedObject<MyObject> managedObject : managedObjects) {
-      descriptors.add(new Settings().set("cName", ((MyObject) managedObject).cName));
-    }
-    return descriptors;
   }
 }

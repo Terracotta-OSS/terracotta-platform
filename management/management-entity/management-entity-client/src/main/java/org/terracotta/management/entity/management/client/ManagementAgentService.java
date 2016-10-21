@@ -29,6 +29,7 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ManagementProviderAdapter;
 import org.terracotta.management.registry.ManagementRegistry;
+import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.io.Closeable;
@@ -67,19 +68,21 @@ public class ManagementAgentService implements Closeable {
 
   private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(ManagementAgentService.class.getSimpleName(), Object.class) {
     @Override
-    public void register(Object managedObject) {
+    public ExposedObject<Object>register(Object managedObject) {
       // expose the registry each time a new object is registered in the management registry
       if (bridging) {
         setCapabilities(registry.getContextContainer(), registry.getCapabilities());
       }
+      return null;
     }
 
     @Override
-    public void unregister(Object managedObject) {
+    public ExposedObject<Object> unregister(Object managedObject) {
       // expose the registry each time a new object is registered in the management registry
       if (bridging) {
         setCapabilities(registry.getContextContainer(), registry.getCapabilities());
       }
+      return null;
     }
   };
 

@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.registry.action;
+package org.terracotta.management.service.registry.provider;
 
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
-import org.terracotta.management.model.context.Context;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.management.registry.ManagementProvider;
+import org.terracotta.management.service.registry.MonitoringResolver;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Mathieu Carbou
  */
-public interface ExposedObject<T> {
-  T getTarget();
+@CommonComponent
+public interface ConsumerManagementProvider<T> extends ManagementProvider<T> {
 
-  ClassLoader getClassLoader();
+  void accept(MonitoringResolver resolver);
 
-  Context getContext();
-
-  Collection<? extends Descriptor> getDescriptors();
+  boolean pushServerEntityNotification(T managedObjectSource, String type, Map<String, String> attrs);
 }

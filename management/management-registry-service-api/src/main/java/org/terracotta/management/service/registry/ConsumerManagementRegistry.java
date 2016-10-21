@@ -16,8 +16,11 @@
 package org.terracotta.management.service.registry;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.management.registry.ManagementRegistry;
 
 import java.io.Closeable;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * An entity can use such registry to expose / unexpose any supported object.
@@ -28,28 +31,28 @@ import java.io.Closeable;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ConsumerManagementRegistry extends Closeable {
+public interface ConsumerManagementRegistry extends ManagementRegistry, Closeable {
 
   /**
-   * Register an object in the management registry.
-   *
-   * @param managedObject the managed object.
-   * @return true if this object has been registered
-   */
-  boolean register(Object managedObject);
-
-  /**
-   * Unregister an object from the management registry.
-   *
-   * @param managedObject the managed object.
-   * @return true if this object has been unregistered
-   */
-  boolean unregister(Object managedObject);
-
-  /**
-   * Used to force an update of the metadata exposed in Voltron.
+   * Used to force an update of the metadata exposed in the server.
    */
   void refresh();
+
+  default void pushServerEntityNotification(Object managedObjectSource, String type) {
+    pushServerEntityNotification(managedObjectSource, type, Collections.emptyMap());
+  }
+
+  boolean pushServerEntityNotification(Object managedObjectSource, String type, Map<String, String> attrs);
+
+  default void registerAndRefresh(Object managedObject) {
+    register(managedObject);
+    refresh();
+  }
+
+  default void unregisterAndRefresh(Object managedObject) {
+    unregister(managedObject);
+    refresh();
+  }
 
   @Override
   void close();

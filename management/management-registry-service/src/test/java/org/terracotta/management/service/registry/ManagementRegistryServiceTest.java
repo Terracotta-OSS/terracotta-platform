@@ -115,8 +115,8 @@ public class ManagementRegistryServiceTest {
     ReadOnlyBuffer<Message> buffer = monitoringService.createMessageBuffer(100);
 
     // a consumer asks for a service
-    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(serviceRegistry)
-        .addProvider(new MyManagementProvider()));
+    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(serviceRegistry));
+    registry.addManagementProvider(new MyManagementProvider());
 
     // then register some objects
     registry.register(new MyObject("myCacheManagerName1", "myCacheName1"));

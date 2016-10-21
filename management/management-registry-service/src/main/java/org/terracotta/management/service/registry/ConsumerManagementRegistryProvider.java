@@ -53,9 +53,7 @@ public class ConsumerManagementRegistryProvider implements ServiceProvider {
         ConsumerManagementRegistryConfiguration config = (ConsumerManagementRegistryConfiguration) configuration;
         ServiceRegistry serviceRegistry = config.getServiceRegistry();
         MonitoringService monitoringService = serviceRegistry.getService(new MonitoringServiceConfiguration(serviceRegistry));
-        return serviceType.cast(monitoringService == null ?
-            new NoopConsumerManagementRegistry(config.getProviders()) :
-            new DefaultConsumerManagementRegistry(monitoringService, config.getProviders()));
+        return serviceType.cast(new DefaultConsumerManagementRegistry(monitoringService));
 
       } else {
         throw new IllegalArgumentException("Missing configuration: " + ConsumerManagementRegistryConfiguration.class.getSimpleName());
