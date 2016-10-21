@@ -52,6 +52,11 @@
       <artifactId>management-registry-service-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
 
     <!-- provided by voltron (server) -->
     <dependency>

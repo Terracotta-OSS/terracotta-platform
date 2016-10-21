@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -47,8 +49,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A monitoring service is created per entity, and contains some states related to the entity that requested this service
@@ -57,7 +57,7 @@ import java.util.logging.Logger;
  */
 class DefaultMonitoringService implements MonitoringService, Closeable {
 
-  private static final Logger LOGGER = Logger.getLogger(DefaultListener.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultListener.class);
 
   private final DefaultListener stripeMonitoring;
   private final long consumerId;
@@ -86,7 +86,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{" + "\nconsumerId=" + consumerId + ", \nfetches=" + fetches + ", \ncalls=" + pendingCalls + '}';
+    return getClass().getSimpleName() + "{" + "\nconsumerId={}, \nfetches=" + fetches + ", \ncalls=" + pendingCalls + '}';
   }
 
   @Override
@@ -100,9 +100,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public ClientIdentifier getClientIdentifier(ClientDescriptor clientDescriptor) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] getClientIdentifier(" + clientDescriptor + ")");
-    }
+    LOGGER.trace("[{}] getClientIdentifier({})", consumerId, clientDescriptor);
 
     ensureAliveOnActive();
     return getConnectedClientIdentifier(clientDescriptor);
@@ -110,9 +108,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void pushClientNotification(ClientDescriptor from, ContextualNotification notification) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushClientNotification(" + from + ", " + notification + ")");
-    }
+    LOGGER.trace("[{}] pushClientNotification({}, {})", consumerId, from, notification);
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
@@ -125,8 +121,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void pushClientStatistics(ClientDescriptor from, ContextualStatistics... statistics) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushClientStatistics(" + from + ", " + Arrays.toString(statistics) + ")");
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("[{}] pushClientStatistics({}, {})", consumerId, from, Arrays.toString(statistics));
     }
 
     ensureAliveOnActive();
@@ -143,8 +139,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void exposeClientTags(ClientDescriptor from, String... tags) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] exposeClientTags(" + from + ", " + Arrays.toString(tags) + ")");
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("[{}] exposeClientTags({}, {})", consumerId, from, Arrays.toString(tags));
     }
 
     ensureAliveOnActive();
@@ -158,8 +154,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void exposeClientManagementRegistry(ClientDescriptor from, ContextContainer contextContainer, Capability... capabilities) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] exposeClientManagementRegistry(" + from + ", " + contextContainer + ", " + Arrays.toString(capabilities) + ")");
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("[{}] exposeClientManagementRegistry({}, {}, {})", consumerId, from, contextContainer, Arrays.toString(capabilities));
     }
 
     ensureAliveOnActive();
@@ -169,7 +165,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
           ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
           newRegistry.addCapabilities(capabilities);
           String notif = client.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "CLIENT_REGISTRY_UPDATED").orElse("CLIENT_REGISTRY_AVAILABLE");
-          if(!notif.isEmpty()) {
+          if (!notif.isEmpty()) {
             client.setManagementRegistry(newRegistry);
             stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), notif));
           }
@@ -196,9 +192,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public String sendManagementCallRequest(ClientDescriptor from, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] sendManagementCallRequest(" + from + ", " + to + ", " + context + ", " + capabilityName + ", " + methodName + ")");
-    }
+    LOGGER.trace("[{}] sendManagementCallRequest({}, {}, {}, {}, {})", consumerId, from, to, context, capabilityName, methodName);
 
     ensureAliveOnActive();
 
@@ -235,9 +229,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void answerManagementCall(ClientDescriptor from, ClientIdentifier caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] answerManagementCall(" + from + ", " + caller + ", " + managementCallIdentifier + ")");
-    }
+    LOGGER.trace("[{}] answerManagementCall({}, {}, {})", consumerId, from, caller, managementCallIdentifier);
 
     ensureAliveOnActive();
 
@@ -274,7 +266,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   private ClientIdentifier getConnectedClientIdentifier(ClientDescriptor from) {
     ClientIdentifier clientIdentifier = fetches.get(from);
     if (clientIdentifier == null) {
-      throw new SecurityException("Descriptor " + from + " is not a client of entity " + stripeMonitoring.getCurrentActiveServerEntity(consumerId).getServerEntityIdentifier() + " (consumerId=" + consumerId + ")");
+      throw new SecurityException("Descriptor " + from + " is not a client of entity " + stripeMonitoring.getCurrentActiveServerEntity(consumerId).getServerEntityIdentifier() + " (consumerId={})");
     }
     return clientIdentifier;
   }
@@ -288,7 +280,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
       }
     }
     if (toClientDescriptor == null) {
-      throw new SecurityException("Client identifier " + to + " is not a client of entity " + stripeMonitoring.getCurrentActiveServerEntity(consumerId).getServerEntityIdentifier() + " (consumerId=" + consumerId + ")");
+      throw new SecurityException("Client identifier " + to + " is not a client of entity " + stripeMonitoring.getCurrentActiveServerEntity(consumerId).getServerEntityIdentifier() + " (consumerId={})");
     }
     return toClientDescriptor;
   }
@@ -304,8 +296,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void exposeServerEntityManagementRegistry(ContextContainer contextContainer, Capability... capabilities) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] exposeServerEntityManagementRegistry(" + contextContainer + ", " + Arrays.toString(capabilities) + ")");
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("[{}] exposeServerEntityManagementRegistry({}, {})", consumerId, contextContainer, Arrays.toString(capabilities));
     }
 
     ManagementRegistry registry = ManagementRegistry.create(contextContainer);
@@ -317,9 +309,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void pushServerEntityNotification(ContextualNotification notification) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushServerEntityNotification(" + notification + ")");
-    }
+    LOGGER.trace("[{}] pushServerEntityNotification({})", consumerId, notification);
 
     // this call will be routed to the current active server by voltron
     monitoringProducer.pushBestEffortsData(DefaultListener.TOPIC_SERVER_ENTITY_NOTIFICATION, notification);
@@ -327,8 +317,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public void pushServerEntityStatistics(ContextualStatistics... statistics) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] pushServerEntityStatistics(" + Arrays.toString(statistics) + ")");
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("[{}] pushServerEntityStatistics({})", consumerId, Arrays.toString(statistics));
     }
 
     // this call will be routed to the current active server by voltron
@@ -337,9 +327,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public synchronized ReadOnlyBuffer<Message> createMessageBuffer(int maxBufferSize) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "[" + consumerId + "] createMessageBuffer(" + maxBufferSize + ")");
-    }
+    LOGGER.trace("[{}] createMessageBuffer({})", consumerId, maxBufferSize);
 
     if (buffer == null) {
       buffer = new RingBuffer<>(maxBufferSize);
@@ -353,9 +341,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   void push(Message message) {
     if (buffer != null) {
-      if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.log(Level.FINEST, "[" + consumerId + "] push(" + message + ")");
-      }
+      LOGGER.trace("[{}] push({})", consumerId, message);
       if (buffer.put(message) != null) {
         // notify the loss of messages if the ring buffer is full
         buffer.put(new DefaultMessage(

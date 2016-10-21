@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.service.registry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.AbstractManagementRegistry;
@@ -26,15 +28,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
  */
 class DefaultConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
 
-  private static final Logger LOGGER = Logger.getLogger(ConsumerManagementRegistryProvider.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerManagementRegistryProvider.class);
 
   private final MonitoringService monitoringService;
   private final ContextContainer contextContainer;
@@ -64,9 +64,7 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
 
   @Override
   public synchronized void refresh() {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.finest("refresh(): " + contextContainer);
-    }
+    LOGGER.trace("refresh(): {}", contextContainer);
     Collection<Capability> capabilities = getCapabilities();
     if (!previouslyExposed.equals(capabilities)) {
       Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);

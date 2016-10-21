@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.management.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -40,15 +42,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
  */
 public class ManagementAgentService implements Closeable {
 
-  private static final Logger LOGGER = Logger.getLogger(ManagementAgentService.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(ManagementAgentService.class);
 
   private final ManagementAgentEntity entity;
   private final ClientIdentifier clientIdentifier;
@@ -112,8 +112,8 @@ public class ManagementAgentService implements Closeable {
                   }
                 }
               } catch (RuntimeException err) {
-                if(LOGGER.isLoggable(Level.WARNING)) {
-                  LOGGER.log(Level.WARNING, "Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
+                if(LOGGER.isWarnEnabled()) {
+                  LOGGER.warn("Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
                 }
               }
             }
@@ -127,8 +127,8 @@ public class ManagementAgentService implements Closeable {
               try {
                 contextualReturnListener.onContextualReturn(message.getFrom(), message.getManagementCallIdentifier(), aReturn);
               } catch (RuntimeException err) {
-                if (LOGGER.isLoggable(Level.WARNING)) {
-                  LOGGER.log(Level.WARNING, "Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
+                if (LOGGER.isWarnEnabled()) {
+                  LOGGER.warn("Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
                 }
               }
             }
