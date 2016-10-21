@@ -32,6 +32,7 @@ import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -53,6 +54,7 @@ public class ManagementAgentService implements Closeable {
 
   private volatile ManagementRegistry registry;
   private volatile boolean bridging = false;
+  private Capability[] previouslyExposed = new Capability[0];
 
   private ContextualReturnListener contextualReturnListener = new ContextualReturnListenerAdapter();
   private long timeout = 5000;
@@ -143,7 +145,7 @@ public class ManagementAgentService implements Closeable {
       registry.addManagementProvider(managementProvider);
       // expose the registry when CM is first available
       Collection<Capability> capabilities = registry.getCapabilities();
-      get(entity.exposeManagementMetadata(null, registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()])), timeout);
+      setCapabilities(registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()]));
       bridging = true;
     }
     return this;
@@ -181,7 +183,10 @@ public class ManagementAgentService implements Closeable {
   }
 
   public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) {
-    get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
+    if (!Arrays.deepEquals(previouslyExposed, capabilities)) {
+      get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
+      previouslyExposed = capabilities;
+    }
   }
 
   public void setTags(Collection<String> tags) {
