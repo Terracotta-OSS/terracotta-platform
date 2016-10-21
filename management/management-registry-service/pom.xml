@@ -90,7 +90,6 @@
       <groupId>org.terracotta.management</groupId>
       <artifactId>monitoring-service</artifactId>
       <version>${project.version}</version>
-      <classifier>plugin</classifier>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -113,6 +112,7 @@
               <!-- we have to make sure no voltron api comes in the shaded jar -->
               <artifactSet>
                 <includes>
+                  <include>org.terracotta.management:management-registry-service</include>
                 </includes>
               </artifactSet>
             </configuration>

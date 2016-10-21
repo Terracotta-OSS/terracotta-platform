@@ -102,7 +102,6 @@
       <groupId>org.terracotta.management</groupId>
       <artifactId>monitoring-service</artifactId>
       <version>${project.version}</version>
-      <classifier>plugin</classifier>
       <scope>test</scope>
     </dependency>
   </dependencies>
