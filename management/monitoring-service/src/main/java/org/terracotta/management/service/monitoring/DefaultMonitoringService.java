@@ -112,11 +112,11 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
-        .ifPresent(client -> {
-          notification.setContext(notification.getContext().with(client.getContext()));
-          stripeMonitoring.fireNotification(notification);
-        }));
+    stripeMonitoring.consumeCluster(cluster -> {
+      Client client = cluster.getClient(clientIdentifier).get();
+      notification.setContext(notification.getContext().with(client.getContext()));
+      stripeMonitoring.fireNotification(notification);
+    });
   }
 
   @Override
@@ -127,14 +127,14 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
-        .ifPresent(client -> {
-          Context context = client.getContext();
-          for (ContextualStatistics statistic : statistics) {
-            statistic.setContext(statistic.getContext().with(context));
-          }
-          stripeMonitoring.fireStatistics(statistics);
-        }));
+    stripeMonitoring.consumeCluster(cluster -> {
+      Client client = cluster.getClient(clientIdentifier).get();
+      Context context = client.getContext();
+      for (ContextualStatistics statistic : statistics) {
+        statistic.setContext(statistic.getContext().with(context));
+      }
+      stripeMonitoring.fireStatistics(statistics);
+    });
   }
 
   @Override
@@ -145,11 +145,11 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
-        .ifPresent(client -> {
-          client.addTags(tags);
-          stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
-        }));
+    stripeMonitoring.consumeCluster(cluster -> {
+      Client client = cluster.getClient(clientIdentifier).get();
+      client.addTags(tags);
+      stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
+    });
   }
 
   @Override
@@ -160,16 +160,16 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> cluster.getClient(clientIdentifier)
-        .ifPresent(client -> {
-          ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
-          newRegistry.addCapabilities(capabilities);
-          String notif = client.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "CLIENT_REGISTRY_UPDATED").orElse("CLIENT_REGISTRY_AVAILABLE");
-          if (!notif.isEmpty()) {
-            client.setManagementRegistry(newRegistry);
-            stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), notif));
-          }
-        }));
+    stripeMonitoring.consumeCluster(cluster -> {
+      Client client = cluster.getClient(clientIdentifier).get();
+      ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
+      newRegistry.addCapabilities(capabilities);
+      String notif = client.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "CLIENT_REGISTRY_UPDATED").orElse("CLIENT_REGISTRY_AVAILABLE");
+      if (!notif.isEmpty()) {
+        client.setManagementRegistry(newRegistry);
+        stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), notif));
+      }
+    });
   }
 
   @Override
