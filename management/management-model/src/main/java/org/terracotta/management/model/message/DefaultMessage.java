@@ -64,8 +64,8 @@ public class DefaultMessage implements Message, Serializable {
   public String toString() {
     return getClass().getSimpleName() +
         "{" +
-        "sequence=" + sequence +
-        ", type=" + messageType +
+        "type=" + messageType +
+        ", sequence=" + sequence +
         ", data=" + (data == null ? null : Arrays.deepToString(data)) +
         '}';
   }
