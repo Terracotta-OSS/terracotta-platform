@@ -304,7 +304,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     registry.addCapabilities(capabilities);
 
     // this call will be routed to the current active server by voltron
-    monitoringProducer.addNode(null, "registry", registry);
+    monitoringProducer.addNode(new String[0], "registry", registry);
   }
 
   @Override
