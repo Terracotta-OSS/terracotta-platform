@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 class DefaultMonitoringService implements MonitoringService, Closeable {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultListener.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMonitoringService.class);
 
   private final DefaultListener stripeMonitoring;
   private final long consumerId;

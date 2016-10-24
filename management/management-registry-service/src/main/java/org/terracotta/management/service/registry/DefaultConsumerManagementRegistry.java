@@ -34,7 +34,7 @@ import java.util.Objects;
  */
 class DefaultConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerManagementRegistryProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
 
   private final MonitoringService monitoringService;
   private final ContextContainer contextContainer;
