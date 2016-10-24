@@ -43,7 +43,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -150,7 +149,8 @@ class DefaultListener implements PlatformListener, DataListener {
 
     Server server = stripe.getServerByName(sender.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
-    ServerEntity entity = ServerEntity.create(platformEntity.name, platformEntity.typeName);
+    ServerEntity entity = ServerEntity.create(platformEntity.name, platformEntity.typeName)
+        .setConsumerId(platformEntity.consumerID);
 
     server.addServerEntity(entity);
 
