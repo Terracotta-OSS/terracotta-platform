@@ -19,7 +19,7 @@ import org.terracotta.management.entity.monitoring.MonitoringServiceProxy;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.MonitoringService;
-import org.terracotta.management.service.monitoring.buffer.ReadOnlyBuffer;
+import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 
 import java.util.ArrayList;
 import java.util.List;

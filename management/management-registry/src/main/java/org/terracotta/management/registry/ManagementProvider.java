@@ -21,6 +21,7 @@ import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.Statistic;
+import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.Collection;
 import java.util.Map;
@@ -44,15 +45,17 @@ public interface ManagementProvider<T> {
    * Register an object for management in the current provider.
    *
    * @param managedObject the object to manage.
+   * @return true if the object has been registered
    */
-  void register(T managedObject);
+  ExposedObject<T> register(T managedObject);
 
   /**
    * Unregister a managed object from the current provider.
    *
    * @param managedObject the managed object.
+   * @return true if the object has been registered
    */
-  void unregister(T managedObject);
+  ExposedObject<T> unregister(T managedObject);
 
   /**
    * Get the set of capability descriptors the current provider provides.

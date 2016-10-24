@@ -15,20 +15,25 @@
  */
 package org.terracotta.management.service.registry;
 
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.Exposed;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Mathieu Carbou
  */
 public class MyObject implements ExposedObject<MyObject> {
 
-  private final String cmName;
-  private final String cName;
+  final String cmName;
+  final String cName;
 
-  public MyObject(String cmName, String cName) {
+  MyObject(String cmName, String cName) {
     this.cmName = cmName;
     this.cName = cName;
   }
@@ -52,7 +57,12 @@ public class MyObject implements ExposedObject<MyObject> {
   }
 
   @Override
-  public boolean matches(Context context) {
-    return cmName.equals(context.get("cacheManagerName")) && cName.equals(context.get("cacheName"));
+  public Context getContext() {
+    return Context.empty().with("cacheManagerName", cmName).with("cacheName", cName);
+  }
+
+  @Override
+  public Collection<? extends Descriptor> getDescriptors() {
+    return Collections.singletonList(new Settings().set("cmName", cmName).set("cName", cName));
   }
 }

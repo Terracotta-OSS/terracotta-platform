@@ -8,6 +8,7 @@
         "id" : "entityName-1:entityType",
         "type" : "entityType",
         "name" : "entityName-1",
+        "consumerId" : 1,
         "managementRegistry" : {
           "contextContainer" : {
             "ctName" : "ctValue",

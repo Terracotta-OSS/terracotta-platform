@@ -22,6 +22,7 @@ import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.Statistic;
+import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -48,7 +49,8 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
   }
 
   @Override
-  public void register(Object managedObject) {
+  public ExposedObject<T> register(Object managedObject) {
+    return null;
   }
 
   @Override
@@ -56,7 +58,8 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
   }
 
   @Override
-  public void unregister(Object managedObject) {
+  public ExposedObject<T> unregister(Object managedObject) {
+    return null;
   }
 
   @Override

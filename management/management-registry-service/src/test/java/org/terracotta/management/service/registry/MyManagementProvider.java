@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.service.registry;
 
-import org.terracotta.management.registry.action.AbstractActionManagementProvider;
+import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
 import org.terracotta.management.registry.action.RequiredContext;
@@ -25,7 +25,7 @@ import org.terracotta.management.registry.action.RequiredContext;
  */
 @Named("TheActionProvider")
 @RequiredContext({@Named("cacheManagerName"), @Named("cacheName")})
-public class MyManagementProvider extends AbstractActionManagementProvider<MyObject> {
+public class MyManagementProvider extends AbstractManagementProvider<MyObject> {
   public MyManagementProvider() {
     super(MyObject.class);
   }

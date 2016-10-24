@@ -8,11 +8,13 @@
         "id" : "entityName-1:entityType",
         "type" : "entityType",
         "name" : "entityName-1",
+        "consumerId" : 1,
         "managementRegistry" : null
       }, {
         "id" : "entityName-2:entityType",
         "type" : "entityType",
         "name" : "entityName-2",
+        "consumerId" : 2,
         "managementRegistry" : null
       } ],
       "serverName" : "server-1",

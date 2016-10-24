@@ -30,6 +30,14 @@
   <name>Terracotta Management :: TMS Entity :: Server</name>
 
   <dependencies>
+    <!-- common server classpath -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- inside jar -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>tms-entity-common</artifactId>
@@ -40,12 +48,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
 

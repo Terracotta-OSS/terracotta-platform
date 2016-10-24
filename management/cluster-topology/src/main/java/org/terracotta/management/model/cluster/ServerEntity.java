@@ -25,7 +25,7 @@ import java.util.Optional;
  */
 public final class ServerEntity extends AbstractNode<Server> {
 
-  private static final long serialVersionUID = 2;
+  private static final long serialVersionUID = 3;
 
   public static final String KEY = "entityId";
   public static final String TYPE_KEY = "entityType";
@@ -33,6 +33,7 @@ public final class ServerEntity extends AbstractNode<Server> {
 
   private final ServerEntityIdentifier identifier;
   private ManagementRegistry managementRegistry;
+  private long consumerId;
 
   // matches management registry config, or entity id, or service type
   private ServerEntity(ServerEntityIdentifier identifier) {
@@ -46,6 +47,15 @@ public final class ServerEntity extends AbstractNode<Server> {
 
   public ServerEntity setManagementRegistry(ManagementRegistry managementRegistry) {
     this.managementRegistry = managementRegistry;
+    return this;
+  }
+
+  public long getConsumerId() {
+    return consumerId;
+  }
+
+  public ServerEntity setConsumerId(long consumerId) {
+    this.consumerId = consumerId;
     return this;
   }
 
@@ -123,6 +133,7 @@ public final class ServerEntity extends AbstractNode<Server> {
     Map<String, Object> map = super.toMap();
     map.put("type", getType());
     map.put("name", getName());
+    map.put("consumerId", getConsumerId());
     map.put("managementRegistry", managementRegistry == null ? null : managementRegistry.toMap());
     return map;
   }

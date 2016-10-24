@@ -36,10 +36,9 @@ public class MonitoringServiceConfiguration implements ServiceConfiguration<Moni
     this.serviceRegistry = serviceRegistry;
   }
 
-  public Optional<ManagementCommunicator> getManagementCommunicator() {
+  public Optional<ClientCommunicator> getClientCommunicator() {
     return getRegistry()
-        .map(registry -> registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)))
-        .map(ManagementCommunicator::new);
+        .map(registry -> registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
   }
 
   public IMonitoringProducer getMonitoringProducer() {

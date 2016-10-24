@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.management.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -29,30 +31,31 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ManagementProviderAdapter;
 import org.terracotta.management.registry.ManagementRegistry;
+import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.voltron.proxy.client.messages.MessageListener;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
  */
 public class ManagementAgentService implements Closeable {
 
-  private static final Logger LOGGER = Logger.getLogger(ManagementAgentService.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(ManagementAgentService.class);
 
   private final ManagementAgentEntity entity;
   private final ClientIdentifier clientIdentifier;
 
   private volatile ManagementRegistry registry;
   private volatile boolean bridging = false;
+  private Capability[] previouslyExposed = new Capability[0];
 
   private ContextualReturnListener contextualReturnListener = new ContextualReturnListenerAdapter();
   private long timeout = 5000;
@@ -65,19 +68,21 @@ public class ManagementAgentService implements Closeable {
 
   private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(ManagementAgentService.class.getSimpleName(), Object.class) {
     @Override
-    public void register(Object managedObject) {
+    public ExposedObject<Object>register(Object managedObject) {
       // expose the registry each time a new object is registered in the management registry
       if (bridging) {
         setCapabilities(registry.getContextContainer(), registry.getCapabilities());
       }
+      return null;
     }
 
     @Override
-    public void unregister(Object managedObject) {
+    public ExposedObject<Object> unregister(Object managedObject) {
       // expose the registry each time a new object is registered in the management registry
       if (bridging) {
         setCapabilities(registry.getContextContainer(), registry.getCapabilities());
       }
+      return null;
     }
   };
 
@@ -107,8 +112,8 @@ public class ManagementAgentService implements Closeable {
                   }
                 }
               } catch (RuntimeException err) {
-                if(LOGGER.isLoggable(Level.WARNING)) {
-                  LOGGER.log(Level.WARNING, "Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
+                if(LOGGER.isWarnEnabled()) {
+                  LOGGER.warn("Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
                 }
               }
             }
@@ -122,8 +127,8 @@ public class ManagementAgentService implements Closeable {
               try {
                 contextualReturnListener.onContextualReturn(message.getFrom(), message.getManagementCallIdentifier(), aReturn);
               } catch (RuntimeException err) {
-                if (LOGGER.isLoggable(Level.WARNING)) {
-                  LOGGER.log(Level.WARNING, "Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
+                if (LOGGER.isWarnEnabled()) {
+                  LOGGER.warn("Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
                 }
               }
             }
@@ -143,7 +148,7 @@ public class ManagementAgentService implements Closeable {
       registry.addManagementProvider(managementProvider);
       // expose the registry when CM is first available
       Collection<Capability> capabilities = registry.getCapabilities();
-      get(entity.exposeManagementMetadata(null, registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()])), timeout);
+      setCapabilities(registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()]));
       bridging = true;
     }
     return this;
@@ -181,7 +186,10 @@ public class ManagementAgentService implements Closeable {
   }
 
   public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) {
-    get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
+    if (!Arrays.deepEquals(previouslyExposed, capabilities)) {
+      get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
+      previouslyExposed = capabilities;
+    }
   }
 
   public void setTags(Collection<String> tags) {

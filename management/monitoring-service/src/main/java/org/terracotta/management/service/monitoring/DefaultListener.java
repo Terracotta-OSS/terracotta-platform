@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
@@ -43,8 +45,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.terracotta.management.service.monitoring.DefaultListener.Notification.CLIENT_CONNECTED;
 import static org.terracotta.management.service.monitoring.DefaultListener.Notification.CLIENT_DISCONNECTED;
@@ -63,7 +63,7 @@ import static org.terracotta.management.service.monitoring.DefaultListener.Notif
  */
 class DefaultListener implements PlatformListener, DataListener {
 
-  private static final Logger LOGGER = Logger.getLogger(DefaultListener.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultListener.class);
 
   static final String TOPIC_SERVER_ENTITY_NOTIFICATION = "server-entity-notification";
   static final String TOPIC_SERVER_ENTITY_STATISTICS = "server-entity-statistics";
@@ -89,9 +89,7 @@ class DefaultListener implements PlatformListener, DataListener {
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public synchronized void serverDidBecomeActive(PlatformServer self) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "serverDidBecomeActive(" + self + ")");
-    }
+    LOGGER.trace("serverDidBecomeActive({})", self);
 
     serverDidJoinStripe(self);
 
@@ -102,9 +100,7 @@ class DefaultListener implements PlatformListener, DataListener {
 
   @Override
   public synchronized void serverDidJoinStripe(PlatformServer platformServer) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "serverDidJoinStripe(" + platformServer + "):\n" + cluster);
-    }
+    LOGGER.trace("serverDidJoinStripe({}):\n{}", platformServer, cluster);
 
     Server server = Server.create(platformServer.getServerName())
         .setBindAddress(platformServer.getBindAddress())
@@ -126,27 +122,22 @@ class DefaultListener implements PlatformListener, DataListener {
 
   @Override
   public synchronized void serverDidLeaveStripe(PlatformServer platformServer) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "serverDidLeaveStripe(" + platformServer + "):\n" + cluster);
-    }
+    LOGGER.trace("serverDidLeaveStripe({}):\n{}", platformServer, cluster);
 
-    stripe.getServerByName(platformServer.getServerName())
-        .ifPresent(server -> {
+    Server server = stripe.getServerByName(platformServer.getServerName())
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + platformServer.getServerName()));
 
-          Context context = server.getContext();
-          server.remove();
+    Context context = server.getContext();
+    server.remove();
 
-          entities.remove(server.getServerName());
+    entities.remove(server.getServerName());
 
-          fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
-        });
+    fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
   }
 
   @Override
   public synchronized void serverEntityCreated(PlatformServer sender, PlatformEntity platformEntity) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "serverEntityCreated(" + sender + ", " + platformEntity + "):\n" + cluster);
-    }
+    LOGGER.trace("serverEntityCreated({}, {}):\n{}", sender, platformEntity, cluster);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getCurrentActive().getServerName())) {
       throw newIllegalTopologyState("Server " + sender + " is not current active server but it created an active entity " + platformEntity);
@@ -156,10 +147,10 @@ class DefaultListener implements PlatformListener, DataListener {
       throw newIllegalTopologyState("Server " + sender + " is the current active server but it created a passive entity " + platformEntity);
     }
 
-    // do not use .ifPresent() because we want to fail if the server is not there!
     Server server = stripe.getServerByName(sender.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
-    ServerEntity entity = ServerEntity.create(platformEntity.name, platformEntity.typeName);
+    ServerEntity entity = ServerEntity.create(platformEntity.name, platformEntity.typeName)
+        .setConsumerId(platformEntity.consumerID);
 
     server.addServerEntity(entity);
 
@@ -170,9 +161,7 @@ class DefaultListener implements PlatformListener, DataListener {
 
   @Override
   public synchronized void serverEntityDestroyed(PlatformServer sender, PlatformEntity platformEntity) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "serverEntityDestroyed(" + sender + ", " + platformEntity + "):\n" + cluster);
-    }
+    LOGGER.trace("serverEntityDestroyed({}, {}):\n{}", sender, platformEntity, cluster);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getCurrentActive().getServerName())) {
       throw newIllegalTopologyState("Server " + sender + " is not current active server but it destroyed an active entity " + platformEntity);
@@ -182,32 +171,28 @@ class DefaultListener implements PlatformListener, DataListener {
       throw newIllegalTopologyState("Server " + sender + " is the current active server but it destroyed a passive entity " + platformEntity);
     }
 
-    stripe.getServerByName(sender.getServerName())
-        .ifPresent(server -> {
-          server.getServerEntity(platformEntity.name, platformEntity.typeName)
-              .ifPresent(entity -> {
+    Server server = stripe.getServerByName(sender.getServerName())
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
 
-                closeMonitoringService(platformEntity.consumerID);
+    ServerEntity entity = server.getServerEntity(platformEntity.name, platformEntity.typeName)
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: " + platformEntity + " on server " + sender));
 
-                Context context = entity.getContext();
-                entity.remove();
+    closeMonitoringService(platformEntity.consumerID);
 
-                entities.get(server.getServerName()).remove(platformEntity.consumerID);
+    Context context = entity.getContext();
+    entity.remove();
 
-                fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
-              });
-        });
+    entities.get(server.getServerName()).remove(platformEntity.consumerID);
+
+    fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
   }
 
   @Override
   public synchronized void clientConnected(PlatformConnectedClient platformConnectedClient) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "clientConnected(" + platformConnectedClient + "):\n" + cluster);
-    }
+    LOGGER.trace("clientConnected({}):\n{}", platformConnectedClient, cluster);
 
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
-    // do not use .ifPresent() because we want to fail if the server is not there!
 
     Client client = Client.create(clientIdentifier)
         .setHostName(platformConnectedClient.remoteAddress.getHostName());
@@ -220,32 +205,26 @@ class DefaultListener implements PlatformListener, DataListener {
 
   @Override
   public synchronized void clientDisconnected(PlatformConnectedClient platformConnectedClient) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "clientDisconnected(" + platformConnectedClient + "):\n" + cluster);
-    }
+    LOGGER.trace("clientDisconnected({}):\n{}", platformConnectedClient, cluster);
 
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-    cluster.getClient(clientIdentifier)
-        .ifPresent(client -> {
+    Client client = cluster.getClient(clientIdentifier)
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
+    Context context = client.getContext();
 
-          Context context = client.getContext();
-          client.remove();
+    client.remove();
 
-          fireNotification(new ContextualNotification(context, CLIENT_DISCONNECTED.name()));
-        });
+    fireNotification(new ContextualNotification(context, CLIENT_DISCONNECTED.name()));
   }
 
   @Override
   public synchronized void clientFetch(PlatformConnectedClient platformConnectedClient, PlatformEntity platformEntity, ClientDescriptor clientDescriptor) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "clientFetch(" + platformConnectedClient + ", " + platformEntity + "):\n" + cluster);
-    }
+    LOGGER.trace("clientFetch({}, {}):\n{}", platformConnectedClient, platformEntity, cluster);
 
     Server currentActive = getCurrentActive();
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-    // do not use .ifPresent() because we want to fail if the server is not there!
     Client client = cluster.getClient(clientIdentifier)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
 
@@ -268,51 +247,44 @@ class DefaultListener implements PlatformListener, DataListener {
 
   @Override
   public synchronized void clientUnfetch(PlatformConnectedClient platformConnectedClient, PlatformEntity platformEntity, ClientDescriptor clientDescriptor) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "clientUnfetch(" + platformConnectedClient + ", " + platformEntity + "):\n" + cluster);
-    }
+    LOGGER.trace("clientUnfetch({}, {}):\n{}", platformConnectedClient, platformEntity, cluster);
 
     Server currentActive = getCurrentActive();
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-    // do not use .ifPresent() because we want to fail if the server is not there!
     ServerEntity entity = currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
 
-    cluster.getClient(clientIdentifier)
-        .ifPresent(client -> client.getConnection(currentActive, endpoint)
-            .ifPresent(connection -> {
+    Client client = cluster.getClient(clientIdentifier)
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
+    Connection connection = client.getConnection(currentActive, endpoint)
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing connection: " + endpoint + " to server " + currentActive.getServerName() + " from client " + clientIdentifier));
+    DefaultMonitoringService monitoringService = monitoringServices.get(platformEntity.consumerID);
+    if (monitoringService != null) {
+      monitoringService.removeFetch(clientDescriptor, clientIdentifier);
+    }
 
-              DefaultMonitoringService monitoringService = monitoringServices.get(platformEntity.consumerID);
-              if (monitoringService != null) {
-                monitoringService.removeFetch(clientDescriptor, clientIdentifier);
-              }
-
-              if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
-                fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
-              }
-            }));
+    if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
+      fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
+    }
   }
 
   @Override
   public synchronized void serverStateChanged(PlatformServer sender, ServerState serverState) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "serverStateChanged(" + sender + ", " + serverState + "):\n" + cluster);
-    }
+    LOGGER.trace("serverStateChanged({}, {}):\n{}", sender, serverState, cluster);
 
-    stripe.getServerByName(sender.getServerName())
-        .ifPresent(server -> {
+    Server server = stripe.getServerByName(sender.getServerName())
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
 
-          server.setState(Server.State.parse(serverState.getState()));
-          server.setActivateTime(serverState.getActivate());
+    server.setState(Server.State.parse(serverState.getState()));
+    server.setActivateTime(serverState.getActivate());
 
-          Map<String, String> attrs = new HashMap<>();
-          attrs.put("state", serverState.getState());
-          attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
+    Map<String, String> attrs = new HashMap<>();
+    attrs.put("state", serverState.getState());
+    attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
 
-          fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
-        });
+    fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
   }
 
   // ===============================================
@@ -321,9 +293,7 @@ class DefaultListener implements PlatformListener, DataListener {
 
   @Override
   public void pushBestEffortsData(long consumerId, PlatformServer sender, String name, Serializable data) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "pushBestEffortsData(" + sender + ", " + name + ", " + data + ")");
-    }
+    LOGGER.trace("pushBestEffortsData({}, {}, {})", sender, name, data);
 
     // handles data coming from DefaultMonitoringService.pushServerEntityNotification() and DefaultMonitoringService.pushServerEntityStatistics()
     switch (name) {
@@ -355,16 +325,17 @@ class DefaultListener implements PlatformListener, DataListener {
 
   @Override
   public synchronized void setState(long consumerId, PlatformServer sender, String[] path, Serializable data) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.FINEST, "setState(" + sender + ", " + Arrays.toString(path) + ", " + data + ")");
-    }
+    LOGGER.trace("setState({}, {}, {})", sender, Arrays.toString(path), data);
 
     // handles data coming from DefaultMonitoringService.exposeServerEntityManagementRegistry()
     if (path.length == 1 && path[0].equals("registry")) {
-      ManagementRegistry registry = (ManagementRegistry) data;
+      ManagementRegistry newRegistry = (ManagementRegistry) data;
       ServerEntity serverEntity = getServerEntity(sender.getServerName(), consumerId);
-      serverEntity.setManagementRegistry(registry);
-      fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_UPDATED"));
+      String notif = serverEntity.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "ENTITY_REGISTRY_UPDATED").orElse("ENTITY_REGISTRY_AVAILABLE");
+      if (!notif.isEmpty()) {
+        serverEntity.setManagementRegistry(newRegistry);
+        fireNotification(new ContextualNotification(serverEntity.getContext(), notif));
+      }
     }
   }
 
@@ -377,7 +348,7 @@ class DefaultListener implements PlatformListener, DataListener {
         this,
         consumerID,
         config.getMonitoringProducer(),
-        config.getManagementCommunicator().orElse(null)));
+        config.getClientCommunicator().map(ManagementCommunicator::new).orElse(null)));
   }
 
   synchronized void clear() {

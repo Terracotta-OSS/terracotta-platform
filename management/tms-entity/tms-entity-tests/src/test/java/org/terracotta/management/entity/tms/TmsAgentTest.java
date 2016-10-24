@@ -106,7 +106,8 @@ public class TmsAgentTest {
                 .setVersion("Version Passthrough 5.0.0-SNAPSHOT")
                 .setBuildId("Build ID")
                 .setState(Server.State.ACTIVE)
-                .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName()))))
+                .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName())
+                    .setConsumerId(1))))
         .addClient(Client.create(clientIdentifier)
             .setHostName(InetAddress.getLocalHost().getHostName()));
 
@@ -225,7 +226,7 @@ public class TmsAgentTest {
         assertEquals("CLIENT_CONNECTED", messages.get(0).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("SERVER_ENTITY_CREATED", messages.get(1).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("SERVER_ENTITY_FETCHED", messages.get(2).unwrap(ContextualNotification.class).get(0).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(3).unwrap(ContextualNotification.class).get(0).getType());
+        assertEquals("CLIENT_REGISTRY_AVAILABLE", messages.get(3).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("CLIENT_TAGS_UPDATED", messages.get(4).unwrap(ContextualNotification.class).get(0).getType());
         assertEquals("TOPOLOGY", messages.get(5).getType());
 
@@ -234,12 +235,11 @@ public class TmsAgentTest {
 
         messages = entity.readMessages().get();
         System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
-        assertEquals(3, messages.size());
+        assertEquals(2, messages.size());
         assertEquals("NOTIFICATION", messages.get(0).getType());
-        assertEquals("NOTIFICATION", messages.get(1).getType());
+        assertEquals("TOPOLOGY", messages.get(1).getType());
         assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(0).unwrap(ContextualNotification.class).get(0).getType());
-        assertEquals("CLIENT_REGISTRY_UPDATED", messages.get(1).unwrap(ContextualNotification.class).get(0).getType());
-        assertEquals("TOPOLOGY", messages.get(2).getType());
+        assertEquals("TOPOLOGY", messages.get(1).getType());
       }
 
     }

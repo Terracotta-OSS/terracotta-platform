@@ -16,10 +16,14 @@
 package org.terracotta.management.entity.helloworld.client.management;
 
 import org.terracotta.management.entity.helloworld.client.HelloWorldEntity;
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.Exposed;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Mathieu Carbou
@@ -48,7 +52,12 @@ public class ExposedHelloWorldEntity implements ExposedObject<HelloWorldEntity> 
   }
 
   @Override
-  public boolean matches(Context context) {
-    return entityName.equals(context.get("entityName"));
+  public Context getContext() {
+    return Context.empty().with("entityName", entityName);
+  }
+
+  @Override
+  public Collection<? extends Descriptor> getDescriptors() {
+    return Collections.emptyList();
   }
 }

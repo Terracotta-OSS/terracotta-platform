@@ -37,12 +37,17 @@
     <module>management-model</module>
     <module>management-registry</module>
     <module>cluster-topology</module>
+    <module>monitoring-service-api</module>
     <module>monitoring-service</module>
     <module>monitoring-service-entity</module>
+    <module>management-registry-service-api</module>
     <module>management-registry-service</module>
     <module>management-entity</module>
     <module>tms-entity</module>
     <module>samples</module>
+    <module>distribution/management-common</module>
+    <module>distribution/management-client</module>
+    <module>distribution/management-server</module>
   </modules>
 
   <name>Terracotta Management</name>

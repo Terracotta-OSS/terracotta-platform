@@ -27,7 +27,7 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
-import org.terracotta.management.service.monitoring.buffer.ReadOnlyBuffer;
+import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformEntity;
@@ -115,24 +115,25 @@ public class ManagementRegistryServiceTest {
     ReadOnlyBuffer<Message> buffer = monitoringService.createMessageBuffer(100);
 
     // a consumer asks for a service
-    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(serviceRegistry)
-        .addProvider(new MyManagementProvider()));
+    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(serviceRegistry));
+    registry.addManagementProvider(new MyManagementProvider());
 
     // then register some objects
     registry.register(new MyObject("myCacheManagerName1", "myCacheName1"));
     registry.refresh();
 
     assertThat(buffer.size(), equalTo(1));
-    assertThat(buffer.read().unwrap(ContextualNotification.class).get(0).getType(), equalTo("ENTITY_REGISTRY_UPDATED"));
+    assertThat(buffer.read().unwrap(ContextualNotification.class).get(0).getType(), equalTo("ENTITY_REGISTRY_AVAILABLE"));
     assertThat(buffer.size(), equalTo(0));
 
-    // no modification => not dirty
     registry.refresh();
-    assertThat(buffer.size(), equalTo(0));
+    assertThat(buffer.size(), equalTo(0)); // registry not updated
 
     registry.register(new MyObject("myCacheManagerName2", "myCacheName2"));
     registry.refresh();
+
     assertThat(buffer.size(), equalTo(1));
+    assertThat(buffer.read().unwrap(ContextualNotification.class).get(0).getType(), equalTo("ENTITY_REGISTRY_UPDATED"));
   }
 
 }

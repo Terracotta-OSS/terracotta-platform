@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.registry.collect;
 
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.AbstractActionManagementProvider;
 import org.terracotta.management.registry.action.Exposed;
@@ -22,6 +23,7 @@ import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Mathieu Carbou
@@ -78,9 +80,15 @@ public class StatisticCollectorProvider<T extends StatisticCollector> extends Ab
     }
 
     @Override
-    public boolean matches(Context context) {
-      return context.contains(this.context);
+    public Collection<? extends Descriptor> getDescriptors() {
+      return Collections.emptyList();
     }
+
+    @Override
+    public Context getContext() {
+      return context;
+    }
+
   }
 
 }

@@ -15,12 +15,9 @@
  */
 package org.terracotta.management.sequence;
 
-import com.tc.classloader.CommonComponent;
-
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface NodeIdSource {
 
   NodeIdSource MAC_PID = Defaults.MAC_PID_NODE_ID_SOURCE;

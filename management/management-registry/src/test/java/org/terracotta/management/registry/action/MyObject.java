@@ -15,7 +15,11 @@
  */
 package org.terracotta.management.registry.action;
 
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Mathieu Carbou
@@ -49,7 +53,13 @@ public class MyObject implements ExposedObject<MyObject> {
   }
 
   @Override
-  public boolean matches(Context context) {
-    return cmName.equals(context.get("cacheManagerName")) && cName.equals(context.get("cacheName"));
+  public Context getContext() {
+    return Context.empty().with("cacheManagerName", cmName).with("cacheName", cName);
   }
+
+  @Override
+  public Collection<? extends Descriptor> getDescriptors() {
+    return Collections.emptyList();
+  }
+
 }

@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.MessageCodecException;
@@ -25,16 +24,15 @@ import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
-public class ManagementCommunicator {
+class ManagementCommunicator {
 
   private final ClientCommunicator clientCommunicator;
 
-  public ManagementCommunicator(ClientCommunicator clientCommunicator) {
+  ManagementCommunicator(ClientCommunicator clientCommunicator) {
     this.clientCommunicator = clientCommunicator;
   }
 
-  public void send(ClientDescriptor target, ManagementCallMessage message) {
+  void send(ClientDescriptor target, ManagementCallMessage message) {
     try {
       clientCommunicator.sendNoResponse(target, ProxyEntityResponse.response(ManagementCallMessage.class, message));
     } catch (MessageCodecException e) {

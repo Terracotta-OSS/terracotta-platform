@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring.buffer;
+package org.terracotta.management.service.monitoring;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -38,11 +38,11 @@ import static java.util.Spliterator.SUBSIZED;
  *
  * @author Mathieu Carbou
  */
-public class RingBuffer<V> implements ReadWriteBuffer<V> {
+class RingBuffer<V> implements ReadWriteBuffer<V> {
 
   private final LinkedBlockingQueue<V> queue;
 
-  public RingBuffer(int maxSize) {
+  RingBuffer(int maxSize) {
     if (maxSize <= 0) {
       throw new IllegalArgumentException("Bad size: " + maxSize + ". Max. size must be greater than 0.");
     }

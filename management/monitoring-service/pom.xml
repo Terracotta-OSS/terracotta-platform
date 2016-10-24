@@ -48,21 +48,16 @@
       <version>${project.version}</version>
     </dependency>
 
-    <!-- all these libs will be in common server classpath -->
+    <!-- all these libs (and transitive deps) will be in common server classpath -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
-      <artifactId>management-model</artifactId>
+      <artifactId>monitoring-service-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>sequence-generator</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>cluster-topology</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
     </dependency>
 
     <!-- provided by voltron (server) -->
@@ -118,11 +113,9 @@
               <shadedClassifierName>plugin</shadedClassifierName>
               <!-- we have to make sure no voltron api comes in the shaded jar -->
               <artifactSet>
-                <excludes>
-                  <exclude>org.terracotta.management:sequence-generator</exclude>
-                  <exclude>org.terracotta.management:management-model</exclude>
-                  <exclude>org.terracotta.management:cluster-topology</exclude>
-                </excludes>
+                <includes>
+                  <include>org.terracotta:voltron-proxy</include>
+                </includes>
               </artifactSet>
             </configuration>
           </execution>

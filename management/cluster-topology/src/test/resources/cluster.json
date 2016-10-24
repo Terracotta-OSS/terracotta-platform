@@ -8,6 +8,7 @@
         "id" : "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
         "type" : "org.ehcache.clustered.client.internal.EhcacheClientEntity",
         "name" : "ehcache-entity-name-1",
+        "consumerId" : 0,
         "managementRegistry" : {
           "contextContainer" : {
             "entityName" : "ehcache-entity-name-1",
@@ -57,6 +58,7 @@
         "id" : "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
         "type" : "org.ehcache.clustered.client.internal.EhcacheClientEntity",
         "name" : "ehcache-entity-name-1",
+        "consumerId" : 0,
         "managementRegistry" : {
           "contextContainer" : {
             "entityName" : "ehcache-entity-name-1",

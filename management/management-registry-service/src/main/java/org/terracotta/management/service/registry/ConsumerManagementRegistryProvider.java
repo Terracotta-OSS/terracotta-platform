@@ -21,47 +21,18 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou
  */
 @BuiltinService
 public class ConsumerManagementRegistryProvider implements ServiceProvider {
-
-  private static final Logger LOGGER = Logger.getLogger(ConsumerManagementRegistryProvider.class.getName());
-  private static final boolean NOOP;
-  private static final String[] DEPS = new String[]{
-      "org.terracotta.management.service.monitoring.MonitoringService", // <artifactId>monitoring-service</artifactId>
-      "org.terracotta.management.model.cluster.Cluster", // <artifactId>cluster-topology</artifactId>
-      "org.terracotta.management.model.cluster.ClientIdentifier", // <artifactId>management-model</artifactId>
-      "org.terracotta.management.sequence.SequenceGenerator" // <artifactId>sequence-generator</artifactId>
-  };
-
-  // detects if the monitoring service and management stack is there. If not, a NOOP implementation is returned
-  static {
-    boolean noop = false;
-    Collection<String> missingDependencies = new TreeSet<>();
-    for (String dep : DEPS) {
-      try {
-        ConsumerManagementRegistryProvider.class.getClassLoader().loadClass(dep);
-      } catch (ClassNotFoundException ignored) {
-        noop = true;
-        missingDependencies.add(dep);
-      }
-    }
-    if (noop && LOGGER.isLoggable(Level.WARNING)) {
-      LOGGER.warning("A no-op " + ConsumerManagementRegistry.class.getSimpleName()
-          + " will be used due to missing dependencies from the classpath: "
-          + String.join(", ", missingDependencies));
-    }
-    NOOP = noop;
-  }
 
   @Override
   public void clear() throws ServiceProviderCleanupException {
@@ -79,9 +50,10 @@ public class ConsumerManagementRegistryProvider implements ServiceProvider {
 
     if (ConsumerManagementRegistry.class == serviceType) {
       if (configuration instanceof ConsumerManagementRegistryConfiguration) {
-        return serviceType.cast(NOOP ?
-            newNoopManagementRegistry((ConsumerManagementRegistryConfiguration) configuration) :
-            newManagementRegistry((ConsumerManagementRegistryConfiguration) configuration));
+        ConsumerManagementRegistryConfiguration config = (ConsumerManagementRegistryConfiguration) configuration;
+        ServiceRegistry serviceRegistry = config.getServiceRegistry();
+        MonitoringService monitoringService = serviceRegistry.getService(new MonitoringServiceConfiguration(serviceRegistry));
+        return serviceType.cast(new DefaultConsumerManagementRegistry(monitoringService));
 
       } else {
         throw new IllegalArgumentException("Missing configuration: " + ConsumerManagementRegistryConfiguration.class.getSimpleName());
@@ -95,14 +67,6 @@ public class ConsumerManagementRegistryProvider implements ServiceProvider {
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
     return Collections.singletonList(ConsumerManagementRegistry.class);
-  }
-
-  private ConsumerManagementRegistry newManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
-    return new DefaultConsumerManagementRegistry(configuration);
-  }
-
-  private ConsumerManagementRegistry newNoopManagementRegistry(ConsumerManagementRegistryConfiguration configuration) {
-    return new NoopConsumerManagementRegistry(configuration);
   }
 
 }

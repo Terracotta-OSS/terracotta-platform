@@ -28,7 +28,7 @@ import org.terracotta.management.registry.action.RequiredContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutionException;
  */
 public abstract class AbstractManagementProvider<T> implements ManagementProvider<T> {
 
-  protected final Queue<ExposedObject<T>> managedObjects = new ConcurrentLinkedQueue<ExposedObject<T>>();
+  private final Queue<ExposedObject<T>> exposedObjects = new ConcurrentLinkedQueue<ExposedObject<T>>();
 
   private final String capabilityName;
   private final Class<? extends T> managedType;
@@ -52,17 +52,17 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   }
 
   @Override
-  public final Class<? extends T> getManagedType() {
+  public Class<? extends T> getManagedType() {
     return managedType;
   }
 
   @Override
-  public final String getCapabilityName() {
+  public String getCapabilityName() {
     return capabilityName;
   }
 
   @Override
-  public final CapabilityContext getCapabilityContext() {
+  public CapabilityContext getCapabilityContext() {
     return capabilityContext;
   }
 
@@ -72,30 +72,37 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   }
 
   @Override
-  public final void register(T managedObject) {
-    this.managedObjects.add(wrap(managedObject));
+  public ExposedObject<T> register(T managedObject) {
+    ExposedObject<T> exposedObject = wrap(managedObject);
+    if(this.exposedObjects.add(exposedObject)) {
+      return exposedObject;
+    } else {
+      return null;
+    }
   }
 
   @Override
-  public final void unregister(T managedObject) {
-    for (ExposedObject<T> exposedObject : managedObjects) {
-      if (exposedObject.getTarget() == managedObject) {
-        if (this.managedObjects.remove(exposedObject)) {
+  public ExposedObject<T> unregister(T managedObject) {
+    for (ExposedObject<T> exposedObject : exposedObjects) {
+      if (exposedObject.getTarget().equals(managedObject)) {
+        if (this.exposedObjects.remove(exposedObject)) {
           dispose(exposedObject);
+          return exposedObject;
         }
       }
     }
+    return null;
   }
 
   @Override
-  public final void close() {
-    while (!managedObjects.isEmpty()) {
-      dispose(managedObjects.poll());
+  public void close() {
+    while (!exposedObjects.isEmpty()) {
+      dispose(exposedObjects.poll());
     }
   }
 
   @Override
-  public final boolean supports(Context context) {
+  public boolean supports(Context context) {
     return findExposedObject(context) != null;
   }
 
@@ -105,7 +112,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   }
 
   @Override
-  public final void callAction(Context context, String methodName, Parameter... parameters) throws ExecutionException {
+  public void callAction(Context context, String methodName, Parameter... parameters) throws ExecutionException {
     callAction(context, methodName, Object.class, parameters);
   }
 
@@ -114,9 +121,14 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
     throw new UnsupportedOperationException("Not an action provider : " + getCapabilityName());
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Collection<Descriptor> getDescriptors() {
-    return Collections.emptyList();
+    Collection<Descriptor> capabilities = new LinkedHashSet<Descriptor>();
+    for (ExposedObject o : exposedObjects) {
+      capabilities.addAll(((ExposedObject<T>) o).getDescriptors());
+    }
+    return capabilities;
   }
 
   protected String buildCapabilityName() {
@@ -143,15 +155,28 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   protected void dispose(ExposedObject<T> exposedObject) {
   }
 
+  public Collection<ExposedObject<T>> getExposedObjects() {
+    return exposedObjects;
+  }
+
   protected abstract ExposedObject<T> wrap(T managedObject);
 
-  protected final ExposedObject<T> findExposedObject(Context context) {
+  protected ExposedObject<T> findExposedObject(Context context) {
     if (!contextValid(context)) {
       return null;
     }
-    for (ExposedObject<T> managedObject : managedObjects) {
-      if (managedObject.matches(context)) {
-        return managedObject;
+    for (ExposedObject<T> exposedObject : exposedObjects) {
+      if (context.contains(exposedObject.getContext())) {
+        return exposedObject;
+      }
+    }
+    return null;
+  }
+
+  protected ExposedObject<T> findExposedObject(T managedObject) {
+    for (ExposedObject<T> exposed : exposedObjects) {
+      if (exposed.getTarget().equals(managedObject)) {
+        return exposed;
       }
     }
     return null;

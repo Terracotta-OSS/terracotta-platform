@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring.buffer;
-
-import com.tc.classloader.CommonComponent;
+package org.terracotta.management.service.monitoring;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
-public interface ReadWriteBuffer<V> extends ReadOnlyBuffer<V> {
+interface ReadWriteBuffer<V> extends ReadOnlyBuffer<V> {
 
   /**
    * Put a value in the buffer, making some space by discarding some other values if necessary

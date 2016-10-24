@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 class OffHeapResourceImpl implements OffHeapResource {
 
   private final AtomicLong remaining;
+  private final long capacity;
 
   /**
    * Creates a resource of the given initial size.
@@ -34,6 +35,7 @@ class OffHeapResourceImpl implements OffHeapResource {
     if (size < 0) {
       throw new IllegalArgumentException("Resource size cannot be negative");
     } else {
+      this.capacity = size;
       this.remaining = new AtomicLong(size);
     }
   }
@@ -75,5 +77,10 @@ class OffHeapResourceImpl implements OffHeapResource {
   @Override
   public long available() {
     return remaining.get();
+  }
+
+  @Override
+  public long capacity() {
+    return capacity;
   }
 }

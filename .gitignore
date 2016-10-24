@@ -16,3 +16,5 @@ build/
 .nb-gradle
 .nb-gradle-properties
 /healthchecker-entity/api/nbproject/
+
+dependency-reduced-pom.xml

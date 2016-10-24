@@ -136,7 +136,7 @@ public class ManagementAgentServiceTest {
 
       List<Message> messages = consumer.drainMessageBuffer();
       assertThat(types(messages), equalTo(Arrays.asList("NOTIFICATION", "NOTIFICATION", "NOTIFICATION", "NOTIFICATION")));
-      assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED", "SERVER_ENTITY_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_REGISTRY_UPDATED")));
+      assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED", "SERVER_ENTITY_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_REGISTRY_AVAILABLE")));
       assertThat(messages.get(0).unwrap(ContextualNotification.class).get(0).getContext().get(Client.KEY), equalTo(clientIdentifier.getClientId()));
       assertThat(messages.get(3).unwrap(ContextualNotification.class).get(0).getContext().get(Client.KEY), equalTo(clientIdentifier.getClientId()));
 

@@ -42,9 +42,11 @@ public class OffHeapResourceTest {
   @Test
   public void testAllocationReducesSize() {
     OffHeapResource ohr = new OffHeapResourceImpl(20);
+    assertThat(ohr.capacity(), is(20L));
     assertThat(ohr.available(), is(20L));
     assertThat(ohr.reserve(10), is(true));
     assertThat(ohr.available(), is(10L));
+    assertThat(ohr.capacity(), is(20L));
   }
 
   @Test

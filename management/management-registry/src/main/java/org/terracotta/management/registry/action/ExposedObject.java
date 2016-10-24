@@ -15,7 +15,10 @@
  */
 package org.terracotta.management.registry.action;
 
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
+
+import java.util.Collection;
 
 /**
  * @author Mathieu Carbou
@@ -25,5 +28,7 @@ public interface ExposedObject<T> {
 
   ClassLoader getClassLoader();
 
-  boolean matches(Context context);
+  Context getContext();
+
+  Collection<? extends Descriptor> getDescriptors();
 }

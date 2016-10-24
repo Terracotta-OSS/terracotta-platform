@@ -56,7 +56,7 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
   @Override
   public final Collection<Descriptor> getDescriptors() {
     Set<Descriptor> descriptors = new HashSet<Descriptor>();
-    for (ExposedObject<T> o : managedObjects) {
+    for (ExposedObject<T> o : getExposedObjects()) {
       for (Method method : o.getClass().getMethods()) {
         if (method.isAnnotationPresent(Exposed.class)) {
           List<CallDescriptor.Parameter> parameters = new ArrayList<CallDescriptor.Parameter>();
