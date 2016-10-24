@@ -347,7 +347,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
         buffer.put(new DefaultMessage(
             nextSequence(),
             "NOTIFICATION",
-            new ContextualNotification(stripeMonitoring.getCurrentActiveServerEntity(consumerId).getContext(), "LOST_NOTIFICATIONS")));
+            new ContextualNotification(stripeMonitoring.getCurrentActiveServerEntity(consumerId).getContext(), "LOST_MESSAGES")));
       }
     }
   }
