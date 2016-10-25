@@ -66,8 +66,8 @@ public class ServerEntityIdentifier implements Serializable {
     return result;
   }
 
-  public static ServerEntityIdentifier create(String serverEntityName, String type) {
-    return new ServerEntityIdentifier(serverEntityName, type);
+  public static ServerEntityIdentifier create(String name, String type) {
+    return new ServerEntityIdentifier(name, type);
   }
 
 }

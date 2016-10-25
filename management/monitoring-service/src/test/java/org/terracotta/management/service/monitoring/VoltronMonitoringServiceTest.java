@@ -223,6 +223,18 @@ public class VoltronMonitoringServiceTest {
   }
 
   @Test
+  public void test_fetch_entity_twice() throws Exception {
+    // fetch twice the same from same client
+    platformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1-1")));
+    platformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1-2")));
+    assertTopologyEquals("cluster-6.json");
+
+    List<Message> messages = messages();
+    assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION", "NOTIFICATION")));
+    assertThat(notificationTypes(messages), equalTo(Arrays.asList("SERVER_ENTITY_FETCHED", "SERVER_ENTITY_FETCHED")));
+  }
+
+  @Test
   public void test_unfetch_entity() throws Exception {
     test_fetch_entity();
     platformListener.removeNode(active, FETCHED_PATH, "fetch-1-1");

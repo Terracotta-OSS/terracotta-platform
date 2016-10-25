@@ -214,6 +214,13 @@ public class ClusterTest extends AbstractTest {
 
     assertTrue(connection.unfetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
     assertFalse(connection.hasFetchedServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+
+    // can fetch several times the same entity
+    assertTrue(connection.fetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    assertTrue(connection.fetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    assertTrue(connection.unfetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    assertTrue(connection.unfetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
+    assertFalse(connection.unfetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
   }
 
   @Test

@@ -146,8 +146,4 @@ public final class ServerEntity extends AbstractNode<Server> {
     return new ServerEntity(serverEntityIdentifier);
   }
 
-  public static String key(String serverEntityName, String type) {
-    return serverEntityName + ":" + type;
-  }
-
 }

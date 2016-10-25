@@ -44,7 +44,9 @@
       },
       "stripeId" : "SINGLE",
       "serverId" : "server-1",
-      "serverEntityIds" : [ "entityName-1:entityType" ]
+      "serverEntityIds" : {
+        "entityName-1:entityType" : 1
+      }
     } ],
     "managementRegistry" : null
   } ]

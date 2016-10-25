@@ -44,29 +44,9 @@
       },
       "stripeId" : "SINGLE",
       "serverId" : "server-1",
-      "serverEntityIds" : { }
-    } ],
-    "managementRegistry" : null
-  }, {
-    "id" : "222@127.0.0.1:name:uuid-2",
-    "pid" : 222,
-    "hostAddress" : "127.0.0.1",
-    "name" : "name",
-    "logicalConnectionUid" : "uuid-2",
-    "vmId" : "222@127.0.0.1",
-    "clientId" : "222@127.0.0.1:name:uuid-2",
-    "hostName" : "localhost",
-    "tags" : [ ],
-    "connections" : [ {
-      "id" : "uuid-2:SINGLE:server-1:127.0.0.1:5679",
-      "logicalConnectionUid" : "uuid-2",
-      "clientEndpoint" : {
-        "address" : "127.0.0.1",
-        "port" : 5679
-      },
-      "stripeId" : "SINGLE",
-      "serverId" : "server-1",
-      "serverEntityIds" : { }
+      "serverEntityIds" : {
+        "entityName-1:entityType" : 2
+      }
     } ],
     "managementRegistry" : null
   } ]

@@ -119,7 +119,7 @@
       },
       "stripeId" : "stripe-1",
       "serverId" : "server-1",
-      "serverEntityIds" : [ ]
+      "serverEntityIds" : { }
     }, {
       "id" : "uid:stripe-2:server-1:10.10.10.10:3457",
       "logicalConnectionUid" : "uid",
@@ -129,7 +129,7 @@
       },
       "stripeId" : "stripe-2",
       "serverId" : "server-1",
-      "serverEntityIds" : [ ]
+      "serverEntityIds" : { }
     } ],
     "managementRegistry" : {
       "contextContainer" : {
