@@ -43,6 +43,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -73,7 +75,7 @@ class DefaultListener implements PlatformListener, DataListener {
   private final Stripe stripe;
 
   private final Map<String, Map<Long, ServerEntityIdentifier>> entities = new HashMap<>();
-  private final Map<Long, DefaultMonitoringService> monitoringServices = new HashMap<>();
+  private final ConcurrentMap<Long, DefaultMonitoringService> monitoringServices = new ConcurrentHashMap<>();
 
   private volatile Server currentActive;
 
@@ -343,7 +345,8 @@ class DefaultListener implements PlatformListener, DataListener {
   // Called by MonitoringServiceProvider
   // ===================================
 
-  synchronized MonitoringService getOrCreateMonitoringService(long consumerID, MonitoringServiceConfiguration config) {
+  // should not be synchroized
+  MonitoringService getOrCreateMonitoringService(long consumerID, MonitoringServiceConfiguration config) {
     return monitoringServices.computeIfAbsent(consumerID, id -> new DefaultMonitoringService(
         this,
         consumerID,
@@ -351,7 +354,8 @@ class DefaultListener implements PlatformListener, DataListener {
         config.getClientCommunicator().map(ManagementCommunicator::new).orElse(null)));
   }
 
-  synchronized void clear() {
+  // should not be synchroized
+  void clear() {
     while (!monitoringServices.isEmpty()) {
       closeMonitoringService(monitoringServices.keySet().iterator().next());
     }
