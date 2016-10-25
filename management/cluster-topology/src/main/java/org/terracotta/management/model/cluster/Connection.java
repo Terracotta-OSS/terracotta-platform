@@ -16,8 +16,7 @@
 package org.terracotta.management.model.cluster;
 
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,11 +27,11 @@ import java.util.stream.Stream;
  */
 public final class Connection extends AbstractNode<Client> {
 
-  private static final long serialVersionUID = 2;
+  private static final long serialVersionUID = 3;
 
   public static final String KEY = "connectionId";
 
-  private final Collection<String> serverEntityIds = new HashSet<>();
+  private final Map<String, Long> serverEntityIds = new LinkedHashMap<>();
   private final Endpoint clientEndpoint;
   private final String stripeId;
   private final String serverId;
@@ -77,7 +76,8 @@ public final class Connection extends AbstractNode<Client> {
 
   public Stream<ServerEntity> fetchedServerEntityStream() {
     return getServer()
-        .map(server -> serverEntityIds.stream()
+        .map(server -> serverEntityIds.keySet()
+            .stream()
             .map(server::getServerEntity)
             .filter(Optional::isPresent)
             .map(Optional::get))
@@ -86,7 +86,8 @@ public final class Connection extends AbstractNode<Client> {
 
   public int getFetchedServerEntityCount() {
     return getServer()
-        .map(server -> serverEntityIds.stream()
+        .map(server -> serverEntityIds.keySet()
+            .stream()
             .map(server::getServerEntity)
             .filter(Optional::isPresent)
             .count())
@@ -148,21 +149,55 @@ public final class Connection extends AbstractNode<Client> {
   }
 
   public boolean unfetchServerEntity(String name, String type) {
-    return serverEntityIds.remove(ServerEntity.key(name, type));
+    return unfetchServerEntity(ServerEntityIdentifier.create(name, type));
+  }
+
+  public boolean unfetchServerEntity(ServerEntityIdentifier serverEntityIdentifier) {
+    String id = serverEntityIdentifier.getId();
+    Long count = serverEntityIds.get(id);
+    if (count == null) {
+      return false;
+    }
+    if (count <= 0) {
+      serverEntityIds.remove(id);
+      return false;
+    }
+    if (count <= 1) {
+      serverEntityIds.remove(id);
+      return true;
+    }
+    serverEntityIds.put(id, count - 1L);
+    return true;
   }
 
   public boolean fetchServerEntity(String name, String type) {
+    return fetchServerEntity(ServerEntityIdentifier.create(name, type));
+  }
+
+  public boolean fetchServerEntity(ServerEntityIdentifier serverEntityIdentifier) {
     if (!isConnected()) {
       throw new IllegalStateException("not connnected");
     }
-    return getServer()
-        .flatMap(server -> server.getServerEntity(name, type))
-        .map(serverEntity -> serverEntityIds.add(serverEntity.getId()))
-        .orElse(false);
+    String id = serverEntityIdentifier.getId();
+    if (!getServer().flatMap(server -> server.getServerEntity(serverEntityIdentifier)).isPresent()) {
+      serverEntityIds.remove(id);
+      return false;
+    }
+    Long count = serverEntityIds.get(id);
+    if (count == null || count <= 0) {
+      serverEntityIds.put(id, 1L);
+      return true;
+    }
+    serverEntityIds.put(id, count + 1);
+    return true;
   }
 
   public boolean hasFetchedServerEntity(String name, String type) {
-    return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst().isPresent();
+    return hasFetchedServerEntity(ServerEntityIdentifier.create(name, type));
+  }
+
+  public boolean hasFetchedServerEntity(ServerEntityIdentifier serverEntityIdentifier) {
+    return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(serverEntityIdentifier)).findFirst().isPresent();
   }
 
   public boolean isConnectedTo(Server server) {

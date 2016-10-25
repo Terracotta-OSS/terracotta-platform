@@ -50,7 +50,7 @@
       },
       "stripeId" : "SINGLE",
       "serverId" : "server-1",
-      "serverEntityIds" : [ ]
+      "serverEntityIds" : { }
     } ],
     "managementRegistry" : null
   } ]

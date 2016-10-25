@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
 import org.terracotta.monitoring.PlatformConnectedClient;
@@ -23,6 +25,7 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -37,6 +40,8 @@ import static java.util.Objects.requireNonNull;
  * @author Mathieu Carbou
  */
 final class PlatformListenerAdapter implements IStripeMonitoring {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(PlatformListenerAdapter.class);
 
   private final PlatformListener delegate;
   private final ConcurrentMap<PlatformServer, ConcurrentMap<String, PlatformEntity>> entities = new ConcurrentHashMap<>();
@@ -67,6 +72,7 @@ final class PlatformListenerAdapter implements IStripeMonitoring {
 
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
+    LOGGER.trace("addNode({}, {}, {}, {})", sender, Arrays.toString(parents), name, value);
     if (parents == null || parents.length == 0) {
       return true;
     }
@@ -124,6 +130,7 @@ final class PlatformListenerAdapter implements IStripeMonitoring {
 
   @Override
   public boolean removeNode(PlatformServer sender, String[] parents, String name) {
+    LOGGER.trace("removeNode({}, {}, {})", sender, Arrays.toString(parents), name);
     if (parents == null || parents.length == 0) {
       return true;
     }
