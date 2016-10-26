@@ -54,18 +54,21 @@ final class PlatformListenerAdapter implements IStripeMonitoring {
 
   @Override
   public void serverDidBecomeActive(PlatformServer self) {
+    LOGGER.trace("serverDidBecomeActive({})", self);
     entities.put(self, new ConcurrentHashMap<>());
     delegate.serverDidBecomeActive(self);
   }
 
   @Override
   public void serverDidJoinStripe(PlatformServer server) {
+    LOGGER.trace("serverDidJoinStripe({})", server);
     entities.put(server, new ConcurrentHashMap<>());
     delegate.serverDidJoinStripe(server);
   }
 
   @Override
   public void serverDidLeaveStripe(PlatformServer server) {
+    LOGGER.trace("serverDidLeaveStripe({})", server);
     entities.remove(server);
     delegate.serverDidLeaveStripe(server);
   }
