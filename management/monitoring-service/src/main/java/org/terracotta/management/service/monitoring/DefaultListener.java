@@ -97,7 +97,7 @@ class DefaultListener implements PlatformListener, DataListener {
 
     currentActive = stripe.getServerByName(self.getServerName()).get();
     currentActive.setState(Server.State.ACTIVE);
-    currentActive.setActivateTime(System.currentTimeMillis());
+    currentActive.setActivateTime(sequenceGenerator.getTimeSource().getTimestamp());
   }
 
   @Override
