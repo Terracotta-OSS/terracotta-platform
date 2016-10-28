@@ -19,7 +19,7 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.management.model.message.ManagementCallMessage;
-import org.terracotta.voltron.proxy.server.messages.ProxyEntityResponse;
+import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
 /**
  * @author Mathieu Carbou

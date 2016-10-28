@@ -20,38 +20,24 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>tms-entity</artifactId>
-    <groupId>org.terracotta.management</groupId>
+    <artifactId>voltron-proxy</artifactId>
+    <groupId>org.terracotta.voltron.proxy</groupId>
     <version>5.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>tms-entity-common</artifactId>
-  <name>Terracotta Management :: TMS Entity :: Common</name>
+  <artifactId>voltron-proxy-common</artifactId>
 
   <dependencies>
-    <!-- all these libs will be in common server classpath -->
     <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>cluster-topology</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-common-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-model</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>sequence-generator</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- will be inside entity jar -->
-    <dependency>
-      <groupId>org.terracotta.voltron.proxy</groupId>
-      <artifactId>voltron-proxy-common</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management.client;
-
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.management.entity.management.ManagementAgent;
-import org.terracotta.management.model.message.ManagementCallMessage;
-import org.terracotta.voltron.proxy.client.ServerMessageAware;
+package org.terracotta.voltron.proxy;
 
 /**
- * @author Mathieu Carbou
+ * @author Alex Snaps
  */
-public interface ManagementAgentEntity extends ManagementAgent, Entity, ServerMessageAware<ManagementCallMessage> {
+public interface MessageListener<T> {
+
+  void onMessage(T message);
 
 }
