@@ -66,7 +66,7 @@ public final class ContextualReturn<T> implements Contextual {
    */
   public T getValue() throws NoSuchElementException, ExecutionException {
     if (!hasExecuted()) {
-      throw new NoSuchElementException();
+      throw new NoSuchElementException("Query has not been executed: capability=" + capability + ", method=" + methodName + ", context=" + context);
     }
     if (error != null) {
       throw error;

@@ -44,6 +44,10 @@ public class DefaultStatisticQuery implements StatisticQuery {
     this.statisticNames = Collections.unmodifiableSet(new LinkedHashSet<String>(statisticNames));
     this.since = since;
     this.contexts = Collections.unmodifiableCollection(new ArrayList<Context>(contexts));
+
+    if(contexts.isEmpty()) {
+      throw new IllegalArgumentException("You did not specify any context to extract the statistics from");
+    }
   }
 
   @Override
