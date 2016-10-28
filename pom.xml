@@ -27,10 +27,9 @@
   <properties>
     <maven-forge-plugin.version>1.2.16</maven-forge-plugin.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <terracotta-apis.version>1.0.8.beta</terracotta-apis.version>
-    <tcconfig.version>10.0.8.beta</tcconfig.version>
-    <passthrough-testing.version>1.0.8.beta</passthrough-testing.version>
-
+    <terracotta-apis.version>1.0.9.beta</terracotta-apis.version>
+    <tcconfig.version>10.0.9.beta2</tcconfig.version>
+    <passthrough-testing.version>1.0.9.beta2</passthrough-testing.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.6</java.version>
