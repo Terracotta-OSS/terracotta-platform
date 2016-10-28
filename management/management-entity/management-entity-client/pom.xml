@@ -31,6 +31,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.terracotta.voltron.proxy</groupId>
+      <artifactId>voltron-proxy-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>management-entity-common</artifactId>
       <version>${project.version}</version>

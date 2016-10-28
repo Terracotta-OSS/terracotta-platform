@@ -32,7 +32,7 @@ import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ManagementProviderAdapter;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.voltron.proxy.client.messages.MessageListener;
+import org.terracotta.voltron.proxy.MessageListener;
 
 import java.io.Closeable;
 import java.util.Arrays;

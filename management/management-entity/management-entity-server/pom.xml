@@ -47,6 +47,11 @@
       <artifactId>management-entity-common</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.voltron.proxy</groupId>
+      <artifactId>voltron-proxy-server</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- provided by voltron (server) -->
     <dependency>
@@ -79,12 +84,9 @@
               <!-- we have to make sure no voltron api comes in the shaded jar -->
               <artifactSet>
                 <includes>
-                  <!--
-                    management-model must be set as an api library in voltron
-                    it is used by the management entity and other entities
-                   -->
                   <include>org.terracotta.management:management-entity-common</include>
-                  <include>org.terracotta:voltron-proxy</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
                 </includes>
               </artifactSet>
             </configuration>

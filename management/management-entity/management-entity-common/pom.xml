@@ -44,8 +44,8 @@
 
     <!-- will be inside the entity jar -->
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>voltron-proxy</artifactId>
+      <groupId>org.terracotta.voltron.proxy</groupId>
+      <artifactId>voltron-proxy-common</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

@@ -43,8 +43,8 @@
   <dependencies>
     <!-- will be inside entity jar -->
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>voltron-proxy</artifactId>
+      <groupId>org.terracotta.voltron.proxy</groupId>
+      <artifactId>voltron-proxy-common</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -114,7 +114,7 @@
               <!-- we have to make sure no voltron api comes in the shaded jar -->
               <artifactSet>
                 <includes>
-                  <include>org.terracotta:voltron-proxy</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
                 </includes>
               </artifactSet>
             </configuration>

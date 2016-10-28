@@ -37,8 +37,13 @@
   <dependencies>
     <!-- will be inside entity jar -->
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>voltron-proxy</artifactId>
+      <groupId>org.terracotta.voltron.proxy</groupId>
+      <artifactId>voltron-proxy-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.voltron.proxy</groupId>
+      <artifactId>voltron-proxy-server</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -129,7 +134,9 @@
               </transformers>
               <artifactSet>
                 <includes>
-                  <include>org.terracotta:voltron-proxy</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-client</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
                 </includes>
               </artifactSet>
             </configuration>

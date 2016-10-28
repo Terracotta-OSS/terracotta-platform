@@ -43,6 +43,11 @@
       <artifactId>tms-entity-common</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.voltron.proxy</groupId>
+      <artifactId>voltron-proxy-server</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- provided by voltron (server) -->
     <dependency>
@@ -76,7 +81,8 @@
                     it is used by the management entity and other entities
                    -->
                   <include>org.terracotta.management:tms-entity-common</include>
-                  <include>org.terracotta:voltron-proxy</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
+                  <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
                 </includes>
               </artifactSet>
             </configuration>
