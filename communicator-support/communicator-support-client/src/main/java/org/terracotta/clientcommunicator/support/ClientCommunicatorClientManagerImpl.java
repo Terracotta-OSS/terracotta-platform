@@ -25,6 +25,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.terracotta.clientcommunicator.support.ClientCommunicatorRequestType.ACK;
+import static org.terracotta.clientcommunicator.support.ClientCommunicatorRequestType.NO_ACK;
+import static org.terracotta.clientcommunicator.support.ClientCommunicatorRequestType.REQUEST_COMPLETE;
+
 /**
  * @author vmad
  */

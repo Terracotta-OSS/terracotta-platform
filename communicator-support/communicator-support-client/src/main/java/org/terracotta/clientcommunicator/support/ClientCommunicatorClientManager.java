@@ -15,7 +15,6 @@
  */
 package org.terracotta.clientcommunicator.support;
 
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
