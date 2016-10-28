@@ -39,8 +39,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>client-communicator-support</artifactId>
+      <groupId>org.terracotta.voltron.communicator</groupId>
+      <artifactId>communicator-support-common</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
