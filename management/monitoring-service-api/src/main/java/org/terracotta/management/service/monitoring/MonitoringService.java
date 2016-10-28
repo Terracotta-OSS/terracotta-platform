@@ -36,7 +36,7 @@ import org.terracotta.management.sequence.Sequence;
 public interface MonitoringService {
 
   /**
-   * Returns an identifier in the M&M topology for an internal voltron client descriptor. This client identifier identifies a client cluster-wise
+   * Returns an identifier in the management topology for an internal voltron client descriptor. This client identifier identifies a client cluster-wise
    * <p>
    * Can be called from active entity only
    */

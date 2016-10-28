@@ -30,6 +30,10 @@
     <terracotta-apis.version>1.0.8.beta</terracotta-apis.version>
     <tcconfig.version>10.0.8.beta</tcconfig.version>
     <passthrough-testing.version>1.0.8.beta</passthrough-testing.version>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.version>1.6</java.version>
   </properties>
 
   <modules>
@@ -78,12 +82,12 @@
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
-        <groupId> org.terracotta</groupId>
+        <groupId>org.terracotta</groupId>
         <artifactId>connection-api</artifactId>
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
-        <groupId> org.terracotta</groupId>
+        <groupId>org.terracotta</groupId>
         <artifactId>entity-client-api</artifactId>
         <version>${terracotta-apis.version}</version>
       </dependency>
@@ -93,17 +97,17 @@
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
-        <groupId> org.terracotta</groupId>
+        <groupId>org.terracotta</groupId>
         <artifactId>entity-server-api</artifactId>
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
-        <groupId> org.terracotta</groupId>
+        <groupId>org.terracotta</groupId>
         <artifactId>entity-common-api</artifactId>
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
-        <groupId> org.terracotta</groupId>
+        <groupId>org.terracotta</groupId>
         <artifactId>passthrough-server</artifactId>
         <version>${passthrough-testing.version}</version>
       </dependency>
@@ -121,10 +125,10 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
+          <version>3.3</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
+            <source>${java.version}</source>
+            <target>${java.version}</target>
           </configuration>
         </plugin>
         <plugin>
@@ -138,9 +142,61 @@
             <skipNexusStagingDeployMojo>${skipDeploy}</skipNexusStagingDeployMojo>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-toolchains-plugin</artifactId>
+          <version>1.1</version>
+          <configuration>
+            <toolchains>
+              <jdk>
+                <version>${java.version}</version>
+              </jdk>
+            </toolchains>
+          </configuration>
+        </plugin>
+        <plugin>
+          <inherited>false</inherited>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>3.0.rc1</version>
+          <configuration>
+            <keywords>
+              <keyword>License</keyword>
+            </keywords>
+            <aggregate>true</aggregate>
+            <header>header.txt</header>
+            <mapping>
+              <java>SLASHSTAR_STYLE</java>
+            </mapping>
+            <excludes>
+              <exclude>**/README</exclude>
+              <exclude>src/test/resources/**</exclude>
+              <exclude>src/main/resources/**</exclude>
+              <!-- if you only import management in your ide, it will generate its metadata under management/ -->
+              <exclude>**/.idea/**</exclude>
+              <exclude>**/nbproject/**</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
+
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>toolchain</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -155,32 +211,28 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.5.4</version>
+        <executions>
+          <execution>
+            <id>generate-osgi-headers</id>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
+        <extensions>true</extensions>
       </plugin>
       <plugin>
         <inherited>false</inherited>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>3.0.rc1</version>
-        <configuration>
-          <keywords>
-            <keyword>License</keyword>
-          </keywords>
-          <aggregate>true</aggregate>
-          <header>header.txt</header>
-          <mapping>
-            <java>SLASHSTAR_STYLE</java>
-          </mapping>
-          <excludes>
-            <exclude>**/README</exclude>
-            <exclude>src/test/resources/**</exclude>
-            <exclude>src/main/resources/**</exclude>
-            <!-- if you only import management in your ide, it will generate its metadata under management/ -->
-            <exclude>**/.idea/**</exclude>
-            <exclude>**/nbproject/**</exclude>
-          </excludes>
-        </configuration>
         <executions>
           <execution>
             <goals>
@@ -221,4 +273,33 @@
     <connection>scm:git:https://github.com/Terracotta-OSS/terracotta-platform.git</connection>
     <developerConnection>scm:git:git@github.com:Terracotta-OSS/terracotta-platform.git</developerConnection>
   </scm>
+
+  <developers>
+    <developer>
+      <name>Ludovic Orban</name>
+      <email>ludovic.orban@terracottatech.com</email>
+      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <organizationUrl>https://terracotta.org</organizationUrl>
+    </developer>
+    <developer>
+      <name>Anthony Dahanne</name>
+      <email>anthony.dahanne@softwareag.com</email>
+      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <organizationUrl>https://terracotta.org</organizationUrl>
+    </developer>
+    <developer>
+      <name>Mathieu Carbou</name>
+      <email>mathieu.carbou@softwareag.com</email>
+      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <organizationUrl>https://terracotta.org</organizationUrl>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
 </project>
