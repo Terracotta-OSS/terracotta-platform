@@ -45,6 +45,10 @@ public class DefaultCallQuery<T> implements CallQuery<T> {
     this.parameters = parameters;
     this.contexts = Collections.unmodifiableCollection(new ArrayList<Context>(contexts));
     this.returnType = returnType;
+
+    if(contexts.isEmpty()) {
+      throw new IllegalArgumentException("You did not specify any context to execute the management call onto");
+    }
   }
 
   @Override

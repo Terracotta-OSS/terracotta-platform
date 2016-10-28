@@ -40,7 +40,7 @@ public class DefaultResultSet<T> implements ResultSet<T> {
   @Override
   public T getSingleResult() throws NoSuchElementException {
     if (results.size() != 1) {
-      throw new NoSuchElementException();
+      throw new NoSuchElementException("No query results!");
     }
     return results.values().iterator().next();
   }
