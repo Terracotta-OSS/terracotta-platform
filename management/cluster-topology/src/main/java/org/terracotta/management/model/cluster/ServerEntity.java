@@ -30,6 +30,7 @@ public final class ServerEntity extends AbstractNode<Server> {
   public static final String KEY = "entityId";
   public static final String TYPE_KEY = "entityType";
   public static final String NAME_KEY = "entityName";
+  public static final String CONSUMER_ID = "consumerId";
 
   private final ServerEntityIdentifier identifier;
   private ManagementRegistry managementRegistry;
@@ -77,9 +78,13 @@ public final class ServerEntity extends AbstractNode<Server> {
 
   @Override
   public Context getContext() {
-    return super.getContext()
+    Context context = super.getContext()
         .with(NAME_KEY, getName())
         .with(TYPE_KEY, getType());
+    if (consumerId > 0) {
+      context = context.with(CONSUMER_ID, String.valueOf(consumerId));
+    }
+    return context;
   }
 
   @Override
