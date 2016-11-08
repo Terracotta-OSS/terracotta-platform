@@ -62,7 +62,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -174,9 +173,6 @@ public class ManagementAgentServiceTest {
     try (Connection managementConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
       ManagementAgentService agent = new ManagementAgentService(new ManagementAgentEntityFactory(managementConnection).retrieveOrCreate(new ManagementAgentConfig()));
       agent.setManagementCallExecutor(executorService);
-
-      assertThat(agent.getManageableClients().size(), equalTo(1));
-      assertThat(agent.getManageableClients(), hasItem(targetClientIdentifier));
 
       AtomicReference<String> managementCallId = new AtomicReference<>();
       BlockingQueue<ContextualReturn<?>> returns = new LinkedBlockingQueue<>();

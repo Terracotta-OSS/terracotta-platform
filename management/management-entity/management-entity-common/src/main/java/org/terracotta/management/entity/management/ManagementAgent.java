@@ -26,7 +26,6 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ClientId;
 
-import java.util.Collection;
 import java.util.concurrent.Future;
 
 /**
@@ -60,14 +59,6 @@ public interface ManagementAgent {
    */
   @Async(Async.Ack.NONE)
   Future<ClientIdentifier> getClientIdentifier(@ClientId Object clientDescriptor);
-
-  /**
-   * Gets the {@link ClientIdentifier} for the underlying logical connection.
-   *
-   * @param clientDescriptor must be null, used only for implementation
-   */
-  @Async(Async.Ack.NONE)
-  Future<Collection<ClientIdentifier>> getManageableClients(@ClientId Object clientDescriptor);
 
   /**
    * Execute a management call and do not expect any return result.
