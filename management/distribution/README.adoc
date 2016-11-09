@@ -1,0 +1,5 @@
+Builds 3 jars:
+
+- management-common (common classes for both client-side and server-side) = model + registry + topology + sequence
+- management-client (classes of entities used client-side)
+- management-server (classes of entities and services used server-side)

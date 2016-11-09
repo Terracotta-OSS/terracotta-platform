@@ -1,0 +1,1 @@
+Provides common management objects used to expose management metadata (capabilities, descriptors), notifications, statistics and also messages on the cluster
