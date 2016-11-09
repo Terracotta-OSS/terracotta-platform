@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry.provider;
+package org.terracotta.management.service.monitoring.registry.provider;
 
-import org.terracotta.management.model.Objects;
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
+@CommonComponent
 public class AliasBindingManagementProvider<T extends AliasBinding> extends AbstractConsumerManagementProvider<T> {
 
   public AliasBindingManagementProvider(Class<? extends T> type) {
@@ -47,7 +49,7 @@ public class AliasBindingManagementProvider<T extends AliasBinding> extends Abst
 
   @Override
   protected ExposedAliasBinding<T> wrap(T managedObject) {
-    return new ExposedAliasBinding<T>(managedObject, getConsumerId());
+    return new ExposedAliasBinding<T>(managedObject, getMonitoringService().getConsumerId());
 
   }
 

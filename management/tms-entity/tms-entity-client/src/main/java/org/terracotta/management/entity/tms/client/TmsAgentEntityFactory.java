@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management.client;
+package org.terracotta.management.entity.tms.client;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
@@ -21,23 +21,23 @@ import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
-import org.terracotta.management.entity.management.ManagementAgentConfig;
-import org.terracotta.management.entity.management.ManagementAgentVersion;
+import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.management.entity.tms.TmsAgentVersion;
 
 /**
  * @author Mathieu Carbou
  */
-public class ManagementAgentEntityFactory {
-
-  public static final String ENTITYNAME = "ManagementAgent";
+public class TmsAgentEntityFactory {
 
   private final Connection connection;
+  private final String entityName;
 
-  public ManagementAgentEntityFactory(Connection connection) {
+  public TmsAgentEntityFactory(Connection connection, String entityName) {
     this.connection = connection;
+    this.entityName = entityName;
   }
 
-  public ManagementAgentEntity retrieveOrCreate(ManagementAgentConfig config) {
+  public TmsAgentEntity retrieveOrCreate(TmsAgentConfig config) {
     try {
       return retrieve();
     } catch (EntityNotFoundException e) {
@@ -53,7 +53,7 @@ public class ManagementAgentEntityFactory {
     }
   }
 
-  public ManagementAgentEntity retrieve() throws EntityNotFoundException {
+  public TmsAgentEntity retrieve() throws EntityNotFoundException {
     try {
       return getEntityRef().fetchEntity();
     } catch (EntityVersionMismatchException e) {
@@ -61,8 +61,8 @@ public class ManagementAgentEntityFactory {
     }
   }
 
-  public ManagementAgentEntity create(ManagementAgentConfig config) throws EntityAlreadyExistsException {
-    EntityRef<ManagementAgentEntity, ManagementAgentConfig> ref = getEntityRef();
+  public TmsAgentEntity create(TmsAgentConfig config) throws EntityAlreadyExistsException {
+    EntityRef<TmsAgentEntity, TmsAgentConfig> ref = getEntityRef();
     try {
       ref.create(config);
       return ref.fetchEntity();
@@ -75,9 +75,9 @@ public class ManagementAgentEntityFactory {
     }
   }
 
-  private EntityRef<ManagementAgentEntity, ManagementAgentConfig> getEntityRef() {
+  private EntityRef<TmsAgentEntity, TmsAgentConfig> getEntityRef() {
     try {
-      return connection.getEntityRef(ManagementAgentEntity.class, ManagementAgentVersion.LATEST.version(), ENTITYNAME);
+      return connection.getEntityRef(TmsAgentEntity.class, TmsAgentVersion.LATEST.version(), entityName);
     } catch (EntityNotProvidedException e) {
       throw new AssertionError(e);
     }

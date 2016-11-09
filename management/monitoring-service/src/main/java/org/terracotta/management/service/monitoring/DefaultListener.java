@@ -18,6 +18,7 @@ package org.terracotta.management.service.monitoring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
@@ -43,6 +44,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
@@ -71,6 +75,7 @@ class DefaultListener implements PlatformListener, DataListener {
   static final String TOPIC_SERVER_ENTITY_STATISTICS = "server-entity-statistics";
 
   private final SequenceGenerator sequenceGenerator;
+  private final PlatformConfiguration platformConfiguration;
   private final Cluster cluster;
   private final Stripe stripe;
 
@@ -79,8 +84,9 @@ class DefaultListener implements PlatformListener, DataListener {
 
   private volatile Server currentActive;
 
-  DefaultListener(SequenceGenerator sequenceGenerator) {
-    this.sequenceGenerator = sequenceGenerator;
+  DefaultListener(SequenceGenerator sequenceGenerator, PlatformConfiguration platformConfiguration) {
+    this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
+    this.platformConfiguration = Objects.requireNonNull(platformConfiguration);
     this.cluster = Cluster.create().addStripe(stripe = Stripe.create("SINGLE"));
   }
 
@@ -351,7 +357,7 @@ class DefaultListener implements PlatformListener, DataListener {
         this,
         consumerID,
         config.getMonitoringProducer(),
-        config.getClientCommunicator().map(ManagementCommunicator::new).orElse(null)));
+        config.getClientCommunicator() == null ? null : new ManagementCommunicator(config.getClientCommunicator())));
   }
 
   // should not be synchroized
@@ -365,12 +371,17 @@ class DefaultListener implements PlatformListener, DataListener {
   // Called from DefaultMonitoringService
   // ====================================
 
-  synchronized <V> V applyCluster(Function<Cluster, V> fn) {
+  synchronized <V> V consumeClusterFn(Function<Cluster, V> fn) {
     // cannot do a simple getCluster() method because Cluster object might be mutated, and it must be mutated within a synchronized method
     return fn.apply(cluster);
   }
 
   synchronized void consumeCluster(Consumer<Cluster> consumer) {
+    // cannot do a simple getCluster() method because Cluster object might be mutated, and it must be mutated within a synchronized method
+    consumer.accept(cluster);
+  }
+
+  synchronized void mutateCluster(Consumer<Cluster> consumer) {
     // cannot do a simple getCluster() method because Cluster object might be mutated, and it must be mutated within a synchronized method
     consumer.accept(cluster);
   }
@@ -381,6 +392,16 @@ class DefaultListener implements PlatformListener, DataListener {
 
   ServerEntity getCurrentActiveServerEntity(long consumerId) {
     return getServerEntity(getCurrentActive().getServerName(), consumerId);
+  }
+
+  synchronized Optional<ServerEntityIdentifier> getServerEntityIdentifier(Context context) throws NoSuchElementException {
+    return stripe.getServer(context)
+        .flatMap(s -> s.getServerEntity(context))
+        .map(ServerEntity::getServerEntityIdentifier);
+  }
+
+  String getCurrentServerName() {
+    return platformConfiguration.getServerName();
   }
 
   // =====================

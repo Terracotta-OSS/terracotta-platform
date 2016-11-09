@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry.provider;
+package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.management.service.registry.MonitoringResolver;
+import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.registry.CapabilityManagementSupport;
 
-import java.util.Map;
+import java.util.Collection;
 
 /**
+ * A management registry that can act on all provided {@link ConsumerManagementRegistry}
+ *
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ConsumerManagementProvider<T> extends ManagementProvider<T> {
+public interface SharedManagementRegistry extends CapabilityManagementSupport {
 
-  void accept(MonitoringResolver resolver);
+  Collection<ContextContainer> getContextContainers();
 
-  boolean pushServerEntityNotification(T managedObjectSource, String type, Map<String, String> attrs);
 }

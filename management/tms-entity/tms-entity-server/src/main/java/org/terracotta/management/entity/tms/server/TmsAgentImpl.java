@@ -15,13 +15,19 @@
  */
 package org.terracotta.management.entity.tms.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
+import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,13 +41,16 @@ import java.util.concurrent.Future;
  */
 class TmsAgentImpl implements TmsAgent {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(TmsAgentImpl.class);
   private static final Comparator<Message> MESSAGE_COMPARATOR = (o1, o2) -> o1.getSequence().compareTo(o2.getSequence());
 
   private final ReadOnlyBuffer<Message> buffer;
   private final MonitoringService monitoringService;
+  private final SharedManagementRegistry managementRegistry;
 
-  TmsAgentImpl(TmsAgentConfig config, MonitoringService monitoringService) {
+  TmsAgentImpl(TmsAgentConfig config, MonitoringService monitoringService, SharedManagementRegistry managementRegistry) {
     this.monitoringService = Objects.requireNonNull(monitoringService);
+    this.managementRegistry = Objects.requireNonNull(managementRegistry);
     this.buffer = monitoringService.createMessageBuffer(config.getMaximumUnreadMessages());
   }
 
@@ -64,5 +73,19 @@ class TmsAgentImpl implements TmsAgent {
     return CompletableFuture.completedFuture(messages);
   }
 
+  @Override
+  public <T> Future<ContextualReturn<T>> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) {
+    LOGGER.trace("call({}, {}, {})", context, capabilityName, methodName);
+    if (!monitoringService.getServerEntityIdentifier(context).isPresent()) {
+      LOGGER.warn("call({}, {}, {}): Entity not found on server {} matching this context.", context, capabilityName, methodName, monitoringService.getCurrentServerName());
+      return CompletableFuture.completedFuture(ContextualReturn.notExecuted(capabilityName, context, methodName));
+    }
+    return CompletableFuture.completedFuture(managementRegistry.withCapability(capabilityName)
+        .call(methodName, returnType, parameters)
+        .on(context)
+        .build()
+        .execute()
+        .getSingleResult());
+  }
 
 }

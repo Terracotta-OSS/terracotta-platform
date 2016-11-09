@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry;
+package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.management.service.monitoring.MonitoringService;
-import org.terracotta.management.service.registry.provider.ConsumerManagementProvider;
+import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -38,14 +40,12 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
 
   private final MonitoringService monitoringService;
   private final ContextContainer contextContainer;
-  private final MonitoringResolver resolver;
 
   private Collection<Capability> previouslyExposed = Collections.emptyList();
 
-  DefaultConsumerManagementRegistry(MonitoringService monitoringService) {
+  DefaultConsumerManagementRegistry(long consumerId, MonitoringService monitoringService) {
     this.monitoringService = Objects.requireNonNull(monitoringService);
-    this.resolver = new DefaultMonitoringResolver(monitoringService);
-    this.contextContainer = new ContextContainer("consumerId", String.valueOf(this.monitoringService.getConsumerId()));
+    this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
   }
 
   @Override
@@ -56,8 +56,8 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
 
   @Override
   public void addManagementProvider(ManagementProvider<?> provider) {
-    if (provider instanceof ConsumerManagementProvider<?>) {
-      ((ConsumerManagementProvider<?>) provider).accept(resolver);
+    if (provider instanceof MonitoringServiceAware) {
+      ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
     }
     super.addManagementProvider(provider);
   }
@@ -78,8 +78,10 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
   @Override
   public boolean pushServerEntityNotification(Object managedObjectSource, String type, Map<String, String> attrs) {
     for (ManagementProvider managementProvider : managementProviders) {
-      if (managementProvider instanceof ConsumerManagementProvider && managementProvider.getManagedType().isInstance(managedObjectSource)) {
-        if (((ConsumerManagementProvider<Object>) managementProvider).pushServerEntityNotification(managedObjectSource, type, attrs)) {
+      if (managementProvider instanceof AbstractManagementProvider && managementProvider.getManagedType().isInstance(managedObjectSource)) {
+        ExposedObject<Object> exposedObject = ((AbstractManagementProvider<Object>) managementProvider).findExposedObject(managedObjectSource);
+        if(exposedObject != null) {
+          monitoringService.pushServerEntityNotification(new ContextualNotification(exposedObject.getContext(), type, attrs));
           return true;
         }
       }

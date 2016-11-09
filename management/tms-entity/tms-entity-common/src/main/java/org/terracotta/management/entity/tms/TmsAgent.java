@@ -15,7 +15,10 @@
  */
 package org.terracotta.management.entity.tms;
 
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.voltron.proxy.Async;
 
@@ -32,5 +35,11 @@ public interface TmsAgent {
 
   @Async(Async.Ack.NONE)
   Future<List<Message>> readMessages();
+
+  /**
+   * Execute a management call on the server and returns the results
+   */
+  @Async(Async.Ack.NONE)
+  <T> Future<ContextualReturn<T>> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters);
 
 }

@@ -26,6 +26,7 @@ import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ManagementRegistry;
+import org.terracotta.management.model.cluster.ServerEntityIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.DefaultManagementCallMessage;
@@ -44,6 +45,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -145,7 +148,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> {
+    stripeMonitoring.mutateCluster(cluster -> {
       Client client = cluster.getClient(clientIdentifier).get();
       client.addTags(tags);
       stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
@@ -160,7 +163,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> {
+    stripeMonitoring.mutateCluster(cluster -> {
       Client client = cluster.getClient(clientIdentifier).get();
       ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
       newRegistry.addCapabilities(capabilities);
@@ -175,7 +178,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   @Override
   public Cluster readTopology() {
     ensureAliveOnActive();
-    return stripeMonitoring.applyCluster(o -> {
+    return stripeMonitoring.consumeClusterFn(o -> {
       try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
         try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
           oos.writeObject(o);
@@ -191,6 +194,17 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
+  public Optional<ServerEntityIdentifier> getServerEntityIdentifier(Context context) throws NoSuchElementException {
+    LOGGER.trace("[{}] getServerEntityIdentifier({})", consumerId, context);
+    return stripeMonitoring.getServerEntityIdentifier(context);
+  }
+
+  @Override
+  public String getCurrentServerName() {
+    return stripeMonitoring.getCurrentServerName();
+  }
+
+  @Override
   public String sendManagementCallRequest(ClientDescriptor from, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
     LOGGER.trace("[{}] sendManagementCallRequest({}, {}, {}, {}, {})", consumerId, from, to, context, capabilityName, methodName);
 
@@ -203,7 +217,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     ClientIdentifier callerClientIdentifier = getConnectedClientIdentifier(from);
     ClientDescriptor toClientDescriptor = getClientDescriptor(to);
 
-    Client targetClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(to)
+    Client targetClient = stripeMonitoring.consumeClusterFn(cluster -> cluster.getClient(to)
         .<IllegalStateException>orElseThrow(() -> new IllegalStateException(to.toString())));
 
     if (!targetClient.isManageable()) {
@@ -240,7 +254,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     ClientIdentifier calledClientIdentifier = getConnectedClientIdentifier(from);
     ClientDescriptor callerClientDescriptor = getClientDescriptor(caller);
 
-    Client targettedClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(caller).<IllegalStateException>orElseThrow(() -> new IllegalStateException(caller.toString())));
+    Client targettedClient = stripeMonitoring.consumeClusterFn(cluster -> cluster.getClient(caller).<IllegalStateException>orElseThrow(() -> new IllegalStateException(caller.toString())));
 
     contextualReturn.setContext(contextualReturn.getContext().with(targettedClient.getContext()));
 

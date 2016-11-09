@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry.provider;
+package org.terracotta.management.service.monitoring.registry.provider;
 
-import org.terracotta.management.model.Objects;
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
@@ -23,7 +23,9 @@ import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
+@CommonComponent
 public class ClientBindingManagementProvider<T extends ClientBinding> extends AbstractConsumerManagementProvider<T> {
 
   public ClientBindingManagementProvider(Class<? extends T> type) {
@@ -48,8 +50,8 @@ public class ClientBindingManagementProvider<T extends ClientBinding> extends Ab
 
   @Override
   protected ExposedClientBinding<T> wrap(T managedObject) {
-    ClientIdentifier clientIdentifier = getConnectedClientIdentifier(managedObject.getClientDescriptor());
-    long consumerId = getConsumerId();
+    ClientIdentifier clientIdentifier = getMonitoringService().getClientIdentifier(managedObject.getClientDescriptor());
+    long consumerId = getMonitoringService().getConsumerId();
     return internalWrap(managedObject, consumerId, clientIdentifier);
 
   }

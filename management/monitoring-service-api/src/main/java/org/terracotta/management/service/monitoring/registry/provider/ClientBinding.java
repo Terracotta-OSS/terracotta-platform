@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry.provider;
+package org.terracotta.management.service.monitoring.registry.provider;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
 
 import java.util.Objects;
 
+@CommonComponent
 public class ClientBinding {
 
   private final ClientDescriptor clientDescriptor;

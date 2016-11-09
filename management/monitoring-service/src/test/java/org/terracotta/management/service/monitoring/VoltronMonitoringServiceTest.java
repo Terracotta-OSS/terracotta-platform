@@ -117,6 +117,7 @@ public class VoltronMonitoringServiceTest {
     passive = new PlatformServer("server-2", "localhost", "127.0.0.1", "0.0.0.0", 9511, 9611, "v1", "b1", now);
 
     // platform does this call to fire events to us
+    serviceProvider.initialize(null, () -> "server-1");
     platformListener = serviceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
 
     // simulation of platform calls when active server is up

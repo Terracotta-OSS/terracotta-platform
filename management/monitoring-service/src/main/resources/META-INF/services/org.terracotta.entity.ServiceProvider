@@ -14,4 +14,3 @@
 #
 
 org.terracotta.management.service.monitoring.MonitoringServiceProvider
-org.terracotta.management.service.registry.ConsumerManagementRegistryProvider

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry;
+package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
+
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
@@ -28,16 +30,16 @@ public class ConsumerManagementRegistryConfiguration implements ServiceConfigura
   private final ServiceRegistry serviceRegistry;
 
   public ConsumerManagementRegistryConfiguration(ServiceRegistry serviceRegistry) {
-    this.serviceRegistry = serviceRegistry;
-  }
-
-  public ServiceRegistry getServiceRegistry() {
-    return serviceRegistry;
+    this.serviceRegistry = Objects.requireNonNull(serviceRegistry);
   }
 
   @Override
   public Class<ConsumerManagementRegistry> getServiceType() {
     return ConsumerManagementRegistry.class;
+  }
+
+  public ServiceRegistry getRegistry() {
+    return serviceRegistry;
   }
 
 }

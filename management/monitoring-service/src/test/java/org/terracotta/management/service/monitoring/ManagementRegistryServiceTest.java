@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.registry;
+package org.terracotta.management.service.monitoring;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.service.monitoring.MonitoringService;
-import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
-import org.terracotta.management.service.monitoring.MonitoringServiceProvider;
-import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformEntity;
@@ -52,15 +50,20 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
 @RunWith(JUnit4.class)
 public class ManagementRegistryServiceTest {
 
-  ConsumerManagementRegistryProvider provider = new ConsumerManagementRegistryProvider();
-  MonitoringServiceProvider serviceProvider = new MonitoringServiceProvider();
+  MonitoringServiceProvider provider = new MonitoringServiceProvider();
   MonitoringService monitoringService;
   ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
   IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
-  IStripeMonitoring platformListener = serviceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+  IStripeMonitoring platformListener;
   IStripeMonitoring dataListener;
   long now = System.currentTimeMillis();
   PlatformServer server = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9520, "version", "build", now);
+
+  @Before
+  public void setUp() throws Exception {
+    provider.initialize(null, () -> "server-1");
+    platformListener = provider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+  }
 
   @Test
   public void test_management_info_pushed() {
@@ -110,8 +113,8 @@ public class ManagementRegistryServiceTest {
     platformListener.addNode(server, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", now, now));
     platformListener.addNode(server, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName", 1, true));
 
-    dataListener = serviceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
-    monitoringService = serviceProvider.getService(1, new MonitoringServiceConfiguration(serviceRegistry));
+    dataListener = provider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+    monitoringService = provider.getService(1, new MonitoringServiceConfiguration(serviceRegistry));
     ReadOnlyBuffer<Message> buffer = monitoringService.createMessageBuffer(100);
 
     // a consumer asks for a service
