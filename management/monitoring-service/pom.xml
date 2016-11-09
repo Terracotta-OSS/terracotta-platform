@@ -41,7 +41,7 @@
   </licenses>
 
   <dependencies>
-    <!-- will be inside entity jar -->
+    <!-- will be inside service jar -->
     <dependency>
       <groupId>org.terracotta.voltron.proxy</groupId>
       <artifactId>voltron-proxy-common</artifactId>
