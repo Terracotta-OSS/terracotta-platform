@@ -44,11 +44,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * A monitoring service is created per entity, and contains some states related to the entity that requested this service
@@ -64,7 +64,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   private final IMonitoringProducer monitoringProducer;
   private final ManagementCommunicator managementCommunicator;
   private final Map<ClientDescriptor, ClientIdentifier> fetches = new ConcurrentHashMap<>();
-  private final ConcurrentMap<ClientDescriptor, AtomicLong> pendingCalls = new ConcurrentHashMap<>();
+  private final ConcurrentMap<ClientDescriptor, Set<String>> pendingCalls = new ConcurrentHashMap<>();
 
   private volatile ReadWriteBuffer<Message> buffer;
 
@@ -220,7 +220,11 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
         new ContextualCall(context.with(targetClient.getContext()), capabilityName, methodName, returnType, parameters));
 
     // atomically increase the counter of management calls made by this client
-    pendingCalls.computeIfAbsent(from, descriptor -> new AtomicLong()).incrementAndGet();
+    Set<String> ids = pendingCalls.get(from);
+    if (ids == null) {
+      throw new SecurityException("Client " + from + " cannot send management calls");
+    }
+    ids.add(id);
 
     managementCommunicator.send(toClientDescriptor, message);
 
@@ -247,10 +251,13 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
         "MANAGEMENT_CALL_RETURN",
         contextualReturn);
 
-    if (Optional.ofNullable(pendingCalls.get(callerClientDescriptor))
-        .<SecurityException>orElseThrow(() -> new SecurityException("Client " + caller + " did not ask for a management call"))
-        .getAndUpdate(current -> Math.max(0, current - 1)) <= 0) {
-      throw new SecurityException("Client " + caller + " did not ask for a management call");
+    Set<String> ids = pendingCalls.get(callerClientDescriptor);
+    if (ids == null) {
+      throw new SecurityException("Client " + callerClientDescriptor + " cannot answer management calls");
+    }
+
+    if (!ids.remove(managementCallIdentifier)) {
+      throw new SecurityException("Client " + caller + " did not ask for management call " + managementCallIdentifier);
     }
 
     managementCommunicator.send(callerClientDescriptor, message);
@@ -354,10 +361,12 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   void addFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
     fetches.put(clientDescriptor, clientIdentifier);
+    pendingCalls.put(clientDescriptor, new ConcurrentSkipListSet<>());
   }
 
   void removeFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
     fetches.remove(clientDescriptor, clientIdentifier);
+    pendingCalls.remove(clientDescriptor);
   }
 
 }
