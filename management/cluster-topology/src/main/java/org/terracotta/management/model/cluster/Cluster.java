@@ -139,6 +139,10 @@ public final class Cluster implements Contextual {
     return getStripe(context).flatMap(s -> s.getActiveServerEntity(context));
   }
 
+  public Optional<ServerEntity> getServerEntity(Context context) {
+    return getStripe(context).flatMap(s -> s.getServerEntity(context));
+  }
+
   public Optional<Server> getServer(Context context) {
     return getStripe(context).flatMap(s -> s.getServer(context));
   }

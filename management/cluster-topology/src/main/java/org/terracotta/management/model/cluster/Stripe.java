@@ -120,6 +120,10 @@ public final class Stripe extends AbstractNode<Cluster> {
     return getActiveServer().flatMap(s -> s.getServerEntity(context));
   }
 
+  public Optional<ServerEntity> getServerEntity(Context context) {
+    return getServer(context).flatMap(s -> s.getServerEntity(context));
+  }
+
   public Optional<ServerEntity> getActiveServerEntity(ServerEntityIdentifier identifier) {
     return getActiveServer().flatMap(s -> s.getServerEntity(identifier));
   }

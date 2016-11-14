@@ -22,6 +22,7 @@ import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
@@ -76,9 +77,19 @@ class TmsAgentImpl implements TmsAgent {
   @Override
   public <T> Future<ContextualReturn<T>> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) {
     LOGGER.trace("call({}, {}, {})", context, capabilityName, methodName);
+    if (!context.contains(Server.NAME_KEY)) {
+      throw new IllegalArgumentException("Incomplete context");
+    }
+    // validate entity
     if (!monitoringService.getServerEntityIdentifier(context).isPresent()) {
       LOGGER.warn("call({}, {}, {}): Entity not found on server {} matching this context.", context, capabilityName, methodName, monitoringService.getCurrentServerName());
       return CompletableFuture.completedFuture(ContextualReturn.notExecuted(capabilityName, context, methodName));
+    }
+    // validate server (active or passive)
+    String serverName = context.get(Server.NAME_KEY);
+    if (!monitoringService.getCurrentServerName().equals(serverName)) {
+      //TODO: A/P support: https://github.com/Terracotta-OSS/terracotta-platform/issues/162
+      throw new UnsupportedOperationException("Unable to route management call to server " + serverName);
     }
     return CompletableFuture.completedFuture(managementRegistry.withCapability(capabilityName)
         .call(methodName, returnType, parameters)
