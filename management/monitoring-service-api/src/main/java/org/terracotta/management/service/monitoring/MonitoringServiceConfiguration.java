@@ -36,11 +36,11 @@ public class MonitoringServiceConfiguration implements ServiceConfiguration<Moni
     this.serviceRegistry = Objects.requireNonNull(serviceRegistry);
   }
 
-  ClientCommunicator getClientCommunicator() {
+  public ClientCommunicator getClientCommunicator() {
     return serviceRegistry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
   }
 
-  IMonitoringProducer getMonitoringProducer() {
+  public IMonitoringProducer getMonitoringProducer() {
     return serviceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
   }
 
