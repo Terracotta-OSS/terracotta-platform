@@ -66,11 +66,7 @@ public class TmsAgentEntityFactory {
     try {
       ref.create(config);
       return ref.fetchEntity();
-    } catch (EntityNotProvidedException e) {
-      throw new AssertionError(e);
-    } catch (EntityVersionMismatchException e) {
-      throw new AssertionError(e);
-    } catch (EntityNotFoundException e) {
+    } catch (EntityNotProvidedException | EntityVersionMismatchException | EntityNotFoundException e) {
       throw new AssertionError(e);
     }
   }
