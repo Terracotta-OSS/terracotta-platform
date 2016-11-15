@@ -15,9 +15,8 @@
  */
 package org.terracotta.management.model.cluster;
 
-import org.terracotta.management.model.Objects;
-
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou

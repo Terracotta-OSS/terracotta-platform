@@ -39,35 +39,58 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
       MonitoringService.class,
-      IStripeMonitoring.class
+      IStripeMonitoring.class,
+      SharedManagementRegistry.class,
+      ConsumerManagementRegistry.class
   );
 
-  private final DefaultListener listener = new DefaultListener(new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST));
-  private final PlatformListenerAdapter platformListenerAdapter = new PlatformListenerAdapter(listener);
+  private DefaultListener listener;
+  private PlatformListenerAdapter platformListenerAdapter;
+  private final DefaultSharedManagementRegistry defaultSharedManagementRegistry = new DefaultSharedManagementRegistry();
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
-    // useless for a @BuiltinService until https://github.com/Terracotta-OSS/terracotta-apis/issues/152 is fixed
+    this.listener = new DefaultListener(new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST), platformConfiguration);
+    this.platformListenerAdapter = new PlatformListenerAdapter(listener);
     return true;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+    if (this.listener == null || this.platformListenerAdapter == null) {
+      throw new IllegalStateException("Service provider " + getClass().getName() + " has not been initialized");
+    }
+
     Class<T> serviceType = configuration.getServiceType();
 
     if (IStripeMonitoring.class.isAssignableFrom(serviceType)) {
       return serviceType.cast(consumerID == PLATFORM_CONSUMER_ID ? platformListenerAdapter : new DataListenerAdapter(listener, consumerID));
     }
 
+    // get or creates a monitoring service used to access the inner M&M topology
     if (MonitoringService.class.isAssignableFrom(serviceType)) {
-
       if (configuration instanceof MonitoringServiceConfiguration) {
-        return serviceType.cast(listener.getOrCreateMonitoringService(consumerID, (MonitoringServiceConfiguration) configuration));
-
+        MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, (MonitoringServiceConfiguration) configuration);
+        return serviceType.cast(monitoringService);
       } else {
-        throw new IllegalArgumentException("Missing configuration: " + MonitoringServiceConfiguration.class.getSimpleName());
+        throw new IllegalArgumentException("Missing configuration " + MonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
+
+      // get or creates a registry specific to this entity to handle stats and management calls
+    } else if (ConsumerManagementRegistry.class.isAssignableFrom(serviceType)) {
+      if (configuration instanceof ConsumerManagementRegistryConfiguration) {
+        ConsumerManagementRegistryConfiguration managementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
+        MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, new MonitoringServiceConfiguration(managementRegistryConfiguration.getRegistry()));
+        ConsumerManagementRegistry consumerManagementRegistry = defaultSharedManagementRegistry.getOrCreateConsumerManagementRegistry(consumerID, monitoringService);
+        return serviceType.cast(consumerManagementRegistry);
+      } else {
+        throw new IllegalArgumentException("Missing configuration " + MonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+      }
+
+      // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
+    } else if (SharedManagementRegistry.class.isAssignableFrom(serviceType)) {
+      return serviceType.cast(defaultSharedManagementRegistry);
 
     } else {
       throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);

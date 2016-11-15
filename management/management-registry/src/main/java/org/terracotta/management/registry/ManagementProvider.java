@@ -124,4 +124,6 @@ public interface ManagementProvider<T> {
    * Closes the management provider.
    */
   void close();
+
+  Collection<ExposedObject<T>> getExposedObjects();
 }

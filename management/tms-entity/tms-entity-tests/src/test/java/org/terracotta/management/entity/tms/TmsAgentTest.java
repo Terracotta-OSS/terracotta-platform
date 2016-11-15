@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
 import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
@@ -31,6 +30,7 @@ import org.terracotta.management.entity.management.client.ManagementAgentService
 import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
 import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityClientService;
+import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
 import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
@@ -136,10 +136,9 @@ public class TmsAgentTest {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
     try (org.terracotta.connection.Connection connection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
-      EntityRef<TmsAgentEntity, TmsAgentConfig> ref = connection.getEntityRef(TmsAgentEntity.class, TmsAgentVersion.LATEST.version(), getClass().getSimpleName());
-      ref.create(new TmsAgentConfig());
 
-      TmsAgentEntity entity = ref.fetchEntity();
+      TmsAgentEntityFactory factory = new TmsAgentEntityFactory(connection, getClass().getSimpleName());
+      TmsAgentEntity entity = factory.retrieveOrCreate(new TmsAgentConfig());
 
       Cluster cluster = entity.readTopology().get();
 

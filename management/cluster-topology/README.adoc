@@ -1,0 +1,1 @@
+Represents the cluster topology used by management apps.

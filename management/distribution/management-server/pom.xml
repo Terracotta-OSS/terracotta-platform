@@ -61,17 +61,6 @@
       <artifactId>monitoring-service</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- monitoring service -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-registry-service-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>management-registry-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
   </dependencies>
 
   <build>

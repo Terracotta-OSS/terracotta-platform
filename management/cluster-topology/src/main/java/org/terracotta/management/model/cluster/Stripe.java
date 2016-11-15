@@ -73,7 +73,15 @@ public final class Stripe extends AbstractNode<Cluster> {
   }
 
   public Optional<Server> getServer(Context context) {
-    return getServer(context.get(Server.KEY));
+    String key = context.get(Server.KEY);
+    if (key != null) {
+      return getServer(key);
+    }
+    String name = context.get(Server.NAME_KEY);
+    if (name != null) {
+      return getServerByName(name);
+    }
+    return Optional.empty();
   }
 
   public Optional<Server> getServer(String id) {
@@ -110,6 +118,10 @@ public final class Stripe extends AbstractNode<Cluster> {
 
   public Optional<ServerEntity> getActiveServerEntity(Context context) {
     return getActiveServer().flatMap(s -> s.getServerEntity(context));
+  }
+
+  public Optional<ServerEntity> getServerEntity(Context context) {
+    return getServer(context).flatMap(s -> s.getServerEntity(context));
   }
 
   public Optional<ServerEntity> getActiveServerEntity(ServerEntityIdentifier identifier) {

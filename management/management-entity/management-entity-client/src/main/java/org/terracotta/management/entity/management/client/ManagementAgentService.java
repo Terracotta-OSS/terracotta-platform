@@ -224,10 +224,6 @@ public class ManagementAgentService implements Closeable {
     return clientIdentifier;
   }
 
-  public Collection<ClientIdentifier> getManageableClients() {
-    return get(entity.getManageableClients(null), timeout);
-  }
-
   /**
    * Execute a management call and do not expect any return result.
    * <p>

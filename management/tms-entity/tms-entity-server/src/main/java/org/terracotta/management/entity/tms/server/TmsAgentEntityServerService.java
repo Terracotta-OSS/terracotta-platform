@@ -15,12 +15,14 @@
  */
 package org.terracotta.management.entity.tms.server;
 
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.entity.tms.TmsAgentVersion;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
+import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
@@ -36,7 +38,8 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
   @Override
   public TmsAgentServerEntity createActiveEntity(ServiceRegistry registry, TmsAgentConfig tmsAgentConfig) {
     MonitoringService monitoringService = registry.getService(new MonitoringServiceConfiguration(registry));
-    return new TmsAgentServerEntity(tmsAgentConfig, monitoringService);
+    SharedManagementRegistry managementRegistry = registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class));
+    return new TmsAgentServerEntity(tmsAgentConfig, monitoringService, managementRegistry);
   }
 
   @Override

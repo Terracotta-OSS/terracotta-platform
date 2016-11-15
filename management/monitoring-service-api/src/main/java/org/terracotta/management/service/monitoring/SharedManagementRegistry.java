@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.registry.collect;
+package org.terracotta.management.service.monitoring;
 
-import org.terracotta.management.model.stats.ContextualStatistics;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.registry.CapabilityManagementSupport;
 
 import java.util.Collection;
 
 /**
+ * A management registry that can act on all provided {@link ConsumerManagementRegistry}
+ *
  * @author Mathieu Carbou
  */
-public interface StatisticCollector {
+@CommonComponent
+public interface SharedManagementRegistry extends CapabilityManagementSupport {
 
-  void startStatisticCollector();
+  Collection<ContextContainer> getContextContainers();
 
-  void stopStatisticCollector();
-
-  void updateCollectedStatistics(String capabilityName, Collection<String> statisticNames);
-
-  interface Collector {
-    void onStatistics(Collection<ContextualStatistics> statistics);
-  }
-
-  interface TimeProvider {
-    long getTimeMillis();
-  }
 }

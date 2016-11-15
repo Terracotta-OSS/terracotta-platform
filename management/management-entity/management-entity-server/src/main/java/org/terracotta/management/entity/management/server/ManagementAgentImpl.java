@@ -20,7 +20,6 @@ import org.terracotta.management.entity.management.ManagementAgent;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
@@ -29,10 +28,8 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.voltron.proxy.ClientId;
 
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 /***
  * @author Mathieu Carbou
@@ -73,15 +70,6 @@ class ManagementAgentImpl implements ManagementAgent {
   public Future<Void> exposeTags(@ClientId Object caller, String... tags) {
     monitoringService.exposeClientTags((ClientDescriptor) caller, tags);
     return CompletableFuture.completedFuture(null);
-  }
-
-  @Override
-  public Future<Collection<ClientIdentifier>> getManageableClients(@ClientId Object caller) {
-    return CompletableFuture.completedFuture(monitoringService.readTopology()
-        .clientStream()
-        .filter(client -> client.getManagementRegistry().isPresent())
-        .map(Client::getClientIdentifier)
-        .collect(Collectors.toList()));
   }
 
   @Override

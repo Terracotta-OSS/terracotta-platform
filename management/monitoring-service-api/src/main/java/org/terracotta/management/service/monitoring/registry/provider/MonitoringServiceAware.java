@@ -13,28 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.registry.collect;
+package org.terracotta.management.service.monitoring.registry.provider;
 
-import org.terracotta.management.model.stats.ContextualStatistics;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.management.registry.ManagementRegistry;
+import org.terracotta.management.service.monitoring.MonitoringService;
 
-import java.util.Collection;
+import java.io.Closeable;
+import java.util.Collections;
+import java.util.Map;
 
-/**
- * @author Mathieu Carbou
- */
-public interface StatisticCollector {
-
-  void startStatisticCollector();
-
-  void stopStatisticCollector();
-
-  void updateCollectedStatistics(String capabilityName, Collection<String> statisticNames);
-
-  interface Collector {
-    void onStatistics(Collection<ContextualStatistics> statistics);
-  }
-
-  interface TimeProvider {
-    long getTimeMillis();
-  }
+@CommonComponent
+public interface MonitoringServiceAware {
+  void setMonitoringService(MonitoringService monitoringService);
 }

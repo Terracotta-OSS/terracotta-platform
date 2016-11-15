@@ -155,6 +155,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   protected void dispose(ExposedObject<T> exposedObject) {
   }
 
+  @Override
   public Collection<ExposedObject<T>> getExposedObjects() {
     return exposedObjects;
   }
@@ -173,7 +174,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
     return null;
   }
 
-  protected ExposedObject<T> findExposedObject(T managedObject) {
+  public ExposedObject<T> findExposedObject(T managedObject) {
     for (ExposedObject<T> exposed : exposedObjects) {
       if (exposed.getTarget().equals(managedObject)) {
         return exposed;

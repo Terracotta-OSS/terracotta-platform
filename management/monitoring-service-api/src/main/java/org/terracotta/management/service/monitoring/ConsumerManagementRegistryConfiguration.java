@@ -16,11 +16,8 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.Objects;
 
@@ -28,25 +25,17 @@ import java.util.Objects;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public class MonitoringServiceConfiguration implements ServiceConfiguration<MonitoringService> {
+public class ConsumerManagementRegistryConfiguration implements ServiceConfiguration<ConsumerManagementRegistry> {
 
   private final ServiceRegistry serviceRegistry;
 
-  public MonitoringServiceConfiguration(ServiceRegistry serviceRegistry) {
+  public ConsumerManagementRegistryConfiguration(ServiceRegistry serviceRegistry) {
     this.serviceRegistry = Objects.requireNonNull(serviceRegistry);
   }
 
-  public ClientCommunicator getClientCommunicator() {
-    return serviceRegistry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
-  }
-
-  public IMonitoringProducer getMonitoringProducer() {
-    return serviceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
-  }
-
   @Override
-  public Class<MonitoringService> getServiceType() {
-    return MonitoringService.class;
+  public Class<ConsumerManagementRegistry> getServiceType() {
+    return ConsumerManagementRegistry.class;
   }
 
   public ServiceRegistry getRegistry() {

@@ -22,12 +22,16 @@ import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.cluster.ServerEntityIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.Sequence;
+
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
@@ -142,4 +146,12 @@ public interface MonitoringService {
    */
   long getConsumerId();
 
+  /**
+   * @param context The routing context
+   * @return The server entity matching the routign context
+   * @throws NoSuchElementException If entity not found or bad server in context
+   */
+  Optional<ServerEntityIdentifier> getServerEntityIdentifier(Context context) throws NoSuchElementException;
+
+  String getCurrentServerName();
 }

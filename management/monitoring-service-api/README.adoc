@@ -1,0 +1,1 @@
+API of the monitoring service. Entities can depend on this module at compile time. And this module can be put on server classpath

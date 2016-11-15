@@ -97,4 +97,8 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
     return false;
   }
 
+  @Override
+  public Collection<ExposedObject<T>> getExposedObjects() {
+    return Collections.emptyList();
+  }
 }

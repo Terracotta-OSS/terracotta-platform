@@ -49,6 +49,11 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.management</groupId>
+      <artifactId>management-registry</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
       <artifactId>sequence-generator</artifactId>
       <version>${project.version}</version>
     </dependency>

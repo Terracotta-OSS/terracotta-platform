@@ -15,12 +15,12 @@
  */
 package org.terracotta.management.model.cluster;
 
-import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -217,13 +217,18 @@ public final class Server extends AbstractNode<Stripe> {
 
   public final Optional<ServerEntity> getServerEntity(Context context) {
     String id = context.get(ServerEntity.KEY);
-    String type = context.get(ServerEntity.TYPE_KEY);
-    String name = context.get(ServerEntity.NAME_KEY);
     if (id != null) {
       return getServerEntity(id);
     }
+    String type = context.get(ServerEntity.TYPE_KEY);
+    String name = context.get(ServerEntity.NAME_KEY);
     if (type != null && name != null) {
       return getServerEntity(name, type);
+    }
+    String consumerId = context.get(ServerEntity.CONSUMER_ID);
+    if (consumerId != null) {
+      long cid = Long.parseLong(consumerId);
+      return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == cid).findFirst();
     }
     return Optional.empty();
   }

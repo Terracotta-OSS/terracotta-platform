@@ -26,6 +26,7 @@ import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ManagementRegistry;
+import org.terracotta.management.model.cluster.ServerEntityIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.DefaultManagementCallMessage;
@@ -44,11 +45,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * A monitoring service is created per entity, and contains some states related to the entity that requested this service
@@ -64,7 +67,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   private final IMonitoringProducer monitoringProducer;
   private final ManagementCommunicator managementCommunicator;
   private final Map<ClientDescriptor, ClientIdentifier> fetches = new ConcurrentHashMap<>();
-  private final ConcurrentMap<ClientDescriptor, AtomicLong> pendingCalls = new ConcurrentHashMap<>();
+  private final ConcurrentMap<ClientDescriptor, Set<String>> pendingCalls = new ConcurrentHashMap<>();
 
   private volatile ReadWriteBuffer<Message> buffer;
 
@@ -145,7 +148,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> {
+    stripeMonitoring.mutateCluster(cluster -> {
       Client client = cluster.getClient(clientIdentifier).get();
       client.addTags(tags);
       stripeMonitoring.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
@@ -160,7 +163,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
     ensureAliveOnActive();
     ClientIdentifier clientIdentifier = getConnectedClientIdentifier(from);
-    stripeMonitoring.consumeCluster(cluster -> {
+    stripeMonitoring.mutateCluster(cluster -> {
       Client client = cluster.getClient(clientIdentifier).get();
       ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
       newRegistry.addCapabilities(capabilities);
@@ -175,7 +178,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   @Override
   public Cluster readTopology() {
     ensureAliveOnActive();
-    return stripeMonitoring.applyCluster(o -> {
+    return stripeMonitoring.consumeClusterFn(o -> {
       try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
         try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
           oos.writeObject(o);
@@ -191,6 +194,17 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
+  public Optional<ServerEntityIdentifier> getServerEntityIdentifier(Context context) throws NoSuchElementException {
+    LOGGER.trace("[{}] getServerEntityIdentifier({})", consumerId, context);
+    return stripeMonitoring.getServerEntityIdentifier(context);
+  }
+
+  @Override
+  public String getCurrentServerName() {
+    return stripeMonitoring.getCurrentServerName();
+  }
+
+  @Override
   public String sendManagementCallRequest(ClientDescriptor from, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
     LOGGER.trace("[{}] sendManagementCallRequest({}, {}, {}, {}, {})", consumerId, from, to, context, capabilityName, methodName);
 
@@ -203,7 +217,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     ClientIdentifier callerClientIdentifier = getConnectedClientIdentifier(from);
     ClientDescriptor toClientDescriptor = getClientDescriptor(to);
 
-    Client targetClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(to)
+    Client targetClient = stripeMonitoring.consumeClusterFn(cluster -> cluster.getClient(to)
         .<IllegalStateException>orElseThrow(() -> new IllegalStateException(to.toString())));
 
     if (!targetClient.isManageable()) {
@@ -220,7 +234,11 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
         new ContextualCall(context.with(targetClient.getContext()), capabilityName, methodName, returnType, parameters));
 
     // atomically increase the counter of management calls made by this client
-    pendingCalls.computeIfAbsent(from, descriptor -> new AtomicLong()).incrementAndGet();
+    Set<String> ids = pendingCalls.get(from);
+    if (ids == null) {
+      throw new SecurityException("Client " + from + " cannot send management calls");
+    }
+    ids.add(id);
 
     managementCommunicator.send(toClientDescriptor, message);
 
@@ -236,7 +254,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
     ClientIdentifier calledClientIdentifier = getConnectedClientIdentifier(from);
     ClientDescriptor callerClientDescriptor = getClientDescriptor(caller);
 
-    Client targettedClient = stripeMonitoring.applyCluster(cluster -> cluster.getClient(caller).<IllegalStateException>orElseThrow(() -> new IllegalStateException(caller.toString())));
+    Client targettedClient = stripeMonitoring.consumeClusterFn(cluster -> cluster.getClient(caller).<IllegalStateException>orElseThrow(() -> new IllegalStateException(caller.toString())));
 
     contextualReturn.setContext(contextualReturn.getContext().with(targettedClient.getContext()));
 
@@ -247,10 +265,13 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
         "MANAGEMENT_CALL_RETURN",
         contextualReturn);
 
-    if (Optional.ofNullable(pendingCalls.get(callerClientDescriptor))
-        .<SecurityException>orElseThrow(() -> new SecurityException("Client " + caller + " did not ask for a management call"))
-        .getAndUpdate(current -> Math.max(0, current - 1)) <= 0) {
-      throw new SecurityException("Client " + caller + " did not ask for a management call");
+    Set<String> ids = pendingCalls.get(callerClientDescriptor);
+    if (ids == null) {
+      throw new SecurityException("Client " + callerClientDescriptor + " cannot answer management calls");
+    }
+
+    if (!ids.remove(managementCallIdentifier)) {
+      throw new SecurityException("Client " + caller + " did not ask for management call " + managementCallIdentifier);
     }
 
     managementCommunicator.send(callerClientDescriptor, message);
@@ -354,10 +375,12 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   void addFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
     fetches.put(clientDescriptor, clientIdentifier);
+    pendingCalls.put(clientDescriptor, new ConcurrentSkipListSet<>());
   }
 
   void removeFetch(ClientDescriptor clientDescriptor, ClientIdentifier clientIdentifier) {
     fetches.remove(clientDescriptor, clientIdentifier);
+    pendingCalls.remove(clientDescriptor);
   }
 
 }
