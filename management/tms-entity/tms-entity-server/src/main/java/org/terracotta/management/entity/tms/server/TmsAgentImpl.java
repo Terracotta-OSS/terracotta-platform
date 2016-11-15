@@ -77,8 +77,8 @@ class TmsAgentImpl implements TmsAgent {
   @Override
   public <T> Future<ContextualReturn<T>> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) {
     LOGGER.trace("call({}, {}, {})", context, capabilityName, methodName);
-    if (!context.contains(Server.NAME_KEY)) {
-      throw new IllegalArgumentException("Incomplete context");
+    if (!context.contains(Server.NAME_KEY) || !context.contains(Server.KEY)) {
+      throw new IllegalArgumentException("Incomplete context: missing server name in context: " + context);
     }
     // validate entity
     if (!monitoringService.getServerEntityIdentifier(context).isPresent()) {
@@ -87,6 +87,9 @@ class TmsAgentImpl implements TmsAgent {
     }
     // validate server (active or passive)
     String serverName = context.get(Server.NAME_KEY);
+    if(serverName == null) {
+      serverName = context.get(Server.KEY);
+    }
     if (!monitoringService.getCurrentServerName().equals(serverName)) {
       //TODO: A/P support: https://github.com/Terracotta-OSS/terracotta-platform/issues/162
       throw new UnsupportedOperationException("Unable to route management call to server " + serverName);
