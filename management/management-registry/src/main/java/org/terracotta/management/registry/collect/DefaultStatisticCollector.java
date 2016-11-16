@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.registry.collect;
 
+import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.CapabilityManagementSupport;
@@ -23,7 +24,6 @@ import org.terracotta.management.registry.ResultSet;
 import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -49,30 +49,27 @@ public class DefaultStatisticCollector implements StatisticCollector {
   private final ScheduledExecutorService scheduledExecutorService;
   private final Collector collector;
   private final TimeProvider timeProvider;
-  private final long frequencyDelay;
-  private final TimeUnit frequencyUnit;
-  private final String[] statsCapabilitynames;
-  private volatile ScheduledFuture<?> task;
+  private final StatisticConfiguration statisticConfiguration;
+  private ScheduledFuture<?> task;
 
   public DefaultStatisticCollector(CapabilityManagementSupport capabilityManagementSupport,
                                    ScheduledExecutorService scheduledExecutorService,
                                    Collector collector,
                                    TimeProvider timeProvider,
-                                   long frequencyDelay,
-                                   TimeUnit frequencyUnit,
-                                   String[] statsCapabilitynames) {
-    this.managementRegistry = capabilityManagementSupport;
-    this.scheduledExecutorService = scheduledExecutorService;
-    this.collector = collector;
-    this.timeProvider = timeProvider;
-    this.frequencyDelay = frequencyDelay;
-    this.frequencyUnit = frequencyUnit;
-    this.statsCapabilitynames = statsCapabilitynames;
+                                   StatisticConfiguration statisticConfiguration) {
+    this.managementRegistry = Objects.requireNonNull(capabilityManagementSupport);
+    this.scheduledExecutorService = Objects.requireNonNull(scheduledExecutorService);
+    this.collector = Objects.requireNonNull(collector);
+    this.timeProvider = Objects.requireNonNull(timeProvider);
+    this.statisticConfiguration = Objects.requireNonNull(statisticConfiguration);
   }
 
   @Override
   public synchronized void startStatisticCollector() {
     if (task == null) {
+
+      // we poll at 75% of the time to disable (before the time to disable happens)
+      long pollingIntervalMs = Math.round(0.75 * TimeUnit.MILLISECONDS.convert(statisticConfiguration.timeToDisable(), statisticConfiguration.timeToDisableUnit()));
 
       final AtomicLong lastPoll = new AtomicLong(timeProvider.getTimeMillis());
 
@@ -85,25 +82,23 @@ public class DefaultStatisticCollector implements StatisticCollector {
               long since = lastPoll.get();
 
               for (Map.Entry<String, Collection<String>> entry : selectedStatsPerCapability.entrySet()) {
-                if (Arrays.binarySearch(statsCapabilitynames, entry.getKey()) >= 0) {
 
-                  Set<Context> allContexts = new LinkedHashSet<Context>();
-                  for (ManagementProvider<?> managementProvider : managementRegistry.getManagementProvidersByCapability(entry.getKey())) {
-                    for (ExposedObject<?> exposedObject : managementProvider.getExposedObjects()) {
-                      allContexts.add(exposedObject.getContext());
-                    }
+                Set<Context> allContexts = new LinkedHashSet<Context>();
+                for (ManagementProvider<?> managementProvider : managementRegistry.getManagementProvidersByCapability(entry.getKey())) {
+                  for (ExposedObject<?> exposedObject : managementProvider.getExposedObjects()) {
+                    allContexts.add(exposedObject.getContext());
                   }
+                }
 
-                  ResultSet<ContextualStatistics> resultSet = managementRegistry.withCapability(entry.getKey())
-                      .queryStatistics(entry.getValue())
-                      .since(since)
-                      .on(allContexts)
-                      .build()
-                      .execute();
+                ResultSet<ContextualStatistics> resultSet = managementRegistry.withCapability(entry.getKey())
+                    .queryStatistics(entry.getValue())
+                    .since(since)
+                    .on(allContexts)
+                    .build()
+                    .execute();
 
-                  for (ContextualStatistics contextualStatistics : resultSet) {
-                    statistics.add(contextualStatistics);
-                  }
+                for (ContextualStatistics contextualStatistics : resultSet) {
+                  statistics.add(contextualStatistics);
                 }
               }
 
@@ -118,7 +113,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
             LOGGER.log(Level.WARNING, "StatisticCollector failed: " + e.getMessage(), e);
           }
         }
-      }, 0, frequencyDelay, frequencyUnit);
+      }, 0, pollingIntervalMs, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -133,13 +128,11 @@ public class DefaultStatisticCollector implements StatisticCollector {
 
   @Override
   public void updateCollectedStatistics(String capabilityName, Collection<String> statisticNames) {
-    if (Arrays.binarySearch(statsCapabilitynames, capabilityName) >= 0) {
-      if (!statisticNames.isEmpty()) {
-        selectedStatsPerCapability.put(capabilityName, statisticNames);
-      } else {
-        // we clear the stats set
-        selectedStatsPerCapability.remove(capabilityName);
-      }
+    if (!statisticNames.isEmpty()) {
+      selectedStatsPerCapability.put(capabilityName, statisticNames);
+    } else {
+      // we clear the stats set
+      selectedStatsPerCapability.remove(capabilityName);
     }
   }
 

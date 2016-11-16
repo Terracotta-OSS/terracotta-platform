@@ -32,6 +32,9 @@ import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityClientService;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
 import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
+import org.terracotta.management.model.capabilities.DefaultCapability;
+import org.terracotta.management.model.capabilities.context.CapabilityContext;
+import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
@@ -51,6 +54,7 @@ import org.terracotta.passthrough.PassthroughServer;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -107,7 +111,24 @@ public class TmsAgentTest {
                 .setBuildId("Build ID")
                 .setState(Server.State.ACTIVE)
                 .addServerEntity(ServerEntity.create(getClass().getSimpleName(), TmsAgentEntity.class.getName())
-                    .setConsumerId(1))))
+                    .setConsumerId(1)
+                    .setManagementRegistry(org.terracotta.management.model.cluster.ManagementRegistry.create(new ContextContainer("consumerId", "1"))
+                        .addCapability(new DefaultCapability(
+                            "StatisticCollectorCapability",
+                            new CapabilityContext(new CapabilityContext.Attribute("consumerId", true)),
+                            new CallDescriptor("stopStatisticCollector", "void"),
+                            new CallDescriptor("startStatisticCollector", "void"),
+                            new CallDescriptor(
+                                "updateCollectedStatistics",
+                                "void",
+                                new CallDescriptor.Parameter("capabilityName", String.class.getName()),
+                                new CallDescriptor.Parameter("statisticNames", Collection.class.getName()))
+                            )
+                        )
+                    )
+                )
+            )
+        )
         .addClient(Client.create(clientIdentifier)
             .setHostName(InetAddress.getLocalHost().getHostName()));
 
@@ -167,7 +188,7 @@ public class TmsAgentTest {
       assertEquals(expected, actual);
 
       List<Message> messages = entity.readMessages().get();
-      assertEquals(3, messages.size());
+      assertEquals(4, messages.size());
 
       // ensure a second read without any topology modifications leads to 0 messages
       assertEquals(0, entity.readMessages().get().size());
@@ -184,11 +205,14 @@ public class TmsAgentTest {
 
       assertEquals("NOTIFICATION", messages.get(1).getType());
       ContextualNotification secondNotif = messages.get(1).unwrap(ContextualNotification.class).get(0);
-      assertEquals("SERVER_ENTITY_FETCHED", secondNotif.getType());
+      assertEquals("ENTITY_REGISTRY_AVAILABLE", secondNotif.getType());
+
+      ContextualNotification thirdNotif = messages.get(2).unwrap(ContextualNotification.class).get(0);
+      assertEquals("SERVER_ENTITY_FETCHED", thirdNotif.getType());
       assertEquals(expectedCluster.serverEntityStream().findFirst().get().getContext(), firstNotif.getContext());
       assertEquals(
           expectedCluster.clientStream().findFirst().get().getClientId().replace("uuid", uuid),
-          secondNotif.getAttributes().get(Client.KEY));
+          thirdNotif.getAttributes().get(Client.KEY));
 
       entity.readMessages().get();
 
@@ -206,6 +230,8 @@ public class TmsAgentTest {
 
         ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(secondConnection).retrieveOrCreate(new ManagementAgentConfig()));
         managementAgent.setManagementCallExecutor(executorService);
+        managementAgent.setManagementRegistry(registry);
+        managementAgent.init();
 
         ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
         //System.out.println(clientIdentifier);
@@ -213,7 +239,6 @@ public class TmsAgentTest {
         assertEquals("UNKNOWN", clientIdentifier.getName());
         assertNotNull(clientIdentifier.getConnectionUid());
 
-        managementAgent.bridge(registry);
         managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
 
         messages = entity.readMessages().get();

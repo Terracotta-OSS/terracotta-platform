@@ -25,6 +25,7 @@ import org.terracotta.management.registry.AbstractManagementRegistry;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
+import org.terracotta.management.service.monitoring.registry.provider.StatisticsServiceAware;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,11 +41,13 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
 
   private final MonitoringService monitoringService;
   private final ContextContainer contextContainer;
+  private final StatisticsService statisticsService;
 
   private Collection<Capability> previouslyExposed = Collections.emptyList();
 
-  DefaultConsumerManagementRegistry(long consumerId, MonitoringService monitoringService) {
+  DefaultConsumerManagementRegistry(long consumerId, MonitoringService monitoringService, StatisticsService statisticsService) {
     this.monitoringService = Objects.requireNonNull(monitoringService);
+    this.statisticsService = Objects.requireNonNull(statisticsService);
     this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
   }
 
@@ -58,6 +61,9 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
   public void addManagementProvider(ManagementProvider<?> provider) {
     if (provider instanceof MonitoringServiceAware) {
       ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
+    }
+    if(provider instanceof StatisticsServiceAware) {
+      ((StatisticsServiceAware) provider).setStatisticsService(statisticsService);
     }
     super.addManagementProvider(provider);
   }

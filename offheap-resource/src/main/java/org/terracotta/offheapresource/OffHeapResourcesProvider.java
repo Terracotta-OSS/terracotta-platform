@@ -63,10 +63,15 @@ public class OffHeapResourcesProvider implements ServiceProvider {
           OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
           resources.put(identifier, offHeapResource);
 
-          Map<String, Object> properties = new HashMap<String, Object>();
+          Map<String, Object> properties = new HashMap<>();
           properties.put("discriminator", "OffHeapResource");
           properties.put("offHeapResourceIdentifier", identifier.getName());
-          StatisticsManager.createPassThroughStatistic(offHeapResource, "availableMemory", new HashSet<>(Arrays.asList("OffHeapResource","tier")), properties, (Callable<Number>) offHeapResource::available);
+          StatisticsManager.createPassThroughStatistic(
+              offHeapResource,
+              "allocatedMemory",
+              new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
+              properties,
+              (Callable<Number>) () -> offHeapResource.capacity() - offHeapResource.available());
         }
         Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
         if (physicalMemory != null && totalSize > physicalMemory) {

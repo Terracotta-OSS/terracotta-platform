@@ -48,21 +48,19 @@ public class AliasBindingManagementProvider<T extends AliasBinding> extends Abst
   }
 
   @Override
-  protected ExposedAliasBinding<T> wrap(T managedObject) {
-    return new ExposedAliasBinding<T>(managedObject, getMonitoringService().getConsumerId());
-
+  protected ExposedAliasBinding<T> internalWrap(Context context, T managedObject) {
+    return new ExposedAliasBinding<>(context, managedObject);
   }
 
+  @CommonComponent
   public static class ExposedAliasBinding<T extends AliasBinding> implements ExposedObject<T> {
 
     private final T binding;
     private final Context context;
 
-    public ExposedAliasBinding(T binding, long consumerId) {
+    public ExposedAliasBinding(Context context, T binding) {
       this.binding = Objects.requireNonNull(binding);
-      this.context = Context.empty()
-          .with("alias", binding.getAlias())
-          .with("consumerId", String.valueOf(consumerId));
+      this.context = context.with("alias", binding.getAlias());
     }
 
     public T getBinding() {
