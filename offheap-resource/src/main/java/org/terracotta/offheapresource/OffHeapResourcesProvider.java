@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.ResourceType;
+import org.terracotta.statistics.StatisticsManager;
 
 /**
  * A provider of {@link OffHeapResource} instances.
@@ -57,7 +59,14 @@ public class OffHeapResourcesProvider implements ServiceProvider {
         for (ResourceType r : configuration.getResources()) {
           long size = longValueExact(convert(r.getValue(), r.getUnit()));
           totalSize += size;
-          resources.put(OffHeapResourceIdentifier.identifier(r.getName()), new OffHeapResourceImpl(size));
+          OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(size);
+          OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
+          resources.put(identifier, offHeapResource);
+
+          Map<String, Object> properties = new HashMap<String, Object>();
+          properties.put("discriminator", "OffHeapResource");
+          properties.put("offHeapResourceIdentifier", identifier.getName());
+          StatisticsManager.createPassThroughStatistic(offHeapResource, "availableMemory", new HashSet<>(Arrays.asList("OffHeapResource","tier")), properties, (Callable<Number>) offHeapResource::available);
         }
         Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
         if (physicalMemory != null && totalSize > physicalMemory) {

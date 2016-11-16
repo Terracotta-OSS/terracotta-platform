@@ -30,6 +30,7 @@
     <terracotta-apis.version>1.0.11.beta</terracotta-apis.version>
     <tcconfig.version>10.0.11.beta</tcconfig.version>
     <passthrough-testing.version>1.0.11.beta</passthrough-testing.version>
+    <statistics.version>1.4.0</statistics.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.6</java.version>

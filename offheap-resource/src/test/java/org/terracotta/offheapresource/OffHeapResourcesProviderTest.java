@@ -15,15 +15,19 @@
  */
 package org.terracotta.offheapresource;
 
-import java.math.BigInteger;
-import java.util.Collections;
 import org.junit.Test;
+import org.terracotta.context.ContextElement;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
-
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.ResourceType;
+import org.terracotta.statistics.StatisticsManager;
+import org.terracotta.statistics.ValueStatistic;
 
+import java.math.BigInteger;
+import java.util.Collections;
+
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -44,6 +48,27 @@ public class OffHeapResourcesProviderTest {
         return OffHeapResourcesProvider.class;
       }
     }, null), is(false));
+  }
+
+  @Test
+  public void testObserverExposed() {
+    ResourceType resourceConfig = mock(ResourceType.class);
+    when(resourceConfig.getName()).thenReturn("foo");
+    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
+    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(2));
+
+    OffHeapResourcesConfiguration config = mock(OffHeapResourcesConfiguration.class);
+    when(config.getResources()).thenReturn(Collections.singleton(resourceConfig));
+
+    OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
+    provider.initialize(config, null);
+
+    OffHeapResource offHeapResource = provider.getService(42L, OffHeapResourceIdentifier.identifier("foo"));
+    assertThat(offHeapResource.available(), equalTo(2L * 1024 * 1024));
+
+    assertThat(StatisticsManager.nodeFor(offHeapResource).getChildren().size(), equalTo(1));
+    ValueStatistic valueStatistic = (ValueStatistic) StatisticsManager.nodeFor(offHeapResource).getChildren().iterator().next().getContext().attributes().get("this");
+    assertThat(valueStatistic.value(), equalTo(2L * 1024 * 1024));
   }
 
   @Test
