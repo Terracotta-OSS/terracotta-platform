@@ -51,7 +51,7 @@ public class ManagementAgentService implements Closeable {
   private static final Logger LOGGER = LoggerFactory.getLogger(ManagementAgentService.class);
 
   private final ManagementAgentEntity entity;
-  private final ClientIdentifier clientIdentifier;
+  private ClientIdentifier clientIdentifier;
 
   private volatile ManagementRegistry registry;
   private volatile boolean bridging = false;
@@ -68,26 +68,33 @@ public class ManagementAgentService implements Closeable {
 
   private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(ManagementAgentService.class.getSimpleName(), Object.class) {
     @Override
-    public ExposedObject<Object>register(Object managedObject) {
-      // expose the registry each time a new object is registered in the management registry
-      if (bridging) {
-        setCapabilities(registry.getContextContainer(), registry.getCapabilities());
-      }
+    public ExposedObject<Object> register(Object managedObject) {
+      refresh(managedObject);
       return null;
     }
 
     @Override
     public ExposedObject<Object> unregister(Object managedObject) {
+      refresh(managedObject);
+      return null;
+    }
+
+    private void refresh(Object managedObject) {
       // expose the registry each time a new object is registered in the management registry
       if (bridging) {
-        setCapabilities(registry.getContextContainer(), registry.getCapabilities());
+        try {
+          setCapabilities(registry.getContextContainer(), registry.getCapabilities());
+        } catch (InterruptedException e) {
+          LOGGER.error("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
+          Thread.currentThread().interrupt();
+        } catch (Exception e) {
+          LOGGER.error("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
+        }
       }
-      return null;
     }
   };
 
   public ManagementAgentService(final ManagementAgentEntity entity) {
-    this.clientIdentifier = get(entity.getClientIdentifier(null), 20000);
     this.entity = Objects.requireNonNull(entity);
     this.entity.registerListener(new MessageListener<ManagementCallMessage>() {
       @Override
@@ -111,8 +118,8 @@ public class ManagementAgentService implements Closeable {
                     get(entity.callReturn(null, message.getFrom(), message.getManagementCallIdentifier(), aReturn), timeout);
                   }
                 }
-              } catch (RuntimeException err) {
-                if(LOGGER.isWarnEnabled()) {
+              } catch (Exception err) {
+                if (LOGGER.isWarnEnabled()) {
                   LOGGER.warn("Error on management call execution or result sending for " + contextualCall + ". Error: " + err.getMessage(), err);
                 }
               }
@@ -138,20 +145,26 @@ public class ManagementAgentService implements Closeable {
     });
   }
 
+  public void init() throws ManagementOperationException, InterruptedException, TimeoutException {
+    this.clientIdentifier = get(entity.getClientIdentifier(null), 20000);
+
+    // expose the registry when CM is first available
+    if (bridging) {
+      Collection<Capability> capabilities = registry.getCapabilities();
+      setCapabilities(registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()]));
+    }
+  }
+
   /**
    * Bridges a management registry with a management entity. All exposure in the registry will be propagated to the server and
    * it will listen for management calls also.
    */
-  public synchronized ManagementAgentService bridge(ManagementRegistry registry) {
+  public synchronized void setManagementRegistry(ManagementRegistry registry) {
     if (!bridging) {
       this.registry = registry;
       registry.addManagementProvider(managementProvider);
-      // expose the registry when CM is first available
-      Collection<Capability> capabilities = registry.getCapabilities();
-      setCapabilities(registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()]));
       bridging = true;
     }
-    return this;
   }
 
   @Override
@@ -181,47 +194,47 @@ public class ManagementAgentService implements Closeable {
 
   // features
 
-  public void setCapabilities(ContextContainer contextContainer, Collection<Capability> capabilities) {
+  public void setCapabilities(ContextContainer contextContainer, Collection<Capability> capabilities) throws ManagementOperationException, InterruptedException, TimeoutException {
     setCapabilities(contextContainer, capabilities.toArray(new Capability[capabilities.size()]));
   }
 
-  public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) {
+  public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) throws ManagementOperationException, InterruptedException, TimeoutException {
     if (!Arrays.deepEquals(previouslyExposed, capabilities)) {
       get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
       previouslyExposed = capabilities;
     }
   }
 
-  public void setTags(Collection<String> tags) {
+  public void setTags(Collection<String> tags) throws ManagementOperationException, InterruptedException, TimeoutException {
     setTags(tags.toArray(new String[tags.size()]));
   }
 
-  public void setTags(String... tags) {
+  public void setTags(String... tags) throws ManagementOperationException, InterruptedException, TimeoutException {
     get(entity.exposeTags(null, tags), timeout);
   }
 
-  public void pushNotification(ContextualNotification notification) {
+  public void pushNotification(ContextualNotification notification) throws ManagementOperationException, InterruptedException, TimeoutException {
     if (notification != null) {
-      notification.setContext(notification.getContext().with("clientId", clientIdentifier.getClientId()));
+      notification.setContext(notification.getContext().with("clientId", getClientIdentifier().getClientId()));
       get(entity.pushNotification(null, notification), timeout);
     }
   }
 
-  public void pushStatistics(ContextualStatistics... statistics) {
+  public void pushStatistics(ContextualStatistics... statistics) throws ManagementOperationException, InterruptedException, TimeoutException {
     if (statistics.length > 0) {
       for (ContextualStatistics statistic : statistics) {
-        statistic.setContext(statistic.getContext().with("clientId", clientIdentifier.getClientId()));
+        statistic.setContext(statistic.getContext().with("clientId", getClientIdentifier().getClientId()));
       }
       get(entity.pushStatistics(null, statistics), timeout);
     }
   }
 
-  public void pushStatistics(Collection<ContextualStatistics> statistics) {
+  public void pushStatistics(Collection<ContextualStatistics> statistics) throws ManagementOperationException, InterruptedException, TimeoutException {
     pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()]));
   }
 
   public ClientIdentifier getClientIdentifier() {
-    return clientIdentifier;
+    return Objects.requireNonNull(clientIdentifier);
   }
 
   /**
@@ -229,20 +242,15 @@ public class ManagementAgentService implements Closeable {
    * <p>
    * Returns a unique identifier for this management call.
    */
-  public String call(ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
+  public String call(ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) throws ManagementOperationException, InterruptedException, TimeoutException {
     return get(entity.call(null, to, context, capabilityName, methodName, returnType, parameters), timeout);
   }
 
-  private static <V> V get(Future<V> future, long timeout) {
+  private static <V> V get(Future<V> future, long timeout) throws ManagementOperationException, TimeoutException, InterruptedException {
     try {
       return future.get(timeout, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IllegalStateException(e);
     } catch (ExecutionException e) {
-      throw new IllegalStateException(e.getCause());
-    } catch (TimeoutException e) {
-      throw new IllegalStateException("Timed out after " + timeout + "ms.", e);
+      throw new ManagementOperationException(e.getCause());
     }
   }
 

@@ -124,14 +124,14 @@ public class ManagementAgentServiceTest {
 
       ManagementAgentService managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection).retrieveOrCreate(new ManagementAgentConfig()));
       managementAgent.setManagementCallExecutor(executorService);
+      managementAgent.setManagementRegistry(registry);
+      managementAgent.init();
 
       ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
       //System.out.println(clientIdentifier);
       assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
       assertEquals("UNKNOWN", clientIdentifier.getName());
       assertNotNull(clientIdentifier.getConnectionUid());
-
-      managementAgent.bridge(registry);
 
       List<Message> messages = consumer.drainMessageBuffer();
       assertThat(types(messages), equalTo(Arrays.asList("NOTIFICATION", "NOTIFICATION", "NOTIFICATION", "NOTIFICATION")));
@@ -173,6 +173,7 @@ public class ManagementAgentServiceTest {
     try (Connection managementConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {
       ManagementAgentService agent = new ManagementAgentService(new ManagementAgentEntityFactory(managementConnection).retrieveOrCreate(new ManagementAgentConfig()));
       agent.setManagementCallExecutor(executorService);
+      agent.init();
 
       AtomicReference<String> managementCallId = new AtomicReference<>();
       BlockingQueue<ContextualReturn<?>> returns = new LinkedBlockingQueue<>();

@@ -18,8 +18,6 @@ package org.terracotta.management.entity.tms.server;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.service.monitoring.MonitoringService;
-import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,13 +28,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
 
   private final AtomicBoolean connected  = new AtomicBoolean();
+  private final TmsAgentImpl tmsAgent;
 
-  TmsAgentServerEntity(TmsAgentConfig config, MonitoringService monitoringService, SharedManagementRegistry managementRegistry) {
-    super(new TmsAgentImpl(config, monitoringService, managementRegistry));
+  TmsAgentServerEntity(TmsAgentImpl tmsAgent) {
+    super(tmsAgent);
+    this.tmsAgent = tmsAgent;
+  }
+
+  @Override
+  public void createNew() {
+    tmsAgent.init();
   }
 
   @Override
   public void destroy() {
+    tmsAgent.close();
     super.destroy();
   }
 

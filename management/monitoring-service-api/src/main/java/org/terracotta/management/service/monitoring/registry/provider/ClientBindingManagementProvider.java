@@ -20,6 +20,7 @@ import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.service.monitoring.MonitoringService;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -49,27 +50,29 @@ public class ClientBindingManagementProvider<T extends ClientBinding> extends Ab
   }
 
   @Override
-  protected ExposedClientBinding<T> wrap(T managedObject) {
-    ClientIdentifier clientIdentifier = getMonitoringService().getClientIdentifier(managedObject.getClientDescriptor());
-    long consumerId = getMonitoringService().getConsumerId();
-    return internalWrap(managedObject, consumerId, clientIdentifier);
-
+  protected ExposedObject<T> wrap(T managedObject) {
+    MonitoringService monitoringService = getMonitoringService();
+    ClientIdentifier clientIdentifier = monitoringService.getClientIdentifier(managedObject.getClientDescriptor());
+    Context context = Context.empty()
+        .with("consumerId", String.valueOf(monitoringService.getConsumerId()))
+        .with("clientId", clientIdentifier.getClientId());
+    return internalWrap(context, managedObject);
   }
 
-  protected ExposedClientBinding<T> internalWrap(T managedObject, long consumerId, ClientIdentifier clientIdentifier) {
-    return new ExposedClientBinding<>(managedObject, consumerId, clientIdentifier);
+  @Override
+  protected ExposedClientBinding<T> internalWrap(Context context, T managedObject) {
+    return new ExposedClientBinding<>(context, managedObject);
   }
 
+  @CommonComponent
   public static class ExposedClientBinding<T extends ClientBinding> implements ExposedObject<T> {
 
     private final T clientBinding;
     private final Context context;
 
-    public ExposedClientBinding(T clientBinding, long consumerId, ClientIdentifier clientIdentifier) {
+    public ExposedClientBinding(Context context, T clientBinding) {
       this.clientBinding = Objects.requireNonNull(clientBinding);
-      this.context = Context.empty()
-          .with("consumerId", String.valueOf(consumerId))
-          .with("clientId", clientIdentifier.getClientId());
+      this.context = Objects.requireNonNull(context);
     }
 
     public T getClientBinding() {

@@ -44,9 +44,18 @@ public class MonitoringServiceProvider implements ServiceProvider {
       ConsumerManagementRegistry.class
   );
 
+  // implementation of PlatformListener (received platform events) and DataListener (receives tree data and best effort data from any consumer)
   private DefaultListener listener;
-  private PlatformListenerAdapter platformListenerAdapter;
-  private final DefaultSharedManagementRegistry defaultSharedManagementRegistry = new DefaultSharedManagementRegistry();
+
+  // implementation of IStripeMonitoring for platform events (consumerId 0)
+  private IStripeMonitoring platformListenerAdapter;
+
+  // holder of all ConsumerManagementRegistry (ManagementRegistry for an entity)
+  // this class is an entry point for management calls and stat query since it knows all management registry created on the server
+  private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry();
+
+  // responsible of scheduling and providing statistics registries to entities
+  private final DefaultStatisticsService statisticsService = new DefaultStatisticsService(sharedManagementRegistry);
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
@@ -82,7 +91,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
       if (configuration instanceof ConsumerManagementRegistryConfiguration) {
         ConsumerManagementRegistryConfiguration managementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
         MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, new MonitoringServiceConfiguration(managementRegistryConfiguration.getRegistry()));
-        ConsumerManagementRegistry consumerManagementRegistry = defaultSharedManagementRegistry.getOrCreateConsumerManagementRegistry(consumerID, monitoringService);
+        ConsumerManagementRegistry consumerManagementRegistry = sharedManagementRegistry.getOrCreateConsumerManagementRegistry(consumerID, monitoringService, statisticsService);
         return serviceType.cast(consumerManagementRegistry);
       } else {
         throw new IllegalArgumentException("Missing configuration " + MonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
@@ -90,7 +99,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
       // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
     } else if (SharedManagementRegistry.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(defaultSharedManagementRegistry);
+      return serviceType.cast(sharedManagementRegistry);
 
     } else {
       throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
@@ -105,6 +114,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
   @Override
   public void clear() throws ServiceProviderCleanupException {
     listener.clear();
+    statisticsService.close();
   }
 
 }

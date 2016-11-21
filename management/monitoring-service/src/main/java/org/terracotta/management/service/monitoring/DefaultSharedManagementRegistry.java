@@ -69,7 +69,7 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
     return new DefaultCapabilityManagement(this, capabilityName);
   }
 
-  ConsumerManagementRegistry getOrCreateConsumerManagementRegistry(long consumerID, MonitoringService monitoringService) {
+  ConsumerManagementRegistry getOrCreateConsumerManagementRegistry(long consumerID, MonitoringService monitoringService, StatisticsService statisticsService) {
     lock.writeLock().lock();
     try {
       for (Map.Entry<ConsumerManagementRegistry, Long> entry : registries.entrySet()) {
@@ -78,7 +78,7 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
           return registry;
         }
       }
-      ConsumerManagementRegistry registry = new DefaultConsumerManagementRegistry(consumerID, monitoringService);
+      ConsumerManagementRegistry registry = new DefaultConsumerManagementRegistry(consumerID, monitoringService, statisticsService);
       registries.put(registry, consumerID);
       return registry;
     } finally {

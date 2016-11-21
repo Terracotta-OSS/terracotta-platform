@@ -16,9 +16,12 @@
 package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.ManagementProvider;
+import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.StatisticsService;
 
 import java.util.Objects;
 
@@ -26,9 +29,10 @@ import java.util.Objects;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public abstract class AbstractConsumerManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware {
+public abstract class AbstractConsumerManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware, StatisticsServiceAware {
 
   private MonitoringService monitoringService;
+  private StatisticsService statisticsService;
 
   public AbstractConsumerManagementProvider(Class<? extends T> managedType) {
     super(managedType);
@@ -43,4 +47,19 @@ public abstract class AbstractConsumerManagementProvider<T> extends AbstractMana
     return Objects.requireNonNull(monitoringService);
   }
 
+  public void setStatisticsService(StatisticsService statisticsService) {
+    this.statisticsService = statisticsService;
+  }
+
+  protected StatisticsService getStatisticsService() {
+    return statisticsService;
+  }
+
+  @Override
+  protected ExposedObject<T> wrap(T managedObject) {
+    Context context = Context.create("consumerId", String.valueOf(getMonitoringService().getConsumerId()));
+    return internalWrap(context, managedObject);
+  }
+
+  protected abstract ExposedObject<T> internalWrap(Context context, T managedObject);
 }

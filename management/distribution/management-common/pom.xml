@@ -56,6 +56,12 @@
       <artifactId>cluster-topology</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- stat library -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>statistics</artifactId>
+      <version>${statistics.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
