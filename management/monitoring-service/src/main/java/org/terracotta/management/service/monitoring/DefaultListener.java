@@ -308,17 +308,31 @@ class DefaultListener implements PlatformListener, DataListener {
 
       case TOPIC_SERVER_ENTITY_NOTIFICATION: {
         ContextualNotification notification = (ContextualNotification) data;
-        Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
-        notification.setContext(notification.getContext().with(serverEntityContext));
+        Context notificationContext = notification.getContext();
+        if (notificationContext.contains(ServerEntity.CONSUMER_ID)) {
+          consumerId = Long.parseLong(notificationContext.get(ServerEntity.CONSUMER_ID));
+        }
+        Context context = getOptionalServerEntity(sender.getServerName(), consumerId)
+            .map(ServerEntity::getContext)
+            .orElseGet(() -> stripe.getServerByName(sender.getServerName())
+                .map(Server::getContext)
+                .orElseGet(stripe::getContext));
+        notification.setContext(notification.getContext().with(context));
         fireNotification(notification);
         break;
       }
 
       case TOPIC_SERVER_ENTITY_STATISTICS: {
         ContextualStatistics[] statistics = (ContextualStatistics[]) data;
-        Context serverEntityContext = getServerEntity(sender.getServerName(), consumerId).getContext();
         for (ContextualStatistics statistic : statistics) {
-          statistic.setContext(statistic.getContext().with(serverEntityContext));
+          Context statContext = statistic.getContext();
+          long cid = statContext.contains(ServerEntity.CONSUMER_ID) ? Long.parseLong(statContext.get(ServerEntity.CONSUMER_ID)) : consumerId;
+          Context context = getOptionalServerEntity(sender.getServerName(), cid)
+              .map(ServerEntity::getContext)
+              .orElseGet(() -> stripe.getServerByName(sender.getServerName())
+                  .map(Server::getContext)
+                  .orElseGet(stripe::getContext));
+          statistic.setContext(statistic.getContext().with(context));
         }
         fireStatistics(statistics);
         break;
@@ -441,6 +455,18 @@ class DefaultListener implements PlatformListener, DataListener {
     return stripe.getServerByName(serverName)
         .flatMap(server -> server.getServerEntity(serverEntityIdentifier))
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Server entity " + consumerId + " not found on server " + serverName + " within the current topology on active server " + getCurrentActive().getServerName()));
+  }
+
+  private synchronized Optional<ServerEntity> getOptionalServerEntity(String serverName, long consumerId) {
+    Map<Long, ServerEntityIdentifier> map = entities.get(serverName);
+    if (map == null) {
+      return Optional.empty();
+    }
+    ServerEntityIdentifier serverEntityIdentifier = map.get(consumerId);
+    if (serverEntityIdentifier == null) {
+      return Optional.empty();
+    }
+    return stripe.getServerByName(serverName).flatMap(server -> server.getServerEntity(serverEntityIdentifier));
   }
 
   private Server getCurrentActive() {
