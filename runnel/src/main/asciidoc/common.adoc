@@ -10,7 +10,7 @@ ifdef::basebackend-html[:outfilesuffix: .html]
 :icons: font
 :iconfont-remote!:
 :iconfont-name: font-awesome.min
-:sourcedir: ../../../
+:sourcedir: ../../..
 :imagesdir: images
 :sectanchors:
 :idprefix:

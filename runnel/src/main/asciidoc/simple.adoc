@@ -15,7 +15,7 @@ The first thing you need to do is to define your data structure, much like you w
 
 [source,java,indent=0]
 ----
-include::{sourcedir}/src/test/java/org/terracotta/tampon/docs/GettingStarted.java[tag=createSimpleStructure]
+include::{sourcedir}/src/test/java/org/terracotta/runnel/docs/GettingStarted.java[tag=createSimpleStructure]
 ----
 <1> Create a `StructBuilder`.
 <2> Add the fields of that structure, each field having a name (for human reference) and an index (for encoding).
@@ -29,7 +29,7 @@ Once you have a structure, you can start using it to encode 'instances' of it in
 
 [source,java,indent=0]
 ----
-include::{sourcedir}/src/test/java/org/terracotta/tampon/docs/GettingStarted.java[tag=encodeSimpleStructure]
+include::{sourcedir}/src/test/java/org/terracotta/runnel/docs/GettingStarted.java[tag=encodeSimpleStructure]
 ----
 <1> Create a `Struct` like explained above.
 <2> Call the `encoder()` method to start the data encoding.
@@ -46,7 +46,7 @@ With a struct previously encoded into a buffer, you can start extracting back th
 
 [source,java,indent=0]
 ----
-include::{sourcedir}/src/test/java/org/terracotta/tampon/docs/GettingStarted.java[tag=decodeSimpleStructure]
+include::{sourcedir}/src/test/java/org/terracotta/runnel/docs/GettingStarted.java[tag=decodeSimpleStructure]
 ----
 <1> Create a `Struct` like explained above.
 <2> Encode a structure into a buffer.
