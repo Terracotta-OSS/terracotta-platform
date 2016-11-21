@@ -35,7 +35,7 @@ public class DefaultStatisticQueryBuilder implements StatisticQuery.Builder {
   private final long since;
 
   public DefaultStatisticQueryBuilder(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames) {
-    this(capabilityManagement, capabilityName, statisticNames, Collections.<Context>emptyList(), Long.MIN_VALUE);
+    this(capabilityManagement, capabilityName, statisticNames, Collections.<Context>emptyList(), 0L);
   }
 
   private DefaultStatisticQueryBuilder(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts, long since) {
