@@ -23,29 +23,19 @@
     <artifactId>terracotta-management</artifactId>
     <groupId>org.terracotta.management</groupId>
     <version>5.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
+  <groupId>org.terracotta.management.testing</groupId>
+  <artifactId>testing</artifactId>
+  <name>Terracotta Management :: Testing</name>
   <packaging>pom</packaging>
 
   <modules>
-    <module>tms-entity-common</module>
-    <module>tms-entity-client</module>
-    <module>tms-entity-server</module>
+    <module>sample-entity</module>
+    <module>entity-tests</module>
+    <module>integration-tests</module>
   </modules>
-
-  <artifactId>tms-entity</artifactId>
-  <name>Terracotta Management :: TMS Entity</name>
-
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
-  <licenses>
-    <license>
-      <name>The Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
 
 </project>
