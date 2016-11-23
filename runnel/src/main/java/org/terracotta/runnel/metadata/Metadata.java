@@ -27,12 +27,19 @@ import java.util.Map;
  */
 public class Metadata {
 
-  private final Map<String, Field> fieldsByName;
+  private final List<? extends Field> metadata;
+  private Map<String, Field> fieldsByName;
 
   public Metadata(List<? extends Field> metadata) {
-    fieldsByName = new HashMap<String, Field>();
-    for (Field field : metadata) {
-      fieldsByName.put(field.name(), field);
+    this.metadata = metadata;
+  }
+
+  private void initFields(List<? extends Field> metadata) {
+    if (fieldsByName == null) {
+      fieldsByName = new HashMap<String, Field>(metadata.size(), 1.0F);
+      for (Field field : metadata) {
+        fieldsByName.put(field.name(), field);
+      }
     }
   }
 
@@ -45,6 +52,7 @@ public class Metadata {
   }
 
   public Map<Integer, Field> buildFieldsByIndexMap() {
+    initFields(metadata);
     Map<Integer, Field> map = new HashMap<Integer, Field>();
     for (Field field : fieldsByName.values()) {
       map.put(field.index(), field);
@@ -53,6 +61,7 @@ public class Metadata {
   }
 
   Field getFieldByName(String name) {
+    initFields(metadata);
     return fieldsByName.get(name);
   }
 
