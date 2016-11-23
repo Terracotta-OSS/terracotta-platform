@@ -21,7 +21,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
-import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.message.Message;
@@ -61,7 +60,7 @@ public class ManagementRegistryServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    provider.initialize(null, () -> "server-1");
+    provider.initialize(null, new MyPlatformConfiguration("server-1"));
     platformListener = provider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
   }
 
