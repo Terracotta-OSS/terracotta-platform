@@ -26,14 +26,14 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
-import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.entity.ServiceProviderConfiguration;
+
+import org.terracotta.config.service.ExtendedConfigParser;
 import org.w3c.dom.Element;
 
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.xml.sax.SAXException;
 
-public class OffHeapResourceConfigurationParser implements ServiceConfigParser {
+public class OffHeapResourceConfigurationParser implements ExtendedConfigParser {
   
   private static final URL XML_SCHEMA = OffHeapResourceConfigurationParser.class.getResource("/offheap-resource.xsd");
   private static final URI NAMESPACE = URI.create("http://www.terracotta.org/config/offheap-resource");
@@ -49,18 +49,17 @@ public class OffHeapResourceConfigurationParser implements ServiceConfigParser {
   }
 
   @Override
-  public ServiceProviderConfiguration parse(Element elmnt, String string) {
+  public OffHeapResourcesProvider parse(Element elmnt, String string) {
     try {
       JAXBContext jaxbContext = JAXBContext.newInstance(OffheapResourcesType.class.getPackage().getName(), OffHeapResourceConfigurationParser.class.getClassLoader());
       Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
       unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(getXmlSchema()));
+      @SuppressWarnings("unchecked")
       JAXBElement<OffheapResourcesType> parsed = (JAXBElement<OffheapResourcesType>) unmarshaller.unmarshal(elmnt);
-      return new OffHeapResourcesConfiguration(parsed.getValue());
+      return new OffHeapResourcesProvider(parsed.getValue());
     } catch (JAXBException e) {
       throw new IllegalArgumentException(e);
-    } catch (SAXException e) {
-      throw new AssertionError(e);
-    } catch (IOException e) {
+    } catch (SAXException | IOException e) {
       throw new AssertionError(e);
     }
   }

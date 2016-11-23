@@ -25,6 +25,7 @@ import java.util.Set;
 @CommonComponent
 public interface OffHeapResources {
 
-  Set<String> getAllIdentifiers();
+  Set<OffHeapResourceIdentifier> getAllIdentifiers();
 
+  OffHeapResource getOffHeapResource(OffHeapResourceIdentifier identifier);
 }

@@ -19,18 +19,16 @@ import java.math.BigInteger;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.validation.SchemaFactory;
-import org.hamcrest.Matcher;
-import org.hamcrest.core.IsCollectionContaining;
 import org.junit.Test;
 import org.terracotta.offheapresource.config.MemoryUnit;
-import org.terracotta.offheapresource.config.ResourceType;
 import org.w3c.dom.Document;
 
-import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
-import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
 import org.junit.Assert;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifier;
+import static org.terracotta.offheapresource.OffHeapResourcesProvider.convert;
+import static org.terracotta.offheapresource.OffHeapResourcesProvider.longValueExact;
 
 /**
  *
@@ -48,11 +46,10 @@ public class OffHeapResourceConfigurationParserTest {
     
     Document dom = domBuilderFactory.newDocumentBuilder().parse(getClass().getResourceAsStream("/configs/valid.xml"));
 
-    OffHeapResourcesConfiguration config = (OffHeapResourcesConfiguration) parser.parse(dom.getDocumentElement(), "what is this thing?");
+    OffHeapResourcesProvider config = parser.parse(dom.getDocumentElement(), "what is this thing?");
 
-    assertThat(config.getResources(), IsCollectionContaining.<ResourceType>hasItems(
-            resource("primary", 128, MemoryUnit.GB),
-            resource("secondary", 1024, MemoryUnit.MB)));
+    assertThat(config.getOffHeapResource(identifier("primary")).available(), is(longValueExact(convert(BigInteger.valueOf(128L), MemoryUnit.GB))));
+    assertThat(config.getOffHeapResource(identifier("secondary")).available(), is(longValueExact(convert(BigInteger.valueOf(1024L), MemoryUnit.MB))));
   }
 
   @Test
@@ -72,11 +69,5 @@ public class OffHeapResourceConfigurationParserTest {
     } catch (IllegalArgumentException e) {
       //expected
     }
-  }
-
-
-  private static Matcher<ResourceType> resource(String name, long size, MemoryUnit unit) {
-    return allOf(hasProperty("name", is(name)), hasProperty("unit", is(unit)),
-            hasProperty("value", is(BigInteger.valueOf(size))));
   }
 }
