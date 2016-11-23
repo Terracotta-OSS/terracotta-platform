@@ -112,7 +112,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public void clear() throws ServiceProviderCleanupException {
+  public void prepareForSynchronization() throws ServiceProviderCleanupException {
     listener.clear();
     statisticsService.close();
   }

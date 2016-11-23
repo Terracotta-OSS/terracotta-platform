@@ -137,7 +137,7 @@ public class OffHeapResourcesProviderTest {
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider();
     provider.initialize(config, null);
-    provider.clear();
+    provider.prepareForSynchronization();
     assertThat(provider.getService(42L, OffHeapResourceIdentifier.identifier("foo")), nullValue());
   }
 
@@ -158,7 +158,7 @@ public class OffHeapResourcesProviderTest {
     } catch (ArithmeticException e) {
       // expected
     } finally {
-      provider.clear();
+      provider.prepareForSynchronization();
     }
   }
 
@@ -176,7 +176,7 @@ public class OffHeapResourcesProviderTest {
     try {
       provider.initialize(config, null);
     } finally {
-      provider.clear();
+      provider.prepareForSynchronization();
     }
   }
 }

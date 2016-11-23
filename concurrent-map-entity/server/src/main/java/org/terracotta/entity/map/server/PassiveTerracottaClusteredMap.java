@@ -62,11 +62,6 @@ class PassiveTerracottaClusteredMap implements PassiveServerEntity<MapOperation,
   }
 
   @Override
-  public void loadExisting() {
-    throw new UnsupportedOperationException("TODO Implement me!");
-  }
-
-  @Override
   public void destroy() {
     throw new UnsupportedOperationException("TODO Implement me!");
   }

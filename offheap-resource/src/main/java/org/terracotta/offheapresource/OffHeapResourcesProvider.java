@@ -114,7 +114,7 @@ public class OffHeapResourcesProvider implements ServiceProvider {
   }
 
   @Override
-  public void clear() {
+  public void prepareForSynchronization () {
     resources.clear();
   }
 
