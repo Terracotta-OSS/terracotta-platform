@@ -131,20 +131,4 @@ public class StructBuilderTest {
     StructBuilder.newStructBuilder().enm("a", 2, ENM).enm("b", 3, ENM);
   }
 
-  /**
-   * Check that when calling StructBuilder.build(), then modifying the builder again then
-   * building a second struct, we do end up with two identical structs.
-   *
-   * Ugly, but that's the quick way to solve the struct loop struct1 -> struct2 -> struct1 problem.
-   */
-  @Test
-  public void checkLazyStructAliasesWork() throws Exception {
-    StructBuilder structBuilder = StructBuilder.newStructBuilder();
-
-    Struct lazilyInitializedStruct = structBuilder.build();
-    Struct struct = structBuilder.int32("a", 2).int32("b", 3).build();
-
-    lazilyInitializedStruct.encoder().int32("a", 1).int32("b", -1).encode();
-    struct.encoder().int32("a", 1).int32("b", -1).encode();
-  }
 }
