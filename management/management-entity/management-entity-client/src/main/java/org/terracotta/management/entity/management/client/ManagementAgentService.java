@@ -96,7 +96,7 @@ public class ManagementAgentService implements Closeable {
 
   public ManagementAgentService(final ManagementAgentEntity entity) {
     this.entity = Objects.requireNonNull(entity);
-    this.entity.registerListener(new MessageListener<ManagementCallMessage>() {
+    this.entity.registerListener(ManagementCallMessage.class, new MessageListener<ManagementCallMessage>() {
       @Override
       public void onMessage(final ManagementCallMessage message) {
         if (message.getType().equals("MANAGEMENT_CALL")) {

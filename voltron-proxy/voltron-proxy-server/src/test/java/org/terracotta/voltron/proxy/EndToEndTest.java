@@ -127,7 +127,7 @@ public class EndToEndTest {
 
     final ComparableEntity proxy = ClientProxyFactory.createEntityProxy(ComparableEntity.class, Comparable.class, endpoint, codec, String.class);
     final AtomicReference<String> messageReceived = new AtomicReference<String>();
-    proxy.registerListener(new MessageListener<String>() {
+    proxy.registerListener(String.class, new MessageListener<String>() {
       @Override
       public void onMessage(final String message) {
         messageReceived.set(message);
@@ -177,7 +177,7 @@ public class EndToEndTest {
     proxyInvoker.addClient(myClient);
 
     final ClientIdAware proxy = ClientProxyFactory.createProxy(ClientIdAware.class, ClientIdAware.class, endpoint, codec, Integer.class);
-    proxy.registerListener(listener);
+    proxy.registerListener(Integer.class, listener);
     proxy.nothing();
     proxy.notMuch(null);
     assertThat(firingClientIdAware.counter.get(), is(1));
@@ -188,7 +188,7 @@ public class EndToEndTest {
     final Codec codec = new SerializationCodec();
     final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> messageCodec = new ProxyMessageCodec(codec, ClientIdAware.class);
     final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(new ClientIdAware() {
-      public void registerListener(final MessageListener<Integer> listener) {
+      public <T> void registerListener(Class<T> type, final MessageListener<T> listener) {
         throw new UnsupportedOperationException("Implement me!");
       }
 
@@ -309,7 +309,7 @@ public class EndToEndTest {
 
   private static class MyClientDescriptor implements ClientDescriptor {}
 
-  public interface ClientIdAware extends ServerMessageAware<Integer> {
+  public interface ClientIdAware extends ServerMessageAware {
 
     void nothing();
 
@@ -344,7 +344,8 @@ public class EndToEndTest {
       return "YAY!";
     }
 
-    public void registerListener(final MessageListener<Integer> listener) {
+    @Override
+    public <T> void registerListener(Class<T> type, final MessageListener<T> listener) {
       // noop
     }
   }

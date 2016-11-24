@@ -20,7 +20,6 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
-import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
@@ -38,9 +37,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.terracotta.voltron.proxy.Async.Ack.NONE;
-import static org.terracotta.voltron.proxy.Async.Ack.RECEIVED;
-
 /**
  * @author Alex Snaps
  */
@@ -52,7 +48,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   static {
     try {
       close = Entity.class.getDeclaredMethod("close");
-      registerListener = ServerMessageAware.class.getDeclaredMethod("registerListener", MessageListener.class);
+      registerListener = ServerMessageAware.class.getDeclaredMethod("registerListener", Class.class, MessageListener.class);
     } catch (NoSuchMethodException e) {
       throw new AssertionError("Someone changed some method signature here!!!");
     }
@@ -79,8 +75,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       entityClientEndpoint.close();
       return null;
     } else if(registerListener.equals(method)) {
-      final MessageListener arg = (MessageListener) args[0];
-      Class<?> eventType = getMessageListenerEventType(arg);
+      final Class<?> eventType = (Class<?>) args[0];
+      final MessageListener arg = (MessageListener) args[1];
       final CopyOnWriteArrayList<MessageListener> messageListeners = listeners.get(eventType);
       if(messageListeners == null) {
         throw new IllegalArgumentException("Event type '" + eventType + "' isn't supported");
@@ -109,18 +105,6 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     } else {
       return builder.invoke().get().getResponse();
     }
-  }
-
-  private static Class<?> getMessageListenerEventType(MessageListener from) {
-    for (Method m: from.getClass().getMethods()) {
-      if (m.getName().equals("onMessage") && !m.isBridge()) {
-        Class<?>[] params = m.getParameterTypes();
-        if (params.length == 1 && !m.getParameterTypes()[0].isPrimitive()) {
-          return m.getParameterTypes()[0];
-        }
-      }
-    }
-    throw new AssertionError();
   }
 
   private static class ProxiedInvokeFuture implements Future {

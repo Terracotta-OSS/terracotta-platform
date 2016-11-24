@@ -114,17 +114,17 @@ public class ClientProxyFactoryTest {
 
     final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, codec, String.class, Integer.class, Long.class, Double.class);
     assertThat(proxy.sync(), is(42));
-    proxy.registerListener(new StringMessageListener());
-    proxy.registerListener(new MessageListener<Integer>() {
+    proxy.registerListener(String.class, new StringMessageListener());
+    proxy.registerListener(Integer.class, new MessageListener<Integer>() {
       @Override
       public void onMessage(final Integer message) {
         throw new UnsupportedOperationException("Implement me!");
       }
     });
-    proxy.registerListener(new ComplexMessageListener());
-    proxy.registerListener(new MoreComplexMessageListener());
+    proxy.registerListener(Long.class, new ComplexMessageListener());
+    proxy.registerListener(Double.class, new MoreComplexMessageListener());
     try {
-      proxy.registerListener(new MessageListener() {
+      proxy.registerListener(Object.class, new MessageListener() {
         @Override
         public void onMessage(final Object message) {
           throw new UnsupportedOperationException("Implement me!");

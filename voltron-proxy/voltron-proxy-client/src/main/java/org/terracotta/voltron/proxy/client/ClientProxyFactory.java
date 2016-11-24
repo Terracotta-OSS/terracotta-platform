@@ -30,13 +30,13 @@ import java.lang.reflect.Proxy;
  */
 public class ClientProxyFactory {
 
-  public static <T extends Entity & ServerMessageAware<?>> T createEntityProxy(Class<T> clientType, Class<? super T> type,
+  public static <T extends Entity & ServerMessageAware> T createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                                                EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
                                                                                Class<?>... messageTypes) {
     return createProxy(clientType, type, entityClientEndpoint, new SerializationCodec(), messageTypes);
   }
 
-  public static <T extends Entity & ServerMessageAware<?>> T createEntityProxy(Class<T> clientType, Class<? super T> type,
+  public static <T extends Entity & ServerMessageAware> T createEntityProxy(Class<T> clientType, Class<? super T> type,
                                                                                EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
                                                                                final Codec codec, Class<?> messageType,
                                                                                Class<?>... messageTypes) {
