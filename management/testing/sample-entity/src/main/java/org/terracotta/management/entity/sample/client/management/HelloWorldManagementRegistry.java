@@ -16,22 +16,16 @@
 package org.terracotta.management.entity.sample.client.management;
 
 import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.registry.AbstractManagementRegistry;
+import org.terracotta.management.registry.DefaultManagementRegistry;
 
 /**
  * @author Mathieu Carbou
  */
-public class HelloWorldManagementRegistry extends AbstractManagementRegistry {
-
-  private final String entityName;
+public class HelloWorldManagementRegistry extends DefaultManagementRegistry {
 
   public HelloWorldManagementRegistry(String entityName) {
-    this.entityName = entityName;
+    super(new ContextContainer("entityName", entityName));
     addManagementProvider(new HelloWorldManagementProvider(entityName));
   }
 
-  @Override
-  public ContextContainer getContextContainer() {
-    return new ContextContainer("entityName", entityName);
-  }
 }

@@ -16,6 +16,7 @@
 package org.terracotta.management.service.monitoring;
 
 import org.terracotta.entity.PlatformConfiguration;
+import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
@@ -24,6 +25,7 @@ import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -35,6 +37,8 @@ import java.util.stream.Stream;
  * @author Mathieu Carbou
  */
 class DefaultSharedManagementRegistry implements SharedManagementRegistry {
+
+  private static final Comparator<Capability> CAPABILITY_COMPARATOR = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
   private final WeakHashMap<ConsumerManagementRegistry, Long> registries = new WeakHashMap<>();
   private final WeakHashMap<PlatformManagementRegistry, Long> platformRegistries = new WeakHashMap<>();
@@ -69,6 +73,20 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
   @Override
   public CapabilityManagement withCapability(String capabilityName) {
     return new DefaultCapabilityManagement(this, capabilityName);
+  }
+
+  @Override
+  public Collection<? extends Capability> getCapabilities() {
+    lock.readLock().lock();
+    try {
+      return registries.keySet()
+          .stream()
+          .flatMap(r -> r.getCapabilities().stream())
+          .sorted(CAPABILITY_COMPARATOR)
+          .collect(Collectors.toList());
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 
   ConsumerManagementRegistry getOrCreateConsumerManagementRegistry(long consumerID, MonitoringService monitoringService, StatisticsService statisticsService) {

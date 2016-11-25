@@ -43,7 +43,7 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.model.stats.NumberUnit;
 import org.terracotta.management.model.stats.primitive.Counter;
-import org.terracotta.management.registry.AbstractManagementRegistry;
+import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
@@ -109,12 +109,7 @@ public class ManagementAgentServiceTest {
 
   @Test(timeout = 5000)
   public void test_expose() throws Exception {
-    ManagementRegistry registry = new AbstractManagementRegistry() {
-      @Override
-      public ContextContainer getContextContainer() {
-        return new ContextContainer("cacheManagerName", "my-cm-name");
-      }
-    };
+    ManagementRegistry registry = new DefaultManagementRegistry(new ContextContainer("cacheManagerName", "my-cm-name"));
     registry.addManagementProvider(new MyManagementProvider());
     registry.register(new MyObject("myCacheManagerName", "myCacheName1"));
     registry.register(new MyObject("myCacheManagerName", "myCacheName2"));

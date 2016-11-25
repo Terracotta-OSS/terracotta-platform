@@ -27,11 +27,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -40,6 +41,12 @@ import java.util.concurrent.ExecutionException;
 public abstract class AbstractActionManagementProvider<T> extends AbstractManagementProvider<T> {
 
   private static final Map<String, Class<?>> PRIMITIVE_MAP = new HashMap<String, Class<?>>();
+  private static final Comparator<CallDescriptor> CALL_DESCRIPTOR_COMPARATOR = new Comparator<CallDescriptor>() {
+    @Override
+    public int compare(CallDescriptor o1, CallDescriptor o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
 
   static {
     for (Class<?> c : new Class<?>[]{
@@ -54,8 +61,8 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
   }
 
   @Override
-  public final Collection<Descriptor> getDescriptors() {
-    Set<Descriptor> descriptors = new HashSet<Descriptor>();
+  public final Collection<? extends Descriptor> getDescriptors() {
+    Collection<CallDescriptor> descriptors = new HashSet<CallDescriptor>();
     for (ExposedObject<T> o : getExposedObjects()) {
       for (Method method : o.getClass().getMethods()) {
         if (method.isAnnotationPresent(Exposed.class)) {
@@ -67,7 +74,9 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
         }
       }
     }
-    return descriptors;
+    List<CallDescriptor> list = new ArrayList<CallDescriptor>(descriptors);
+    Collections.sort(list, CALL_DESCRIPTOR_COMPARATOR);
+    return list;
   }
 
   @SuppressWarnings("unchecked")

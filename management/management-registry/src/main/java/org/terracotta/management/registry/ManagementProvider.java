@@ -62,7 +62,7 @@ public interface ManagementProvider<T> {
    *
    * @return the set of capability descriptors.
    */
-  Collection<Descriptor> getDescriptors();
+  Collection<? extends Descriptor> getDescriptors();
 
   /**
    * Get the context that the provided capabilities need to run.

@@ -150,7 +150,7 @@ public class ManagementAgentService implements Closeable {
 
     // expose the registry when CM is first available
     if (bridging) {
-      Collection<Capability> capabilities = registry.getCapabilities();
+      Collection<? extends Capability> capabilities = registry.getCapabilities();
       setCapabilities(registry.getContextContainer(), capabilities.toArray(new Capability[capabilities.size()]));
     }
   }
@@ -194,7 +194,7 @@ public class ManagementAgentService implements Closeable {
 
   // features
 
-  public void setCapabilities(ContextContainer contextContainer, Collection<Capability> capabilities) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void setCapabilities(ContextContainer contextContainer, Collection<? extends Capability> capabilities) throws ManagementOperationException, InterruptedException, TimeoutException {
     setCapabilities(contextContainer, capabilities.toArray(new Capability[capabilities.size()]));
   }
 

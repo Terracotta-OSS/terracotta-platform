@@ -17,6 +17,7 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.model.context.Context;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -29,12 +30,17 @@ public class DefaultResultSet<T> implements ResultSet<T> {
   private final Map<Context, T> results;
 
   public DefaultResultSet(Map<Context, T> results) {
-    this.results = results;
+    this.results = Collections.unmodifiableMap(results);
   }
 
   @Override
   public T getResult(Context context) {
     return results.get(context);
+  }
+
+  @Override
+  public Map<Context, T> results() {
+    return results;
   }
 
   @Override

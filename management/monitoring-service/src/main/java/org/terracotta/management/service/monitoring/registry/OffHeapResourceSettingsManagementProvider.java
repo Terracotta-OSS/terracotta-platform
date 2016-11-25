@@ -22,6 +22,7 @@ import org.terracotta.management.registry.action.Named;
 import org.terracotta.management.registry.action.RequiredContext;
 import org.terracotta.management.service.monitoring.registry.provider.AliasBindingManagementProvider;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -35,7 +36,7 @@ public class OffHeapResourceSettingsManagementProvider extends AliasBindingManag
 
   @Override
   public Collection<Descriptor> getDescriptors() {
-    Collection<Descriptor> descriptors = super.getDescriptors();
+    Collection<Descriptor> descriptors = new ArrayList<>(super.getDescriptors());
     descriptors.add(new Settings()
       .set("type", "OffHeapResourceSettingsManagementProvider")
       .set("time", System.currentTimeMillis()));
@@ -59,7 +60,7 @@ public class OffHeapResourceSettingsManagementProvider extends AliasBindingManag
     }
 
     @Override
-    public Collection<? extends Descriptor> getDescriptors() {
+    public Collection<? extends Settings> getDescriptors() {
       return Collections.singleton(new Settings(getContext())
         .set("capacity", getBinding().getValue().capacity())
         .set("availableAtTime", getBinding().getValue().available())

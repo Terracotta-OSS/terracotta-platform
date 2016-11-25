@@ -32,14 +32,14 @@ public final class DefaultCapability implements Capability, Serializable {
   private static final long serialVersionUID = 1;
 
   private final String name;
-  private final Collection<Descriptor> descriptors;
+  private final Collection<? extends Descriptor> descriptors;
   private final CapabilityContext capabilityContext;
 
   public DefaultCapability(String name, CapabilityContext capabilityContext, Descriptor... descriptors) {
     this(name, capabilityContext, Arrays.asList(descriptors));
   }
 
-  public DefaultCapability(String name, CapabilityContext capabilityContext, Collection<Descriptor> descriptors) {
+  public DefaultCapability(String name, CapabilityContext capabilityContext, Collection<? extends Descriptor> descriptors) {
     this.name = Objects.requireNonNull(name);
     this.descriptors = Objects.requireNonNull(descriptors);
     this.capabilityContext = Objects.requireNonNull(capabilityContext);
@@ -51,7 +51,7 @@ public final class DefaultCapability implements Capability, Serializable {
   }
 
   @Override
-  public Collection<Descriptor> getDescriptors() {
+  public Collection<? extends Descriptor> getDescriptors() {
     return descriptors;
   }
 

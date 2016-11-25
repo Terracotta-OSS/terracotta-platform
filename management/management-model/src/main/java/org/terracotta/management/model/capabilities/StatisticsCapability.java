@@ -34,14 +34,14 @@ public final class StatisticsCapability implements Capability, Serializable {
 
   private final String name;
   private final Properties properties;
-  private final Collection<Descriptor> descriptors;
+  private final Collection<? extends Descriptor> descriptors;
   private final CapabilityContext capabilityContext;
 
   public StatisticsCapability(String name, Properties properties, CapabilityContext capabilityContext, Descriptor... descriptors) {
     this(name, properties, Arrays.asList(descriptors), capabilityContext);
   }
 
-  public StatisticsCapability(String name, Properties properties, Collection<Descriptor> descriptors, CapabilityContext capabilityContext) {
+  public StatisticsCapability(String name, Properties properties, Collection<? extends Descriptor> descriptors, CapabilityContext capabilityContext) {
     this.name = Objects.requireNonNull(name);
     this.properties = Objects.requireNonNull(properties);
     this.descriptors = Objects.requireNonNull(descriptors);
@@ -53,7 +53,7 @@ public final class StatisticsCapability implements Capability, Serializable {
   }
 
   @Override
-  public Collection<Descriptor> getDescriptors() {
+  public Collection<? extends Descriptor> getDescriptors() {
     return descriptors;
   }
 

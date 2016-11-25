@@ -19,21 +19,30 @@ import com.tc.classloader.CommonComponent;
 import org.terracotta.context.extended.StatisticsRegistry;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.StatisticsCapability;
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
 import org.terracotta.management.registry.action.RequiredContext;
-import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
+import org.terracotta.management.service.monitoring.MonitoringService;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 @RequiredContext({@Named("consumerId")})
 @CommonComponent
 public abstract class AbstractStatisticsManagementProvider<T extends AliasBinding> extends AliasBindingManagementProvider<T> {
+
+  private static final Comparator<StatisticDescriptor> STATISTIC_DESCRIPTOR_COMPARATOR = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
   private final StatisticConfiguration statisticConfiguration;
 
@@ -63,6 +72,17 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
         configuration.timeToDisable(),
         configuration.timeToDisableUnit());
     return new StatisticsCapability(getCapabilityName(), properties, getDescriptors(), getCapabilityContext());
+  }
+
+  @Override
+  public final Collection<? extends Descriptor> getDescriptors() {
+    Collection<StatisticDescriptor> capabilities = new HashSet<>();
+    for (ExposedObject o : getExposedObjects()) {
+      capabilities.addAll(((AbstractExposedStatistics<?>) o).getDescriptors());
+    }
+    List<StatisticDescriptor> list = new ArrayList<>(capabilities);
+    Collections.sort(list, STATISTIC_DESCRIPTOR_COMPARATOR);
+    return list;
   }
 
   @Override

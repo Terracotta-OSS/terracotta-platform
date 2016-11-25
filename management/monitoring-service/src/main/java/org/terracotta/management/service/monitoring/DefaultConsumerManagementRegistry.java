@@ -21,7 +21,7 @@ import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.registry.AbstractManagementProvider;
-import org.terracotta.management.registry.AbstractManagementRegistry;
+import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
@@ -35,20 +35,19 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry extends AbstractManagementRegistry implements ConsumerManagementRegistry {
+class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
 
   private final MonitoringService monitoringService;
-  private final ContextContainer contextContainer;
   private final StatisticsService statisticsService;
 
-  private Collection<Capability> previouslyExposed = Collections.emptyList();
+  private Collection<? extends Capability> previouslyExposed = Collections.emptyList();
 
   DefaultConsumerManagementRegistry(long consumerId, MonitoringService monitoringService, StatisticsService statisticsService) {
+    super(new ContextContainer("consumerId", String.valueOf(consumerId)));
     this.monitoringService = Objects.requireNonNull(monitoringService);
     this.statisticsService = Objects.requireNonNull(statisticsService);
-    this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
   }
 
   @Override
@@ -70,12 +69,12 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
 
   @Override
   public synchronized void refresh() {
-    LOGGER.trace("refresh(): {}", contextContainer);
-    Collection<Capability> capabilities = getCapabilities();
+    LOGGER.trace("refresh(): {}", getContextContainer());
+    Collection<? extends Capability> capabilities = getCapabilities();
     if (!previouslyExposed.equals(capabilities)) {
       Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
       // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
-      monitoringService.exposeServerEntityManagementRegistry(contextContainer, capabilitiesArray);
+      monitoringService.exposeServerEntityManagementRegistry(getContextContainer(), capabilitiesArray);
       previouslyExposed = capabilities;
     }
   }
@@ -96,14 +95,9 @@ class DefaultConsumerManagementRegistry extends AbstractManagementRegistry imple
   }
 
   @Override
-  public ContextContainer getContextContainer() {
-    return contextContainer;
-  }
-
-  @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("DefaultConsumerManagementRegistry{");
-    sb.append("contextContainer=").append(contextContainer);
+    sb.append("contextContainer=").append(getContextContainer());
     sb.append(", monitoringService=").append(monitoringService);
     sb.append('}');
     return sb.toString();

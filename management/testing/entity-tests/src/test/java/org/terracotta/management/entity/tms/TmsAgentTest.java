@@ -46,7 +46,7 @@ import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.registry.AbstractManagementRegistry;
+import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
@@ -116,8 +116,8 @@ public class TmsAgentTest {
                         .addCapability(new DefaultCapability(
                             "StatisticCollectorCapability",
                             new CapabilityContext(new CapabilityContext.Attribute("consumerId", true)),
-                            new CallDescriptor("stopStatisticCollector", "void"),
                             new CallDescriptor("startStatisticCollector", "void"),
+                            new CallDescriptor("stopStatisticCollector", "void"),
                             new CallDescriptor(
                                 "updateCollectedStatistics",
                                 "void",
@@ -210,12 +210,7 @@ public class TmsAgentTest {
 
       // not connects a client management registry
 
-      ManagementRegistry registry = new AbstractManagementRegistry() {
-        @Override
-        public ContextContainer getContextContainer() {
-          return new ContextContainer("cacheManagerName", "my-cm-name");
-        }
-      };
+      ManagementRegistry registry = new DefaultManagementRegistry(new ContextContainer("cacheManagerName", "my-cm-name"));
       registry.addManagementProvider(new MyManagementProvider());
 
       try (org.terracotta.connection.Connection secondConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/cluster-1"), new Properties())) {

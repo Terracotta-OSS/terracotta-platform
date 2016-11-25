@@ -16,9 +16,12 @@
 package org.terracotta.management.registry;
 
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.ContextContainer;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -26,9 +29,22 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public abstract class AbstractManagementRegistry implements ManagementRegistry {
+public class DefaultManagementRegistry implements ManagementRegistry {
+
+  private final ContextContainer contextContainer;
+
+  private static final Comparator<Capability> CAPABILITY_COMPARATOR = new Comparator<Capability>() {
+    @Override
+    public int compare(Capability o1, Capability o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
 
   protected final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<ManagementProvider<?>>();
+
+  public DefaultManagementRegistry(ContextContainer contextContainer) {
+    this.contextContainer = contextContainer; // accept null values - can be overridden
+  }
 
   @Override
   public void addManagementProvider(ManagementProvider<?> provider) {
@@ -76,11 +92,12 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
   }
 
   @Override
-  public Collection<Capability> getCapabilities() {
-    Collection<Capability> capabilities = new ArrayList<Capability>();
+  public Collection<? extends Capability> getCapabilities() {
+    List<Capability> capabilities = new ArrayList<Capability>();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       capabilities.add(managementProvider.getCapability());
     }
+    Collections.sort(capabilities, CAPABILITY_COMPARATOR);
     return capabilities;
   }
 
@@ -95,4 +112,8 @@ public abstract class AbstractManagementRegistry implements ManagementRegistry {
     return allProviders;
   }
 
+  @Override
+  public ContextContainer getContextContainer() {
+    return contextContainer;
+  }
 }

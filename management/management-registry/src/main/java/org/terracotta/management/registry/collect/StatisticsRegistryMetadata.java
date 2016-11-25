@@ -17,7 +17,6 @@ package org.terracotta.management.registry.collect;
 
 import org.terracotta.context.extended.RegisteredStatistic;
 import org.terracotta.context.extended.StatisticsRegistry;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.stats.MemoryUnit;
 import org.terracotta.management.model.stats.NumberUnit;
@@ -115,8 +114,8 @@ public class StatisticsRegistryMetadata {
     return samples;
   }
 
-  public Collection<Descriptor> getDescriptors() {
-    Set<Descriptor> capabilities = new HashSet<Descriptor>();
+  public Collection<? extends StatisticDescriptor> getDescriptors() {
+    Set<StatisticDescriptor> capabilities = new HashSet<StatisticDescriptor>();
 
     if (statisticsRegistry != null) {
       Map<String, RegisteredStatistic> registrations = statisticsRegistry.getRegistrations();
