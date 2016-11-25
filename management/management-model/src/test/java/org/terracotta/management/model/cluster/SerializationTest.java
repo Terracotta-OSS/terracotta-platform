@@ -24,7 +24,6 @@ import org.terracotta.management.model.capabilities.StatisticsCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
-import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptorCategory;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -93,7 +92,6 @@ public class SerializationTest {
         "capability",
         new StatisticsCapability.Properties(1, TimeUnit.HOURS, 100, 1, TimeUnit.SECONDS, 5, TimeUnit.SECONDS),
         new CapabilityContext(new CapabilityContext.Attribute("cache", true)),
-        new StatisticDescriptorCategory("category", new StatisticDescriptor("stat", StatisticType.AVERAGE)),
         new StatisticDescriptor("stat2", StatisticType.AVERAGE_HISTORY));
     assertEquals(statisticsCapability, copy(statisticsCapability));
     assertEquals(statisticsCapability.hashCode(), copy(statisticsCapability).hashCode());
