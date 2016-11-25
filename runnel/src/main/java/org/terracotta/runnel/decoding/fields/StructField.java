@@ -31,9 +31,17 @@ public class StructField extends AbstractField {
   private final Metadata metadata;
 
   public StructField(String name, int index, List<? extends Field> subFields) {
+    this(name, index, subFields, true);
+  }
+
+  public StructField(String name, int index, List<? extends Field> subFields, boolean init) {
     super(name, index);
     this.subFields = subFields;
-    this.metadata = new Metadata(subFields);
+    this.metadata = new Metadata(subFields, init);
+  }
+
+  public void init() {
+    this.metadata.init();
   }
 
   public Metadata getMetadata() {
