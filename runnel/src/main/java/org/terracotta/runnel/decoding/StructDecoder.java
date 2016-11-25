@@ -30,7 +30,8 @@ import org.terracotta.runnel.utils.ReadBuffer;
 import java.nio.ByteBuffer;
 
 /**
- * @author Ludovic Orban
+ * A decoder allows decoding structured data described by a {@link org.terracotta.runnel.Struct}.
+ * Note: Instances of this class are not thread-safe.
  */
 public class StructDecoder implements PrimitiveDecodingSupport {
 
