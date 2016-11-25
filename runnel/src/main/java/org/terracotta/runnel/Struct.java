@@ -40,14 +40,31 @@ public class Struct {
     return root.subFields();
   }
 
+  /**
+   * Create a non-thread safe encoder allowing encoding according to the present structure.
+   * Note: this method is thread-safe.
+   * @return the encoder.
+   */
   public StructEncoder encoder() {
     return new StructEncoder(root);
   }
 
+  /**
+   * Create a non-thread safe decoder allowing decoding according to the present structure.
+   * Note: this method is thread-safe.
+   * @param byteBuffer the byte buffer containing the data to be decoded.
+   * @return the decoder.
+   */
   public StructDecoder decoder(ByteBuffer byteBuffer) {
     return new StructDecoder(root, new ReadBuffer(byteBuffer));
   }
 
+  /**
+   * Recursively decode a byte buffer according to the present structure and print the decoded outcome to a print stream.
+   * Note: this method is thread-safe.
+   * @param byteBuffer the byte buffer containing the data to be dumped.
+   * @param out the print stream to print to.
+   */
   public void dump(ByteBuffer byteBuffer, PrintStream out) {
     Map<Integer, Field> fieldsByInteger = root.getMetadata().buildFieldsByIndexMap();
 

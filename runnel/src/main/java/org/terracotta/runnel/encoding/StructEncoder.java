@@ -46,7 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author Ludovic Orban
+ * An encoder allows encoding structured data described by a {@link org.terracotta.runnel.Struct}.
+ * Note: Instances of this class are not thread-safe.
  */
 public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
 
