@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.model.capabilities;
+package org.terracotta.management.entity.sample.client;
 
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
-
-import java.util.Collection;
+import org.terracotta.connection.entity.Entity;
+import org.terracotta.management.entity.sample.Cache;
+import org.terracotta.voltron.proxy.client.ServerMessageAware;
 
 /**
- * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public interface Capability {
-
-  String getName();
-
-  Collection<? extends Descriptor> getDescriptors();
-
-  <T extends Descriptor> Collection<T> getDescriptors(Class<T> descriptorType);
-
-  CapabilityContext getCapabilityContext();
+public interface CacheEntity extends Cache, Entity, ServerMessageAware {
 
 }

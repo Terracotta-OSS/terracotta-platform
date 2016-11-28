@@ -33,10 +33,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 @RequiredContext({@Named("consumerId")})
 @CommonComponent
@@ -87,7 +87,7 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
 
   @Override
   public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames, long since) {
-    Map<String, Statistic<?, ?>> statistics = new HashMap<String, Statistic<?, ?>>(statisticNames.size());
+    Map<String, Statistic<?, ?>> statistics = new TreeMap<>();
     AbstractExposedStatistics<T> exposedObject = (AbstractExposedStatistics<T>) findExposedObject(context);
     if (exposedObject != null) {
       for (String statisticName : statisticNames) {

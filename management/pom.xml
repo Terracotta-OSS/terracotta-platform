@@ -42,7 +42,8 @@
     <module>distribution/management-common</module>
     <module>distribution/management-client</module>
     <module>distribution/management-server</module>
-    <module>testing</module>
+    <module>testing/sample-entity</module>
+    <module>testing/integration-tests</module>
   </modules>
 
   <name>Terracotta Management</name>

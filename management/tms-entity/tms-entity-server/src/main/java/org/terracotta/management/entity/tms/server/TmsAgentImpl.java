@@ -44,8 +44,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 /**
  * @author Mathieu Carbou
  */
@@ -55,23 +53,18 @@ class TmsAgentImpl implements TmsAgent, Closeable {
   private static final Comparator<Message> MESSAGE_COMPARATOR = (o1, o2) -> o1.getSequence().compareTo(o2.getSequence());
 
   private final ReadOnlyBuffer<Message> buffer;
+  private final TmsAgentConfig config;
   private final MonitoringService monitoringService;
   private final SharedManagementRegistry sharedManagementRegistry;
   private final PlatformManagementRegistry platformManagementRegistry;
 
-  // TODO: if a day we want to make that configurable, we can, and per provider, or globally as it is now
-  private final StatisticConfiguration statisticConfiguration = new StatisticConfiguration(
-      60, SECONDS,
-      100, 1, SECONDS,
-      30, SECONDS
-  );
-
   TmsAgentImpl(TmsAgentConfig config, ServiceRegistry serviceRegistry) {
+    this.config = config;
     this.monitoringService = Objects.requireNonNull(serviceRegistry.getService(new MonitoringServiceConfiguration(serviceRegistry)));
     this.sharedManagementRegistry = Objects.requireNonNull(serviceRegistry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
     this.buffer = monitoringService.createMessageBuffer(config.getMaximumUnreadMessages());
     this.platformManagementRegistry = Objects.requireNonNull(serviceRegistry.getService(new PlatformManagementRegistryConfiguration(serviceRegistry)
-        .setStatisticConfiguration(statisticConfiguration)));
+        .setStatisticConfiguration(config.getStatisticConfiguration())));
   }
 
   @Override

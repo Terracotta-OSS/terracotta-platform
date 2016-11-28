@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,7 +36,7 @@ public final class Server extends AbstractNode<Stripe> {
   public static final String KEY = "serverId";
   public static final String NAME_KEY = "serverName";
 
-  private final Map<String, ServerEntity> serverEntities = new HashMap<>();
+  private final Map<String, ServerEntity> serverEntities = new TreeMap<>();
   private final String serverName; // matches xml config
 
   private String hostName; // matches xml config

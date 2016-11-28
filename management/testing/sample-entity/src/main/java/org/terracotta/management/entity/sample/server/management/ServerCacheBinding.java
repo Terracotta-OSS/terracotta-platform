@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.model.capabilities;
+package org.terracotta.management.entity.sample.server.management;
 
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.entity.sample.server.ServerCache;
+import org.terracotta.management.service.monitoring.registry.provider.AliasBinding;
 
-import java.util.Collection;
+public class ServerCacheBinding extends AliasBinding {
 
-/**
- * @author Ludovic Orban
- */
-public interface Capability {
+  public ServerCacheBinding(ServerCache serverCache) {
+    super(serverCache.getName(), serverCache);
+  }
 
-  String getName();
-
-  Collection<? extends Descriptor> getDescriptors();
-
-  <T extends Descriptor> Collection<T> getDescriptors(Class<T> descriptorType);
-
-  CapabilityContext getCapabilityContext();
+  @Override
+  public ServerCache getValue() {
+    return (ServerCache) super.getValue();
+  }
 
 }

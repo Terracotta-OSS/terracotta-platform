@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.model.capabilities;
+package org.terracotta.management.entity.sample.client;
 
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.entity.sample.Cache;
+import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
 
-import java.util.Collection;
+import java.io.Serializable;
 
 /**
- * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public interface Capability {
-
-  String getName();
-
-  Collection<? extends Descriptor> getDescriptors();
-
-  <T extends Descriptor> Collection<T> getDescriptors(Class<T> descriptorType);
-
-  CapabilityContext getCapabilityContext();
-
+public class CacheEntityClientService extends ProxyEntityClientService<CacheEntity, String> {
+  public CacheEntityClientService() {
+    super(CacheEntity.class, Cache.class, String.class, new SerializationCodec(), Serializable[].class);
+  }
 }

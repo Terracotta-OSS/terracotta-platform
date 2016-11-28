@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.model.capabilities;
-
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
-
-import java.util.Collection;
+package org.terracotta.management.entity.sample;
 
 /**
- * @author Ludovic Orban
+ * @author Mathieu Carbou
  */
-public interface Capability {
+public interface Cache {
+  void put(String key, String value);
 
-  String getName();
+  String get(String key);
 
-  Collection<? extends Descriptor> getDescriptors();
+  void remove(String key);
 
-  <T extends Descriptor> Collection<T> getDescriptors(Class<T> descriptorType);
+  /**
+   * empty current layer's heap
+   */
+  void clear();
 
-  CapabilityContext getCapabilityContext();
-
+  /**
+   * reports current's layer heap
+   */
+  int size();
 }

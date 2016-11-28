@@ -19,15 +19,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>terracotta-management</artifactId>
+    <groupId>org.terracotta.management</groupId>
+    <version>5.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <artifactId>testing</artifactId>
-    <groupId>org.terracotta.management.testing</groupId>
-    <version>5.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
-  </parent>
-
+  <groupId>org.terracotta.management.testing</groupId>
   <artifactId>sample-entity</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Management :: Testing :: Sample Entity</name>
@@ -48,7 +48,6 @@
       <version>${project.version}</version>
     </dependency>
 
-    <!-- inside jar -->
     <dependency>
       <groupId>org.terracotta.voltron.proxy</groupId>
       <artifactId>voltron-proxy-client</artifactId>
@@ -85,34 +84,34 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
-  </dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.3</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <createSourcesJar>true</createSourcesJar>
-              <artifactSet>
-                <includes>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-client</include>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>passthrough-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.6.3</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
 </project>

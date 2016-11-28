@@ -1,0 +1,995 @@
+{
+  "stripes": [
+    {
+      "id": "SINGLE",
+      "name": "SINGLE",
+      "servers": [
+        {
+          "id": "server1",
+          "serverEntities": [
+            {
+              "id": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
+              "type": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
+              "name": "ManagementAgent",
+              "consumerId": 2,
+              "managementRegistry": null
+            },
+            {
+              "id": "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+              "type": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
+              "name": "TopologyTest",
+              "consumerId": 1,
+              "managementRegistry": {
+                "contextContainer": {
+                  "consumerId": "1",
+                  "subContexts": []
+                },
+                "capabilities": [
+                  {
+                    "name": "StatisticCollectorCapability",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "startStatisticCollector",
+                        "returnType": "void",
+                        "parameters": []
+                      },
+                      {
+                        "name": "stopStatisticCollector",
+                        "returnType": "void",
+                        "parameters": []
+                      },
+                      {
+                        "name": "updateCollectedStatistics",
+                        "returnType": "void",
+                        "parameters": [
+                          {
+                            "name": "capabilityName",
+                            "type": "java.lang.String"
+                          },
+                          {
+                            "name": "statisticNames",
+                            "type": "java.util.Collection"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
+              "type": "org.terracotta.management.entity.sample.client.CacheEntity",
+              "name": "pet-clinic/clients",
+              "consumerId": 4,
+              "managementRegistry": {
+                "contextContainer": {
+                  "consumerId": "4",
+                  "subContexts": []
+                },
+                "capabilities": [
+                  {
+                    "name": "ServerCacheCalls",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "cacheName",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "clear",
+                        "returnType": "void",
+                        "parameters": []
+                      },
+                      {
+                        "name": "get",
+                        "returnType": "java.lang.String",
+                        "parameters": [
+                          {
+                            "name": "key",
+                            "type": "java.lang.String"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "put",
+                        "returnType": "void",
+                        "parameters": [
+                          {
+                            "name": "key",
+                            "type": "java.lang.String"
+                          },
+                          {
+                            "name": "value",
+                            "type": "java.lang.String"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "size",
+                        "returnType": "int",
+                        "parameters": []
+                      }
+                    ]
+                  },
+                  {
+                    "name": "ServerCacheSettings",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "consumerId": "4",
+                        "alias": "pet-clinic/clients",
+                        "type": "ServerCache",
+                        "size": 0
+                      },
+                      {
+                        "type": "ServerCacheSettings",
+                        "time": 0
+                      }
+                    ]
+                  },
+                  {
+                    "name": "ServerCacheStatistics",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "Cluster:ClearCount",
+                        "type": "COUNTER_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearLatencyAverage",
+                        "type": "AVERAGE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearLatencyMaximum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearLatencyMinimum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearRate",
+                        "type": "RATE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitCount",
+                        "type": "COUNTER_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitLatencyAverage",
+                        "type": "AVERAGE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitLatencyMaximum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitLatencyMinimum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitRate",
+                        "type": "RATE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitRatio",
+                        "type": "RATIO_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissCount",
+                        "type": "COUNTER_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissLatencyAverage",
+                        "type": "AVERAGE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissLatencyMaximum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissLatencyMinimum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissRate",
+                        "type": "RATE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissRatio",
+                        "type": "RATIO_HISTORY"
+                      },
+                      {
+                        "name": "ServerCache:Size",
+                        "type": "SIZE_HISTORY"
+                      }
+                    ],
+                    "properties": {
+                      "averageWindowDuration": 1,
+                      "averageWindowUnit": "MINUTES",
+                      "historyInterval": 1,
+                      "historyIntervalUnit": "SECONDS",
+                      "historySize": 100,
+                      "timeToDisable": 5,
+                      "timeToDisableUnit": "SECONDS"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
+              "type": "org.terracotta.management.entity.sample.client.CacheEntity",
+              "name": "pet-clinic/pets",
+              "consumerId": 3,
+              "managementRegistry": {
+                "contextContainer": {
+                  "consumerId": "3",
+                  "subContexts": []
+                },
+                "capabilities": [
+                  {
+                    "name": "ServerCacheCalls",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "cacheName",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "clear",
+                        "returnType": "void",
+                        "parameters": []
+                      },
+                      {
+                        "name": "get",
+                        "returnType": "java.lang.String",
+                        "parameters": [
+                          {
+                            "name": "key",
+                            "type": "java.lang.String"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "put",
+                        "returnType": "void",
+                        "parameters": [
+                          {
+                            "name": "key",
+                            "type": "java.lang.String"
+                          },
+                          {
+                            "name": "value",
+                            "type": "java.lang.String"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "size",
+                        "returnType": "int",
+                        "parameters": []
+                      }
+                    ]
+                  },
+                  {
+                    "name": "ServerCacheSettings",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "consumerId": "3",
+                        "alias": "pet-clinic/pets",
+                        "type": "ServerCache",
+                        "size": 0
+                      },
+                      {
+                        "type": "ServerCacheSettings",
+                        "time": 0
+                      }
+                    ]
+                  },
+                  {
+                    "name": "ServerCacheStatistics",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "Cluster:ClearCount",
+                        "type": "COUNTER_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearLatencyAverage",
+                        "type": "AVERAGE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearLatencyMaximum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearLatencyMinimum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:ClearRate",
+                        "type": "RATE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitCount",
+                        "type": "COUNTER_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitLatencyAverage",
+                        "type": "AVERAGE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitLatencyMaximum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitLatencyMinimum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitRate",
+                        "type": "RATE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:HitRatio",
+                        "type": "RATIO_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissCount",
+                        "type": "COUNTER_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissLatencyAverage",
+                        "type": "AVERAGE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissLatencyMaximum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissLatencyMinimum",
+                        "type": "DURATION_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissRate",
+                        "type": "RATE_HISTORY"
+                      },
+                      {
+                        "name": "Cluster:MissRatio",
+                        "type": "RATIO_HISTORY"
+                      },
+                      {
+                        "name": "ServerCache:Size",
+                        "type": "SIZE_HISTORY"
+                      }
+                    ],
+                    "properties": {
+                      "averageWindowDuration": 1,
+                      "averageWindowUnit": "MINUTES",
+                      "historyInterval": 1,
+                      "historyIntervalUnit": "SECONDS",
+                      "historySize": 100,
+                      "timeToDisable": 5,
+                      "timeToDisableUnit": "SECONDS"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "serverName": "server1",
+          "hostName": "localhost",
+          "hostAddress": "127.0.0.1",
+          "bindAddress": "0.0.0.0",
+          "bindPort": 0,
+          "groupPort": 0,
+          "state": "ACTIVE",
+          "version": "Version Passthrough 5.0.0-SNAPSHOT",
+          "buildId": "Build ID",
+          "startTime": 0,
+          "upTimeSec": 0,
+          "activateTime": 0
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "id": "0@127.0.0.1:TopologyTest:<uuid>",
+      "pid": 0,
+      "hostAddress": "127.0.0.1",
+      "name": "TopologyTest",
+      "logicalConnectionUid": "<uuid>",
+      "vmId": "0@127.0.0.1",
+      "clientId": "0@127.0.0.1:TopologyTest:<uuid>",
+      "hostName": "<hostname>",
+      "tags": [],
+      "connections": [
+        {
+          "id": "<uuid>:SINGLE:server1:127.0.0.1:0",
+          "logicalConnectionUid": "<uuid>",
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 0
+          },
+          "stripeId": "SINGLE",
+          "serverId": "server1",
+          "serverEntityIds": {
+            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
+            "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+          }
+        }
+      ],
+      "managementRegistry": null
+    },
+    {
+      "id": "0@127.0.0.1:pet-clinic:<uuid>",
+      "pid": 0,
+      "hostAddress": "127.0.0.1",
+      "name": "pet-clinic",
+      "logicalConnectionUid": "<uuid>",
+      "vmId": "0@127.0.0.1",
+      "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
+      "hostName": "<hostname>",
+      "tags": [
+        "caches",
+        "pet-clinic"
+      ],
+      "connections": [
+        {
+          "id": "<uuid>:SINGLE:server1:127.0.0.1:0",
+          "logicalConnectionUid": "<uuid>",
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 0
+          },
+          "stripeId": "SINGLE",
+          "serverId": "server1",
+          "serverEntityIds": {
+            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
+            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
+            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
+          }
+        }
+      ],
+      "managementRegistry": {
+        "contextContainer": {
+          "appName": "pet-clinic",
+          "subContexts": []
+        },
+        "capabilities": [
+          {
+            "name": "CacheCalls",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "clear",
+                "returnType": "void",
+                "parameters": []
+              },
+              {
+                "name": "get",
+                "returnType": "java.lang.String",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  }
+                ]
+              },
+              {
+                "name": "put",
+                "returnType": "void",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  },
+                  {
+                    "name": "value",
+                    "type": "java.lang.String"
+                  }
+                ]
+              },
+              {
+                "name": "size",
+                "returnType": "int",
+                "parameters": []
+              }
+            ]
+          },
+          {
+            "name": "CacheSettings",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "appName": "pet-clinic",
+                "cacheName": "pets",
+                "size": 0
+              },
+              {
+                "appName": "pet-clinic",
+                "cacheName": "clients",
+                "size": 0
+              }
+            ]
+          },
+          {
+            "name": "CacheStatistics",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "Cache:ClearCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cache:ClearLatencyAverage",
+                "type": "AVERAGE_HISTORY"
+              },
+              {
+                "name": "Cache:ClearLatencyMaximum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:ClearLatencyMinimum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:ClearRate",
+                "type": "RATE_HISTORY"
+              },
+              {
+                "name": "Cache:HitCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cache:HitLatencyAverage",
+                "type": "AVERAGE_HISTORY"
+              },
+              {
+                "name": "Cache:HitLatencyMaximum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:HitLatencyMinimum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:HitRate",
+                "type": "RATE_HISTORY"
+              },
+              {
+                "name": "Cache:HitRatio",
+                "type": "RATIO_HISTORY"
+              },
+              {
+                "name": "Cache:MissCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cache:MissLatencyAverage",
+                "type": "AVERAGE_HISTORY"
+              },
+              {
+                "name": "Cache:MissLatencyMaximum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:MissLatencyMinimum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:MissRate",
+                "type": "RATE_HISTORY"
+              },
+              {
+                "name": "Cache:MissRatio",
+                "type": "RATIO_HISTORY"
+              },
+              {
+                "name": "ClientCache:Size",
+                "type": "SIZE_HISTORY"
+              }
+            ],
+            "properties": {
+              "averageWindowDuration": 1,
+              "averageWindowUnit": "MINUTES",
+              "historyInterval": 1,
+              "historyIntervalUnit": "SECONDS",
+              "historySize": 100,
+              "timeToDisable": 5,
+              "timeToDisableUnit": "SECONDS"
+            }
+          },
+          {
+            "name": "ManagementAgentService",
+            "context": [],
+            "descriptors": []
+          },
+          {
+            "name": "StatisticCollectorCapability",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "startStatisticCollector",
+                "returnType": "void",
+                "parameters": []
+              },
+              {
+                "name": "stopStatisticCollector",
+                "returnType": "void",
+                "parameters": []
+              },
+              {
+                "name": "updateCollectedStatistics",
+                "returnType": "void",
+                "parameters": [
+                  {
+                    "name": "capabilityName",
+                    "type": "java.lang.String"
+                  },
+                  {
+                    "name": "statisticNames",
+                    "type": "java.util.Collection"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "0@127.0.0.1:pet-clinic:<uuid>",
+      "pid": 0,
+      "hostAddress": "127.0.0.1",
+      "name": "pet-clinic",
+      "logicalConnectionUid": "<uuid>",
+      "vmId": "0@127.0.0.1",
+      "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
+      "hostName": "<hostname>",
+      "tags": [
+        "caches",
+        "pet-clinic"
+      ],
+      "connections": [
+        {
+          "id": "<uuid>:SINGLE:server1:127.0.0.1:0",
+          "logicalConnectionUid": "<uuid>",
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 0
+          },
+          "stripeId": "SINGLE",
+          "serverId": "server1",
+          "serverEntityIds": {
+            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
+            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
+            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
+          }
+        }
+      ],
+      "managementRegistry": {
+        "contextContainer": {
+          "appName": "pet-clinic",
+          "subContexts": []
+        },
+        "capabilities": [
+          {
+            "name": "CacheCalls",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "clear",
+                "returnType": "void",
+                "parameters": []
+              },
+              {
+                "name": "get",
+                "returnType": "java.lang.String",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  }
+                ]
+              },
+              {
+                "name": "put",
+                "returnType": "void",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  },
+                  {
+                    "name": "value",
+                    "type": "java.lang.String"
+                  }
+                ]
+              },
+              {
+                "name": "size",
+                "returnType": "int",
+                "parameters": []
+              }
+            ]
+          },
+          {
+            "name": "CacheSettings",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "appName": "pet-clinic",
+                "cacheName": "pets",
+                "size": 0
+              },
+              {
+                "appName": "pet-clinic",
+                "cacheName": "clients",
+                "size": 0
+              }
+            ]
+          },
+          {
+            "name": "CacheStatistics",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "Cache:ClearCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cache:ClearLatencyAverage",
+                "type": "AVERAGE_HISTORY"
+              },
+              {
+                "name": "Cache:ClearLatencyMaximum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:ClearLatencyMinimum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:ClearRate",
+                "type": "RATE_HISTORY"
+              },
+              {
+                "name": "Cache:HitCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cache:HitLatencyAverage",
+                "type": "AVERAGE_HISTORY"
+              },
+              {
+                "name": "Cache:HitLatencyMaximum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:HitLatencyMinimum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:HitRate",
+                "type": "RATE_HISTORY"
+              },
+              {
+                "name": "Cache:HitRatio",
+                "type": "RATIO_HISTORY"
+              },
+              {
+                "name": "Cache:MissCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cache:MissLatencyAverage",
+                "type": "AVERAGE_HISTORY"
+              },
+              {
+                "name": "Cache:MissLatencyMaximum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:MissLatencyMinimum",
+                "type": "DURATION_HISTORY"
+              },
+              {
+                "name": "Cache:MissRate",
+                "type": "RATE_HISTORY"
+              },
+              {
+                "name": "Cache:MissRatio",
+                "type": "RATIO_HISTORY"
+              },
+              {
+                "name": "ClientCache:Size",
+                "type": "SIZE_HISTORY"
+              }
+            ],
+            "properties": {
+              "averageWindowDuration": 1,
+              "averageWindowUnit": "MINUTES",
+              "historyInterval": 1,
+              "historyIntervalUnit": "SECONDS",
+              "historySize": 100,
+              "timeToDisable": 5,
+              "timeToDisableUnit": "SECONDS"
+            }
+          },
+          {
+            "name": "ManagementAgentService",
+            "context": [],
+            "descriptors": []
+          },
+          {
+            "name": "StatisticCollectorCapability",
+            "context": [
+              {
+                "name": "appName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "startStatisticCollector",
+                "returnType": "void",
+                "parameters": []
+              },
+              {
+                "name": "stopStatisticCollector",
+                "returnType": "void",
+                "parameters": []
+              },
+              {
+                "name": "updateCollectedStatistics",
+                "returnType": "void",
+                "parameters": [
+                  {
+                    "name": "capabilityName",
+                    "type": "java.lang.String"
+                  },
+                  {
+                    "name": "statisticNames",
+                    "type": "java.util.Collection"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

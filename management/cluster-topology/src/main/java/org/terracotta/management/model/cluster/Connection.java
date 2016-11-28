@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 /**
@@ -31,7 +32,7 @@ public final class Connection extends AbstractNode<Client> {
 
   public static final String KEY = "connectionId";
 
-  private final Map<String, Long> serverEntityIds = new LinkedHashMap<>();
+  private final Map<String, Long> serverEntityIds = new TreeMap<>();
   private final Endpoint clientEndpoint;
   private final String stripeId;
   private final String serverId;

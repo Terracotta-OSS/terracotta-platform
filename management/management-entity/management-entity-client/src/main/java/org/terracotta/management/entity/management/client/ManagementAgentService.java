@@ -59,7 +59,7 @@ public class ManagementAgentService implements Closeable {
 
   private ContextualReturnListener contextualReturnListener = new ContextualReturnListenerAdapter();
   private long timeout = 5000;
-  private Executor managementCallExecutor = new Executor() {
+  private Executor managementMessageExecutor = new Executor() {
     @Override
     public void execute(Runnable command) {
       command.run();
@@ -101,7 +101,7 @@ public class ManagementAgentService implements Closeable {
       public void onMessage(final ManagementCallMessage message) {
         if (message.getType().equals("MANAGEMENT_CALL")) {
           final ContextualCall contextualCall = message.unwrap(ContextualCall.class).get(0);
-          managementCallExecutor.execute(new Runnable() {
+          managementMessageExecutor.execute(new Runnable() {
             @Override
             public void run() {
               try {
@@ -128,7 +128,7 @@ public class ManagementAgentService implements Closeable {
 
         } else if (message.getType().equals("MANAGEMENT_CALL_RETURN")) {
           final ContextualReturn<?> aReturn = message.unwrap(ContextualReturn.class).get(0);
-          managementCallExecutor.execute(new Runnable() {
+          managementMessageExecutor.execute(new Runnable() {
             @Override
             public void run() {
               try {
@@ -182,8 +182,8 @@ public class ManagementAgentService implements Closeable {
     return this;
   }
 
-  public ManagementAgentService setManagementCallExecutor(Executor managementCallExecutor) {
-    this.managementCallExecutor = Objects.requireNonNull(managementCallExecutor);
+  public ManagementAgentService setManagementMessageExecutor(Executor managementCallExecutor) {
+    this.managementMessageExecutor = Objects.requireNonNull(managementCallExecutor);
     return this;
   }
 

@@ -89,7 +89,7 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{" + "\nconsumerId={}, \nfetches=" + fetches + ", \ncalls=" + pendingCalls + '}';
+    return getClass().getSimpleName() + "{" + "\nconsumerId=" + consumerId + ", \nfetches=" + fetches + ", \ncalls=" + pendingCalls + '}';
   }
 
   @Override
