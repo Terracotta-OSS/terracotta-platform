@@ -21,16 +21,34 @@ import org.terracotta.runnel.utils.ReadBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Ludovic Orban
  */
 public class Metadata {
 
+  private final List<? extends Field> metadata;
   private final Map<String, Field> fieldsByName;
 
   public Metadata(List<? extends Field> metadata) {
-    fieldsByName = new HashMap<String, Field>();
+    this(metadata, true);
+  }
+
+  public Metadata(List<? extends Field> metadata, boolean init) {
+    this.metadata = metadata;
+    if (init) {
+      fieldsByName = new HashMap<String, Field>();
+      init();
+    } else {
+      fieldsByName = new ConcurrentHashMap<String, Field>(16, 1.0F, 1);
+    }
+  }
+
+  public void init() {
+    if (!fieldsByName.isEmpty()) {
+      throw new IllegalStateException("Metadata already initialized");
+    }
     for (Field field : metadata) {
       fieldsByName.put(field.name(), field);
     }

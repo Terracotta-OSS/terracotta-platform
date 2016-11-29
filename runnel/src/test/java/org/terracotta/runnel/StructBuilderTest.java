@@ -131,4 +131,14 @@ public class StructBuilderTest {
     StructBuilder.newStructBuilder().enm("a", 2, ENM).enm("b", 3, ENM);
   }
 
+  @Test
+  public void checkLazyStructAliasesWork() throws Exception {
+    StructBuilder structBuilder = StructBuilder.newStructBuilder();
+
+    Struct lazilyInitializedStruct = structBuilder.alias();
+    Struct struct = structBuilder.int32("a", 2).int32("b", 3).build();
+
+    lazilyInitializedStruct.encoder().int32("a", 1).int32("b", -1).encode();
+    struct.encoder().int32("a", 1).int32("b", -1).encode();
+  }
 }

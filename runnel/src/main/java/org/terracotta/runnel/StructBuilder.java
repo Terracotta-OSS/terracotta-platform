@@ -39,10 +39,21 @@ public class StructBuilder {
 
   private final List<Field> fields = new ArrayList<Field>();
   private final Set<String> names = new HashSet<String>();
+  private final List<StructField> aliasStructFields = new ArrayList<StructField>();
   private int lastIndex = -1;
 
   public Struct build() {
+    for (StructField prebuilt : aliasStructFields) {
+      prebuilt.init();
+    }
+    aliasStructFields.clear();
     return new Struct(new StructField("root", -1, fields));
+  }
+
+  public Struct alias() {
+    StructField field = new StructField("root", -1, fields, false);
+    aliasStructFields.add(field);
+    return new Struct(field);
   }
 
   public static StructBuilder newStructBuilder() {
