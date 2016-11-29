@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.tms.server.registry;
+package org.terracotta.management.service.monitoring.registry;
 
 import org.terracotta.context.extended.StatisticsRegistry;
 import org.terracotta.management.model.context.Context;

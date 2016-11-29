@@ -41,11 +41,13 @@ public class MonitoringServiceProvider implements ServiceProvider {
       MonitoringService.class,
       IStripeMonitoring.class,
       SharedManagementRegistry.class,
-      ConsumerManagementRegistry.class
+      ConsumerManagementRegistry.class,
+      PlatformManagementRegistry.class
   );
 
   // implementation of PlatformListener (received platform events) and DataListener (receives tree data and best effort data from any consumer)
   private DefaultListener listener;
+  private PlatformConfiguration platformConfiguration;
 
   // implementation of IStripeMonitoring for platform events (consumerId 0)
   private IStripeMonitoring platformListenerAdapter;
@@ -60,6 +62,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.listener = new DefaultListener(new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST), platformConfiguration);
+    this.platformConfiguration = platformConfiguration;
     this.platformListenerAdapter = new PlatformListenerAdapter(listener);
     return true;
   }
@@ -78,7 +81,7 @@ public class MonitoringServiceProvider implements ServiceProvider {
     }
 
     // get or creates a monitoring service used to access the inner M&M topology
-    if (MonitoringService.class.isAssignableFrom(serviceType)) {
+    if (MonitoringService.class == serviceType) {
       if (configuration instanceof MonitoringServiceConfiguration) {
         MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, (MonitoringServiceConfiguration) configuration);
         return serviceType.cast(monitoringService);
@@ -87,19 +90,35 @@ public class MonitoringServiceProvider implements ServiceProvider {
       }
 
       // get or creates a registry specific to this entity to handle stats and management calls
-    } else if (ConsumerManagementRegistry.class.isAssignableFrom(serviceType)) {
+    } else if (ConsumerManagementRegistry.class == serviceType) {
       if (configuration instanceof ConsumerManagementRegistryConfiguration) {
         ConsumerManagementRegistryConfiguration managementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
         MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, new MonitoringServiceConfiguration(managementRegistryConfiguration.getRegistry()));
         ConsumerManagementRegistry consumerManagementRegistry = sharedManagementRegistry.getOrCreateConsumerManagementRegistry(consumerID, monitoringService, statisticsService);
         return serviceType.cast(consumerManagementRegistry);
       } else {
-        throw new IllegalArgumentException("Missing configuration " + MonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+        throw new IllegalArgumentException("Missing configuration " + ConsumerManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
 
       // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
-    } else if (SharedManagementRegistry.class.isAssignableFrom(serviceType)) {
+    } else if (SharedManagementRegistry.class == serviceType) {
       return serviceType.cast(sharedManagementRegistry);
+
+    } else if (PlatformManagementRegistry.class == serviceType) {
+      if (configuration instanceof PlatformManagementRegistryConfiguration) {
+        PlatformManagementRegistryConfiguration platformManagementRegistryConfiguration = (PlatformManagementRegistryConfiguration) configuration;
+        ConsumerManagementRegistryConfiguration managementRegistryConfiguration = new ConsumerManagementRegistryConfiguration(platformManagementRegistryConfiguration.getRegistry());
+        MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, new MonitoringServiceConfiguration(managementRegistryConfiguration.getRegistry()));
+        PlatformManagementRegistry platformManagementRegistry = sharedManagementRegistry.getOrCreatePlatformManagementRegistryConfiguration(
+            consumerID,
+            monitoringService,
+            statisticsService,
+            platformConfiguration,
+            platformManagementRegistryConfiguration.getStatisticConfiguration());
+        return serviceType.cast(platformManagementRegistry);
+      } else {
+        throw new IllegalArgumentException("Missing configuration " + PlatformManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+      }
 
     } else {
       throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);

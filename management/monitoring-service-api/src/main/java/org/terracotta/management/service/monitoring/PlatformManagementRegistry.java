@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.offheapresource;
+package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 
-import java.util.Set;
-
 /**
- * Represents a collection of {@link OffHeapResource} instances
+ * The registry for the platform
+ *
+ * @author Mathieu Carbou
  */
 @CommonComponent
-public interface OffHeapResources {
-
-  Set<OffHeapResourceIdentifier> getAllIdentifiers();
-
-  OffHeapResource getOffHeapResource(OffHeapResourceIdentifier identifier);
+public interface PlatformManagementRegistry extends ConsumerManagementRegistry {
+  void init();
 }

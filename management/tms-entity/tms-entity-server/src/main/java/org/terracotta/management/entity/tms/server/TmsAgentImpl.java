@@ -21,10 +21,6 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.entity.tms.server.registry.OffHeapResourceBinding;
-import org.terracotta.management.entity.tms.server.registry.OffHeapResourceSettingsManagementProvider;
-import org.terracotta.management.entity.tms.server.registry.OffHeapResourceStatisticsManagementProvider;
-import org.terracotta.management.service.monitoring.registry.provider.StatisticCollectorManagementProvider;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
@@ -33,15 +29,12 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
+import org.terracotta.management.service.monitoring.PlatformManagementRegistry;
+import org.terracotta.management.service.monitoring.PlatformManagementRegistryConfiguration;
 import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.management.service.monitoring.SharedManagementRegistry;
-import org.terracotta.offheapresource.OffHeapResource;
-import org.terracotta.offheapresource.OffHeapResourceIdentifier;
-import org.terracotta.offheapresource.OffHeapResources;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -64,7 +57,7 @@ class TmsAgentImpl implements TmsAgent, Closeable {
   private final ReadOnlyBuffer<Message> buffer;
   private final MonitoringService monitoringService;
   private final SharedManagementRegistry sharedManagementRegistry;
-  private final ConsumerManagementRegistry consumerManagementRegistry;
+  private final PlatformManagementRegistry platformManagementRegistry;
 
   // TODO: if a day we want to make that configurable, we can, and per provider, or globally as it is now
   private final StatisticConfiguration statisticConfiguration = new StatisticConfiguration(
@@ -77,21 +70,8 @@ class TmsAgentImpl implements TmsAgent, Closeable {
     this.monitoringService = Objects.requireNonNull(serviceRegistry.getService(new MonitoringServiceConfiguration(serviceRegistry)));
     this.sharedManagementRegistry = Objects.requireNonNull(serviceRegistry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
     this.buffer = monitoringService.createMessageBuffer(config.getMaximumUnreadMessages());
-    this.consumerManagementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ConsumerManagementRegistryConfiguration(serviceRegistry)));
-
-    // manage offheap service if it is there
-    OffHeapResources offHeapResources = serviceRegistry.getService(new BasicServiceConfiguration<>(OffHeapResources.class));
-    if (offHeapResources != null) {
-      // expose settings about off-heap server service
-      consumerManagementRegistry.addManagementProvider(new OffHeapResourceSettingsManagementProvider());
-      consumerManagementRegistry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider(statisticConfiguration));
-
-      // exposes available offheap service resources
-      for (String identifier : offHeapResources.getAllIdentifiers()) {
-        OffHeapResource offHeapResource = serviceRegistry.getService(OffHeapResourceIdentifier.identifier(identifier));
-        consumerManagementRegistry.register(new OffHeapResourceBinding(identifier, offHeapResource));
-      }
-    }
+    this.platformManagementRegistry = Objects.requireNonNull(serviceRegistry.getService(new PlatformManagementRegistryConfiguration(serviceRegistry)
+        .setStatisticConfiguration(statisticConfiguration)));
   }
 
   @Override
@@ -142,25 +122,13 @@ class TmsAgentImpl implements TmsAgent, Closeable {
   }
 
   void init() {
-    // the context for the collector, created from the the registry of the tms entity
-    Context context = Context.create(consumerManagementRegistry.getContextContainer().getName(), consumerManagementRegistry.getContextContainer().getValue());
-
-    // we create a provider that will receive management calls to control the global voltron's statistic collector
-    // this provider will thus be on top of the tms entity
-    StatisticCollectorManagementProvider collectorManagementProvider = new StatisticCollectorManagementProvider(context, statisticConfiguration);
-
-    consumerManagementRegistry.addManagementProvider(collectorManagementProvider);
-
-    // start the stat collector (it won't collect any stats though, because they need to be configured through a management call)
-    collectorManagementProvider.init();
-
-    // expose the management registry inside voltorn
-    consumerManagementRegistry.refresh();
+    platformManagementRegistry.init();
+    platformManagementRegistry.refresh();
   }
 
   @Override
   public void close() {
-    consumerManagementRegistry.close();
+    platformManagementRegistry.close();
   }
 
 }

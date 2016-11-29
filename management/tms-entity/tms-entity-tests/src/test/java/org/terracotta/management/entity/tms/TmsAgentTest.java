@@ -178,13 +178,7 @@ public class TmsAgentTest {
           .replace(":-1", ":" + realConnectionPort)
           .replace(": -1", ": " + realConnectionPort);
 
-      System.out.println("EXPECTED:");
-      System.out.println(expected);
-
       String actual = mapper.writeValueAsString(cluster.toMap());
-      System.out.println("ACTUAL");
-      System.out.println(actual);
-
       assertEquals(expected, actual);
 
       List<Message> messages = entity.readMessages().get();
@@ -192,8 +186,6 @@ public class TmsAgentTest {
 
       // ensure a second read without any topology modifications leads to 0 messages
       assertEquals(0, entity.readMessages().get().size());
-
-      System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
 
       assertEquals("TOPOLOGY", messages.get(messages.size() - 1).getType());
       assertEquals(cluster, messages.get(messages.size() - 1).unwrap(Cluster.class).get(0));
@@ -234,7 +226,6 @@ public class TmsAgentTest {
         managementAgent.init();
 
         ClientIdentifier clientIdentifier = managementAgent.getClientIdentifier();
-        //System.out.println(clientIdentifier);
         assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), clientIdentifier.getPid());
         assertEquals("UNKNOWN", clientIdentifier.getName());
         assertNotNull(clientIdentifier.getConnectionUid());
@@ -242,7 +233,6 @@ public class TmsAgentTest {
         managementAgent.setTags("EhcachePounder", "webapp-1", "app-server-node-1");
 
         messages = entity.readMessages().get();
-        System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
         assertEquals(6, messages.size());
         for (int i = 0; i < 5; i++) {
           assertEquals("NOTIFICATION", messages.get(0).getType());
@@ -258,7 +248,6 @@ public class TmsAgentTest {
         registry.register(new MyObject("myCacheManagerName", "myCacheName2"));
 
         messages = entity.readMessages().get();
-        System.out.println(messages.stream().map(Message::toString).collect(Collectors.joining("\n")));
         assertEquals(2, messages.size());
         assertEquals("NOTIFICATION", messages.get(0).getType());
         assertEquals("TOPOLOGY", messages.get(1).getType());

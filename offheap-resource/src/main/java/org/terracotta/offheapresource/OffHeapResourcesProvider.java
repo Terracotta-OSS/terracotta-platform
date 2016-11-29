@@ -15,26 +15,21 @@
  */
 package org.terracotta.offheapresource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.offheapresource.config.MemoryUnit;
+import org.terracotta.offheapresource.config.OffheapResourcesType;
+import org.terracotta.offheapresource.config.ResourceType;
+import org.terracotta.statistics.StatisticsManager;
+
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.terracotta.entity.PlatformConfiguration;
-import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.offheapresource.config.MemoryUnit;
-import org.terracotta.offheapresource.config.ResourceType;
-import org.terracotta.statistics.StatisticsManager;
 
 /**
  * A provider of {@link OffHeapResource} instances.
@@ -44,81 +39,51 @@ import org.terracotta.statistics.StatisticsManager;
  * allows for the partitioning and control of memory usage by entities
  * consuming this service.
  */
-public class OffHeapResourcesProvider implements ServiceProvider {
+public class OffHeapResourcesProvider implements OffHeapResources {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourcesProvider.class);
           
-  private final Map<OffHeapResourceIdentifier, OffHeapResource> resources = new HashMap<OffHeapResourceIdentifier, OffHeapResource>();
+  private final Map<OffHeapResourceIdentifier, OffHeapResource> resources = new HashMap<>();
 
-  @Override
-  public synchronized boolean initialize(ServiceProviderConfiguration unknownConfig, PlatformConfiguration platformConfiguration) {
-    if (unknownConfig instanceof OffHeapResourcesConfiguration) {
-      OffHeapResourcesConfiguration configuration = (OffHeapResourcesConfiguration) unknownConfig;
-      if (resources.isEmpty()) {
-        long totalSize = 0;
-        for (ResourceType r : configuration.getResources()) {
-          long size = longValueExact(convert(r.getValue(), r.getUnit()));
-          totalSize += size;
-          OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(size);
-          OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
-          resources.put(identifier, offHeapResource);
+  public OffHeapResourcesProvider(OffheapResourcesType configuration) {
+    if (resources.isEmpty()) {
+      long totalSize = 0;
+      for (ResourceType r : configuration.getResource()) {
+        long size = longValueExact(convert(r.getValue(), r.getUnit()));
+        totalSize += size;
+        OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(size);
+        OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
+        resources.put(identifier, offHeapResource);
 
-          Map<String, Object> properties = new HashMap<>();
-          properties.put("discriminator", "OffHeapResource");
-          properties.put("offHeapResourceIdentifier", identifier.getName());
-          StatisticsManager.createPassThroughStatistic(
-              offHeapResource,
-              "allocatedMemory",
-              new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
-              properties,
-              (Callable<Number>) () -> offHeapResource.capacity() - offHeapResource.available());
-        }
-        Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
-        if (physicalMemory != null && totalSize > physicalMemory) {
-          LOGGER.warn("More offheap configured than there is physical memory [{} > {}]", totalSize, physicalMemory);
-        }
-        return true;
-      } else {
-        throw new IllegalStateException("Resources already initialized");
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("discriminator", "OffHeapResource");
+        properties.put("offHeapResourceIdentifier", identifier.getName());
+        StatisticsManager.createPassThroughStatistic(
+            offHeapResource,
+            "allocatedMemory",
+            new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
+            properties,
+            (Callable<Number>) () -> offHeapResource.capacity() - offHeapResource.available());
+      }
+      Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
+      if (physicalMemory != null && totalSize > physicalMemory) {
+        LOGGER.warn("More offheap configured than there is physical memory [{} > {}]", totalSize, physicalMemory);
       }
     } else {
-      return false;
+      throw new IllegalStateException("Resources already initialized");
     }
   }
 
   @Override
-  public <T> T getService(long consumerID, ServiceConfiguration<T> unknownConfiguration) {
-    if (unknownConfiguration instanceof OffHeapResourceIdentifier) {
-      OffHeapResourceIdentifier identifier = (OffHeapResourceIdentifier) unknownConfiguration;
-      return (T) identifier.getServiceType().cast(resources.get(identifier));
-    } else if (OffHeapResources.class.isAssignableFrom(unknownConfiguration.getServiceType())) {
-      return (T) new OffHeapResources() {
-        @Override
-        public Set<String> getAllIdentifiers() {
-          Set<String> names = new HashSet<String>();
-          for (OffHeapResourceIdentifier identifier: resources.keySet()) {
-            names.add(identifier.getName());
-          }
-
-          return Collections.unmodifiableSet(names);
-        }
-      };
-    } else {
-      throw new IllegalArgumentException("Unexpected configuration type " + unknownConfiguration.getClass());
-    }
+  public Set<OffHeapResourceIdentifier> getAllIdentifiers() {
+    return Collections.unmodifiableSet(resources.keySet());
   }
 
-  @Override
-  public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(OffHeapResource.class, OffHeapResources.class);
+  public OffHeapResource getOffHeapResource(OffHeapResourceIdentifier identifier) {
+    return resources.get(identifier);
   }
 
-  @Override
-  public void prepareForSynchronization () {
-    resources.clear();
-  }
-
-  private static BigInteger convert(BigInteger value, MemoryUnit unit) {
+   static BigInteger convert(BigInteger value, MemoryUnit unit) {
     switch (unit) {
       case B: return value.shiftLeft(0);
       case K_B: return value.shiftLeft(10);
@@ -131,7 +96,7 @@ public class OffHeapResourcesProvider implements ServiceProvider {
   }
 
   private static final BigInteger MAX_LONG_PLUS_ONE = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
-  private static long longValueExact(BigInteger value) {
+  static long longValueExact(BigInteger value) {
     if (value.compareTo(MAX_LONG_PLUS_ONE) < 0) {
       return value.longValue();
     } else {
