@@ -16,15 +16,29 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.context.extended.StatisticsRegistry;
-import org.terracotta.management.registry.collect.StatisticCollector;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
+import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.ServiceConfiguration;
 
+import java.util.Objects;
+
+/**
+ * @author Mathieu Carbou
+ */
 @CommonComponent
-public interface StatisticsService {
-  StatisticsRegistry createStatisticsRegistry(Object contextObject);
+public class ClientMonitoringServiceConfiguration implements ServiceConfiguration<ClientMonitoringService> {
 
-  StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
+  private final ClientCommunicator clientCommunicator;
 
-  StatisticConfiguration getStatisticConfiguration();
+  public ClientMonitoringServiceConfiguration(ClientCommunicator clientCommunicator) {
+    this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
+  }
+
+  @Override
+  public Class<ClientMonitoringService> getServiceType() {
+    return ClientMonitoringService.class;
+  }
+
+  public ClientCommunicator getClientCommunicator() {
+    return clientCommunicator;
+  }
 }

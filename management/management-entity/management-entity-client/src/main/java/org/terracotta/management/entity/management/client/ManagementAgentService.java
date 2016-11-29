@@ -20,12 +20,10 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
-import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.cluster.ClientIdentifier;
-import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.ManagementCallMessage;
+import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.ManagementProvider;
@@ -51,15 +49,13 @@ public class ManagementAgentService implements Closeable {
   private static final Logger LOGGER = LoggerFactory.getLogger(ManagementAgentService.class);
 
   private final ManagementAgentEntity entity;
-  private ClientIdentifier clientIdentifier;
 
   private volatile ManagementRegistry registry;
   private volatile boolean bridging = false;
   private Capability[] previouslyExposed = new Capability[0];
 
-  private ContextualReturnListener contextualReturnListener = new ContextualReturnListenerAdapter();
   private long timeout = 5000;
-  private Executor managementMessageExecutor = new Executor() {
+  private Executor managementCallExecutor = new Executor() {
     @Override
     public void execute(Runnable command) {
       command.run();
@@ -96,12 +92,13 @@ public class ManagementAgentService implements Closeable {
 
   public ManagementAgentService(final ManagementAgentEntity entity) {
     this.entity = Objects.requireNonNull(entity);
-    this.entity.registerListener(ManagementCallMessage.class, new MessageListener<ManagementCallMessage>() {
+    this.entity.registerListener(Message.class, new MessageListener<Message>() {
       @Override
-      public void onMessage(final ManagementCallMessage message) {
+      public void onMessage(final Message message) {
+
         if (message.getType().equals("MANAGEMENT_CALL")) {
-          final ContextualCall contextualCall = message.unwrap(ContextualCall.class).get(0);
-          managementMessageExecutor.execute(new Runnable() {
+          final ContextualCall<?> contextualCall = message.unwrap(ContextualCall.class).get(0);
+          managementCallExecutor.execute(new Runnable() {
             @Override
             public void run() {
               try {
@@ -115,7 +112,7 @@ public class ManagementAgentService implements Closeable {
                       .getSingleResult();
                   // check again in case the management call takes some time
                   if (bridging) {
-                    get(entity.callReturn(null, message.getFrom(), message.getManagementCallIdentifier(), aReturn), timeout);
+                    get(entity.answerManagementCall(null, ((ManagementCallMessage) message).getManagementCallIdentifier(), aReturn));
                   }
                 }
               } catch (Exception err) {
@@ -126,28 +123,14 @@ public class ManagementAgentService implements Closeable {
             }
           });
 
-        } else if (message.getType().equals("MANAGEMENT_CALL_RETURN")) {
-          final ContextualReturn<?> aReturn = message.unwrap(ContextualReturn.class).get(0);
-          managementMessageExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                contextualReturnListener.onContextualReturn(message.getFrom(), message.getManagementCallIdentifier(), aReturn);
-              } catch (RuntimeException err) {
-                if (LOGGER.isWarnEnabled()) {
-                  LOGGER.warn("Error on management call result listener for " + message + ". Error: " + err.getMessage(), err);
-                }
-              }
-            }
-          });
+        } else {
+          LOGGER.warn("Received unsupported message: " + message);
         }
       }
     });
   }
 
-  public void init() throws ManagementOperationException, InterruptedException, TimeoutException {
-    this.clientIdentifier = get(entity.getClientIdentifier(null), 20000);
-
+  public void init() throws ExecutionException, InterruptedException, TimeoutException {
     // expose the registry when CM is first available
     if (bridging) {
       Collection<? extends Capability> capabilities = registry.getCapabilities();
@@ -177,13 +160,8 @@ public class ManagementAgentService implements Closeable {
 
   // config ops
 
-  public ManagementAgentService setContextualReturnListener(ContextualReturnListener contextualReturnListener) {
-    this.contextualReturnListener = Objects.requireNonNull(contextualReturnListener);
-    return this;
-  }
-
-  public ManagementAgentService setManagementMessageExecutor(Executor managementCallExecutor) {
-    this.managementMessageExecutor = Objects.requireNonNull(managementCallExecutor);
+  public ManagementAgentService setManagementCallExecutor(Executor managementCallExecutor) {
+    this.managementCallExecutor = Objects.requireNonNull(managementCallExecutor);
     return this;
   }
 
@@ -194,68 +172,43 @@ public class ManagementAgentService implements Closeable {
 
   // features
 
-  public void setCapabilities(ContextContainer contextContainer, Collection<? extends Capability> capabilities) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void setCapabilities(ContextContainer contextContainer, Collection<? extends Capability> capabilities) throws ExecutionException, InterruptedException, TimeoutException {
     setCapabilities(contextContainer, capabilities.toArray(new Capability[capabilities.size()]));
   }
 
-  public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) throws ExecutionException, InterruptedException, TimeoutException {
     if (!Arrays.deepEquals(previouslyExposed, capabilities)) {
-      get(entity.exposeManagementMetadata(null, contextContainer, capabilities), timeout);
+      get(entity.exposeManagementMetadata(null, contextContainer, capabilities));
       previouslyExposed = capabilities;
     }
   }
 
-  public void setTags(Collection<String> tags) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void setTags(Collection<String> tags) throws ExecutionException, InterruptedException, TimeoutException {
     setTags(tags.toArray(new String[tags.size()]));
   }
 
-  public void setTags(String... tags) throws ManagementOperationException, InterruptedException, TimeoutException {
-    get(entity.exposeTags(null, tags), timeout);
+  public void setTags(String... tags) throws ExecutionException, InterruptedException, TimeoutException {
+    get(entity.exposeTags(null, tags));
   }
 
-  public void pushNotification(ContextualNotification notification) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void pushNotification(ContextualNotification notification) throws ExecutionException, InterruptedException, TimeoutException {
     if (notification != null) {
-      notification.setContext(notification.getContext().with("clientId", getClientIdentifier().getClientId()));
-      get(entity.pushNotification(null, notification), timeout);
+      get(entity.pushNotification(null, notification));
     }
   }
 
-  public void pushStatistics(ContextualStatistics... statistics) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void pushStatistics(ContextualStatistics... statistics) throws ExecutionException, InterruptedException, TimeoutException {
     if (statistics.length > 0) {
-      for (ContextualStatistics statistic : statistics) {
-        statistic.setContext(statistic.getContext().with("clientId", getClientIdentifier().getClientId()));
-      }
-      get(entity.pushStatistics(null, statistics), timeout);
+      get(entity.pushStatistics(null, statistics));
     }
   }
 
-  public void pushStatistics(Collection<ContextualStatistics> statistics) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void pushStatistics(Collection<ContextualStatistics> statistics) throws ExecutionException, InterruptedException, TimeoutException {
     pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()]));
   }
 
-  public ClientIdentifier getClientIdentifier() {
-    return Objects.requireNonNull(clientIdentifier);
-  }
-
-  /**
-   * Execute a management call and do not expect any return result.
-   * <p>
-   * Returns a unique identifier for this management call.
-   */
-  public String call(Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) throws ManagementOperationException, InterruptedException, TimeoutException {
-    return get(entity.call(null, context, capabilityName, methodName, returnType, parameters), timeout);
-  }
-
-  public String updateCollectedStatistics(Context context, String capabilityName, Collection<String> statisticNames) throws ManagementOperationException, InterruptedException, TimeoutException {
-    return get(entity.updateCollectedStatistics(null, context, capabilityName, statisticNames), timeout);
-  }
-
-  private static <V> V get(Future<V> future, long timeout) throws ManagementOperationException, TimeoutException, InterruptedException {
-    try {
-      return future.get(timeout, TimeUnit.MILLISECONDS);
-    } catch (ExecutionException e) {
-      throw new ManagementOperationException(e.getCause());
-    }
+  private <V> V get(Future<V> future) throws ExecutionException, TimeoutException, InterruptedException {
+    return future.get(timeout, TimeUnit.MILLISECONDS);
   }
 
 }

@@ -18,6 +18,8 @@ package org.terracotta.management.entity.sample.server.management;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.server.ServerCache;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
+import org.terracotta.management.service.monitoring.ActiveEntityMonitoringService;
+import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
 
@@ -31,17 +33,17 @@ public class Management {
 
   private final ConsumerManagementRegistry managementRegistry;
 
-  private final StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
-      .setAverageWindowDuration(1, TimeUnit.MINUTES)
-      .setHistorySize(100)
-      .setHistoryInterval(1, TimeUnit.SECONDS)
-      .setTimeToDisable(5, TimeUnit.SECONDS);
-
   public Management(ServiceRegistry serviceRegistry) {
-    this.managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ConsumerManagementRegistryConfiguration(serviceRegistry)));
+    ActiveEntityMonitoringService activeEntityMonitoringService = Objects.requireNonNull(serviceRegistry.getService(new ActiveEntityMonitoringServiceConfiguration()));
+    this.managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ConsumerManagementRegistryConfiguration(activeEntityMonitoringService)
+        .setStatisticConfiguration(new StatisticConfiguration()
+            .setAverageWindowDuration(1, TimeUnit.MINUTES)
+            .setHistorySize(100)
+            .setHistoryInterval(1, TimeUnit.SECONDS)
+            .setTimeToDisable(5, TimeUnit.SECONDS))));
     this.managementRegistry.addManagementProvider(new ServerCacheSettingsManagementProvider());
     this.managementRegistry.addManagementProvider(new ServerCacheCallManagementProvider());
-    this.managementRegistry.addManagementProvider(new ServerCacheStatisticsManagementProvider(statisticConfiguration));
+    this.managementRegistry.addManagementProvider(new ServerCacheStatisticsManagementProvider());
   }
 
   public void init() {

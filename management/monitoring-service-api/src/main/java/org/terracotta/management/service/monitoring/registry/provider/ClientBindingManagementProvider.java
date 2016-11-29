@@ -17,10 +17,12 @@ package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.ActiveEntityMonitoringService;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -50,12 +52,20 @@ public class ClientBindingManagementProvider<T extends ClientBinding> extends Ab
   }
 
   @Override
+  public void setMonitoringService(EntityMonitoringService monitoringService) {
+    if (!(monitoringService instanceof ActiveEntityMonitoringService)) {
+      throw new IllegalArgumentException("Monitoring service is not a " + ActiveEntityMonitoringService.class.getName());
+    }
+    super.setMonitoringService(monitoringService);
+  }
+
+  @Override
   protected ExposedObject<T> wrap(T managedObject) {
-    MonitoringService monitoringService = getMonitoringService();
+    ActiveEntityMonitoringService monitoringService = (ActiveEntityMonitoringService) getMonitoringService();
     ClientIdentifier clientIdentifier = monitoringService.getClientIdentifier(managedObject.getClientDescriptor());
     Context context = Context.empty()
         .with("consumerId", String.valueOf(monitoringService.getConsumerId()))
-        .with("clientId", clientIdentifier.getClientId());
+        .with(Client.KEY, clientIdentifier.getClientId());
     return internalWrap(context, managedObject);
   }
 

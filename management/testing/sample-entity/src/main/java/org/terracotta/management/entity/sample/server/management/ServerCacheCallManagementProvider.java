@@ -22,7 +22,8 @@ import org.terracotta.management.registry.action.Exposed;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
 import org.terracotta.management.registry.action.RequiredContext;
-import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
+import org.terracotta.management.service.monitoring.StatisticsService;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 
 import java.util.Collection;
@@ -35,16 +36,20 @@ import java.util.Collections;
 @RequiredContext({@Named("consumerId"), @Named("cacheName")})
 public class ServerCacheCallManagementProvider extends AbstractActionManagementProvider<ServerCacheBinding> implements MonitoringServiceAware {
 
-  private MonitoringService monitoringService;
+  private EntityMonitoringService monitoringService;
 
   ServerCacheCallManagementProvider() {
     super(ServerCacheBinding.class);
   }
 
   @Override
-  public void setMonitoringService(MonitoringService monitoringService) {
-
+  public void setMonitoringService(EntityMonitoringService monitoringService) {
     this.monitoringService = monitoringService;
+  }
+
+  @Override
+  public void setStatisticsService(StatisticsService statisticsService) {
+    // we do not care about this service
   }
 
   @Override

@@ -15,13 +15,15 @@
  */
 package org.terracotta.management.entity.tms.client;
 
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.management.entity.tms.TmsAgent;
-import org.terracotta.voltron.proxy.client.ServerMessageAware;
+import org.terracotta.management.model.context.Context;
 
 /**
  * @author Mathieu Carbou
  */
-public interface TmsAgentEntity extends TmsAgent, Entity, ServerMessageAware {
+public class IllegalManagementCallException extends Exception {
+  private static final long serialVersionUID = -5711911050827926344L;
 
+  public IllegalManagementCallException(Context context, String capabilityName, String methodName) {
+    super("Cannot find capability " + capabilityName + " on target " + context + " to call method " + methodName);
+  }
 }

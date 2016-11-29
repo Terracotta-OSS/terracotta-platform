@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring.registry.provider;
+package org.terracotta.management.entity.tms.client;
 
-import com.tc.classloader.CommonComponent;
-import org.terracotta.management.service.monitoring.StatisticsService;
+import org.terracotta.management.model.context.Context;
 
-@CommonComponent
-public interface StatisticsServiceAware {
-  void setStatisticsService(StatisticsService statisticsService);
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+/**
+ * @author Mathieu Carbou
+ */
+public interface ManagementCall<T> {
+
+  Class<T> getReturnType();
+
+  Context getTarget();
+
+  String getId();
+
+  T waitForReturn() throws TimeoutException, ExecutionException, InterruptedException, CancellationException, IllegalManagementCallException;
+
+  void cancel();
+
+  boolean isCanceled();
 }

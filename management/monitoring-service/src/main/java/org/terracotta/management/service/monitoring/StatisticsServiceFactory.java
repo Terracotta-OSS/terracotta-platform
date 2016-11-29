@@ -22,8 +22,10 @@ import org.terracotta.management.registry.CapabilityManagementSupport;
 import org.terracotta.management.registry.collect.DefaultStatisticCollector;
 import org.terracotta.management.registry.collect.StatisticCollector;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
+import org.terracotta.management.sequence.TimeSource;
 
 import java.io.Closeable;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RunnableScheduledFuture;
@@ -33,15 +35,19 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * This service is the central point to create statistic registries and collectors running with the scheduler provided by this service
+ *
  * @author Mathieu Carbou
  */
-class DefaultStatisticsService implements StatisticsService, Closeable {
+class StatisticsServiceFactory implements Closeable {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStatisticsService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsServiceFactory.class);
 
-  private final AtomicLong managementSchedulerCount = new AtomicLong();
+  private static final AtomicLong managementSchedulerCount = new AtomicLong();
+
+  //TODO: keep an eye on the thread count, also, do we want 2 scheduled executor service, one for stats sampling (1 sec rate) and another one for stats collector (22 sec delay) ? Or keep 1 for both use cases ?
   private final ScheduledExecutorService managementScheduler = Executors.unconfigurableScheduledExecutorService(new ScheduledThreadPoolExecutor(
-      Runtime.getRuntime().availableProcessors(),
+      1,
       r -> {
         Thread t = Executors.defaultThreadFactory().newThread(r);
         t.setDaemon(true);
@@ -63,13 +69,15 @@ class DefaultStatisticsService implements StatisticsService, Closeable {
   });
 
   private final CapabilityManagementSupport capabilityManagementSupport;
+  private final TimeSource timeSource;
 
-  DefaultStatisticsService(CapabilityManagementSupport capabilityManagementSupport) {
-    this.capabilityManagementSupport = capabilityManagementSupport;
+  StatisticsServiceFactory(CapabilityManagementSupport capabilityManagementSupport, TimeSource timeSource) {
+    this.capabilityManagementSupport = Objects.requireNonNull(capabilityManagementSupport);
+    this.timeSource = Objects.requireNonNull(timeSource);
   }
 
-  @Override
   public StatisticsRegistry createStatisticsRegistry(StatisticConfiguration statisticConfiguration, Object contextObject) {
+    LOGGER.trace("[0] createStatisticsRegistry({})", statisticConfiguration);
     return new StatisticsRegistry(
         contextObject,
         managementScheduler,
@@ -82,14 +90,13 @@ class DefaultStatisticsService implements StatisticsService, Closeable {
         statisticConfiguration.timeToDisableUnit());
   }
 
-  @Override
   public StatisticCollector createStatisticCollector(StatisticConfiguration statisticConfiguration, StatisticCollector.Collector collector) {
+    LOGGER.trace("[0] createStatisticCollector({})", statisticConfiguration);
     return new DefaultStatisticCollector(
         capabilityManagementSupport,
         managementScheduler,
         collector,
-        // TODO FIXME: there is no timesource service in voltron: https://github.com/Terracotta-OSS/terracotta-apis/issues/167
-        System::currentTimeMillis,
+        timeSource::getTimestamp,
         statisticConfiguration
     );
   }
@@ -99,4 +106,22 @@ class DefaultStatisticsService implements StatisticsService, Closeable {
     managementScheduler.shutdown();
   }
 
+  public StatisticsService createStatisticsService(StatisticConfiguration statisticConfiguration) {
+    return new StatisticsService() {
+      @Override
+      public StatisticsRegistry createStatisticsRegistry(Object contextObject) {
+        return StatisticsServiceFactory.this.createStatisticsRegistry(statisticConfiguration, contextObject);
+      }
+
+      @Override
+      public StatisticCollector createStatisticCollector(StatisticCollector.Collector collector) {
+        return StatisticsServiceFactory.this.createStatisticCollector(statisticConfiguration, collector);
+      }
+
+      @Override
+      public StatisticConfiguration getStatisticConfiguration() {
+        return statisticConfiguration;
+      }
+    };
+  }
 }

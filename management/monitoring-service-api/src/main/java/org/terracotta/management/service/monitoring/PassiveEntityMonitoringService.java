@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.tms.client;
+package org.terracotta.management.service.monitoring;
 
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.management.entity.tms.TmsAgent;
-import org.terracotta.voltron.proxy.client.ServerMessageAware;
+import com.tc.classloader.CommonComponent;
 
 /**
+ * Class used by passive entities requiring to push some data into the monitoring service.
+ * <p>
+ * Data is redirecting through the IMonitoringProducer of platform, which will send the data back to the active.
+ * <p>
+ * The active will receive the data in the DefaultDataListener.
+ *
  * @author Mathieu Carbou
  */
-public interface TmsAgentEntity extends TmsAgent, Entity, ServerMessageAware {
+@CommonComponent
+public interface PassiveEntityMonitoringService extends EntityMonitoringService {
 
 }

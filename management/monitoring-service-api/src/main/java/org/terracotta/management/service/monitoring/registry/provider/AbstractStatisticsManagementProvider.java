@@ -27,7 +27,6 @@ import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.registry.action.Named;
 import org.terracotta.management.registry.action.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
-import org.terracotta.management.service.monitoring.MonitoringService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,15 +43,8 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
 
   private static final Comparator<StatisticDescriptor> STATISTIC_DESCRIPTOR_COMPARATOR = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
-  private final StatisticConfiguration statisticConfiguration;
-
-  public AbstractStatisticsManagementProvider(Class<? extends T> type, StatisticConfiguration statisticConfiguration) {
+  public AbstractStatisticsManagementProvider(Class<? extends T> type) {
     super(type);
-    this.statisticConfiguration = statisticConfiguration;
-  }
-
-  protected StatisticConfiguration getStatisticConfiguration() {
-    return statisticConfiguration;
   }
 
   @Override
@@ -62,7 +54,7 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
 
   @Override
   public Capability getCapability() {
-    StatisticConfiguration configuration = getStatisticConfiguration();
+    StatisticConfiguration configuration = getStatisticsService().getStatisticConfiguration();
     StatisticsCapability.Properties properties = new StatisticsCapability.Properties(
         configuration.averageWindowDuration(),
         configuration.averageWindowUnit(),
@@ -103,10 +95,9 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
 
   @Override
   protected AbstractExposedStatistics<T> wrap(T managedObject) {
-    MonitoringService monitoringService = getMonitoringService();
     StatisticsRegistry statisticsRegistry = createStatisticsRegistry(managedObject);
     Context context = Context.empty()
-        .with("consumerId", String.valueOf(monitoringService.getConsumerId()))
+        .with("consumerId", String.valueOf(getMonitoringService().getConsumerId()))
         .with("alias", managedObject.getAlias());
     return internalWrap(context, managedObject, statisticsRegistry);
   }
@@ -117,7 +108,7 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
   }
 
   protected StatisticsRegistry createStatisticsRegistry(T managedObject) {
-    return getStatisticsService().createStatisticsRegistry(getStatisticConfiguration(), managedObject.getValue());
+    return getStatisticsService().createStatisticsRegistry(managedObject.getValue());
   }
 
   protected abstract AbstractExposedStatistics<T> internalWrap(Context context, T managedObject, StatisticsRegistry statisticsRegistry);

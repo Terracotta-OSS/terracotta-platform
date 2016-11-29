@@ -25,7 +25,6 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -53,9 +52,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -70,9 +67,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-import static org.terracotta.management.service.monitoring.DefaultListener.TOPIC_SERVER_ENTITY_NOTIFICATION;
-import static org.terracotta.management.service.monitoring.DefaultListener.TOPIC_SERVER_ENTITY_STATISTICS;
+import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_NOTIFICATION;
+import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_STATISTICS;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_ROOT_NAME;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_PATH;
@@ -91,6 +87,7 @@ public class VoltronMonitoringServiceTest {
 
   ObjectMapper mapper = new ObjectMapper();
   MonitoringServiceProvider serviceProvider = new MonitoringServiceProvider();
+  ClientCommunicator clientCommunicator;
   long now = 1476304913984L;
 
   // service that the platform calls when it received calls on active and passive through IMonitoringProducer
@@ -102,12 +99,11 @@ public class VoltronMonitoringServiceTest {
   PlatformServer passive;
 
   // a monitoring service (and buffer) retrieved from our entity 1
-  MonitoringService monitoringServiceEntity1;
-  MonitoringService monitoringServiceEntity3;
-  ReadOnlyBuffer<Message> bufferEntity1;
-
-  Map<Class<?>, Object> mocks = new HashMap<>();
-  ServiceRegistry registry = mock(ServiceRegistry.class);
+  ManagementService managementService;
+  ClientMonitoringService clientMonitoringService;
+  ActiveEntityMonitoringService activeEntityMonitoringService;
+  PassiveEntityMonitoringService passiveEntityMonitoringService;
+  ReadOnlyBuffer<Message> buffer;
 
   @Before
   public void setUp() throws Exception {
@@ -134,32 +130,16 @@ public class VoltronMonitoringServiceTest {
     // simulate an entity creation
     platformListener.addNode(active, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, true));
 
-    // mock voltron's ServiceRegistry
-    when(registry.getService(any(BasicServiceConfiguration.class)))
-        .thenAnswer(invocation -> mocks.computeIfAbsent(((BasicServiceConfiguration) invocation.getArguments()[0]).getServiceType(), type -> mock(type)));
-
     // an entity is requesting the service in its "createActiveEntity" method
     // simulate the IMonitoringProducer's voltron implementation for consumer id 1
     dataListener = serviceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
-    mocks.put(IMonitoringProducer.class, new IMonitoringProducer() {
-      @Override
-      public boolean addNode(String[] parents, String name, Serializable value) {
-        return dataListener.addNode(active, parents, name, value);
-      }
 
-      @Override
-      public boolean removeNode(String[] parents, String name) {
-        return dataListener.removeNode(active, parents, name);
-      }
+    clientCommunicator = mock(ClientCommunicator.class);
+    managementService = serviceProvider.getService(1, new ManagementServiceConfiguration(clientCommunicator));
+    buffer = managementService.createMessageBuffer(100);
 
-      @Override
-      public void pushBestEffortsData(String name, Serializable data) {
-        dataListener.pushBestEffortsData(active, name, data);
-      }
-    });
-
-    monitoringServiceEntity1 = serviceProvider.getService(1, new MonitoringServiceConfiguration(registry));
-    bufferEntity1 = monitoringServiceEntity1.createMessageBuffer(100);
+    clientMonitoringService = serviceProvider.getService(1, new ClientMonitoringServiceConfiguration(clientCommunicator));
+    activeEntityMonitoringService = serviceProvider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
   }
 
   @Test
@@ -275,7 +255,7 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_expose_client_tags() throws Exception {
     test_fetch_entity();
-    monitoringServiceEntity1.exposeClientTags(new FakeDesc("1-1"), "tags1");
+    clientMonitoringService.exposeTags(new FakeDesc("1-1"), "tags1");
     assertTopologyEquals("cluster-10.json");
 
     List<Message> messages = messages();
@@ -286,7 +266,7 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_expose_registry_on_client() throws Exception {
     test_fetch_entity();
-    monitoringServiceEntity1.exposeClientManagementRegistry(
+    clientMonitoringService.exposeManagementRegistry(
         new FakeDesc("1-1"),
         new ContextContainer("ctName", "ctValue"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
@@ -299,7 +279,7 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_expose_registry_on_active_entity() throws Exception {
-    monitoringServiceEntity1.exposeServerEntityManagementRegistry(
+    activeEntityMonitoringService.exposeManagementRegistry(
         new ContextContainer("ctName", "ctValue"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
     assertTopologyEquals("cluster-8.json");
@@ -315,7 +295,7 @@ public class VoltronMonitoringServiceTest {
 
     // simulate the IMonitoringProducer's voltron implementation for consumer id 3
     dataListener = serviceProvider.getService(3, new BasicServiceConfiguration<>(IStripeMonitoring.class));
-    mocks.put(IMonitoringProducer.class, new IMonitoringProducer() {
+    IMonitoringProducer monitoringProducer = new IMonitoringProducer() {
       @Override
       public boolean addNode(String[] parents, String name, Serializable value) {
         return dataListener.addNode(passive, parents, name, value);
@@ -330,10 +310,10 @@ public class VoltronMonitoringServiceTest {
       public void pushBestEffortsData(String name, Serializable data) {
         dataListener.pushBestEffortsData(passive, name, data);
       }
-    });
-    monitoringServiceEntity3 = serviceProvider.getService(3, new MonitoringServiceConfiguration(registry));
+    };
+    passiveEntityMonitoringService = serviceProvider.getService(3, new PassiveEntityMonitoringServiceConfiguration(monitoringProducer));
 
-    monitoringServiceEntity3.exposeServerEntityManagementRegistry(
+    passiveEntityMonitoringService.exposeManagementRegistry(
         new ContextContainer("k", "v"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
     assertTopologyEquals("cluster-9.json");
@@ -343,7 +323,7 @@ public class VoltronMonitoringServiceTest {
     assertThat(notificationTypes(messages), equalTo(Arrays.asList("ENTITY_REGISTRY_AVAILABLE")));
 
     // no update
-    monitoringServiceEntity3.exposeServerEntityManagementRegistry(
+    passiveEntityMonitoringService.exposeManagementRegistry(
         new ContextContainer("k", "v"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
 
@@ -351,7 +331,7 @@ public class VoltronMonitoringServiceTest {
     assertThat(messages.size(), equalTo(0));
 
     // update
-    monitoringServiceEntity3.exposeServerEntityManagementRegistry(
+    passiveEntityMonitoringService.exposeManagementRegistry(
         new ContextContainer("w", "w"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
 
@@ -362,15 +342,15 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_entity_identifier() throws Exception {
-    assertThat(monitoringServiceEntity1.getConsumerId(), equalTo(1L));
+    assertThat(activeEntityMonitoringService.getConsumerId(), equalTo(1L));
   }
 
   @Test
   public void test_notifs_and_stats() throws Exception {
     test_fetch_entity();
 
-    monitoringServiceEntity1.pushClientNotification(new FakeDesc("1-1"), new ContextualNotification(Context.empty(), "TYPE-1"));
-    monitoringServiceEntity1.pushClientStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty(), Collections.emptyMap()));
+    clientMonitoringService.pushNotification(new FakeDesc("1-1"), new ContextualNotification(Context.empty(), "TYPE-1"));
+    clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty(), Collections.emptyMap()));
 
     dataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
     dataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty(), Collections.emptyMap())});
@@ -382,7 +362,7 @@ public class VoltronMonitoringServiceTest {
         notificationContexts(messages),
         equalTo(Arrays.asList(
             Context.create(Client.KEY, "111@127.0.0.1:name:uuid-1"),
-            monitoringServiceEntity1.readTopology().getSingleStripe().getActiveServerEntity("entityName-1", "entityType").get().getContext())));
+            managementService.readTopology().getSingleStripe().getActiveServerEntity("entityName-1", "entityType").get().getContext())));
   }
 
   @Test
@@ -392,25 +372,23 @@ public class VoltronMonitoringServiceTest {
     platformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
     platformListener.addNode(active, FETCHED_PATH, "fetch-2-1", new PlatformClientFetchedEntity("client-2", "entity-1", new FakeDesc("2-1")));
 
-    monitoringServiceEntity1.exposeClientManagementRegistry(
+    clientMonitoringService.exposeManagementRegistry(
         new FakeDesc("2-1"),
         new ContextContainer("ctName", "ctValue"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
 
-    String id = monitoringServiceEntity1.sendManagementCallRequest(
+    String id = managementService.sendManagementCallRequest(
         new FakeDesc("1-1"),
         Context.create(Client.KEY, ClientIdentifier.create(222L, InetAddress.getByName("localhost").getHostAddress(), "name", "uuid-2").toString()),
         "capabilityName",
         "myMethod",
         Void.TYPE);
 
-    monitoringServiceEntity1.answerManagementCall(
+    clientMonitoringService.answerManagementCall(
         new FakeDesc("2-1"),
-        ClientIdentifier.create(111L, InetAddress.getByName("localhost").getHostAddress(), "name", "uuid-1"),
         id,
         ContextualReturn.notExecuted("capabilityName", Context.empty(), "methodName"));
 
-    ClientCommunicator clientCommunicator = (ClientCommunicator) mocks.get(ClientCommunicator.class);
     verify(clientCommunicator, times(1)).sendNoResponse(eq(new FakeDesc("2-1")), any(EntityResponse.class));
     verify(clientCommunicator, times(1)).sendNoResponse(eq(new FakeDesc("1-1")), any(EntityResponse.class));
     verifyNoMoreInteractions(clientCommunicator);
@@ -419,24 +397,24 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_client_identifiers() throws Exception {
     test_fetch_entity();
-    assertThat(monitoringServiceEntity1.getClientIdentifier(new FakeDesc("1-1")), equalTo(ClientIdentifier.create(111, "127.0.0.1", "name", "uuid-1")));
+    assertThat(activeEntityMonitoringService.getClientIdentifier(new FakeDesc("1-1")), equalTo(ClientIdentifier.create(111, "127.0.0.1", "name", "uuid-1")));
     try {
-      monitoringServiceEntity1.getClientIdentifier(new FakeDesc("1-2"));
+      activeEntityMonitoringService.getClientIdentifier(new FakeDesc("1-2"));
       fail();
     } catch (Exception e) {
-      assertThat(e, is(instanceOf(SecurityException.class)));
+      assertThat(e, is(instanceOf(IllegalStateException.class)));
     }
   }
 
   private void assertTopologyEquals(String file) throws Exception {
-    Cluster cluster = monitoringServiceEntity1.readTopology();
+    Cluster cluster = managementService.readTopology();
     cluster.serverStream().forEach(server -> server.setUpTimeSec(0));
     assertEquals(new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8"), mapper.writeValueAsString(cluster.toMap()));
   }
 
   private List<Message> messages() {
     List<Message> messages = new ArrayList<>();
-    bufferEntity1.drainTo(messages);
+    buffer.drainTo(messages);
     return messages;
   }
 

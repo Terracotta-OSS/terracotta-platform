@@ -122,6 +122,8 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
 
   @Test(timeout = 20_000)
   public void can_query_local_stats() throws Exception {
+    System.out.println("Please be patient... Test can take about 5s...");
+
     triggerStatComputation(0, "pets");
     triggerStatComputation(1, "pets");
 

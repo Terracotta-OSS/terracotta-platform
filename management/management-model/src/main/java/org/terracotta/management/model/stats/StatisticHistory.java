@@ -20,6 +20,14 @@ package org.terracotta.management.model.stats;
  */
 public interface StatisticHistory<V, U> extends Statistic<Sample<V>[], U> {
 
+  /**
+   * @return last sample or null
+   */
   Sample<V> getLast();
+
+  /**
+   * @return first sample or null
+   */
+  Sample<V> getFirst();
 
 }

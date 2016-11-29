@@ -15,59 +15,44 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import org.terracotta.entity.PlatformConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ManagementRegistry;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
  */
 class DefaultSharedManagementRegistry implements SharedManagementRegistry {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSharedManagementRegistry.class);
   private static final Comparator<Capability> CAPABILITY_COMPARATOR = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
-  private final WeakHashMap<ConsumerManagementRegistry, Long> registries = new WeakHashMap<>();
-  private final WeakHashMap<PlatformManagementRegistry, Long> platformRegistries = new WeakHashMap<>();
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final Map<ConsumerManagementRegistry, Long> registries = new ConcurrentWeakIdentityHashMap<>();
 
   @Override
   public Collection<ContextContainer> getContextContainers() {
-    lock.readLock().lock();
-    try {
-      return Stream.concat(registries.keySet().stream(), platformRegistries.keySet().stream())
-          .filter(registry -> registry != null)
-          .map(ManagementRegistry::getContextContainer)
-          .collect(Collectors.toList());
-    } finally {
-      lock.readLock().unlock();
-    }
+    return registries.keySet()
+        .stream()
+        .map(ManagementRegistry::getContextContainer)
+        .collect(Collectors.toList());
   }
 
   @Override
   public Collection<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
-    lock.readLock().lock();
-    try {
-      return Stream.concat(registries.keySet().stream(), platformRegistries.keySet().stream())
-          .filter(registry -> registry != null)
-          .flatMap(registry -> registry.getManagementProvidersByCapability(capabilityName).stream())
-          .collect(Collectors.toList());
-    } finally {
-      lock.readLock().unlock();
-    }
+    return registries.keySet()
+        .stream()
+        .flatMap(registry -> registry.getManagementProvidersByCapability(capabilityName).stream())
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -77,50 +62,24 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
 
   @Override
   public Collection<? extends Capability> getCapabilities() {
-    lock.readLock().lock();
-    try {
-      return registries.keySet()
-          .stream()
-          .flatMap(r -> r.getCapabilities().stream())
-          .sorted(CAPABILITY_COMPARATOR)
-          .collect(Collectors.toList());
-    } finally {
-      lock.readLock().unlock();
-    }
+    return registries.keySet()
+        .stream()
+        .flatMap(r -> r.getCapabilities().stream())
+        .sorted(CAPABILITY_COMPARATOR)
+        .collect(Collectors.toList());
   }
 
-  ConsumerManagementRegistry getOrCreateConsumerManagementRegistry(long consumerID, MonitoringService monitoringService, StatisticsService statisticsService) {
-    lock.writeLock().lock();
-    try {
-      for (Map.Entry<ConsumerManagementRegistry, Long> entry : registries.entrySet()) {
-        ConsumerManagementRegistry registry = entry.getKey();
-        if (consumerID == entry.getValue() && registry != null) {
-          return registry;
-        }
+  synchronized ConsumerManagementRegistry getOrCreateConsumerManagementRegistry(long consumerID, EntityMonitoringService monitoringService, StatisticsService statisticsService) {
+    LOGGER.trace("[{}] getOrCreateConsumerManagementRegistry()", consumerID);
+    for (Map.Entry<ConsumerManagementRegistry, Long> entry : registries.entrySet()) {
+      ConsumerManagementRegistry registry = entry.getKey();
+      if (consumerID == entry.getValue()) {
+        return registry;
       }
-      ConsumerManagementRegistry registry = new DefaultConsumerManagementRegistry(consumerID, monitoringService, statisticsService);
-      registries.put(registry, consumerID);
-      return registry;
-    } finally {
-      lock.writeLock().unlock();
     }
-  }
-
-  PlatformManagementRegistry getOrCreatePlatformManagementRegistryConfiguration(long consumerID, MonitoringService monitoringService, DefaultStatisticsService statisticsService, PlatformConfiguration platformConfiguration, StatisticConfiguration statisticConfiguration) {
-    lock.writeLock().lock();
-    try {
-      for (Map.Entry<PlatformManagementRegistry, Long> entry : platformRegistries.entrySet()) {
-        PlatformManagementRegistry registry = entry.getKey();
-        if (consumerID == entry.getValue() && registry != null) {
-          return registry;
-        }
-      }
-      PlatformManagementRegistry registry = new PlatformConsumerManagementRegistry(consumerID, monitoringService, statisticsService, platformConfiguration, statisticConfiguration);
-      platformRegistries.put(registry, consumerID);
-      return registry;
-    } finally {
-      lock.writeLock().unlock();
-    }
+    ConsumerManagementRegistry registry = new DefaultConsumerManagementRegistry(consumerID, monitoringService, statisticsService);
+    registries.put(registry, consumerID);
+    return registry;
   }
 
 }

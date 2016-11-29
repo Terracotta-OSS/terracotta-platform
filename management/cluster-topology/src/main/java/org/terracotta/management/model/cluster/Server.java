@@ -238,6 +238,10 @@ public final class Server extends AbstractNode<Stripe> {
     return getServerEntity(serverEntityIdentifier.getId());
   }
 
+  public final Optional<ServerEntity> getServerEntity(long consumerId) {
+    return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == consumerId).findFirst();
+  }
+
   public final Optional<ServerEntity> getServerEntity(String id) {
     return id == null ? Optional.empty() : Optional.ofNullable(serverEntities.get(id));
   }

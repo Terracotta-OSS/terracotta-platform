@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.tms.client;
+package org.terracotta.management.service.monitoring;
 
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.management.entity.tms.TmsAgent;
-import org.terracotta.voltron.proxy.client.ServerMessageAware;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ServiceConfiguration;
 
 /**
  * @author Mathieu Carbou
  */
-public interface TmsAgentEntity extends TmsAgent, Entity, ServerMessageAware {
+@CommonComponent
+public class ActiveEntityMonitoringServiceConfiguration implements ServiceConfiguration<ActiveEntityMonitoringService> {
+
+  @Override
+  public Class<ActiveEntityMonitoringService> getServiceType() {
+    return ActiveEntityMonitoringService.class;
+  }
 
 }

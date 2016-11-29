@@ -16,13 +16,29 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.monitoring.IMonitoringProducer;
+
+import java.util.Objects;
 
 /**
- * The registry for the platform
- *
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface PlatformManagementRegistry extends ConsumerManagementRegistry {
-  void init();
+public class PassiveEntityMonitoringServiceConfiguration implements ServiceConfiguration<PassiveEntityMonitoringService> {
+
+  private final IMonitoringProducer monitoringProducer;
+
+  public PassiveEntityMonitoringServiceConfiguration(IMonitoringProducer monitoringProducer) {
+    this.monitoringProducer = Objects.requireNonNull(monitoringProducer);
+  }
+
+  @Override
+  public Class<PassiveEntityMonitoringService> getServiceType() {
+    return PassiveEntityMonitoringService.class;
+  }
+
+  public IMonitoringProducer getMonitoringProducer() {
+    return monitoringProducer;
+  }
 }

@@ -26,6 +26,7 @@ import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -39,43 +40,43 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-final class PlatformListenerAdapter implements IStripeMonitoring {
+final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitoring {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(PlatformListenerAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(IStripeMonitoringPlatformListenerAdapter.class);
 
   private final PlatformListener delegate;
   private final ConcurrentMap<PlatformServer, ConcurrentMap<String, PlatformEntity>> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformConnectedClient> clients = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformClientFetchedEntity> fetches = new ConcurrentHashMap<>();
 
-  PlatformListenerAdapter(PlatformListener delegate) {
-    this.delegate = delegate;
+  IStripeMonitoringPlatformListenerAdapter(PlatformListener delegate) {
+    this.delegate = Objects.requireNonNull(delegate);
   }
 
   @Override
   public void serverDidBecomeActive(PlatformServer self) {
-    LOGGER.trace("serverDidBecomeActive({})", self);
+    LOGGER.trace("[0] serverDidBecomeActive({})", self.getServerName());
     entities.put(self, new ConcurrentHashMap<>());
     delegate.serverDidBecomeActive(self);
   }
 
   @Override
   public void serverDidJoinStripe(PlatformServer server) {
-    LOGGER.trace("serverDidJoinStripe({})", server);
+    LOGGER.trace("[0] serverDidJoinStripe({})", server.getServerName());
     entities.put(server, new ConcurrentHashMap<>());
     delegate.serverDidJoinStripe(server);
   }
 
   @Override
   public void serverDidLeaveStripe(PlatformServer server) {
-    LOGGER.trace("serverDidLeaveStripe({})", server);
+    LOGGER.trace("[0] serverDidLeaveStripe({})", server.getServerName());
     entities.remove(server);
     delegate.serverDidLeaveStripe(server);
   }
 
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
-    LOGGER.trace("addNode({}, {}, {}, {})", sender, Arrays.toString(parents), name, value);
+    LOGGER.trace("[0] addNode({}, {}, {})", sender.getServerName(), Arrays.toString(parents), name);
     if (parents == null || parents.length == 0) {
       return true;
     }
@@ -133,7 +134,7 @@ final class PlatformListenerAdapter implements IStripeMonitoring {
 
   @Override
   public boolean removeNode(PlatformServer sender, String[] parents, String name) {
-    LOGGER.trace("removeNode({}, {}, {})", sender, Arrays.toString(parents), name);
+    LOGGER.trace("[0] removeNode({}, {}, {})", sender.getServerName(), Arrays.toString(parents), name);
     if (parents == null || parents.length == 0) {
       return true;
     }

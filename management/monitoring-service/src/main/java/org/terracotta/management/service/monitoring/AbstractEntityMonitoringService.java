@@ -13,20 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management.client;
+package org.terracotta.management.service.monitoring;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
-public class ManagementOperationException extends Exception {
+abstract class AbstractEntityMonitoringService implements EntityMonitoringService {
 
-  private static final long serialVersionUID = 1L;
+  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  public ManagementOperationException(String message) {
-    super(message);
+  private final long consumerId;
+
+  AbstractEntityMonitoringService(long consumerId) {
+    this.consumerId = consumerId;
   }
 
-  public ManagementOperationException(Throwable cause) {
-    super(cause);
+  @Override
+  public long getConsumerId() {
+    return consumerId;
   }
+
 }

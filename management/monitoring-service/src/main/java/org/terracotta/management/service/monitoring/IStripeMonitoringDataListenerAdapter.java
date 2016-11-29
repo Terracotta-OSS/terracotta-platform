@@ -21,8 +21,8 @@ import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Adapts the API-wanted {@link DataListener} into the current existing one ({@link org.terracotta.monitoring.IStripeMonitoring}),
@@ -32,26 +32,21 @@ import java.util.Arrays;
  *
  * @author Mathieu Carbou
  */
-final class DataListenerAdapter implements IStripeMonitoring {
+final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DataListenerAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(IStripeMonitoringDataListenerAdapter.class);
 
   private final DataListener delegate;
   private final long consumerId;
 
-  DataListenerAdapter(DataListener delegate, long consumerId) {
-    this.delegate = delegate;
+  IStripeMonitoringDataListenerAdapter(long consumerId, DataListener delegate) {
+    this.delegate = Objects.requireNonNull(delegate);
     this.consumerId = consumerId;
   }
 
   @Override
-  public String toString() {
-    return "DataListenerAdapter{" + "consumerId=" + consumerId + '}';
-  }
-
-  @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
-    LOGGER.trace("addNode({}, {}, {}, {})", sender, Arrays.toString(parents), name, value);
+    LOGGER.trace("[{}] addNode({}, {}, {})", consumerId, sender.getServerName(), Arrays.toString(parents), name);
     if (parents == null) {
       parents = new String[0];
     }
@@ -63,7 +58,7 @@ final class DataListenerAdapter implements IStripeMonitoring {
 
   @Override
   public boolean removeNode(PlatformServer sender, String[] parents, String name) {
-    LOGGER.trace("removeNode({}, {}, {})", sender, Arrays.toString(parents), name);
+    LOGGER.trace("[{}] removeNode({}, {})", consumerId, sender.getServerName(), Arrays.toString(parents));
     if (parents == null) {
       parents = new String[0];
     }

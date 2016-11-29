@@ -16,7 +16,6 @@
 package org.terracotta.management.entity.sample;
 
 import org.junit.Test;
-import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ManagementRegistry;
@@ -42,8 +41,7 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
 
   @Test
   public void can_access_remote_management_registry_of_client() throws Exception {
-    ManagementRegistry registry = tmsAgent.readTopology()
-        .get()
+    ManagementRegistry registry = tmsAgentService.readTopology()
         .clientStream()
         .filter(cli -> cli.getName().equals("pet-clinic"))
         .findFirst()
@@ -63,8 +61,7 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
 
   @Test(timeout = 30_000)
   public void can_do_remote_management_calls_on_client() throws Exception {
-    Client client = tmsAgent.readTopology()
-        .get()
+    Client client = tmsAgentService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
         .findFirst()
@@ -76,41 +73,24 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
         .with("cacheName", "pets");
 
     // put
-    managementAgentService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat"));
-    ContextualReturn<?> put = managementCallReturns.take();
-    assertThat(put.hasExecuted(), is(true));
-    assertThat(put.errorThrown(), is(false));
+    tmsAgentService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
 
     // get
-    managementAgentService.call(context, "CacheCalls", "get", String.class, new Parameter("pet1"));
-    ContextualReturn<?> get = managementCallReturns.take();
-    assertThat(get.hasExecuted(), is(true));
-    assertThat(get.errorThrown(), is(false));
-    assertThat(get.getValue(), equalTo("Cat"));
+    assertThat(tmsAgentService.call(context, "CacheCalls", "get", String.class, new Parameter("pet1")).waitForReturn(), equalTo("Cat"));
 
     // size
-    managementAgentService.call(context, "CacheCalls", "size", int.class);
-    ContextualReturn<?> size = managementCallReturns.take();
-    assertThat(size.hasExecuted(), is(true));
-    assertThat(size.errorThrown(), is(false));
-    assertThat(size.getValue(), is(1));
+    assertThat(tmsAgentService.call(context, "CacheCalls", "size", int.class).waitForReturn(), is(1));
 
     // clear
-    managementAgentService.call(context, "CacheCalls", "clear", Void.TYPE);
-    ContextualReturn<?> clear = managementCallReturns.take();
-    assertThat(clear.hasExecuted(), is(true));
-    assertThat(clear.errorThrown(), is(false));
+    tmsAgentService.call(context, "CacheCalls", "clear", Void.TYPE).waitForReturn();
 
     // size again
-    managementAgentService.call(context, "CacheCalls", "size", int.class);
-    size = managementCallReturns.take();
-    assertThat(size.hasExecuted(), is(true));
-    assertThat(size.errorThrown(), is(false));
-    assertThat(size.getValue(), is(0));
+    assertThat(tmsAgentService.call(context, "CacheCalls", "size", int.class).waitForReturn(), is(0));
   }
 
-  @Test(timeout = 60_000)
+  @Test(timeout = 30_000)
   public void can_receive_client_statistics() throws Exception {
+    System.out.println("Please be patient... Test can take about 15s...");
     triggerClientStatComputation();
 
     put(0, "pets", "pet1", "Cubitus");
@@ -162,8 +142,7 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
 
   private void triggerClientStatComputation() throws Exception {
     // trigger stats computation and wait for all stats to have been computed at least once
-    Client client = tmsAgent.readTopology()
-        .get()
+    Client client = tmsAgentService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
         .findFirst()
@@ -173,13 +152,11 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
     Context context = client.getContext()
         .with("appName", "pet-clinic");
 
-    managementAgentService.updateCollectedStatistics(
+    tmsAgentService.updateCollectedStatistics(
         context,
         "CacheStatistics",
-        Arrays.asList("Cache:HitCount", "Cache:MissCount", "Cache:HitRatio", "ClientCache:Size"));
-    ContextualReturn<?> updateCollectedStatistics = managementCallReturns.take();
-    assertThat(updateCollectedStatistics.hasExecuted(), is(true));
-    assertThat(updateCollectedStatistics.errorThrown(), is(false));
+        Arrays.asList("Cache:HitCount", "Cache:MissCount", "Cache:HitRatio", "ClientCache:Size")
+    ).waitForReturn();
 
     queryAllRemoteStatsUntil(stats -> !stats.isEmpty() && !stats
         .stream()

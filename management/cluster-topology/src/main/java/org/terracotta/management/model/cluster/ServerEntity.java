@@ -72,6 +72,10 @@ public final class ServerEntity extends AbstractNode<Server> {
     return getType().equals(type);
   }
 
+  public boolean isManageable() {
+    return managementRegistry != null;
+  }
+
   public String getName() {
     return identifier.getName();
   }

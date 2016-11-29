@@ -28,17 +28,16 @@ import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.client.ManagementAgentEntity;
 import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
 import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
-import org.terracotta.management.entity.management.client.ManagementAgentService;
 import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
 import org.terracotta.management.entity.sample.client.CacheEntityClientService;
 import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.entity.sample.server.CacheEntityServerService;
-import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityClientService;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
+import org.terracotta.management.entity.tms.client.TmsAgentService;
 import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
-import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
@@ -55,7 +54,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -68,7 +66,7 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class AbstractTest {
 
-  private final ExecutorService managementMessageExecutor = Executors.newSingleThreadExecutor();
+  private final ExecutorService managementMessageExecutor = Executors.newCachedThreadPool();
   private final ObjectMapper mapper = new ObjectMapper();
   private final PassthroughClusterControl stripeControl;
 
@@ -76,9 +74,7 @@ public abstract class AbstractTest {
 
   protected final List<CacheFactory> webappNodes = new ArrayList<>();
   protected final Map<String, List<Cache>> caches = new HashMap<>();
-  protected final SynchronousQueue<ContextualReturn<?>> managementCallReturns = new SynchronousQueue<>();
-  protected TmsAgent tmsAgent;
-  protected ManagementAgentService managementAgentService;
+  protected TmsAgentService tmsAgentService;
 
   AbstractTest() {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
@@ -156,12 +152,17 @@ public abstract class AbstractTest {
     webappNodes.forEach(CacheFactory::close);
   }
 
-  protected void getCaches(String pets) {
-    caches.put(pets, webappNodes.stream().map(cacheFactory -> cacheFactory.getCache(pets)).collect(Collectors.toList()));
+  protected void getCaches(String name) {
+    caches.put(name, webappNodes.stream().map(cacheFactory -> cacheFactory.getCache(name)).collect(Collectors.toList()));
   }
 
   protected void addWebappNode() throws Exception {
-    CacheFactory cacheFactory = new CacheFactory("passthrough://stripe-1:9510/pet-clinic");
+    StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
+        .setAverageWindowDuration(1, TimeUnit.MINUTES)
+        .setHistorySize(100)
+        .setHistoryInterval(1, TimeUnit.SECONDS)
+        .setTimeToDisable(5, TimeUnit.SECONDS);
+    CacheFactory cacheFactory = new CacheFactory("passthrough://stripe-1:9510/pet-clinic", statisticConfiguration);
     cacheFactory.init();
     webappNodes.add(cacheFactory);
   }
@@ -183,26 +184,25 @@ public abstract class AbstractTest {
 
     // create a tms entity
     TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());
-    this.tmsAgent = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
+    TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
+        .setMaximumUnreadMessages(1024 * 1024)
         .setStatisticConfiguration(new StatisticConfiguration()
             .setAverageWindowDuration(1, TimeUnit.MINUTES)
             .setHistorySize(100)
             .setHistoryInterval(1, TimeUnit.SECONDS)
             .setTimeToDisable(5, TimeUnit.SECONDS)));
+    this.tmsAgentService = new TmsAgentService(tmsAgentEntity);
+    this.tmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
 
     // create a management entity
     ManagementAgentEntityFactory managementAgentEntityFactory = new ManagementAgentEntityFactory(managementConnection);
     ManagementAgentEntity managementAgentEntity = managementAgentEntityFactory.retrieveOrCreate(new ManagementAgentConfig());
-    this.managementAgentService = new ManagementAgentService(managementAgentEntity);
-    this.managementAgentService.setManagementMessageExecutor(managementMessageExecutor);
-    this.managementAgentService.setContextualReturnListener((from, managementCallId, aReturn) -> managementCallReturns.offer(aReturn));
   }
 
   protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {
     List<? extends ContextualStatistics> statistics;
     do {
-      statistics = tmsAgent.readMessages()
-          .get()
+      statistics = tmsAgentService.readMessages()
           .stream()
           .filter(message -> message.getType().equals("STATISTICS"))
           .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())

@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-abstract class AbstractNode<P extends Contextual> implements Node {
+public abstract class AbstractNode<P extends Contextual> implements Node {
 
   private static final long serialVersionUID = 1;
 

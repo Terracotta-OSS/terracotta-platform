@@ -116,7 +116,7 @@ public final class ContextualReturn<T> implements Contextual {
         ", method='" + methodName + '\'' +
         ", context=" + context +
         ", executed=" + executed +
-        ", value=" + value +
+        ", error=" + (error != null) +
         '}';
   }
 

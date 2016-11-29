@@ -24,17 +24,17 @@ import java.util.Arrays;
 /**
  * @author Mathieu Carbou
  */
-public class ContextualCall implements Contextual {
+public class ContextualCall<T> implements Contextual {
 
   private static final long serialVersionUID = 1;
 
   private Context context;
   private final String capability;
   private final String methodName;
-  private final Class<?> returnType;
+  private final Class<T> returnType;
   private final Parameter[] parameters;
 
-  public ContextualCall(Context context, String capability, String methodName, Class<?> returnType, Parameter... parameters) {
+  public ContextualCall(Context context, String capability, String methodName, Class<T> returnType, Parameter... parameters) {
     this.context = Objects.requireNonNull(context);
     this.capability = Objects.requireNonNull(capability);
     this.methodName = Objects.requireNonNull(methodName);
@@ -64,7 +64,7 @@ public class ContextualCall implements Contextual {
     return parameters;
   }
 
-  public Class<?> getReturnType() {
+  public Class<T> getReturnType() {
     return returnType;
   }
 
@@ -74,7 +74,7 @@ public class ContextualCall implements Contextual {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    ContextualCall that = (ContextualCall) o;
+    ContextualCall<?> that = (ContextualCall<?>) o;
 
     if (!context.equals(that.context)) return false;
     if (!capability.equals(that.capability)) return false;
@@ -103,7 +103,6 @@ public class ContextualCall implements Contextual {
     sb.append(", capability='").append(capability).append('\'');
     sb.append(", methodName='").append(methodName).append('\'');
     sb.append(", returnType=").append(returnType);
-    sb.append(", parameters=").append(Arrays.toString(parameters));
     sb.append('}');
     return sb.toString();
   }

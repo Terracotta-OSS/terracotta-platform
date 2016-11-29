@@ -15,29 +15,30 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientCommunicator;
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.MessageCodecException;
-import org.terracotta.management.model.message.ManagementCallMessage;
-import org.terracotta.voltron.proxy.ProxyEntityResponse;
+import org.terracotta.entity.ServiceConfiguration;
+
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
-class ManagementCommunicator {
+@CommonComponent
+public class ManagementServiceConfiguration implements ServiceConfiguration<ManagementService> {
 
   private final ClientCommunicator clientCommunicator;
 
-  ManagementCommunicator(ClientCommunicator clientCommunicator) {
-    this.clientCommunicator = clientCommunicator;
+  public ManagementServiceConfiguration(ClientCommunicator clientCommunicator) {
+    this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
   }
 
-  void send(ClientDescriptor target, ManagementCallMessage message) {
-    try {
-      clientCommunicator.sendNoResponse(target, ProxyEntityResponse.response(ManagementCallMessage.class, message));
-    } catch (MessageCodecException e) {
-      throw new RuntimeException(e);
-    }
+  @Override
+  public Class<ManagementService> getServiceType() {
+    return ManagementService.class;
   }
 
+  public ClientCommunicator getClientCommunicator() {
+    return clientCommunicator;
+  }
 }

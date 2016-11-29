@@ -37,7 +37,7 @@ public class TopologyTest extends AbstractTest {
 
   @Test
   public void can_read_topology() throws Exception {
-    Cluster cluster = tmsAgent.readTopology().get();
+    Cluster cluster = tmsAgentService.readTopology();
 
     // removes all random values
 
@@ -73,7 +73,7 @@ public class TopologyTest extends AbstractTest {
 
   @Test
   public void can_read_messages() throws Exception {
-    List<Message> messages = tmsAgent.readMessages().get();
+    List<Message> messages = tmsAgentService.readMessages();
 
     Map<String, List<Message>> messsageByTypes = messages.stream().collect(Collectors.groupingBy(Message::getType));
     assertThat(messsageByTypes.size(), equalTo(2));
@@ -103,7 +103,7 @@ public class TopologyTest extends AbstractTest {
 
   @Test
   public void notifications_have_a_source_context() throws Exception {
-    List<Message> messages = tmsAgent.readMessages().get();
+    List<Message> messages = tmsAgentService.readMessages();
     List<ContextualNotification> notifs = messages.stream()
         .filter(message -> message.getType().equals("NOTIFICATION"))
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
@@ -113,7 +113,7 @@ public class TopologyTest extends AbstractTest {
 
     final String[] currentJson = {toJson(notifs).toString()};
 
-    tmsAgent.readTopology().get().clientStream().forEach(client -> currentJson[0] = currentJson[0]
+    tmsAgentService.readTopology().clientStream().forEach(client -> currentJson[0] = currentJson[0]
         .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
         .replace(String.valueOf(client.getPid()), "0")
         .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")

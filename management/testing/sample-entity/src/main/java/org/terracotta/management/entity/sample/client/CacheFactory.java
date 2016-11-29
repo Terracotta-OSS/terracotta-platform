@@ -19,11 +19,11 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
-import org.terracotta.management.entity.management.client.ManagementOperationException;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.management.Management;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagementSupport;
+import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,6 +32,8 @@ import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -47,19 +49,27 @@ public class CacheFactory implements Closeable {
   private CacheEntityFactory cacheEntityFactory;
 
   public CacheFactory(String uri) {
+    this(uri, new StatisticConfiguration()
+        .setAverageWindowDuration(1, TimeUnit.MINUTES)
+        .setHistorySize(100)
+        .setHistoryInterval(1, TimeUnit.SECONDS)
+        .setTimeToDisable(30, TimeUnit.SECONDS));
+  }
+
+  public CacheFactory(String uri, StatisticConfiguration statisticConfiguration) {
     URI u = URI.create(uri);
     if (u.getPath() == null || u.getPath().isEmpty()) {
       throw new IllegalArgumentException(uri);
     }
     this.uri = u;
-    this.management = new Management(new ContextContainer("appName", u.getPath().substring(1)));
+    this.management = new Management(new ContextContainer("appName", u.getPath().substring(1)), statisticConfiguration);
   }
 
   public CapabilityManagementSupport getManagementRegistry() {
     return management.getManagementRegistry();
   }
 
-  public void init() throws ConnectionException, ManagementOperationException, InterruptedException, TimeoutException {
+  public void init() throws ConnectionException, ExecutionException, InterruptedException, TimeoutException {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, uri.getPath().substring(1));

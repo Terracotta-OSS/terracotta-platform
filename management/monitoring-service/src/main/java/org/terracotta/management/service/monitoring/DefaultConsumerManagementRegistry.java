@@ -25,7 +25,6 @@ import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
-import org.terracotta.management.service.monitoring.registry.provider.StatisticsServiceAware;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -39,42 +38,44 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
 
-  private final MonitoringService monitoringService;
+  private final long consumerId;
+  private final EntityMonitoringService monitoringService;
   private final StatisticsService statisticsService;
 
   private Collection<? extends Capability> previouslyExposed = Collections.emptyList();
 
-  DefaultConsumerManagementRegistry(long consumerId, MonitoringService monitoringService, StatisticsService statisticsService) {
+  DefaultConsumerManagementRegistry(long consumerId, EntityMonitoringService monitoringService, StatisticsService statisticsService) {
     super(new ContextContainer("consumerId", String.valueOf(consumerId)));
+    this.consumerId = consumerId;
     this.monitoringService = Objects.requireNonNull(monitoringService);
     this.statisticsService = Objects.requireNonNull(statisticsService);
   }
 
   @Override
   public void close() {
+    LOGGER.trace("[{}] close()", consumerId);
     managementProviders.forEach(ManagementProvider::close);
     managementProviders.clear();
   }
 
   @Override
   public void addManagementProvider(ManagementProvider<?> provider) {
+    LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass());
     if (provider instanceof MonitoringServiceAware) {
       ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
-    }
-    if(provider instanceof StatisticsServiceAware) {
-      ((StatisticsServiceAware) provider).setStatisticsService(statisticsService);
+      ((MonitoringServiceAware) provider).setStatisticsService(statisticsService);
     }
     super.addManagementProvider(provider);
   }
 
   @Override
   public synchronized void refresh() {
-    LOGGER.trace("refresh(): {}", getContextContainer());
+    LOGGER.trace("[{}] refresh()", consumerId);
     Collection<? extends Capability> capabilities = getCapabilities();
     if (!previouslyExposed.equals(capabilities)) {
       Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
       // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
-      monitoringService.exposeServerEntityManagementRegistry(getContextContainer(), capabilitiesArray);
+      monitoringService.exposeManagementRegistry(getContextContainer(), capabilitiesArray);
       previouslyExposed = capabilities;
     }
   }
@@ -82,25 +83,17 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
   @SuppressWarnings("unchecked")
   @Override
   public boolean pushServerEntityNotification(Object managedObjectSource, String type, Map<String, String> attrs) {
+    LOGGER.trace("[{}] pushServerEntityNotification({})", consumerId, type);
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider instanceof AbstractManagementProvider && managementProvider.getManagedType().isInstance(managedObjectSource)) {
         ExposedObject<Object> exposedObject = ((AbstractManagementProvider<Object>) managementProvider).findExposedObject(managedObjectSource);
-        if(exposedObject != null) {
-          monitoringService.pushServerEntityNotification(new ContextualNotification(exposedObject.getContext(), type, attrs));
+        if (exposedObject != null) {
+          monitoringService.pushNotification(new ContextualNotification(exposedObject.getContext(), type, attrs));
           return true;
         }
       }
     }
     return false;
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("DefaultConsumerManagementRegistry{");
-    sb.append("contextContainer=").append(getContextContainer());
-    sb.append(", monitoringService=").append(monitoringService);
-    sb.append('}');
-    return sb.toString();
   }
 
 }

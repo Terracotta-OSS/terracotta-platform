@@ -60,6 +60,11 @@
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
   </dependencies>
 

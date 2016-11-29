@@ -15,15 +15,11 @@
  */
 package org.terracotta.management.model.message;
 
-import org.terracotta.management.model.cluster.ClientIdentifier;
-
 /**
  * @author Mathieu Carbou
  */
 public interface ManagementCallMessage extends Message {
 
   String getManagementCallIdentifier();
-
-  ClientIdentifier getFrom();
 
 }

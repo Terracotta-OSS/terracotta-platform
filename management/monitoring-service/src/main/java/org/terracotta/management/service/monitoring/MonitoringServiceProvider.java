@@ -24,106 +24,45 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
+import org.terracotta.management.service.monitoring.registry.OffHeapResourceBinding;
+import org.terracotta.management.service.monitoring.registry.OffHeapResourceSettingsManagementProvider;
+import org.terracotta.management.service.monitoring.registry.OffHeapResourceStatisticsManagementProvider;
 import org.terracotta.monitoring.IStripeMonitoring;
+import org.terracotta.offheapresource.OffHeapResourceIdentifier;
+import org.terracotta.offheapresource.OffHeapResources;
 
+import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 /**
- * Provides 2 services: {@link IStripeMonitoring} for the platform, {@link MonitoringService} for the consumers (server entities)
- *
  * @author Mathieu Carbou
  */
 @BuiltinService
-public class MonitoringServiceProvider implements ServiceProvider {
+public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
-      MonitoringService.class,
-      IStripeMonitoring.class,
-      SharedManagementRegistry.class,
-      ConsumerManagementRegistry.class,
-      PlatformManagementRegistry.class
+      IStripeMonitoring.class, // for platform
+      SharedManagementRegistry.class, // access all registries
+      ConsumerManagementRegistry.class, // registry for an entity
+      ClientMonitoringService.class, // for management entity
+      ManagementService.class, // for TMS Entity
+      ActiveEntityMonitoringService.class, // monitoring of an active entity
+      PassiveEntityMonitoringService.class // monitoring of a passive entity
   );
 
-  // implementation of PlatformListener (received platform events) and DataListener (receives tree data and best effort data from any consumer)
-  private DefaultListener listener;
-  private PlatformConfiguration platformConfiguration;
-
-  // implementation of IStripeMonitoring for platform events (consumerId 0)
-  private IStripeMonitoring platformListenerAdapter;
-
-  // holder of all ConsumerManagementRegistry (ManagementRegistry for an entity)
-  // this class is an entry point for management calls and stat query since it knows all management registry created on the server
+  private final Map<DefaultManagementService, Boolean> managementServices = new ConcurrentWeakIdentityHashMap<>();
+  private final Map<DefaultClientMonitoringService, Boolean> clientMonitoringServices = new ConcurrentWeakIdentityHashMap<>();
+  private final TimeSource timeSource = TimeSource.BEST;
   private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry();
+  private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
+  private final StatisticsServiceFactory statisticsServiceFactory = new StatisticsServiceFactory(sharedManagementRegistry, timeSource);
 
-  // responsible of scheduling and providing statistics registries to entities
-  private final DefaultStatisticsService statisticsService = new DefaultStatisticsService(sharedManagementRegistry);
-
-  @Override
-  public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
-    this.listener = new DefaultListener(new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST), platformConfiguration);
-    this.platformConfiguration = platformConfiguration;
-    this.platformListenerAdapter = new PlatformListenerAdapter(listener);
-    return true;
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    if (this.listener == null || this.platformListenerAdapter == null) {
-      throw new IllegalStateException("Service provider " + getClass().getName() + " has not been initialized");
-    }
-
-    Class<T> serviceType = configuration.getServiceType();
-
-    if (IStripeMonitoring.class.isAssignableFrom(serviceType)) {
-      return serviceType.cast(consumerID == PLATFORM_CONSUMER_ID ? platformListenerAdapter : new DataListenerAdapter(listener, consumerID));
-    }
-
-    // get or creates a monitoring service used to access the inner M&M topology
-    if (MonitoringService.class == serviceType) {
-      if (configuration instanceof MonitoringServiceConfiguration) {
-        MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, (MonitoringServiceConfiguration) configuration);
-        return serviceType.cast(monitoringService);
-      } else {
-        throw new IllegalArgumentException("Missing configuration " + MonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
-      }
-
-      // get or creates a registry specific to this entity to handle stats and management calls
-    } else if (ConsumerManagementRegistry.class == serviceType) {
-      if (configuration instanceof ConsumerManagementRegistryConfiguration) {
-        ConsumerManagementRegistryConfiguration managementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
-        MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, new MonitoringServiceConfiguration(managementRegistryConfiguration.getRegistry()));
-        ConsumerManagementRegistry consumerManagementRegistry = sharedManagementRegistry.getOrCreateConsumerManagementRegistry(consumerID, monitoringService, statisticsService);
-        return serviceType.cast(consumerManagementRegistry);
-      } else {
-        throw new IllegalArgumentException("Missing configuration " + ConsumerManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
-      }
-
-      // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
-    } else if (SharedManagementRegistry.class == serviceType) {
-      return serviceType.cast(sharedManagementRegistry);
-
-    } else if (PlatformManagementRegistry.class == serviceType) {
-      if (configuration instanceof PlatformManagementRegistryConfiguration) {
-        PlatformManagementRegistryConfiguration platformManagementRegistryConfiguration = (PlatformManagementRegistryConfiguration) configuration;
-        ConsumerManagementRegistryConfiguration managementRegistryConfiguration = new ConsumerManagementRegistryConfiguration(platformManagementRegistryConfiguration.getRegistry());
-        MonitoringService monitoringService = listener.getOrCreateMonitoringService(consumerID, new MonitoringServiceConfiguration(managementRegistryConfiguration.getRegistry()));
-        PlatformManagementRegistry platformManagementRegistry = sharedManagementRegistry.getOrCreatePlatformManagementRegistryConfiguration(
-            consumerID,
-            monitoringService,
-            statisticsService,
-            platformConfiguration,
-            platformManagementRegistryConfiguration.getStatisticConfiguration());
-        return serviceType.cast(platformManagementRegistry);
-      } else {
-        throw new IllegalArgumentException("Missing configuration " + PlatformManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
-      }
-
-    } else {
-      throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
-    }
-  }
+  private PlatformConfiguration platformConfiguration;
+  private DefaultEventService eventService;
+  private TopologyService topologyService;
+  private IStripeMonitoring platformListenerAdapter;
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
@@ -132,8 +71,148 @@ public class MonitoringServiceProvider implements ServiceProvider {
 
   @Override
   public void prepareForSynchronization() throws ServiceProviderCleanupException {
-    listener.clear();
-    statisticsService.close();
+  }
+
+  @Override
+  public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
+    this.platformConfiguration = platformConfiguration;
+    this.eventService = new DefaultEventService(sequenceGenerator, platformConfiguration, sharedManagementRegistry, managementServices, clientMonitoringServices);
+    this.topologyService = new TopologyService(eventService, timeSource, platformConfiguration);
+    this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
+    return true;
+  }
+
+  @Override
+  public void close() {
+    this.statisticsServiceFactory.close();
+    this.eventService.close();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+    Class<T> serviceType = configuration.getServiceType();
+
+    // for platform, which requests either a IStripeMonitoring to send platform events or a IStripeMonitoring to send callbacks from passive entities
+    if (IStripeMonitoring.class == serviceType) {
+      if (consumerID == PLATFORM_CONSUMER_ID) {
+        return serviceType.cast(platformListenerAdapter);
+      } else {
+        DataListener dataListener = new DefaultDataListener(consumerID, topologyService, eventService);
+        return serviceType.cast(new IStripeMonitoringDataListenerAdapter(consumerID, dataListener));
+      }
+    }
+
+    // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
+    if (SharedManagementRegistry.class == serviceType) {
+      return serviceType.cast(sharedManagementRegistry);
+    }
+
+    // get or creates a registry specific to this entity to handle stats and management calls
+    if (ConsumerManagementRegistry.class == serviceType) {
+      if (configuration instanceof ConsumerManagementRegistryConfiguration) {
+        ConsumerManagementRegistryConfiguration consumerManagementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
+        StatisticsService statisticsService = statisticsServiceFactory.createStatisticsService(consumerManagementRegistryConfiguration.getStatisticConfiguration());
+        ConsumerManagementRegistry consumerManagementRegistry = sharedManagementRegistry.getOrCreateConsumerManagementRegistry(
+            consumerID,
+            consumerManagementRegistryConfiguration.getEntityMonitoringService(),
+            statisticsService);
+        if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
+          addServerManagementProviders(consumerManagementRegistry);
+        }
+        return serviceType.cast(consumerManagementRegistry);
+      } else {
+        throw new IllegalArgumentException("Missing configuration " + ConsumerManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+      }
+    }
+
+    // get or creates a client-side monitoring service
+    if (ClientMonitoringService.class == serviceType) {
+      if (configuration instanceof ClientMonitoringServiceConfiguration) {
+        if (!topologyService.isCurrentServerActive()) {
+          throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not active!");
+        }
+        ClientMonitoringServiceConfiguration clientMonitoringServiceConfiguration = (ClientMonitoringServiceConfiguration) configuration;
+        DefaultClientMonitoringService clientMonitoringService = new DefaultClientMonitoringService(
+            consumerID,
+            topologyService,
+            eventService,
+            clientMonitoringServiceConfiguration.getClientCommunicator());
+        clientMonitoringServices.put(clientMonitoringService, Boolean.TRUE);
+        return serviceType.cast(clientMonitoringService);
+      } else {
+        throw new IllegalArgumentException("Missing configuration " + ClientMonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+      }
+    }
+
+    // get or creates a monitoring accessor service (for tms)
+    if (ManagementService.class == serviceType) {
+      if (configuration instanceof ManagementServiceConfiguration) {
+        if (!topologyService.isCurrentServerActive()) {
+          throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not active!");
+        }
+        ManagementServiceConfiguration managementServiceConfiguration = (ManagementServiceConfiguration) configuration;
+        DefaultManagementService managementService = new DefaultManagementService(
+            consumerID,
+            topologyService,
+            eventService,
+            managementServiceConfiguration.getClientCommunicator(),
+            sequenceGenerator);
+        managementServices.put(managementService, Boolean.TRUE);
+        return serviceType.cast(managementService);
+      } else {
+        throw new IllegalArgumentException("Missing configuration " + ManagementServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+      }
+    }
+
+    // get or creates a monitoring service for an active entity
+    if (ActiveEntityMonitoringService.class == serviceType) {
+      if (configuration instanceof ActiveEntityMonitoringServiceConfiguration) {
+        if (!topologyService.isCurrentServerActive()) {
+          throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not active!");
+        }
+        ActiveEntityMonitoringServiceConfiguration activeEntityMonitoringServiceConfiguration = (ActiveEntityMonitoringServiceConfiguration) configuration;
+        DefaultActiveEntityMonitoringService activeEntityMonitoringService = new DefaultActiveEntityMonitoringService(
+            consumerID,
+            topologyService,
+            eventService);
+        return serviceType.cast(activeEntityMonitoringService);
+      } else {
+        throw new IllegalArgumentException("Missing configuration " + ActiveEntityMonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+      }
+    }
+
+    // get or creates a monitoring service for a passive entity, bridging calls to IMonitoringProducer
+    if (PassiveEntityMonitoringService.class == serviceType) {
+      if (configuration instanceof PassiveEntityMonitoringServiceConfiguration) {
+        if (!topologyService.isCurrentServerActive()) {
+          throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not passive!");
+        }
+        PassiveEntityMonitoringServiceConfiguration passiveEntityMonitoringServiceConfiguration = (PassiveEntityMonitoringServiceConfiguration) configuration;
+        DefaultPassiveEntityMonitoringService passiveEntityMonitoringService = new DefaultPassiveEntityMonitoringService(
+            consumerID,
+            passiveEntityMonitoringServiceConfiguration.getMonitoringProducer());
+        return serviceType.cast(passiveEntityMonitoringService);
+      } else {
+        throw new IllegalArgumentException("Missing configuration " + PassiveEntityMonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+      }
+    }
+
+    throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
+  }
+
+  private void addServerManagementProviders(ConsumerManagementRegistry consumerManagementRegistry) {
+    // manage offheap service if it is there
+    Collection<OffHeapResources> offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class);
+    if (!offHeapResources.isEmpty()) {
+      consumerManagementRegistry.addManagementProvider(new OffHeapResourceSettingsManagementProvider());
+      consumerManagementRegistry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
+      for (OffHeapResources offHeapResource : offHeapResources) {
+        for (OffHeapResourceIdentifier identifier : offHeapResource.getAllIdentifiers()) {
+          consumerManagementRegistry.register(new OffHeapResourceBinding(identifier.getName(), offHeapResource.getOffHeapResource(identifier)));
+        }
+      }
+    }
   }
 
 }

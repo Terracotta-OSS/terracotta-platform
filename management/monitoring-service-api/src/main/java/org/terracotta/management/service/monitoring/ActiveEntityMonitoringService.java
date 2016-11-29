@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management.client;
+package org.terracotta.management.service.monitoring;
 
-import org.terracotta.management.model.call.ContextualReturn;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 
 /**
+ * Class used by active entities requiring to push some data into the monitoring service
+ *
  * @author Mathieu Carbou
  */
-public class ContextualReturnListenerAdapter implements ContextualReturnListener {
-  @Override
-  public void onContextualReturn(ClientIdentifier from, String id, ContextualReturn<?> aReturn) {
+@CommonComponent
+public interface ActiveEntityMonitoringService extends EntityMonitoringService {
 
-  }
+  /**
+   * Returns an identifier in the management topology for an internal voltron client descriptor. This client identifier identifies a client cluster-wise
+   * <p>
+   * Can be called from active entity only
+   */
+  ClientIdentifier getClientIdentifier(ClientDescriptor clientDescriptor);
+
 }

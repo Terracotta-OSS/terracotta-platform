@@ -59,7 +59,6 @@ public final class Client extends AbstractNode<Cluster> {
     return this;
   }
 
-
   public boolean isManageable() {
     return managementRegistry != null;
   }
@@ -73,6 +72,12 @@ public final class Client extends AbstractNode<Cluster> {
   }
 
   public Client addTags(String... tags) {
+    Collections.addAll(this.tags, tags);
+    return this;
+  }
+
+  public Client setTags(String[] tags) {
+    this.tags.clear();
     Collections.addAll(this.tags, tags);
     return this;
   }

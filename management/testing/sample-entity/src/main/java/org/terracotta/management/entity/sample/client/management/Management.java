@@ -19,7 +19,6 @@ import org.terracotta.connection.Connection;
 import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.management.client.ManagementAgentService;
-import org.terracotta.management.entity.management.client.ManagementOperationException;
 import org.terracotta.management.entity.sample.client.ClientCache;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
@@ -29,6 +28,7 @@ import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.registry.collect.DefaultStatisticCollector;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,15 +46,9 @@ public class Management {
   private final Context parentContext;
   private final ManagementRegistry managementRegistry;
 
-  private final StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
-      .setAverageWindowDuration(1, TimeUnit.MINUTES)
-      .setHistorySize(100)
-      .setHistoryInterval(1, TimeUnit.SECONDS)
-      .setTimeToDisable(5, TimeUnit.SECONDS);
-
   private ManagementAgentService managementAgent;
 
-  public Management(ContextContainer contextContainer) {
+  public Management(ContextContainer contextContainer, StatisticConfiguration statisticConfiguration) {
     this.parentContext = Context.create(contextContainer.getName(), contextContainer.getValue());
 
     // create a client-side management registry and add some providers for stats, calls and settings
@@ -86,14 +80,14 @@ public class Management {
     return managementRegistry;
   }
 
-  public void init(Connection connection) throws ManagementOperationException, InterruptedException, TimeoutException {
+  public void init(Connection connection) throws ExecutionException, InterruptedException, TimeoutException {
     // activate stat collection
     statisticCollector.startStatisticCollector();
 
     // connect the management entity to this registry to bridge the voltorn monitoring service
     managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection)
         .retrieveOrCreate(new ManagementAgentConfig()));
-    managementAgent.setManagementMessageExecutor(executorService);
+    managementAgent.setManagementCallExecutor(executorService);
     managementAgent.setOperationTimeout(5, TimeUnit.SECONDS);
     managementAgent.setManagementRegistry(managementRegistry);
 
@@ -111,6 +105,7 @@ public class Management {
     } catch (Exception e) {
       throw new RuntimeException(e); // do not do that in a real app, this is useful for testing purposes
     }
+    managementAgent.close();
     statisticCollector.stopStatisticCollector();
     executorService.shutdown();
     scheduledExecutorService.shutdown();
