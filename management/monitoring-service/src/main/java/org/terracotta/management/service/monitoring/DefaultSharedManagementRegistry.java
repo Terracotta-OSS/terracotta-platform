@@ -15,11 +15,13 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ManagementRegistry;
+import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.util.Collection;
 import java.util.Map;
@@ -27,6 +29,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
@@ -34,14 +37,14 @@ import java.util.stream.Collectors;
 class DefaultSharedManagementRegistry implements SharedManagementRegistry {
 
   private final WeakHashMap<ConsumerManagementRegistry, Long> registries = new WeakHashMap<>();
+  private final WeakHashMap<PlatformManagementRegistry, Long> platformRegistries = new WeakHashMap<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   @Override
   public Collection<ContextContainer> getContextContainers() {
     lock.readLock().lock();
     try {
-      return registries.keySet()
-          .stream()
+      return Stream.concat(registries.keySet().stream(), platformRegistries.keySet().stream())
           .filter(registry -> registry != null)
           .map(ManagementRegistry::getContextContainer)
           .collect(Collectors.toList());
@@ -54,8 +57,7 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
   public Collection<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
     lock.readLock().lock();
     try {
-      return registries.keySet()
-          .stream()
+      return Stream.concat(registries.keySet().stream(), platformRegistries.keySet().stream())
           .filter(registry -> registry != null)
           .flatMap(registry -> registry.getManagementProvidersByCapability(capabilityName).stream())
           .collect(Collectors.toList());
@@ -80,6 +82,23 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
       }
       ConsumerManagementRegistry registry = new DefaultConsumerManagementRegistry(consumerID, monitoringService, statisticsService);
       registries.put(registry, consumerID);
+      return registry;
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  PlatformManagementRegistry getOrCreatePlatformManagementRegistryConfiguration(long consumerID, MonitoringService monitoringService, DefaultStatisticsService statisticsService, PlatformConfiguration platformConfiguration, StatisticConfiguration statisticConfiguration) {
+    lock.writeLock().lock();
+    try {
+      for (Map.Entry<PlatformManagementRegistry, Long> entry : platformRegistries.entrySet()) {
+        PlatformManagementRegistry registry = entry.getKey();
+        if (consumerID == entry.getValue() && registry != null) {
+          return registry;
+        }
+      }
+      PlatformManagementRegistry registry = new PlatformConsumerManagementRegistry(consumerID, monitoringService, statisticsService, platformConfiguration, statisticConfiguration);
+      platformRegistries.put(registry, consumerID);
       return registry;
     } finally {
       lock.writeLock().unlock();

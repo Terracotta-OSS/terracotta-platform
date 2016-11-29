@@ -41,12 +41,6 @@
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <!-- TODO: there is no separation between api and impl for this service. there should be, so that we only depend on apis -->
-      <artifactId>offheap-resource</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <!-- inside jar -->
     <dependency>

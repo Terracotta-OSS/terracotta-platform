@@ -78,6 +78,12 @@
       <artifactId>monitoring-support</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>offheap-resource</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.terracotta.management</groupId>
