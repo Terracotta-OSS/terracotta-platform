@@ -205,8 +205,8 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
   }
 
   @Override
-  public String sendManagementCallRequest(ClientDescriptor from, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
-    LOGGER.trace("[{}] sendManagementCallRequest({}, {}, {}, {}, {})", consumerId, from, to, context, capabilityName, methodName);
+  public String sendManagementCallRequest(ClientDescriptor from, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
+    LOGGER.trace("[{}] sendManagementCallRequest({}, {}, {}, {})", consumerId, from, context, capabilityName, methodName);
 
     ensureAliveOnActive();
 
@@ -214,6 +214,11 @@ class DefaultMonitoringService implements MonitoringService, Closeable {
       throw new IllegalStateException("No " + ManagementCommunicator.class.getSimpleName());
     }
 
+    if (!context.contains(Client.KEY)) {
+      throw new IllegalArgumentException("Bad context, missing " + Client.KEY + ": " + context);
+    }
+
+    ClientIdentifier to = ClientIdentifier.valueOf(context.get(Client.KEY));
     ClientIdentifier callerClientIdentifier = getConnectedClientIdentifier(from);
     ClientDescriptor toClientDescriptor = getClientDescriptor(to);
 

@@ -28,7 +28,6 @@ import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.PlatformManagementRegistry;
@@ -38,6 +37,7 @@ import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +84,16 @@ class TmsAgentImpl implements TmsAgent, Closeable {
     }
 
     return CompletableFuture.completedFuture(messages);
+  }
+
+  @Override
+  public Future<ContextualReturn<Void>> updateCollectedStatistics(Context context, String capabilityName, Collection<String> statisticNames) {
+    return call(context,
+        "StatisticCollectorCapability",
+        "updateCollectedStatistics",
+        Void.TYPE,
+        new Parameter(capabilityName),
+        new Parameter(statisticNames, Collection.class.getName()));
   }
 
   @Override

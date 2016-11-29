@@ -24,7 +24,6 @@ import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.AbstractStatisticHistory;
-import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.model.stats.StatisticHistory;
 import org.terracotta.management.model.stats.history.CounterHistory;
 import org.terracotta.management.model.stats.history.RatioHistory;
@@ -32,18 +31,12 @@ import org.terracotta.management.model.stats.history.SizeHistory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Mathieu Carbou
@@ -184,13 +177,10 @@ public class ServerCacheManagementTest extends AbstractTest {
         .findFirst()
         .get();
 
-    ContextualReturn<Void> updateCollectedStatistics = tmsAgent.call(
+    ContextualReturn<Void> updateCollectedStatistics = tmsAgent.updateCollectedStatistics(
         serverEntity.getContext(),
-        "StatisticCollectorCapability",
-        "updateCollectedStatistics",
-        Void.TYPE,
-        new Parameter("ServerCacheStatistics"),
-        new Parameter(Arrays.asList("Cluster:HitCount", "Cluster:MissCount", "Cluster:HitRatio", "ServerCache:Size"), Collection.class.getName())).get();
+        "ServerCacheStatistics",
+        Arrays.asList("Cluster:HitCount", "Cluster:MissCount", "Cluster:HitRatio", "ServerCache:Size")).get();
 
     assertThat(updateCollectedStatistics.hasExecuted(), is(true));
     assertThat(updateCollectedStatistics.errorThrown(), is(false));

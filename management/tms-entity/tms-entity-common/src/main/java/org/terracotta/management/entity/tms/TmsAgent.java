@@ -22,6 +22,7 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.voltron.proxy.Async;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -35,6 +36,9 @@ public interface TmsAgent {
 
   @Async(Async.Ack.NONE)
   Future<List<Message>> readMessages();
+
+  @Async(Async.Ack.NONE)
+  Future<ContextualReturn<Void>> updateCollectedStatistics(Context context, String capabilityName, Collection<String> statisticNames);
 
   /**
    * Execute a management call on the server and returns the results

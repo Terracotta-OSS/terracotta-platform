@@ -28,6 +28,7 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.service.monitoring.MonitoringService;
 import org.terracotta.voltron.proxy.ClientId;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -73,8 +74,20 @@ class ManagementAgentImpl implements ManagementAgent {
   }
 
   @Override
-  public Future<String> call(@ClientId Object callerDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
-    String managementCallIdentifier = monitoringService.sendManagementCallRequest((ClientDescriptor) callerDescriptor, to, context, capabilityName, methodName, returnType, parameters);
+  public Future<String> updateCollectedStatistics(@ClientId Object clientDescriptor, Context context, String capabilityName, Collection<String> statisticNames) {
+    return call(
+        clientDescriptor,
+        context,
+        "StatisticCollectorCapability",
+        "updateCollectedStatistics",
+        Void.TYPE,
+        new Parameter(capabilityName),
+        new Parameter(statisticNames, Collection.class.getName()));
+  }
+
+  @Override
+  public Future<String> call(@ClientId Object callerDescriptor, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
+    String managementCallIdentifier = monitoringService.sendManagementCallRequest((ClientDescriptor) callerDescriptor, context, capabilityName, methodName, returnType, parameters);
     return CompletableFuture.completedFuture(managementCallIdentifier);
   }
 

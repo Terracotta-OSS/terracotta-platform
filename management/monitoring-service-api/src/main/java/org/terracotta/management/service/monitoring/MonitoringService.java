@@ -111,7 +111,7 @@ public interface MonitoringService {
    *
    * @return An unique identifier for this management call
    */
-  String sendManagementCallRequest(ClientDescriptor caller, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
+  String sendManagementCallRequest(ClientDescriptor caller, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
 
   /**
    * Answer a management call we received and executed

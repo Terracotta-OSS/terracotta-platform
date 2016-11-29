@@ -399,8 +399,7 @@ public class VoltronMonitoringServiceTest {
 
     String id = monitoringServiceEntity1.sendManagementCallRequest(
         new FakeDesc("1-1"),
-        ClientIdentifier.create(222L, InetAddress.getByName("localhost").getHostAddress(), "name", "uuid-2"),
-        Context.empty(),
+        Context.create(Client.KEY, ClientIdentifier.create(222L, InetAddress.getByName("localhost").getHostAddress(), "name", "uuid-2").toString()),
         "capabilityName",
         "myMethod",
         Void.TYPE);

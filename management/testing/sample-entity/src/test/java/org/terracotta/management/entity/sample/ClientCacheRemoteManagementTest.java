@@ -28,7 +28,6 @@ import org.terracotta.management.model.stats.history.RatioHistory;
 import org.terracotta.management.model.stats.history.SizeHistory;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -77,33 +76,33 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
         .with("cacheName", "pets");
 
     // put
-    managementAgentService.call(client.getClientIdentifier(), context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat"));
+    managementAgentService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat"));
     ContextualReturn<?> put = managementCallReturns.take();
     assertThat(put.hasExecuted(), is(true));
     assertThat(put.errorThrown(), is(false));
 
     // get
-    managementAgentService.call(client.getClientIdentifier(), context, "CacheCalls", "get", String.class, new Parameter("pet1"));
+    managementAgentService.call(context, "CacheCalls", "get", String.class, new Parameter("pet1"));
     ContextualReturn<?> get = managementCallReturns.take();
     assertThat(get.hasExecuted(), is(true));
     assertThat(get.errorThrown(), is(false));
     assertThat(get.getValue(), equalTo("Cat"));
 
     // size
-    managementAgentService.call(client.getClientIdentifier(), context, "CacheCalls", "size", int.class);
+    managementAgentService.call(context, "CacheCalls", "size", int.class);
     ContextualReturn<?> size = managementCallReturns.take();
     assertThat(size.hasExecuted(), is(true));
     assertThat(size.errorThrown(), is(false));
     assertThat(size.getValue(), is(1));
 
     // clear
-    managementAgentService.call(client.getClientIdentifier(), context, "CacheCalls", "clear", Void.TYPE);
+    managementAgentService.call(context, "CacheCalls", "clear", Void.TYPE);
     ContextualReturn<?> clear = managementCallReturns.take();
     assertThat(clear.hasExecuted(), is(true));
     assertThat(clear.errorThrown(), is(false));
 
     // size again
-    managementAgentService.call(client.getClientIdentifier(), context, "CacheCalls", "size", int.class);
+    managementAgentService.call(context, "CacheCalls", "size", int.class);
     size = managementCallReturns.take();
     assertThat(size.hasExecuted(), is(true));
     assertThat(size.errorThrown(), is(false));
@@ -174,14 +173,10 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
     Context context = client.getContext()
         .with("appName", "pet-clinic");
 
-    managementAgentService.call(
-        client.getClientIdentifier(),
+    managementAgentService.updateCollectedStatistics(
         context,
-        "StatisticCollectorCapability",
-        "updateCollectedStatistics",
-        Void.TYPE,
-        new Parameter("CacheStatistics"),
-        new Parameter(Arrays.asList("Cache:HitCount", "Cache:MissCount", "Cache:HitRatio", "ClientCache:Size"), Collection.class.getName()));
+        "CacheStatistics",
+        Arrays.asList("Cache:HitCount", "Cache:MissCount", "Cache:HitRatio", "ClientCache:Size"));
     ContextualReturn<?> updateCollectedStatistics = managementCallReturns.take();
     assertThat(updateCollectedStatistics.hasExecuted(), is(true));
     assertThat(updateCollectedStatistics.errorThrown(), is(false));

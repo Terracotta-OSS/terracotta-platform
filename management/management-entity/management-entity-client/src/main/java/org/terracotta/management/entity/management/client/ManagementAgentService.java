@@ -242,8 +242,12 @@ public class ManagementAgentService implements Closeable {
    * <p>
    * Returns a unique identifier for this management call.
    */
-  public String call(ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) throws ManagementOperationException, InterruptedException, TimeoutException {
-    return get(entity.call(null, to, context, capabilityName, methodName, returnType, parameters), timeout);
+  public String call(Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) throws ManagementOperationException, InterruptedException, TimeoutException {
+    return get(entity.call(null, context, capabilityName, methodName, returnType, parameters), timeout);
+  }
+
+  public String updateCollectedStatistics(Context context, String capabilityName, Collection<String> statisticNames) throws ManagementOperationException, InterruptedException, TimeoutException {
+    return get(entity.updateCollectedStatistics(null, context, capabilityName, statisticNames), timeout);
   }
 
   private static <V> V get(Future<V> future, long timeout) throws ManagementOperationException, TimeoutException, InterruptedException {
