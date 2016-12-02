@@ -20,9 +20,11 @@ import org.terracotta.monitoring.PlatformServer;
 import java.io.Serializable;
 
 /**
- * Interface used to receive states and data sent from all server entities (or more generally service consumers)
+ * Class returned to the platform so that we can be called back with the data coming from a passive entity (from a DefaultPassiveEntityMonitoringService)
+ *
+ * @author Mathieu Carbou
  */
-public interface DataListener {
+interface DataListener {
 
   void pushBestEffortsData(long consumerId, PlatformServer sender, String name, Serializable data);
 

@@ -21,9 +21,9 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.management.ManagementAgent;
 import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.ManagementAgentVersion;
-import org.terracotta.management.model.message.ManagementCallMessage;
-import org.terracotta.management.service.monitoring.MonitoringService;
-import org.terracotta.management.service.monitoring.MonitoringServiceConfiguration;
+import org.terracotta.management.model.message.Message;
+import org.terracotta.management.service.monitoring.ClientMonitoringService;
+import org.terracotta.management.service.monitoring.ClientMonitoringServiceConfiguration;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
@@ -36,14 +36,14 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
 
   public ManagementAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec(), ManagementCallMessage.class);
+    super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec(), Message.class);
   }
 
   @Override
   public ManagementAgentServerEntity createActiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
     ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
-    MonitoringService monitoringService = Objects.requireNonNull(registry.getService(new MonitoringServiceConfiguration(registry)));
-    ManagementAgentImpl managementAgent = new ManagementAgentImpl(monitoringService);
+    ClientMonitoringService clientMonitoringService = Objects.requireNonNull(registry.getService(new ClientMonitoringServiceConfiguration(communicator)));
+    ManagementAgentImpl managementAgent = new ManagementAgentImpl(clientMonitoringService);
     return new ManagementAgentServerEntity(managementAgent, communicator);
   }
 

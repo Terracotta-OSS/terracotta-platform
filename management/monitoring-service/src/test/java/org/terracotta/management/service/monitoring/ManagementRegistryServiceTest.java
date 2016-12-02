@@ -21,8 +21,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
-import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -50,8 +48,7 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
 public class ManagementRegistryServiceTest {
 
   MonitoringServiceProvider provider = new MonitoringServiceProvider();
-  MonitoringService monitoringService;
-  ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
+  ManagementService managementService;
   IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
   IStripeMonitoring platformListener;
   IStripeMonitoring dataListener;
@@ -66,22 +63,6 @@ public class ManagementRegistryServiceTest {
 
   @Test
   public void test_management_info_pushed() {
-
-    // service registry
-
-    doAnswer(invocation -> {
-      Class<?> type = ((ServiceConfiguration) invocation.getArguments()[0]).getServiceType();
-      if (type == IMonitoringProducer.class) {
-        return monitoringProducer;
-      }
-      if (type == MonitoringService.class) {
-        return monitoringService;
-      }
-      if (type == ClientCommunicator.class) {
-        return null;
-      }
-      throw new AssertionError(invocation + "\ntype=" + type);
-    }).when(serviceRegistry).getService(any(ServiceConfiguration.class));
 
     // dataListener => per entity
 
@@ -113,11 +94,12 @@ public class ManagementRegistryServiceTest {
     platformListener.addNode(server, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName", 1, true));
 
     dataListener = provider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
-    monitoringService = provider.getService(1, new MonitoringServiceConfiguration(serviceRegistry));
-    ReadOnlyBuffer<Message> buffer = monitoringService.createMessageBuffer(100);
+    managementService = provider.getService(1, new ManagementServiceConfiguration(mock(ClientCommunicator.class)));
+    ReadOnlyBuffer<Message> buffer = managementService.createMessageBuffer(100);
 
     // a consumer asks for a service
-    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(serviceRegistry));
+    ActiveEntityMonitoringService activeEntityMonitoringService = provider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
+    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(activeEntityMonitoringService));
     registry.addManagementProvider(new MyManagementProvider());
 
     // then register some objects

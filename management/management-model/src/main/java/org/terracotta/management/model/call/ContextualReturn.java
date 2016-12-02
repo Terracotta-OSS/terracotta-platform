@@ -59,6 +59,10 @@ public final class ContextualReturn<T> implements Contextual {
     return executed;
   }
 
+  public boolean errorThrown() {
+    return error != null;
+  }
+
   /**
    * @return The returned value, might be null
    * @throws NoSuchElementException If the management call was not able to execute because a provider was not found
@@ -112,7 +116,7 @@ public final class ContextualReturn<T> implements Contextual {
         ", method='" + methodName + '\'' +
         ", context=" + context +
         ", executed=" + executed +
-        ", value=" + value +
+        ", error=" + (error != null) +
         '}';
   }
 

@@ -17,7 +17,7 @@ package org.terracotta.management.entity.management.server;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.management.entity.management.ManagementAgent;
-import org.terracotta.management.model.message.ManagementCallMessage;
+import org.terracotta.management.model.message.Message;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 /**
@@ -25,6 +25,6 @@ import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
  */
 class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
   ManagementAgentServerEntity(ManagementAgentImpl managementAgent, ClientCommunicator communicator) {
-    super(managementAgent, communicator, ManagementCallMessage.class);
+    super(managementAgent, communicator, Message.class);
   }
 }

@@ -32,7 +32,6 @@
     <module>tms-entity-common</module>
     <module>tms-entity-client</module>
     <module>tms-entity-server</module>
-    <module>tms-entity-tests</module>
   </modules>
 
   <artifactId>tms-entity</artifactId>

@@ -123,7 +123,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
 
   @SuppressWarnings("unchecked")
   @Override
-  public Collection<Descriptor> getDescriptors() {
+  public Collection<? extends Descriptor> getDescriptors() {
     Collection<Descriptor> capabilities = new LinkedHashSet<Descriptor>();
     for (ExposedObject o : exposedObjects) {
       capabilities.addAll(((ExposedObject<T>) o).getDescriptors());

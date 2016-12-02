@@ -15,9 +15,11 @@
  */
 package org.terracotta.management.entity.tms.server;
 
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.management.model.message.Message;
 import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,11 +29,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
 
-  private final AtomicBoolean connected  = new AtomicBoolean();
+  private final AtomicBoolean connected = new AtomicBoolean();
   private final TmsAgentImpl tmsAgent;
 
-  TmsAgentServerEntity(TmsAgentImpl tmsAgent) {
-    super(tmsAgent);
+  TmsAgentServerEntity(TmsAgentImpl tmsAgent, ClientCommunicator communicator) {
+    super(tmsAgent, communicator, Message.class);
     this.tmsAgent = tmsAgent;
   }
 
@@ -49,7 +51,7 @@ class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
   @Override
   public void connected(ClientDescriptor clientDescriptor) {
     super.connected(clientDescriptor);
-    if(!connected.compareAndSet(false, true)) {
+    if (!connected.compareAndSet(false, true)) {
       throw new AssertionError("Only one connection allowed per " + TmsAgentConfig.ENTITY_TYPE);
     }
   }

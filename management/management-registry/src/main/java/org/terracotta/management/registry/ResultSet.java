@@ -17,6 +17,7 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.model.context.Context;
 
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -30,6 +31,8 @@ public interface ResultSet<T> extends Iterable<T> {
    * @return The result of the query for a specific context
    */
   T getResult(Context context);
+
+  Map<Context, T> results();
 
   /**
    * @return The result of the query for the only one existing context

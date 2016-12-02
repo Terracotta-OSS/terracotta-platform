@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,8 +36,8 @@ public final class Cluster implements Contextual {
 
   private static final long serialVersionUID = 2;
 
-  private final Map<String, Client> clients = new HashMap<>();
-  private final Map<String, Stripe> stripes = new HashMap<>();
+  private final Map<String, Client> clients = new TreeMap<>();
+  private final Map<String, Stripe> stripes = new TreeMap<>();
 
   private Cluster() {
   }

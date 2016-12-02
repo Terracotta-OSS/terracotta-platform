@@ -20,7 +20,7 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
 import org.terracotta.management.service.monitoring.StatisticsService;
 
 import java.util.Objects;
@@ -29,9 +29,9 @@ import java.util.Objects;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public abstract class AbstractConsumerManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware, StatisticsServiceAware {
+public abstract class AbstractConsumerManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware {
 
-  private MonitoringService monitoringService;
+  private EntityMonitoringService monitoringService;
   private StatisticsService statisticsService;
 
   public AbstractConsumerManagementProvider(Class<? extends T> managedType) {
@@ -39,20 +39,21 @@ public abstract class AbstractConsumerManagementProvider<T> extends AbstractMana
   }
 
   @Override
-  public void setMonitoringService(MonitoringService monitoringService) {
+  public void setMonitoringService(EntityMonitoringService monitoringService) {
     this.monitoringService = Objects.requireNonNull(monitoringService);
   }
 
-  protected MonitoringService getMonitoringService() {
-    return Objects.requireNonNull(monitoringService);
-  }
-
+  @Override
   public void setStatisticsService(StatisticsService statisticsService) {
     this.statisticsService = statisticsService;
   }
 
+  protected EntityMonitoringService getMonitoringService() {
+    return Objects.requireNonNull(monitoringService);
+  }
+
   protected StatisticsService getStatisticsService() {
-    return statisticsService;
+    return Objects.requireNonNull(statisticsService);
   }
 
   @Override

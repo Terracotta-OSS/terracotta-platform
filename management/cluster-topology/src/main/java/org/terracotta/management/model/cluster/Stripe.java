@@ -17,9 +17,9 @@ package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,7 +32,7 @@ public final class Stripe extends AbstractNode<Cluster> {
 
   public static final String KEY = "stripeId";
 
-  private final Map<String, Server> servers = new HashMap<>();
+  private final Map<String, Server> servers = new TreeMap<>();
 
   private Stripe(String name) {
     super(name);

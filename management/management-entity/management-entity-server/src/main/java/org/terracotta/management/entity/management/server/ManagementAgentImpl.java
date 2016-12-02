@@ -18,16 +18,14 @@ package org.terracotta.management.entity.management.server;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.management.ManagementAgent;
 import org.terracotta.management.model.call.ContextualReturn;
-import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.cluster.ClientIdentifier;
-import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.ClientMonitoringService;
 import org.terracotta.voltron.proxy.ClientId;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -36,51 +34,41 @@ import java.util.concurrent.Future;
  */
 class ManagementAgentImpl implements ManagementAgent {
 
-  private final MonitoringService monitoringService;
+  private final ClientMonitoringService clientMonitoringService;
 
-  ManagementAgentImpl(MonitoringService monitoringService) {
-    this.monitoringService = monitoringService;
-  }
-
-  public Future<ClientIdentifier> getClientIdentifier(@ClientId Object clientDescriptor) {
-    return CompletableFuture.completedFuture(monitoringService.getClientIdentifier((ClientDescriptor) clientDescriptor));
+  ManagementAgentImpl(ClientMonitoringService clientMonitoringService) {
+    this.clientMonitoringService = Objects.requireNonNull(clientMonitoringService);
   }
 
   @Override
   public Future<Void> pushNotification(@ClientId Object caller, ContextualNotification notification) {
-    monitoringService.pushClientNotification((ClientDescriptor) caller, notification);
+    clientMonitoringService.pushNotification((ClientDescriptor) caller, notification);
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> pushStatistics(@ClientId Object caller, ContextualStatistics... statistics) {
     if (statistics.length > 0) {
-      monitoringService.pushClientStatistics((ClientDescriptor) caller, statistics);
+      clientMonitoringService.pushStatistics((ClientDescriptor) caller, statistics);
     }
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> exposeManagementMetadata(@ClientId Object caller, ContextContainer contextContainer, Capability... capabilities) {
-    monitoringService.exposeClientManagementRegistry((ClientDescriptor) caller, contextContainer, capabilities);
+    clientMonitoringService.exposeManagementRegistry((ClientDescriptor) caller, contextContainer, capabilities);
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> exposeTags(@ClientId Object caller, String... tags) {
-    monitoringService.exposeClientTags((ClientDescriptor) caller, tags);
+    clientMonitoringService.exposeTags((ClientDescriptor) caller, tags);
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public Future<String> call(@ClientId Object callerDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
-    String managementCallIdentifier = monitoringService.sendManagementCallRequest((ClientDescriptor) callerDescriptor, to, context, capabilityName, methodName, returnType, parameters);
-    return CompletableFuture.completedFuture(managementCallIdentifier);
-  }
-
-  @Override
-  public Future<Void> callReturn(@ClientId Object calledDescriptor, ClientIdentifier to, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
-    monitoringService.answerManagementCall((ClientDescriptor) calledDescriptor, to, managementCallIdentifier, contextualReturn);
+  public Future<Void> answerManagementCall(@ClientId Object caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
+    clientMonitoringService.answerManagementCall((ClientDescriptor) caller, managementCallIdentifier, contextualReturn);
     return CompletableFuture.completedFuture(null);
   }
 

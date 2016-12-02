@@ -23,26 +23,23 @@ import org.terracotta.management.registry.action.Named;
 import org.terracotta.management.registry.action.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticCollector;
 import org.terracotta.management.registry.collect.StatisticCollectorProvider;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
-import org.terracotta.management.service.monitoring.MonitoringService;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
 import org.terracotta.management.service.monitoring.StatisticsService;
 
 @Named("StatisticCollectorCapability")
 @RequiredContext({@Named("consumerId")})
 @CommonComponent
-public class StatisticCollectorManagementProvider extends StatisticCollectorProvider<StatisticCollector> implements StatisticsServiceAware, MonitoringServiceAware {
+public class StatisticCollectorManagementProvider extends StatisticCollectorProvider<StatisticCollector> implements MonitoringServiceAware {
 
-  private final StatisticConfiguration statisticConfiguration;
   private StatisticsService statisticsService;
-  private MonitoringService monitoringService;
+  private EntityMonitoringService monitoringService;
 
-  public StatisticCollectorManagementProvider(Context context, StatisticConfiguration statisticConfiguration) {
+  public StatisticCollectorManagementProvider(Context context) {
     super(StatisticCollector.class, context);
-    this.statisticConfiguration = statisticConfiguration;
   }
 
   @Override
-  public void setMonitoringService(MonitoringService monitoringService) {
+  public void setMonitoringService(EntityMonitoringService monitoringService) {
     this.monitoringService = monitoringService;
   }
 
@@ -58,8 +55,7 @@ public class StatisticCollectorManagementProvider extends StatisticCollectorProv
 
   public void init() {
     StatisticCollector statisticCollector = statisticsService.createStatisticCollector(
-        statisticConfiguration,
-        statistics -> monitoringService.pushServerEntityStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
+        statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
     register(statisticCollector);
     statisticCollector.startStatisticCollector();
   }

@@ -17,10 +17,11 @@ package org.terracotta.management.entity.tms.client;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.management.entity.tms.TmsAgent;
+import org.terracotta.voltron.proxy.client.ServerMessageAware;
 
 /**
  * @author Mathieu Carbou
  */
-public interface TmsAgentEntity extends TmsAgent, Entity {
+public interface TmsAgentEntity extends TmsAgent, Entity, ServerMessageAware {
 
 }

@@ -45,12 +45,7 @@ public class ManagementRegistryTest {
 
   @Test
   public void test_management_registry_exposes() throws IOException {
-    ManagementRegistry registry = new AbstractManagementRegistry() {
-      @Override
-      public ContextContainer getContextContainer() {
-        return new ContextContainer("cacheManagerName", "my-cm-name");
-      }
-    };
+    ManagementRegistry registry = new DefaultManagementRegistry(new ContextContainer("cacheManagerName", "my-cm-name"));
 
     registry.addManagementProvider(new MyManagementProvider());
 
@@ -66,8 +61,6 @@ public class ManagementRegistryTest {
     mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
 
     String actual = mapper.writeValueAsString(registry.getCapabilities());
-    System.out.println(expectedJson);
-    System.out.println(actual);
     assertEquals(expectedJson, actual);
 
     ContextualReturn<?> cr = registry.withCapability("TheActionProvider")

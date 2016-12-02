@@ -1,0 +1,186 @@
+[
+  {
+    "name": "ServerCacheCalls",
+    "descriptors": [
+      {
+        "name": "clear",
+        "returnType": "void",
+        "parameters": []
+      },
+      {
+        "name": "get",
+        "returnType": "java.lang.String",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          }
+        ]
+      },
+      {
+        "name": "put",
+        "returnType": "void",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          },
+          {
+            "name": "value",
+            "type": "java.lang.String"
+          }
+        ]
+      },
+      {
+        "name": "size",
+        "returnType": "int",
+        "parameters": []
+      }
+    ],
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "consumerId",
+          "required": true
+        },
+        {
+          "name": "cacheName",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "ServerCacheSettings",
+    "descriptors": [
+      {
+        "consumerId": "4",
+        "alias": "pet-clinic/clients",
+        "type": "ServerCache",
+        "size": 0
+      },
+      {
+        "type": "ServerCacheSettings",
+        "time": 0
+      }
+    ],
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "consumerId",
+          "required": true
+        },
+        {
+          "name": "type",
+          "required": true
+        },
+        {
+          "name": "alias",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "ServerCacheStatistics",
+    "properties": {
+      "averageWindowDuration": 1,
+      "averageWindowUnit": "MINUTES",
+      "historySize": 100,
+      "historyInterval": 1,
+      "historyIntervalUnit": "SECONDS",
+      "timeToDisable": 5,
+      "timeToDisableUnit": "SECONDS"
+    },
+    "descriptors": [
+      {
+        "name": "Cluster:ClearCount",
+        "type": "COUNTER_HISTORY"
+      },
+      {
+        "name": "Cluster:ClearLatencyAverage",
+        "type": "AVERAGE_HISTORY"
+      },
+      {
+        "name": "Cluster:ClearLatencyMaximum",
+        "type": "DURATION_HISTORY"
+      },
+      {
+        "name": "Cluster:ClearLatencyMinimum",
+        "type": "DURATION_HISTORY"
+      },
+      {
+        "name": "Cluster:ClearRate",
+        "type": "RATE_HISTORY"
+      },
+      {
+        "name": "Cluster:HitCount",
+        "type": "COUNTER_HISTORY"
+      },
+      {
+        "name": "Cluster:HitLatencyAverage",
+        "type": "AVERAGE_HISTORY"
+      },
+      {
+        "name": "Cluster:HitLatencyMaximum",
+        "type": "DURATION_HISTORY"
+      },
+      {
+        "name": "Cluster:HitLatencyMinimum",
+        "type": "DURATION_HISTORY"
+      },
+      {
+        "name": "Cluster:HitRate",
+        "type": "RATE_HISTORY"
+      },
+      {
+        "name": "Cluster:HitRatio",
+        "type": "RATIO_HISTORY"
+      },
+      {
+        "name": "Cluster:MissCount",
+        "type": "COUNTER_HISTORY"
+      },
+      {
+        "name": "Cluster:MissLatencyAverage",
+        "type": "AVERAGE_HISTORY"
+      },
+      {
+        "name": "Cluster:MissLatencyMaximum",
+        "type": "DURATION_HISTORY"
+      },
+      {
+        "name": "Cluster:MissLatencyMinimum",
+        "type": "DURATION_HISTORY"
+      },
+      {
+        "name": "Cluster:MissRate",
+        "type": "RATE_HISTORY"
+      },
+      {
+        "name": "Cluster:MissRatio",
+        "type": "RATIO_HISTORY"
+      },
+      {
+        "name": "ServerCache:Size",
+        "type": "SIZE_HISTORY"
+      }
+    ],
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "consumerId",
+          "required": true
+        },
+        {
+          "name": "type",
+          "required": true
+        },
+        {
+          "name": "alias",
+          "required": true
+        }
+      ]
+    }
+  }
+]

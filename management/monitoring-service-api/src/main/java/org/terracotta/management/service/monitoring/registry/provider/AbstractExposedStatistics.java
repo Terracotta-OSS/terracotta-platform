@@ -17,7 +17,7 @@ package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.context.extended.StatisticsRegistry;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.collect.StatisticsRegistryMetadata;
@@ -59,7 +59,7 @@ public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBind
   }
 
   @Override
-  public Collection<Descriptor> getDescriptors() {
+  public Collection<? extends StatisticDescriptor> getDescriptors() {
     return statisticsRegistryMetadata.getDescriptors();
   }
 

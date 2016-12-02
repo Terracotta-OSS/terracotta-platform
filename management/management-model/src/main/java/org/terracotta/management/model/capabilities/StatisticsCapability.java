@@ -20,6 +20,7 @@ import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -34,14 +35,14 @@ public final class StatisticsCapability implements Capability, Serializable {
 
   private final String name;
   private final Properties properties;
-  private final Collection<Descriptor> descriptors;
+  private final Collection<? extends Descriptor> descriptors;
   private final CapabilityContext capabilityContext;
 
   public StatisticsCapability(String name, Properties properties, CapabilityContext capabilityContext, Descriptor... descriptors) {
     this(name, properties, Arrays.asList(descriptors), capabilityContext);
   }
 
-  public StatisticsCapability(String name, Properties properties, Collection<Descriptor> descriptors, CapabilityContext capabilityContext) {
+  public StatisticsCapability(String name, Properties properties, Collection<? extends Descriptor> descriptors, CapabilityContext capabilityContext) {
     this.name = Objects.requireNonNull(name);
     this.properties = Objects.requireNonNull(properties);
     this.descriptors = Objects.requireNonNull(descriptors);
@@ -53,8 +54,19 @@ public final class StatisticsCapability implements Capability, Serializable {
   }
 
   @Override
-  public Collection<Descriptor> getDescriptors() {
+  public Collection<? extends Descriptor> getDescriptors() {
     return descriptors;
+  }
+
+  @Override
+  public <T extends Descriptor> Collection<T> getDescriptors(Class<T> descriptorType) {
+    Collection<T> list = new ArrayList<T>();
+    for (Descriptor descriptor : descriptors) {
+      if (descriptorType.isInstance(descriptor)) {
+        list.add(descriptorType.cast(descriptor));
+      }
+    }
+    return list;
   }
 
   @Override

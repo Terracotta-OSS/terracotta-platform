@@ -27,7 +27,9 @@ public interface Capability {
 
   String getName();
 
-  Collection<Descriptor> getDescriptors();
+  Collection<? extends Descriptor> getDescriptors();
+
+  <T extends Descriptor> Collection<T> getDescriptors(Class<T> descriptorType);
 
   CapabilityContext getCapabilityContext();
 

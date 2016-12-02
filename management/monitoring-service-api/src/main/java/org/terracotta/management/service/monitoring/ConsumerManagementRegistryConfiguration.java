@@ -17,9 +17,11 @@ package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.util.Objects;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * @author Mathieu Carbou
@@ -27,19 +29,42 @@ import java.util.Objects;
 @CommonComponent
 public class ConsumerManagementRegistryConfiguration implements ServiceConfiguration<ConsumerManagementRegistry> {
 
-  private final ServiceRegistry serviceRegistry;
+  private final EntityMonitoringService entityMonitoringService;
+  private boolean addServerManagementProviders;
+  private StatisticConfiguration statisticConfiguration = new StatisticConfiguration(
+      60, SECONDS,
+      100, 1, SECONDS,
+      30, SECONDS
+  );
 
-  public ConsumerManagementRegistryConfiguration(ServiceRegistry serviceRegistry) {
-    this.serviceRegistry = Objects.requireNonNull(serviceRegistry);
+  public ConsumerManagementRegistryConfiguration(EntityMonitoringService entityMonitoringService) {
+    this.entityMonitoringService = Objects.requireNonNull(entityMonitoringService);
+  }
+
+  public EntityMonitoringService getEntityMonitoringService() {
+    return entityMonitoringService;
+  }
+
+  public ConsumerManagementRegistryConfiguration addServerManagementProviders() {
+    this.addServerManagementProviders = true;
+    return this;
+  }
+
+  public boolean wantsServerManagementProviders() {
+    return addServerManagementProviders;
+  }
+
+  public StatisticConfiguration getStatisticConfiguration() {
+    return statisticConfiguration;
+  }
+
+  public ConsumerManagementRegistryConfiguration setStatisticConfiguration(StatisticConfiguration statisticConfiguration) {
+    this.statisticConfiguration = statisticConfiguration;
+    return this;
   }
 
   @Override
   public Class<ConsumerManagementRegistry> getServiceType() {
     return ConsumerManagementRegistry.class;
   }
-
-  public ServiceRegistry getRegistry() {
-    return serviceRegistry;
-  }
-
 }

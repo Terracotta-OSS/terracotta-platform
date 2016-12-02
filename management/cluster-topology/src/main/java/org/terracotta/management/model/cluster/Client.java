@@ -19,11 +19,11 @@ import org.terracotta.management.model.context.Context;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,7 +38,7 @@ public final class Client extends AbstractNode<Cluster> {
   public static final String KEY = "clientId";
 
   // physical connections to stripes (active server)
-  private final Map<String, Connection> connections = new HashMap<>();
+  private final Map<String, Connection> connections = new TreeMap<>();
 
   private final ClientIdentifier clientIdentifier;
   private final SortedSet<String> tags = new TreeSet<>();
@@ -59,7 +59,6 @@ public final class Client extends AbstractNode<Cluster> {
     return this;
   }
 
-
   public boolean isManageable() {
     return managementRegistry != null;
   }
@@ -73,6 +72,12 @@ public final class Client extends AbstractNode<Cluster> {
   }
 
   public Client addTags(String... tags) {
+    Collections.addAll(this.tags, tags);
+    return this;
+  }
+
+  public Client setTags(String[] tags) {
+    this.tags.clear();
     Collections.addAll(this.tags, tags);
     return this;
   }

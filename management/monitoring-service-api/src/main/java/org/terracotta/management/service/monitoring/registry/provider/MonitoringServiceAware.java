@@ -16,14 +16,11 @@
 package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.management.registry.ManagementRegistry;
-import org.terracotta.management.service.monitoring.MonitoringService;
-
-import java.io.Closeable;
-import java.util.Collections;
-import java.util.Map;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
+import org.terracotta.management.service.monitoring.StatisticsService;
 
 @CommonComponent
 public interface MonitoringServiceAware {
-  void setMonitoringService(MonitoringService monitoringService);
+  void setMonitoringService(EntityMonitoringService monitoringService);
+  void setStatisticsService(StatisticsService statisticsService);
 }

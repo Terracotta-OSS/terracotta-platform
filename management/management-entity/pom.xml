@@ -26,7 +26,6 @@
     <module>management-entity-common</module>
     <module>management-entity-client</module>
     <module>management-entity-server</module>
-    <module>management-entity-tests</module>
   </modules>
 
   <parent>

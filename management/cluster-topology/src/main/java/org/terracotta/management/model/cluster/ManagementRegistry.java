@@ -22,7 +22,6 @@ import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
-import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptorCategory;
 import org.terracotta.management.model.context.ContextContainer;
 
 import java.io.Serializable;
@@ -127,8 +126,6 @@ public final class ManagementRegistry implements Serializable {
         descriptorList.add(toMap((CallDescriptor) o));
       } else if (o instanceof StatisticDescriptor) {
         descriptorList.add(toMap((StatisticDescriptor) o));
-      } else if (o instanceof StatisticDescriptorCategory) {
-        descriptorList.add(toMap((StatisticDescriptorCategory) o));
       } else if (o instanceof Settings) {
         descriptorList.add(toMap((Settings) o));
       } else {
@@ -165,13 +162,6 @@ public final class ManagementRegistry implements Serializable {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("name", descriptor.getName());
     map.put("type", descriptor.getType().name());
-    return map;
-  }
-
-  private static Map<String, Object> toMap(StatisticDescriptorCategory descriptor) {
-    Map<String, Object> map = new LinkedHashMap<>();
-    map.put("name", descriptor.getName());
-    map.put("statistics", descriptor.getStatistics().stream().map(ManagementRegistry::toMap).collect(Collectors.toList()));
     return map;
   }
 

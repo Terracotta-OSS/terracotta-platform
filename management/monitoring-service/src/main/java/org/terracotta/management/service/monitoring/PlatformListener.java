@@ -26,7 +26,7 @@ import org.terracotta.monitoring.ServerState;
  * <p>
  * This is only ever called by the consumerID 0 instance.
  */
-public interface PlatformListener {
+interface PlatformListener {
 
   void serverDidBecomeActive(PlatformServer self);
 

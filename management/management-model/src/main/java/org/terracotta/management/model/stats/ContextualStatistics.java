@@ -121,7 +121,7 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Co
     return "ContextualStatistics{" +
         "capability='" + capability + '\'' +
         ", context=" + context +
-        ", statistics=" + statistics +
+        ", statistics=" + statistics.size() +
         '}';
   }
 

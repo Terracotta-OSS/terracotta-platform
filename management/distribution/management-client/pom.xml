@@ -78,6 +78,7 @@
                   <exclude>org.terracotta.management:sequence-generator</exclude>
                   <exclude>org.terracotta.management:cluster-topology</exclude>
                   <exclude>org.terracotta.management:management-registry</exclude>
+                  <exclude>org.terracotta:statistics</exclude>
                   <exclude>org.terracotta.management.dist:management-common</exclude>
                 </excludes>
               </artifactSet>

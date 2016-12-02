@@ -16,10 +16,7 @@
 package org.terracotta.management.entity.management;
 
 import org.terracotta.management.model.call.ContextualReturn;
-import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.cluster.ClientIdentifier;
-import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -53,28 +50,10 @@ public interface ManagementAgent {
   Future<Void> exposeTags(@ClientId Object clientDescriptor, String... tags);
 
   /**
-   * Gets the {@link ClientIdentifier} for the underlying logical connection.
-   *
-   * @param clientDescriptor must be null, used only for implementation
-   */
-  @Async(Async.Ack.NONE)
-  Future<ClientIdentifier> getClientIdentifier(@ClientId Object clientDescriptor);
-
-  /**
-   * Execute a management call and do not expect any return result.
-   * <p>
-   * Returns a unique identifier for this management call.
-   */
-  @Async(Async.Ack.NONE)
-  Future<String> call(@ClientId Object clientDescriptor, ClientIdentifier to, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
-
-  //TODO: MATHIEU: Add a method to run the same management call over several clients at once: https://github.com/Terracotta-OSS/terracotta-platform/issues/126
-
-  /**
    * Return a result from a received management call
    */
   @Async(Async.Ack.NONE)
-  Future<Void> callReturn(@ClientId Object clientDescriptor, ClientIdentifier to, String managementCallId, ContextualReturn<?> contextualReturn);
+  Future<Void> answerManagementCall(@ClientId Object clientDescriptor, String managementCallId, ContextualReturn<?> contextualReturn);
 
   /**
    * Sends client's notification to the server

@@ -73,4 +73,13 @@ public abstract class AbstractStatisticHistory<V, U> implements StatisticHistory
     return result;
   }
 
+  @Override
+  public Sample<V> getLast() {
+    return values == null || values.length == 0 ? null : values[values.length - 1];
+  }
+
+  @Override
+  public Sample<V> getFirst() {
+    return values == null || values.length == 0 ? null : values[0];
+  }
 }

@@ -17,6 +17,8 @@ package org.terracotta.management.entity.tms.client;
 
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.management.model.message.Message;
+import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
 
 /**
@@ -24,6 +26,6 @@ import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
  */
 public class TmsAgentEntityClientService extends ProxyEntityClientService<TmsAgentEntity, TmsAgentConfig> {
   public TmsAgentEntityClientService() {
-    super(TmsAgentEntity.class, TmsAgent.class, TmsAgentConfig.class);
+    super(TmsAgentEntity.class, TmsAgent.class, TmsAgentConfig.class, new SerializationCodec(), Message.class);
   }
 }

@@ -17,7 +17,6 @@ package org.terracotta.management.registry.collect;
 
 import org.terracotta.context.extended.RegisteredStatistic;
 import org.terracotta.context.extended.StatisticsRegistry;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.stats.MemoryUnit;
 import org.terracotta.management.model.stats.NumberUnit;
@@ -85,13 +84,13 @@ public class StatisticsRegistryMetadata {
       if (statistic != null) {
         List<? extends Timestamped<? extends Number>> history = statistic.history(since);
         switch (statistic.type()) {
-          case COUNTER: return new CounterHistory(buildSamples(history, Long.class), NumberUnit.COUNT);
-          case RATE: return new RateHistory(buildSamples(history, Double.class), TimeUnit.SECONDS);
-          case LATENCY_MIN: return new DurationHistory(buildSamples(history, Long.class), TimeUnit.NANOSECONDS);
-          case LATENCY_MAX: return new DurationHistory(buildSamples(history, Long.class), TimeUnit.NANOSECONDS);
-          case LATENCY_AVG: return new AverageHistory(buildSamples(history, Double.class), TimeUnit.NANOSECONDS);
-          case RATIO: return new RatioHistory(buildSamples(history, Double.class), NumberUnit.RATIO);
-          case SIZE: return new SizeHistory(buildSamples(history, Long.class), MemoryUnit.B);
+          case COUNTER: return new CounterHistory(buildNaturalSamples(history), NumberUnit.COUNT);
+          case RATE: return new RateHistory(buildDecimalSamples(history), TimeUnit.SECONDS);
+          case LATENCY_MIN: return new DurationHistory(buildNaturalSamples(history), TimeUnit.NANOSECONDS);
+          case LATENCY_MAX: return new DurationHistory(buildNaturalSamples(history), TimeUnit.NANOSECONDS);
+          case LATENCY_AVG: return new AverageHistory(buildDecimalSamples(history), TimeUnit.NANOSECONDS);
+          case RATIO: return new RatioHistory(buildDecimalSamples(history), NumberUnit.RATIO);
+          case SIZE: return new SizeHistory(buildNaturalSamples(history), MemoryUnit.B);
           default: throw new UnsupportedOperationException(statistic.type().name());
         }
       }
@@ -99,16 +98,24 @@ public class StatisticsRegistryMetadata {
     throw new IllegalArgumentException("No registered statistic named '" + fullStatisticName + "'");
   }
 
-  private <T extends Number> List<Sample<T>> buildSamples(List<? extends Timestamped<? extends Number>> history, Class<T> type) {
-    List<Sample<T>> samples = new ArrayList<Sample<T>>(history.size());
+  private List<Sample<Double>> buildDecimalSamples(List<? extends Timestamped<? extends Number>> history) {
+    List<Sample<Double>> samples = new ArrayList<Sample<Double>>(history.size());
     for (Timestamped<? extends Number> t : history) {
-      samples.add(new Sample<T>(t.getTimestamp(), type.cast(t.getSample())));
+      samples.add(new Sample<Double>(t.getTimestamp(), t.getSample() == null ? null : t.getSample().doubleValue()));
     }
     return samples;
   }
 
-  public Collection<Descriptor> getDescriptors() {
-    Set<Descriptor> capabilities = new HashSet<Descriptor>();
+  private List<Sample<Long>> buildNaturalSamples(List<? extends Timestamped<? extends Number>> history) {
+    List<Sample<Long>> samples = new ArrayList<Sample<Long>>(history.size());
+    for (Timestamped<? extends Number> t : history) {
+      samples.add(new Sample<Long>(t.getTimestamp(), t.getSample() == null ? null : t.getSample().longValue()));
+    }
+    return samples;
+  }
+
+  public Collection<? extends StatisticDescriptor> getDescriptors() {
+    Set<StatisticDescriptor> capabilities = new HashSet<StatisticDescriptor>();
 
     if (statisticsRegistry != null) {
       Map<String, RegisteredStatistic> registrations = statisticsRegistry.getRegistrations();

@@ -22,7 +22,7 @@ import org.terracotta.management.registry.CapabilityManagementSupport;
 import java.util.Collection;
 
 /**
- * A management registry that can act on all provided {@link ConsumerManagementRegistry}
+ * Special management registry that aggregates all created entity management registry on a server to run query and management call on them
  *
  * @author Mathieu Carbou
  */

@@ -22,7 +22,9 @@ import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 @CommonComponent
 public interface StatisticsService {
-  StatisticsRegistry createStatisticsRegistry(StatisticConfiguration statisticConfiguration, Object contextObject);
+  StatisticsRegistry createStatisticsRegistry(Object contextObject);
 
-  StatisticCollector createStatisticCollector(StatisticConfiguration statisticConfiguration, StatisticCollector.Collector collector);
+  StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
+
+  StatisticConfiguration getStatisticConfiguration();
 }
