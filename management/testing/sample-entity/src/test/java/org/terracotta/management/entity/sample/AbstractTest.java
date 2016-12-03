@@ -41,10 +41,15 @@ import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
+import org.terracotta.offheapresource.OffHeapResourcesProvider;
+import org.terracotta.offheapresource.config.MemoryUnit;
+import org.terracotta.offheapresource.config.OffheapResourcesType;
+import org.terracotta.offheapresource.config.ResourceType;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughServer;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,6 +96,14 @@ public abstract class AbstractTest {
 
     activeServer.registerClientEntityService(new TmsAgentEntityClientService());
     activeServer.registerServerEntityService(new TmsAgentEntityServerService());
+
+    OffheapResourcesType resources = new OffheapResourcesType();
+    ResourceType resource = new ResourceType();
+    resource.setName("primary-resource");
+    resource.setUnit(MemoryUnit.MB);
+    resource.setValue(BigInteger.valueOf(32));
+    resources.getResource().add(resource);
+    activeServer.registerExtendedConfiguration(new OffHeapResourcesProvider(resources));
 
     stripeControl = new PassthroughClusterControl("stripe-1", activeServer);
   }

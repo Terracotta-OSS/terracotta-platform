@@ -25,6 +25,7 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -49,7 +50,9 @@ public class TopologyTest extends AbstractTest {
 
     cluster.serverEntityStream()
         .map(ServerEntity::getManagementRegistry)
-        .map(managementRegistry -> managementRegistry.flatMap(r -> r.getCapability("ServerCacheSettings")))
+        .flatMap(managementRegistry -> Stream.of(
+            managementRegistry.flatMap(r -> r.getCapability("ServerCacheSettings")),
+            managementRegistry.flatMap(r -> r.getCapability("OffHeapResourceSettings"))))
         .forEach(capability -> {
           if (capability.isPresent()) {
             capability.get()

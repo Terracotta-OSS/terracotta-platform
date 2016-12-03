@@ -61,6 +61,18 @@ public class ServerCacheManagementTest extends AbstractTest {
     serverCacheSettings.set("time", 0L);
 
     assertEquals(readJson("server-descriptors.json"), toJson(registry.getCapabilities()));
+
+    registry = tmsAgentService.readTopology()
+        .activeServerEntityStream()
+        .filter(serverEntity -> serverEntity.getType().equals(TmsAgentConfig.ENTITY_TYPE))
+        .findFirst()
+        .flatMap(ServerEntity::getManagementRegistry)
+        .get();
+
+    assertThat(registry.getCapabilities().size(), equalTo(3));
+    assertThat(registry.getCapability("OffHeapResourceSettings"), is(notNullValue()));
+    assertThat(registry.getCapability("OffHeapResourceStatistics"), is(notNullValue()));
+    assertThat(registry.getCapability("StatisticCollectorCapability"), is(notNullValue()));
   }
 
   @Test(timeout = 60_000L)
