@@ -16,6 +16,8 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.BuiltinService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -41,6 +43,8 @@ import java.util.Map;
  */
 @BuiltinService
 public class MonitoringServiceProvider implements ServiceProvider, Closeable {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MonitoringServiceProvider.class);
 
   private static final Collection<Class<?>> providedServiceTypes = Arrays.asList(
       IStripeMonitoring.class, // for platform
@@ -118,7 +122,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
             consumerManagementRegistryConfiguration.getEntityMonitoringService(),
             statisticsService);
         if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
-          addServerManagementProviders(consumerManagementRegistry);
+          addServerManagementProviders(consumerID, consumerManagementRegistry);
         }
         return serviceType.cast(consumerManagementRegistry);
       } else {
@@ -201,7 +205,8 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
   }
 
-  private void addServerManagementProviders(ConsumerManagementRegistry consumerManagementRegistry) {
+  private void addServerManagementProviders(long consumerId, ConsumerManagementRegistry consumerManagementRegistry) {
+    LOGGER.trace("[{}] addServerManagementProviders()", consumerId);
     // manage offheap service if it is there
     Collection<OffHeapResources> offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class);
     if (!offHeapResources.isEmpty()) {
@@ -209,6 +214,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       consumerManagementRegistry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
       for (OffHeapResources offHeapResource : offHeapResources) {
         for (OffHeapResourceIdentifier identifier : offHeapResource.getAllIdentifiers()) {
+          LOGGER.trace("[{}] addServerManagementProviders() OffHeapResource:{}", consumerId, identifier.getName());
           consumerManagementRegistry.register(new OffHeapResourceBinding(identifier.getName(), offHeapResource.getOffHeapResource(identifier)));
         }
       }

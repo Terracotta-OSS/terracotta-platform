@@ -64,7 +64,8 @@ public class TopologyTest extends AbstractTest {
         .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
         .replace(String.valueOf(client.getPid()), "0")
         .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")
-        .replace(client.getHostName(), "<hostname>"));
+        .replace(client.getHostName(), "<hostname>")
+        .replace(client.getHostAddress(), "127.0.0.1"));
 
     // and compare
 
@@ -117,8 +118,8 @@ public class TopologyTest extends AbstractTest {
         .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
         .replace(String.valueOf(client.getPid()), "0")
         .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")
-        .replace(client.getHostName(), "<hostname>"));
-
+        .replace(client.getHostName(), "<hostname>")
+        .replace(client.getHostAddress(), "127.0.0.1"));
 
     assertEquals(readJson("notifications.json").toString(), currentJson[0]);
   }
