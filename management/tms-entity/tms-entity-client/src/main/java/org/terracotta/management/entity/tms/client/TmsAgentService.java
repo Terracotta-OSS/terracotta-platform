@@ -116,6 +116,14 @@ public class TmsAgentService {
     }
   }
 
+  public void cancelAllPendingManagementCalls() {
+    while (!managementCalls.keySet().isEmpty()) {
+      for (VoltronManagementCall<?> call : managementCalls.keySet()) {
+        call.cancel(); // will remove itself from managementCalls list
+      }
+    }
+  }
+
   private static <T> void complete(VoltronManagementCall<T> managementCall, ContextualReturn<?> aReturn) {
     try {
       // we have a value returned
