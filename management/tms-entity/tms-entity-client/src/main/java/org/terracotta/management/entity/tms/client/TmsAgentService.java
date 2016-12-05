@@ -58,6 +58,8 @@ public class TmsAgentService {
   public TmsAgentService(final TmsAgentEntity entity) {
     this.entity = Objects.requireNonNull(entity);
     this.entity.registerListener(Message.class, message -> {
+      LOGGER.trace("onMessage({})", message);
+
       switch (message.getType()) {
 
         case "MANAGEMENT_CALL_RETURN":
@@ -105,6 +107,7 @@ public class TmsAgentService {
   }
 
   public <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException {
+    LOGGER.trace("call({}, {}, {})", context, capabilityName, methodName);
     lock.writeLock().lock();
     try {
       String managementCallId = get(entity.call(null, context, capabilityName, methodName, returnType, parameters));
