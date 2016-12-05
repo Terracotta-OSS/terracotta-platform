@@ -33,11 +33,12 @@ import org.terracotta.voltron.proxy.ProxyEntityResponse;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Mathieu Carbou
  */
-class DefaultClientMonitoringService implements ClientMonitoringService {
+class DefaultClientMonitoringService implements ClientMonitoringService, ClientDescriptorListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClientMonitoringService.class);
 
@@ -45,7 +46,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService {
   private final EventService eventService;
   private final ClientCommunicator clientCommunicator;
   private final TopologyService topologyService;
-  private final Map<ClientDescriptor, Context> manageableClients = new ConcurrentWeakIdentityHashMap<>();
+  private final Map<ClientDescriptor, Context> manageableClients = new ConcurrentHashMap<>();
 
   DefaultClientMonitoringService(long consumerId, TopologyService topologyService, EventService eventService, ClientCommunicator clientCommunicator) {
     this.consumerId = consumerId;
@@ -96,6 +97,24 @@ class DefaultClientMonitoringService implements ClientMonitoringService {
   public void answerManagementCall(ClientDescriptor caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
     LOGGER.trace("[{}] answerManagementCall({})", consumerId, managementCallIdentifier);
     eventService.fireManagementCallAnswer(managementCallIdentifier, contextualReturn);
+  }
+
+  @Override
+  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
+  }
+
+  @Override
+  public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
+    if(consumerId == this.consumerId) {
+      manageableClients.remove(clientDescriptor);
+    }
+  }
+
+  @Override
+  public void onEntityDestroyed(long consumerId) {
+    if(consumerId == this.consumerId) {
+      manageableClients.clear();
+    }
   }
 
   void fireMessage(Message message) {

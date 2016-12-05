@@ -30,7 +30,6 @@ import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
 import org.terracotta.management.service.monitoring.registry.provider.StatisticCollectorManagementProvider;
 import org.terracotta.voltron.proxy.ClientId;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -41,7 +40,7 @@ import java.util.concurrent.Future;
 /**
  * @author Mathieu Carbou
  */
-class TmsAgentImpl implements TmsAgent, Closeable {
+class TmsAgentImpl implements TmsAgent {
 
   private static final Comparator<Message> MESSAGE_COMPARATOR = (o1, o2) -> o1.getSequence().compareTo(o2.getSequence());
 
@@ -94,11 +93,6 @@ class TmsAgentImpl implements TmsAgent, Closeable {
     collectorManagementProvider.init();
 
     consumerManagementRegistry.refresh();
-  }
-
-  @Override
-  public void close() {
-    consumerManagementRegistry.close();
   }
 
 }

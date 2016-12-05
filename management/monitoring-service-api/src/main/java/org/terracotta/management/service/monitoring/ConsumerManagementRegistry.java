@@ -31,7 +31,7 @@ import java.util.Map;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ConsumerManagementRegistry extends ManagementRegistry, Closeable {
+public interface ConsumerManagementRegistry extends ManagementRegistry {
 
   /**
    * Used to force an update of the metadata exposed in the server.
@@ -54,6 +54,4 @@ public interface ConsumerManagementRegistry extends ManagementRegistry, Closeabl
     refresh();
   }
 
-  @Override
-  void close();
 }

@@ -81,7 +81,6 @@ class CacheServerEntity extends ProxiedServerEntity<Cache> {
   @Override
   public void destroy() {
     management.serverCacheDestroyed(cache);
-    management.close();
     super.destroy();
   }
 }

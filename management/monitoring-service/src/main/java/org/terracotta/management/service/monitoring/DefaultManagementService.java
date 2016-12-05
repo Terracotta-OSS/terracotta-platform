@@ -39,12 +39,13 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * @author Mathieu Carbou
  */
-class DefaultManagementService implements ManagementService {
+class DefaultManagementService implements ManagementService, ClientDescriptorListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultManagementService.class);
 
@@ -53,7 +54,7 @@ class DefaultManagementService implements ManagementService {
   private final ClientCommunicator clientCommunicator;
   private final SequenceGenerator sequenceGenerator;
   private final TopologyService topologyService;
-  private final ConcurrentWeakIdentityHashMap<ClientDescriptor, Collection<String>> managementCallRequests = new ConcurrentWeakIdentityHashMap<>();
+  private final Map<ClientDescriptor, Collection<String>> managementCallRequests = new ConcurrentHashMap<>();
 
   private volatile ReadWriteBuffer<Message> buffer;
   private volatile ContextualNotification full;
@@ -117,6 +118,25 @@ class DefaultManagementService implements ManagementService {
     track(caller, managementCallIdentifier);
     eventService.fireManagementCallRequest(managementCallIdentifier, new ContextualCall<>(fullContext, capabilityName, methodName, returnType, parameters));
     return managementCallIdentifier;
+  }
+
+  @Override
+  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
+  }
+
+  @Override
+  public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
+    if (consumerId == this.consumerId) {
+      managementCallRequests.remove(clientDescriptor);
+    }
+  }
+
+  @Override
+  public void onEntityDestroyed(long consumerId) {
+    if (consumerId == this.consumerId) {
+      managementCallRequests.clear();
+      buffer = null;
+    }
   }
 
   void fireMessage(Message message) {
