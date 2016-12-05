@@ -26,6 +26,68 @@
                 },
                 "capabilities": [
                   {
+                    "name": "OffHeapResourceSettings",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "consumerId": "1",
+                        "alias": "primary-resource",
+                        "type": "OffHeapResource",
+                        "capacity": 33554432,
+                        "availableAtTime": 33554432
+                      },
+                      {
+                        "type": "OffHeapResourceSettingsManagementProvider",
+                        "time": 0
+                      }
+                    ]
+                  },
+                  {
+                    "name": "OffHeapResourceStatistics",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "OffHeapResource:AllocatedMemory",
+                        "type": "SIZE_HISTORY"
+                      }
+                    ],
+                    "properties": {
+                      "averageWindowDuration": 1,
+                      "averageWindowUnit": "MINUTES",
+                      "historyInterval": 1,
+                      "historyIntervalUnit": "SECONDS",
+                      "historySize": 100,
+                      "timeToDisable": 5,
+                      "timeToDisableUnit": "SECONDS"
+                    }
+                  },
+                  {
                     "name": "StatisticCollectorCapability",
                     "context": [
                       {
