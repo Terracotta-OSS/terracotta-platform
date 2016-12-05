@@ -24,10 +24,7 @@ import org.junit.Before;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
-import org.terracotta.management.entity.management.ManagementAgentConfig;
-import org.terracotta.management.entity.management.client.ManagementAgentEntity;
 import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
-import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
 import org.terracotta.management.entity.sample.client.CacheEntityClientService;
 import org.terracotta.management.entity.sample.client.CacheFactory;
@@ -205,11 +202,7 @@ public abstract class AbstractTest {
             .setHistoryInterval(1, TimeUnit.SECONDS)
             .setTimeToDisable(5, TimeUnit.SECONDS)));
     this.tmsAgentService = new TmsAgentService(tmsAgentEntity);
-    this.tmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
-
-    // create a management entity
-    ManagementAgentEntityFactory managementAgentEntityFactory = new ManagementAgentEntityFactory(managementConnection);
-    ManagementAgentEntity managementAgentEntity = managementAgentEntityFactory.retrieveOrCreate(new ManagementAgentConfig());
+    this.tmsAgentService.setOperationTimeout(10, TimeUnit.SECONDS);
   }
 
   protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {

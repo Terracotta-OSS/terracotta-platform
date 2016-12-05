@@ -50,10 +50,6 @@ public class Management {
     managementRegistry.refresh(); // send to voltron the registry at entity init
   }
 
-  public void close() {
-    managementRegistry.close();
-  }
-
   public void serverCacheCreated(ServerCache cache) {
     managementRegistry.register(new ServerCacheBinding(cache));
     managementRegistry.refresh();

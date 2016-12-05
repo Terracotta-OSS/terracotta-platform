@@ -17,6 +17,7 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -34,7 +35,7 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry {
+class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry, ClientDescriptorListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
 
@@ -49,13 +50,6 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
     this.consumerId = consumerId;
     this.monitoringService = Objects.requireNonNull(monitoringService);
     this.statisticsService = Objects.requireNonNull(statisticsService);
-  }
-
-  @Override
-  public void close() {
-    LOGGER.trace("[{}] close()", consumerId);
-    managementProviders.forEach(ManagementProvider::close);
-    managementProviders.clear();
   }
 
   @Override
@@ -94,6 +88,23 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
       }
     }
     return false;
+  }
+
+  @Override
+  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
+  }
+
+  @Override
+  public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
+  }
+
+  @Override
+  public void onEntityDestroyed(long consumerId) {
+    if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onEntityDestroyed()", consumerId);
+      managementProviders.forEach(ManagementProvider::close);
+      managementProviders.clear();
+    }
   }
 
 }

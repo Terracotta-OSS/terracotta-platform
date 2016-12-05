@@ -44,10 +44,12 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.CLIENT_CONNECTED;
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.CLIENT_DISCONNECTED;
@@ -72,6 +74,7 @@ class TopologyService implements PlatformListener {
   private final EventService eventService;
   private final TimeSource timeSource;
   private final PlatformConfiguration platformConfiguration;
+  private final List<ClientDescriptorListener> clientDescriptorListeners = new CopyOnWriteArrayList<>();
 
   private volatile Server currentActive;
 
@@ -181,6 +184,8 @@ class TopologyService implements PlatformListener {
 
     if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
       fetches.remove(platformEntity.consumerID);
+
+      clientDescriptorListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
     }
 
     eventService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
@@ -238,6 +243,8 @@ class TopologyService implements PlatformListener {
 
     fetches.get(platformEntity.consumerID).put(clientDescriptor, clientIdentifier);
 
+    clientDescriptorListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
+
     eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
   }
 
@@ -258,6 +265,8 @@ class TopologyService implements PlatformListener {
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing connection: " + endpoint + " to server " + currentActive.getServerName() + " from client " + clientIdentifier));
 
     fetches.get(platformEntity.consumerID).remove(clientDescriptor);
+
+    clientDescriptorListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
 
     if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
       eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
@@ -371,6 +380,16 @@ class TopologyService implements PlatformListener {
 
   String getCurrentServerName() {
     return platformConfiguration.getServerName();
+  }
+
+  void addClientDescriptorListener(ClientDescriptorListener clientDescriptorListener) {
+    clientDescriptorListeners.add(Objects.requireNonNull(clientDescriptorListener));
+  }
+
+  void removeClientDescriptorListener(ClientDescriptorListener clientDescriptorListener) {
+    if(clientDescriptorListener != null) {
+      clientDescriptorListeners.remove(clientDescriptorListener);
+    }
   }
 
   private Server getActiveServer() {

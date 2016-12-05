@@ -44,14 +44,14 @@ class DefaultEventService implements EventService, Closeable {
   private final SequenceGenerator sequenceGenerator;
   private final PlatformConfiguration platformConfiguration;
   private final SharedManagementRegistry sharedManagementRegistry;
-  private final Map<DefaultManagementService, Boolean> managementServices;
-  private final Map<DefaultClientMonitoringService, Boolean> clientMonitoringServices;
+  private final Map<Long, DefaultManagementService> managementServices;
+  private final Map<Long, DefaultClientMonitoringService> clientMonitoringServices;
 
   //TODO: A/P support: https://github.com/Terracotta-OSS/terracotta-platform/issues/188
   // temporary there to simulate an entity callback with IEntityMessenger
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-  DefaultEventService(SequenceGenerator sequenceGenerator, PlatformConfiguration platformConfiguration, SharedManagementRegistry sharedManagementRegistry, Map<DefaultManagementService, Boolean> managementServices, Map<DefaultClientMonitoringService, Boolean> clientMonitoringServices) {
+  DefaultEventService(SequenceGenerator sequenceGenerator, PlatformConfiguration platformConfiguration, SharedManagementRegistry sharedManagementRegistry, Map<Long, DefaultManagementService> managementServices, Map<Long, DefaultClientMonitoringService> clientMonitoringServices) {
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
     this.platformConfiguration = Objects.requireNonNull(platformConfiguration);
     this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);
@@ -62,19 +62,19 @@ class DefaultEventService implements EventService, Closeable {
   @Override
   public void fireNotification(ContextualNotification notification) {
     DefaultMessage message = new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", notification);
-    managementServices.keySet().forEach(managementService -> managementService.fireMessage(message));
+    managementServices.values().forEach(managementService -> managementService.fireMessage(message));
   }
 
   @Override
   public void fireStatistics(ContextualStatistics[] statistics) {
     DefaultMessage message = new DefaultMessage(sequenceGenerator.next(), "STATISTICS", statistics);
-    managementServices.keySet().forEach(managementService -> managementService.fireMessage(message));
+    managementServices.values().forEach(managementService -> managementService.fireMessage(message));
   }
 
   @Override
   public void fireManagementCallAnswer(String managementCallIdentifier, ContextualReturn<?> answer) {
     DefaultManagementCallMessage message = new DefaultManagementCallMessage(managementCallIdentifier, sequenceGenerator.next(), "MANAGEMENT_CALL_RETURN", answer);
-    managementServices.keySet().forEach(managementService -> managementService.fireMessage(message));
+    managementServices.values().forEach(managementService -> managementService.fireMessage(message));
   }
 
   @Override
@@ -82,7 +82,7 @@ class DefaultEventService implements EventService, Closeable {
     DefaultManagementCallMessage message = new DefaultManagementCallMessage(managementCallIdentifier, sequenceGenerator.next(), "MANAGEMENT_CALL", call);
 
     if (call.getContext().contains(Client.KEY)) {
-      clientMonitoringServices.keySet().forEach(clientMonitoringService -> clientMonitoringService.fireMessage(message));
+      clientMonitoringServices.values().forEach(clientMonitoringService -> clientMonitoringService.fireMessage(message));
 
     } else {
       //TODO: A/P support: https://github.com/Terracotta-OSS/terracotta-platform/issues/188
@@ -95,6 +95,7 @@ class DefaultEventService implements EventService, Closeable {
             throw new UnsupportedOperationException("Unable to route management call to server " + serverName);
           }
           // 3. call execution
+          LOGGER.trace("[0] execute({})", call);
           ContextualReturn<?> contextualReturn = sharedManagementRegistry.withCapability(call.getCapability())
               .call(call.getMethodName(), call.getReturnType(), call.getParameters())
               .on(call.getContext())

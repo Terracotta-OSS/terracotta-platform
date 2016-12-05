@@ -41,6 +41,13 @@
     }
   },
   {
+    "type": "CLIENT_CONNECTED",
+    "context": {
+      "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
+    },
+    "attributes": {}
+  },
+  {
     "type": "SERVER_ENTITY_CREATED",
     "context": {
       "stripeId": "SINGLE",
@@ -50,28 +57,6 @@
       "entityName": "ManagementAgent",
       "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
       "consumerId": "2"
-    },
-    "attributes": {}
-  },
-  {
-    "type": "SERVER_ENTITY_FETCHED",
-    "context": {
-      "stripeId": "SINGLE",
-      "serverId": "server1",
-      "serverName": "server1",
-      "entityId": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
-      "entityName": "ManagementAgent",
-      "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
-      "consumerId": "2"
-    },
-    "attributes": {
-      "clientId": "0@127.0.0.1:TopologyTest:<uuid>"
-    }
-  },
-  {
-    "type": "CLIENT_CONNECTED",
-    "context": {
-      "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
     },
     "attributes": {}
   },

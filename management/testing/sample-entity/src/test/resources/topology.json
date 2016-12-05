@@ -548,7 +548,6 @@
           "stripeId": "SINGLE",
           "serverId": "server1",
           "serverEntityIds": {
-            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
             "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
           }
         }

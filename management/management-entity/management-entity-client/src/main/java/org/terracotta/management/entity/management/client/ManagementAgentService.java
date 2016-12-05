@@ -95,6 +95,7 @@ public class ManagementAgentService implements Closeable {
     this.entity.registerListener(Message.class, new MessageListener<Message>() {
       @Override
       public void onMessage(final Message message) {
+        LOGGER.trace("onMessage({})", message);
 
         if (message.getType().equals("MANAGEMENT_CALL")) {
           final ContextualCall<?> contextualCall = message.unwrap(ContextualCall.class).get(0);
@@ -112,6 +113,7 @@ public class ManagementAgentService implements Closeable {
                       .getSingleResult();
                   // check again in case the management call takes some time
                   if (bridging) {
+                    LOGGER.trace("answerManagementCall({}, {})", message, contextualCall);
                     get(entity.answerManagementCall(null, ((ManagementCallMessage) message).getManagementCallIdentifier(), aReturn));
                   }
                 }
@@ -131,6 +133,7 @@ public class ManagementAgentService implements Closeable {
   }
 
   public void init() throws ExecutionException, InterruptedException, TimeoutException {
+    LOGGER.trace("init()");
     // expose the registry when CM is first available
     if (bridging) {
       Collection<? extends Capability> capabilities = registry.getCapabilities();
@@ -178,6 +181,7 @@ public class ManagementAgentService implements Closeable {
 
   public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) throws ExecutionException, InterruptedException, TimeoutException {
     if (!Arrays.deepEquals(previouslyExposed, capabilities)) {
+      LOGGER.trace("exposeManagementMetadata({})", contextContainer);
       get(entity.exposeManagementMetadata(null, contextContainer, capabilities));
       previouslyExposed = capabilities;
     }
@@ -188,17 +192,20 @@ public class ManagementAgentService implements Closeable {
   }
 
   public void setTags(String... tags) throws ExecutionException, InterruptedException, TimeoutException {
+    LOGGER.trace("setTags({})", Arrays.asList(tags));
     get(entity.exposeTags(null, tags));
   }
 
   public void pushNotification(ContextualNotification notification) throws ExecutionException, InterruptedException, TimeoutException {
     if (notification != null) {
+      LOGGER.trace("pushNotification({})", notification);
       get(entity.pushNotification(null, notification));
     }
   }
 
   public void pushStatistics(ContextualStatistics... statistics) throws ExecutionException, InterruptedException, TimeoutException {
     if (statistics.length > 0) {
+      LOGGER.trace("pushStatistics({})", statistics.length);
       get(entity.pushStatistics(null, statistics));
     }
   }

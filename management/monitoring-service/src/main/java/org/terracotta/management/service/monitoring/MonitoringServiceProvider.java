@@ -37,6 +37,7 @@ import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Mathieu Carbou
@@ -56,10 +57,13 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       PassiveEntityMonitoringService.class // monitoring of a passive entity
   );
 
-  private final Map<DefaultManagementService, Boolean> managementServices = new ConcurrentWeakIdentityHashMap<>();
-  private final Map<DefaultClientMonitoringService, Boolean> clientMonitoringServices = new ConcurrentWeakIdentityHashMap<>();
+  private final Map<Long, DefaultManagementService> managementServices = new ConcurrentHashMap<>();
+  private final Map<Long, DefaultClientMonitoringService> clientMonitoringServices = new ConcurrentHashMap<>();
+  private final Map<Long, DefaultConsumerManagementRegistry> consumerManagementRegistries = new ConcurrentHashMap<>();
+  private final Map<Long, AbstractEntityMonitoringService> entityMonitoringServices = new ConcurrentHashMap<>();
+
   private final TimeSource timeSource = TimeSource.BEST;
-  private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry();
+  private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry(consumerManagementRegistries);
   private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
   private final StatisticsServiceFactory statisticsServiceFactory = new StatisticsServiceFactory(sharedManagementRegistry, timeSource);
 
@@ -83,6 +87,16 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     this.eventService = new DefaultEventService(sequenceGenerator, platformConfiguration, sharedManagementRegistry, managementServices, clientMonitoringServices);
     this.topologyService = new TopologyService(eventService, timeSource, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
+
+    this.topologyService.addClientDescriptorListener(new ClientDescriptorListenerAdapter() {
+      @Override
+      public void onEntityDestroyed(long consumerId) {
+        topologyService.removeClientDescriptorListener(managementServices.remove(consumerId));
+        topologyService.removeClientDescriptorListener(clientMonitoringServices.remove(consumerId));
+        topologyService.removeClientDescriptorListener(consumerManagementRegistries.remove(consumerId));
+        entityMonitoringServices.remove(consumerId);
+      }
+    });
     return true;
   }
 
@@ -115,16 +129,19 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     // get or creates a registry specific to this entity to handle stats and management calls
     if (ConsumerManagementRegistry.class == serviceType) {
       if (configuration instanceof ConsumerManagementRegistryConfiguration) {
-        ConsumerManagementRegistryConfiguration consumerManagementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
-        StatisticsService statisticsService = statisticsServiceFactory.createStatisticsService(consumerManagementRegistryConfiguration.getStatisticConfiguration());
-        ConsumerManagementRegistry consumerManagementRegistry = sharedManagementRegistry.getOrCreateConsumerManagementRegistry(
-            consumerID,
-            consumerManagementRegistryConfiguration.getEntityMonitoringService(),
-            statisticsService);
-        if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
-          addServerManagementProviders(consumerID, consumerManagementRegistry);
-        }
-        return serviceType.cast(consumerManagementRegistry);
+        return serviceType.cast(consumerManagementRegistries.computeIfAbsent(consumerID, cid -> {
+          ConsumerManagementRegistryConfiguration consumerManagementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
+          StatisticsService statisticsService = statisticsServiceFactory.createStatisticsService(consumerManagementRegistryConfiguration.getStatisticConfiguration());
+          DefaultConsumerManagementRegistry consumerManagementRegistry = new DefaultConsumerManagementRegistry(
+              consumerID,
+              consumerManagementRegistryConfiguration.getEntityMonitoringService(),
+              statisticsService);
+          if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
+            addServerManagementProviders(consumerID, consumerManagementRegistry);
+          }
+          topologyService.addClientDescriptorListener(consumerManagementRegistry);
+          return consumerManagementRegistry;
+        }));
       } else {
         throw new IllegalArgumentException("Missing configuration " + ConsumerManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
@@ -136,14 +153,16 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         if (!topologyService.isCurrentServerActive()) {
           throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not active!");
         }
-        ClientMonitoringServiceConfiguration clientMonitoringServiceConfiguration = (ClientMonitoringServiceConfiguration) configuration;
-        DefaultClientMonitoringService clientMonitoringService = new DefaultClientMonitoringService(
-            consumerID,
-            topologyService,
-            eventService,
-            clientMonitoringServiceConfiguration.getClientCommunicator());
-        clientMonitoringServices.put(clientMonitoringService, Boolean.TRUE);
-        return serviceType.cast(clientMonitoringService);
+        return serviceType.cast(clientMonitoringServices.computeIfAbsent(consumerID, cid -> {
+          ClientMonitoringServiceConfiguration clientMonitoringServiceConfiguration = (ClientMonitoringServiceConfiguration) configuration;
+          DefaultClientMonitoringService clientMonitoringService = new DefaultClientMonitoringService(
+              consumerID,
+              topologyService,
+              eventService,
+              clientMonitoringServiceConfiguration.getClientCommunicator());
+          topologyService.addClientDescriptorListener(clientMonitoringService);
+          return clientMonitoringService;
+        }));
       } else {
         throw new IllegalArgumentException("Missing configuration " + ClientMonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
@@ -155,15 +174,17 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         if (!topologyService.isCurrentServerActive()) {
           throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not active!");
         }
-        ManagementServiceConfiguration managementServiceConfiguration = (ManagementServiceConfiguration) configuration;
-        DefaultManagementService managementService = new DefaultManagementService(
-            consumerID,
-            topologyService,
-            eventService,
-            managementServiceConfiguration.getClientCommunicator(),
-            sequenceGenerator);
-        managementServices.put(managementService, Boolean.TRUE);
-        return serviceType.cast(managementService);
+        return serviceType.cast(managementServices.computeIfAbsent(consumerID, cid -> {
+          ManagementServiceConfiguration managementServiceConfiguration = (ManagementServiceConfiguration) configuration;
+          DefaultManagementService managementService = new DefaultManagementService(
+              consumerID,
+              topologyService,
+              eventService,
+              managementServiceConfiguration.getClientCommunicator(),
+              sequenceGenerator);
+          topologyService.addClientDescriptorListener(managementService);
+          return managementService;
+        }));
       } else {
         throw new IllegalArgumentException("Missing configuration " + ManagementServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
@@ -175,12 +196,14 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         if (!topologyService.isCurrentServerActive()) {
           throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not active!");
         }
-        ActiveEntityMonitoringServiceConfiguration activeEntityMonitoringServiceConfiguration = (ActiveEntityMonitoringServiceConfiguration) configuration;
-        DefaultActiveEntityMonitoringService activeEntityMonitoringService = new DefaultActiveEntityMonitoringService(
-            consumerID,
-            topologyService,
-            eventService);
-        return serviceType.cast(activeEntityMonitoringService);
+        return serviceType.cast(entityMonitoringServices.computeIfAbsent(consumerID, cid -> {
+          ActiveEntityMonitoringServiceConfiguration activeEntityMonitoringServiceConfiguration = (ActiveEntityMonitoringServiceConfiguration) configuration;
+          DefaultActiveEntityMonitoringService activeEntityMonitoringService = new DefaultActiveEntityMonitoringService(
+              consumerID,
+              topologyService,
+              eventService);
+          return activeEntityMonitoringService;
+        }));
       } else {
         throw new IllegalArgumentException("Missing configuration " + ActiveEntityMonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
@@ -192,11 +215,13 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         if (!topologyService.isCurrentServerActive()) {
           throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not passive!");
         }
-        PassiveEntityMonitoringServiceConfiguration passiveEntityMonitoringServiceConfiguration = (PassiveEntityMonitoringServiceConfiguration) configuration;
-        DefaultPassiveEntityMonitoringService passiveEntityMonitoringService = new DefaultPassiveEntityMonitoringService(
-            consumerID,
-            passiveEntityMonitoringServiceConfiguration.getMonitoringProducer());
-        return serviceType.cast(passiveEntityMonitoringService);
+        return serviceType.cast(entityMonitoringServices.computeIfAbsent(consumerID, cid -> {
+          PassiveEntityMonitoringServiceConfiguration passiveEntityMonitoringServiceConfiguration = (PassiveEntityMonitoringServiceConfiguration) configuration;
+          DefaultPassiveEntityMonitoringService passiveEntityMonitoringService = new DefaultPassiveEntityMonitoringService(
+              consumerID,
+              passiveEntityMonitoringServiceConfiguration.getMonitoringProducer());
+          return passiveEntityMonitoringService;
+        }));
       } else {
         throw new IllegalArgumentException("Missing configuration " + PassiveEntityMonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }

@@ -33,7 +33,7 @@
 
   <!--<logger name="com.terracottatech" level="INFO"/>-->
   <!--<logger name="org.terracotta" level="TRACE"/>-->
-  <!--<logger name="org.terracotta.management" level="TRACE"/>-->
+  <logger name="org.terracotta.management" level="TRACE"/>
 
   <root level="INFO">
     <appender-ref ref="CONSOLE"/>

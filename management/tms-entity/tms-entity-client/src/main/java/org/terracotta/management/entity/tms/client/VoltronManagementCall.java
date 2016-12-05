@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.tms.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.context.Context;
 
 import java.util.Objects;
@@ -29,6 +31,8 @@ import java.util.function.Consumer;
  * @author Mathieu Carbou
  */
 class VoltronManagementCall<T> implements ManagementCall<T> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(VoltronManagementCall.class);
 
   private final CompletableFuture<T> future = new CompletableFuture<>();
   private final Context target;
@@ -84,6 +88,7 @@ class VoltronManagementCall<T> implements ManagementCall<T> {
   @Override
   public void cancel() {
     if (!future.isDone()) {
+      LOGGER.trace("[{}] cancel()", managementCallId);
       future.cancel(true);
       onDone.accept(this);
     }
@@ -91,6 +96,7 @@ class VoltronManagementCall<T> implements ManagementCall<T> {
 
   void completeExceptionally(Throwable throwable) {
     if (!future.isDone()) {
+      LOGGER.trace("[{}] completeExceptionally()", throwable.getClass().getName());
       future.completeExceptionally(throwable);
       onDone.accept(this);
     }
@@ -98,6 +104,7 @@ class VoltronManagementCall<T> implements ManagementCall<T> {
 
   void complete(T value) {
     if (!future.isDone()) {
+      LOGGER.trace("[{}] complete()");
       future.complete(value);
       onDone.accept(this);
     }

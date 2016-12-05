@@ -43,12 +43,6 @@ class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
   }
 
   @Override
-  public void destroy() {
-    tmsAgent.close();
-    super.destroy();
-  }
-
-  @Override
   public void connected(ClientDescriptor clientDescriptor) {
     super.connected(clientDescriptor);
     if (!connected.compareAndSet(false, true)) {
