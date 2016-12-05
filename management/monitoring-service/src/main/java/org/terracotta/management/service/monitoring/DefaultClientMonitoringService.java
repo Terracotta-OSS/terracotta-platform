@@ -105,14 +105,14 @@ class DefaultClientMonitoringService implements ClientMonitoringService, ClientD
 
   @Override
   public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
-    if(consumerId == this.consumerId) {
+    if (consumerId == this.consumerId) {
       manageableClients.remove(clientDescriptor);
     }
   }
 
   @Override
   public void onEntityDestroyed(long consumerId) {
-    if(consumerId == this.consumerId) {
+    if (consumerId == this.consumerId) {
       manageableClients.clear();
     }
   }

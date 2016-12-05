@@ -202,7 +202,7 @@ public abstract class AbstractTest {
             .setHistoryInterval(1, TimeUnit.SECONDS)
             .setTimeToDisable(5, TimeUnit.SECONDS)));
     this.tmsAgentService = new TmsAgentService(tmsAgentEntity);
-    this.tmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
+    this.tmsAgentService.setOperationTimeout(10, TimeUnit.SECONDS);
   }
 
   protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {

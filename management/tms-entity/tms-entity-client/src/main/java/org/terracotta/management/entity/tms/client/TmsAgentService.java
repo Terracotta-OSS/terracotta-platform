@@ -28,7 +28,8 @@ import org.terracotta.management.model.message.Message;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +44,7 @@ public class TmsAgentService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TmsAgentService.class);
 
-  private final Collection<VoltronManagementCall<?>> managementCalls = new CopyOnWriteArrayList<>();
+  private final Queue<VoltronManagementCall<?>> managementCalls = new ConcurrentLinkedQueue<>();
   private final TmsAgentEntity entity;
 
   // this RW lock is to prevent any message listener callback to iterate over the list of managementCalls
@@ -112,16 +113,19 @@ public class TmsAgentService {
     try {
       String managementCallId = get(entity.call(null, context, capabilityName, methodName, returnType, parameters));
       VoltronManagementCall<T> managementCall = new VoltronManagementCall<>(managementCallId, context, returnType, timeout, managementCalls::remove);
-      managementCalls.add(managementCall);
+      managementCalls.offer(managementCall);
       return managementCall;
     } finally {
       lock.writeLock().unlock();
     }
   }
 
-  public void cancelAllPendingManagementCalls() {
+  public void cancelAllManagementCalls() {
     while (!managementCalls.isEmpty()) {
-      managementCalls.forEach(VoltronManagementCall::cancel);
+      VoltronManagementCall<?> call = managementCalls.poll();
+      if (call != null) { // can happen if list is cleared while iterating
+        call.cancel();
+      }
     }
   }
 
