@@ -27,8 +27,8 @@ import org.terracotta.management.model.message.Message;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +43,7 @@ public class TmsAgentService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TmsAgentService.class);
 
-  private final Map<VoltronManagementCall<?>, Class<?>> managementCalls = new ConcurrentWeakIdentityHashMap<>();
+  private final Collection<VoltronManagementCall<?>> managementCalls = new CopyOnWriteArrayList<>();
   private final TmsAgentEntity entity;
 
   // this RW lock is to prevent any message listener callback to iterate over the list of managementCalls
@@ -65,7 +65,7 @@ public class TmsAgentService {
         case "MANAGEMENT_CALL_RETURN":
           lock.readLock().lock();
           try {
-            managementCalls.keySet()
+            managementCalls
                 .stream()
                 .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
                 .findFirst()
@@ -112,7 +112,7 @@ public class TmsAgentService {
     try {
       String managementCallId = get(entity.call(null, context, capabilityName, methodName, returnType, parameters));
       VoltronManagementCall<T> managementCall = new VoltronManagementCall<>(managementCallId, context, returnType, timeout, managementCalls::remove);
-      managementCalls.put(managementCall, Void.TYPE);
+      managementCalls.add(managementCall);
       return managementCall;
     } finally {
       lock.writeLock().unlock();
@@ -120,10 +120,8 @@ public class TmsAgentService {
   }
 
   public void cancelAllPendingManagementCalls() {
-    while (!managementCalls.keySet().isEmpty()) {
-      for (VoltronManagementCall<?> call : managementCalls.keySet()) {
-        call.cancel(); // will remove itself from managementCalls list
-      }
+    while (!managementCalls.isEmpty()) {
+      managementCalls.forEach(VoltronManagementCall::cancel);
     }
   }
 
