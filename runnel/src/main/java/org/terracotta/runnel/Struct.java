@@ -23,21 +23,25 @@ import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 
 /**
  * @author Ludovic Orban
  */
 public class Struct {
+
   private final StructField root;
 
   public Struct(StructField root) {
     this.root = root;
   }
 
-  List<? extends Field> getRootSubFields() {
-    return root.subFields();
+  StructField alias(String name, int index) {
+    return root.alias(name, index);
+  }
+
+  void init() {
+    root.init();
   }
 
   /**
@@ -46,6 +50,7 @@ public class Struct {
    * @return the encoder.
    */
   public StructEncoder<Void> encoder() {
+    root.checkFullyInitialized();
     return new StructEncoder<Void>(root);
   }
 
@@ -56,6 +61,7 @@ public class Struct {
    * @return the decoder.
    */
   public StructDecoder<Void> decoder(ByteBuffer byteBuffer) {
+    root.checkFullyInitialized();
     return new StructDecoder<Void>(root, new ReadBuffer(byteBuffer));
   }
 
@@ -66,6 +72,7 @@ public class Struct {
    * @param out the print stream to print to.
    */
   public void dump(ByteBuffer byteBuffer, PrintStream out) {
+    root.checkFullyInitialized();
     Map<Integer, Field> fieldsByInteger = root.getMetadata().buildFieldsByIndexMap();
 
     ReadBuffer readBuffer = new ReadBuffer(byteBuffer);
