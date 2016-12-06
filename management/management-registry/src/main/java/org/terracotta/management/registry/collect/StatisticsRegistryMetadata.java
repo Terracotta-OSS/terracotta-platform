@@ -23,9 +23,7 @@ import org.terracotta.management.model.stats.NumberUnit;
 import org.terracotta.management.model.stats.Sample;
 import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.model.stats.StatisticType;
-import org.terracotta.management.model.stats.history.AverageHistory;
 import org.terracotta.management.model.stats.history.CounterHistory;
-import org.terracotta.management.model.stats.history.DurationHistory;
 import org.terracotta.management.model.stats.history.RateHistory;
 import org.terracotta.management.model.stats.history.RatioHistory;
 import org.terracotta.management.model.stats.history.SizeHistory;
@@ -52,10 +50,12 @@ public class StatisticsRegistryMetadata {
 
   static {
     COMPOUND_SUFFIXES.put("Count", SampleType.COUNTER);
+    //TODO: remove "Rate" suffix when rates will be computed externally
     COMPOUND_SUFFIXES.put("Rate", SampleType.RATE);
-    COMPOUND_SUFFIXES.put("LatencyMinimum", SampleType.LATENCY_MIN);
-    COMPOUND_SUFFIXES.put("LatencyMaximum", SampleType.LATENCY_MAX);
-    COMPOUND_SUFFIXES.put("LatencyAverage", SampleType.LATENCY_AVG);
+    //TODO: cleanup unused compound and sample types for https://github.com/Terracotta-OSS/terracotta-platform/issues/217
+    //COMPOUND_SUFFIXES.put("LatencyMinimum", SampleType.LATENCY_MIN);
+    //COMPOUND_SUFFIXES.put("LatencyMaximum", SampleType.LATENCY_MAX);
+    //COMPOUND_SUFFIXES.put("LatencyAverage", SampleType.LATENCY_AVG);
   }
 
   private final StatisticsRegistry statisticsRegistry;
@@ -64,12 +64,14 @@ public class StatisticsRegistryMetadata {
     this.statisticsRegistry = statisticsRegistry;
   }
 
+  //TODO: Directly query Statistic context tree instead of stat registry (cyclic buffer): https://github.com/Terracotta-OSS/terracotta-platform/issues/217
   public Statistic<?, ?> queryStatistic(String fullStatisticName, long since) {
     if (statisticsRegistry != null) {
 
       // first search for a non-compound stat
       SampledStatistic<? extends Number> statistic = statisticsRegistry.findSampledStatistic(fullStatisticName);
 
+      // TODO: remove compound since we won't need it after #217
       // if not found, it can be a compound stat, so search for it
       if (statistic == null) {
         for (Iterator<Map.Entry<String, SampleType>> it = COMPOUND_SUFFIXES.entrySet().iterator(); it.hasNext() && statistic == null; ) {
@@ -86,9 +88,6 @@ public class StatisticsRegistryMetadata {
         switch (statistic.type()) {
           case COUNTER: return new CounterHistory(buildNaturalSamples(history), NumberUnit.COUNT);
           case RATE: return new RateHistory(buildDecimalSamples(history), TimeUnit.SECONDS);
-          case LATENCY_MIN: return new DurationHistory(buildNaturalSamples(history), TimeUnit.NANOSECONDS);
-          case LATENCY_MAX: return new DurationHistory(buildNaturalSamples(history), TimeUnit.NANOSECONDS);
-          case LATENCY_AVG: return new AverageHistory(buildDecimalSamples(history), TimeUnit.NANOSECONDS);
           case RATIO: return new RatioHistory(buildDecimalSamples(history), NumberUnit.RATIO);
           case SIZE: return new SizeHistory(buildNaturalSamples(history), MemoryUnit.B);
           default: throw new UnsupportedOperationException(statistic.type().name());
@@ -132,12 +131,15 @@ public class StatisticsRegistryMetadata {
           case SIZE:
             capabilities.add(new StatisticDescriptor(statisticName, StatisticType.SIZE_HISTORY));
             break;
+            // TODO: remove compound since we won't need it after #217
           case COMPOUND:
             capabilities.add(new StatisticDescriptor(entry.getKey() + "Count", StatisticType.COUNTER_HISTORY));
+            //TODO: remove "Rate" suffix when rates will be computed externally
             capabilities.add(new StatisticDescriptor(entry.getKey() + "Rate", StatisticType.RATE_HISTORY));
-            capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMinimum", StatisticType.DURATION_HISTORY));
-            capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMaximum", StatisticType.DURATION_HISTORY));
-            capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyAverage", StatisticType.AVERAGE_HISTORY));
+            //TODO: cleanup unused compound and sample types for https://github.com/Terracotta-OSS/terracotta-platform/issues/217
+            //capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMinimum", StatisticType.DURATION_HISTORY));
+            //capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMaximum", StatisticType.DURATION_HISTORY));
+            //capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyAverage", StatisticType.AVERAGE_HISTORY));
             break;
           default:
             throw new UnsupportedOperationException(registeredStatistic.getType().name());

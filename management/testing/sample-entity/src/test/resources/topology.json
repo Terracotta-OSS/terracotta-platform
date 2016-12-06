@@ -236,36 +236,12 @@
                         "type": "COUNTER_HISTORY"
                       },
                       {
-                        "name": "Cluster:ClearLatencyAverage",
-                        "type": "AVERAGE_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:ClearLatencyMaximum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:ClearLatencyMinimum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
                         "name": "Cluster:ClearRate",
                         "type": "RATE_HISTORY"
                       },
                       {
                         "name": "Cluster:HitCount",
                         "type": "COUNTER_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:HitLatencyAverage",
-                        "type": "AVERAGE_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:HitLatencyMaximum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:HitLatencyMinimum",
-                        "type": "DURATION_HISTORY"
                       },
                       {
                         "name": "Cluster:HitRate",
@@ -278,18 +254,6 @@
                       {
                         "name": "Cluster:MissCount",
                         "type": "COUNTER_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:MissLatencyAverage",
-                        "type": "AVERAGE_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:MissLatencyMaximum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:MissLatencyMinimum",
-                        "type": "DURATION_HISTORY"
                       },
                       {
                         "name": "Cluster:MissRate",
@@ -428,36 +392,12 @@
                         "type": "COUNTER_HISTORY"
                       },
                       {
-                        "name": "Cluster:ClearLatencyAverage",
-                        "type": "AVERAGE_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:ClearLatencyMaximum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:ClearLatencyMinimum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
                         "name": "Cluster:ClearRate",
                         "type": "RATE_HISTORY"
                       },
                       {
                         "name": "Cluster:HitCount",
                         "type": "COUNTER_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:HitLatencyAverage",
-                        "type": "AVERAGE_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:HitLatencyMaximum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:HitLatencyMinimum",
-                        "type": "DURATION_HISTORY"
                       },
                       {
                         "name": "Cluster:HitRate",
@@ -470,18 +410,6 @@
                       {
                         "name": "Cluster:MissCount",
                         "type": "COUNTER_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:MissLatencyAverage",
-                        "type": "AVERAGE_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:MissLatencyMaximum",
-                        "type": "DURATION_HISTORY"
-                      },
-                      {
-                        "name": "Cluster:MissLatencyMinimum",
-                        "type": "DURATION_HISTORY"
                       },
                       {
                         "name": "Cluster:MissRate",
@@ -682,36 +610,12 @@
                 "type": "COUNTER_HISTORY"
               },
               {
-                "name": "Cache:ClearLatencyAverage",
-                "type": "AVERAGE_HISTORY"
-              },
-              {
-                "name": "Cache:ClearLatencyMaximum",
-                "type": "DURATION_HISTORY"
-              },
-              {
-                "name": "Cache:ClearLatencyMinimum",
-                "type": "DURATION_HISTORY"
-              },
-              {
                 "name": "Cache:ClearRate",
                 "type": "RATE_HISTORY"
               },
               {
                 "name": "Cache:HitCount",
                 "type": "COUNTER_HISTORY"
-              },
-              {
-                "name": "Cache:HitLatencyAverage",
-                "type": "AVERAGE_HISTORY"
-              },
-              {
-                "name": "Cache:HitLatencyMaximum",
-                "type": "DURATION_HISTORY"
-              },
-              {
-                "name": "Cache:HitLatencyMinimum",
-                "type": "DURATION_HISTORY"
               },
               {
                 "name": "Cache:HitRate",
@@ -724,18 +628,6 @@
               {
                 "name": "Cache:MissCount",
                 "type": "COUNTER_HISTORY"
-              },
-              {
-                "name": "Cache:MissLatencyAverage",
-                "type": "AVERAGE_HISTORY"
-              },
-              {
-                "name": "Cache:MissLatencyMaximum",
-                "type": "DURATION_HISTORY"
-              },
-              {
-                "name": "Cache:MissLatencyMinimum",
-                "type": "DURATION_HISTORY"
               },
               {
                 "name": "Cache:MissRate",
@@ -931,36 +823,12 @@
                 "type": "COUNTER_HISTORY"
               },
               {
-                "name": "Cache:ClearLatencyAverage",
-                "type": "AVERAGE_HISTORY"
-              },
-              {
-                "name": "Cache:ClearLatencyMaximum",
-                "type": "DURATION_HISTORY"
-              },
-              {
-                "name": "Cache:ClearLatencyMinimum",
-                "type": "DURATION_HISTORY"
-              },
-              {
                 "name": "Cache:ClearRate",
                 "type": "RATE_HISTORY"
               },
               {
                 "name": "Cache:HitCount",
                 "type": "COUNTER_HISTORY"
-              },
-              {
-                "name": "Cache:HitLatencyAverage",
-                "type": "AVERAGE_HISTORY"
-              },
-              {
-                "name": "Cache:HitLatencyMaximum",
-                "type": "DURATION_HISTORY"
-              },
-              {
-                "name": "Cache:HitLatencyMinimum",
-                "type": "DURATION_HISTORY"
               },
               {
                 "name": "Cache:HitRate",
@@ -973,18 +841,6 @@
               {
                 "name": "Cache:MissCount",
                 "type": "COUNTER_HISTORY"
-              },
-              {
-                "name": "Cache:MissLatencyAverage",
-                "type": "AVERAGE_HISTORY"
-              },
-              {
-                "name": "Cache:MissLatencyMaximum",
-                "type": "DURATION_HISTORY"
-              },
-              {
-                "name": "Cache:MissLatencyMinimum",
-                "type": "DURATION_HISTORY"
               },
               {
                 "name": "Cache:MissRate",
