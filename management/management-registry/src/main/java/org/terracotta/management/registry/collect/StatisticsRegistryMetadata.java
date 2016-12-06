@@ -53,9 +53,9 @@ public class StatisticsRegistryMetadata {
   static {
     COMPOUND_SUFFIXES.put("Count", SampleType.COUNTER);
     COMPOUND_SUFFIXES.put("Rate", SampleType.RATE);
-    COMPOUND_SUFFIXES.put("LatencyMinimum", SampleType.LATENCY_MIN);
-    COMPOUND_SUFFIXES.put("LatencyMaximum", SampleType.LATENCY_MAX);
-    COMPOUND_SUFFIXES.put("LatencyAverage", SampleType.LATENCY_AVG);
+    //COMPOUND_SUFFIXES.put("LatencyMinimum", SampleType.LATENCY_MIN);
+    //COMPOUND_SUFFIXES.put("LatencyMaximum", SampleType.LATENCY_MAX);
+    //COMPOUND_SUFFIXES.put("LatencyAverage", SampleType.LATENCY_AVG);
   }
 
   private final StatisticsRegistry statisticsRegistry;
@@ -64,6 +64,7 @@ public class StatisticsRegistryMetadata {
     this.statisticsRegistry = statisticsRegistry;
   }
 
+  //TODO: Directly query Statistic context tree instead of stat registry (cyclic buffer): https://github.com/Terracotta-OSS/terracotta-platform/issues/217
   public Statistic<?, ?> queryStatistic(String fullStatisticName, long since) {
     if (statisticsRegistry != null) {
 
@@ -135,9 +136,10 @@ public class StatisticsRegistryMetadata {
           case COMPOUND:
             capabilities.add(new StatisticDescriptor(entry.getKey() + "Count", StatisticType.COUNTER_HISTORY));
             capabilities.add(new StatisticDescriptor(entry.getKey() + "Rate", StatisticType.RATE_HISTORY));
-            capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMinimum", StatisticType.DURATION_HISTORY));
-            capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMaximum", StatisticType.DURATION_HISTORY));
-            capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyAverage", StatisticType.AVERAGE_HISTORY));
+
+            //capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMinimum", StatisticType.DURATION_HISTORY));
+            //capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMaximum", StatisticType.DURATION_HISTORY));
+            //capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyAverage", StatisticType.AVERAGE_HISTORY));
             break;
           default:
             throw new UnsupportedOperationException(registeredStatistic.getType().name());
