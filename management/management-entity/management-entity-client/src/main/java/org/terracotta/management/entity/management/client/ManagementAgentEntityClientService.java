@@ -28,7 +28,8 @@ public class ManagementAgentEntityClientService extends ProxyEntityClientService
 
   public ManagementAgentEntityClientService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgentEntity.class, ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec(), Message.class);
+    super(ManagementAgentEntity.class, ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[] {Message.class});
+    setCodec(new SerializationCodec());
   }
 
 }

@@ -50,7 +50,7 @@ public class ClientProxyFactoryTest {
   @Test
   public void addEntityInterfaceToType() {
     final EntityClientEndpoint clientEndpoint = mock(EntityClientEndpoint.class);
-    final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, Comparable.class, clientEndpoint);
+    final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, Comparable.class, clientEndpoint, null);
     assertThat(proxy, instanceOf(Entity.class));
     ((Entity) proxy).close();
     verify(clientEndpoint).close();
@@ -67,7 +67,7 @@ public class ClientProxyFactoryTest {
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(response(Integer.class, 42));
 
-    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
+    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, null);
     assertThat(proxy.sync(), is(42));
   }
 
@@ -75,9 +75,9 @@ public class ClientProxyFactoryTest {
   public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException, EntityException, MessageCodecException {
     final SerializationCodec codec = new SerializationCodec() {
       @Override
-      public Object decode(final byte[] buffer, final Class<?> type) {
+      public <T> T decode(final Class<T> type, final byte[] buffer) {
         assertThat(type == Integer.class, is(true));
-        return super.decode(buffer, type);
+        return super.decode(type, buffer);
       }
     };
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
@@ -90,7 +90,7 @@ public class ClientProxyFactoryTest {
     when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(response(Integer.class, 43))
         .thenThrow(new TimeoutException("Blah!"));
 
-    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, codec);
+    final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, null);
     assertThat(proxy.aSync().get(), is(42));
     assertThat(proxy.aSync().get(1, TimeUnit.SECONDS), is(43));
     try {
@@ -112,7 +112,7 @@ public class ClientProxyFactoryTest {
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(response(Integer.class, 42));
 
-    final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, codec, String.class, Integer.class, Long.class, Double.class);
+    final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, new Class<?>[]{String.class, Integer.class, Long.class, Double.class});
     assertThat(proxy.sync(), is(42));
     proxy.registerListener(String.class, new StringMessageListener());
     proxy.registerListener(Integer.class, new MessageListener<Integer>() {

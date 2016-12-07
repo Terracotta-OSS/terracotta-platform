@@ -32,19 +32,25 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgentConfig> {
+public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgent, ManagementAgentConfig, Void> {
 
   public ManagementAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgent.class, ManagementAgentConfig.class, new SerializationCodec(), Message.class);
+    super(ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[] {Message.class}, null);
+    setCodec(new SerializationCodec());
   }
 
   @Override
-  public ManagementAgentServerEntity createActiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
+  public ActiveManagementAgentServerEntity createActiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
     ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
     ClientMonitoringService clientMonitoringService = Objects.requireNonNull(registry.getService(new ClientMonitoringServiceConfiguration(communicator)));
-    ManagementAgentImpl managementAgent = new ManagementAgentImpl(clientMonitoringService);
-    return new ManagementAgentServerEntity(managementAgent, communicator);
+    ActiveManagementAgent managementAgent = new ActiveManagementAgent(clientMonitoringService);
+    return new ActiveManagementAgentServerEntity(managementAgent);
+  }
+
+  @Override
+  protected PassiveManagementAgentServerEntity createPassiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
+    return new PassiveManagementAgentServerEntity(new PassiveManagementAgent());
   }
 
   @Override

@@ -17,11 +17,9 @@ package org.terracotta.voltron.proxy.client;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.CommonProxyFactory;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
-import org.terracotta.voltron.proxy.SerializationCodec;
 
 import java.lang.reflect.Proxy;
 
@@ -30,36 +28,18 @@ import java.lang.reflect.Proxy;
  */
 public class ClientProxyFactory {
 
-  public static <T extends Entity & ServerMessageAware> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                                               EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
-                                                                               Class<?>... messageTypes) {
-    return createProxy(clientType, type, entityClientEndpoint, new SerializationCodec(), messageTypes);
+  public static <T extends Entity & ServerMessageAware> T createEntityProxy(Class<T> clientType,
+                                                                            Class<? super T> type,
+                                                                            EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
+                                                                            Class<?>[] messageTypes) {
+    return createProxy(clientType, type, entityClientEndpoint, messageTypes);
   }
 
-  public static <T extends Entity & ServerMessageAware> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                                               EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
-                                                                               final Codec codec, Class<?> messageType,
-                                                                               Class<?>... messageTypes) {
-    return createProxy(clientType, type, entityClientEndpoint, codec, sum(messageType, messageTypes));
-  }
+  public static <T> T createProxy(Class<T> clientType,
+                                  Class<? super T> type,
+                                  EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
+                                  Class<?>[] messageTypes) {
 
-  public static <T extends Entity> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                       EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint) {
-    return createProxy(clientType, type, entityClientEndpoint);
-  }
-
-  public static <T extends Entity> T createEntityProxy(Class<T> clientType, Class<? super T> type,
-                                                       EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, final Codec codec) {
-    return createProxy(clientType, type, entityClientEndpoint, codec);
-  }
-
-  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint) {
-    return createProxy(clientType, type, entityClientEndpoint, new SerializationCodec());
-  }
-
-  public static <T> T createProxy(Class<T> clientType, Class<? super T> type, EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
-                                  final Codec codec, Class... messageTypes) {
-    
     if (entityClientEndpoint == null) {
       throw new NullPointerException("EntityClientEndpoint has to be provided!");
     }
@@ -69,24 +49,18 @@ public class ClientProxyFactory {
     }
 
     final Class[] interfaces;
-    if (messageTypes.length == 0) {
-      interfaces = new Class[] { clientType, Entity.class };
+    if (messageTypes == null || messageTypes.length == 0) {
+      interfaces = new Class[]{clientType, Entity.class};
     } else {
-      interfaces = new Class[] { clientType, Entity.class, ServerMessageAware.class };
+      interfaces = new Class[]{clientType, Entity.class, ServerMessageAware.class};
     }
-    return clientType.cast(Proxy.newProxyInstance(Entity.class.getClassLoader(), interfaces,
+    return clientType.cast(Proxy.newProxyInstance(
+        Entity.class.getClassLoader(),
+        interfaces,
         new VoltronProxyInvocationHandler(
-                entityClientEndpoint,
-                CommonProxyFactory.invert(CommonProxyFactory.createResponseTypeMappings(type, messageTypes)).values()
-        )
+            entityClientEndpoint,
+            CommonProxyFactory.invert(CommonProxyFactory.createResponseTypeMappings(type, messageTypes)).values())
     ));
-  }
-
-  private static Class<?>[] sum(Class<?> one, Class<?>[] others) {
-    Class<?>[] result = new Class<?>[others.length + 1];
-    result[0] = one;
-    System.arraycopy(others, 0, result, 1, others.length);
-    return result;
   }
 
 }

@@ -15,14 +15,11 @@
  */
 package org.terracotta.voltron.proxy.server;
 
-import org.terracotta.entity.ClientDescriptor;
-
 /**
- * @author Alex Snaps
+ * @author Mathieu Carbou
  */
-public interface MessageFiring {
+public interface MessageFiringSupport {
 
-  <T> void fireMessage(Class<T> type, T message, boolean echo);
+  void setMessageFiring(MessageFiring messageFiring);
 
-  <T> void fireMessage(Class<T> type, T message, ClientDescriptor[] clients);
 }

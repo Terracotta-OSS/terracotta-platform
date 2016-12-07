@@ -26,7 +26,47 @@ import java.io.ObjectOutputStream;
  */
 public class SerializationCodec implements Codec {
 
+  @Override
   public byte[] encode(final Class<?> type, final Object value) {
+    return serialize(value);
+  }
+
+  @Override
+  public <T> T decode(final Class<T> type, final byte[] buffer) {
+    return decode(type, buffer, 0, buffer.length);
+  }
+
+  @Override
+  public <T> T decode(Class<T> type, byte[] buffer, int offset, int len) {
+    return type.cast(deserialize(buffer, offset, len));
+  }
+
+  @Override
+  public byte[] encode(Class<?>[] types, Object[] values) {
+    if (values == null && types.length == 0) {
+      values = new Object[0];
+    }
+    if (types.length != values.length) {
+      throw new IllegalArgumentException();
+    }
+    return serialize(values);
+  }
+
+  @Override
+  public Object[] decode(Class<?>[] types, byte[] buffer) {
+    return decode(types, buffer, 0, buffer.length);
+  }
+
+  @Override
+  public Object[] decode(Class<?>[] types, byte[] buffer, int offset, int len) {
+    Object[] oo = (Object[]) deserialize(buffer, offset, len);
+    for (int i = 0; i < oo.length; i++) {
+      oo[i] = types[i].cast(oo[i]);
+    }
+    return oo;
+  }
+
+  private byte[] serialize(Object value) {
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
     try {
       ObjectOutputStream oout = new ObjectOutputStream(bout);
@@ -43,25 +83,8 @@ public class SerializationCodec implements Codec {
     return bout.toByteArray();
   }
 
-  public byte[] encode(final Class<?>[] type, final Object[] values) {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    try {
-      ObjectOutputStream oout = new ObjectOutputStream(bout);
-      oout.writeObject(values);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      try {
-        bout.close();
-      } catch (IOException e) {
-        throw new AssertionError(e);
-      }
-    }
-    return bout.toByteArray();
-  }
-
-  public Object decode(final byte[] buffer, final Class<?> type) {
-    ByteArrayInputStream bin = new ByteArrayInputStream(buffer);
+  private Object deserialize(byte[] buffer, int offset, int len) {
+    ByteArrayInputStream bin = new ByteArrayInputStream(buffer, offset, len);
     try {
       ObjectInputStream ois = new ObjectInputStream(bin);
       try {
@@ -79,27 +102,7 @@ public class SerializationCodec implements Codec {
       } catch (IOException e) {
         throw new AssertionError(e);
       }
-    }  }
-
-  public Object[] decode(final byte[] buffer, final Class<?>[] type) {
-    ByteArrayInputStream bin = new ByteArrayInputStream(buffer);
-    try {
-      ObjectInputStream ois = new ObjectInputStream(bin);
-      try {
-        return (Object[]) ois.readObject();
-      } catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      } finally {
-        ois.close();
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      try {
-        bin.close();
-      } catch (IOException e) {
-        throw new AssertionError(e);
-      }
     }
   }
+
 }

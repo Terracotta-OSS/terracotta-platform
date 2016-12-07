@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.sample.client.management;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.management.entity.management.ManagementAgentConfig;
@@ -40,6 +42,8 @@ import java.util.concurrent.TimeoutException;
  * @author Mathieu Carbou
  */
 public class Management {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(Management.class);
 
   private final ExecutorService executorService = Executors.newCachedThreadPool();
   private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -82,6 +86,8 @@ public class Management {
   }
 
   public void init(Connection connection) throws ExecutionException, InterruptedException, TimeoutException {
+    LOGGER.trace("[{}] init()", managementRegistry.getContextContainer().getValue());
+
     // activate stat collection
     statisticCollector.startStatisticCollector();
 
@@ -105,6 +111,8 @@ public class Management {
   }
 
   public void close() {
+    LOGGER.trace("[{}] close()", managementRegistry.getContextContainer().getValue());
+
     try {
       managementAgent.pushNotification(new ContextualNotification(parentContext, "CLIENT_CLOSE"));
     } catch (Exception e) {

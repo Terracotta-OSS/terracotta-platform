@@ -50,7 +50,7 @@ public class StatisticsRegistryMetadata {
 
   static {
     COMPOUND_SUFFIXES.put("Count", SampleType.COUNTER);
-    //TODO: remove "Rate" suffix when rates will be computed externally
+    //TODO: remove "Rate" suffix when rates will be computed externally (https://github.com/ehcache/ehcache3/issues/1684)
     COMPOUND_SUFFIXES.put("Rate", SampleType.RATE);
     //TODO: cleanup unused compound and sample types for https://github.com/Terracotta-OSS/terracotta-platform/issues/217
     //COMPOUND_SUFFIXES.put("LatencyMinimum", SampleType.LATENCY_MIN);
@@ -71,7 +71,7 @@ public class StatisticsRegistryMetadata {
       // first search for a non-compound stat
       SampledStatistic<? extends Number> statistic = statisticsRegistry.findSampledStatistic(fullStatisticName);
 
-      // TODO: remove compound since we won't need it after #217
+      // TODO: remove compound since we won't need it after https://github.com/Terracotta-OSS/terracotta-platform/issues/217
       // if not found, it can be a compound stat, so search for it
       if (statistic == null) {
         for (Iterator<Map.Entry<String, SampleType>> it = COMPOUND_SUFFIXES.entrySet().iterator(); it.hasNext() && statistic == null; ) {
@@ -131,10 +131,10 @@ public class StatisticsRegistryMetadata {
           case SIZE:
             capabilities.add(new StatisticDescriptor(statisticName, StatisticType.SIZE_HISTORY));
             break;
-            // TODO: remove compound since we won't need it after #217
+            // TODO: remove compound since we won't need it after https://github.com/Terracotta-OSS/terracotta-platform/issues/217
           case COMPOUND:
             capabilities.add(new StatisticDescriptor(entry.getKey() + "Count", StatisticType.COUNTER_HISTORY));
-            //TODO: remove "Rate" suffix when rates will be computed externally
+            //TODO: remove "Rate" suffix when rates will be computed externally (https://github.com/ehcache/ehcache3/issues/1684)
             capabilities.add(new StatisticDescriptor(entry.getKey() + "Rate", StatisticType.RATE_HISTORY));
             //TODO: cleanup unused compound and sample types for https://github.com/Terracotta-OSS/terracotta-platform/issues/217
             //capabilities.add(new StatisticDescriptor(entry.getKey() + "LatencyMinimum", StatisticType.DURATION_HISTORY));

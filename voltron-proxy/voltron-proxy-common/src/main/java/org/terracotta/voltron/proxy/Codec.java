@@ -24,7 +24,17 @@ public interface Codec {
 
   byte[] encode(Class<?>[] types, Object[] values);
 
-  Object decode(byte[] buffer, Class<?> type);
+  /**
+   * Delegates to {@link #decode(Class, byte[], int, int)}
+   */
+  <T> T decode(Class<T> type, byte[] buffer);
 
-  Object[] decode(byte[] buffer, Class<?>[] type);
+  <T> T decode(Class<T> type, byte[] buffer, int offset, int len);
+
+  /**
+   * Delegates to {@link #decode(Class[], byte[], int, int)}
+   */
+  Object[] decode(Class<?>[] types, byte[] buffer);
+
+  Object[] decode(Class<?>[] types, byte[] buffer, int offset, int len);
 }

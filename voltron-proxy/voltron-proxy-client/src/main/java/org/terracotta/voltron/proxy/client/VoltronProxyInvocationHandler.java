@@ -88,7 +88,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
 
     final InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> builder = entityClientEndpoint.beginInvoke()
-            .message(new ProxyEntityMessage(methodDescriptor, args));
+            .message(new ProxyEntityMessage(methodDescriptor, args, false));
 
     if(methodDescriptor.isAsync()) {
       switch (methodDescriptor.getAck()) {

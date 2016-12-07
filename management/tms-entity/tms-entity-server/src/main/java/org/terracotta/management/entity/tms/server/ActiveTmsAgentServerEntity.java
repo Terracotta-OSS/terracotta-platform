@@ -15,25 +15,23 @@
  */
 package org.terracotta.management.entity.tms.server;
 
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.model.message.Message;
-import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
+import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Mathieu Carbou
  */
-class TmsAgentServerEntity extends ProxiedServerEntity<TmsAgent> {
+class ActiveTmsAgentServerEntity extends ActiveProxiedServerEntity<TmsAgent, Void> {
 
   private final AtomicBoolean connected = new AtomicBoolean();
-  private final TmsAgentImpl tmsAgent;
+  private final ActiveTmsAgent tmsAgent;
 
-  TmsAgentServerEntity(TmsAgentImpl tmsAgent, ClientCommunicator communicator) {
-    super(tmsAgent, communicator, Message.class);
+  ActiveTmsAgentServerEntity(ActiveTmsAgent tmsAgent) {
+    super(tmsAgent);
     this.tmsAgent = tmsAgent;
   }
 

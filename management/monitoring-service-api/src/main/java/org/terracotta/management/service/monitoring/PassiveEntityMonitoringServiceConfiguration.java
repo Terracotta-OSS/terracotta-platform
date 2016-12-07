@@ -19,8 +19,6 @@ import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.monitoring.IMonitoringProducer;
 
-import java.util.Objects;
-
 /**
  * @author Mathieu Carbou
  */
@@ -30,7 +28,7 @@ public class PassiveEntityMonitoringServiceConfiguration implements ServiceConfi
   private final IMonitoringProducer monitoringProducer;
 
   public PassiveEntityMonitoringServiceConfiguration(IMonitoringProducer monitoringProducer) {
-    this.monitoringProducer = Objects.requireNonNull(monitoringProducer);
+    this.monitoringProducer = monitoringProducer; // allow null since this platform service might not be there
   }
 
   @Override

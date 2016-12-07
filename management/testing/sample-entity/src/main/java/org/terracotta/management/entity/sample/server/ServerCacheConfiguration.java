@@ -13,16 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.voltron.proxy.server;
+package org.terracotta.management.entity.sample.server;
 
-import org.terracotta.entity.ClientDescriptor;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ServiceConfiguration;
 
 /**
- * @author Alex Snaps
+ * @author Mathieu Carbou
  */
-public interface MessageFiring {
+@CommonComponent
+public class ServerCacheConfiguration implements ServiceConfiguration<ServerCache> {
 
-  <T> void fireMessage(Class<T> type, T message, boolean echo);
+  private final String name;
 
-  <T> void fireMessage(Class<T> type, T message, ClientDescriptor[] clients);
+  public ServerCacheConfiguration(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public Class<ServerCache> getServiceType() {
+    return ServerCache.class;
+  }
 }

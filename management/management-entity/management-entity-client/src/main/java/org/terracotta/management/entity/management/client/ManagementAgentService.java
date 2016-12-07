@@ -54,7 +54,7 @@ public class ManagementAgentService implements Closeable {
   private volatile boolean bridging = false;
   private Capability[] previouslyExposed = new Capability[0];
 
-  private long timeout = 5000;
+  private long timeoutMs = 5000;
   private Executor managementCallExecutor = new Executor() {
     @Override
     public void execute(Runnable command) {
@@ -169,7 +169,7 @@ public class ManagementAgentService implements Closeable {
   }
 
   public ManagementAgentService setOperationTimeout(long duration, TimeUnit unit) {
-    this.timeout = TimeUnit.MILLISECONDS.convert(duration, unit);
+    this.timeoutMs = TimeUnit.MILLISECONDS.convert(duration, unit);
     return this;
   }
 
@@ -215,7 +215,7 @@ public class ManagementAgentService implements Closeable {
   }
 
   private <V> V get(Future<V> future) throws ExecutionException, TimeoutException, InterruptedException {
-    return future.get(timeout, TimeUnit.MILLISECONDS);
+    return future.get(timeoutMs, TimeUnit.MILLISECONDS);
   }
 
 }

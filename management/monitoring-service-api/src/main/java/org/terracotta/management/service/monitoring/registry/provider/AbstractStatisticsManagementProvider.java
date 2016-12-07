@@ -41,7 +41,7 @@ import java.util.TreeMap;
 @CommonComponent
 public abstract class AbstractStatisticsManagementProvider<T extends AliasBinding> extends AliasBindingManagementProvider<T> {
 
-  private static final Comparator<StatisticDescriptor> STATISTIC_DESCRIPTOR_COMPARATOR = (o1, o2) -> o1.getName().compareTo(o2.getName());
+  private static final Comparator<StatisticDescriptor> STATISTIC_DESCRIPTOR_COMPARATOR = Comparator.comparing(StatisticDescriptor::getName);
 
   public AbstractStatisticsManagementProvider(Class<? extends T> type) {
     super(type);

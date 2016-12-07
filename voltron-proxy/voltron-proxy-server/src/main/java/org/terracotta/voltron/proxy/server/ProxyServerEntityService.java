@@ -15,76 +15,127 @@
  */
 package org.terracotta.voltron.proxy.server;
 
-import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityServerService;
+import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.NoConcurrencyStrategy;
-import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.Codec;
-import org.terracotta.voltron.proxy.ProxyMessageCodec;
-import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
+import org.terracotta.voltron.proxy.ProxyMessageCodec;
+
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Mathieu Carbou
  */
-public abstract class ProxyServerEntityService<C> implements EntityServerService<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ProxyServerEntityService<T, C, S> implements EntityServerService<ProxyEntityMessage, ProxyEntityResponse> {
 
-  private final Class<?> proxyType;
-  private final Codec codec;
-  private final Class<?>[] eventTypes;
   private final Class<C> configType;
+  private final Class<?>[] eventTypes;
+  private final Class<S> synchronizerType;
+  private final ProxyMessageCodec messageCodec;
+  private final DelegatingSyncMessageCodec syncMessageCodec;
+  private final ExecutionStrategy<ProxyEntityMessage> executionStrategy = message -> ExecutionStrategy.Location.valueOf(message.getExecutionLocation().name());
+  private final ConcurrencyStrategy<ProxyEntityMessage> concurrencyStrategy = new ConcurrencyStrategy<ProxyEntityMessage>() {
+    @Override
+    public int concurrencyKey(ProxyEntityMessage message) {
+      return message.getConcurrencyKey();
+    }
 
-  public ProxyServerEntityService(Class<?> proxyType, Class<C> configType) {
-    this(proxyType, configType, new SerializationCodec());
-  }
+    @Override
+    public Set<Integer> getKeysForSynchronization() {
+      return ProxyServerEntityService.this.getKeysForSynchronization();
+    }
+  };
 
-  public ProxyServerEntityService(Class<?> proxyType, Class<C> configType, Codec codec, Class<?> ... eventTypes) {
-    this.proxyType = proxyType;
-    this.configType = configType;
-    this.codec = codec;
-    this.eventTypes = eventTypes;
-  }
+  public ProxyServerEntityService(Class<T> proxyType, Class<C> configType, Class<?>[] eventTypes, Class<S> synchronizerType) {
+    this.configType = Objects.requireNonNull(configType);
 
-  @Override
-  public ConcurrencyStrategy<ProxyEntityMessage> getConcurrencyStrategy(byte[] configuration) {
-    return new NoConcurrencyStrategy<ProxyEntityMessage>();
+    this.eventTypes = eventTypes; // can be null
+    this.messageCodec = new ProxyMessageCodec(Objects.requireNonNull(proxyType), eventTypes);
+
+    this.synchronizerType = synchronizerType; // can be null
+    this.syncMessageCodec = synchronizerType == null ? null : new DelegatingSyncMessageCodec(new ProxyMessageCodec(synchronizerType));
   }
 
   @Override
   public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
-    return new ProxyMessageCodec(codec, proxyType, eventTypes);
-  }
-
-  @Override
-  public PassiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> createPassiveEntity(final ServiceRegistry serviceRegistry, final byte[] bytes) {
-    throw new UnsupportedOperationException("Implement me!");
+    return messageCodec;
   }
 
   @Override
   public SyncMessageCodec<ProxyEntityMessage> getSyncMessageCodec() {
-    return null;
+    return syncMessageCodec;
   }
 
   @Override
-  public ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> createActiveEntity(ServiceRegistry registry, byte[] bytes) {
+  public ActiveProxiedServerEntity<T, S> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
     C config = null;
     if (configType == Void.TYPE) {
-      if (bytes != null && bytes.length > 0) {
+      if (configuration != null && configuration.length > 0) {
         throw new IllegalArgumentException("No config expected here!");
       }
     } else {
-      config = configType.cast(codec.decode(bytes, configType));
+      config = configType.cast(messageCodec.getCodec().decode(configType, configuration));
     }
-    return createActiveEntity(registry, config);
+    ActiveProxiedServerEntity<T, S> activeEntity = createActiveEntity(registry, config);
+
+    if (eventTypes != null && eventTypes.length > 0) {
+      ClientCommunicator clientCommunicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
+      activeEntity.getInvoker().activateEvents(clientCommunicator, eventTypes);
+    }
+
+    if(synchronizerType != null) {
+      S synchronizer = SyncProxyFactory.createProxy(synchronizerType);
+      activeEntity.setSynchronizer(synchronizer);
+    }
+
+    return activeEntity;
   }
 
-  protected ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> createActiveEntity(ServiceRegistry registry, C configuration) {
-    throw new UnsupportedOperationException("Implement me!");
+  @Override
+  public PassiveProxiedServerEntity<T, S> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
+    C config = null;
+    if (configType == Void.TYPE) {
+      if (configuration != null && configuration.length > 0) {
+        throw new IllegalArgumentException("No config expected here!");
+      }
+    } else {
+      config = configType.cast(messageCodec.getCodec().decode(configType, configuration));
+    }
+    return createPassiveEntity(registry, config);
   }
+
+  @Override
+  public ConcurrencyStrategy<ProxyEntityMessage> getConcurrencyStrategy(byte[] configuration) {
+    return concurrencyStrategy;
+  }
+
+  @Override
+  public ExecutionStrategy<ProxyEntityMessage> getExecutionStrategy(byte[] configuration) {
+    return executionStrategy;
+  }
+
+  protected Set<Integer> getKeysForSynchronization() {
+    return Collections.emptySet();
+  }
+
+  protected void setCodec(Codec codec) {
+    messageCodec.setCodec(codec);
+    if(syncMessageCodec != null) {
+      syncMessageCodec.setCodec(codec);
+    }
+  }
+
+  protected abstract ActiveProxiedServerEntity<T, S> createActiveEntity(ServiceRegistry registry, C configuration);
+
+  protected abstract PassiveProxiedServerEntity<T, S> createPassiveEntity(ServiceRegistry registry, C configuration);
 
 }

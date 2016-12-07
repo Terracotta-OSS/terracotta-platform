@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.voltron.proxy.server;
+package org.terracotta.management.entity.sample.ha;
 
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.management.entity.sample.AbstractTest;
 
 /**
- * @author Alex Snaps
+ * @author Mathieu Carbou
  */
-public interface MessageFiring {
+public abstract class AbstractHaTest extends AbstractTest {
 
-  <T> void fireMessage(Class<T> type, T message, boolean echo);
+  public AbstractHaTest() {
+    super(1);
+  }
 
-  <T> void fireMessage(Class<T> type, T message, ClientDescriptor[] clients);
 }

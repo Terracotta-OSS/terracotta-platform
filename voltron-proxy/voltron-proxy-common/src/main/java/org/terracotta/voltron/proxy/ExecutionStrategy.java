@@ -13,18 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management.server;
+package org.terracotta.voltron.proxy;
 
-import org.terracotta.entity.ClientCommunicator;
-import org.terracotta.management.entity.management.ManagementAgent;
-import org.terracotta.management.model.message.Message;
-import org.terracotta.voltron.proxy.server.ProxiedServerEntity;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.BOTH;
 
 /**
  * @author Mathieu Carbou
  */
-class ManagementAgentServerEntity extends ProxiedServerEntity<ManagementAgent> {
-  ManagementAgentServerEntity(ManagementAgentImpl managementAgent, ClientCommunicator communicator) {
-    super(managementAgent, communicator, Message.class);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface ExecutionStrategy {
+
+  Location location() default BOTH;
+
+  enum Location {
+    ACTIVE,
+    PASSIVE,
+    BOTH,
+    NONE
   }
+
 }
