@@ -32,15 +32,15 @@ import java.nio.ByteBuffer;
 /**
  * @author Ludovic Orban
  */
-public class StructArrayDecoder implements PrimitiveDecodingSupport {
+public class StructArrayDecoder<P> implements PrimitiveDecodingSupport {
   private final FieldDecoder fieldDecoder;
-  private final StructDecoder parent;
+  private final P parent;
   private final ReadBuffer arrayReadBuffer;
   private final int arrayLength;
 
   private ReadBuffer structReadBuffer;
 
-  public StructArrayDecoder(StructField field, ReadBuffer readBuffer, StructDecoder parent) {
+  public StructArrayDecoder(StructField field, ReadBuffer readBuffer, P parent) {
     this.parent = parent;
 
     int arraySize = readBuffer.getVlqInt();
@@ -100,11 +100,15 @@ public class StructArrayDecoder implements PrimitiveDecodingSupport {
     return fieldDecoder.decodeValue(name, ByteBufferField.class);
   }
 
+  public StructDecoder<StructArrayDecoder<P>> struct(String name) {
+    return fieldDecoder.decodeStruct(name, this);
+  }
+
   public int length() {
     return arrayLength;
   }
 
-  public StructDecoder end() {
+  public P end() {
     arrayReadBuffer.skipAll();
     return parent;
   }

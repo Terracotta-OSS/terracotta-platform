@@ -49,10 +49,10 @@ public class BoolTest {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
     assertThat(decoder.bool("x"), is(true));
-    ArrayDecoder<Boolean> ad = decoder.bools("y");
+    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.bools("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(false));
     assertThat(ad.value(), is(true));
@@ -81,9 +81,9 @@ public class BoolTest {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Boolean> ad = decoder.bools("y");
+    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.bools("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(true));
     assertThat(ad.value(), is(false));

@@ -52,10 +52,10 @@ public class StringTest {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
     assertThat(decoder.string("name"), is("john doe"));
-    ArrayDecoder<String> ad = decoder.strings("colors");
+    ArrayDecoder<String, StructDecoder<Void>> ad = decoder.strings("colors");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is("red"));
     assertThat(ad.value(), is("green"));
@@ -84,9 +84,9 @@ public class StringTest {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<String> ad = decoder.strings("colors");
+    ArrayDecoder<String, StructDecoder<Void>> ad = decoder.strings("colors");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is("red"));
     assertThat(ad.value(), is("green"));

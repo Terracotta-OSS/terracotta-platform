@@ -49,10 +49,10 @@ public class CharTest {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
     assertThat(decoder.chr("x"), is('a'));
-    ArrayDecoder<Character> ad = decoder.chrs("y");
+    ArrayDecoder<Character, StructDecoder<Void>> ad = decoder.chrs("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is('1'));
     assertThat(ad.value(), is('2'));
@@ -81,9 +81,9 @@ public class CharTest {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Character> ad = decoder.chrs("y");
+    ArrayDecoder<Character, StructDecoder<Void>> ad = decoder.chrs("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is('w'));
     assertThat(ad.value(), is('e'));

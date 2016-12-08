@@ -43,15 +43,15 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayEncoder> {
+public class StructArrayEncoder<P> implements PrimitiveEncodingSupport<StructArrayEncoder> {
   private static final int ARRAY_INITIAL_SIZE = 16;
 
   private final List<StructDataHolder> values;
-  private final StructEncoder parent;
+  private final P parent;
   private final FieldSearcher fieldSearcher;
   private List<DataHolder> currentData;
 
-  StructArrayEncoder(List<StructDataHolder> values, StructEncoder parent, StructField structField) {
+  StructArrayEncoder(List<StructDataHolder> values, P parent, StructField structField) {
     this.values = values;
     this.parent = parent;
     this.fieldSearcher = structField.getMetadata().fieldSearcher();
@@ -59,69 +59,76 @@ public class StructArrayEncoder implements PrimitiveEncodingSupport<StructArrayE
   }
 
   @Override
-  public StructArrayEncoder bool(String name, boolean value) {
+  public StructArrayEncoder<P> bool(String name, boolean value) {
     BoolField field = fieldSearcher.findField(name, BoolField.class, null);
     currentData.add(new BoolDataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructArrayEncoder chr(String name, char value) {
+  public StructArrayEncoder<P> chr(String name, char value) {
     CharField field = fieldSearcher.findField(name, CharField.class, null);
     currentData.add(new CharDataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public <E> StructArrayEncoder enm(String name, E value) {
+  public <E> StructArrayEncoder<P> enm(String name, E value) {
     EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);
     currentData.add(new EnumDataHolder<E>(value, field.index(), field.getEnumMapping()));
     return this;
   }
 
   @Override
-  public StructArrayEncoder int32(String name, int value) {
+  public StructArrayEncoder<P> int32(String name, int value) {
     Int32Field field = fieldSearcher.findField(name, Int32Field.class, null);
     currentData.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructArrayEncoder int64(String name, long value) {
+  public StructArrayEncoder<P> int64(String name, long value) {
     Int64Field field = fieldSearcher.findField(name, Int64Field.class, null);
     currentData.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructArrayEncoder fp64(String name, double value) {
+  public StructArrayEncoder<P> fp64(String name, double value) {
     FloatingPoint64Field field = fieldSearcher.findField(name, FloatingPoint64Field.class, null);
     currentData.add(new FloatingPoint64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructArrayEncoder string(String name, String value) {
+  public StructArrayEncoder<P> string(String name, String value) {
     StringField field = fieldSearcher.findField(name, StringField.class, null);
     currentData.add(new StringDataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructArrayEncoder byteBuffer(String name, ByteBuffer value) {
+  public StructArrayEncoder<P> byteBuffer(String name, ByteBuffer value) {
     ByteBufferField field = fieldSearcher.findField(name, ByteBufferField.class, null);
     currentData.add(new ByteBufferDataHolder(value, field.index()));
     return this;
   }
 
-  public StructArrayEncoder next() {
+  public StructEncoder<StructArrayEncoder<P>> struct(String name) {
+    StructField field = fieldSearcher.findField(name, StructField.class, null);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    currentData.add(new StructDataHolder(values, field.index()));
+    return new StructEncoder<StructArrayEncoder<P>>(field, values, this);
+  }
+
+  public StructArrayEncoder<P> next() {
     fieldSearcher.reset();
     values.add(new StructDataHolder(currentData, -1));
     currentData = new ArrayList<DataHolder>(ARRAY_INITIAL_SIZE);
     return this;
   }
 
-  public StructEncoder end() {
+  public P end() {
     if (!currentData.isEmpty()) {
       values.add(new StructDataHolder(currentData, -1));
     }

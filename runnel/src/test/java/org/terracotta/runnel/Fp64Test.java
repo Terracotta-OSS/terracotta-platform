@@ -51,10 +51,10 @@ public class Fp64Test {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
     assertThat(decoder.fp64("x"), is(-1.0));
-    ArrayDecoder<Double> ad = decoder.fp64s("y");
+    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.fp64s("y");
     assertThat(ad.length(), is(5));
     assertThat(ad.value(), is(1.0));
     assertThat(ad.value(), is(-0.123));
@@ -87,9 +87,9 @@ public class Fp64Test {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Double> ad = decoder.fp64s("y");
+    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.fp64s("y");
     assertThat(ad.length(), is(5));
     assertThat(ad.value(), is(1.0));
     assertThat(ad.value(), is(-0.123));
