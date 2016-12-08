@@ -33,17 +33,17 @@ import java.nio.ByteBuffer;
  * A decoder allows decoding structured data described by a {@link org.terracotta.runnel.Struct}.
  * Note: Instances of this class are not thread-safe.
  */
-public class StructDecoder implements PrimitiveDecodingSupport {
+public class StructDecoder<P> implements PrimitiveDecodingSupport {
 
   private final FieldDecoder fieldDecoder;
   private final ReadBuffer readBuffer;
-  private final StructDecoder parent;
+  private final P parent;
 
   public StructDecoder(StructField structField, ReadBuffer readBuffer) {
     this(structField, readBuffer, null);
   }
 
-  public StructDecoder(StructField structField, ReadBuffer readBuffer, StructDecoder parent) {
+  public StructDecoder(StructField structField, ReadBuffer readBuffer, P parent) {
     this.parent = parent;
     int size = readBuffer.getVlqInt();
     this.readBuffer = readBuffer.limit(size);
@@ -95,39 +95,39 @@ public class StructDecoder implements PrimitiveDecodingSupport {
   }
 
 
-  public ArrayDecoder<Integer> int32s(String name) {
+  public ArrayDecoder<Integer, StructDecoder<P>> int32s(String name) {
     return fieldDecoder.decodeValueArray(name, Int32Field.class, this);
   }
 
-  public ArrayDecoder<Boolean> bools(String name) {
+  public ArrayDecoder<Boolean, StructDecoder<P>> bools(String name) {
     return fieldDecoder.decodeValueArray(name, BoolField.class, this);
   }
 
-  public ArrayDecoder<Character> chrs(String name) {
+  public ArrayDecoder<Character, StructDecoder<P>> chrs(String name) {
     return fieldDecoder.decodeValueArray(name, CharField.class, this);
   }
 
-  public ArrayDecoder<Long> int64s(String name) {
+  public ArrayDecoder<Long, StructDecoder<P>> int64s(String name) {
     return fieldDecoder.decodeValueArray(name, Int64Field.class, this);
   }
 
-  public ArrayDecoder<Double> fp64s(String name) {
+  public ArrayDecoder<Double, StructDecoder<P>> fp64s(String name) {
     return fieldDecoder.decodeValueArray(name, FloatingPoint64Field.class, this);
   }
 
-  public ArrayDecoder<String> strings(String name) {
+  public ArrayDecoder<String, StructDecoder<P>> strings(String name) {
     return fieldDecoder.decodeValueArray(name, StringField.class, this);
   }
 
-  public StructDecoder struct(String name) {
+  public StructDecoder<StructDecoder<P>> struct(String name) {
     return fieldDecoder.decodeStruct(name, this);
   }
 
-  public StructArrayDecoder structs(String name) {
+  public StructArrayDecoder<StructDecoder<P>> structs(String name) {
     return fieldDecoder.decodeStructArray(name, this);
   }
 
-  public StructDecoder end() {
+  public P end() {
     if (parent == null) {
       throw new IllegalStateException("Cannot end root decoder");
     }

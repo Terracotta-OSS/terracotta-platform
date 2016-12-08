@@ -49,10 +49,10 @@ public class Int32Test {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
     assertThat(decoder.int32("x"), is(-1));
-    ArrayDecoder<Integer> ad = decoder.int32s("y");
+    ArrayDecoder<Integer, StructDecoder<Void>> ad = decoder.int32s("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(-10));
     assertThat(ad.value(), is(-15));
@@ -81,9 +81,9 @@ public class Int32Test {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Integer> ad = decoder.int32s("y");
+    ArrayDecoder<Integer, StructDecoder<Void>> ad = decoder.int32s("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(-10));
     assertThat(ad.value(), is(-15));

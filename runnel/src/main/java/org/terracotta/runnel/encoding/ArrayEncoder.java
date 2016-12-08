@@ -22,17 +22,17 @@ import java.util.List;
 /**
  * @author Ludovic Orban
  */
-public abstract class ArrayEncoder<T> {
+public abstract class ArrayEncoder<T, P> {
 
-  private final StructEncoder parent;
+  private final P parent;
   private final List<DataHolder> values;
 
-  ArrayEncoder(List<DataHolder> values, StructEncoder parent) {
+  ArrayEncoder(List<DataHolder> values, P parent) {
     this.values = values;
     this.parent = parent;
   }
 
-  public ArrayEncoder<T> value(T value) {
+  public ArrayEncoder<T, P> value(T value) {
     DataHolder dataHolder = buildDataHolder(value);
     this.values.add(dataHolder);
     return this;
@@ -40,7 +40,7 @@ public abstract class ArrayEncoder<T> {
 
   protected abstract DataHolder buildDataHolder(T value);
 
-  public StructEncoder end() {
+  public P end() {
     return parent;
   }
 

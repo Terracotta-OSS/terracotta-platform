@@ -49,10 +49,10 @@ public class Int64Test {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
     assertThat(decoder.int64("x"), is(-1L));
-    ArrayDecoder<Long> ad = decoder.int64s("y");
+    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.int64s("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(-10L));
     assertThat(ad.value(), is(-15L));
@@ -81,9 +81,9 @@ public class Int64Test {
 
     encoded.rewind();
 
-    StructDecoder decoder = struct.decoder(encoded);
+    StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Long> ad = decoder.int64s("y");
+    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.int64s("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(-10L));
     assertThat(ad.value(), is(-15L));

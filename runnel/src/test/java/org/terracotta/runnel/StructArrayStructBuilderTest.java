@@ -19,8 +19,9 @@ import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
-import org.terracotta.runnel.encoding.PrimitiveEncodingSupport;
+import org.terracotta.runnel.encoding.StructArrayEncoder;
 import org.terracotta.runnel.encoding.StructArrayEncoderFunction;
+import org.terracotta.runnel.encoding.StructEncoder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -46,11 +47,16 @@ public class StructArrayStructBuilderTest {
       .mapping(Type.INT, 1)
       .build();
 
+  private final Struct anotherStruct = StructBuilder.newStructBuilder()
+      .int32("aaa", 1)
+      .build();
+
   private final Struct mapEntry = StructBuilder.newStructBuilder()
       .string("key", 1)
       .enm("type", 2, typeEnumMapping)
       .string("string", 10)
       .string("int", 11)
+      .struct("anotherStruct", 12, anotherStruct)
       .build();
 
   private final Struct struct = StructBuilder.newStructBuilder()
@@ -61,12 +67,16 @@ public class StructArrayStructBuilderTest {
 
   @Test
   public void testReadAll() throws Exception {
-    ByteBuffer bb = struct.encoder()
+    ByteBuffer bb =
+      struct.encoder()
         .string("name", "joe")
         .structs("mapEntry")
           .string("key", "1")
           .enm("type", Type.STRING)
           .string("string", "one")
+          .struct("anotherStruct")
+            .int32("aaa", 1)
+          .end()
         .next()
           .string("key", "2")
           .enm("type", Type.STRING)
@@ -77,15 +87,18 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    StructArrayDecoder sad = decoder.structs("mapEntry");
+    StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     assertThat(sad.<Type>enm("type").get(), is(Type.STRING));
     assertThat(sad.string("string"), is("one"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> anotherStruct = sad.struct("anotherStruct");
+    assertThat(anotherStruct.int32("aaa"), is(1));
+    anotherStruct.end();
     sad.next();
     assertThat(sad.string("key"), is("2"));
     assertThat(sad.<Type>enm("type").get(), is(Type.STRING));
@@ -103,9 +116,9 @@ public class StructArrayStructBuilderTest {
 
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>>() {
+        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>, StructArrayEncoder<StructEncoder<Void>>>() {
           @Override
-          public void encode(PrimitiveEncodingSupport<PrimitiveEncodingSupport> encoder, Map.Entry<String, String> entry) {
+          public void encode(StructArrayEncoder<StructEncoder<Void>> encoder, Map.Entry<String, String> entry) {
             encoder
                 .string("key", entry.getKey())
                 .enm("type", Type.STRING)
@@ -117,11 +130,11 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    StructArrayDecoder sad = decoder.structs("mapEntry");
+    StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
@@ -173,11 +186,11 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    StructArrayDecoder sad = decoder.structs("mapEntry");
+    StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
@@ -204,7 +217,7 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
@@ -236,11 +249,11 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    StructArrayDecoder sad = decoder.structs("mapEntry");
+    StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     sad.end();
 
@@ -264,7 +277,7 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
     assertThat(decoder.int64("id"), is(999L));
@@ -288,10 +301,10 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
-    StructArrayDecoder sad = decoder.structs("mapEntry");
+    StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
     assertThat(sad.string("key"), is("1"));
     assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
@@ -318,9 +331,9 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
-    StructArrayDecoder sad = decoder.structs("mapEntry");
+    StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(0));
     sad.end();
   }
@@ -341,11 +354,11 @@ public class StructArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    StructArrayDecoder sad = decoder.structs("mapEntry");
+    StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(3));
     assertThat(sad.string("key"), is(nullValue()));
     assertThat(sad.enm("type").isFound(), is(false));

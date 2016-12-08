@@ -18,8 +18,8 @@ package org.terracotta.runnel.encoding;
 /**
  * @author Ludovic Orban
  */
-public interface StructEncoderFunction {
+public interface StructEncoderFunction<P extends PrimitiveEncodingSupport<?>> {
 
-  void encode(StructEncoder encoder);
+  void encode(P encoder);
 
 }

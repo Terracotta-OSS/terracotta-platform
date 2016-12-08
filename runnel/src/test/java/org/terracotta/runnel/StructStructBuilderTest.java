@@ -64,14 +64,14 @@ public class StructStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    decoder = decoder.struct("mapEntry");
-    assertThat(decoder.string("key"), is("1"));
-    assertThat(decoder.string("value"), is("one"));
-    decoder = decoder.end();
+    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    assertThat(d2.string("key"), is("1"));
+    assertThat(d2.string("value"), is("one"));
+    decoder = d2.end();
 
     assertThat(decoder.int64("id"), is(999L));
   }
@@ -80,9 +80,9 @@ public class StructStructBuilderTest {
   public void testReadAll_withLambda() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .struct("mapEntry", new StructEncoderFunction() {
+        .struct("mapEntry", new StructEncoderFunction<StructEncoder<StructEncoder<Void>>>() {
           @Override
-          public void encode(StructEncoder encoder) {
+          public void encode(StructEncoder<StructEncoder<Void>> encoder) {
             encoder.string("key", "1")
                 .string("value", "one");
           }
@@ -92,14 +92,14 @@ public class StructStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    decoder = decoder.struct("mapEntry");
-    assertThat(decoder.string("key"), is("1"));
-    assertThat(decoder.string("value"), is("one"));
-    decoder = decoder.end();
+    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    assertThat(d2.string("key"), is("1"));
+    assertThat(d2.string("value"), is("one"));
+    decoder = d2.end();
 
     assertThat(decoder.int64("id"), is(999L));
   }
@@ -135,13 +135,12 @@ public class StructStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
-
-    decoder = decoder.struct("mapEntry");
-    assertThat(decoder.string("key"), is("1"));
-    assertThat(decoder.string("value"), is("one"));
-    decoder = decoder.end();
+    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    assertThat(d2.string("key"), is("1"));
+    assertThat(d2.string("value"), is("one"));
+    decoder = d2.end();
 
     assertThat(decoder.int64("id"), is(999L));
   }
@@ -159,12 +158,12 @@ public class StructStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    decoder = decoder.struct("mapEntry");
-    decoder = decoder.end();
+    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    decoder = d2.end();
 
     assertThat(decoder.int64("id"), is(999L));
   }
@@ -182,13 +181,13 @@ public class StructStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    decoder = decoder.struct("mapEntry");
-    assertThat(decoder.string("value"), is("one"));
-    decoder = decoder.end();
+    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    assertThat(d2.string("value"), is("one"));
+    decoder = d2.end();
 
     assertThat(decoder.int64("id"), is(999L));
   }
@@ -206,13 +205,13 @@ public class StructStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    decoder = decoder.struct("mapEntry");
-    assertThat(decoder.string("key"), is("1"));
-    decoder = decoder.end();
+    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    assertThat(d2.string("key"), is("1"));
+    decoder = d2.end();
 
     assertThat(decoder.int64("id"), is(999L));
   }
@@ -248,13 +247,13 @@ public class StructStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder decoder = struct.decoder(bb);
+    StructDecoder<Void> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
-    decoder = decoder.struct("mapEntry");
-    assertThat(decoder.string("key"), is(nullValue()));
-    assertThat(decoder.string("value"), is("one"));
-    decoder = decoder.end();
+    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    assertThat(d2.string("key"), is(nullValue()));
+    assertThat(d2.string("value"), is("one"));
+    decoder = d2.end();
     assertThat(decoder.int64("id"), is(999L));
   }
 

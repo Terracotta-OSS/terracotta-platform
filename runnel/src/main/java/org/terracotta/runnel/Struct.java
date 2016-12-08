@@ -45,8 +45,8 @@ public class Struct {
    * Note: this method is thread-safe.
    * @return the encoder.
    */
-  public StructEncoder encoder() {
-    return new StructEncoder(root);
+  public StructEncoder<Void> encoder() {
+    return new StructEncoder<Void>(root);
   }
 
   /**
@@ -55,8 +55,8 @@ public class Struct {
    * @param byteBuffer the byte buffer containing the data to be decoded.
    * @return the decoder.
    */
-  public StructDecoder decoder(ByteBuffer byteBuffer) {
-    return new StructDecoder(root, new ReadBuffer(byteBuffer));
+  public StructDecoder<Void> decoder(ByteBuffer byteBuffer) {
+    return new StructDecoder<Void>(root, new ReadBuffer(byteBuffer));
   }
 
   /**

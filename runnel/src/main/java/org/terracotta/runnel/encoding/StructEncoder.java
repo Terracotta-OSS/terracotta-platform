@@ -49,66 +49,66 @@ import java.util.List;
  * An encoder allows encoding structured data described by a {@link org.terracotta.runnel.Struct}.
  * Note: Instances of this class are not thread-safe.
  */
-public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
+public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder> {
 
   private final FieldSearcher fieldSearcher;
   private final List<DataHolder> data;
-  private final StructEncoder parent;
+  private final P parent;
 
   public StructEncoder(StructField structField) {
     this(structField, new ArrayList<DataHolder>(), null);
   }
 
-  private StructEncoder(StructField structField, List<DataHolder> values, StructEncoder structEncoder) {
+  StructEncoder(StructField structField, List<DataHolder> values, P parent) {
     this.fieldSearcher = structField.getMetadata().fieldSearcher();
     this.data = values;
-    this.parent = structEncoder;
+    this.parent = parent;
   }
 
   @Override
-  public StructEncoder bool(String name, boolean value) {
+  public StructEncoder<P> bool(String name, boolean value) {
     BoolField field = fieldSearcher.findField(name, BoolField.class, null);
     data.add(new BoolDataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructEncoder chr(String name, char value) {
+  public StructEncoder<P> chr(String name, char value) {
     CharField field = fieldSearcher.findField(name, CharField.class, null);
     data.add(new CharDataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public <E> StructEncoder enm(String name, E value) {
+  public <E> StructEncoder<P> enm(String name, E value) {
     EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);
     data.add(new EnumDataHolder<E>(value, field.index(), field.getEnumMapping()));
     return this;
   }
 
   @Override
-  public StructEncoder int32(String name, int value) {
+  public StructEncoder<P> int32(String name, int value) {
     Int32Field field = fieldSearcher.findField(name, Int32Field.class, null);
     data.add(new Int32DataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructEncoder int64(String name, long value) {
+  public StructEncoder<P> int64(String name, long value) {
     Int64Field field = fieldSearcher.findField(name, Int64Field.class, null);
     data.add(new Int64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructEncoder fp64(String name, double value) {
+  public StructEncoder<P> fp64(String name, double value) {
     FloatingPoint64Field field = fieldSearcher.findField(name, FloatingPoint64Field.class, null);
     data.add(new FloatingPoint64DataHolder(value, field.index()));
     return this;
   }
 
   @Override
-  public StructEncoder string(String name, String value) {
+  public StructEncoder<P> string(String name, String value) {
     StringField field = fieldSearcher.findField(name, StringField.class, null);
     if (value != null) {
       data.add(new StringDataHolder(value, field.index()));
@@ -117,41 +117,41 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
   }
 
   @Override
-  public StructEncoder byteBuffer(String name, ByteBuffer value) {
+  public StructEncoder<P> byteBuffer(String name, ByteBuffer value) {
     ByteBufferField field = fieldSearcher.findField(name, ByteBufferField.class, null);
     data.add(new ByteBufferDataHolder(value, field.index()));
     return this;
   }
 
-  public StructEncoder struct(String name, StructEncoderFunction function) {
+  public StructEncoder<P> struct(String name, StructEncoderFunction<StructEncoder<StructEncoder<P>>> function) {
     StructField field = fieldSearcher.findField(name, StructField.class, null);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new StructDataHolder(values, field.index()));
-    StructEncoder subStructEncoder = new StructEncoder(field, values, this);
+    StructEncoder<StructEncoder<P>> subStructEncoder = new StructEncoder<StructEncoder<P>>(field, values, this);
     function.encode(subStructEncoder);
     subStructEncoder.end();
     return this;
   }
 
-  public StructEncoder struct(String name) {
+  public StructEncoder<StructEncoder<P>> struct(String name) {
     StructField field = fieldSearcher.findField(name, StructField.class, null);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new StructDataHolder(values, field.index()));
-    return new StructEncoder(field, values, this);
+    return new StructEncoder<StructEncoder<P>>(field, values, this);
   }
 
-  public StructEncoder end() {
+  public P end() {
     if (parent == null) {
       throw new IllegalStateException("Cannot end root encoder");
     }
     return parent;
   }
 
-  public ArrayEncoder<Boolean> bools(String name) {
+  public ArrayEncoder<Boolean, StructEncoder<P>> bools(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, BoolField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new ArrayEncoder<Boolean>(values, this) {
+    return new ArrayEncoder<Boolean, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Boolean value) {
         return new BoolDataHolder(value, field.index());
@@ -159,11 +159,11 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     };
   }
 
-  public ArrayEncoder<Character> chrs(String name) {
+  public ArrayEncoder<Character, StructEncoder<P>> chrs(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, CharField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new ArrayEncoder<Character>(values, this) {
+    return new ArrayEncoder<Character, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Character value) {
         return new CharDataHolder(value, field.index());
@@ -171,11 +171,11 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     };
   }
 
-  public ArrayEncoder<Integer> int32s(String name) {
+  public ArrayEncoder<Integer, StructEncoder<P>> int32s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int32Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new ArrayEncoder<Integer>(values, this) {
+    return new ArrayEncoder<Integer, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Integer value) {
         return new Int32DataHolder(value, field.index());
@@ -183,11 +183,11 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     };
   }
 
-  public ArrayEncoder<Long> int64s(String name) {
+  public ArrayEncoder<Long, StructEncoder<P>> int64s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new ArrayEncoder<Long>(values, this) {
+    return new ArrayEncoder<Long, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Long value) {
         return new Int64DataHolder(value, field.index());
@@ -195,11 +195,11 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     };
   }
 
-  public ArrayEncoder<Double> fp64s(String name) {
+  public ArrayEncoder<Double, StructEncoder<P>> fp64s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, FloatingPoint64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new ArrayEncoder<Double>(values, this) {
+    return new ArrayEncoder<Double, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Double value) {
         return new FloatingPoint64DataHolder(value, field.index());
@@ -207,11 +207,11 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     };
   }
 
-  public ArrayEncoder<String> strings(String name) {
+  public ArrayEncoder<String, StructEncoder<P>> strings(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StringField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new ArrayEncoder<String>(values, this) {
+    return new ArrayEncoder<String, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(String value) {
         return new StringDataHolder(value, field.index());
@@ -219,24 +219,24 @@ public class StructEncoder implements PrimitiveEncodingSupport<StructEncoder> {
     };
   }
 
-  public StructArrayEncoder structs(String name) {
+  public StructArrayEncoder<StructEncoder<P>> structs(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new StructArrayEncoder(values, this, ((StructField) field.subField()));
+    return new StructArrayEncoder<StructEncoder<P>>(values, this, ((StructField) field.subField()));
   }
 
-  public <T> StructEncoder structs(String name, T[] array, StructArrayEncoderFunction<T> function) {
+  public <T> StructEncoder<P> structs(String name, T[] array, StructArrayEncoderFunction<T, StructArrayEncoder<StructEncoder<P>>> function) {
     return structs(name, Arrays.asList(array), function);
   }
 
-  public <T> StructEncoder structs(String name, Iterable<T> iterable, StructArrayEncoderFunction<T> function) {
+  public <T> StructEncoder<P> structs(String name, Iterable<T> iterable, StructArrayEncoderFunction<T, StructArrayEncoder<StructEncoder<P>>> function) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
     data.add(new ArrayDataHolder(values, field.index()));
-    StructArrayEncoder subStructArrayEncoder = new StructArrayEncoder(values, this, ((StructField) field.subField()));
+    StructArrayEncoder<StructEncoder<P>> subStructArrayEncoder = new StructArrayEncoder<StructEncoder<P>>(values, this, ((StructField) field.subField()));
     for (T t : iterable) {
-      function.encode((PrimitiveEncodingSupport) subStructArrayEncoder, t);
+      function.encode(subStructArrayEncoder, t);
       subStructArrayEncoder.next();
     }
     subStructArrayEncoder.end();
