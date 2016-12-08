@@ -80,9 +80,9 @@ public class StructStructBuilderTest {
   public void testReadAll_withLambda() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .struct("mapEntry", new StructEncoderFunction() {
+        .struct("mapEntry", new StructEncoderFunction<StructEncoder<StructEncoder<Void>>>() {
           @Override
-          public void encode(StructEncoder encoder) {
+          public void encode(StructEncoder<StructEncoder<Void>> encoder) {
             encoder.string("key", "1")
                 .string("value", "one");
           }

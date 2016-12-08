@@ -19,8 +19,9 @@ import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
-import org.terracotta.runnel.encoding.PrimitiveEncodingSupport;
+import org.terracotta.runnel.encoding.StructArrayEncoder;
 import org.terracotta.runnel.encoding.StructArrayEncoderFunction;
+import org.terracotta.runnel.encoding.StructEncoder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -115,9 +116,9 @@ public class StructArrayStructBuilderTest {
 
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>>() {
+        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>, StructArrayEncoder<StructEncoder<Void>>>() {
           @Override
-          public void encode(PrimitiveEncodingSupport<PrimitiveEncodingSupport> encoder, Map.Entry<String, String> entry) {
+          public void encode(StructArrayEncoder<StructEncoder<Void>> encoder, Map.Entry<String, String> entry) {
             encoder
                 .string("key", entry.getKey())
                 .enm("type", Type.STRING)
