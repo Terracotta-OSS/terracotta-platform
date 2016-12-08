@@ -20,16 +20,13 @@ import org.terracotta.runnel.decoding.fields.BoolField;
 import org.terracotta.runnel.decoding.fields.ByteBufferField;
 import org.terracotta.runnel.decoding.fields.CharField;
 import org.terracotta.runnel.decoding.fields.EnumField;
-import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,23 +34,18 @@ import java.util.Set;
  */
 public class StructBuilder {
 
-  private final List<Field> fields = new ArrayList<Field>();
+  private final StructField structField = new StructField("root", -1);
   private final Set<String> names = new HashSet<String>();
-  private final List<StructField> aliasStructFields = new ArrayList<StructField>();
   private int lastIndex = -1;
 
   public Struct build() {
-    for (StructField prebuilt : aliasStructFields) {
-      prebuilt.init();
-    }
-    aliasStructFields.clear();
-    return new Struct(new StructField("root", -1, fields));
+    Struct struct = new Struct(structField);
+    struct.init();
+    return struct;
   }
 
   public Struct alias() {
-    StructField field = new StructField("root", -1, fields, false);
-    aliasStructFields.add(field);
-    return new Struct(field);
+    return new Struct(structField);
   }
 
   public static StructBuilder newStructBuilder() {
@@ -63,97 +55,97 @@ public class StructBuilder {
 
   public StructBuilder bool(String name, int index) {
     checkParams(name, index);
-    fields.add(new BoolField(name, index));
+    structField.addField(new BoolField(name, index));
     return this;
   }
 
   public StructBuilder chr(String name, int index) {
     checkParams(name, index);
-    fields.add(new CharField(name, index));
+    structField.addField(new CharField(name, index));
     return this;
   }
 
   public StructBuilder enm(String name, int index, EnumMapping enumMapping) {
     checkParams(name, index);
-    fields.add(new EnumField(name, index, enumMapping));
+    structField.addField(new EnumField(name, index, enumMapping));
     return this;
   }
 
   public StructBuilder int32(String name, int index) {
     checkParams(name, index);
-    fields.add(new Int32Field(name, index));
+    structField.addField(new Int32Field(name, index));
     return this;
   }
 
   public StructBuilder int64(String name, int index) {
     checkParams(name, index);
-    fields.add(new Int64Field(name, index));
+    structField.addField(new Int64Field(name, index));
     return this;
   }
 
   public StructBuilder fp64(String name, int index) {
     checkParams(name, index);
-    fields.add(new FloatingPoint64Field(name, index));
+    structField.addField(new FloatingPoint64Field(name, index));
     return this;
   }
 
   public StructBuilder string(String name, int index) {
     checkParams(name, index);
-    fields.add(new StringField(name, index));
+    structField.addField(new StringField(name, index));
     return this;
   }
 
   public StructBuilder byteBuffer(String name, int index) {
     checkParams(name, index);
-    fields.add(new ByteBufferField(name, index));
+    structField.addField(new ByteBufferField(name, index));
     return this;
   }
 
   public StructBuilder struct(String name, int index, Struct struct) {
     checkParams(name, index);
-    fields.add(new StructField(name, index, struct.getRootSubFields()));
+    structField.addField(struct.alias(name, index));
     return this;
   }
 
   public StructBuilder bools(String name, int index) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new BoolField(name, index)));
+    structField.addField(new ArrayField(name, index, new BoolField(name, index)));
     return this;
   }
 
   public StructBuilder chrs(String name, int index) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new CharField(name, index)));
+    structField.addField(new ArrayField(name, index, new CharField(name, index)));
     return this;
   }
 
   public StructBuilder int32s(String name, int index) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new Int32Field(name, index)));
+    structField.addField(new ArrayField(name, index, new Int32Field(name, index)));
     return this;
   }
 
   public StructBuilder int64s(String name, int index) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new Int64Field(name, index)));
+    structField.addField(new ArrayField(name, index, new Int64Field(name, index)));
     return this;
   }
 
   public StructBuilder fp64s(String name, int index) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new FloatingPoint64Field(name, index)));
+    structField.addField(new ArrayField(name, index, new FloatingPoint64Field(name, index)));
     return this;
   }
 
   public StructBuilder strings(String name, int index) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new StringField(name, index)));
+    structField.addField(new ArrayField(name, index, new StringField(name, index)));
     return this;
   }
 
   public StructBuilder structs(String name, int index, Struct struct) {
     checkParams(name, index);
-    fields.add(new ArrayField(name, index, new StructField(name, index, struct.getRootSubFields())));
+    structField.addField(new ArrayField(name, index, struct.alias(name, index)));
     return this;
   }
 
