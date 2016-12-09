@@ -75,10 +75,10 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>jaxb2-maven-plugin</artifactId>
-        <version>2.3</version>
         <executions>
           <execution>
             <id>xjc</id>
+            <phase>generate-sources</phase>
             <goals>
               <goal>xjc</goal>
             </goals>
@@ -87,7 +87,7 @@
         <configuration>
           <packageName>org.terracotta.offheapresource.config</packageName>
           <sources>
-            <source>src/main/resources/offheap-resource.xsd</source>
+            <source>${basedir}/src/main/resources/offheap-resource.xsd</source>
           </sources>
         </configuration>
       </plugin>
