@@ -44,6 +44,7 @@
     <module>distribution/management-server</module>
     <module>testing/sample-entity</module>
     <module>testing/integration-tests</module>
+    <module>testing/doc</module>
   </modules>
 
   <name>Terracotta Management</name>
