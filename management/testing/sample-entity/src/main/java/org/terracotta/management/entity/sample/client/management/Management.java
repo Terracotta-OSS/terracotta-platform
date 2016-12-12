@@ -16,6 +16,7 @@
 package org.terracotta.management.entity.sample.client.management;
 
 import org.terracotta.connection.Connection;
+import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
 import org.terracotta.management.entity.management.client.ManagementAgentService;
@@ -85,8 +86,12 @@ public class Management {
     statisticCollector.startStatisticCollector();
 
     // connect the management entity to this registry to bridge the voltorn monitoring service
-    managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection)
-        .retrieveOrCreate(new ManagementAgentConfig()));
+    try {
+      managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection)
+          .retrieveOrCreate(new ManagementAgentConfig()));
+    } catch (EntityConfigurationException e) {
+      throw new ExecutionException(e);
+    }
     managementAgent.setManagementCallExecutor(executorService);
     managementAgent.setOperationTimeout(5, TimeUnit.SECONDS);
     managementAgent.setManagementRegistry(managementRegistry);

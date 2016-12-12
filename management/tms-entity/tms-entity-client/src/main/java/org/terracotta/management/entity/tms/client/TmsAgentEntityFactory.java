@@ -38,7 +38,7 @@ public class TmsAgentEntityFactory {
     this.entityName = entityName;
   }
 
-  public TmsAgentEntity retrieveOrCreate(TmsAgentConfig config) {
+  public TmsAgentEntity retrieveOrCreate(TmsAgentConfig config) throws EntityConfigurationException {
     try {
       return retrieve();
     } catch (EntityNotFoundException e) {
@@ -62,15 +62,12 @@ public class TmsAgentEntityFactory {
     }
   }
 
-  public TmsAgentEntity create(TmsAgentConfig config) throws EntityAlreadyExistsException {
+  public TmsAgentEntity create(TmsAgentConfig config) throws EntityAlreadyExistsException, EntityConfigurationException {
     EntityRef<TmsAgentEntity, TmsAgentConfig> ref = getEntityRef();
     try {
       ref.create(config);
       return ref.fetchEntity();
     } catch (EntityNotProvidedException | EntityVersionMismatchException | EntityNotFoundException e) {
-      throw new AssertionError(e);
-    } catch (EntityConfigurationException e) {
-      // TODO handle this once the entity can report configuration errors
       throw new AssertionError(e);
     }
   }

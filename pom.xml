@@ -31,7 +31,7 @@
     <terracotta-apis.version>1.0.15.beta</terracotta-apis.version>
     <tcconfig.version>10.0.15.beta</tcconfig.version>
     <passthrough-testing.version>1.0.15.beta</passthrough-testing.version>
-    <galvan.version>1.0.14-beta2</galvan.version>
+    <galvan.version>1.0.15-beta</galvan.version>
     <statistics.version>1.4.1</statistics.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
