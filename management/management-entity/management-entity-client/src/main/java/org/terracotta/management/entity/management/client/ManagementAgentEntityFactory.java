@@ -38,7 +38,7 @@ public class ManagementAgentEntityFactory {
     this.connection = connection;
   }
 
-  public ManagementAgentEntity retrieveOrCreate(ManagementAgentConfig config) {
+  public ManagementAgentEntity retrieveOrCreate(ManagementAgentConfig config) throws EntityConfigurationException {
     try {
       return retrieve();
     } catch (EntityNotFoundException e) {
@@ -62,7 +62,7 @@ public class ManagementAgentEntityFactory {
     }
   }
 
-  public ManagementAgentEntity create(ManagementAgentConfig config) throws EntityAlreadyExistsException {
+  public ManagementAgentEntity create(ManagementAgentConfig config) throws EntityAlreadyExistsException, EntityConfigurationException {
     EntityRef<ManagementAgentEntity, ManagementAgentConfig> ref = getEntityRef();
     try {
       ref.create(config);
@@ -72,9 +72,6 @@ public class ManagementAgentEntityFactory {
     } catch (EntityVersionMismatchException e) {
       throw new AssertionError(e);
     } catch (EntityNotFoundException e) {
-      throw new AssertionError(e);
-    } catch (EntityConfigurationException e) {
-      // TODO handle this once the entity can report configuration errors
       throw new AssertionError(e);
     }
   }
