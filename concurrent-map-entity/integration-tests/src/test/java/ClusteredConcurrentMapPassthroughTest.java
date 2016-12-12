@@ -16,14 +16,21 @@
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.connection.Connection;
+import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.map.TerracottaClusteredMapClientService;
 import org.terracotta.entity.map.common.ConcurrentClusteredMap;
 import org.terracotta.entity.map.server.TerracottaClusteredMapService;
+import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughConnection;
 import org.terracotta.passthrough.PassthroughServer;
+import org.terracotta.passthrough.PassthroughServerRegistry;
+import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.Serializable;
+import java.net.URI;
+import java.util.Properties;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
@@ -36,19 +43,24 @@ import static org.junit.Assert.assertThat;
 public class ClusteredConcurrentMapPassthroughTest {
 
   private static final String MAP_NAME = "my-map";
+  private static final String SERVER_NAME = "testServer";
+  private static final String CLUSTER_URI = "passthrough://" + SERVER_NAME + "/" + MAP_NAME;
 
-  private PassthroughServer server;
   private ConcurrentClusteredMap<Long, String> clusteredMap;
+  private PassthroughClusterControl clusterControl;
 
   @Before
   public void setUp() throws Exception {
-    server = new PassthroughServer();
-    server.registerClientEntityService(new TerracottaClusteredMapClientService());
-    server.registerServerEntityService(new TerracottaClusteredMapService());
-    boolean isActive = true;
-    boolean shouldLoadStorage = false;
-    server.start(isActive, shouldLoadStorage);
-    PassthroughConnection connection = server.connectNewClient("connectionName");
+    clusterControl = PassthroughTestHelpers.createActiveOnly("test", new PassthroughTestHelpers.ServerInitializer() {
+      @Override
+      public void registerServicesForServer(PassthroughServer passthroughServer) {
+        passthroughServer.setServerName(SERVER_NAME);
+        passthroughServer.registerClientEntityService(new TerracottaClusteredMapClientService());
+        passthroughServer.registerServerEntityService(new TerracottaClusteredMapService());
+        PassthroughServerRegistry.getSharedInstance().registerServer(SERVER_NAME, passthroughServer);
+      }
+    });
+    Connection connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     entityRef.create(null);
     clusteredMap = entityRef.fetchEntity();
@@ -57,7 +69,7 @@ public class ClusteredConcurrentMapPassthroughTest {
 
   @After
   public void tearDown() {
-    server.stop();
+    clusterControl.terminateAllServers();
   }
 
   @Test
@@ -75,7 +87,7 @@ public class ClusteredConcurrentMapPassthroughTest {
     String value = "see that?";
     clusteredMap.put(key, value);
 
-    PassthroughConnection connection = server.connectNewClient("connectionName");
+    Connection connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     ConcurrentClusteredMap<Long, String> mapFromOtherClient = entityRef.fetchEntity();
     mapFromOtherClient.setTypes(Long.class, String.class);
@@ -114,7 +126,7 @@ public class ClusteredConcurrentMapPassthroughTest {
 
   @Test
   public void testWithCustomType() throws Exception {
-    PassthroughConnection connection = server.connectNewClient("connectionName");
+    Connection connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
     EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
     entityRef.create(null);
     ConcurrentClusteredMap<Long, Person> map = entityRef.fetchEntity();
@@ -123,7 +135,7 @@ public class ClusteredConcurrentMapPassthroughTest {
     map.put(33L, new Person("Iron Man", 33));
     map.close();
 
-    connection = server.connectNewClient("connectionName");
+    connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
     entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
     map = entityRef.fetchEntity();
     map.setTypes(Long.class, Person.class);

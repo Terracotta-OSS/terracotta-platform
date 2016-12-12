@@ -18,6 +18,7 @@ package org.terracotta.management.entity.management.client;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
@@ -71,6 +72,9 @@ public class ManagementAgentEntityFactory {
     } catch (EntityVersionMismatchException e) {
       throw new AssertionError(e);
     } catch (EntityNotFoundException e) {
+      throw new AssertionError(e);
+    } catch (EntityConfigurationException e) {
+      // TODO handle this once the entity can report configuration errors
       throw new AssertionError(e);
     }
   }
