@@ -38,7 +38,7 @@ class Utils {
   static Connection createConnection(String name, String uri) throws ConnectionException {
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, name);
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     return ConnectionFactory.connect(URI.create(uri), properties);
   }
 

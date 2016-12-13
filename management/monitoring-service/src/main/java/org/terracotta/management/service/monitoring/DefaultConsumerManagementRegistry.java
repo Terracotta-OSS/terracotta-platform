@@ -35,7 +35,7 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry, ClientDescriptorListener {
+class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry, EntityListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
 
@@ -54,7 +54,7 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
 
   @Override
   public void addManagementProvider(ManagementProvider<?> provider) {
-    LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass());
+    LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass().getSimpleName());
     if (provider instanceof MonitoringServiceAware) {
       ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
       ((MonitoringServiceAware) provider).setStatisticsService(statisticsService);
@@ -105,6 +105,11 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
       managementProviders.forEach(ManagementProvider::close);
       managementProviders.clear();
     }
+  }
+
+  @Override
+  public void onEntityFailover(long consumerId) {
+    onEntityDestroyed(consumerId);
   }
 
 }

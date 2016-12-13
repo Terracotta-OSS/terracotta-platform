@@ -67,6 +67,7 @@ public final class ContextualNotification implements Contextual {
     return "ContextualNotification{" +
         "type='" + type + '\'' +
         ", context=" + context +
+        ", attributes=" + attributes +
         '}';
   }
 

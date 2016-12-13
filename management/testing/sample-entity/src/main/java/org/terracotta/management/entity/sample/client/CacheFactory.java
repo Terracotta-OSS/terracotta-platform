@@ -73,7 +73,7 @@ public class CacheFactory implements Closeable {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, uri.getPath().substring(1));
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     this.connection = ConnectionFactory.connect(uri, properties);
     this.cacheEntityFactory = new CacheEntityFactory(connection);
     this.management.init(connection);

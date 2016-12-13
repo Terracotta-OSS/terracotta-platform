@@ -46,6 +46,8 @@ import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
@@ -54,7 +56,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -129,9 +135,19 @@ public abstract class AbstractTest {
   public void tearDown() throws Exception {
     closeNodes();
     if (managementConnection != null) {
-      managementConnection.close();
+      interruptVoltron(() -> {
+        try {
+          managementConnection.close();
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      });
     }
-    stripeControl.tearDown();
+    try {
+      stripeControl.tearDown();
+    } catch (Error ignored) {
+      // because passthrough fails shutting down in case the passive failed to take over the active
+    }
   }
 
   protected JsonNode readJson(String file) {
@@ -167,7 +183,7 @@ public abstract class AbstractTest {
   }
 
   protected void closeNodes() {
-    webappNodes.forEach(CacheFactory::close);
+    webappNodes.forEach(cacheFactory -> interruptVoltron(cacheFactory::close));
   }
 
   protected void getCaches(String name) {
@@ -197,7 +213,7 @@ public abstract class AbstractTest {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, getClass().getSimpleName());
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     this.managementConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/"), properties);
 
     // create a tms entity
@@ -234,4 +250,38 @@ public abstract class AbstractTest {
     assertTrue(test.test(statistics));
   }
 
+  // hack because passthrough invocations are blocking, not like Galvan, so they can hide Junit exceptions and prevent junit test to finish
+  // https://github.com/Terracotta-OSS/tc-passthrough-testing/issues/70
+  // See https://github.com/Terracotta-OSS/tc-passthrough-testing/pull/71
+  private void interruptVoltron(Runnable runnable) {
+    CountDownLatch closed = new CountDownLatch(1);
+    FutureTask<?> task = new FutureTask<>(() -> {
+      try {
+        runnable.run();
+      } catch (RuntimeException e) {
+        Throwable t = e.getCause();
+        while (t != null && !(t instanceof InterruptedException)) {
+          t = t.getCause();
+        }
+        if (t == null) {
+          throw e;
+        } else {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }, null);
+    Thread thread = new Thread(task, getClass().getSimpleName() + "-tearDown");
+    thread.start();
+    try {
+      task.get(2, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    } catch (TimeoutException e) {
+      thread.interrupt();
+      throw new RuntimeException(e);
+    }
+  }
 }

@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.entity.sample.ha;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.cluster.Cluster;
@@ -34,12 +33,11 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * @author Mathieu Carbou
  */
-public class HATests extends AbstractHaTest {
+public class HATest extends AbstractHaTest {
 
   @Test
   public void topology_includes_passives() throws Exception {
@@ -71,21 +69,17 @@ public class HATests extends AbstractHaTest {
           }
         });
 
-    final String[] currentTopo = {toJson(cluster.toMap()).toString()};
-    cluster.clientStream().forEach(client -> currentTopo[0] = currentTopo[0]
-        .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
-        .replace(String.valueOf(client.getPid()), "0")
-        .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")
-        .replace(client.getHostName(), "<hostname>")
-        .replace(client.getHostAddress(), "127.0.0.1"));
+    Server passive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
+    final String[] currentPassive = {toJson(passive.toMap()).toString()};
+    cluster.clientStream().forEach(client -> currentPassive[0] = currentPassive[0]
+        .replace(passive.getServerName(), "stripe-PASSIVE"));
 
     // and compare
-
-    assertEquals(readJson("topology-ha.json").toString(), currentTopo[0]);
+    assertEquals(readJson("passive.json").toString(), currentPassive[0]);
   }
 
   @Test
-  //TODO: needs to confirm that with a galvan test: the sequence of notifications seems weird on passthrough. All notifs are there, but there are duplicates.
+  //TODO: needs to confirm that with a galvan test: the sequence of notifications seems weird on passthrough. All notifs are there, but there are duplicates (https://github.com/Terracotta-OSS/terracotta-platform/issues/191)
   public void get_notifications_when_passive_joins() throws Exception {
     // clear
     tmsAgentService.readMessages();
@@ -161,7 +155,7 @@ public class HATests extends AbstractHaTest {
 
   @Test
   public void get_server_states_when_passive_joins() throws Exception {
-    // clear
+    // clear buffer
     tmsAgentService.readMessages();
 
     // connect passive
@@ -191,10 +185,47 @@ public class HATests extends AbstractHaTest {
   }
 
   @Test
-  @Ignore("Will be done for https://github.com/Terracotta-OSS/terracotta-platform/issues/171")
-  //TODO: support failover: https://github.com/Terracotta-OSS/terracotta-platform/issues/171
-  public void can_failover() throws Exception {
-    fail();
+  //TODO: needs to also test the topology with a galvan test after the failover:  (https://github.com/Terracotta-OSS/terracotta-platform/issues/191)
+  public void failover() throws Exception {
+    // connect passive
+    stripeControl.startOneServer();
+    stripeControl.waitForRunningPassivesInStandby();
+
+    Cluster cluster = tmsAgentService.readTopology();
+    Server active = cluster.serverStream().filter(Server::isActive).findFirst().get();
+    Server passive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
+    assertThat(active.getState(), equalTo(Server.State.ACTIVE));
+    assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
+
+    // clear buffer
+    tmsAgentService.readMessages();
+
+    // kill active - passive should take the active role
+    stripeControl.terminateActive();
+    stripeControl.waitForActive();
+
+    cluster = tmsAgentService.readTopology();
+    Server newActive = cluster.serverStream().filter(Server::isActive).findFirst().get();
+    assertThat(newActive.getState(), equalTo(Server.State.ACTIVE));
+    assertThat(newActive.getServerName(), equalTo(passive.getServerName()));
+
+    // read messages
+    List<Message> messages = tmsAgentService.readMessages();
+    assertThat(messages.size(), equalTo(3));
+
+    List<ContextualNotification> notifs = messages.stream()
+        .filter(message -> message.getType().equals("NOTIFICATION"))
+        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+        .filter(notif -> notif.getType().equals("SERVER_STATE_CHANGED"))
+        .collect(Collectors.toList());
+
+    assertThat(
+        notifs.stream().map(notif -> notif.getContext().get(Server.NAME_KEY)).collect(Collectors.toList()),
+        equalTo(Arrays.asList(newActive.getServerName(), newActive.getServerName())));
+
+    assertThat(
+        notifs.stream().map(notif -> notif.getAttributes().get("state")).collect(Collectors.toList()),
+        equalTo(Arrays.asList("ACTIVE", "ACTIVE")));
   }
 
 }

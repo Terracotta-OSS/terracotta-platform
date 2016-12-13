@@ -20,11 +20,24 @@ import org.terracotta.entity.ClientDescriptor;
 /**
  * @author Mathieu Carbou
  */
-interface ClientDescriptorListener {
+class EntityListenerAdapter implements EntityListener {
+  @Override
+  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
 
-  void onFetch(long consumerId, ClientDescriptor clientDescriptor);
+  }
 
-  void onUnfetch(long consumerId, ClientDescriptor clientDescriptor);
+  @Override
+  public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
 
-  void onEntityDestroyed(long consumerId);
+  }
+
+  @Override
+  public void onEntityDestroyed(long consumerId) {
+
+  }
+
+  @Override
+  public void onEntityFailover(long consumerId) {
+
+  }
 }
