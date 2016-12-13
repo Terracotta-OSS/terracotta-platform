@@ -96,7 +96,7 @@ class VoltronManagementCall<T> implements ManagementCall<T> {
 
   void completeExceptionally(Throwable throwable) {
     if (!future.isDone()) {
-      LOGGER.trace("[{}] completeExceptionally()", throwable.getClass().getName());
+      LOGGER.trace("[{}] completeExceptionally({})", managementCallId, throwable.getClass().getName());
       future.completeExceptionally(throwable);
       onDone.accept(this);
     }
@@ -104,7 +104,7 @@ class VoltronManagementCall<T> implements ManagementCall<T> {
 
   void complete(T value) {
     if (!future.isDone()) {
-      LOGGER.trace("[{}] complete()");
+      LOGGER.trace("[{}] complete()", managementCallId);
       future.complete(value);
       onDone.accept(this);
     }
