@@ -90,15 +90,17 @@ public class DefaultStatisticCollector implements StatisticCollector {
                   }
                 }
 
-                ResultSet<ContextualStatistics> resultSet = managementRegistry.withCapability(entry.getKey())
-                    .queryStatistics(entry.getValue())
-                    .since(since)
-                    .on(allContexts)
-                    .build()
-                    .execute();
+                if(!allContexts.isEmpty()) {
+                  ResultSet<ContextualStatistics> resultSet = managementRegistry.withCapability(entry.getKey())
+                      .queryStatistics(entry.getValue())
+                      .since(since)
+                      .on(allContexts)
+                      .build()
+                      .execute();
 
-                for (ContextualStatistics contextualStatistics : resultSet) {
-                  statistics.add(contextualStatistics);
+                  for (ContextualStatistics contextualStatistics : resultSet) {
+                    statistics.add(contextualStatistics);
+                  }
                 }
               }
 
