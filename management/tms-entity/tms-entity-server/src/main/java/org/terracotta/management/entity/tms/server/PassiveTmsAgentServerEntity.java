@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.voltron.proxy.server;
+package org.terracotta.management.entity.tms.server;
 
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.management.entity.tms.TmsAgent;
+import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
 
 /**
- * @author Alex Snaps
+ * @author Mathieu Carbou
  */
-public interface MessageFiring {
+class PassiveTmsAgentServerEntity extends PassiveProxiedServerEntity<TmsAgent, Void> {
 
-  <T> void fireMessage(Class<T> type, T message, boolean echo);
+  private final PassiveTmsAgent tmsAgent;
 
-  <T> void fireMessage(Class<T> type, T message, ClientDescriptor[] clients);
+  PassiveTmsAgentServerEntity(PassiveTmsAgent tmsAgent) {
+    super(tmsAgent, null);
+    this.tmsAgent = tmsAgent;
+  }
+
+  @Override
+  public void createNew() {
+    tmsAgent.init();
+  }
+
 }

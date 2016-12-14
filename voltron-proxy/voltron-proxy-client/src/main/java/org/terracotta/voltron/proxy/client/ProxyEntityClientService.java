@@ -23,30 +23,21 @@ import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 import org.terracotta.voltron.proxy.ProxyMessageCodec;
-import org.terracotta.voltron.proxy.SerializationCodec;
 
-public abstract class ProxyEntityClientService<T extends Entity, C> implements EntityClientService<T, C, ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ProxyEntityClientService<T extends Entity & ServerMessageAware, C> implements EntityClientService<T, C, ProxyEntityMessage, ProxyEntityResponse> {
 
   private final Class<T> clientType;
   private final Class<? super T> type;
-  private final Codec codec;
-  private final Class<?>[] messageTypes;
   private final Class<C> configType;
+  private final Class<?>[] messageTypes;
+  private final ProxyMessageCodec messageCodec;
 
-  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType, Class<?>... messageTypes) {
-    this(clientType, type, configType, new SerializationCodec(), messageTypes);
-  }
-
-  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType) {
-    this(clientType, type, configType, new SerializationCodec());
-  }
-
-  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType, Codec codec, Class<?>... messageTypes) {
+  public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType, Class<?>[] messageTypes) {
     this.clientType = clientType;
     this.type = type;
     this.configType = configType;
-    this.codec = codec;
     this.messageTypes = messageTypes;
+    this.messageCodec = new ProxyMessageCodec(type, messageTypes);
   }
 
   @Override
@@ -56,34 +47,31 @@ public abstract class ProxyEntityClientService<T extends Entity, C> implements E
 
   @Override
   public T create(EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint) {
-    return (T) ClientProxyFactory.createEntityProxy((Class) clientType, type, endpoint, messageTypes);
+    return ClientProxyFactory.createEntityProxy(clientType, type, endpoint, messageTypes);
   }
 
   @Override
   public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
-    return new ProxyMessageCodec(codec, type, messageTypes);
+    return messageCodec;
   }
 
   @Override
   public C deserializeConfiguration(byte[] configuration) {
-    if(configType == Void.TYPE) {
+    if (configType == Void.TYPE) {
       return null;
     }
-    return configType.cast(codec.decode(configuration, configType));
+    return configType.cast(messageCodec.getCodec().decode(configType, configuration));
   }
 
   @Override
   public byte[] serializeConfiguration(C configuration) {
-    if(configType == Void.TYPE) {
+    if (configType == Void.TYPE) {
       return new byte[0];
     }
-    return codec.encode(configType, configuration);
+    return messageCodec.getCodec().encode(configType, configuration);
   }
 
-  private static Class<?>[] sum(Class<?> one, Class<?>[] others) {
-    Class<?>[] result = new Class<?>[others.length + 1];
-    result[0] = one;
-    System.arraycopy(others, 0, result, 1, others.length);
-    return result;
+  protected void setCodec(Codec codec) {
+    messageCodec.setCodec(codec);
   }
 }

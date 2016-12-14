@@ -15,41 +15,50 @@
  */
 package org.terracotta.voltron.proxy;
 
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
 import java.util.Map;
 
-import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
-
 /**
- *
  * @author cdennis
  */
 public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, ProxyEntityResponse> {
 
-  private final Codec codec;
   private final Map<Byte, MethodDescriptor> methodMappings;
   private final Map<MethodDescriptor, Byte> reverseMethodMappings;
-  
   private final Map<Class<?>, Byte> responseMappings;
   private final Map<Byte, Class<?>> reverseResponseMappings;
-  
-  public ProxyMessageCodec(Codec codec, Class<?> proxyType, Class<?> ... eventTypes) {
-    this.codec = codec;
+
+  private Codec codec = new SerializationCodec();
+
+  public ProxyMessageCodec(Class<?> proxyType) {
+    this(proxyType, new Class[0]);
+  }
+
+  public ProxyMessageCodec(Class<?> proxyType, Class<?>[] eventTypes) {
     this.methodMappings = CommonProxyFactory.createMethodMappings(proxyType);
     this.reverseMethodMappings = CommonProxyFactory.invert(methodMappings);
     this.responseMappings = CommonProxyFactory.createResponseTypeMappings(proxyType, eventTypes);
     this.reverseResponseMappings = CommonProxyFactory.invert(responseMappings);
   }
 
+  public void setCodec(Codec codec) {
+    this.codec = codec;
+  }
+
+  public Codec getCodec() {
+    return codec;
+  }
+
   @Override
   public byte[] encodeResponse(ProxyEntityResponse r) {
     final Byte messageTypeIdentifier = responseMappings.get(r.getResponseType());
-    if(messageTypeIdentifier == null) {
+    if (messageTypeIdentifier == null) {
       throw new AssertionError("WAT, no mapping for " + r.getResponseType().getName());
     }
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
@@ -65,15 +74,15 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
   }
 
   @Override
-  public ProxyEntityResponse decodeResponse(byte[] binary) throws MessageCodecException {
-    byte messageTypeIdentifier = binary[0];
+  public ProxyEntityResponse decodeResponse(byte[] buffer) throws MessageCodecException {
+    byte messageTypeIdentifier = buffer[0];
 
     Class<?> responseType = reverseResponseMappings.get(messageTypeIdentifier);
 
-    if(responseType == null) {
+    if (responseType == null) {
       throw new AssertionError("WAT, no mapping for " + messageTypeIdentifier);
     }
-    return ProxyEntityResponse.response(responseType, codec.decode(Arrays.copyOfRange(binary, 1, binary.length), responseType));
+    return ProxyEntityResponse.response(responseType, codec.decode(responseType, buffer, 1, buffer.length - 1));
   }
 
   @Override
@@ -83,8 +92,8 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
       Object[] args = message.getArguments();
 
       final Byte methodIdentifier = reverseMethodMappings.get(method);
-      
-      if(methodIdentifier == null) {
+
+      if (methodIdentifier == null) {
         throw new AssertionError("WAT, no mapping for " + method.toGenericString());
       }
 
@@ -103,6 +112,7 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
 
       final Class<?>[] parameterTypes = method.getParameterTypes();
       output.writeByte(methodIdentifier);
+      output.writeByte(message.isSyncMessage() ? 1 : 0);
       output.write(codec.encode(parameterTypes, args));
 
       output.close();
@@ -113,28 +123,18 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
   }
 
   @Override
-  public ProxyEntityMessage decodeMessage(final byte[] bytes) {
-    final MethodDescriptor method = decodeMethod(bytes[0]);
-    return new ProxyEntityMessage(method, decodeArgs(bytes, method.getParameterTypes()));
-  }
-
-  public byte[] serializeForSync(int concurrencyKey, ProxyEntityResponse payload) {
-    throw new UnsupportedOperationException("Not supported yet."); 
-  }
-
-  public ProxyEntityMessage deserializeForSync(final int i, final byte[] bytes) {
-    throw new UnsupportedOperationException("Not supported yet.");
+  public ProxyEntityMessage decodeMessage(final byte[] buffer) {
+    final MethodDescriptor method = decodeMethod(buffer[0]);
+    boolean syncMessage = buffer[1] == 1;
+    return new ProxyEntityMessage(method, codec.decode(method.getParameterTypes(), buffer, 2, buffer.length - 2), syncMessage);
   }
 
   private MethodDescriptor decodeMethod(final byte b) {
     final MethodDescriptor method = methodMappings.get(b);
-    if(method == null) {
+    if (method == null) {
       throw new AssertionError();
     }
     return method;
   }
 
-  private Object[] decodeArgs(final byte[] arg, final Class<?>[] parameterTypes) {
-    return codec.decode(Arrays.copyOfRange(arg, 1, arg.length), parameterTypes);
-  }
 }

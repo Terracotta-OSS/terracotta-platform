@@ -32,11 +32,11 @@ import java.util.concurrent.Future;
 /***
  * @author Mathieu Carbou
  */
-class ManagementAgentImpl implements ManagementAgent {
+class ActiveManagementAgent implements ManagementAgent {
 
   private final ClientMonitoringService clientMonitoringService;
 
-  ManagementAgentImpl(ClientMonitoringService clientMonitoringService) {
+  ActiveManagementAgent(ClientMonitoringService clientMonitoringService) {
     this.clientMonitoringService = Objects.requireNonNull(clientMonitoringService);
   }
 

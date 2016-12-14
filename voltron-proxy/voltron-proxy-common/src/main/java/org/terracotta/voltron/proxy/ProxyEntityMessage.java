@@ -30,10 +30,12 @@ public class ProxyEntityMessage implements EntityMessage {
   private final Object[] args;
 
   private final AtomicBoolean consumed = new AtomicBoolean(false);
+  private final boolean syncMessage;
 
-  public ProxyEntityMessage(final MethodDescriptor method, final Object[] args) {
+  public ProxyEntityMessage(final MethodDescriptor method, final Object[] args, boolean syncMessage) {
     this.method = method;
     this.args = args;
+    this.syncMessage = syncMessage;
   }
 
   public MethodDescriptor getMethod() {
@@ -65,9 +67,26 @@ public class ProxyEntityMessage implements EntityMessage {
     return method.invoke(target, args);
   }
 
+  public Object invoke(final Object target) throws InvocationTargetException, IllegalAccessException {
+    if(!consumed.compareAndSet(false, true)) {
+      throw new IllegalStateException("Message was consumed already!");
+    }
+    return method.invoke(target, args);
+  }
+
   public Class<?> messageType() {
     return method.getMessageType();
   }
 
+  public int getConcurrencyKey() {
+    return method.getConcurrencyKey();
+  }
 
+  public ExecutionStrategy.Location getExecutionLocation() {
+    return method.getExecutionLocation();
+  }
+
+  public boolean isSyncMessage() {
+    return syncMessage;
+  }
 }

@@ -26,6 +26,7 @@ import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
  */
 public class TmsAgentEntityClientService extends ProxyEntityClientService<TmsAgentEntity, TmsAgentConfig> {
   public TmsAgentEntityClientService() {
-    super(TmsAgentEntity.class, TmsAgent.class, TmsAgentConfig.class, new SerializationCodec(), Message.class);
+    super(TmsAgentEntity.class, TmsAgent.class, TmsAgentConfig.class, new Class<?>[] {Message.class});
+    setCodec(new SerializationCodec());
   }
 }

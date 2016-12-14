@@ -36,9 +36,13 @@ public final class MethodDescriptor {
   private final Class<?> messageType;
   private final Method method;
   private final Async.Ack ack;
+  private final ExecutionStrategy.Location location;
+  private final int concurrencyKey;
 
   private MethodDescriptor(Method method) {
     this.method = method;
+
+    // @Async
     Async asyncAnnot = method.getAnnotation(Async.class);
     async = asyncAnnot != null;
     if (async) {
@@ -55,6 +59,22 @@ public final class MethodDescriptor {
       ack = Async.Ack.NONE;
       messageType = method.getReturnType();
     }
+
+    // @ExecutionStrategy
+    ExecutionStrategy executionStrategy = method.getAnnotation(ExecutionStrategy.class);
+    location = executionStrategy == null ? ExecutionStrategy.Location.BOTH : executionStrategy.location();
+
+    // @ConcurrencyStrategy
+    ConcurrencyStrategy concurrencyStrategy = method.getAnnotation(ConcurrencyStrategy.class);
+    concurrencyKey = concurrencyStrategy == null ? ConcurrencyStrategy.MANAGEMENT_KEY : concurrencyStrategy.key();
+  }
+
+  public int getConcurrencyKey() {
+    return concurrencyKey;
+  }
+
+  public ExecutionStrategy.Location getExecutionLocation() {
+    return location;
   }
 
   public Async.Ack getAck() {

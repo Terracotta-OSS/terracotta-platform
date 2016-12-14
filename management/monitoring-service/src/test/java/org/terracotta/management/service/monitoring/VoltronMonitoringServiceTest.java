@@ -86,13 +86,14 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
 public class VoltronMonitoringServiceTest {
 
   ObjectMapper mapper = new ObjectMapper();
-  MonitoringServiceProvider serviceProvider = new MonitoringServiceProvider();
+  MonitoringServiceProvider activeServiceProvider = new MonitoringServiceProvider();
+  MonitoringServiceProvider passiveServiceProvider = new MonitoringServiceProvider();
   ClientCommunicator clientCommunicator;
   long now = 1476304913984L;
 
   // service that the platform calls when it received calls on active and passive through IMonitoringProducer
-  IStripeMonitoring platformListener;
-  IStripeMonitoring dataListener;
+  IStripeMonitoring activePlatformListener;
+  IStripeMonitoring activeDataListener;
 
   // an active and passive
   PlatformServer active;
@@ -113,33 +114,34 @@ public class VoltronMonitoringServiceTest {
     passive = new PlatformServer("server-2", "localhost", "127.0.0.1", "0.0.0.0", 9511, 9611, "v1", "b1", now);
 
     // platform does this call to fire events to us
-    serviceProvider.initialize(null, new MyPlatformConfiguration("server-1"));
-    platformListener = serviceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+    activeServiceProvider.initialize(null, new MyPlatformConfiguration(active.getServerName()));
+    passiveServiceProvider.initialize(null, new MyPlatformConfiguration(passive.getServerName()));
+    activePlatformListener = activeServiceProvider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
 
     // simulation of platform calls when active server is up
-    platformListener.serverDidBecomeActive(active);
-    platformListener.addNode(active, null, PLATFORM_ROOT_NAME, null);
-    platformListener.addNode(active, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", active.getStartTime(), active.getStartTime()));
-    platformListener.addNode(active, PLATFORM_PATH, ENTITIES_ROOT_NAME, null);
-    platformListener.addNode(active, PLATFORM_PATH, FETCHED_ROOT_NAME, null);
-    platformListener.addNode(active, PLATFORM_PATH, CLIENTS_ROOT_NAME, null);
+    activePlatformListener.serverDidBecomeActive(active);
+    activePlatformListener.addNode(active, null, PLATFORM_ROOT_NAME, null);
+    activePlatformListener.addNode(active, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", active.getStartTime(), active.getStartTime()));
+    activePlatformListener.addNode(active, PLATFORM_PATH, ENTITIES_ROOT_NAME, null);
+    activePlatformListener.addNode(active, PLATFORM_PATH, FETCHED_ROOT_NAME, null);
+    activePlatformListener.addNode(active, PLATFORM_PATH, CLIENTS_ROOT_NAME, null);
 
     // simulate a client connection
-    platformListener.addNode(active, CLIENTS_PATH, "client-1", new PlatformConnectedClient("uuid-1", "name", InetAddress.getByName("localhost"), 1234, InetAddress.getByName("localhost"), 5678, 111));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-1", new PlatformConnectedClient("uuid-1", "name", InetAddress.getByName("localhost"), 1234, InetAddress.getByName("localhost"), 5678, 111));
 
     // simulate an entity creation
-    platformListener.addNode(active, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, true));
+    activePlatformListener.addNode(active, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, true));
 
     // an entity is requesting the service in its "createActiveEntity" method
     // simulate the IMonitoringProducer's voltron implementation for consumer id 1
-    dataListener = serviceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+    activeDataListener = activeServiceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
 
     clientCommunicator = mock(ClientCommunicator.class);
-    managementService = serviceProvider.getService(1, new ManagementServiceConfiguration(clientCommunicator));
+    managementService = activeServiceProvider.getService(1, new ManagementServiceConfiguration(clientCommunicator));
     buffer = managementService.createMessageBuffer(100);
 
-    clientMonitoringService = serviceProvider.getService(1, new ClientMonitoringServiceConfiguration(clientCommunicator));
-    activeEntityMonitoringService = serviceProvider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
+    clientMonitoringService = activeServiceProvider.getService(1, new ClientMonitoringServiceConfiguration(clientCommunicator));
+    activeEntityMonitoringService = activeServiceProvider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
   }
 
   @Test
@@ -153,7 +155,7 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_add_new_client() throws Exception {
-    platformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
     assertTopologyEquals("cluster-2.json");
 
     List<Message> messages = messages();
@@ -164,7 +166,7 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_remove_client() throws Exception {
     test_add_new_client();
-    platformListener.removeNode(active, CLIENTS_PATH, "client-2");
+    activePlatformListener.removeNode(active, CLIENTS_PATH, "client-2");
     assertTopologyEquals("cluster-1.json");
 
     List<Message> messages = messages();
@@ -174,7 +176,7 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_add_new_entity() throws Exception {
-    platformListener.addNode(active, ENTITIES_PATH, "entity-2", new PlatformEntity("entityType", "entityName-2", 2, true));
+    activePlatformListener.addNode(active, ENTITIES_PATH, "entity-2", new PlatformEntity("entityType", "entityName-2", 2, true));
     assertTopologyEquals("cluster-3.json");
 
     List<Message> messages = messages();
@@ -185,7 +187,7 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_remove_entity() throws Exception {
     test_add_new_entity();
-    platformListener.removeNode(active, ENTITIES_PATH, "entity-2");
+    activePlatformListener.removeNode(active, ENTITIES_PATH, "entity-2");
     assertTopologyEquals("cluster-1.json");
 
     List<Message> messages = messages();
@@ -195,7 +197,7 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_fetch_entity() throws Exception {
-    platformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1")));
+    activePlatformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1")));
     assertTopologyEquals("cluster-4.json");
 
     List<Message> messages = messages();
@@ -206,8 +208,8 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_fetch_entity_twice() throws Exception {
     // fetch twice the same from same client
-    platformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1-1")));
-    platformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1-2")));
+    activePlatformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1-1")));
+    activePlatformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1-2")));
     assertTopologyEquals("cluster-6.json");
 
     List<Message> messages = messages();
@@ -218,7 +220,7 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_unfetch_entity() throws Exception {
     test_fetch_entity();
-    platformListener.removeNode(active, FETCHED_PATH, "fetch-1-1");
+    activePlatformListener.removeNode(active, FETCHED_PATH, "fetch-1-1");
     assertTopologyEquals("cluster-1.json");
 
     List<Message> messages = messages();
@@ -229,9 +231,9 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_add_passive_entity() throws Exception {
     // this reflects the calls received on active through IStripeMonitoring
-    platformListener.serverDidJoinStripe(passive);
-    platformListener.addNode(passive, PLATFORM_PATH, "state", new ServerState("PASSIVE", now, 0));
-    platformListener.addNode(passive, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 3, false));
+    activePlatformListener.serverDidJoinStripe(passive);
+    activePlatformListener.addNode(passive, PLATFORM_PATH, "state", new ServerState("PASSIVE", now, 0));
+    activePlatformListener.addNode(passive, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 3, false));
     assertTopologyEquals("cluster-5.json");
 
     List<Message> messages = messages();
@@ -242,9 +244,9 @@ public class VoltronMonitoringServiceTest {
   @Test
   public void test_remove_passive() throws Exception {
     test_add_passive_entity();
-    platformListener.removeNode(passive, ENTITIES_PATH, "entity-1");
-    platformListener.removeNode(passive, PLATFORM_PATH, "state");
-    platformListener.serverDidLeaveStripe(passive);
+    activePlatformListener.removeNode(passive, ENTITIES_PATH, "entity-1");
+    activePlatformListener.removeNode(passive, PLATFORM_PATH, "state");
+    activePlatformListener.serverDidLeaveStripe(passive);
     assertTopologyEquals("cluster-1.json");
 
     List<Message> messages = messages();
@@ -294,24 +296,24 @@ public class VoltronMonitoringServiceTest {
     test_add_passive_entity();
 
     // simulate the IMonitoringProducer's voltron implementation for consumer id 3
-    dataListener = serviceProvider.getService(3, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+    activeDataListener = activeServiceProvider.getService(3, new BasicServiceConfiguration<>(IStripeMonitoring.class));
     IMonitoringProducer monitoringProducer = new IMonitoringProducer() {
       @Override
       public boolean addNode(String[] parents, String name, Serializable value) {
-        return dataListener.addNode(passive, parents, name, value);
+        return activeDataListener.addNode(passive, parents, name, value);
       }
 
       @Override
       public boolean removeNode(String[] parents, String name) {
-        return dataListener.removeNode(passive, parents, name);
+        return activeDataListener.removeNode(passive, parents, name);
       }
 
       @Override
       public void pushBestEffortsData(String name, Serializable data) {
-        dataListener.pushBestEffortsData(passive, name, data);
+        activeDataListener.pushBestEffortsData(passive, name, data);
       }
     };
-    passiveEntityMonitoringService = serviceProvider.getService(3, new PassiveEntityMonitoringServiceConfiguration(monitoringProducer));
+    passiveEntityMonitoringService = passiveServiceProvider.getService(3, new PassiveEntityMonitoringServiceConfiguration(monitoringProducer));
 
     passiveEntityMonitoringService.exposeManagementRegistry(
         new ContextContainer("k", "v"),
@@ -352,8 +354,8 @@ public class VoltronMonitoringServiceTest {
     clientMonitoringService.pushNotification(new FakeDesc("1-1"), new ContextualNotification(Context.empty(), "TYPE-1"));
     clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty(), Collections.emptyMap()));
 
-    dataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
-    dataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty(), Collections.emptyMap())});
+    activeDataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
+    activeDataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty(), Collections.emptyMap())});
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION", "STATISTICS", "NOTIFICATION", "STATISTICS")));
@@ -367,10 +369,10 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_management_call() throws Exception {
-    platformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1")));
+    activePlatformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1")));
 
-    platformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
-    platformListener.addNode(active, FETCHED_PATH, "fetch-2-1", new PlatformClientFetchedEntity("client-2", "entity-1", new FakeDesc("2-1")));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
+    activePlatformListener.addNode(active, FETCHED_PATH, "fetch-2-1", new PlatformClientFetchedEntity("client-2", "entity-1", new FakeDesc("2-1")));
 
     clientMonitoringService.exposeManagementRegistry(
         new FakeDesc("2-1"),

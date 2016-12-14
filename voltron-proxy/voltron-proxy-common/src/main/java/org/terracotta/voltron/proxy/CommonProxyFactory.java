@@ -63,7 +63,7 @@ public class CommonProxyFactory {
     return map;
   }
 
-  public static Map<Class<?>, Byte> createResponseTypeMappings(Class<?> proxyType, Class<?> ... events) {
+  public static Map<Class<?>, Byte> createResponseTypeMappings(Class<?> proxyType, Class<?>[] events) {
     final HashMap<Class<?>, Byte> map = new HashMap<Class<?>, Byte>();
     byte index = 0;
     for (MethodDescriptor m : getSortedMethods(proxyType)) {
@@ -80,7 +80,7 @@ public class CommonProxyFactory {
     return unmodifiableMap(map);
   }
 
-  static SortedSet<MethodDescriptor> getSortedMethods(final Class<?> type) {
+  private static SortedSet<MethodDescriptor> getSortedMethods(final Class<?> type) {
     SortedSet<MethodDescriptor> methods = new TreeSet<MethodDescriptor>(METHOD_COMPARATOR);
 
     final Method[] declaredMethods = type.getDeclaredMethods();
@@ -99,9 +99,11 @@ public class CommonProxyFactory {
     return methods;
   }
 
-  private static SortedSet<Class<?>> getSortedTypes(Class<?> ... types) {
+  private static SortedSet<Class<?>> getSortedTypes(Class<?>[] types) {
     final TreeSet<Class<?>> classes = new TreeSet<Class<?>>(CLASS_COMPARATOR);
-    classes.addAll(asList(types));
+    if (types != null) {
+      classes.addAll(asList(types));
+    }
     return classes;
   }
 }

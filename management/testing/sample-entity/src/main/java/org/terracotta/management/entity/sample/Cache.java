@@ -15,23 +15,52 @@
  */
 package org.terracotta.management.entity.sample;
 
+import org.terracotta.voltron.proxy.ConcurrencyStrategy;
+import org.terracotta.voltron.proxy.ExecutionStrategy;
+
+import static org.terracotta.voltron.proxy.ConcurrencyStrategy.*;
+import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.ACTIVE;
+import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.BOTH;
+
 /**
  * @author Mathieu Carbou
  */
 public interface Cache {
-  void put(String key, String value);
 
+  // The answer to life, the universe and everything
+  int MUTATION_KEY = 42;
+
+  // reads
+
+  @ConcurrencyStrategy(key = UNIVERSAL_KEY)
+  @ExecutionStrategy(location = ACTIVE)
   String get(String key);
-
-  void remove(String key);
-
-  /**
-   * empty current layer's heap
-   */
-  void clear();
 
   /**
    * reports current's layer heap
    */
+  @ConcurrencyStrategy(key = UNIVERSAL_KEY)
+  @ExecutionStrategy(location = ACTIVE)
   int size();
+
+  // mutations
+
+  @ConcurrencyStrategy(key = MUTATION_KEY)
+  @ExecutionStrategy(location = BOTH)
+  void put(String key, String value);
+
+  /**
+   * removes a key, and fire a message to clients to do the same
+   */
+  @ConcurrencyStrategy(key = MUTATION_KEY)
+  @ExecutionStrategy(location = BOTH)
+  void remove(String key);
+
+  /**
+   * empty current layer's heap, and fire a message to clients to do the same
+   */
+  @ConcurrencyStrategy(key = MUTATION_KEY)
+  @ExecutionStrategy(location = BOTH)
+  void clear();
+
 }

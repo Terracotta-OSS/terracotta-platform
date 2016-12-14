@@ -28,6 +28,9 @@ import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
 import org.terracotta.management.service.monitoring.ManagementService;
 import org.terracotta.management.service.monitoring.ManagementServiceConfiguration;
+import org.terracotta.management.service.monitoring.PassiveEntityMonitoringService;
+import org.terracotta.management.service.monitoring.PassiveEntityMonitoringServiceConfiguration;
+import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
@@ -36,21 +39,32 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAgentConfig> {
+public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAgent, TmsAgentConfig, Void> {
 
   public TmsAgentEntityServerService() {
-    super(TmsAgent.class, TmsAgentConfig.class, new SerializationCodec(), Message.class);
+    super(TmsAgent.class, TmsAgentConfig.class, new Class<?>[] {Message.class}, null);
+    setCodec(new SerializationCodec());
   }
 
   @Override
-  public TmsAgentServerEntity createActiveEntity(ServiceRegistry registry, TmsAgentConfig tmsAgentConfig) {
+  public ActiveTmsAgentServerEntity createActiveEntity(ServiceRegistry registry, TmsAgentConfig configuration) {
     ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
     ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration(communicator)));
     ActiveEntityMonitoringService activeEntityMonitoringService = Objects.requireNonNull(registry.getService(new ActiveEntityMonitoringServiceConfiguration()));
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(activeEntityMonitoringService)
         .addServerManagementProviders()
-        .setStatisticConfiguration(tmsAgentConfig.getStatisticConfiguration())));
-    return new TmsAgentServerEntity(new TmsAgentImpl(tmsAgentConfig, managementService, consumerManagementRegistry), communicator);
+        .setStatisticConfiguration(configuration.getStatisticConfiguration())));
+    return new ActiveTmsAgentServerEntity(new ActiveTmsAgent(configuration, managementService, consumerManagementRegistry));
+  }
+
+  @Override
+  protected PassiveTmsAgentServerEntity createPassiveEntity(ServiceRegistry registry, TmsAgentConfig configuration) {
+    IMonitoringProducer monitoringProducer = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)));
+    PassiveEntityMonitoringService activeEntityMonitoringService = Objects.requireNonNull(registry.getService(new PassiveEntityMonitoringServiceConfiguration(monitoringProducer)));
+    ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(activeEntityMonitoringService)
+        .addServerManagementProviders()
+        .setStatisticConfiguration(configuration.getStatisticConfiguration())));
+    return new PassiveTmsAgentServerEntity(new PassiveTmsAgent(consumerManagementRegistry));
   }
 
   @Override

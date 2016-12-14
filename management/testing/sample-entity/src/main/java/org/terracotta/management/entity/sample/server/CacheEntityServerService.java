@@ -21,20 +21,34 @@ import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Mathieu Carbou
  */
-public class CacheEntityServerService extends ProxyServerEntityService<String> {
+public class CacheEntityServerService extends ProxyServerEntityService<Cache, String, CacheSync> {
 
   public CacheEntityServerService() {
-    super(Cache.class, String.class, new SerializationCodec(), Serializable[].class);
+    super(Cache.class, String.class, new Class<?>[]{Serializable[].class}, CacheSync.class);
+    setCodec(new SerializationCodec());
   }
 
   @Override
-  public CacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) {
-    ServerCache cache = new ServerCache(identifier);
-    return new CacheServerEntity(cache, registry);
+  public ActiveCacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) {
+    ServerCache cache = registry.getService(new ServerCacheConfiguration(identifier));
+    return new ActiveCacheServerEntity(cache, registry);
+  }
+
+  @Override
+  protected PassiveCacheServerEntity createPassiveEntity(ServiceRegistry registry, String identifier) {
+    ServerCache cache = registry.getService(new ServerCacheConfiguration(identifier));
+    return new PassiveCacheServerEntity(cache, registry);
+  }
+
+  @Override
+  protected Set<Integer> getKeysForSynchronization() {
+    return Collections.singleton(Cache.MUTATION_KEY);
   }
 
   @Override

@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.sample.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.observer.OperationObserver;
@@ -37,6 +39,8 @@ import static org.terracotta.statistics.StatisticBuilder.operation;
  */
 public class ClientCache implements Cache {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientCache.class);
+
   private final String name;
   private final CacheEntity delegate;
   private final ConcurrentMap<String, String> data = new ConcurrentHashMap<>();
@@ -51,8 +55,8 @@ public class ClientCache implements Cache {
 
     this.delegate.registerListener(Serializable[].class, message -> {
       String cmd = (String) message[0];
-      if ("eviction".equals(cmd)) {
-        invalidate((String) message[1], (String) message[2]);
+      if ("remove".equals(cmd)) {
+        remove((String) message[1], (String) message[2]);
       }
     });
 
@@ -69,6 +73,7 @@ public class ClientCache implements Cache {
 
   @Override
   public void put(String key, String value) {
+    LOGGER.trace("[{}] put({}, {})", name, key, value);
     if (key == null) {
       throw new NullPointerException();
     }
@@ -87,6 +92,7 @@ public class ClientCache implements Cache {
 
   @Override
   public String get(String key) {
+    LOGGER.trace("[{}] get({})", name, key);
     if (key == null) {
       throw new NullPointerException();
     }
@@ -113,6 +119,7 @@ public class ClientCache implements Cache {
 
   @Override
   public void remove(String key) {
+    LOGGER.trace("[{}] remove({})", name, key);
     if (key == null) {
       throw new NullPointerException();
     }
@@ -121,6 +128,7 @@ public class ClientCache implements Cache {
 
   @Override
   public void clear() {
+    LOGGER.trace("[{}] clear()", name);
     clearObserver.begin();
     try {
       data.clear();
@@ -147,7 +155,7 @@ public class ClientCache implements Cache {
     return sb.toString();
   }
 
-  private void invalidate(String key, String val) {
+  private void remove(String key, String val) {
     data.remove(key, val);
   }
 

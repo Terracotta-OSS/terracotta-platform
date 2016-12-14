@@ -15,26 +15,31 @@
  */
 package org.terracotta.management.entity.sample.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.CacheOperationOutcomes;
 import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.observer.OperationObserver;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.terracotta.statistics.StatisticBuilder.operation;
 
 /**
  * @author Mathieu Carbou
  */
-public class ServerCache implements Cache {
+public class ServerCache implements Cache, CacheSync {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerCache.class);
 
   private final ConcurrentMap<String, String> data = new ConcurrentHashMap<>();
 
@@ -44,8 +49,7 @@ public class ServerCache implements Cache {
   private final Random random = new Random();
   private final String name;
 
-  private BiConsumer<String, String> evictionListener = (s, s2) -> {
-  };
+  private Collection<Listener> listeners = new CopyOnWriteArrayList<>();
 
   ServerCache(String name) {
     this.name = name;
@@ -61,12 +65,17 @@ public class ServerCache implements Cache {
         this::size);
   }
 
-  void setEvictionListener(BiConsumer<String, String> evictionListener) {
-    this.evictionListener = evictionListener;
+  void removeListener(Listener listener) {
+    listeners.remove(listener);
+  }
+
+  void addListener(Listener listener) {
+    listeners.add(listener);
   }
 
   @Override
   public void put(String key, String value) {
+    LOGGER.trace("[{}] put({}, {})", name, key, value);
     if (key == null) {
       throw new NullPointerException();
     }
@@ -77,7 +86,7 @@ public class ServerCache implements Cache {
     try {
       String old = data.put(key, value);
       simulateLatency();
-      evicted(key, old);
+      removed(key, old);
       putObserver.end(CacheOperationOutcomes.PutOutcome.PUT);
     } catch (RuntimeException e) {
       putObserver.end(CacheOperationOutcomes.PutOutcome.FAILURE);
@@ -87,6 +96,7 @@ public class ServerCache implements Cache {
 
   @Override
   public String get(String key) {
+    LOGGER.trace("[{}] get({})", name, key);
     if (key == null) {
       throw new NullPointerException();
     }
@@ -104,21 +114,23 @@ public class ServerCache implements Cache {
 
   @Override
   public void remove(String key) {
+    LOGGER.trace("[{}] remove({})", name, key);
     if (key == null) {
       throw new NullPointerException();
     }
     String v = data.remove(key);
-    evicted(key, v);
+    removed(key, v);
   }
 
   @Override
   public void clear() {
+    LOGGER.trace("[{}] clear()", name);
     clearObserver.begin();
     try {
       while (!data.isEmpty()) {
         Map.Entry<String, String> e = data.entrySet().iterator().next();
         if (data.remove(e.getKey(), e.getValue())) {
-          evicted(e.getKey(), e.getValue());
+          removed(e.getKey(), e.getValue());
         }
       }
       simulateLatency();
@@ -133,6 +145,13 @@ public class ServerCache implements Cache {
     return data.size();
   }
 
+  @Override
+  public void syncCacheDataInPassives(Map<String, String> data) {
+    LOGGER.trace("[{}] syncCacheDataInPassives({})", name, data.size());
+    this.data.clear();
+    this.data.putAll(data);
+  }
+
   public String getName() {
     return name;
   }
@@ -145,10 +164,19 @@ public class ServerCache implements Cache {
     }
   }
 
-  private void evicted(String key, String value) {
+  private void removed(String key, String value) {
     if (value != null) {
-      evictionListener.accept(key, value);
+      for (Listener l : listeners) {
+        l.onRemove(key, value);
+      }
     }
   }
 
+  Map<String, String> getData() {
+    return new HashMap<>(data);
+  }
+
+  interface Listener {
+    void onRemove(String key, String val);
+  }
 }

@@ -43,7 +43,7 @@ import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
 import org.terracotta.passthrough.PassthroughClusterControl;
-import org.terracotta.passthrough.PassthroughServer;
+import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -54,8 +54,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -68,9 +66,8 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class AbstractTest {
 
-  private final ExecutorService managementMessageExecutor = Executors.newCachedThreadPool();
   private final ObjectMapper mapper = new ObjectMapper();
-  private final PassthroughClusterControl stripeControl;
+  protected final PassthroughClusterControl stripeControl;
 
   private Connection managementConnection;
 
@@ -78,31 +75,43 @@ public abstract class AbstractTest {
   protected final Map<String, List<Cache>> caches = new HashMap<>();
   protected TmsAgentService tmsAgentService;
 
-  AbstractTest() {
+  protected AbstractTest() {
+    this(0);
+  }
+
+  protected AbstractTest(int nPassives) {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
     mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
 
-    PassthroughServer activeServer = new PassthroughServer();
-    activeServer.setServerName("server1");
+    stripeControl = PassthroughTestHelpers.createMultiServerStripe("stripe-1", nPassives + 1, server -> {
+      server.registerClientEntityService(new CacheEntityClientService());
+      server.registerServerEntityService(new CacheEntityServerService());
 
-    activeServer.registerClientEntityService(new CacheEntityClientService());
-    activeServer.registerServerEntityService(new CacheEntityServerService());
+      server.registerClientEntityService(new ManagementAgentEntityClientService());
+      server.registerServerEntityService(new ManagementAgentEntityServerService());
 
-    activeServer.registerClientEntityService(new ManagementAgentEntityClientService());
-    activeServer.registerServerEntityService(new ManagementAgentEntityServerService());
+      server.registerClientEntityService(new TmsAgentEntityClientService());
+      server.registerServerEntityService(new TmsAgentEntityServerService());
 
-    activeServer.registerClientEntityService(new TmsAgentEntityClientService());
-    activeServer.registerServerEntityService(new TmsAgentEntityServerService());
+      OffheapResourcesType resources = new OffheapResourcesType();
+      ResourceType resource = new ResourceType();
+      resource.setName("primary-resource");
+      resource.setUnit(MemoryUnit.MB);
+      resource.setValue(BigInteger.valueOf(32));
+      resources.getResource().add(resource);
+      server.registerExtendedConfiguration(new OffHeapResourcesProvider(resources));
+    });
 
-    OffheapResourcesType resources = new OffheapResourcesType();
-    ResourceType resource = new ResourceType();
-    resource.setName("primary-resource");
-    resource.setUnit(MemoryUnit.MB);
-    resource.setValue(BigInteger.valueOf(32));
-    resources.getResource().add(resource);
-    activeServer.registerExtendedConfiguration(new OffHeapResourcesProvider(resources));
+    try {
+      stripeControl.waitForActive();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
-    stripeControl = new PassthroughClusterControl("stripe-1", activeServer);
+    // only keep 1 active running by default
+    for (int i = 0; i < nPassives; i++) {
+      stripeControl.terminateOnePassive();
+    }
   }
 
   @Before
@@ -123,7 +132,6 @@ public abstract class AbstractTest {
       managementConnection.close();
     }
     stripeControl.tearDown();
-    managementMessageExecutor.shutdown();
   }
 
   protected JsonNode readJson(String file) {

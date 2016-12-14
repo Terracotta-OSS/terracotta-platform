@@ -21,9 +21,13 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ClientId;
+import org.terracotta.voltron.proxy.ConcurrencyStrategy;
+import org.terracotta.voltron.proxy.ExecutionStrategy;
 
 import java.util.List;
 import java.util.concurrent.Future;
+
+import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.ACTIVE;
 
 /**
  * @author Mathieu Carbou
@@ -31,15 +35,21 @@ import java.util.concurrent.Future;
 public interface TmsAgent {
 
   @Async(Async.Ack.NONE)
+  @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
+  @ExecutionStrategy(location = ACTIVE)
   Future<Cluster> readTopology();
 
   @Async(Async.Ack.NONE)
+  @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
+  @ExecutionStrategy(location = ACTIVE)
   Future<List<Message>> readMessages();
 
   /**
    * Execute a management call on the server and returns the results
    */
   @Async(Async.Ack.NONE)
+  @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
+  @ExecutionStrategy(location = ACTIVE)
   Future<String> call(@ClientId Object callerDescriptor, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
 
 }

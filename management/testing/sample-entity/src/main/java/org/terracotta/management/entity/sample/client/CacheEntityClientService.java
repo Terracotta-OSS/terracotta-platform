@@ -26,6 +26,7 @@ import java.io.Serializable;
  */
 public class CacheEntityClientService extends ProxyEntityClientService<CacheEntity, String> {
   public CacheEntityClientService() {
-    super(CacheEntity.class, Cache.class, String.class, new SerializationCodec(), Serializable[].class);
+    super(CacheEntity.class, Cache.class, String.class, new Class<?>[] {Serializable[].class});
+    setCodec(new SerializationCodec());
   }
 }
