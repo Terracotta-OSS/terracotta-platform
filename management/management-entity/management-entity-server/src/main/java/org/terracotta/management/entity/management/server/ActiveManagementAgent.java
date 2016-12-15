@@ -42,13 +42,15 @@ class ActiveManagementAgent implements ManagementAgent {
 
   @Override
   public Future<Void> pushNotification(@ClientId Object caller, ContextualNotification notification) {
-    clientMonitoringService.pushNotification((ClientDescriptor) caller, notification);
+    if (notification != null) {
+      clientMonitoringService.pushNotification((ClientDescriptor) caller, notification);
+    }
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> pushStatistics(@ClientId Object caller, ContextualStatistics... statistics) {
-    if (statistics.length > 0) {
+    if (statistics != null && statistics.length > 0) {
       clientMonitoringService.pushStatistics((ClientDescriptor) caller, statistics);
     }
     return CompletableFuture.completedFuture(null);
@@ -56,13 +58,17 @@ class ActiveManagementAgent implements ManagementAgent {
 
   @Override
   public Future<Void> exposeManagementMetadata(@ClientId Object caller, ContextContainer contextContainer, Capability... capabilities) {
-    clientMonitoringService.exposeManagementRegistry((ClientDescriptor) caller, contextContainer, capabilities);
+    if (contextContainer != null && capabilities != null) {
+      clientMonitoringService.exposeManagementRegistry((ClientDescriptor) caller, contextContainer, capabilities);
+    }
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
   public Future<Void> exposeTags(@ClientId Object caller, String... tags) {
-    clientMonitoringService.exposeTags((ClientDescriptor) caller, tags);
+    if (tags != null) {
+      clientMonitoringService.exposeTags((ClientDescriptor) caller, tags);
+    }
     return CompletableFuture.completedFuture(null);
   }
 

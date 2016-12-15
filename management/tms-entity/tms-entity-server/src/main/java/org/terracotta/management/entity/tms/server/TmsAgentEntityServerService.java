@@ -41,12 +41,12 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAgent, TmsAgentConfig, Void> {
+public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAgent, TmsAgentConfig, Void, Void> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TmsAgentEntityServerService.class);
 
   public TmsAgentEntityServerService() {
-    super(TmsAgent.class, TmsAgentConfig.class, new Class<?>[]{Message.class}, null);
+    super(TmsAgent.class, TmsAgentConfig.class, new Class<?>[]{Message.class}, null, null);
     setCodec(new SerializationCodec());
   }
 

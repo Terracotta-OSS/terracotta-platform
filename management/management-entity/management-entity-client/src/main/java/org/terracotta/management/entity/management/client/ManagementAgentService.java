@@ -17,10 +17,12 @@ package org.terracotta.management.entity.management.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.management.entity.management.ReconnectData;
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
@@ -31,10 +33,12 @@ import org.terracotta.management.registry.ManagementProviderAdapter;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.voltron.proxy.MessageListener;
+import org.terracotta.voltron.proxy.client.EndpointListener;
 
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -52,7 +56,8 @@ public class ManagementAgentService implements Closeable {
 
   private volatile ManagementRegistry registry;
   private volatile boolean bridging = false;
-  private Capability[] previouslyExposed = new Capability[0];
+  private Capability[] previouslyExposedCapabilities;
+  private String[] previouslyExposedTags;
 
   private long timeoutMs = 5000;
   private Executor managementCallExecutor = new Executor() {
@@ -92,7 +97,8 @@ public class ManagementAgentService implements Closeable {
 
   public ManagementAgentService(final ManagementAgentEntity entity) {
     this.entity = Objects.requireNonNull(entity);
-    this.entity.registerListener(Message.class, new MessageListener<Message>() {
+
+    this.entity.registerMessageListener(Message.class, new MessageListener<Message>() {
       @Override
       public void onMessage(final Message message) {
         LOGGER.trace("onMessage({})", message);
@@ -130,6 +136,30 @@ public class ManagementAgentService implements Closeable {
         }
       }
     });
+
+    this.entity.setEndpointListener(new EndpointListener() {
+      @Override
+      public Object onReconnect() {
+        if (bridging) {
+          LOGGER.trace("onReconnect()");
+          Collection<? extends Capability> capabilities = registry == null ? Collections.<Capability>emptyList() : registry.getCapabilities();
+          Context context = registry == null ? Context.empty() : Context.create(registry.getContextContainer().getName(), registry.getContextContainer().getValue());
+          return new ReconnectData(
+              previouslyExposedTags,
+              registry == null ? null : registry.getContextContainer(),
+              registry == null ? null : capabilities.toArray(new Capability[capabilities.size()]),
+              new ContextualNotification(context, "CLIENT_RECONNECTED"));
+        } else {
+          return null;
+        }
+      }
+
+      @Override
+      public void onDisconnectUnexpectedly() {
+        LOGGER.trace("onDisconnectUnexpectedly()");
+        close();
+      }
+    });
   }
 
   public void init() throws ExecutionException, InterruptedException, TimeoutException {
@@ -147,6 +177,7 @@ public class ManagementAgentService implements Closeable {
    */
   public synchronized void setManagementRegistry(ManagementRegistry registry) {
     if (!bridging) {
+      LOGGER.trace("setManagementRegistry({})", registry.getContextContainer().getValue());
       this.registry = registry;
       registry.addManagementProvider(managementProvider);
       bridging = true;
@@ -156,6 +187,7 @@ public class ManagementAgentService implements Closeable {
   @Override
   public synchronized void close() {
     if (bridging) {
+      LOGGER.trace("close()");
       registry.removeManagementProvider(managementProvider);
       bridging = false;
     }
@@ -180,10 +212,10 @@ public class ManagementAgentService implements Closeable {
   }
 
   public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) throws ExecutionException, InterruptedException, TimeoutException {
-    if (!Arrays.deepEquals(previouslyExposed, capabilities)) {
-      LOGGER.trace("exposeManagementMetadata({})", contextContainer);
+    if (!Arrays.deepEquals(previouslyExposedCapabilities, capabilities)) {
+      LOGGER.trace("exposeManagementMetadata({})", contextContainer.getValue());
       get(entity.exposeManagementMetadata(null, contextContainer, capabilities));
-      previouslyExposed = capabilities;
+      previouslyExposedCapabilities = capabilities;
     }
   }
 
@@ -194,6 +226,7 @@ public class ManagementAgentService implements Closeable {
   public void setTags(String... tags) throws ExecutionException, InterruptedException, TimeoutException {
     LOGGER.trace("setTags({})", Arrays.asList(tags));
     get(entity.exposeTags(null, tags));
+    previouslyExposedTags = tags;
   }
 
   public void pushNotification(ContextualNotification notification) throws ExecutionException, InterruptedException, TimeoutException {

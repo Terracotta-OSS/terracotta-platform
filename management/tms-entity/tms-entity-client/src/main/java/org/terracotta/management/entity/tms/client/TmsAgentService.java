@@ -58,7 +58,7 @@ public class TmsAgentService {
 
   public TmsAgentService(final TmsAgentEntity entity) {
     this.entity = Objects.requireNonNull(entity);
-    this.entity.registerListener(Message.class, message -> {
+    this.entity.registerMessageListener(Message.class, message -> {
       LOGGER.trace("onMessage({})", message);
 
       switch (message.getType()) {

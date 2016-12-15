@@ -186,7 +186,7 @@ public class HATest extends AbstractHaTest {
 
   @Test
   //TODO: needs to also test the topology with a galvan test after the failover:  (https://github.com/Terracotta-OSS/terracotta-platform/issues/191)
-  public void failover() throws Exception {
+  public void failover_management() throws Exception {
     // connect passive
     stripeControl.startOneServer();
     stripeControl.waitForRunningPassivesInStandby();
@@ -226,6 +226,26 @@ public class HATest extends AbstractHaTest {
     assertThat(
         notifs.stream().map(notif -> notif.getAttributes().get("state")).collect(Collectors.toList()),
         equalTo(Arrays.asList("ACTIVE", "ACTIVE")));
+
+    //TODO: complete with Galvan: passthrough bug prevents m&m so see the new topology and further notifications (https://github.com/Terracotta-OSS/tc-passthrough-testing/issues/74)
+    //- test topology (like topology_includes_passives), client should have re-exposed their management metadata
+    //- check notifications: server states
+    //- check notification that might be there: CLIENT_RECONNECTED and SERVER_ENTITY_FAILOVER_COMPLETE
+  }
+
+  @Test
+  public void puts_can_be_seen_on_other_clients_after_failover() throws Exception {
+    // connect passive
+    stripeControl.startOneServer();
+    stripeControl.waitForRunningPassivesInStandby();
+
+    put(0, "clients", "client1", "Mathieu");
+
+    // kill active - passive should take the active role
+    stripeControl.terminateActive();
+    stripeControl.waitForActive();
+
+    assertThat(get(1, "clients", "client1"), equalTo("Mathieu"));
   }
 
 }

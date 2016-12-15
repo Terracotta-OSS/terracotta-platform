@@ -15,14 +15,34 @@
  */
 package org.terracotta.management.entity.management.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.management.ManagementAgent;
+import org.terracotta.management.entity.management.ReconnectData;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
 
 /**
  * @author Mathieu Carbou
  */
-class ActiveManagementAgentServerEntity extends ActiveProxiedServerEntity<ManagementAgent, Void> {
+class ActiveManagementAgentServerEntity extends ActiveProxiedServerEntity<ManagementAgent, Void, ReconnectData> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ActiveManagementAgentServerEntity.class);
+
+  private final ActiveManagementAgent managementAgent;
+
   ActiveManagementAgentServerEntity(ActiveManagementAgent managementAgent) {
     super(managementAgent);
+    this.managementAgent = managementAgent;
+  }
+
+  @Override
+  protected void onReconnect(ClientDescriptor clientDescriptor, ReconnectData reconnectData) {
+    if (reconnectData != null) {
+      LOGGER.trace("onReconnect({})", clientDescriptor);
+      managementAgent.exposeTags(clientDescriptor, reconnectData.tags);
+      managementAgent.exposeManagementMetadata(clientDescriptor, reconnectData.contextContainer, reconnectData.capabilities);
+      managementAgent.pushNotification(clientDescriptor, reconnectData.contextualNotification);
+    }
   }
 }

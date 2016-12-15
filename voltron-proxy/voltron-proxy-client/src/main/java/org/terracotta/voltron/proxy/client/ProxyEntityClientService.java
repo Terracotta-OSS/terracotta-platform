@@ -47,7 +47,7 @@ public abstract class ProxyEntityClientService<T extends Entity & ServerMessageA
 
   @Override
   public T create(EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint) {
-    return ClientProxyFactory.createEntityProxy(clientType, type, endpoint, messageTypes);
+    return ClientProxyFactory.createEntityProxy(clientType, type, endpoint, messageTypes, messageCodec.getCodec());
   }
 
   @Override

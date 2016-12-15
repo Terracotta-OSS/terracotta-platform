@@ -17,6 +17,7 @@ package org.terracotta.voltron.proxy.client;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.CommonProxyFactory;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
@@ -31,14 +32,16 @@ public class ClientProxyFactory {
   public static <T extends Entity & ServerMessageAware> T createEntityProxy(Class<T> clientType,
                                                                             Class<? super T> type,
                                                                             EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
-                                                                            Class<?>[] messageTypes) {
-    return createProxy(clientType, type, entityClientEndpoint, messageTypes);
+                                                                            Class<?>[] messageTypes,
+                                                                            Codec codec) {
+    return createProxy(clientType, type, entityClientEndpoint, messageTypes, codec);
   }
 
   public static <T> T createProxy(Class<T> clientType,
                                   Class<? super T> type,
                                   EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint,
-                                  Class<?>[] messageTypes) {
+                                  Class<?>[] messageTypes,
+                                  Codec codec) {
 
     if (entityClientEndpoint == null) {
       throw new NullPointerException("EntityClientEndpoint has to be provided!");
@@ -59,7 +62,8 @@ public class ClientProxyFactory {
         interfaces,
         new VoltronProxyInvocationHandler(
             entityClientEndpoint,
-            CommonProxyFactory.invert(CommonProxyFactory.createResponseTypeMappings(type, messageTypes)).values())
+            CommonProxyFactory.invert(CommonProxyFactory.createResponseTypeMappings(type, messageTypes)).values(),
+            codec)
     ));
   }
 

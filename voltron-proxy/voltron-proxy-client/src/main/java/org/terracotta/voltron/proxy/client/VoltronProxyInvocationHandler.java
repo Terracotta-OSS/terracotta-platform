@@ -16,10 +16,13 @@
 package org.terracotta.voltron.proxy.client;
 
 import org.terracotta.connection.entity.Entity;
+import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
+import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
@@ -43,12 +46,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private static final Method close;
-  private static final Method registerListener;
+  private static final Method registerMessageListener;
+  private static final Method setEndpointListener;
 
   static {
     try {
       close = Entity.class.getDeclaredMethod("close");
-      registerListener = ServerMessageAware.class.getDeclaredMethod("registerListener", Class.class, MessageListener.class);
+      registerMessageListener = ServerMessageAware.class.getDeclaredMethod("registerMessageListener", Class.class, MessageListener.class);
+      setEndpointListener = EndpointListenerAware.class.getDeclaredMethod("setEndpointListener", EndpointListener.class);
     } catch (NoSuchMethodException e) {
       throw new AssertionError("Someone changed some method signature here!!!");
     }
@@ -56,41 +61,82 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint;
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
+  private final Codec codec;
 
-  public VoltronProxyInvocationHandler(final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, Collection<Class<?>> events) {
+  private EndpointListener endpointListener;
+
+  VoltronProxyInvocationHandler(final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, Collection<Class<?>> events, final Codec codec) {
     this.entityClientEndpoint = entityClientEndpoint;
+    this.codec = codec;
     this.listeners = new ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<MessageListener>>();
     if (events.size() > 0) {
       for (Class<?> aClass : events) {
         listeners.put(aClass, new CopyOnWriteArrayList<MessageListener>());
       }
-      entityClientEndpoint.setDelegate(new ProxyEndpointDelegate(listeners));
+
+      entityClientEndpoint.setDelegate(new EndpointDelegate() {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void handleMessage(EntityResponse messageFromServer) {
+          ProxyEntityResponse response = (ProxyEntityResponse) messageFromServer;
+          final Class<?> aClass = response.getResponseType();
+          for (MessageListener messageListener : listeners.get(aClass)) {
+            messageListener.onMessage(response.getResponse());
+          }
+        }
+
+        @Override
+        public byte[] createExtendedReconnectData() {
+          if (endpointListener == null) {
+            return null;
+          } else {
+            Object state = endpointListener.onReconnect();
+            if (state == null) {
+              return null;
+            }
+            return codec.encode(state.getClass(), state);
+          }
+        }
+
+        @Override
+        public void didDisconnectUnexpectedly() {
+          if (endpointListener != null) {
+            endpointListener.onDisconnectUnexpectedly();
+          }
+        }
+      });
     }
   }
 
   @Override
   public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
 
-    if(close.equals(method)) {
+    if (close.equals(method)) {
       entityClientEndpoint.close();
       return null;
-    } else if(registerListener.equals(method)) {
+
+    } else if (registerMessageListener.equals(method)) {
       final Class<?> eventType = (Class<?>) args[0];
       final MessageListener arg = (MessageListener) args[1];
       final CopyOnWriteArrayList<MessageListener> messageListeners = listeners.get(eventType);
-      if(messageListeners == null) {
+      if (messageListeners == null) {
         throw new IllegalArgumentException("Event type '" + eventType + "' isn't supported");
       }
       messageListeners.add(arg);
+      return null;
+
+    } else if (setEndpointListener.equals(method)) {
+      this.endpointListener = (EndpointListener) args[0];
       return null;
     }
 
     final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
 
     final InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> builder = entityClientEndpoint.beginInvoke()
-            .message(new ProxyEntityMessage(methodDescriptor, args, false));
+        .message(new ProxyEntityMessage(methodDescriptor, args, false));
 
-    if(methodDescriptor.isAsync()) {
+    if (methodDescriptor.isAsync()) {
       switch (methodDescriptor.getAck()) {
         case NONE:
           break;

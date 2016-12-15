@@ -18,6 +18,7 @@ package org.terracotta.voltron.proxy.server;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
@@ -26,11 +27,14 @@ import java.util.Objects;
 /**
  * @author Alex Snaps
  */
-public abstract class ActiveProxiedServerEntity<T, S> implements ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ActiveProxiedServerEntity<T, S, R> implements ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final T entity;
   private final ProxyInvoker<T> invoker;
+
   private S synchronizer;
+  private Codec codec;
+  private Class<R> reconnectDataType;
 
   public ActiveProxiedServerEntity(T entity) {
     this.entity = Objects.requireNonNull(entity);
@@ -38,7 +42,7 @@ public abstract class ActiveProxiedServerEntity<T, S> implements ActiveServerEnt
   }
 
   @Override
-  public ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
+  public final ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
     return invoker.invoke(msg, clientDescriptor);
   }
 
@@ -53,12 +57,19 @@ public abstract class ActiveProxiedServerEntity<T, S> implements ActiveServerEnt
   }
 
   @Override
-  public void handleReconnect(final ClientDescriptor clientDescriptor, final byte[] extendedReconnectData) {
-    // Don't care I think
+  public final void handleReconnect(final ClientDescriptor clientDescriptor, final byte[] extendedReconnectData) {
+    if (reconnectDataType != null && codec != null) {
+      R state = null;
+      if (extendedReconnectData != null && extendedReconnectData.length > 0) {
+        state = codec.decode(reconnectDataType, extendedReconnectData);
+
+      }
+      onReconnect(clientDescriptor, state);
+    }
   }
 
   @Override
-  public void synchronizeKeyToPassive(final PassiveSynchronizationChannel<ProxyEntityMessage> channel, final int concurrencyKey) {
+  public final void synchronizeKeyToPassive(final PassiveSynchronizationChannel<ProxyEntityMessage> channel, final int concurrencyKey) {
     if (synchronizer != null) {
       SyncProxyFactory.setCurrentChannel(channel);
       try {
@@ -87,24 +98,31 @@ public abstract class ActiveProxiedServerEntity<T, S> implements ActiveServerEnt
   protected void synchronizeKeyToPassive(int concurrencyKey) {
   }
 
-  protected <M> void fireMessage(Class<M> type, M message, boolean echo) {invoker.fireMessage(type, message, echo);}
+  protected void onReconnect(ClientDescriptor clientDescriptor, R state) {
+  }
 
-  protected <M> void fireMessage(Class<M> type, M message, ClientDescriptor[] clients) {invoker.fireMessage(type, message, clients);}
+  protected final <M> void fireMessage(Class<M> type, M message, boolean echo) {invoker.fireMessage(type, message, echo);}
 
-  protected T getEntity() {
+  protected final <M> void fireMessage(Class<M> type, M message, ClientDescriptor[] clients) {invoker.fireMessage(type, message, clients);}
+
+  protected final T getEntity() {
     return entity;
   }
 
-  protected S getSynchronizer() {
+  protected final S getSynchronizer() {
     return synchronizer;
   }
 
-  ProxyInvoker<T> getInvoker() {
+  final ProxyInvoker<T> getInvoker() {
     return invoker;
   }
 
-  void setSynchronizer(S synchronizer) {
+  final void setSynchronizer(S synchronizer) {
     this.synchronizer = synchronizer;
   }
 
+  final void setReconnect(Class<R> reconnectDataType, Codec codec) {
+    this.reconnectDataType = reconnectDataType;
+    this.codec = codec;
+  }
 }

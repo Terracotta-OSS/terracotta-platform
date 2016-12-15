@@ -15,12 +15,16 @@
  */
 package org.terracotta.voltron.proxy.server;
 
+import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.Codec;
@@ -33,12 +37,17 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
+ * @param <T> The interface of the entity proxy implementation
+ * @param <C> Entity config type
+ * @param <S> Void, or the interface type to sync to passives
+ * @param <R> Void, or the reconnect data type
  * @author Mathieu Carbou
  */
-public abstract class ProxyServerEntityService<T, C, S> implements EntityServerService<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ProxyServerEntityService<T, C, S, R> implements EntityServerService<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final Class<C> configType;
   private final Class<?>[] eventTypes;
+  private final Class<R> reconnectDataType;
   private final Class<S> synchronizerType;
   private final ProxyMessageCodec messageCodec;
   private final DelegatingSyncMessageCodec syncMessageCodec;
@@ -55,7 +64,7 @@ public abstract class ProxyServerEntityService<T, C, S> implements EntityServerS
     }
   };
 
-  public ProxyServerEntityService(Class<T> proxyType, Class<C> configType, Class<?>[] eventTypes, Class<S> synchronizerType) {
+  public ProxyServerEntityService(Class<T> proxyType, Class<C> configType, Class<?>[] eventTypes, Class<S> synchronizerType, Class<R> reconnectDataType) {
     this.configType = Objects.requireNonNull(configType);
 
     this.eventTypes = eventTypes; // can be null
@@ -63,20 +72,22 @@ public abstract class ProxyServerEntityService<T, C, S> implements EntityServerS
 
     this.synchronizerType = synchronizerType; // can be null
     this.syncMessageCodec = synchronizerType == null ? null : new DelegatingSyncMessageCodec(new ProxyMessageCodec(synchronizerType));
+
+    this.reconnectDataType = reconnectDataType; // can be null
   }
 
   @Override
-  public MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
+  public final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> getMessageCodec() {
     return messageCodec;
   }
 
   @Override
-  public SyncMessageCodec<ProxyEntityMessage> getSyncMessageCodec() {
+  public final SyncMessageCodec<ProxyEntityMessage> getSyncMessageCodec() {
     return syncMessageCodec;
   }
 
   @Override
-  public ActiveProxiedServerEntity<T, S> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public final ActiveProxiedServerEntity<T, S, R> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
     C config = null;
     if (configType == Void.TYPE) {
       if (configuration != null && configuration.length > 0) {
@@ -85,23 +96,27 @@ public abstract class ProxyServerEntityService<T, C, S> implements EntityServerS
     } else {
       config = configType.cast(messageCodec.getCodec().decode(configType, configuration));
     }
-    ActiveProxiedServerEntity<T, S> activeEntity = createActiveEntity(registry, config);
+    ActiveProxiedServerEntity<T, S, R> activeEntity = createActiveEntity(registry, config);
 
     if (eventTypes != null && eventTypes.length > 0) {
       ClientCommunicator clientCommunicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
       activeEntity.getInvoker().activateEvents(clientCommunicator, eventTypes);
     }
 
-    if(synchronizerType != null) {
+    if (synchronizerType != null) {
       S synchronizer = SyncProxyFactory.createProxy(synchronizerType);
       activeEntity.setSynchronizer(synchronizer);
+    }
+
+    if (reconnectDataType != null) {
+      activeEntity.setReconnect(reconnectDataType, messageCodec.getCodec());
     }
 
     return activeEntity;
   }
 
   @Override
-  public PassiveProxiedServerEntity<T, S> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public final PassiveProxiedServerEntity<T, S> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
     C config = null;
     if (configType == Void.TYPE) {
       if (configuration != null && configuration.length > 0) {
@@ -114,27 +129,40 @@ public abstract class ProxyServerEntityService<T, C, S> implements EntityServerS
   }
 
   @Override
-  public ConcurrencyStrategy<ProxyEntityMessage> getConcurrencyStrategy(byte[] configuration) {
+  public final ConcurrencyStrategy<ProxyEntityMessage> getConcurrencyStrategy(byte[] configuration) {
     return concurrencyStrategy;
   }
 
   @Override
-  public ExecutionStrategy<ProxyEntityMessage> getExecutionStrategy(byte[] configuration) {
+  public final ExecutionStrategy<ProxyEntityMessage> getExecutionStrategy(byte[] configuration) {
     return executionStrategy;
   }
+
+  protected final void setCodec(Codec codec) {
+    messageCodec.setCodec(codec);
+    if (syncMessageCodec != null) {
+      syncMessageCodec.setCodec(codec);
+    }
+  }
+
+  @Override
+  public final <AP extends CommonServerEntity<ProxyEntityMessage, ProxyEntityResponse>> AP reconfigureEntity(ServiceRegistry registry, AP oldEntity, byte[] configuration) throws ConfigurationException {
+    if (oldEntity instanceof PassiveServerEntity) {
+      return (AP) createPassiveEntity(registry, configuration);
+    } else if (oldEntity instanceof ActiveServerEntity) {
+      return (AP) createActiveEntity(registry, configuration);
+    } else {
+      throw new AssertionError("unknown entity type");
+    }
+  }
+
+  // can be overriden / implemented
 
   protected Set<Integer> getKeysForSynchronization() {
     return Collections.emptySet();
   }
 
-  protected void setCodec(Codec codec) {
-    messageCodec.setCodec(codec);
-    if(syncMessageCodec != null) {
-      syncMessageCodec.setCodec(codec);
-    }
-  }
-
-  protected abstract ActiveProxiedServerEntity<T, S> createActiveEntity(ServiceRegistry registry, C configuration);
+  protected abstract ActiveProxiedServerEntity<T, S, R> createActiveEntity(ServiceRegistry registry, C configuration);
 
   protected abstract PassiveProxiedServerEntity<T, S> createPassiveEntity(ServiceRegistry registry, C configuration);
 

@@ -23,6 +23,7 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.management.ManagementAgent;
 import org.terracotta.management.entity.management.ManagementAgentConfig;
 import org.terracotta.management.entity.management.ManagementAgentVersion;
+import org.terracotta.management.entity.management.ReconnectData;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ClientMonitoringService;
 import org.terracotta.management.service.monitoring.ClientMonitoringServiceConfiguration;
@@ -34,13 +35,13 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgent, ManagementAgentConfig, Void> {
+public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgent, ManagementAgentConfig, Void, ReconnectData> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ManagementAgentEntityServerService.class);
 
   public ManagementAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[]{Message.class}, null);
+    super(ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[]{Message.class}, null, ReconnectData.class);
     setCodec(new SerializationCodec());
   }
 

@@ -64,7 +64,7 @@ public class VoltronProxyInvocationHandlerTest {
     when(future.get()).thenReturn(ProxyEntityResponse.response(Void.TYPE, null));
 
     Map<MethodDescriptor, Byte> methodMappings = invert(createMethodMappings(TestInterface.class));
-    VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(endpoint, Collections.<Class<?>>emptyList());
+    VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(endpoint, Collections.<Class<?>>emptyList(), codec);
     for (MethodDescriptor method : methodMappings.keySet()) {
       handler.invoke(null, method.getMethod(), new Object[] { "String", new Object() });
     }
