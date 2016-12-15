@@ -25,14 +25,14 @@ import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
 /**
  * @author Mathieu Carbou
  */
-class ActiveManagementAgentServerEntity extends ActiveProxiedServerEntity<ManagementAgent, Void, ReconnectData> {
+class ActiveManagementAgentServerEntity extends ActiveProxiedServerEntity<ManagementAgent, Void, ReconnectData, Void> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveManagementAgentServerEntity.class);
 
   private final ActiveManagementAgent managementAgent;
 
   ActiveManagementAgentServerEntity(ActiveManagementAgent managementAgent) {
-    super(managementAgent);
+    super(managementAgent, null);
     this.managementAgent = managementAgent;
   }
 

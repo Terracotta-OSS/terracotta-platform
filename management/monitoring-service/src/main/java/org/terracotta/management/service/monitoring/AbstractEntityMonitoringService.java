@@ -17,6 +17,7 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.PlatformConfiguration;
 
 import java.util.Objects;
 
@@ -28,14 +29,21 @@ abstract class AbstractEntityMonitoringService implements EntityMonitoringServic
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final long consumerId;
+  private final PlatformConfiguration platformConfiguration;
 
-  AbstractEntityMonitoringService(long consumerId) {
+  AbstractEntityMonitoringService(long consumerId, PlatformConfiguration platformConfiguration) {
     this.consumerId = consumerId;
+    this.platformConfiguration = Objects.requireNonNull(platformConfiguration);
   }
 
   @Override
   public long getConsumerId() {
     return consumerId;
+  }
+
+  @Override
+  public String getServerName() {
+    return platformConfiguration.getServerName();
   }
 
 }

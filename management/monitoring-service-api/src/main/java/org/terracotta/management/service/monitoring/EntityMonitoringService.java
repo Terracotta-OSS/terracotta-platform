@@ -66,4 +66,8 @@ public interface EntityMonitoringService {
    */
   long getConsumerId();
 
+  /**
+   * @return The current server name
+   */
+  String getServerName();
 }

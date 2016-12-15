@@ -24,6 +24,7 @@ import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MessageListener;
+import org.terracotta.voltron.proxy.MessageType;
 import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
@@ -134,7 +135,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
 
     final InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> builder = entityClientEndpoint.beginInvoke()
-        .message(new ProxyEntityMessage(methodDescriptor, args, false));
+        .message(new ProxyEntityMessage(methodDescriptor, args, MessageType.MESSAGE));
 
     if (methodDescriptor.isAsync()) {
       switch (methodDescriptor.getAck()) {
@@ -149,7 +150,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       return new ProxiedInvokeFuture(builder.invoke());
 
     } else {
-      return builder.invoke().get().getResponse();
+      ProxyEntityResponse proxyEntityResponse = builder.invoke().get();
+      return proxyEntityResponse == null ? null : proxyEntityResponse.getResponse();
     }
   }
 

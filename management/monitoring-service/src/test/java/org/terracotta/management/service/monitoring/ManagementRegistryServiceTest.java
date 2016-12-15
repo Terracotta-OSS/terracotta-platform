@@ -94,7 +94,7 @@ public class ManagementRegistryServiceTest {
     platformListener.addNode(server, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName", 1, true));
 
     dataListener = provider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
-    managementService = provider.getService(1, new ManagementServiceConfiguration(mock(ClientCommunicator.class)));
+    managementService = provider.getService(1, new ManagementServiceConfiguration(mock(ClientCommunicator.class), mock(ManagementCallExecutor.class)));
     ReadOnlyBuffer<Message> buffer = managementService.createMessageBuffer(100);
 
     // a consumer asks for a service

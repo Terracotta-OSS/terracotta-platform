@@ -23,8 +23,10 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
 import org.terracotta.management.service.monitoring.ManagementService;
 import org.terracotta.management.service.monitoring.ReadOnlyBuffer;
+import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 import org.terracotta.voltron.proxy.ClientId;
 
 import java.util.ArrayList;
@@ -44,8 +46,8 @@ class ActiveTmsAgent extends AbstractTmsAgent {
   private final ReadOnlyBuffer<Message> buffer;
   private final ManagementService managementService;
 
-  ActiveTmsAgent(TmsAgentConfig config, ManagementService managementService, ConsumerManagementRegistry consumerManagementRegistry) {
-    super(consumerManagementRegistry);
+  ActiveTmsAgent(TmsAgentConfig config, ManagementService managementService, ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService entityMonitoringService, SharedManagementRegistry sharedManagementRegistry) {
+    super(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
     this.managementService = Objects.requireNonNull(managementService);
     this.buffer = managementService.createMessageBuffer(config.getMaximumUnreadMessages());
   }

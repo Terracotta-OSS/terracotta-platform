@@ -40,7 +40,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.terracotta.voltron.proxy.ProxyEntityResponse.response;
+import static org.terracotta.voltron.proxy.ProxyEntityResponse.messageResponse;
 
 /**
  * @author Alex Snaps
@@ -66,7 +66,7 @@ public class ClientProxyFactoryTest {
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(response(Integer.class, 42));
+    when(future.get()).thenReturn(messageResponse(Integer.class, 42));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, null, codec);
     assertThat(proxy.sync(), is(42));
@@ -87,8 +87,8 @@ public class ClientProxyFactoryTest {
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(response(Integer.class, 42));
-    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(response(Integer.class, 43))
+    when(future.get()).thenReturn(messageResponse(Integer.class, 42));
+    when(future.getWithTimeout(1, TimeUnit.SECONDS)).thenReturn(messageResponse(Integer.class, 43))
         .thenThrow(new TimeoutException("Blah!"));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, null, codec);
@@ -111,7 +111,7 @@ public class ClientProxyFactoryTest {
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(response(Integer.class, 42));
+    when(future.get()).thenReturn(messageResponse(Integer.class, 42));
 
     final ListenerAware proxy = ClientProxyFactory.createEntityProxy(ListenerAware.class, PassThrough.class, endpoint, new Class<?>[]{String.class, Integer.class, Long.class, Double.class}, codec);
     assertThat(proxy.sync(), is(42));

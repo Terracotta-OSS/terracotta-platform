@@ -16,6 +16,7 @@
 package org.terracotta.management.service.monitoring;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.Client;
@@ -37,8 +38,8 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
   private final FiringService firingService;
   private final String serverName;
 
-  DefaultActiveEntityMonitoringService(long consumerId, TopologyService topologyService, FiringService firingService) {
-    super(consumerId);
+  DefaultActiveEntityMonitoringService(long consumerId, TopologyService topologyService, FiringService firingService, PlatformConfiguration platformConfiguration) {
+    super(consumerId, platformConfiguration);
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
     this.serverName = topologyService.getCurrentServerName();

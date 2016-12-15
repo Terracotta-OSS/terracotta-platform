@@ -21,15 +21,15 @@ import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -69,29 +69,48 @@ public class PassiveStartupIT extends AbstractHATest {
     assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
 
     // read messages
-    List<Message> messages = tmsAgentService.readMessages();
-    assertThat(messages.size(), equalTo(13));
-    Map<String, List<Message>> map = messages.stream().collect(Collectors.groupingBy(Message::getType));
+    Map<String, List<Message>> map = tmsAgentService.readMessages().stream().collect(Collectors.groupingBy(Message::getType));
     assertThat(map.size(), equalTo(2));
     assertThat(map.keySet(), hasItem("TOPOLOGY"));
     assertThat(map.keySet(), hasItem("NOTIFICATION"));
-    assertThat(map.get("NOTIFICATION").size(), equalTo(12));
 
-    List<ContextualNotification> notifs = map.get("NOTIFICATION").stream()
+    List<ContextualNotification> notifs = new ArrayList<>();
+    List<String> states = new ArrayList<>();
+
+    map.get("NOTIFICATION").stream()
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
+        .forEach(notifs::add);
+
+    notifs.stream()
+        .filter(contextualNotification -> contextualNotification.getType().equals("SERVER_STATE_CHANGED"))
+        .map(contextualNotification -> contextualNotification.getAttributes().get("state"))
+        .forEach(states::add);
+
+    while (!Thread.currentThread().isInterrupted() && !(states.contains("SYNCHRONIZING") && states.contains("PASSIVE"))) {
+      tmsAgentService.readMessages().stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .forEach(contextualNotification -> {
+            notifs.add(contextualNotification);
+            if (contextualNotification.getType().equals("SERVER_STATE_CHANGED")) {
+              states.add(contextualNotification.getAttributes().get("state"));
+            }
+          });
+    }
 
     // test notifications generated on active from passive "actions"
     assertThat(
-        notifs.stream().map(ContextualNotification::getType).collect(Collectors.toList()),
-        equalTo(Arrays.asList(
+        notifs.stream().map(ContextualNotification::getType).collect(Collectors.toCollection(TreeSet::new)),
+        equalTo(new TreeSet<>(Arrays.asList(
             "SERVER_JOINED",
             "SERVER_STATE_CHANGED",
             "SERVER_ENTITY_CREATED",
             "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
             "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_UPDATED",
             "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_UPDATED",
-            "SERVER_STATE_CHANGED")));
+            "SERVER_STATE_CHANGED",
+            "SYNC_START", "SYNC_END"
+        ))));
 
     // only 1 server in source: passive server
     assertThat(
@@ -100,33 +119,11 @@ public class PassiveStartupIT extends AbstractHATest {
 
     // test state transition of passive
     assertThat(
-        Stream.of(1, 11).map(idx -> notifs.get(idx).getAttributes().get("state")).collect(Collectors.toList()),
+        states,
         equalTo(Arrays.asList("SYNCHRONIZING", "PASSIVE")));
 
-    // wait for SYNC_END message to transit from passive to active
-    do {
-      messages = tmsAgentService.readMessages();
-      if (messages.stream()
-          .filter(message -> message.getType().equals("NOTIFICATION"))
-          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-          .map(ContextualNotification::getType)
-          .anyMatch(s -> s.equals("SYNC_END"))) {
-        break;
-      }
-    }
-    while (!Thread.currentThread().isInterrupted());
 
-    assertThat(messages.stream()
-            .filter(message -> message.getType().equals("NOTIFICATION"))
-            .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-            .map(ContextualNotification::getType)
-            .collect(Collectors.toList()),
-        hasItem("SYNC_END"));
-
-    assertThat(messages.stream()
-            .filter(message -> message.getType().equals("NOTIFICATION"))
-            .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-            .filter(contextualNotification -> contextualNotification.getType().endsWith("SYNC_END"))
+    assertThat(notifs.stream()
             .map(contextualNotification -> contextualNotification.getContext().get(Server.NAME_KEY))
             .collect(Collectors.toSet()),
         equalTo(new HashSet<>(Arrays.asList(passive.getServerName(), passive.getServerName()))));

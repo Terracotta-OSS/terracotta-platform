@@ -25,7 +25,7 @@ import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
 /**
  * @author Mathieu Carbou
  */
-class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSync> {
+class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSync, Void> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PassiveCacheServerEntity.class);
 
@@ -33,7 +33,7 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSy
   private final ServerCache cache;
 
   PassiveCacheServerEntity(ServerCache cache, ServiceRegistry serviceRegistry) {
-    super(cache, cache);
+    super(cache, cache, null);
     this.cache = cache;
     this.management = new Management(cache.getName(), serviceRegistry, false);
   }

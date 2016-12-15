@@ -35,13 +35,13 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgent, ManagementAgentConfig, Void, ReconnectData> {
+public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgent, ManagementAgentConfig, Void, ReconnectData, Void> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ManagementAgentEntityServerService.class);
 
   public ManagementAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[]{Message.class}, null, ReconnectData.class);
+    super(ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[]{Message.class}, null, ReconnectData.class, null);
     setCodec(new SerializationCodec());
   }
 

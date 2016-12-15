@@ -33,11 +33,13 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.sequence.Sequence;
 import org.terracotta.management.sequence.SequenceGenerator;
+import org.terracotta.voltron.proxy.MessageType;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -53,18 +55,20 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   private final FiringService firingService;
   private final ClientCommunicator clientCommunicator;
   private final SequenceGenerator sequenceGenerator;
+  private final ManagementCallExecutor managementCallExecutor;
   private final TopologyService topologyService;
   private final Map<ClientDescriptor, Collection<String>> managementCallRequests = new ConcurrentHashMap<>();
 
   private volatile ReadWriteBuffer<Message> buffer;
   private volatile ContextualNotification full;
 
-  DefaultManagementService(long consumerId, TopologyService topologyService, FiringService firingService, ClientCommunicator clientCommunicator, SequenceGenerator sequenceGenerator) {
+  DefaultManagementService(long consumerId, TopologyService topologyService, FiringService firingService, ClientCommunicator clientCommunicator, SequenceGenerator sequenceGenerator, ManagementCallExecutor managementCallExecutor) {
     this.consumerId = consumerId;
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
     this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
+    this.managementCallExecutor = Objects.requireNonNull(managementCallExecutor);
   }
 
   @Override
@@ -163,14 +167,19 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
         push(message);
         break;
 
-      case "MANAGEMENT_CALL_RETURN":
+      case "MANAGEMENT_CALL":
         ManagementCallMessage managementCallMessage = (ManagementCallMessage) message;
-        for (Map.Entry<ClientDescriptor, Collection<String>> entry : managementCallRequests.entrySet()) {
-          if (entry.getValue().remove(managementCallMessage.getManagementCallIdentifier())) {
-            send(entry.getKey(), message);
-            break;
-          }
+        String managementCallIdentifier = managementCallMessage.getManagementCallIdentifier();
+        if (isTracked(managementCallIdentifier)) {
+          ContextualCall call = managementCallMessage.unwrap(ContextualCall.class).get(0);
+          managementCallExecutor.executeManagementCall(managementCallIdentifier, call);
         }
+        break;
+
+      case "MANAGEMENT_CALL_RETURN":
+        ManagementCallMessage managementCallResultMessage = (ManagementCallMessage) message;
+        unTrack(managementCallResultMessage.getManagementCallIdentifier())
+            .ifPresent(clientDescriptor -> send(clientDescriptor, message));
         break;
 
       default:
@@ -181,7 +190,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   private void send(ClientDescriptor client, Message message) {
     LOGGER.trace("[{}] send({}, {})", consumerId, client, message);
     try {
-      clientCommunicator.sendNoResponse(client, ProxyEntityResponse.response(Message.class, message));
+      clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(Message.class, message));
     } catch (Exception e) {
       LOGGER.error("Unable to send message " + message + " to client " + client);
     }
@@ -205,6 +214,24 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     managementCallRequests
         .computeIfAbsent(caller, clientDescriptor -> new ConcurrentSkipListSet<>())
         .add(managementCallIdentifier);
+  }
+
+  private Optional<ClientDescriptor> unTrack(String managementCallIdentifier) {
+    for (Map.Entry<ClientDescriptor, Collection<String>> entry : managementCallRequests.entrySet()) {
+      if (entry.getValue().remove(managementCallIdentifier)) {
+        return Optional.of(entry.getKey());
+      }
+    }
+    return Optional.empty();
+  }
+
+  private boolean isTracked(String managementCallIdentifier) {
+    for (Map.Entry<ClientDescriptor, Collection<String>> entry : managementCallRequests.entrySet()) {
+      if (entry.getValue().contains(managementCallIdentifier)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void clear() {

@@ -47,7 +47,7 @@ class ProxyInvoker<T> implements MessageFiring {
     try {
       try {
         invocationContext.set(new InvocationContext(clientDescriptor));
-        return ProxyEntityResponse.response(message.messageType(), message.invoke(target, clientDescriptor));
+        return ProxyEntityResponse.response(message.getType(), message.messageType(), message.invoke(target, clientDescriptor));
       } finally {
         invocationContext.remove();
       }
@@ -92,7 +92,7 @@ class ProxyInvoker<T> implements MessageFiring {
     for (ClientDescriptor client : clients) {
       if (echo || !client.equals(caller)) {
         try {
-          clientCommunicator.sendNoResponse(client, ProxyEntityResponse.response(type, message));
+          clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(type, message));
         } catch (MessageCodecException ex) {
           handleExceptionOnSend(ex);
         }
@@ -107,7 +107,7 @@ class ProxyInvoker<T> implements MessageFiring {
     }
     for (ClientDescriptor client : clients) {
       try {
-        clientCommunicator.sendNoResponse(client, ProxyEntityResponse.response(type, message));
+        clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(type, message));
       } catch (MessageCodecException ex) {
         handleExceptionOnSend(ex);
       }

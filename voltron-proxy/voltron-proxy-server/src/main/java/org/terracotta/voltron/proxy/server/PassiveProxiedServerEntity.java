@@ -24,26 +24,39 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public abstract class PassiveProxiedServerEntity<T, S> implements PassiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class PassiveProxiedServerEntity<T, S, M> implements PassiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final T entity;
   private final S synchronizer;
+  private final M messenger;
+
   private final ProxyInvoker<T> entityInvoker;
   private final ProxyInvoker<S> synchronizerInvoker;
+  private final ProxyInvoker<M> messengerInvoker;
 
-  public PassiveProxiedServerEntity(T entity, S synchronizer) {
+  public PassiveProxiedServerEntity(T entity, S synchronizer, M messenger) {
     this.entity = Objects.requireNonNull(entity);
     this.synchronizer = synchronizer; // can be null
+    this.messenger = messenger; // can be null
     this.entityInvoker = new ProxyInvoker<>(entity);
     this.synchronizerInvoker = new ProxyInvoker<>(synchronizer);
+    this.messengerInvoker = new ProxyInvoker<>(messenger);
   }
 
   @Override
   public void invoke(final ProxyEntityMessage msg) {
-    if (msg.isSyncMessage()) {
-      synchronizerInvoker.invoke(msg);
-    } else {
-      entityInvoker.invoke(msg);
+    switch (msg.getType()) {
+      case SYNC:
+        synchronizerInvoker.invoke(msg);
+        break;
+      case MESSENGER:
+        messengerInvoker.invoke(msg);
+        break;
+      case MESSAGE:
+        entityInvoker.invoke(msg);
+        break;
+      default:
+        throw new AssertionError(msg.getType());
     }
   }
 
@@ -77,12 +90,16 @@ public abstract class PassiveProxiedServerEntity<T, S> implements PassiveServerE
     // Don't care I think
   }
 
-  protected T getEntity() {
+  protected final T getEntity() {
     return entity;
   }
 
-  protected S getSynchronizer() {
+  protected final S getSynchronizer() {
     return synchronizer;
+  }
+
+  protected final M getMessenger() {
+    return messenger;
   }
 
 }

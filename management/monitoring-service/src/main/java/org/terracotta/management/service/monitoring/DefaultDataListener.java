@@ -102,9 +102,9 @@ class DefaultDataListener implements DataListener {
       ManagementRegistry newRegistry = (ManagementRegistry) data;
       topologyService.setEntityManagementRegistry(consumerId, sender.getServerName(), newRegistry);
 
-    } else if (path.length == 3 && "management".equals(path[0]) && "answer".equals(path[1])) {
+    } else if (path.length == 2 && "management-answer".equals(path[0])) {
       // handles data coming from DefaultMonitoringService.answerManagementCall()
-      String managementCallIdentifier = path[2];
+      String managementCallIdentifier = path[1];
       ContextualReturn<?> answer = (ContextualReturn<?>) data;
       firingService.fireManagementCallAnswer(managementCallIdentifier, answer);
     }

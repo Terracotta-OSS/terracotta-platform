@@ -86,7 +86,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
-    this.firingService = new DefaultFiringService(sequenceGenerator, platformConfiguration, sharedManagementRegistry, managementServices, clientMonitoringServices);
+    this.firingService = new DefaultFiringService(sequenceGenerator, managementServices, clientMonitoringServices);
     this.topologyService = new TopologyService(firingService, timeSource, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
 
@@ -107,7 +107,6 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public void close() {
     this.statisticsServiceFactory.close();
-    this.firingService.close();
   }
 
   @SuppressWarnings("unchecked")
@@ -196,7 +195,8 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
               topologyService,
               firingService,
               managementServiceConfiguration.getClientCommunicator(),
-              sequenceGenerator);
+              sequenceGenerator,
+              managementServiceConfiguration.getManagementCallExecutor());
           topologyService.addTopologyEventListener(managementService);
           managementServices.put(consumerID, managementService);
         } else {
@@ -218,7 +218,8 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           activeEntityMonitoringService = new DefaultActiveEntityMonitoringService(
               consumerID,
               topologyService,
-              firingService);
+              firingService,
+              platformConfiguration);
           activeEntityMonitoringServices.put(consumerID, activeEntityMonitoringService);
         } else {
           LOGGER.trace("[{}] getService({}): re-using.", consumerID, ActiveEntityMonitoringService.class.getSimpleName());
@@ -241,7 +242,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
             LOGGER.warn("Platform service " + IMonitoringProducer.class.getSimpleName() + " is not accessible.");
             return null;
           }
-          passiveEntityMonitoringService = new DefaultPassiveEntityMonitoringService(consumerID, monitoringProducer);
+          passiveEntityMonitoringService = new DefaultPassiveEntityMonitoringService(consumerID, monitoringProducer, platformConfiguration);
           passiveEntityMonitoringServices.put(consumerID, passiveEntityMonitoringService);
         } else {
           LOGGER.trace("[{}] getService({}): re-using.", consumerID, PassiveEntityMonitoringService.class.getSimpleName());

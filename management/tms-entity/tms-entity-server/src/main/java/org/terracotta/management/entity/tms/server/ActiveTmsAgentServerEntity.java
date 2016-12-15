@@ -25,13 +25,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Mathieu Carbou
  */
-class ActiveTmsAgentServerEntity extends ActiveProxiedServerEntity<TmsAgent, Void, Void> {
+class ActiveTmsAgentServerEntity extends ActiveProxiedServerEntity<TmsAgent, Void, Void, TmsAgentMessenger> {
 
   private final AtomicBoolean connected = new AtomicBoolean();
   private final ActiveTmsAgent tmsAgent;
 
   ActiveTmsAgentServerEntity(ActiveTmsAgent tmsAgent) {
-    super(tmsAgent);
+    super(tmsAgent, tmsAgent);
     this.tmsAgent = tmsAgent;
   }
 

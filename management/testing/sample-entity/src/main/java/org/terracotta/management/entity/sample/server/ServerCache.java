@@ -147,8 +147,10 @@ public class ServerCache implements Cache, CacheSync {
   @Override
   public void syncCacheDataInPassives(Map<String, String> data) {
     LOGGER.trace("[{}] syncCacheDataInPassives({})", name, data.size());
-    this.data.clear();
-    this.data.putAll(data);
+    clear();
+    for (Map.Entry<String, String> entry : data.entrySet()) {
+      put(entry.getKey(), entry.getValue());
+    }
   }
 
   public String getName() {

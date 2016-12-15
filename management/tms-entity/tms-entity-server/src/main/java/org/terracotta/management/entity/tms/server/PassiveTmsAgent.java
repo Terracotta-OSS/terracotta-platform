@@ -20,6 +20,8 @@ import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
+import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 import org.terracotta.voltron.proxy.ClientId;
 
 import java.util.List;
@@ -30,8 +32,8 @@ import java.util.concurrent.Future;
  */
 class PassiveTmsAgent extends AbstractTmsAgent {
 
-  PassiveTmsAgent(ConsumerManagementRegistry consumerManagementRegistry) {
-    super(consumerManagementRegistry);
+  PassiveTmsAgent(ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService entityMonitoringService, SharedManagementRegistry sharedManagementRegistry) {
+    super(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
   }
 
   @Override

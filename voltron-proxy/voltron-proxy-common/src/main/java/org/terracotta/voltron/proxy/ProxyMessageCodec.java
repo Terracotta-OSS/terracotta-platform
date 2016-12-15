@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.EnumMap;
 import java.util.Map;
 
 /**
@@ -29,22 +30,41 @@ import java.util.Map;
  */
 public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, ProxyEntityResponse> {
 
-  private final Map<Byte, MethodDescriptor> methodMappings;
-  private final Map<MethodDescriptor, Byte> reverseMethodMappings;
-  private final Map<Class<?>, Byte> responseMappings;
-  private final Map<Byte, Class<?>> reverseResponseMappings;
+  private final EnumMap<MessageType, Map<Byte, MethodDescriptor>> methodMappings = new EnumMap<MessageType, Map<Byte, MethodDescriptor>>(MessageType.class);
+  private final EnumMap<MessageType, Map<MethodDescriptor, Byte>> reverseMethodMappings = new EnumMap<MessageType, Map<MethodDescriptor, Byte>>(MessageType.class);
+  private final EnumMap<MessageType, Map<Class<?>, Byte>> responseMappings = new EnumMap<MessageType, Map<Class<?>, Byte>>(MessageType.class);
+  private final EnumMap<MessageType, Map<Byte, Class<?>>> reverseResponseMappings = new EnumMap<MessageType, Map<Byte, Class<?>>>(MessageType.class);
 
   private Codec codec = new SerializationCodec();
 
   public ProxyMessageCodec(Class<?> proxyType) {
-    this(proxyType, new Class[0]);
+    this(proxyType, new Class[0], null, null);
   }
 
   public ProxyMessageCodec(Class<?> proxyType, Class<?>[] eventTypes) {
-    this.methodMappings = CommonProxyFactory.createMethodMappings(proxyType);
-    this.reverseMethodMappings = CommonProxyFactory.invert(methodMappings);
-    this.responseMappings = CommonProxyFactory.createResponseTypeMappings(proxyType, eventTypes);
-    this.reverseResponseMappings = CommonProxyFactory.invert(responseMappings);
+    this(proxyType, eventTypes, null, null);
+  }
+
+  public ProxyMessageCodec(Class<?> proxyType, Class<?>[] eventTypes, Class<?> messengerType, Class<?> synchronizerType) {
+    // type == message
+    this.methodMappings.put(MessageType.MESSAGE, CommonProxyFactory.createMethodMappings(proxyType));
+    this.reverseMethodMappings.put(MessageType.MESSAGE, CommonProxyFactory.invert(methodMappings.get(MessageType.MESSAGE)));
+    this.responseMappings.put(MessageType.MESSAGE, CommonProxyFactory.createResponseTypeMappings(proxyType, eventTypes));
+    this.reverseResponseMappings.put(MessageType.MESSAGE, CommonProxyFactory.invert(responseMappings.get(MessageType.MESSAGE)));
+    // type == sync
+    if (synchronizerType != null) {
+      this.methodMappings.put(MessageType.SYNC, CommonProxyFactory.createMethodMappings(synchronizerType));
+      this.reverseMethodMappings.put(MessageType.SYNC, CommonProxyFactory.invert(methodMappings.get(MessageType.SYNC)));
+      this.responseMappings.put(MessageType.SYNC, CommonProxyFactory.createResponseTypeMappings(synchronizerType));
+      this.reverseResponseMappings.put(MessageType.SYNC, CommonProxyFactory.invert(responseMappings.get(MessageType.SYNC)));
+    }
+    // type == messenger
+    if (messengerType != null) {
+      this.methodMappings.put(MessageType.MESSENGER, CommonProxyFactory.createMethodMappings(messengerType));
+      this.reverseMethodMappings.put(MessageType.MESSENGER, CommonProxyFactory.invert(methodMappings.get(MessageType.MESSENGER)));
+      this.responseMappings.put(MessageType.MESSENGER, CommonProxyFactory.createResponseTypeMappings(messengerType));
+      this.reverseResponseMappings.put(MessageType.MESSENGER, CommonProxyFactory.invert(responseMappings.get(MessageType.MESSENGER)));
+    }
   }
 
   public void setCodec(Codec codec) {
@@ -57,13 +77,26 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
 
   @Override
   public byte[] encodeResponse(ProxyEntityResponse r) {
-    final Byte messageTypeIdentifier = responseMappings.get(r.getResponseType());
+    if (r == null) {
+      return new byte[0];
+    }
+
+    MessageType messageType = r.getMessageType();
+
+    Map<Class<?>, Byte> mapping = responseMappings.get(messageType);
+    if (mapping == null) {
+      throw new AssertionError("WAT, no mapping for " + messageType);
+    }
+
+    Byte messageTypeIdentifier = mapping.get(r.getResponseType());
     if (messageTypeIdentifier == null) {
       throw new AssertionError("WAT, no mapping for " + r.getResponseType().getName());
     }
+
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     DataOutputStream output = new DataOutputStream(byteOut);
     try {
+      output.writeByte(messageType.ordinal());
       output.writeByte(messageTypeIdentifier);
       output.write(codec.encode(r.getResponseType(), r.getResponse()));
       output.close();
@@ -75,31 +108,43 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
 
   @Override
   public ProxyEntityResponse decodeResponse(byte[] buffer) throws MessageCodecException {
-    byte messageTypeIdentifier = buffer[0];
-
-    Class<?> responseType = reverseResponseMappings.get(messageTypeIdentifier);
-
-    if (responseType == null) {
-      throw new AssertionError("WAT, no mapping for " + messageTypeIdentifier);
+    if (buffer.length == 0) {
+      return null;
     }
-    return ProxyEntityResponse.response(responseType, codec.decode(responseType, buffer, 1, buffer.length - 1));
+
+    MessageType messageType = MessageType.values()[buffer[0]];
+
+    Map<Byte, Class<?>> mapping = reverseResponseMappings.get(messageType);
+    if (mapping == null) {
+      throw new AssertionError("WAT, no mapping for " + messageType);
+    }
+
+    Class<?> responseType = mapping.get(buffer[1]);
+    if (responseType == null) {
+      throw new AssertionError("WAT, no mapping for method " + buffer[1] + " for messageType " + messageType);
+    }
+
+    Object o = codec.decode(responseType, buffer, 2, buffer.length - 2);
+    return ProxyEntityResponse.response(messageType, responseType, o);
   }
 
   @Override
   public byte[] encodeMessage(ProxyEntityMessage message) throws MessageCodecException {
     try {
+      MessageType messageType = message.getType();
       MethodDescriptor method = message.getMethod();
-      Object[] args = message.getArguments();
 
-      final Byte methodIdentifier = reverseMethodMappings.get(method);
+      Map<MethodDescriptor, Byte> mapping = reverseMethodMappings.get(messageType);
+      if (mapping == null) {
+        throw new AssertionError("WAT, no mapping for " + messageType);
+      }
 
+      Byte methodIdentifier = mapping.get(method);
       if (methodIdentifier == null) {
         throw new AssertionError("WAT, no mapping for " + method.toGenericString());
       }
 
-      ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-      DataOutputStream output = new DataOutputStream(byteOut);
-
+      Object[] args = message.getArguments();
       final Annotation[][] parameterAnnotations = method.getParameterAnnotations();
       for (int i = 0, parameterAnnotationsLength = parameterAnnotations.length; i < parameterAnnotationsLength; i++) {
         final Annotation[] parameterAnnotation = parameterAnnotations[i];
@@ -110,10 +155,12 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
         }
       }
 
-      final Class<?>[] parameterTypes = method.getParameterTypes();
-      output.writeByte(methodIdentifier);
-      output.writeByte(message.isSyncMessage() ? 1 : 0);
-      output.write(codec.encode(parameterTypes, args));
+      ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+      DataOutputStream output = new DataOutputStream(byteOut);
+
+      output.writeByte(messageType.ordinal()); // first, message type
+      output.writeByte(methodIdentifier); // then method mapping
+      output.write(codec.encode(method.getParameterTypes(), args));
 
       output.close();
       return byteOut.toByteArray();
@@ -124,17 +171,19 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
 
   @Override
   public ProxyEntityMessage decodeMessage(final byte[] buffer) {
-    final MethodDescriptor method = decodeMethod(buffer[0]);
-    boolean syncMessage = buffer[1] == 1;
-    return new ProxyEntityMessage(method, codec.decode(method.getParameterTypes(), buffer, 2, buffer.length - 2), syncMessage);
-  }
+    MessageType messageType = MessageType.values()[buffer[0]];
 
-  private MethodDescriptor decodeMethod(final byte b) {
-    final MethodDescriptor method = methodMappings.get(b);
-    if (method == null) {
-      throw new AssertionError();
+    Map<Byte, MethodDescriptor> mapping = methodMappings.get(messageType);
+    if (mapping == null) {
+      throw new AssertionError("WAT, no mapping for " + messageType);
     }
-    return method;
+
+    MethodDescriptor method = mapping.get(buffer[1]);
+    if (method == null) {
+      throw new AssertionError("WAT, no mapping for method " + buffer[1] + " for messageType " + messageType);
+    }
+
+    return new ProxyEntityMessage(method, codec.decode(method.getParameterTypes(), buffer, 2, buffer.length - 2), messageType);
   }
 
 }

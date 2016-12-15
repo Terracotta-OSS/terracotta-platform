@@ -61,7 +61,7 @@ public class VoltronProxyInvocationHandlerTest {
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(future.get()).thenReturn(ProxyEntityResponse.response(Void.TYPE, null));
+    when(future.get()).thenReturn(ProxyEntityResponse.messageResponse(Void.TYPE, null));
 
     Map<MethodDescriptor, Byte> methodMappings = invert(createMethodMappings(TestInterface.class));
     VoltronProxyInvocationHandler handler = new VoltronProxyInvocationHandler(endpoint, Collections.<Class<?>>emptyList(), codec);
