@@ -53,7 +53,7 @@ public class ClientCache implements Cache {
     this.name = name;
     this.delegate = delegate;
 
-    this.delegate.registerListener(Serializable[].class, message -> {
+    this.delegate.registerMessageListener(Serializable[].class, message -> {
       String cmd = (String) message[0];
       if ("remove".equals(cmd)) {
         remove((String) message[1], (String) message[2]);

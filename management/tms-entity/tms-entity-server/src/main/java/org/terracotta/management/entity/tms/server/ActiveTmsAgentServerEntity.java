@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Mathieu Carbou
  */
-class ActiveTmsAgentServerEntity extends ActiveProxiedServerEntity<TmsAgent, Void> {
+class ActiveTmsAgentServerEntity extends ActiveProxiedServerEntity<TmsAgent, Void, Void> {
 
   private final AtomicBoolean connected = new AtomicBoolean();
   private final ActiveTmsAgent tmsAgent;

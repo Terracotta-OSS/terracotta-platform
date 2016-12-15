@@ -27,7 +27,7 @@ import java.io.Serializable;
 /**
  * @author Mathieu Carbou
  */
-class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync> {
+class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync, Void> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveCacheServerEntity.class);
 

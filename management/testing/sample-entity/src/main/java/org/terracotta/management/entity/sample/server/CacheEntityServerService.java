@@ -29,12 +29,12 @@ import java.util.Set;
 /**
  * @author Mathieu Carbou
  */
-public class CacheEntityServerService extends ProxyServerEntityService<Cache, String, CacheSync> {
+public class CacheEntityServerService extends ProxyServerEntityService<Cache, String, CacheSync, Void> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CacheEntityServerService.class);
 
   public CacheEntityServerService() {
-    super(Cache.class, String.class, new Class<?>[]{Serializable[].class}, CacheSync.class);
+    super(Cache.class, String.class, new Class<?>[]{Serializable[].class}, CacheSync.class, null);
     setCodec(new SerializationCodec());
   }
 

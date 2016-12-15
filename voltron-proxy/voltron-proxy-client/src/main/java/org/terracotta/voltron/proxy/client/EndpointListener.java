@@ -15,12 +15,13 @@
  */
 package org.terracotta.voltron.proxy.client;
 
-import org.terracotta.voltron.proxy.MessageListener;
-
 /**
- * @author Alex Snaps
+ * @author Mathieu Carbou
  */
-public interface ServerMessageAware {
+public interface EndpointListener {
 
-  <T> void registerMessageListener(Class<T> type, MessageListener<T> listener);
+  Object onReconnect();
+
+  void onDisconnectUnexpectedly();
+
 }
