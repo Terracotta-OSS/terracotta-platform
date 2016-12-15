@@ -26,6 +26,7 @@ import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -45,9 +46,11 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
   private static final Logger LOGGER = LoggerFactory.getLogger(IStripeMonitoringPlatformListenerAdapter.class);
 
   private final PlatformListener delegate;
-  private final ConcurrentMap<PlatformServer, ConcurrentMap<String, PlatformEntity>> entities = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Map<String, PlatformEntity>> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformConnectedClient> clients = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformClientFetchedEntity> fetches = new ConcurrentHashMap<>();
+
+  private volatile String currentActive;
 
   IStripeMonitoringPlatformListenerAdapter(PlatformListener delegate) {
     this.delegate = Objects.requireNonNull(delegate);
@@ -56,21 +59,22 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
   @Override
   public void serverDidBecomeActive(PlatformServer self) {
     LOGGER.trace("[0] serverDidBecomeActive({})", self.getServerName());
-    entities.put(self, new ConcurrentHashMap<>());
+    entities.put(self.getServerName(), new ConcurrentHashMap<>());
+    currentActive = self.getServerName();
     delegate.serverDidBecomeActive(self);
   }
 
   @Override
   public void serverDidJoinStripe(PlatformServer server) {
     LOGGER.trace("[0] serverDidJoinStripe({})", server.getServerName());
-    entities.put(server, new ConcurrentHashMap<>());
+    entities.put(server.getServerName(), new ConcurrentHashMap<>());
     delegate.serverDidJoinStripe(server);
   }
 
   @Override
   public void serverDidLeaveStripe(PlatformServer server) {
     LOGGER.trace("[0] serverDidLeaveStripe({})", server.getServerName());
-    entities.remove(server);
+    entities.remove(server.getServerName());
     delegate.serverDidLeaveStripe(server);
   }
 
@@ -88,9 +92,15 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
       switch (entryType) {
 
         case "entities": {
-          requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
-              .put(name, (PlatformEntity) value);
-          delegate.serverEntityCreated(sender, (PlatformEntity) value);
+          PlatformEntity platformEntity = (PlatformEntity) value;
+          requireNonNull(entities.get(sender.getServerName()), "Inconsistent monitoring tree: server did not joined stripe first: " + sender.getServerName())
+              .put(name, platformEntity);
+          // an active server is reporting a passive entity: it *can* be that a failover is occurring
+          if (!platformEntity.isActive && sender.getServerName().equals(currentActive)) {
+            delegate.serverEntityFailover(sender, platformEntity);
+          } else {
+            delegate.serverEntityCreated(sender, platformEntity);
+          }
           return true;
         }
 
@@ -111,9 +121,9 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
           if (client == null) {
             throw new IllegalStateException("No " + PlatformConnectedClient.class.getSimpleName() + " has been added before with identifier " + fetch.clientIdentifier);
           }
-          PlatformEntity entity = requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
+          PlatformEntity entity = requireNonNull(entities.get(sender.getServerName()), "Inconsistent monitoring tree: server did not joined stripe first: " + sender.getServerName())
               .get(fetch.entityIdentifier);
-          requireNonNull(entity, "Inconsistent monitoring tree: entity " + fetch.entityIdentifier + " is not on server " + sender);
+          requireNonNull(entity, "Inconsistent monitoring tree: entity " + fetch.entityIdentifier + " is not on server " + sender.getServerName());
           fetches.put(name, (PlatformClientFetchedEntity) value);
           delegate.clientFetch(client, entity, fetch.clientDescriptor);
           return true;
@@ -129,7 +139,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
     }
 
-    throw new UnsupportedOperationException("addNode(" + String.join("/", (CharSequence[]) parents) + "/" + name + ") from server " + sender + ", data: " + value);
+    throw new UnsupportedOperationException("addNode(" + String.join("/", (CharSequence[]) parents) + "/" + name + ") from server " + sender.getServerName() + ", data: " + value);
   }
 
   @Override
@@ -141,33 +151,36 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
     switch (parents[parents.length - 1]) {
 
       case "entities": {
-        PlatformEntity entity = requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
-            .remove(name);
-        requireNonNull(entity, "Inconsistent monitoring tree: entity " + name + " not found on server " + sender);
-        delegate.serverEntityDestroyed(sender, entity);
-        return true;
+        Map<String, PlatformEntity> serverEntities = entities.get(sender.getServerName());
+        PlatformEntity entity = serverEntities.remove(name);
+        if (entity != null) {
+          delegate.serverEntityDestroyed(sender, entity);
+          return true;
+        }
+        return false;
       }
 
       case "clients": {
         PlatformConnectedClient client = clients.remove(name);
-        requireNonNull(client, "Inconsistent monitoring tree: client " + name + " not found on server " + sender);
-        delegate.clientDisconnected(client);
-        return true;
+        if (client != null) {
+          delegate.clientDisconnected(client);
+          return true;
+        }
+        return false;
       }
 
       case "fetched": {
         PlatformClientFetchedEntity fetch = fetches.remove(name);
-        requireNonNull(fetch, "Inconsistent monitoring tree: fetch " + name + " not found on server " + sender);
-
-        PlatformEntity entity = requireNonNull(entities.get(sender), "Inconsistent monitoring tree: server did not joined stripe first: " + sender)
-            .get(fetch.entityIdentifier);
-        requireNonNull(entity, "Inconsistent monitoring tree: entity " + fetch.entityIdentifier + " not found on server " + sender);
-
-        PlatformConnectedClient client = clients.get(fetch.clientIdentifier);
-        requireNonNull(client, "Inconsistent monitoring tree: client " + fetch.clientIdentifier + " not found on server " + sender);
-
-        delegate.clientUnfetch(client, entity, fetch.clientDescriptor);
-        return true;
+        if (fetch != null) {
+          Map<String, PlatformEntity> serverEntities = entities.get(sender.getServerName());
+          PlatformConnectedClient client = clients.get(fetch.clientIdentifier);
+          PlatformEntity entity = serverEntities.get(fetch.entityIdentifier);
+          if (entity != null && client != null) {
+            delegate.clientUnfetch(client, entity, fetch.clientDescriptor);
+            return true;
+          }
+        }
+        return false;
       }
 
       default: {

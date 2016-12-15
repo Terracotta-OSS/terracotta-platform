@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 /**
  * @author Mathieu Carbou
  */
-class DefaultManagementService implements ManagementService, ClientDescriptorListener {
+class DefaultManagementService implements ManagementService, EntityListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultManagementService.class);
 
@@ -127,6 +127,7 @@ class DefaultManagementService implements ManagementService, ClientDescriptorLis
   @Override
   public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
     if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onUnfetch({})", this.consumerId, clientDescriptor);
       managementCallRequests.remove(clientDescriptor);
     }
   }
@@ -134,9 +135,15 @@ class DefaultManagementService implements ManagementService, ClientDescriptorLis
   @Override
   public void onEntityDestroyed(long consumerId) {
     if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onEntityDestroyed()", this.consumerId);
       managementCallRequests.clear();
       buffer = null;
     }
+  }
+
+  @Override
+  public void onEntityFailover(long consumerId) {
+    onEntityDestroyed(consumerId);
   }
 
   void fireMessage(Message message) {

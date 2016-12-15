@@ -27,6 +27,7 @@ import org.terracotta.management.model.cluster.Endpoint;
 import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.ServerEntity;
+import org.terracotta.management.model.cluster.ServerEntityIdentifier;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -55,6 +56,7 @@ import static org.terracotta.management.service.monitoring.TopologyService.Notif
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.CLIENT_DISCONNECTED;
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_CREATED;
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_DESTROYED;
+import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_FAILOVER_COMPLETED;
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_FETCHED;
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_UNFETCHED;
 import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_JOINED;
@@ -74,7 +76,8 @@ class TopologyService implements PlatformListener {
   private final EventService eventService;
   private final TimeSource timeSource;
   private final PlatformConfiguration platformConfiguration;
-  private final List<ClientDescriptorListener> clientDescriptorListeners = new CopyOnWriteArrayList<>();
+  private final List<EntityListener> entityListeners = new CopyOnWriteArrayList<>();
+  private final Map<ServerEntityIdentifier, Long> failoverEntities = new HashMap<>();
 
   private volatile Server currentActive;
 
@@ -139,16 +142,17 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityCreated({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender + " is not current active server but it created an active entity " + platformEntity);
+      throw newIllegalTopologyState("Server " + sender.getServerName() + " is not current active server but it created an active entity " + platformEntity);
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender + " is the current active server but it created a passive entity " + platformEntity);
+      throw newIllegalTopologyState("Server " + sender.getServerName() + " is the current active server but it created a passive entity " + platformEntity);
     }
 
     Server server = stripe.getServerByName(sender.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
-    ServerEntity entity = ServerEntity.create(platformEntity.name, platformEntity.typeName)
+    ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
+    ServerEntity entity = ServerEntity.create(identifier)
         .setConsumerId(platformEntity.consumerID);
 
     server.addServerEntity(entity);
@@ -159,6 +163,10 @@ class TopologyService implements PlatformListener {
     }
 
     eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
+
+    if (failoverEntities.remove(identifier) != null) {
+      eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FAILOVER_COMPLETED.name()));
+    }
   }
 
   @Override
@@ -166,18 +174,18 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityDestroyed({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender + " is not current active server but it destroyed an active entity " + platformEntity);
+      throw newIllegalTopologyState("Server " + sender.getServerName() + " is not current active server but it destroyed an active entity " + platformEntity);
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender + " is the current active server but it destroyed a passive entity " + platformEntity);
+      throw newIllegalTopologyState("Server " + sender.getServerName() + " is the current active server but it destroyed a passive entity " + platformEntity);
     }
 
     Server server = stripe.getServerByName(sender.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
 
     ServerEntity entity = server.getServerEntity(platformEntity.name, platformEntity.typeName)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: " + platformEntity + " on server " + sender));
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: " + platformEntity + " on server " + sender.getServerName()));
 
     Context context = entity.getContext();
     entity.remove();
@@ -185,10 +193,26 @@ class TopologyService implements PlatformListener {
     if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
       fetches.remove(platformEntity.consumerID);
 
-      clientDescriptorListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
+      entityListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
     }
 
     eventService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
+  }
+
+  @Override
+  public synchronized void serverEntityFailover(PlatformServer sender, PlatformEntity platformEntity) {
+    LOGGER.trace("[0] serverEntityFailover({}, {})", sender.getServerName(), platformEntity);
+
+    if (platformEntity.isActive || !sender.getServerName().equals(getActiveServer().getServerName())) {
+      throw newIllegalTopologyState("Server " + sender.getServerName() + " should be active and should receive a passive entity " + platformEntity);
+    }
+
+    // we cannot fire any event because the monitoring tree is not constructed yet, and the TmsEntity is not yet connected
+    // we are still transitioning from passive entities to active entities
+    // so we can keep track of those and send an event after, when they become active
+    failoverEntities.put(ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName), platformEntity.consumerID);
+
+    entityListeners.forEach(listener -> listener.onEntityFailover(platformEntity.consumerID));
   }
 
   @Override
@@ -243,7 +267,7 @@ class TopologyService implements PlatformListener {
 
     fetches.get(platformEntity.consumerID).put(clientDescriptor, clientIdentifier);
 
-    clientDescriptorListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
+    entityListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
 
     eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
   }
@@ -266,7 +290,7 @@ class TopologyService implements PlatformListener {
 
     fetches.get(platformEntity.consumerID).remove(clientDescriptor);
 
-    clientDescriptorListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
+    entityListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
 
     if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
       eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
@@ -382,13 +406,13 @@ class TopologyService implements PlatformListener {
     return platformConfiguration.getServerName();
   }
 
-  void addClientDescriptorListener(ClientDescriptorListener clientDescriptorListener) {
-    clientDescriptorListeners.add(Objects.requireNonNull(clientDescriptorListener));
+  void addEntityListener(EntityListener entityListener) {
+    entityListeners.add(Objects.requireNonNull(entityListener));
   }
 
-  void removeClientDescriptorListener(ClientDescriptorListener clientDescriptorListener) {
-    if(clientDescriptorListener != null) {
-      clientDescriptorListeners.remove(clientDescriptorListener);
+  void removeEntityListener(EntityListener entityListener) {
+    if (entityListener != null) {
+      entityListeners.remove(entityListener);
     }
   }
 
@@ -423,6 +447,7 @@ class TopologyService implements PlatformListener {
   enum Notification {
     SERVER_ENTITY_CREATED,
     SERVER_ENTITY_DESTROYED,
+    SERVER_ENTITY_FAILOVER_COMPLETED,
 
     SERVER_ENTITY_FETCHED,
     SERVER_ENTITY_UNFETCHED,

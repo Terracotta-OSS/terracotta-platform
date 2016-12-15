@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.sample.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.voltron.proxy.SerializationCodec;
@@ -29,6 +31,8 @@ import java.util.Set;
  */
 public class CacheEntityServerService extends ProxyServerEntityService<Cache, String, CacheSync> {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(CacheEntityServerService.class);
+
   public CacheEntityServerService() {
     super(Cache.class, String.class, new Class<?>[]{Serializable[].class}, CacheSync.class);
     setCodec(new SerializationCodec());
@@ -36,12 +40,14 @@ public class CacheEntityServerService extends ProxyServerEntityService<Cache, St
 
   @Override
   public ActiveCacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) {
+    LOGGER.trace("createActiveEntity({})", identifier);
     ServerCache cache = registry.getService(new ServerCacheConfiguration(identifier));
     return new ActiveCacheServerEntity(cache, registry);
   }
 
   @Override
   protected PassiveCacheServerEntity createPassiveEntity(ServiceRegistry registry, String identifier) {
+    LOGGER.trace("createPassiveEntity({})", identifier);
     ServerCache cache = registry.getService(new ServerCacheConfiguration(identifier));
     return new PassiveCacheServerEntity(cache, registry);
   }

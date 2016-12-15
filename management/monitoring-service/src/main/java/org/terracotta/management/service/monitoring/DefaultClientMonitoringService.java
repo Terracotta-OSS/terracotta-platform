@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Mathieu Carbou
  */
-class DefaultClientMonitoringService implements ClientMonitoringService, ClientDescriptorListener {
+class DefaultClientMonitoringService implements ClientMonitoringService, EntityListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClientMonitoringService.class);
 
@@ -106,6 +106,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, ClientD
   @Override
   public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
     if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onUnfetch({})", this.consumerId, clientDescriptor);
       manageableClients.remove(clientDescriptor);
     }
   }
@@ -113,8 +114,14 @@ class DefaultClientMonitoringService implements ClientMonitoringService, ClientD
   @Override
   public void onEntityDestroyed(long consumerId) {
     if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onEntityDestroyed()", this.consumerId);
       manageableClients.clear();
     }
+  }
+
+  @Override
+  public void onEntityFailover(long consumerId) {
+    onEntityDestroyed(consumerId);
   }
 
   void fireMessage(Message message) {

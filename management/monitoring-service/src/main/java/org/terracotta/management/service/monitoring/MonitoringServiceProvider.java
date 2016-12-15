@@ -89,13 +89,19 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     this.topologyService = new TopologyService(eventService, timeSource, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
 
-    this.topologyService.addClientDescriptorListener(new ClientDescriptorListenerAdapter() {
+    this.topologyService.addEntityListener(new EntityListenerAdapter() {
       @Override
       public void onEntityDestroyed(long consumerId) {
-        topologyService.removeClientDescriptorListener(managementServices.remove(consumerId));
-        topologyService.removeClientDescriptorListener(clientMonitoringServices.remove(consumerId));
-        topologyService.removeClientDescriptorListener(consumerManagementRegistries.remove(consumerId));
+        LOGGER.trace("[{}] onEntityDestroyed()", consumerId);
+        topologyService.removeEntityListener(managementServices.remove(consumerId));
+        topologyService.removeEntityListener(clientMonitoringServices.remove(consumerId));
+        topologyService.removeEntityListener(consumerManagementRegistries.remove(consumerId));
         entityMonitoringServices.remove(consumerId);
+      }
+
+      @Override
+      public void onEntityFailover(long consumerId) {
+        onEntityDestroyed(consumerId);
       }
     });
     return true;
@@ -140,7 +146,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
             addServerManagementProviders(consumerID, consumerManagementRegistry);
           }
-          topologyService.addClientDescriptorListener(consumerManagementRegistry);
+          topologyService.addEntityListener(consumerManagementRegistry);
           return consumerManagementRegistry;
         }));
       } else {
@@ -161,7 +167,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
               topologyService,
               eventService,
               clientMonitoringServiceConfiguration.getClientCommunicator());
-          topologyService.addClientDescriptorListener(clientMonitoringService);
+          topologyService.addEntityListener(clientMonitoringService);
           return clientMonitoringService;
         }));
       } else {
@@ -183,7 +189,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
               eventService,
               managementServiceConfiguration.getClientCommunicator(),
               sequenceGenerator);
-          topologyService.addClientDescriptorListener(managementService);
+          topologyService.addEntityListener(managementService);
           return managementService;
         }));
       } else {
@@ -243,7 +249,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       consumerManagementRegistry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
       for (OffHeapResources offHeapResource : offHeapResources) {
         for (OffHeapResourceIdentifier identifier : offHeapResource.getAllIdentifiers()) {
-          LOGGER.trace("[{}] addServerManagementProviders() OffHeapResource:{}", consumerId, identifier.getName());
+          LOGGER.trace("[{}] addServerManagementProviders(OffHeapResource:{})", consumerId, identifier.getName());
           consumerManagementRegistry.register(new OffHeapResourceBinding(identifier.getName(), offHeapResource.getOffHeapResource(identifier)));
         }
       }

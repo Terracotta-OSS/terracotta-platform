@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.entity.management.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceRegistry;
@@ -34,9 +36,11 @@ import java.util.Objects;
  */
 public class ManagementAgentEntityServerService extends ProxyServerEntityService<ManagementAgent, ManagementAgentConfig, Void> {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ManagementAgentEntityServerService.class);
+
   public ManagementAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[] {Message.class}, null);
+    super(ManagementAgent.class, ManagementAgentConfig.class, new Class<?>[]{Message.class}, null);
     setCodec(new SerializationCodec());
   }
 
@@ -45,11 +49,13 @@ public class ManagementAgentEntityServerService extends ProxyServerEntityService
     ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
     ClientMonitoringService clientMonitoringService = Objects.requireNonNull(registry.getService(new ClientMonitoringServiceConfiguration(communicator)));
     ActiveManagementAgent managementAgent = new ActiveManagementAgent(clientMonitoringService);
+    LOGGER.trace("createActiveEntity()");
     return new ActiveManagementAgentServerEntity(managementAgent);
   }
 
   @Override
   protected PassiveManagementAgentServerEntity createPassiveEntity(ServiceRegistry registry, ManagementAgentConfig configuration) {
+    LOGGER.trace("createPassiveEntity()");
     return new PassiveManagementAgentServerEntity(new PassiveManagementAgent());
   }
 
