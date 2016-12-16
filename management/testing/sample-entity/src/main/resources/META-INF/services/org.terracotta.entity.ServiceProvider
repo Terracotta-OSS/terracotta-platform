@@ -13,4 +13,4 @@
 #  limitations under the License.
 #
 
-org.terracotta.management.entity.sample.server.ServerCacheProvider
+org.terracotta.management.entity.sample.server.MapProvider

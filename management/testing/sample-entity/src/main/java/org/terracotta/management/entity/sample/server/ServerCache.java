@@ -28,8 +28,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.terracotta.statistics.StatisticBuilder.operation;
@@ -41,7 +39,7 @@ public class ServerCache implements Cache, CacheSync {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerCache.class);
 
-  private final ConcurrentMap<String, String> data = new ConcurrentHashMap<>();
+  private final Map<String, String> data;
 
   private final OperationObserver<CacheOperationOutcomes.GetOutcome> getObserver = operation(CacheOperationOutcomes.GetOutcome.class).named("get").of(this).tag("cluster").build();
   private final OperationObserver<CacheOperationOutcomes.PutOutcome> putObserver = operation(CacheOperationOutcomes.PutOutcome.class).named("put").of(this).tag("cluster").build();
@@ -51,8 +49,9 @@ public class ServerCache implements Cache, CacheSync {
 
   private Collection<Listener> listeners = new CopyOnWriteArrayList<>();
 
-  ServerCache(String name) {
+  ServerCache(String name, Map<String, String> data) {
     this.name = name;
+    this.data = data;
     // add a passthrough stat for size
     Map<String, Object> properties = new HashMap<>();
     properties.put("discriminator", "ServerCache");

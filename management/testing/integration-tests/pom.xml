@@ -36,31 +36,32 @@
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>galvan-support</artifactId>
-      <version>${galvan.version}</version>
-      <scope>test</scope>
-    </dependency>
+    <!-- entity under test -->
     <dependency>
       <groupId>org.terracotta.management.testing</groupId>
       <artifactId>sample-entity</artifactId>
-      <version>${parent.version}</version>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-client-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
+    <!-- management stack -->
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
       <artifactId>management-common</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
       <artifactId>management-client</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- testing libs -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>galvan-support</artifactId>
+      <version>${galvan.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
