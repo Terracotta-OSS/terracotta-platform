@@ -20,13 +20,29 @@ import org.terracotta.entity.ClientDescriptor;
 /**
  * @author Mathieu Carbou
  */
-interface EntityListener {
+class TopologyEventListenerAdapter implements TopologyEventListener {
+  @Override
+  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
 
-  void onFetch(long consumerId, ClientDescriptor clientDescriptor);
+  }
 
-  void onUnfetch(long consumerId, ClientDescriptor clientDescriptor);
+  @Override
+  public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
 
-  void onEntityDestroyed(long consumerId);
+  }
 
-  void onEntityFailover(long consumerId);
+  @Override
+  public void onEntityDestroyed(long consumerId) {
+
+  }
+
+  @Override
+  public void onEntityFailover(long consumerId) {
+
+  }
+
+  @Override
+  public void onBecomeActive() {
+
+  }
 }

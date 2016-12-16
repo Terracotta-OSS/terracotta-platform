@@ -35,7 +35,7 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry, EntityListener {
+class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry, TopologyEventListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
 
@@ -88,6 +88,10 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
       }
     }
     return false;
+  }
+
+  @Override
+  public void onBecomeActive() {
   }
 
   @Override

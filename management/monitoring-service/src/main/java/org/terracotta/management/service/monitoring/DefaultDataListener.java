@@ -41,12 +41,12 @@ class DefaultDataListener implements DataListener {
 
   private final long consumerId;
   private final TopologyService topologyService;
-  private final EventService eventService;
+  private final FiringService firingService;
 
-  DefaultDataListener(long consumerId, TopologyService topologyService, EventService eventService) {
+  DefaultDataListener(long consumerId, TopologyService topologyService, FiringService firingService) {
     this.consumerId = consumerId;
     this.topologyService = Objects.requireNonNull(topologyService);
-    this.eventService = Objects.requireNonNull(eventService);
+    this.firingService = Objects.requireNonNull(firingService);
   }
 
   // ===========================================================================
@@ -68,7 +68,7 @@ class DefaultDataListener implements DataListener {
         }
         topologyService.getEntityContext(sender.getServerName(), consumerId).ifPresent(context -> {
           notification.setContext(notification.getContext().with(context));
-          eventService.fireNotification(notification);
+          firingService.fireNotification(notification);
         });
         break;
       }
@@ -82,7 +82,7 @@ class DefaultDataListener implements DataListener {
           topologyService.getEntityContext(sender.getServerName(), cid)
               .ifPresent(context -> statistic.setContext(statistic.getContext().with(context)));
         }
-        eventService.fireStatistics(statistics);
+        firingService.fireStatistics(statistics);
         break;
       }
 
@@ -106,7 +106,7 @@ class DefaultDataListener implements DataListener {
       // handles data coming from DefaultMonitoringService.answerManagementCall()
       String managementCallIdentifier = path[2];
       ContextualReturn<?> answer = (ContextualReturn<?>) data;
-      eventService.fireManagementCallAnswer(managementCallIdentifier, answer);
+      firingService.fireManagementCallAnswer(managementCallIdentifier, answer);
     }
   }
 

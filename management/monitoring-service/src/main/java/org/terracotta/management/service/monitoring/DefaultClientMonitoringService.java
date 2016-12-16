@@ -38,20 +38,20 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Mathieu Carbou
  */
-class DefaultClientMonitoringService implements ClientMonitoringService, EntityListener {
+class DefaultClientMonitoringService implements ClientMonitoringService, TopologyEventListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClientMonitoringService.class);
 
   private final long consumerId;
-  private final EventService eventService;
+  private final FiringService firingService;
   private final ClientCommunicator clientCommunicator;
   private final TopologyService topologyService;
   private final Map<ClientDescriptor, Context> manageableClients = new ConcurrentHashMap<>();
 
-  DefaultClientMonitoringService(long consumerId, TopologyService topologyService, EventService eventService, ClientCommunicator clientCommunicator) {
+  DefaultClientMonitoringService(long consumerId, TopologyService topologyService, FiringService firingService, ClientCommunicator clientCommunicator) {
     this.consumerId = consumerId;
     this.topologyService = Objects.requireNonNull(topologyService);
-    this.eventService = Objects.requireNonNull(eventService);
+    this.firingService = Objects.requireNonNull(firingService);
     this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
   }
 
@@ -60,7 +60,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, EntityL
     LOGGER.trace("[{}] pushNotification({}, {})", consumerId, from, notification);
     topologyService.getClientContext(consumerId, from).ifPresent(context -> {
       notification.setContext(notification.getContext().with(context));
-      eventService.fireNotification(notification);
+      firingService.fireNotification(notification);
     });
   }
 
@@ -72,7 +72,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, EntityL
         for (ContextualStatistics statistic : statistics) {
           statistic.setContext(statistic.getContext().with(context));
         }
-        eventService.fireStatistics(statistics);
+        firingService.fireStatistics(statistics);
       });
     }
   }
@@ -96,7 +96,11 @@ class DefaultClientMonitoringService implements ClientMonitoringService, EntityL
   @Override
   public void answerManagementCall(ClientDescriptor caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
     LOGGER.trace("[{}] answerManagementCall({})", consumerId, managementCallIdentifier);
-    eventService.fireManagementCallAnswer(managementCallIdentifier, contextualReturn);
+    firingService.fireManagementCallAnswer(managementCallIdentifier, contextualReturn);
+  }
+
+  @Override
+  public void onBecomeActive() {
   }
 
   @Override

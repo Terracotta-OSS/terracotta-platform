@@ -45,12 +45,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 /**
  * @author Mathieu Carbou
  */
-class DefaultManagementService implements ManagementService, EntityListener {
+class DefaultManagementService implements ManagementService, TopologyEventListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultManagementService.class);
 
   private final long consumerId;
-  private final EventService eventService;
+  private final FiringService firingService;
   private final ClientCommunicator clientCommunicator;
   private final SequenceGenerator sequenceGenerator;
   private final TopologyService topologyService;
@@ -59,10 +59,10 @@ class DefaultManagementService implements ManagementService, EntityListener {
   private volatile ReadWriteBuffer<Message> buffer;
   private volatile ContextualNotification full;
 
-  DefaultManagementService(long consumerId, TopologyService topologyService, EventService eventService, ClientCommunicator clientCommunicator, SequenceGenerator sequenceGenerator) {
+  DefaultManagementService(long consumerId, TopologyService topologyService, FiringService firingService, ClientCommunicator clientCommunicator, SequenceGenerator sequenceGenerator) {
     this.consumerId = consumerId;
     this.topologyService = Objects.requireNonNull(topologyService);
-    this.eventService = Objects.requireNonNull(eventService);
+    this.firingService = Objects.requireNonNull(firingService);
     this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
   }
@@ -116,8 +116,12 @@ class DefaultManagementService implements ManagementService, EntityListener {
     }
 
     track(caller, managementCallIdentifier);
-    eventService.fireManagementCallRequest(managementCallIdentifier, new ContextualCall<>(fullContext, capabilityName, methodName, returnType, parameters));
+    firingService.fireManagementCallRequest(managementCallIdentifier, new ContextualCall<>(fullContext, capabilityName, methodName, returnType, parameters));
     return managementCallIdentifier;
+  }
+
+  @Override
+  public void onBecomeActive() {
   }
 
   @Override
