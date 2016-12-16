@@ -75,7 +75,7 @@ public class ServerCacheManagementTest extends AbstractTest {
     assertThat(registry.getCapability("StatisticCollectorCapability"), is(notNullValue()));
   }
 
-  @Test(timeout = 60_000L)
+  @Test
   public void can_do_remote_management_calls_on_server() throws Exception {
     ServerEntity serverEntity = tmsAgentService.readTopology()
         .activeServerEntityStream()
@@ -111,7 +111,7 @@ public class ServerCacheManagementTest extends AbstractTest {
     assertThat(tmsAgentService.call(context, "ServerCacheCalls", "size", int.class).waitForReturn(), is(0));
   }
 
-  @Test(timeout = 60_000)
+  @Test
   public void can_receive_server_statistics() throws Exception {
     System.out.println("Please be patient... Test can take about 15s...");
     triggerServerStatComputation();

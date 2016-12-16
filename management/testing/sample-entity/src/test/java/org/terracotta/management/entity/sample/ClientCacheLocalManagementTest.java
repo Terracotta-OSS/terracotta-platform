@@ -120,7 +120,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     assertThat(size(0, "pets"), equalTo(0));
   }
 
-  @Test(timeout = 20_000)
+  @Test
   public void can_query_local_stats() throws Exception {
     System.out.println("Please be patient... Test can take about 5s...");
 
