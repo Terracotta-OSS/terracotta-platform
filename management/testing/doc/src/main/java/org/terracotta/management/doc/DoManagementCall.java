@@ -23,6 +23,7 @@ import org.terracotta.management.entity.tms.client.IllegalManagementCallExceptio
 import org.terracotta.management.entity.tms.client.TmsAgentService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class DoManagementCall {
 
     Cluster cluster = tmsAgentService.readTopology();
 
-    // 1. find ehcache clients in topology to clear
+    // REMOTE MANAGEMENT CALL ON A CLIENT
     cluster
         .clientStream()
         .filter(c -> c.getName().startsWith("Ehcache:"))
@@ -59,6 +60,15 @@ public class DoManagementCall {
             throw new RuntimeException(e);
           }
         });
+
+    // REMOTE MANAGEMENT CALL ON A SERVER
+    ServerEntity serverEntity = cluster
+        .activeServerEntityStream()
+        .filter(e -> e.getName().equals("pet-clinic/pets"))
+        .findFirst()
+        .get();
+    Context cacheName = serverEntity.getContext().with("cacheName", "pet-clinic/pets");
+    tmsAgentService.call(cacheName, "ServerCacheCalls", "clear", Void.TYPE).waitForReturn();
 
     System.in.read();
 

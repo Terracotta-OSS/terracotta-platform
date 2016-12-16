@@ -47,13 +47,14 @@ public class ReadNotifications {
     ScheduledFuture<?> task = executorService.scheduleWithFixedDelay(() -> {
       try {
 
+        // READ M&M MESSAGES and filter NOTIFICATIONS
         List<Message> messages = service.readMessages();
         System.out.println(messages.size() + " messages");
         messages
             .stream()
             .filter(message -> message.getType().equals("NOTIFICATION"))
             .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-            .forEach(notification -> System.out.println(" - " + notification.getType() + ": " + notification.getContext() + " - " + notification.getAttributes()));
+            .forEach(notification -> System.out.println(" - " + notification.getType() + ":\n   - " + notification.getContext() + "\n   - " + notification.getAttributes()));
 
       } catch (InterruptedException | ExecutionException | TimeoutException e) {
         LoggerFactory.getLogger(className).error("ERR: " + e.getMessage(), e);

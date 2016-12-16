@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<tc-config xmlns="http://www.terracotta.org/config"
+           xmlns:ohr="http://www.terracotta.org/config/offheap-resource">
+
+  <plugins>
+    <config>
+      <ohr:offheap-resources>
+        <ohr:resource name="primary" unit="MB">64</ohr:resource>
+      </ohr:offheap-resources>
+    </config>
+  </plugins>
+
+  <servers>
+    <server host="localhost" name="server1">
+      <logs>./logs/server1</logs>
+      <tsa-port>9510</tsa-port>
+      <tsa-group-port>9530</tsa-group-port>
+    </server>
+    <server host="localhost" name="server2">
+      <logs>./logs/server2</logs>
+      <tsa-port>9511</tsa-port>
+      <tsa-group-port>9531</tsa-group-port>
+    </server>
+  </servers>
+
+</tc-config>

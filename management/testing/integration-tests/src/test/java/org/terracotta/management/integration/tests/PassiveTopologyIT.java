@@ -15,31 +15,22 @@
  */
 package org.terracotta.management.integration.tests;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.ServerEntity;
-import org.terracotta.management.model.message.Message;
-import org.terracotta.management.model.notification.ContextualNotification;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.stream.Stream;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou
  */
-@Ignore // TODO activate
-public class HAIT extends AbstractHATest {
+public class PassiveTopologyIT extends AbstractHATest {
 
   @Test
   public void topology_includes_passives() throws Exception {
@@ -49,8 +40,12 @@ public class HAIT extends AbstractHATest {
 
     cluster.serverStream().forEach(server -> {
       server.setActivateTime(0);
+      server.setUpTimeSec(0);
       server.setStartTime(0);
       server.setBuildId("Build ID");
+      server.setVersion("");
+      server.setGroupPort(0);
+      server.setBindPort(0);
     });
 
     cluster.serverEntityStream()
@@ -72,43 +67,13 @@ public class HAIT extends AbstractHATest {
     cluster.clientStream().forEach(client -> currentPassive[0] = currentPassive[0]
         .replace(passive.getServerName(), "stripe-PASSIVE"));
 
+    // please leave this: easy to compare if something changes
+    /*FileWriter w = new FileWriter(new File("target/out.json"));
+    w.write(currentPassive[0]);
+    w.close();*/
+
     // and compare
     assertEquals(readJson("passive.json").toString(), currentPassive[0]);
-  }
-
-  @Test
-  public void get_notifications_when_passive_leaves() throws Exception {
-    Server active = tmsAgentService.readTopology().serverStream().filter(Server::isActive).findFirst().get();
-    Server passive = tmsAgentService.readTopology().serverStream().filter(server -> !server.isActive()).findFirst().get();
-    assertThat(active.getState(), equalTo(Server.State.ACTIVE));
-    assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
-
-    // clear notification buffer
-    tmsAgentService.readMessages();
-
-    // remove one passive
-    voltron.getClusterControl().terminateOnePassive();
-
-    // read messages
-    List<Message> messages = tmsAgentService.readMessages();
-    assertThat(messages.size(), equalTo(2));
-    Map<String, List<Message>> map = messages.stream().collect(Collectors.groupingBy(Message::getType));
-    assertThat(map.size(), equalTo(2));
-    assertThat(map.keySet(), hasItem("TOPOLOGY"));
-    assertThat(map.keySet(), hasItem("NOTIFICATION"));
-    assertThat(map.get("NOTIFICATION").size(), equalTo(1));
-
-    List<ContextualNotification> notifs = map.get("NOTIFICATION").stream()
-        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
-
-    assertThat(
-        notifs.stream().map(ContextualNotification::getType).collect(Collectors.toList()),
-        equalTo(Arrays.asList("SERVER_LEFT")));
-
-    assertThat(
-        notifs.get(0).getContext().get(Server.NAME_KEY),
-        equalTo(passive.getServerName()));
   }
 
 }

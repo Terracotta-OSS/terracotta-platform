@@ -18,6 +18,7 @@ package org.terracotta.management.integration.tests;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.terracotta.testing.rules.BasicExternalCluster;
 
 import java.io.File;
@@ -41,8 +42,12 @@ public abstract class AbstractHATest extends AbstractTest {
   public org.terracotta.testing.rules.Cluster voltron =
       new BasicExternalCluster(new File("target/galvan"), 2, emptyList(), "", resourceConfig, "");
 
+  @Rule
+  public TestName testName = new TestName();
+
   @Before
   public void setUp() throws Exception {
+    System.out.println(" => [" + testName.getMethodName() + "] " + getClass().getSimpleName() + ".setUp()");
     voltron.getClusterControl().waitForActive();
     voltron.getClusterControl().waitForRunningPassivesInStandby();
     commonSetUp(voltron);
@@ -51,6 +56,7 @@ public abstract class AbstractHATest extends AbstractTest {
 
   @After
   public void tearDown() throws Exception {
+    System.out.println(" => [" + testName.getMethodName() + "] " + getClass().getSimpleName() + ".tearDown()");
     commonTearDown();
   }
 
