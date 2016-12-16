@@ -1,1 +1,1 @@
-sample.server.HelloWorldEntityServerService
+org.terracotta.management.entity.sample.server.CacheEntityServerService
