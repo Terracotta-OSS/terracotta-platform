@@ -15,11 +15,13 @@
  */
 package org.terracotta.management.integration.tests;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.rules.Timeout;
 import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
 import org.terracotta.testing.rules.BasicExternalCluster;
@@ -52,25 +54,29 @@ public class SimpleGalvanIT {
   }
 
   @Rule
-  public final TestName testName = new TestName();
+  public Timeout timeout = Timeout.seconds(30);
 
-  @Test
-  public void simpleTest_one_active() throws Exception {
-    URI uri = CLUSTER.getConnectionURI();
+  CacheFactory cacheFactory;
 
-    System.out.println(uri);
-
+  @Before
+  public void setUp() throws Exception {
     StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
         .setAverageWindowDuration(1, TimeUnit.MINUTES)
         .setHistorySize(100)
         .setHistoryInterval(1, TimeUnit.SECONDS)
         .setTimeToDisable(5, TimeUnit.SECONDS);
-    CacheFactory cacheFactory = new CacheFactory(uri.toString() + "/pif", statisticConfiguration);
-    cacheFactory.init();
-    try {
-      cacheFactory.getCache("paf");
-    } finally {
-      cacheFactory.close();
-    }
+    URI uri = CLUSTER.getConnectionURI().resolve("/pif");
+    cacheFactory = new CacheFactory(uri, statisticConfiguration);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    cacheFactory.getConnection().close();
+  }
+
+  @Test
+  public void simpleTest_one_active() throws Exception {
+    cacheFactory.init(); // create and fetches management entity
+    cacheFactory.getCache("paf"); // create and fetch sample entity
   }
 }

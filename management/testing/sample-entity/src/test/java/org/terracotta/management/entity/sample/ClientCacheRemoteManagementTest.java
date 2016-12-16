@@ -59,7 +59,7 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
     assertEquals(readJson("client-descriptors.json"), toJson(registry.getCapabilities()));
   }
 
-  @Test(timeout = 30_000)
+  @Test
   public void can_do_remote_management_calls_on_client() throws Exception {
     Client client = tmsAgentService.readTopology()
         .clientStream()
@@ -88,7 +88,7 @@ public class ClientCacheRemoteManagementTest extends AbstractTest {
     assertThat(tmsAgentService.call(context, "CacheCalls", "size", int.class).waitForReturn(), is(0));
   }
 
-  @Test(timeout = 30_000)
+  @Test
   public void can_receive_client_statistics() throws Exception {
     System.out.println("Please be patient... Test can take about 15s...");
     triggerClientStatComputation();

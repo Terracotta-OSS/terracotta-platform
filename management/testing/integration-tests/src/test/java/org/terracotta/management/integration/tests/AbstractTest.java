@@ -13,43 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.sample;
+package org.terracotta.management.integration.tests;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
-import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
-import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
-import org.terracotta.management.entity.sample.client.CacheEntityClientService;
+import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.CacheFactory;
-import org.terracotta.management.entity.sample.server.CacheEntityServerService;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.entity.tms.client.TmsAgentEntity;
-import org.terracotta.management.entity.tms.client.TmsAgentEntityClientService;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
 import org.terracotta.management.entity.tms.client.TmsAgentService;
-import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
-import org.terracotta.offheapresource.OffHeapResourcesProvider;
-import org.terracotta.offheapresource.config.MemoryUnit;
-import org.terracotta.offheapresource.config.OffheapResourcesType;
-import org.terracotta.offheapresource.config.ResourceType;
-import org.terracotta.passthrough.PassthroughClusterControl;
-import org.terracotta.passthrough.PassthroughTestHelpers;
+import org.terracotta.testing.rules.Cluster;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,9 +57,9 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractTest {
 
   private final ObjectMapper mapper = new ObjectMapper();
-  protected final PassthroughClusterControl stripeControl;
 
   private Connection managementConnection;
+  private Cluster cluster;
 
   protected final List<CacheFactory> webappNodes = new ArrayList<>();
   protected final Map<String, List<Cache>> caches = new HashMap<>();
@@ -81,63 +68,29 @@ public abstract class AbstractTest {
   @Rule
   public Timeout timeout = Timeout.seconds(60);
 
-  protected AbstractTest() {
-    this(0);
-  }
+  protected final void commonSetUp(Cluster cluster) throws Exception {
+    this.cluster = cluster;
 
-  protected AbstractTest(int nPassives) {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
     mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
 
-    stripeControl = PassthroughTestHelpers.createMultiServerStripe("stripe-1", nPassives + 1, server -> {
-      server.registerClientEntityService(new CacheEntityClientService());
-      server.registerServerEntityService(new CacheEntityServerService());
+    connectManagementClients(cluster.getConnectionURI());
 
-      server.registerClientEntityService(new ManagementAgentEntityClientService());
-      server.registerServerEntityService(new ManagementAgentEntityServerService());
-
-      server.registerClientEntityService(new TmsAgentEntityClientService());
-      server.registerServerEntityService(new TmsAgentEntityServerService());
-
-      OffheapResourcesType resources = new OffheapResourcesType();
-      ResourceType resource = new ResourceType();
-      resource.setName("primary-resource");
-      resource.setUnit(MemoryUnit.MB);
-      resource.setValue(BigInteger.valueOf(32));
-      resources.getResource().add(resource);
-      server.registerExtendedConfiguration(new OffHeapResourcesProvider(resources));
-    });
-
-    try {
-      stripeControl.waitForActive();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    // only keep 1 active running by default
-    for (int i = 0; i < nPassives; i++) {
-      stripeControl.terminateOnePassive();
-    }
-  }
-
-  @Before
-  public void setUp() throws Exception {
-    connectManagementClients();
-
-    addWebappNode();
-    addWebappNode();
+    addWebappNode(cluster.getConnectionURI().resolve("pet-clinic"));
+    addWebappNode(cluster.getConnectionURI().resolve("pet-clinic"));
 
     getCaches("pets");
     getCaches("clients");
   }
 
-  @After
-  public void tearDown() throws Exception {
+  protected final void commonTearDown() throws Exception {
     closeNodes();
     if (managementConnection != null) {
       managementConnection.close();
     }
-    stripeControl.tearDown();
+    if (cluster != null) {
+      cluster.getClusterControl().terminateAllServers();
+    }
   }
 
   protected JsonNode readJson(String file) {
@@ -185,13 +138,13 @@ public abstract class AbstractTest {
     caches.put(name, webappNodes.stream().map(cacheFactory -> cacheFactory.getCache(name)).collect(Collectors.toList()));
   }
 
-  protected void addWebappNode() throws Exception {
+  protected void addWebappNode(URI uri) throws Exception {
     StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
         .setAverageWindowDuration(1, TimeUnit.MINUTES)
         .setHistorySize(100)
         .setHistoryInterval(1, TimeUnit.SECONDS)
         .setTimeToDisable(5, TimeUnit.SECONDS);
-    CacheFactory cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510/pet-clinic"), statisticConfiguration);
+    CacheFactory cacheFactory = new CacheFactory(uri, statisticConfiguration);
     cacheFactory.init();
     webappNodes.add(cacheFactory);
   }
@@ -204,12 +157,12 @@ public abstract class AbstractTest {
     public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
   }
 
-  private void connectManagementClients() throws Exception {
+  private void connectManagementClients(URI uri) throws Exception {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, getClass().getSimpleName());
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
-    this.managementConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/"), properties);
+    this.managementConnection = ConnectionFactory.connect(uri, properties);
 
     // create a tms entity
     TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());

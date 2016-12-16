@@ -48,7 +48,7 @@ public class CacheFactory implements Closeable {
   private Connection connection;
   private CacheEntityFactory cacheEntityFactory;
 
-  public CacheFactory(String uri) {
+  public CacheFactory(URI uri) {
     this(uri, new StatisticConfiguration()
         .setAverageWindowDuration(1, TimeUnit.MINUTES)
         .setHistorySize(100)
@@ -56,10 +56,9 @@ public class CacheFactory implements Closeable {
         .setTimeToDisable(30, TimeUnit.SECONDS));
   }
 
-  public CacheFactory(String uri, StatisticConfiguration statisticConfiguration) {
-    URI u = URI.create(uri);
+  public CacheFactory(URI u, StatisticConfiguration statisticConfiguration) {
     if (u.getPath() == null || u.getPath().isEmpty()) {
-      throw new IllegalArgumentException(uri);
+      throw new IllegalArgumentException(u.toString());
     }
     this.uri = u;
     this.management = new Management(new ContextContainer("appName", u.getPath().substring(1)), statisticConfiguration);
@@ -89,6 +88,10 @@ public class CacheFactory implements Closeable {
 
       return clientCache;
     });
+  }
+
+  public Connection getConnection() {
+    return connection;
   }
 
   @Override
