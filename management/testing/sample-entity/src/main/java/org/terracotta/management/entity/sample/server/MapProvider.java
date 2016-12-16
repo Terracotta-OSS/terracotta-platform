@@ -16,6 +16,8 @@
 package org.terracotta.management.entity.sample.server;
 
 import com.tc.classloader.BuiltinService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -32,13 +34,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Mathieu Carbou
  */
 @BuiltinService
-public class ServerCacheProvider implements ServiceProvider, Closeable {
+public class MapProvider implements ServiceProvider, Closeable {
 
-  private final Map<String, ServerCache> caches = new ConcurrentHashMap<>();
+  private static final Logger LOGGER = LoggerFactory.getLogger(MapProvider.class);
+
+  private final Map<String, Map<String, String>> caches = new ConcurrentHashMap<>();
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(ServerCache.class);
+    return Arrays.asList(Map.class);
   }
 
   @Override
@@ -60,12 +64,13 @@ public class ServerCacheProvider implements ServiceProvider, Closeable {
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
-    if (ServerCache.class == serviceType) {
-      if (configuration instanceof ServerCacheConfiguration) {
-        ServerCacheConfiguration serverCacheConfiguration = (ServerCacheConfiguration) configuration;
-        return serviceType.cast(caches.computeIfAbsent(serverCacheConfiguration.getName(), ServerCache::new));
+    if (Map.class == serviceType) {
+      if (configuration instanceof MapConfiguration) {
+        MapConfiguration mapConfiguration = (MapConfiguration) configuration;
+        LOGGER.trace("getService({}, {})", consumerID, configuration);
+        return serviceType.cast(caches.computeIfAbsent(mapConfiguration.getName(), s -> new ConcurrentHashMap<>()));
       } else {
-        throw new IllegalArgumentException("Missing configuration " + ServerCacheConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+        throw new IllegalArgumentException("Missing configuration " + MapConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
     }
 

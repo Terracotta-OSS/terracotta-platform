@@ -58,6 +58,8 @@ public class SimpleGalvanIT {
   public void simpleTest_one_active() throws Exception {
     URI uri = CLUSTER.getConnectionURI();
 
+    System.out.println(uri);
+
     StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
         .setAverageWindowDuration(1, TimeUnit.MINUTES)
         .setHistorySize(100)
@@ -65,5 +67,10 @@ public class SimpleGalvanIT {
         .setTimeToDisable(5, TimeUnit.SECONDS);
     CacheFactory cacheFactory = new CacheFactory(uri.toString() + "/pif", statisticConfiguration);
     cacheFactory.init();
+    try {
+      cacheFactory.getCache("paf");
+    } finally {
+      cacheFactory.close();
+    }
   }
 }

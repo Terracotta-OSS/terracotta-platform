@@ -24,6 +24,7 @@ import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,15 +42,15 @@ public class CacheEntityServerService extends ProxyServerEntityService<Cache, St
   @Override
   public ActiveCacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) {
     LOGGER.trace("createActiveEntity({})", identifier);
-    ServerCache cache = registry.getService(new ServerCacheConfiguration(identifier));
-    return new ActiveCacheServerEntity(cache, registry);
+    Map<String, String> data = registry.getService(new MapConfiguration(identifier));
+    return new ActiveCacheServerEntity(new ServerCache(identifier, data), registry);
   }
 
   @Override
   protected PassiveCacheServerEntity createPassiveEntity(ServiceRegistry registry, String identifier) {
     LOGGER.trace("createPassiveEntity({})", identifier);
-    ServerCache cache = registry.getService(new ServerCacheConfiguration(identifier));
-    return new PassiveCacheServerEntity(cache, registry);
+    Map<String, String> data = registry.getService(new MapConfiguration(identifier));
+    return new PassiveCacheServerEntity(new ServerCache(identifier, data), registry);
   }
 
   @Override

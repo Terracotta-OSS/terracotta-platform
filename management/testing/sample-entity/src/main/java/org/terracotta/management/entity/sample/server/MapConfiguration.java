@@ -18,15 +18,17 @@ package org.terracotta.management.entity.sample.server;
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
 
+import java.util.Map;
+
 /**
  * @author Mathieu Carbou
  */
 @CommonComponent
-public class ServerCacheConfiguration implements ServiceConfiguration<ServerCache> {
+public class MapConfiguration implements ServiceConfiguration<Map> {
 
   private final String name;
 
-  public ServerCacheConfiguration(String name) {
+  public MapConfiguration(String name) {
     this.name = name;
   }
 
@@ -35,7 +37,15 @@ public class ServerCacheConfiguration implements ServiceConfiguration<ServerCach
   }
 
   @Override
-  public Class<ServerCache> getServiceType() {
-    return ServerCache.class;
+  public Class<Map> getServiceType() {
+    return Map.class;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("MapConfiguration{");
+    sb.append("name='").append(name).append('\'');
+    sb.append('}');
+    return sb.toString();
   }
 }
