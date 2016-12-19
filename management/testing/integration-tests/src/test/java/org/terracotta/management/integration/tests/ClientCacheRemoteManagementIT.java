@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.sample;
+package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
 import org.terracotta.management.model.call.Parameter;
@@ -37,7 +37,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-public class ClientCacheRemoteManagementTest extends AbstractTest {
+public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
   @Test
   public void can_access_remote_management_registry_of_client() throws Exception {

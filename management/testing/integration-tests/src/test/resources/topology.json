@@ -5,7 +5,7 @@
       "name": "SINGLE",
       "servers": [
         {
-          "id": "stripe-1_0",
+          "id": "testServer0",
           "serverEntities": [
             {
               "id": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
@@ -15,9 +15,9 @@
               "managementRegistry": null
             },
             {
-              "id": "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+              "id": "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
               "type": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
-              "name": "TopologyTest",
+              "name": "TopologyIT",
               "consumerId": 1,
               "managementRegistry": {
                 "contextContainer": {
@@ -44,10 +44,10 @@
                     "descriptors": [
                       {
                         "consumerId": "1",
-                        "alias": "primary-resource",
+                        "alias": "primary-server-resource",
                         "type": "OffHeapResource",
-                        "capacity": 33554432,
-                        "availableAtTime": 33554432
+                        "capacity": 67108864,
+                        "availableAtTime": 67108864
                       },
                       {
                         "type": "OffHeapResourceSettingsManagementProvider",
@@ -438,14 +438,14 @@
               }
             }
           ],
-          "serverName": "stripe-1_0",
-          "hostName": "localhost",
+          "serverName": "testServer0",
+          "hostName": "<hostname>",
           "hostAddress": "127.0.0.1",
           "bindAddress": "0.0.0.0",
           "bindPort": 0,
           "groupPort": 0,
           "state": "ACTIVE",
-          "version": "Version Passthrough 5.0.0-SNAPSHOT",
+          "version": "VERSION_TO_REPLACE",
           "buildId": "Build ID",
           "startTime": 0,
           "upTimeSec": 0,
@@ -456,27 +456,27 @@
   ],
   "clients": [
     {
-      "id": "0@127.0.0.1:TopologyTest:<uuid>",
+      "id": "0@127.0.0.1:TopologyIT:<uuid>",
       "pid": 0,
       "hostAddress": "127.0.0.1",
-      "name": "TopologyTest",
+      "name": "TopologyIT",
       "logicalConnectionUid": "<uuid>",
       "vmId": "0@127.0.0.1",
-      "clientId": "0@127.0.0.1:TopologyTest:<uuid>",
+      "clientId": "0@127.0.0.1:TopologyIT:<uuid>",
       "hostName": "<hostname>",
       "tags": [],
       "connections": [
         {
-          "id": "<uuid>:SINGLE:stripe-1_0:127.0.0.1:0",
+          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
           "stripeId": "SINGLE",
-          "serverId": "stripe-1_0",
+          "serverId": "testServer0",
           "serverEntityIds": {
-            "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+            "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
           }
         }
       ],
@@ -497,14 +497,14 @@
       ],
       "connections": [
         {
-          "id": "<uuid>:SINGLE:stripe-1_0:127.0.0.1:0",
+          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
           "stripeId": "SINGLE",
-          "serverId": "stripe-1_0",
+          "serverId": "testServer0",
           "serverEntityIds": {
             "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
             "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
@@ -710,14 +710,14 @@
       ],
       "connections": [
         {
-          "id": "<uuid>:SINGLE:stripe-1_0:127.0.0.1:0",
+          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
           "stripeId": "SINGLE",
-          "serverId": "stripe-1_0",
+          "serverId": "testServer0",
           "serverEntityIds": {
             "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
             "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,

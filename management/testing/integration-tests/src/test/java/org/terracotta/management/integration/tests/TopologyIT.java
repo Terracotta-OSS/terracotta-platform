@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.sample;
+package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-public class TopologyTest extends AbstractTest {
+public class TopologyIT extends AbstractSingleTest {
 
   @Test
   public void can_read_topology() throws Exception {
@@ -70,9 +70,32 @@ public class TopologyTest extends AbstractTest {
         .replace(client.getHostName(), "<hostname>")
         .replace(client.getHostAddress(), "127.0.0.1"));
 
-    // and compare
+    String actual = replaceHostname(zeroPortsAndUptime(currentTopo[0]));
+    String expected = replaceVersion(readJson("topology.json").toString());
 
-    assertEquals(readJson("topology.json").toString(), currentTopo[0]);
+    System.out.println("This is the actual topology : " + actual);
+    System.out.println("This is the expected topology : " + expected);
+    // and compare
+    assertEquals(expected, actual);
+  }
+
+  private String zeroPortsAndUptime(String s) {
+    return s.replaceAll("(\"bindPort\":[0-9]+)", "\"bindPort\":0")
+        .replaceAll("(\"groupPort\":[0-9]+)", "\"groupPort\":0")
+        .replaceAll("(\"upTimeSec\":[0-9]+)", "\"upTimeSec\":0");
+  }
+
+  private String replaceHostname(String s) {
+    return s.replaceAll("\"hostname\":(.*),", "\"hostname\":\"<hostname>\",");
+  }
+
+  /**
+   *
+   * @param topology, probably from topology.json
+   * @return the same topology, but replacing VERSION_TO_REPLACE with the tc core version from the pom
+   */
+  private String replaceVersion(String topology) {
+    return topology.replace("VERSION_TO_REPLACE", System.getProperty("kitInstallationPath").substring(System.getProperty("kitInstallationPath").lastIndexOf("terracotta-") + 11, System.getProperty("kitInstallationPath").length()-1));
   }
 
   @Test

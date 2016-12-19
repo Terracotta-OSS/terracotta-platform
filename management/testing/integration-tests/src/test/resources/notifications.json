@@ -3,10 +3,10 @@
     "type": "SERVER_ENTITY_CREATED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
-      "entityId": "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity",
-      "entityName": "TopologyTest",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "entityId": "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityName": "TopologyIT",
       "entityType": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
       "consumerId": "1"
     },
@@ -16,10 +16,10 @@
     "type": "ENTITY_REGISTRY_AVAILABLE",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
-      "entityId": "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity",
-      "entityName": "TopologyTest",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "entityId": "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityName": "TopologyIT",
       "entityType": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
       "consumerId": "1"
     },
@@ -29,15 +29,15 @@
     "type": "SERVER_ENTITY_FETCHED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
-      "entityId": "TopologyTest:org.terracotta.management.entity.tms.client.TmsAgentEntity",
-      "entityName": "TopologyTest",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "entityId": "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityName": "TopologyIT",
       "entityType": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
       "consumerId": "1"
     },
     "attributes": {
-      "clientId": "0@127.0.0.1:TopologyTest:<uuid>"
+      "clientId": "0@127.0.0.1:TopologyIT:<uuid>"
     }
   },
   {
@@ -51,8 +51,8 @@
     "type": "SERVER_ENTITY_CREATED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
       "entityName": "ManagementAgent",
       "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
@@ -64,8 +64,8 @@
     "type": "SERVER_ENTITY_FETCHED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
       "entityName": "ManagementAgent",
       "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
@@ -108,8 +108,8 @@
     "type": "SERVER_ENTITY_FETCHED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
       "entityName": "ManagementAgent",
       "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
@@ -145,8 +145,8 @@
     "type": "SERVER_ENTITY_CREATED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/pets",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -158,8 +158,8 @@
     "type": "ENTITY_REGISTRY_AVAILABLE",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/pets",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -171,8 +171,8 @@
     "type": "ENTITY_REGISTRY_UPDATED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/pets",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -187,8 +187,8 @@
       "alias": "pet-clinic/pets",
       "type": "ServerCache",
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/pets",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
@@ -199,8 +199,8 @@
     "type": "SERVER_ENTITY_FETCHED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/pets",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -230,8 +230,8 @@
     "type": "SERVER_ENTITY_FETCHED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/pets",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -261,8 +261,8 @@
     "type": "SERVER_ENTITY_CREATED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/clients",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -274,8 +274,8 @@
     "type": "ENTITY_REGISTRY_AVAILABLE",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/clients",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -287,8 +287,8 @@
     "type": "ENTITY_REGISTRY_UPDATED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/clients",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -303,8 +303,8 @@
       "alias": "pet-clinic/clients",
       "type": "ServerCache",
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/clients",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
@@ -315,8 +315,8 @@
     "type": "SERVER_ENTITY_FETCHED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/clients",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
@@ -346,8 +346,8 @@
     "type": "SERVER_ENTITY_FETCHED",
     "context": {
       "stripeId": "SINGLE",
-      "serverId": "stripe-1_0",
-      "serverName": "stripe-1_0",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
       "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/clients",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
