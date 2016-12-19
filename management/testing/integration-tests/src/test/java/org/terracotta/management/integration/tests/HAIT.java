@@ -39,7 +39,7 @@ import static org.junit.Assert.assertThat;
  * @author Mathieu Carbou
  */
 @Ignore // TODO activate
-public class HATest extends AbstractHATest {
+public class HAIT extends AbstractHATest {
 
   @Test
   public void topology_includes_passives() throws Exception {

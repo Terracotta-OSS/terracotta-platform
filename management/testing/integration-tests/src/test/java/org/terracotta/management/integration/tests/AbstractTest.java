@@ -66,7 +66,7 @@ public abstract class AbstractTest {
   protected TmsAgentService tmsAgentService;
 
   @Rule
-  public Timeout timeout = Timeout.seconds(60);
+  public Timeout timeout = Timeout.seconds(90);
 
   protected final void commonSetUp(Cluster cluster) throws Exception {
     this.cluster = cluster;
@@ -76,8 +76,8 @@ public abstract class AbstractTest {
 
     connectManagementClients(cluster.getConnectionURI());
 
-    addWebappNode(cluster.getConnectionURI().resolve("pet-clinic"));
-    addWebappNode(cluster.getConnectionURI().resolve("pet-clinic"));
+    addWebappNode(cluster.getConnectionURI().resolve("/pet-clinic"));
+    addWebappNode(cluster.getConnectionURI().resolve("/pet-clinic"));
 
     getCaches("pets");
     getCaches("clients");

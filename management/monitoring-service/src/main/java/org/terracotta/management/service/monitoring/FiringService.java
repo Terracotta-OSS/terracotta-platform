@@ -25,7 +25,7 @@ import org.terracotta.management.model.stats.ContextualStatistics;
  *
  * @author Mathieu Carbou
  */
-interface EventService {
+interface FiringService {
   void fireNotification(ContextualNotification notification);
 
   void fireStatistics(ContextualStatistics[] statistics);

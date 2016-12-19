@@ -73,16 +73,16 @@ class TopologyService implements PlatformListener {
   private final Cluster cluster;
   private final Stripe stripe;
   private final Map<Long, Map<ClientDescriptor, ClientIdentifier>> fetches = new HashMap<>();
-  private final EventService eventService;
+  private final FiringService firingService;
   private final TimeSource timeSource;
   private final PlatformConfiguration platformConfiguration;
-  private final List<EntityListener> entityListeners = new CopyOnWriteArrayList<>();
+  private final List<TopologyEventListener> topologyEventListeners = new CopyOnWriteArrayList<>();
   private final Map<ServerEntityIdentifier, Long> failoverEntities = new HashMap<>();
 
   private volatile Server currentActive;
 
-  TopologyService(EventService eventService, TimeSource timeSource, PlatformConfiguration platformConfiguration) {
-    this.eventService = Objects.requireNonNull(eventService);
+  TopologyService(FiringService firingService, TimeSource timeSource, PlatformConfiguration platformConfiguration) {
+    this.firingService = Objects.requireNonNull(firingService);
     this.timeSource = Objects.requireNonNull(timeSource);
     this.platformConfiguration = platformConfiguration;
     this.cluster = Cluster.create().addStripe(stripe = Stripe.create("SINGLE"));
@@ -102,6 +102,8 @@ class TopologyService implements PlatformListener {
     currentActive = stripe.getServerByName(self.getServerName()).get();
     currentActive.setState(Server.State.ACTIVE);
     currentActive.setActivateTime(timeSource.getTimestamp());
+
+    topologyEventListeners.forEach(TopologyEventListener::onBecomeActive);
   }
 
   @Override
@@ -121,7 +123,7 @@ class TopologyService implements PlatformListener {
 
     stripe.addServer(server);
 
-    eventService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
+    firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
   }
 
   @Override
@@ -134,7 +136,7 @@ class TopologyService implements PlatformListener {
     Context context = server.getContext();
     server.remove();
 
-    eventService.fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
+    firingService.fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
   }
 
   @Override
@@ -162,10 +164,10 @@ class TopologyService implements PlatformListener {
       fetches.put(platformEntity.consumerID, new HashMap<>());
     }
 
-    eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
+    firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
 
     if (failoverEntities.remove(identifier) != null) {
-      eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FAILOVER_COMPLETED.name()));
+      firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FAILOVER_COMPLETED.name()));
     }
   }
 
@@ -193,10 +195,10 @@ class TopologyService implements PlatformListener {
     if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
       fetches.remove(platformEntity.consumerID);
 
-      entityListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
+      topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
     }
 
-    eventService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
+    firingService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
   }
 
   @Override
@@ -212,7 +214,7 @@ class TopologyService implements PlatformListener {
     // so we can keep track of those and send an event after, when they become active
     failoverEntities.put(ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName), platformEntity.consumerID);
 
-    entityListeners.forEach(listener -> listener.onEntityFailover(platformEntity.consumerID));
+    topologyEventListeners.forEach(listener -> listener.onEntityFailover(platformEntity.consumerID));
   }
 
   @Override
@@ -228,7 +230,7 @@ class TopologyService implements PlatformListener {
 
     client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint));
 
-    eventService.fireNotification(new ContextualNotification(client.getContext(), CLIENT_CONNECTED.name()));
+    firingService.fireNotification(new ContextualNotification(client.getContext(), CLIENT_CONNECTED.name()));
   }
 
   @Override
@@ -242,7 +244,7 @@ class TopologyService implements PlatformListener {
 
     client.remove();
 
-    eventService.fireNotification(new ContextualNotification(context, CLIENT_DISCONNECTED.name()));
+    firingService.fireNotification(new ContextualNotification(context, CLIENT_DISCONNECTED.name()));
   }
 
   @Override
@@ -267,9 +269,9 @@ class TopologyService implements PlatformListener {
 
     fetches.get(platformEntity.consumerID).put(clientDescriptor, clientIdentifier);
 
-    entityListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
+    topologyEventListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
 
-    eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
+    firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
   }
 
   @Override
@@ -290,10 +292,10 @@ class TopologyService implements PlatformListener {
 
     fetches.get(platformEntity.consumerID).remove(clientDescriptor);
 
-    entityListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
+    topologyEventListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
 
     if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
-      eventService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
+      firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
     }
   }
 
@@ -311,7 +313,7 @@ class TopologyService implements PlatformListener {
     attrs.put("state", serverState.getState());
     attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
 
-    eventService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
+    firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
   }
 
   synchronized void setEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {
@@ -321,7 +323,7 @@ class TopologyService implements PlatformListener {
           String notif = serverEntity.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "ENTITY_REGISTRY_UPDATED").orElse("ENTITY_REGISTRY_AVAILABLE");
           if (!notif.isEmpty()) {
             serverEntity.setManagementRegistry(newRegistry);
-            eventService.fireNotification(new ContextualNotification(serverEntity.getContext(), notif));
+            firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), notif));
           }
         });
   }
@@ -331,7 +333,7 @@ class TopologyService implements PlatformListener {
       String notif = client.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "CLIENT_REGISTRY_UPDATED").orElse("CLIENT_REGISTRY_AVAILABLE");
       if (!notif.isEmpty()) {
         client.setManagementRegistry(newRegistry);
-        eventService.fireNotification(new ContextualNotification(client.getContext(), notif));
+        firingService.fireNotification(new ContextualNotification(client.getContext(), notif));
       }
     });
   }
@@ -342,7 +344,7 @@ class TopologyService implements PlatformListener {
       Set<String> newTags = new HashSet<>(Arrays.asList(tags));
       if (!currtags.equals(newTags)) {
         client.setTags(tags);
-        eventService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
+        firingService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
       }
     });
   }
@@ -406,13 +408,13 @@ class TopologyService implements PlatformListener {
     return platformConfiguration.getServerName();
   }
 
-  void addEntityListener(EntityListener entityListener) {
-    entityListeners.add(Objects.requireNonNull(entityListener));
+  void addTopologyEventListener(TopologyEventListener topologyEventListener) {
+    topologyEventListeners.add(Objects.requireNonNull(topologyEventListener));
   }
 
-  void removeEntityListener(EntityListener entityListener) {
-    if (entityListener != null) {
-      entityListeners.remove(entityListener);
+  void removeTopologyEventListener(TopologyEventListener topologyEventListener) {
+    if (topologyEventListener != null) {
+      topologyEventListeners.remove(topologyEventListener);
     }
   }
 

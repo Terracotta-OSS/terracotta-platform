@@ -33,7 +33,7 @@ import static org.junit.Assert.assertThat;
  * @author Mathieu Carbou
  */
 @Ignore // TODO activate
-public class FailoverTest extends AbstractHATest {
+public class FailoverIT extends AbstractHATest {
 
   @Test
   public void failover_management() throws Exception {

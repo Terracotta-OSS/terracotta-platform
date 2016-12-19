@@ -37,9 +37,9 @@ import java.util.concurrent.Executors;
 /**
  * @author Mathieu Carbou
  */
-class DefaultEventService implements EventService, Closeable {
+class DefaultFiringService implements FiringService, Closeable {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultEventService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultFiringService.class);
 
   private final SequenceGenerator sequenceGenerator;
   private final PlatformConfiguration platformConfiguration;
@@ -51,7 +51,7 @@ class DefaultEventService implements EventService, Closeable {
   // temporary there to simulate an entity callback with IEntityMessenger
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-  DefaultEventService(SequenceGenerator sequenceGenerator, PlatformConfiguration platformConfiguration, SharedManagementRegistry sharedManagementRegistry, Map<Long, DefaultManagementService> managementServices, Map<Long, DefaultClientMonitoringService> clientMonitoringServices) {
+  DefaultFiringService(SequenceGenerator sequenceGenerator, PlatformConfiguration platformConfiguration, SharedManagementRegistry sharedManagementRegistry, Map<Long, DefaultManagementService> managementServices, Map<Long, DefaultClientMonitoringService> clientMonitoringServices) {
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
     this.platformConfiguration = Objects.requireNonNull(platformConfiguration);
     this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);

@@ -34,13 +34,13 @@ import java.util.Objects;
 public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitoringService implements ActiveEntityMonitoringService {
 
   private final TopologyService topologyService;
-  private final EventService eventService;
+  private final FiringService firingService;
   private final String serverName;
 
-  DefaultActiveEntityMonitoringService(long consumerId, TopologyService topologyService, EventService eventService) {
+  DefaultActiveEntityMonitoringService(long consumerId, TopologyService topologyService, FiringService firingService) {
     super(consumerId);
     this.topologyService = Objects.requireNonNull(topologyService);
-    this.eventService = Objects.requireNonNull(eventService);
+    this.firingService = Objects.requireNonNull(firingService);
     this.serverName = topologyService.getCurrentServerName();
   }
 
@@ -57,7 +57,7 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
     logger.trace("[{}] pushNotification({})", getConsumerId(), notification);
     topologyService.getEntityContext(serverName, getConsumerId()).ifPresent(context -> {
       notification.setContext(notification.getContext().with(context));
-      eventService.fireNotification(notification);
+      firingService.fireNotification(notification);
     });
   }
 
@@ -70,14 +70,14 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
         topologyService.getEntityContext(serverName, getConsumerId())
             .ifPresent(context -> statistic.setContext(statistic.getContext().with(context)));
       }
-      eventService.fireStatistics(statistics);
+      firingService.fireStatistics(statistics);
     }
   }
 
   @Override
   public void answerManagementCall(String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
     logger.trace("[{}] answerManagementCall({}, executed={}, error={})", getConsumerId(), managementCallIdentifier, contextualReturn.hasExecuted(), contextualReturn.errorThrown());
-    eventService.fireManagementCallAnswer(managementCallIdentifier, contextualReturn);
+    firingService.fireManagementCallAnswer(managementCallIdentifier, contextualReturn);
   }
 
   @Override

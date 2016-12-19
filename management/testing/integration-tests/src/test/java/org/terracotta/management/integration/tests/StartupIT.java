@@ -36,7 +36,7 @@ import static org.junit.Assert.assertThat;
  * @author Mathieu Carbou
  */
 @Ignore // TODO activate
-public class StartupTest extends AbstractHATest {
+public class StartupIT extends AbstractHATest {
 
   @Before
   @Override

@@ -38,7 +38,12 @@ import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Stream.concat;
 
 /**
  * @author Mathieu Carbou
@@ -61,7 +66,8 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private final Map<Long, DefaultManagementService> managementServices = new ConcurrentHashMap<>();
   private final Map<Long, DefaultClientMonitoringService> clientMonitoringServices = new ConcurrentHashMap<>();
   private final Map<Long, DefaultConsumerManagementRegistry> consumerManagementRegistries = new ConcurrentHashMap<>();
-  private final Map<Long, AbstractEntityMonitoringService> entityMonitoringServices = new ConcurrentHashMap<>();
+  private final Map<Long, DefaultActiveEntityMonitoringService> activeEntityMonitoringService = new ConcurrentHashMap<>();
+  private final Map<Long, DefaultPassiveEntityMonitoringService> passiveEntityMonitoringService = new ConcurrentHashMap<>();
 
   private final TimeSource timeSource = TimeSource.BEST;
   private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry(consumerManagementRegistries);
@@ -69,7 +75,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private final StatisticsServiceFactory statisticsServiceFactory = new StatisticsServiceFactory(sharedManagementRegistry, timeSource);
 
   private PlatformConfiguration platformConfiguration;
-  private DefaultEventService eventService;
+  private DefaultFiringService firingService;
   private TopologyService topologyService;
   private IStripeMonitoring platformListenerAdapter;
 
@@ -85,23 +91,39 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
-    this.eventService = new DefaultEventService(sequenceGenerator, platformConfiguration, sharedManagementRegistry, managementServices, clientMonitoringServices);
-    this.topologyService = new TopologyService(eventService, timeSource, platformConfiguration);
+    this.firingService = new DefaultFiringService(sequenceGenerator, platformConfiguration, sharedManagementRegistry, managementServices, clientMonitoringServices);
+    this.topologyService = new TopologyService(firingService, timeSource, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
 
-    this.topologyService.addEntityListener(new EntityListenerAdapter() {
+    this.topologyService.addTopologyEventListener(new TopologyEventListenerAdapter() {
       @Override
       public void onEntityDestroyed(long consumerId) {
-        LOGGER.trace("[{}] onEntityDestroyed()", consumerId);
-        topologyService.removeEntityListener(managementServices.remove(consumerId));
-        topologyService.removeEntityListener(clientMonitoringServices.remove(consumerId));
-        topologyService.removeEntityListener(consumerManagementRegistries.remove(consumerId));
-        entityMonitoringServices.remove(consumerId);
+        LOGGER.trace("[0] onEntityDestroyed({})", consumerId);
+        topologyService.removeTopologyEventListener(managementServices.remove(consumerId));
+        topologyService.removeTopologyEventListener(clientMonitoringServices.remove(consumerId));
+        topologyService.removeTopologyEventListener(consumerManagementRegistries.remove(consumerId));
+        passiveEntityMonitoringService.remove(consumerId);
+        activeEntityMonitoringService.remove(consumerId);
       }
 
       @Override
       public void onEntityFailover(long consumerId) {
         onEntityDestroyed(consumerId);
+      }
+
+      @Override
+      public void onBecomeActive() {
+        // clear some states that can have been created by placeholders entities with restartability on before they become active
+        // platform does not send us any event about that so we do not know when these placeholder entities get destroyed
+        Set<Long> consumerIds = concat(concat(concat(concat(
+            managementServices.keySet().stream(),
+            clientMonitoringServices.keySet().stream()),
+            consumerManagementRegistries.keySet().stream()),
+            activeEntityMonitoringService.keySet().stream()),
+            passiveEntityMonitoringService.keySet().stream()
+        ).collect(Collectors.toCollection(TreeSet::new));
+        LOGGER.trace("[0] onBecomeActive({})", consumerIds);
+        consumerIds.forEach(this::onEntityDestroyed);
       }
     });
     return true;
@@ -110,7 +132,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public void close() {
     this.statisticsServiceFactory.close();
-    this.eventService.close();
+    this.firingService.close();
   }
 
   @SuppressWarnings("unchecked")
@@ -123,7 +145,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       if (consumerID == PLATFORM_CONSUMER_ID) {
         return serviceType.cast(platformListenerAdapter);
       } else {
-        DataListener dataListener = new DefaultDataListener(consumerID, topologyService, eventService);
+        DataListener dataListener = new DefaultDataListener(consumerID, topologyService, firingService);
         return serviceType.cast(new IStripeMonitoringDataListenerAdapter(consumerID, dataListener));
       }
     }
@@ -146,7 +168,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
             addServerManagementProviders(consumerID, consumerManagementRegistry);
           }
-          topologyService.addEntityListener(consumerManagementRegistry);
+          topologyService.addTopologyEventListener(consumerManagementRegistry);
           return consumerManagementRegistry;
         }));
       } else {
@@ -165,9 +187,9 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           DefaultClientMonitoringService clientMonitoringService = new DefaultClientMonitoringService(
               consumerID,
               topologyService,
-              eventService,
+              firingService,
               clientMonitoringServiceConfiguration.getClientCommunicator());
-          topologyService.addEntityListener(clientMonitoringService);
+          topologyService.addTopologyEventListener(clientMonitoringService);
           return clientMonitoringService;
         }));
       } else {
@@ -186,10 +208,10 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           DefaultManagementService managementService = new DefaultManagementService(
               consumerID,
               topologyService,
-              eventService,
+              firingService,
               managementServiceConfiguration.getClientCommunicator(),
               sequenceGenerator);
-          topologyService.addEntityListener(managementService);
+          topologyService.addTopologyEventListener(managementService);
           return managementService;
         }));
       } else {
@@ -203,12 +225,12 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         if (!topologyService.isCurrentServerActive()) {
           throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not active!");
         }
-        return serviceType.cast(entityMonitoringServices.computeIfAbsent(consumerID, cid -> {
+        return serviceType.cast(activeEntityMonitoringService.computeIfAbsent(consumerID, cid -> {
           ActiveEntityMonitoringServiceConfiguration activeEntityMonitoringServiceConfiguration = (ActiveEntityMonitoringServiceConfiguration) configuration;
           DefaultActiveEntityMonitoringService activeEntityMonitoringService = new DefaultActiveEntityMonitoringService(
               consumerID,
               topologyService,
-              eventService);
+              firingService);
           return activeEntityMonitoringService;
         }));
       } else {
@@ -222,7 +244,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         if (topologyService.isCurrentServerActive()) {
           throw new IllegalStateException("Server " + platformConfiguration.getServerName() + " is not passive!");
         }
-        return serviceType.cast(entityMonitoringServices.computeIfAbsent(consumerID, cid -> {
+        return serviceType.cast(passiveEntityMonitoringService.computeIfAbsent(consumerID, cid -> {
           PassiveEntityMonitoringServiceConfiguration passiveEntityMonitoringServiceConfiguration = (PassiveEntityMonitoringServiceConfiguration) configuration;
           IMonitoringProducer monitoringProducer = passiveEntityMonitoringServiceConfiguration.getMonitoringProducer();
           if (monitoringProducer == null) {
@@ -241,7 +263,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   }
 
   private void addServerManagementProviders(long consumerId, ConsumerManagementRegistry consumerManagementRegistry) {
-    LOGGER.trace("[{}] addServerManagementProviders()", consumerId);
+    LOGGER.trace("[0] addServerManagementProviders({})", consumerId);
     // manage offheap service if it is there
     Collection<OffHeapResources> offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class);
     if (!offHeapResources.isEmpty()) {
@@ -249,7 +271,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       consumerManagementRegistry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
       for (OffHeapResources offHeapResource : offHeapResources) {
         for (OffHeapResourceIdentifier identifier : offHeapResource.getAllIdentifiers()) {
-          LOGGER.trace("[{}] addServerManagementProviders(OffHeapResource:{})", consumerId, identifier.getName());
+          LOGGER.trace("[0] addServerManagementProviders({}, OffHeapResource:{})", consumerId, identifier.getName());
           consumerManagementRegistry.register(new OffHeapResourceBinding(identifier.getName(), offHeapResource.getOffHeapResource(identifier)));
         }
       }

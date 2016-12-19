@@ -67,11 +67,11 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSy
 
   @Override
   public void startSyncConcurrencyKey(int concurrencyKey) {
-    LOGGER.trace("[{}] startSyncConcurrencyKey({})", concurrencyKey);
+    LOGGER.trace("[{}] startSyncConcurrencyKey({})", cache.getName(), concurrencyKey);
   }
 
   @Override
   public void endSyncConcurrencyKey(int concurrencyKey) {
-    LOGGER.trace("[{}] endSyncConcurrencyKey({})", concurrencyKey);
+    LOGGER.trace("[{}] endSyncConcurrencyKey({})", cache.getName(), concurrencyKey);
   }
 }
