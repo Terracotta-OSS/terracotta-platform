@@ -1,0 +1,186 @@
+[
+  {
+    "name": "CacheCalls",
+    "descriptors": [
+      {
+        "name": "clear",
+        "returnType": "void",
+        "parameters": []
+      },
+      {
+        "name": "get",
+        "returnType": "java.lang.String",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          }
+        ]
+      },
+      {
+        "name": "put",
+        "returnType": "void",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          },
+          {
+            "name": "value",
+            "type": "java.lang.String"
+          }
+        ]
+      },
+      {
+        "name": "size",
+        "returnType": "int",
+        "parameters": []
+      }
+    ],
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "appName",
+          "required": true
+        },
+        {
+          "name": "cacheName",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "CacheSettings",
+    "descriptors": [
+      {
+        "appName": "pet-clinic",
+        "cacheName": "pets",
+        "size": 0
+      },
+      {
+        "appName": "pet-clinic",
+        "cacheName": "clients",
+        "size": 0
+      }
+    ],
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "appName",
+          "required": true
+        },
+        {
+          "name": "cacheName",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "CacheStatistics",
+    "properties": {
+      "averageWindowDuration": 1,
+      "averageWindowUnit": "MINUTES",
+      "historySize": 100,
+      "historyInterval": 1,
+      "historyIntervalUnit": "SECONDS",
+      "timeToDisable": 5,
+      "timeToDisableUnit": "SECONDS"
+    },
+    "descriptors": [
+      {
+        "name": "Cache:ClearCount",
+        "type": "COUNTER_HISTORY"
+      },
+      {
+        "name": "Cache:ClearRate",
+        "type": "RATE_HISTORY"
+      },
+      {
+        "name": "Cache:HitCount",
+        "type": "COUNTER_HISTORY"
+      },
+      {
+        "name": "Cache:HitRate",
+        "type": "RATE_HISTORY"
+      },
+      {
+        "name": "Cache:HitRatio",
+        "type": "RATIO_HISTORY"
+      },
+      {
+        "name": "Cache:MissCount",
+        "type": "COUNTER_HISTORY"
+      },
+      {
+        "name": "Cache:MissRate",
+        "type": "RATE_HISTORY"
+      },
+      {
+        "name": "Cache:MissRatio",
+        "type": "RATIO_HISTORY"
+      },
+      {
+        "name": "ClientCache:Size",
+        "type": "SIZE_HISTORY"
+      }
+    ],
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "appName",
+          "required": true
+        },
+        {
+          "name": "cacheName",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "ManagementAgentService",
+    "descriptors": [],
+    "capabilityContext": {
+      "attributes": []
+    }
+  },
+  {
+    "name": "StatisticCollectorCapability",
+    "descriptors": [
+      {
+        "name": "startStatisticCollector",
+        "returnType": "void",
+        "parameters": []
+      },
+      {
+        "name": "stopStatisticCollector",
+        "returnType": "void",
+        "parameters": []
+      },
+      {
+        "name": "updateCollectedStatistics",
+        "returnType": "void",
+        "parameters": [
+          {
+            "name": "capabilityName",
+            "type": "java.lang.String"
+          },
+          {
+            "name": "statisticNames",
+            "type": "java.util.Collection"
+          }
+        ]
+      }
+    ],
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "appName",
+          "required": true
+        }
+      ]
+    }
+  }
+]

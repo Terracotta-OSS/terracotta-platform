@@ -50,6 +50,13 @@
       <version>${terracotta-core.version}</version>
     </dependency>
 
+    <!-- sample entity client -->
+    <dependency>
+      <groupId>org.terracotta.management.testing</groupId>
+      <artifactId>sample-entity</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- logging -->
     <dependency>
       <groupId>org.terracotta.internal</groupId>

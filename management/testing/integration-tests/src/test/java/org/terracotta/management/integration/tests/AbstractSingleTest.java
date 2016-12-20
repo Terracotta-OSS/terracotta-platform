@@ -18,7 +18,6 @@ package org.terracotta.management.integration.tests;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TestName;
 import org.terracotta.testing.rules.BasicExternalCluster;
 
 import java.io.File;
@@ -28,7 +27,7 @@ import static java.util.Collections.emptyList;
 /**
  * @author Mathieu Carbou
  */
-public abstract class AbstractHATest extends AbstractTest {
+public abstract class AbstractSingleTest extends AbstractTest {
 
   private final String offheapResource = "primary-server-resource";
   private final String resourceConfig =
@@ -40,23 +39,16 @@ public abstract class AbstractHATest extends AbstractTest {
 
   @Rule
   public org.terracotta.testing.rules.Cluster voltron =
-      new BasicExternalCluster(new File("target/galvan"), 2, emptyList(), "", resourceConfig, "");
-
-  @Rule
-  public TestName testName = new TestName();
+      new BasicExternalCluster(new File("target/galvan"), 1, emptyList(), "", resourceConfig, "");
 
   @Before
   public void setUp() throws Exception {
-    System.out.println(" => [" + testName.getMethodName() + "] " + getClass().getSimpleName() + ".setUp()");
     voltron.getClusterControl().waitForActive();
-    voltron.getClusterControl().waitForRunningPassivesInStandby();
     commonSetUp(voltron);
-    tmsAgentService.readMessages();
   }
 
   @After
   public void tearDown() throws Exception {
-    System.out.println(" => [" + testName.getMethodName() + "] " + getClass().getSimpleName() + ".tearDown()");
     commonTearDown();
   }
 

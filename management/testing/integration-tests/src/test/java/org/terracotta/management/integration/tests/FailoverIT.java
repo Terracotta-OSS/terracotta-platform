@@ -32,7 +32,8 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-@Ignore // TODO activate
+@Ignore("Impacted by https://github.com/Terracotta-OSS/terracotta-core/issues/405")
+//TODO: VOLTRON ISSUE ? https://github.com/Terracotta-OSS/terracotta-core/issues/405
 public class FailoverIT extends AbstractHATest {
 
   @Test
@@ -47,9 +48,12 @@ public class FailoverIT extends AbstractHATest {
     tmsAgentService.readMessages();
 
     // kill active - passive should take the active role
+    System.out.printf("==> terminateActive()");
     voltron.getClusterControl().terminateActive();
+    System.out.printf("==> waitForActive()");
     voltron.getClusterControl().waitForActive();
 
+    System.out.printf("==> readTopology()");
     cluster = tmsAgentService.readTopology();
     Server newActive = cluster.serverStream().filter(Server::isActive).findFirst().get();
     assertThat(newActive.getState(), equalTo(Server.State.ACTIVE));
@@ -57,6 +61,9 @@ public class FailoverIT extends AbstractHATest {
 
     // read messages
     List<Message> messages = tmsAgentService.readMessages();
+
+    messages.forEach(System.out::println);
+
     assertThat(messages.size(), equalTo(3));
 
     List<ContextualNotification> notifs = messages.stream()
@@ -77,6 +84,17 @@ public class FailoverIT extends AbstractHATest {
     //- test topology (like topology_includes_passives), client should have re-exposed their management metadata
     //- check notifications: server states
     //- check notification that might be there: CLIENT_RECONNECTED and SERVER_ENTITY_FAILOVER_COMPLETE
+  }
+
+  @Test
+  public void puts_can_be_seen_on_other_clients_after_failover() throws Exception {
+    put(0, "clients", "client1", "Mathieu");
+
+    // kill active - passive should take the active role
+    voltron.getClusterControl().terminateActive();
+    voltron.getClusterControl().waitForActive();
+
+    assertThat(get(1, "clients", "client1"), equalTo("Mathieu"));
   }
 
 }

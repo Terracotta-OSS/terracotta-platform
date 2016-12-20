@@ -17,6 +17,7 @@ package org.terracotta.management.integration.tests;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Rule;
@@ -56,7 +57,7 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class AbstractTest {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper = new ObjectMapper().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 
   private Connection managementConnection;
   private Cluster cluster;
@@ -196,6 +197,27 @@ public abstract class AbstractTest {
     } while (!Thread.currentThread().isInterrupted() && (statistics.isEmpty() || !test.test(statistics)));
     assertFalse(Thread.currentThread().isInterrupted());
     assertTrue(test.test(statistics));
+  }
+
+  protected String removeRandomValues(String currentTopo) {
+    // removes all random values
+    return currentTopo
+        .replaceAll("\"(hostName)\":\"[^\"]*\"", "\"$1\":\"<hostname>\"")
+        .replaceAll("\"hostAddress\":[^,]*", "\"hostAddress\":\"127\\.0\\.0\\.1\"")
+        .replaceAll("\"bindPort\":[0-9]+", "\"bindPort\":0")
+        .replaceAll("\"groupPort\":[0-9]+", "\"groupPort\":0")
+        .replaceAll("\"port\":[0-9]+", "\"port\":0")
+        .replaceAll("\"activateTime\":[0-9]+", "\"activateTime\":0")
+        .replaceAll("\"time\":[0-9]+", "\"time\":0")
+        .replaceAll("\"startTime\":[0-9]+", "\"startTime\":0")
+        .replaceAll("\"upTimeSec\":[0-9]+", "\"upTimeSec\":0")
+        .replaceAll("\"id\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",\"pid\":[0-9]+", "\"id\":\"0@127.0.0.1:$1:<uuid>\",\"pid\":0")
+        .replaceAll("\"buildId\":\"[^\"]*\"", "\"buildId\":\"Build ID\"")
+        .replaceAll("\"version\":\"[^\"]*\"", "\"version\":\"<version>\"")
+        .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")
+        .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
+        .replaceAll("\"id\":\"[^\"]*\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:SINGLE:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
+        .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"");
   }
 
 }

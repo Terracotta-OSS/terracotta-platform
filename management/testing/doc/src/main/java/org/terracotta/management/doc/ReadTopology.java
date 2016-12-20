@@ -54,6 +54,7 @@ public class ReadTopology {
     ScheduledFuture<?> task = executorService.scheduleWithFixedDelay(() -> {
       try {
 
+        // READ TOPOLOGY
         Cluster cluster = service.readTopology();
         System.out.println(mapper.writeValueAsString(cluster.toMap()));
 

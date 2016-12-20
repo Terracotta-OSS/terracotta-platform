@@ -53,22 +53,20 @@ public class ReadStatistics {
 
     Cluster cluster = tmsAgentService.readTopology();
 
-    // trigger stats computation on server-side
+    // TRIGGER SERVER-SIDE STATS COMPUTATION
 
-    // 1. find the tms entity (management)
     ServerEntity serverEntity = cluster
         .activeServerEntityStream()
         .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
         .findFirst()
         .get();
 
-    // 2. create a routing context
     Context context = serverEntity.getContext();
 
-    // 3. collect stats on 3 capabilities (pool, stores, offheap)
     tmsAgentService.updateCollectedStatistics(context, "PoolStatistics", asList(
         "Pool:AllocatedSize"
     )).waitForReturn();
+
     tmsAgentService.updateCollectedStatistics(context, "ServerStoreStatistics", asList(
         "Store:AllocatedMemory",
         "Store:DataAllocatedMemory",
@@ -83,25 +81,31 @@ public class ReadStatistics {
         "Store:DataSize",
         "Store:TableCapacity"
     )).waitForReturn();
+
     tmsAgentService.updateCollectedStatistics(context, "OffHeapResourceStatistics", asList(
         "OffHeapResource:AllocatedMemory"
     )).waitForReturn();
 
-    // trigger stats computation on client-side
+    tmsAgentService.updateCollectedStatistics(context, "ServerCacheStatistics", asList(
+        "Cluster:HitCount",
+        "Cluster:MissCount",
+        "Cluster:HitRatio",
+        "ServerCache:Size"))
+        .waitForReturn();
 
-    // 1. find ehcache clients in topology
+    // TRIGGER CLIENT-SIDE STATS COMPUTATION
+
     cluster
         .clientStream()
-        .filter(c -> c.getName().startsWith("Ehcache:"))
-        .forEach(ehcache -> {
+        .filter(c -> c.getName().equals("pet-clinic"))
+        .findFirst()
+        .ifPresent(ehcache -> {
 
-          // 2. create a routing context
           Context ctx = ehcache.getContext()
-              .with("cacheManagerName", "my-super-cache-manager");
+              .with("appName", "pet-clinic");
 
           try {
-            // 3. collect stats on client-side
-            tmsAgentService.updateCollectedStatistics(ctx, "StatisticsCapability", asList("Cache:HitCount", "Clustered:HitCount", "Cache:MissCount", "Clustered:MissCount")).waitForReturn();
+            tmsAgentService.updateCollectedStatistics(ctx, "CacheStatistics", asList("Cache:HitCount", "Cache:MissCount", "Cache:HitRatio", "ClientCache:Size")).waitForReturn();
           } catch (Exception e) {
             throw new RuntimeException(e);
           }

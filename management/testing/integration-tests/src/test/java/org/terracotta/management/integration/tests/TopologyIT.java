@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.sample;
+package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
+import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.message.Message;
@@ -34,45 +35,21 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-public class TopologyTest extends AbstractTest {
+public class TopologyIT extends AbstractSingleTest {
 
   @Test
   public void can_read_topology() throws Exception {
     Cluster cluster = tmsAgentService.readTopology();
+    String currentTopo = toJson(cluster.toMap()).toString();
+    String actual = removeRandomValues(currentTopo);
 
-    // removes all random values
 
-    cluster.serverStream().forEach(server -> {
-      server.setActivateTime(0);
-      server.setStartTime(0);
-      server.setBuildId("Build ID");
-    });
+    String expected = readJson("topology.json").toString();
 
-    cluster.serverEntityStream()
-        .map(ServerEntity::getManagementRegistry)
-        .flatMap(managementRegistry -> Stream.of(
-            managementRegistry.flatMap(r -> r.getCapability("ServerCacheSettings")),
-            managementRegistry.flatMap(r -> r.getCapability("OffHeapResourceSettings"))))
-        .forEach(capability -> {
-          if (capability.isPresent()) {
-            capability.get()
-                .getDescriptors(Settings.class)
-                .stream()
-                .filter(settings -> settings.containsKey("time")).forEach(settings -> settings.set("time", 0));
-          }
-        });
-
-    final String[] currentTopo = {toJson(cluster.toMap()).toString()};
-    cluster.clientStream().forEach(client -> currentTopo[0] = currentTopo[0]
-        .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
-        .replace(String.valueOf(client.getPid()), "0")
-        .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")
-        .replace(client.getHostName(), "<hostname>")
-        .replace(client.getHostAddress(), "127.0.0.1"));
-
+    System.out.println("This is the actual topology : " + actual);
+    System.out.println("This is the expected topology : " + expected);
     // and compare
-
-    assertEquals(readJson("topology.json").toString(), currentTopo[0]);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -113,18 +90,14 @@ public class TopologyTest extends AbstractTest {
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
         .collect(Collectors.toList());
 
-    // removes all random values
+    String currentJson = toJson(notifs).toString();
+    String actual = removeRandomValues(currentJson);
+    String expected = readJson("notifications.json").toString();
 
-    final String[] currentJson = {toJson(notifs).toString()};
+    System.out.println("This is the actual topology : " + actual);
+    System.out.println("This is the expected topology : " + expected);
 
-    tmsAgentService.readTopology().clientStream().forEach(client -> currentJson[0] = currentJson[0]
-        .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
-        .replace(String.valueOf(client.getPid()), "0")
-        .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")
-        .replace(client.getHostName(), "<hostname>")
-        .replace(client.getHostAddress(), "127.0.0.1"));
-
-    assertEquals(readJson("notifications.json").toString(), currentJson[0]);
+    assertEquals(expected, actual);
   }
 
 }
