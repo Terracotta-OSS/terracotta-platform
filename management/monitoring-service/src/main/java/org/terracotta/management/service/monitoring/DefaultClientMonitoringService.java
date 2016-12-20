@@ -101,6 +101,8 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
 
   @Override
   public void onBecomeActive() {
+    LOGGER.trace("[{}] onBecomeActive()", this.consumerId);
+    clear();
   }
 
   @Override
@@ -119,13 +121,16 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   public void onEntityDestroyed(long consumerId) {
     if (consumerId == this.consumerId) {
       LOGGER.trace("[{}] onEntityDestroyed()", this.consumerId);
-      manageableClients.clear();
+      clear();
     }
   }
 
   @Override
   public void onEntityFailover(long consumerId) {
-    onEntityDestroyed(consumerId);
+    if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onEntityFailover()", this.consumerId);
+      clear();
+    }
   }
 
   void fireMessage(Message message) {
@@ -153,6 +158,10 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
     } catch (Exception e) {
       LOGGER.error("Unable to send message " + message + " to client " + client);
     }
+  }
+
+  private void clear() {
+    manageableClients.clear();
   }
 
 }

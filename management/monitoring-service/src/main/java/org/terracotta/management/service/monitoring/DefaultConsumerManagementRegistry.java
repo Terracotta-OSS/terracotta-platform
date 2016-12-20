@@ -92,6 +92,8 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
 
   @Override
   public void onBecomeActive() {
+    LOGGER.trace("[{}] onBecomeActive()", consumerId);
+    clear();
   }
 
   @Override
@@ -106,14 +108,21 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
   public void onEntityDestroyed(long consumerId) {
     if (consumerId == this.consumerId) {
       LOGGER.trace("[{}] onEntityDestroyed()", consumerId);
-      managementProviders.forEach(ManagementProvider::close);
-      managementProviders.clear();
+      clear();
     }
   }
 
   @Override
   public void onEntityFailover(long consumerId) {
-    onEntityDestroyed(consumerId);
+    if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onEntityFailover()", consumerId);
+      clear();
+    }
   }
 
+  private void clear() {
+    managementProviders.forEach(ManagementProvider::close);
+    managementProviders.clear();
+    previouslyExposed.clear();
+  }
 }
