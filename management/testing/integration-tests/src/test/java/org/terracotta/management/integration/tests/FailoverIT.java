@@ -15,50 +15,73 @@
  */
 package org.terracotta.management.integration.tests;
 
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
+import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou
  */
-@Ignore("Impacted by https://github.com/Terracotta-OSS/terracotta-core/issues/405")
-//TODO: VOLTRON ISSUE ? https://github.com/Terracotta-OSS/terracotta-core/issues/405
 public class FailoverIT extends AbstractHATest {
 
-  @Test
-  public void failover_management() throws Exception {
+  Server oldActive;
+  Server oldPassive;
+
+  @Override
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+
     Cluster cluster = tmsAgentService.readTopology();
-    Server active = cluster.serverStream().filter(Server::isActive).findFirst().get();
-    Server passive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
-    assertThat(active.getState(), equalTo(Server.State.ACTIVE));
-    assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
+    oldActive = cluster.serverStream().filter(Server::isActive).findFirst().get();
+    oldPassive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
+    assertThat(oldActive.getState(), equalTo(Server.State.ACTIVE));
+    assertThat(oldPassive.getState(), equalTo(Server.State.PASSIVE));
 
     // clear buffer
     tmsAgentService.readMessages();
 
     // kill active - passive should take the active role
-    System.out.printf("==> terminateActive()");
     voltron.getClusterControl().terminateActive();
-    System.out.printf("==> waitForActive()");
     voltron.getClusterControl().waitForActive();
+  }
 
-    System.out.printf("==> readTopology()");
-    cluster = tmsAgentService.readTopology();
+  @Test
+  @Ignore
+  public void topology_recovery_after_failover() throws Exception {
+    Cluster cluster = tmsAgentService.readTopology();
+
+    // verify new server
     Server newActive = cluster.serverStream().filter(Server::isActive).findFirst().get();
     assertThat(newActive.getState(), equalTo(Server.State.ACTIVE));
-    assertThat(newActive.getServerName(), equalTo(passive.getServerName()));
+    assertThat(newActive.getServerName(), equalTo(oldPassive.getServerName()));
 
+    // removes all random values
+    String currentTopo = toJson(cluster.toMap()).toString();
+    String actual = removeRandomValues(currentTopo);
+
+    String expected = readJson("topology.json").toString();
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  @Ignore
+  public void notifications_after_failover() throws Exception {
     // read messages
     List<Message> messages = tmsAgentService.readMessages();
 
@@ -74,7 +97,7 @@ public class FailoverIT extends AbstractHATest {
 
     assertThat(
         notifs.stream().map(notif -> notif.getContext().get(Server.NAME_KEY)).collect(Collectors.toList()),
-        equalTo(Arrays.asList(newActive.getServerName(), newActive.getServerName())));
+        equalTo(Arrays.asList(oldPassive.getServerName(), oldPassive.getServerName())));
 
     assertThat(
         notifs.stream().map(notif -> notif.getAttributes().get("state")).collect(Collectors.toList()),
@@ -87,6 +110,7 @@ public class FailoverIT extends AbstractHATest {
   }
 
   @Test
+  @Ignore
   public void puts_can_be_seen_on_other_clients_after_failover() throws Exception {
     put(0, "clients", "client1", "Mathieu");
 

@@ -42,13 +42,7 @@ public class TopologyIT extends AbstractSingleTest {
     Cluster cluster = tmsAgentService.readTopology();
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
-
-
     String expected = readJson("topology.json").toString();
-
-    System.out.println("This is the actual topology : " + actual);
-    System.out.println("This is the expected topology : " + expected);
-    // and compare
     assertEquals(expected, actual);
   }
 

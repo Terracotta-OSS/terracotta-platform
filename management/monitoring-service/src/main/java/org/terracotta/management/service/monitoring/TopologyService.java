@@ -97,13 +97,27 @@ class TopologyService implements PlatformListener {
   public synchronized void serverDidBecomeActive(PlatformServer self) {
     LOGGER.trace("[0] serverDidBecomeActive({})", self.getServerName());
 
-    serverDidJoinStripe(self);
+    Server server = Server.create(self.getServerName())
+        .setBindAddress(self.getBindAddress())
+        .setBindPort(self.getBindPort())
+        .setBuildId(self.getBuild())
+        .setGroupPort(self.getGroupPort())
+        .setHostName(self.getHostName())
+        .setStartTime(self.getStartTime())
+        .setHostAddress(self.getHostAddress())
+        .setVersion(self.getVersion())
+        .computeUpTime();
+
+    stripe.addServer(server);
 
     currentActive = stripe.getServerByName(self.getServerName()).get();
-    currentActive.setState(Server.State.ACTIVE);
-    currentActive.setActivateTime(timeSource.getTimestamp());
 
     topologyEventListeners.forEach(TopologyEventListener::onBecomeActive);
+
+    firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
+
+    long time = timeSource.getTimestamp();
+    serverStateChanged(self, new ServerState("ACTIVE", time, time));
   }
 
   @Override

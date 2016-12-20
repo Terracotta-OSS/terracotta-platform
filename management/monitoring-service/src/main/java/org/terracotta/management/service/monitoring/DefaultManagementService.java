@@ -122,6 +122,8 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
 
   @Override
   public void onBecomeActive() {
+    LOGGER.trace("[{}] onBecomeActive()", this.consumerId);
+    clear();
   }
 
   @Override
@@ -140,14 +142,16 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   public void onEntityDestroyed(long consumerId) {
     if (consumerId == this.consumerId) {
       LOGGER.trace("[{}] onEntityDestroyed()", this.consumerId);
-      managementCallRequests.clear();
-      buffer = null;
+      clear();
     }
   }
 
   @Override
   public void onEntityFailover(long consumerId) {
-    onEntityDestroyed(consumerId);
+    if (consumerId == this.consumerId) {
+      LOGGER.trace("[{}] onEntityFailover()", this.consumerId);
+      clear();
+    }
   }
 
   void fireMessage(Message message) {
@@ -201,6 +205,14 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     managementCallRequests
         .computeIfAbsent(caller, clientDescriptor -> new ConcurrentSkipListSet<>())
         .add(managementCallIdentifier);
+  }
+
+  private void clear() {
+    managementCallRequests.clear();
+    full = null;
+    if (buffer != null) {
+      buffer.clear();
+    }
   }
 
 }
