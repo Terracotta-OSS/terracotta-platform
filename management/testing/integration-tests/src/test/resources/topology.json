@@ -445,7 +445,7 @@
           "bindPort": 0,
           "groupPort": 0,
           "state": "ACTIVE",
-          "version": "VERSION_TO_REPLACE",
+          "version": "<version>",
           "buildId": "Build ID",
           "startTime": 0,
           "upTimeSec": 0,

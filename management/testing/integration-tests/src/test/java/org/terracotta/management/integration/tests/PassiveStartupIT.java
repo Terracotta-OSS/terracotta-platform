@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -105,8 +106,15 @@ public class PassiveStartupIT extends AbstractHATest {
     // wait for SYNC_END message to transit from passive to active
     do {
       messages = tmsAgentService.readMessages();
+      if (messages.stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .map(ContextualNotification::getType)
+          .anyMatch(s -> s.equals("SYNC_END"))) {
+        break;
+      }
     }
-    while (messages.isEmpty() && !Thread.currentThread().isInterrupted());
+    while (!Thread.currentThread().isInterrupted());
 
     assertThat(messages.stream()
             .filter(message -> message.getType().equals("NOTIFICATION"))

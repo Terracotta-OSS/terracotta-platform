@@ -17,6 +17,7 @@ package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
+import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.message.Message;
@@ -39,63 +40,16 @@ public class TopologyIT extends AbstractSingleTest {
   @Test
   public void can_read_topology() throws Exception {
     Cluster cluster = tmsAgentService.readTopology();
+    String currentTopo = toJson(cluster.toMap()).toString();
+    String actual = removeRandomValues(currentTopo);
 
-    // removes all random values
 
-    cluster.serverStream().forEach(server -> {
-      server.setActivateTime(0);
-      server.setStartTime(0);
-      server.setBuildId("Build ID");
-    });
-
-    cluster.serverEntityStream()
-        .map(ServerEntity::getManagementRegistry)
-        .flatMap(managementRegistry -> Stream.of(
-            managementRegistry.flatMap(r -> r.getCapability("ServerCacheSettings")),
-            managementRegistry.flatMap(r -> r.getCapability("OffHeapResourceSettings"))))
-        .forEach(capability -> {
-          if (capability.isPresent()) {
-            capability.get()
-                .getDescriptors(Settings.class)
-                .stream()
-                .filter(settings -> settings.containsKey("time")).forEach(settings -> settings.set("time", 0));
-          }
-        });
-
-    final String[] currentTopo = {toJson(cluster.toMap()).toString()};
-    cluster.clientStream().forEach(client -> currentTopo[0] = currentTopo[0]
-        .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
-        .replace(String.valueOf(client.getPid()), "0")
-        .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")
-        .replace(client.getHostName(), "<hostname>")
-        .replace(client.getHostAddress(), "127.0.0.1"));
-
-    String actual = replaceHostname(zeroPortsAndUptime(currentTopo[0]));
-    String expected = replaceVersion(readJson("topology.json").toString());
+    String expected = readJson("topology.json").toString();
 
     System.out.println("This is the actual topology : " + actual);
     System.out.println("This is the expected topology : " + expected);
     // and compare
     assertEquals(expected, actual);
-  }
-
-  private String zeroPortsAndUptime(String s) {
-    return s.replaceAll("(\"bindPort\":[0-9]+)", "\"bindPort\":0")
-        .replaceAll("(\"groupPort\":[0-9]+)", "\"groupPort\":0")
-        .replaceAll("(\"upTimeSec\":[0-9]+)", "\"upTimeSec\":0");
-  }
-
-  private String replaceHostname(String s) {
-    return s.replaceAll("\"hostname\":(.*),", "\"hostname\":\"<hostname>\",");
-  }
-
-  /**
-   *
-   * @param topology, probably from topology.json
-   * @return the same topology, but replacing VERSION_TO_REPLACE with the tc core version from the pom
-   */
-  private String replaceVersion(String topology) {
-    return topology.replace("VERSION_TO_REPLACE", System.getProperty("kitInstallationPath").substring(System.getProperty("kitInstallationPath").lastIndexOf("terracotta-") + 11, System.getProperty("kitInstallationPath").length()-1));
   }
 
   @Test
@@ -136,18 +90,14 @@ public class TopologyIT extends AbstractSingleTest {
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
         .collect(Collectors.toList());
 
-    // removes all random values
+    String currentJson = toJson(notifs).toString();
+    String actual = removeRandomValues(currentJson);
+    String expected = readJson("notifications.json").toString();
 
-    final String[] currentJson = {toJson(notifs).toString()};
+    System.out.println("This is the actual topology : " + actual);
+    System.out.println("This is the expected topology : " + expected);
 
-    tmsAgentService.readTopology().clientStream().forEach(client -> currentJson[0] = currentJson[0]
-        .replace(client.getClientIdentifier().getConnectionUid(), "<uuid>")
-        .replace(String.valueOf(client.getPid()), "0")
-        .replace(String.valueOf(client.connectionStream().findFirst().get().getClientEndpoint().getPort()), "0")
-        .replace(client.getHostName(), "<hostname>")
-        .replace(client.getHostAddress(), "127.0.0.1"));
-
-    assertEquals(readJson("notifications.json").toString(), currentJson[0]);
+    assertEquals(expected, actual);
   }
 
 }

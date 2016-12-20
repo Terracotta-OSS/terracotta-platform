@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -49,19 +50,28 @@ public class PassiveLeaveIT extends AbstractHATest {
     List<Message> messages;
     do {
       messages = tmsAgentService.readMessages();
+
+      if (messages.stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .map(ContextualNotification::getType)
+          .anyMatch(s -> s.equals("SERVER_LEFT"))) {
+        break;
+      }
     }
-    while (messages.isEmpty() && !Thread.currentThread().isInterrupted());
+    while (!Thread.currentThread().isInterrupted());
 
     assertThat(messages.stream()
             .filter(message -> message.getType().equals("NOTIFICATION"))
             .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
             .map(ContextualNotification::getType)
-            .collect(Collectors.toList()),
-        equalTo(Arrays.asList("SERVER_LEFT")));
+            .anyMatch(s -> s.equals("SERVER_LEFT")),
+        is(true));
 
     assertThat(messages.stream()
             .filter(message -> message.getType().equals("NOTIFICATION"))
             .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+            .filter(notif -> notif.getType().equals("SERVER_LEFT"))
             .map(contextualNotification -> contextualNotification.getContext().get(Server.NAME_KEY))
             .collect(Collectors.toList()),
         equalTo(Arrays.asList(passive.getServerName())));
