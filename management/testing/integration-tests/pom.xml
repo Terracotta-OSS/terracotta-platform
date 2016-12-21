@@ -58,9 +58,9 @@
     </dependency>
     <!-- testing libs -->
     <dependency>
-      <groupId>org.terracotta</groupId>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>galvan-support</artifactId>
-      <version>${galvan.version}</version>
+      <version>${terracotta-core.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
