@@ -62,9 +62,17 @@ public class FailoverIT extends AbstractHATest {
   }
 
   @Test
-  //TODO: uncomment this - see https://github.com/Terracotta-OSS/terracotta-core/issues/412
-  @Ignore("See https://github.com/Terracotta-OSS/terracotta-core/issues/412")
   public void all_registries_reexposed_after_failover() throws Exception {
+    int clientReconnected = 0;
+    do {
+      clientReconnected += tmsAgentService.readMessages()
+          .stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .filter(contextualNotification -> contextualNotification.getType().equals("CLIENT_RECONNECTED"))
+          .count();
+    } while (clientReconnected < 2);
+
     Cluster cluster = tmsAgentService.readTopology();
 
     // removes all random values
