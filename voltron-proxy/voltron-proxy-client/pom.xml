@@ -22,7 +22,7 @@
   <parent>
     <artifactId>voltron-proxy</artifactId>
     <groupId>org.terracotta.voltron.proxy</groupId>
-    <version>5.1-SNAPSHOT</version>
+    <version>5.1.1-pre5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
