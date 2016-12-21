@@ -24,15 +24,25 @@ public class StatisticConfiguration implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private long averageWindowDuration = 60;
-  private TimeUnit averageWindowUnit = TimeUnit.SECONDS;
-  private int historySize = 100;
-  private long historyInterval = 1;
-  private TimeUnit historyIntervalUnit = TimeUnit.SECONDS;
-  private long timeToDisable = 30;
-  private TimeUnit timeToDisableUnit = TimeUnit.SECONDS;
+  private long averageWindowDuration;
+  private TimeUnit averageWindowUnit;
+  private int historySize;
+  private long historyInterval;
+  private TimeUnit historyIntervalUnit;
+  private long timeToDisable;
+  private TimeUnit timeToDisableUnit;
 
+  /**
+   * Initialize with default values
+   * <ul>
+   *   <li>averageWindowDuration: 60 seconds</li>
+   *   <li>historySize: 100</li>
+   *   <li>historyInterval: 1 second</li>
+   *   <li>timeToDisable: 30 seconds</li>
+   * </ul>
+   */
   public StatisticConfiguration() {
+    this(60, TimeUnit.SECONDS, 100, 1, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
   }
 
   public StatisticConfiguration(long averageWindowDuration, TimeUnit averageWindowUnit, int historySize, long historyInterval, TimeUnit historyIntervalUnit, long timeToDisable, TimeUnit timeToDisableUnit) {
