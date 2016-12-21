@@ -49,6 +49,7 @@
     <module>communicator-support</module>
     <module>healthchecker-entity</module>
     <module>runnel</module>
+    <module>server-logging</module>
     <module>management</module>
   </modules>
 
