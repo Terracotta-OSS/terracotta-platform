@@ -121,14 +121,15 @@ public class PassiveStartupIT extends AbstractHATest {
             .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
             .map(ContextualNotification::getType)
             .collect(Collectors.toList()),
-        equalTo(Arrays.asList("SYNC_END", "SYNC_END")));
+        hasItem("SYNC_END"));
 
     assertThat(messages.stream()
             .filter(message -> message.getType().equals("NOTIFICATION"))
             .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+            .filter(contextualNotification -> contextualNotification.getType().endsWith("SYNC_END"))
             .map(contextualNotification -> contextualNotification.getContext().get(Server.NAME_KEY))
-            .collect(Collectors.toList()),
-        equalTo(Arrays.asList(passive.getServerName(), passive.getServerName())));
+            .collect(Collectors.toSet()),
+        equalTo(new HashSet<>(Arrays.asList(passive.getServerName(), passive.getServerName()))));
   }
 
 }

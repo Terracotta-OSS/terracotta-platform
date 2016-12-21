@@ -116,8 +116,8 @@ class TopologyService implements PlatformListener {
 
     firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
 
-    long time = timeSource.getTimestamp();
-    serverStateChanged(self, new ServerState("ACTIVE", time, time));
+    // we assume server.getStartTime() == activate time, but this will be fixed after into serverStateChanged() call by platform
+    serverStateChanged(self, new ServerState("ACTIVE", server.getStartTime(), server.getStartTime()));
   }
 
   @Override
@@ -320,14 +320,26 @@ class TopologyService implements PlatformListener {
     Server server = stripe.getServerByName(sender.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
 
+    Server.State oldState = server.getState();
+
+    if (oldState == Server.State.ACTIVE && currentActive != null && currentActive.getServerName().equals(server.getServerName())) {
+      // in case of a failover, the server state changed is replayed. So the server is active but will become passive and will become active again
+      // we filter this out
+      return;
+    }
+
     server.setState(Server.State.parse(serverState.getState()));
     server.setActivateTime(serverState.getActivate());
 
-    Map<String, String> attrs = new HashMap<>();
-    attrs.put("state", serverState.getState());
-    attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
+    if (oldState != server.getState()) {
+      // avoid sending another event to report the same state as before, to avoid duplicates
 
-    firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
+      Map<String, String> attrs = new HashMap<>();
+      attrs.put("state", serverState.getState());
+      attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
+
+      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
+    }
   }
 
   synchronized void setEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {

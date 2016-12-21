@@ -410,7 +410,9 @@ public class VoltronMonitoringServiceTest {
 
   private void assertTopologyEquals(String file) throws Exception {
     Cluster cluster = managementService.readTopology();
-    cluster.serverStream().forEach(server -> server.setUpTimeSec(0));
+    cluster.serverStream().forEach(server -> {
+      server.setUpTimeSec(0);
+    });
     assertEquals(new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8"), mapper.writeValueAsString(cluster.toMap()));
   }
 

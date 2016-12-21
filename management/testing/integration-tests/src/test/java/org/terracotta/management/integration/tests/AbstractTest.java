@@ -102,6 +102,14 @@ public abstract class AbstractTest {
     }
   }
 
+  protected JsonNode readJsonStr(String json) {
+    try {
+      return mapper.readTree(json);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   protected JsonNode toJson(Object o) {
     try {
       return mapper.readTree(mapper.writeValueAsString(o));
@@ -217,7 +225,8 @@ public abstract class AbstractTest {
         .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")
         .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"id\":\"[^\"]*\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:SINGLE:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
-        .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"");
+        .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
+        .replaceAll("testServer1", "testServer0");
   }
 
 }
