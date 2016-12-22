@@ -1,42 +1,5 @@
 [
   {
-    "name": "ServerCacheCalls",
-    "descriptors": [
-      {
-        "name": "clear",
-        "returnType": "void",
-        "parameters": []
-      },
-      {
-        "name": "get",
-        "returnType": "java.lang.String",
-        "parameters": [
-          {
-            "name": "key",
-            "type": "java.lang.String"
-          }
-        ]
-      },
-      {
-        "name": "put",
-        "returnType": "void",
-        "parameters": [
-          {
-            "name": "key",
-            "type": "java.lang.String"
-          },
-          {
-            "name": "value",
-            "type": "java.lang.String"
-          }
-        ]
-      },
-      {
-        "name": "size",
-        "returnType": "int",
-        "parameters": []
-      }
-    ],
     "capabilityContext": {
       "attributes": [
         {
@@ -48,22 +11,46 @@
           "required": true
         }
       ]
-    }
-  },
-  {
-    "name": "ServerCacheSettings",
+    },
     "descriptors": [
       {
-        "consumerId": "4",
-        "alias": "pet-clinic/clients",
-        "type": "ServerCache",
-        "size": 0
+        "name": "clear",
+        "parameters": [],
+        "returnType": "void"
       },
       {
-        "type": "ServerCacheSettings",
-        "time": 0
+        "name": "get",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.String"
+      },
+      {
+        "name": "put",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          },
+          {
+            "name": "value",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "size",
+        "parameters": [],
+        "returnType": "int"
       }
     ],
+    "name": "ServerCacheCalls"
+  },
+  {
     "capabilityContext": {
       "attributes": [
         {
@@ -79,18 +66,37 @@
           "required": true
         }
       ]
-    }
+    },
+    "descriptors": [
+      {
+        "consumerId": "4",
+        "alias": "pet-clinic/clients",
+        "type": "ServerCache",
+        "size": 0
+      },
+      {
+        "type": "ServerCacheSettings",
+        "time": 0
+      }
+    ],
+    "name": "ServerCacheSettings"
   },
   {
-    "name": "ServerCacheStatistics",
-    "properties": {
-      "averageWindowDuration": 1,
-      "averageWindowUnit": "MINUTES",
-      "historySize": 100,
-      "historyInterval": 1,
-      "historyIntervalUnit": "SECONDS",
-      "timeToDisable": 5,
-      "timeToDisableUnit": "SECONDS"
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "consumerId",
+          "required": true
+        },
+        {
+          "name": "type",
+          "required": true
+        },
+        {
+          "name": "alias",
+          "required": true
+        }
+      ]
     },
     "descriptors": [
       {
@@ -126,25 +132,27 @@
         "type": "RATIO_HISTORY"
       },
       {
+        "name": "Cluster:PutCount",
+        "type": "COUNTER_HISTORY"
+      },
+      {
+        "name": "Cluster:PutRate",
+        "type": "RATE_HISTORY"
+      },
+      {
         "name": "ServerCache:Size",
         "type": "SIZE_HISTORY"
       }
     ],
-    "capabilityContext": {
-      "attributes": [
-        {
-          "name": "consumerId",
-          "required": true
-        },
-        {
-          "name": "type",
-          "required": true
-        },
-        {
-          "name": "alias",
-          "required": true
-        }
-      ]
+    "name": "ServerCacheStatistics",
+    "properties": {
+      "averageWindowDuration": 1,
+      "averageWindowUnit": "MINUTES",
+      "historyInterval": 1,
+      "historyIntervalUnit": "SECONDS",
+      "historySize": 100,
+      "timeToDisable": 5,
+      "timeToDisableUnit": "SECONDS"
     }
   }
 ]

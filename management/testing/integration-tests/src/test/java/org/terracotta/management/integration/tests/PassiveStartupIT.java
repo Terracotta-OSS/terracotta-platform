@@ -30,6 +30,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -100,8 +101,8 @@ public class PassiveStartupIT extends AbstractHATest {
 
     // test notifications generated on active from passive "actions"
     assertThat(
-        notifs.stream().map(ContextualNotification::getType).collect(Collectors.toCollection(TreeSet::new)),
-        equalTo(new TreeSet<>(Arrays.asList(
+        notifs.stream().map(ContextualNotification::getType).collect(Collectors.toCollection(TreeSet::new))
+            .containsAll(new TreeSet<>(Arrays.asList(
             "SERVER_JOINED",
             "SERVER_STATE_CHANGED",
             "SERVER_ENTITY_CREATED",
@@ -109,8 +110,8 @@ public class PassiveStartupIT extends AbstractHATest {
             "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_UPDATED",
             "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_UPDATED",
             "SERVER_STATE_CHANGED",
-            "SYNC_START", "SYNC_END"
-        ))));
+            "SYNC_END"
+        ))), is(true));
 
     // only 1 server in source: passive server
     assertThat(
