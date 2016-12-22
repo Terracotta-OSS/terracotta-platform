@@ -23,8 +23,6 @@ import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,6 +62,7 @@ public class FailoverIT extends AbstractHATest {
   }
 
   @Test
+  //TODO: uncomment this - see https://github.com/Terracotta-OSS/terracotta-core/issues/412
   @Ignore("See https://github.com/Terracotta-OSS/terracotta-core/issues/412")
   public void all_registries_reexposed_after_failover() throws Exception {
     Cluster cluster = tmsAgentService.readTopology();
@@ -74,6 +73,7 @@ public class FailoverIT extends AbstractHATest {
 
     System.out.println(actual);
 
+    //TODO: change this file content: topology-after-failover.json - there should be tags on clients and management registry
     assertEquals(readJson("topology-after-failover.json"), readJsonStr(actual));
   }
 

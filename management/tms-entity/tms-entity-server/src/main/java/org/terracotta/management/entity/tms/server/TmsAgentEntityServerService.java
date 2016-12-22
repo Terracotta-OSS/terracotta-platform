@@ -23,15 +23,18 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.tms.TmsAgent;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.entity.tms.TmsAgentVersion;
+import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ActiveEntityMonitoringService;
 import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
+import org.terracotta.management.service.monitoring.ManagementCallExecutor;
 import org.terracotta.management.service.monitoring.ManagementService;
 import org.terracotta.management.service.monitoring.ManagementServiceConfiguration;
 import org.terracotta.management.service.monitoring.PassiveEntityMonitoringService;
 import org.terracotta.management.service.monitoring.PassiveEntityMonitoringServiceConfiguration;
+import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
@@ -41,25 +44,33 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAgent, TmsAgentConfig, Void, Void> {
+public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAgent, TmsAgentConfig, Void, Void, TmsAgentMessenger> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TmsAgentEntityServerService.class);
 
   public TmsAgentEntityServerService() {
-    super(TmsAgent.class, TmsAgentConfig.class, new Class<?>[]{Message.class}, null, null);
+    super(TmsAgent.class, TmsAgentConfig.class, new Class<?>[]{Message.class}, null, null, TmsAgentMessenger.class);
     setCodec(new SerializationCodec());
   }
 
   @Override
   public ActiveTmsAgentServerEntity createActiveEntity(ServiceRegistry registry, TmsAgentConfig configuration) {
     LOGGER.trace("createActiveEntity()");
+    TmsAgentMessenger tmsAgentMessenger = createMessenger(registry);
     ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
-    ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration(communicator)));
+    ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration(communicator, new ManagementCallExecutor() {
+      @Override
+      public void executeManagementCall(String managementCallIdentifier, ContextualCall<?> call) {
+        LOGGER.trace("executeManagementCall({}, {})", managementCallIdentifier, call);
+        tmsAgentMessenger.executeManagementCall(managementCallIdentifier, call);
+      }
+    })));
     ActiveEntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new ActiveEntityMonitoringServiceConfiguration()));
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
         .addServerManagementProviders()
         .setStatisticConfiguration(configuration.getStatisticConfiguration())));
-    return new ActiveTmsAgentServerEntity(new ActiveTmsAgent(configuration, managementService, consumerManagementRegistry));
+    SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
+    return new ActiveTmsAgentServerEntity(new ActiveTmsAgent(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry));
   }
 
   @Override
@@ -70,7 +81,8 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
         .addServerManagementProviders()
         .setStatisticConfiguration(configuration.getStatisticConfiguration())));
-    return new PassiveTmsAgentServerEntity(new PassiveTmsAgent(consumerManagementRegistry));
+    SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
+    return new PassiveTmsAgentServerEntity(new PassiveTmsAgent(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry));
   }
 
   @Override

@@ -137,7 +137,7 @@ public class VoltronMonitoringServiceTest {
     activeDataListener = activeServiceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
 
     clientCommunicator = mock(ClientCommunicator.class);
-    managementService = activeServiceProvider.getService(1, new ManagementServiceConfiguration(clientCommunicator));
+    managementService = activeServiceProvider.getService(1, new ManagementServiceConfiguration(clientCommunicator, mock(ManagementCallExecutor.class)));
     buffer = managementService.createMessageBuffer(100);
 
     clientMonitoringService = activeServiceProvider.getService(1, new ClientMonitoringServiceConfiguration(clientCommunicator));

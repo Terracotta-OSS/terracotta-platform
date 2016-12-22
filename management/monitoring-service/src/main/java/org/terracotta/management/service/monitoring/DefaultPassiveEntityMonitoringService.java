@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ManagementRegistry;
@@ -33,9 +34,10 @@ class DefaultPassiveEntityMonitoringService extends AbstractEntityMonitoringServ
 
   private final IMonitoringProducer monitoringProducer;
 
-  DefaultPassiveEntityMonitoringService(long consumerId, IMonitoringProducer monitoringProducer) {
-    super(consumerId);
+  DefaultPassiveEntityMonitoringService(long consumerId, IMonitoringProducer monitoringProducer, PlatformConfiguration platformConfiguration) {
+    super(consumerId, platformConfiguration);
     this.monitoringProducer = monitoringProducer;
+    monitoringProducer.addNode(new String[0], "management-answer", null);
   }
 
   @Override
@@ -63,7 +65,7 @@ class DefaultPassiveEntityMonitoringService extends AbstractEntityMonitoringServ
   @Override
   public void answerManagementCall(String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
     logger.trace("[{}] answerManagementCall({}, executed={}, error={})", getConsumerId(), managementCallIdentifier, contextualReturn.hasExecuted(), contextualReturn.errorThrown());
-    monitoringProducer.addNode(new String[]{"management", "answer"}, managementCallIdentifier, contextualReturn);
+    monitoringProducer.addNode(new String[]{"management-answer"}, managementCallIdentifier, contextualReturn);
   }
 
 }

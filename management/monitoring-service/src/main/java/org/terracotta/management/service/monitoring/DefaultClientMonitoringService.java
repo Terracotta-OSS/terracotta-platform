@@ -154,7 +154,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   private void send(ClientDescriptor client, Message message) {
     LOGGER.trace("[{}] send({}, {})", consumerId, client, message);
     try {
-      clientCommunicator.sendNoResponse(client, ProxyEntityResponse.response(Message.class, message));
+      clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(Message.class, message));
     } catch (Exception e) {
       LOGGER.error("Unable to send message " + message + " to client " + client);
     }

@@ -15,24 +15,21 @@
  */
 package org.terracotta.management.entity.tms.server;
 
-import org.terracotta.management.entity.tms.TmsAgent;
-import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
+import org.terracotta.management.model.call.ContextualCall;
+import org.terracotta.voltron.proxy.ConcurrencyStrategy;
+import org.terracotta.voltron.proxy.ExecutionStrategy;
+
+import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.BOTH;
 
 /**
+ * Interface backed by the @{{@link org.terracotta.entity.IEntityMessenger}} used to communicate a management call to execute on a server
+ *
  * @author Mathieu Carbou
  */
-class PassiveTmsAgentServerEntity extends PassiveProxiedServerEntity<TmsAgent, Void, TmsAgentMessenger> {
+public interface TmsAgentMessenger {
 
-  private final PassiveTmsAgent tmsAgent;
-
-  PassiveTmsAgentServerEntity(PassiveTmsAgent tmsAgent) {
-    super(tmsAgent, null, tmsAgent);
-    this.tmsAgent = tmsAgent;
-  }
-
-  @Override
-  public void createNew() {
-    tmsAgent.init();
-  }
+  @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
+  @ExecutionStrategy(location = BOTH)
+  void executeManagementCall(String managementCallIdentifier, ContextualCall<?> call);
 
 }

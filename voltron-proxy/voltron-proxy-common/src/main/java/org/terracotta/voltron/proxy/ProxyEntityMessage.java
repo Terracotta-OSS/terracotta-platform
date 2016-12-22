@@ -30,12 +30,12 @@ public class ProxyEntityMessage implements EntityMessage {
   private final Object[] args;
 
   private final AtomicBoolean consumed = new AtomicBoolean(false);
-  private final boolean syncMessage;
+  private final MessageType type;
 
-  public ProxyEntityMessage(final MethodDescriptor method, final Object[] args, boolean syncMessage) {
+  public ProxyEntityMessage(final MethodDescriptor method, final Object[] args, MessageType type) {
     this.method = method;
     this.args = args;
-    this.syncMessage = syncMessage;
+    this.type = type;
   }
 
   public MethodDescriptor getMethod() {
@@ -86,7 +86,7 @@ public class ProxyEntityMessage implements EntityMessage {
     return method.getExecutionLocation();
   }
 
-  public boolean isSyncMessage() {
-    return syncMessage;
+  public MessageType getType() {
+    return type;
   }
 }

@@ -27,33 +27,45 @@ import java.util.Objects;
 /**
  * @author Alex Snaps
  */
-public abstract class ActiveProxiedServerEntity<T, S, R> implements ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ActiveProxiedServerEntity<T, S, R, M> implements ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final T entity;
-  private final ProxyInvoker<T> invoker;
-
   private S synchronizer;
+  private final M messenger;
+
+  private final ProxyInvoker<T> entityInvoker;
+  private final ProxyInvoker<M> messengerInvoker;
+
   private Codec codec;
   private Class<R> reconnectDataType;
 
-  public ActiveProxiedServerEntity(T entity) {
+  public ActiveProxiedServerEntity(T entity, M messenger) {
     this.entity = Objects.requireNonNull(entity);
-    this.invoker = new ProxyInvoker<>(entity);
+    this.messenger = messenger; // can be null
+    this.entityInvoker = new ProxyInvoker<>(entity);
+    this.messengerInvoker = new ProxyInvoker<>(messenger);
   }
 
   @Override
   public final ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
-    return invoker.invoke(msg, clientDescriptor);
+    switch (msg.getType()) {
+      case MESSAGE:
+        return entityInvoker.invoke(msg, clientDescriptor);
+      case MESSENGER:
+        return messengerInvoker.invoke(msg, clientDescriptor);
+      default:
+        throw new AssertionError(msg.getType());
+    }
   }
 
   @Override
   public void connected(ClientDescriptor clientDescriptor) {
-    invoker.addClient(clientDescriptor);
+    entityInvoker.addClient(clientDescriptor);
   }
 
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {
-    invoker.removeClient(clientDescriptor);
+    entityInvoker.removeClient(clientDescriptor);
   }
 
   @Override
@@ -101,9 +113,9 @@ public abstract class ActiveProxiedServerEntity<T, S, R> implements ActiveServer
   protected void onReconnect(ClientDescriptor clientDescriptor, R state) {
   }
 
-  protected final <M> void fireMessage(Class<M> type, M message, boolean echo) {invoker.fireMessage(type, message, echo);}
+  protected final <M> void fireMessage(Class<M> type, M message, boolean echo) {entityInvoker.fireMessage(type, message, echo);}
 
-  protected final <M> void fireMessage(Class<M> type, M message, ClientDescriptor[] clients) {invoker.fireMessage(type, message, clients);}
+  protected final <M> void fireMessage(Class<M> type, M message, ClientDescriptor[] clients) {entityInvoker.fireMessage(type, message, clients);}
 
   protected final T getEntity() {
     return entity;
@@ -113,8 +125,12 @@ public abstract class ActiveProxiedServerEntity<T, S, R> implements ActiveServer
     return synchronizer;
   }
 
-  final ProxyInvoker<T> getInvoker() {
-    return invoker;
+  protected final M getMessenger() {
+    return messenger;
+  }
+
+  final ProxyInvoker<T> getEntityInvoker() {
+    return entityInvoker;
   }
 
   final void setSynchronizer(S synchronizer) {

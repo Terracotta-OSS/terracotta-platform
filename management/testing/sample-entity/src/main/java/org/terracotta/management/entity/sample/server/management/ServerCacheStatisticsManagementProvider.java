@@ -56,8 +56,12 @@ class ServerCacheStatisticsManagementProvider extends AbstractStatisticsManageme
       EnumSet<CacheOperationOutcomes.GetOutcome> miss = of(CacheOperationOutcomes.GetOutcome.MISS);
       OperationStatisticDescriptor<CacheOperationOutcomes.GetOutcome> getCacheStatisticDescriptor = OperationStatisticDescriptor.descriptor("get", singleton("cluster"), CacheOperationOutcomes.GetOutcome.class);
 
+      EnumSet<CacheOperationOutcomes.PutOutcome> put = of(CacheOperationOutcomes.PutOutcome.PUT);
+      OperationStatisticDescriptor<CacheOperationOutcomes.PutOutcome> putCacheStatisticDescriptor = OperationStatisticDescriptor.descriptor("put", singleton("cluster"), CacheOperationOutcomes.PutOutcome.class);
+
       statisticsRegistry.registerCompoundOperations("Cluster:Hit", getCacheStatisticDescriptor, hit);
       statisticsRegistry.registerCompoundOperations("Cluster:Miss", getCacheStatisticDescriptor, miss);
+      statisticsRegistry.registerCompoundOperations("Cluster:Put", putCacheStatisticDescriptor, put);
       statisticsRegistry.registerCompoundOperations("Cluster:Clear", OperationStatisticDescriptor.descriptor("clear", singleton("cluster"), CacheOperationOutcomes.ClearOutcome.class), allOf(CacheOperationOutcomes.ClearOutcome.class));
 
       statisticsRegistry.registerRatios("Cluster:HitRatio", getCacheStatisticDescriptor, hit, allOf(CacheOperationOutcomes.GetOutcome.class));

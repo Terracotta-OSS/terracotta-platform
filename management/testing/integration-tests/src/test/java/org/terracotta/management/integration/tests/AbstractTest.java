@@ -67,7 +67,7 @@ public abstract class AbstractTest {
   protected TmsAgentService tmsAgentService;
 
   @Rule
-  public Timeout timeout = Timeout.seconds(90);
+  public Timeout timeout = Timeout.seconds(60);
 
   protected final void commonSetUp(Cluster cluster) throws Exception {
     this.cluster = cluster;
@@ -75,7 +75,7 @@ public abstract class AbstractTest {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
     mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
 
-    connectManagementClients(cluster.getConnectionURI());
+    connectManagementClient(cluster.getConnectionURI());
 
     addWebappNode(cluster.getConnectionURI().resolve("/pet-clinic"));
     addWebappNode(cluster.getConnectionURI().resolve("/pet-clinic"));
@@ -166,7 +166,7 @@ public abstract class AbstractTest {
     public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
   }
 
-  private void connectManagementClients(URI uri) throws Exception {
+  private void connectManagementClient(URI uri) throws Exception {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, getClass().getSimpleName());
@@ -183,7 +183,7 @@ public abstract class AbstractTest {
             .setHistoryInterval(1, TimeUnit.SECONDS)
             .setTimeToDisable(5, TimeUnit.SECONDS)));
     this.tmsAgentService = new TmsAgentService(tmsAgentEntity);
-    this.tmsAgentService.setOperationTimeout(10, TimeUnit.SECONDS);
+    this.tmsAgentService.setOperationTimeout(60, TimeUnit.SECONDS);
   }
 
   protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {

@@ -28,9 +28,11 @@ import java.util.Objects;
 public class ManagementServiceConfiguration implements ServiceConfiguration<ManagementService> {
 
   private final ClientCommunicator clientCommunicator;
+  private ManagementCallExecutor managementCallExecutor;
 
-  public ManagementServiceConfiguration(ClientCommunicator clientCommunicator) {
+  public ManagementServiceConfiguration(ClientCommunicator clientCommunicator, ManagementCallExecutor managementCallExecutor) {
     this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
+    this.managementCallExecutor = Objects.requireNonNull(managementCallExecutor);
   }
 
   @Override
@@ -40,5 +42,9 @@ public class ManagementServiceConfiguration implements ServiceConfiguration<Mana
 
   public ClientCommunicator getClientCommunicator() {
     return clientCommunicator;
+  }
+
+  public ManagementCallExecutor getManagementCallExecutor() {
+    return managementCallExecutor;
   }
 }

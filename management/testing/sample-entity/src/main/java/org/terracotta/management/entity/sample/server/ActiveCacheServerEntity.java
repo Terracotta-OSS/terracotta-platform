@@ -27,7 +27,7 @@ import java.io.Serializable;
 /**
  * @author Mathieu Carbou
  */
-class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync, Void> {
+class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync, Void, Void> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveCacheServerEntity.class);
 
@@ -36,7 +36,7 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
   private final ServerCache.Listener listener = (key, value) -> fireMessage(Serializable[].class, new Serializable[]{"remove", key, value}, true);
 
   ActiveCacheServerEntity(ServerCache cache, ServiceRegistry serviceRegistry) {
-    super(cache);
+    super(cache, null);
     this.cache = cache;
 
     // callback clients on eviction

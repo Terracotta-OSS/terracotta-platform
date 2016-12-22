@@ -33,7 +33,7 @@
     <passthrough-testing.version>1.2.0-pre2</passthrough-testing.version>
     <terracotta-core.version>5.2.0-pre2</terracotta-core.version>
     <galvan.version>1.2.0-pre2</galvan.version>
-    <statistics.version>1.4.1</statistics.version>
+    <statistics.version>1.4.2</statistics.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.6</java.version>

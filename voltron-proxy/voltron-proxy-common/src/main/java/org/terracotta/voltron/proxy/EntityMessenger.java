@@ -13,16 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management.server;
+package org.terracotta.voltron.proxy;
 
-import org.terracotta.management.entity.management.ManagementAgent;
-import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
  */
-class PassiveManagementAgentServerEntity extends PassiveProxiedServerEntity<ManagementAgent, Void, Void> {
-  PassiveManagementAgentServerEntity(PassiveManagementAgent managementAgent) {
-    super(managementAgent, null, null);
+public interface EntityMessenger {
+
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @interface Delayed {
+    long value() default 0;
+
+    TimeUnit unit() default TimeUnit.MILLISECONDS;
+  }
+
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @interface Frequency {
+    long value() default 0;
+
+    TimeUnit unit() default TimeUnit.MILLISECONDS;
   }
 }

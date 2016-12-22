@@ -44,12 +44,14 @@ public class Management {
   public Management(String cacheName, ServiceRegistry serviceRegistry, boolean active) {
     this.cacheName = cacheName;
     EntityMonitoringService monitoringService;
+
     if (active) {
       monitoringService = Objects.requireNonNull(serviceRegistry.getService(new ActiveEntityMonitoringServiceConfiguration()));
     } else {
       IMonitoringProducer monitoringProducer = serviceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
       monitoringService = Objects.requireNonNull(serviceRegistry.getService(new PassiveEntityMonitoringServiceConfiguration(monitoringProducer)));
     }
+
     if (monitoringService == null) {
       this.managementRegistry = null;
     } else {

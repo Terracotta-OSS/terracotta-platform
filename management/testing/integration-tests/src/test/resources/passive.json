@@ -258,6 +258,14 @@
                 "type": "RATIO_HISTORY"
               },
               {
+                "name": "Cluster:PutCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cluster:PutRate",
+                "type": "RATE_HISTORY"
+              },
+              {
                 "name": "ServerCache:Size",
                 "type": "SIZE_HISTORY"
               }
@@ -412,6 +420,14 @@
               {
                 "name": "Cluster:MissRatio",
                 "type": "RATIO_HISTORY"
+              },
+              {
+                "name": "Cluster:PutCount",
+                "type": "COUNTER_HISTORY"
+              },
+              {
+                "name": "Cluster:PutRate",
+                "type": "RATE_HISTORY"
               },
               {
                 "name": "ServerCache:Size",

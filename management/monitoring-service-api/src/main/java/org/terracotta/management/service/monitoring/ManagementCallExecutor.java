@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.entity.management.server;
+package org.terracotta.management.service.monitoring;
 
-import org.terracotta.management.entity.management.ManagementAgent;
-import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.management.model.call.ContextualCall;
+import org.terracotta.management.model.call.ContextualReturn;
 
 /**
+ * Interface passed to a {@link ManagementServiceConfiguration}, that is responsible to execute a management call
+ * and set the result by calling {@link EntityMonitoringService#answerManagementCall(String, ContextualReturn)}
+ *
  * @author Mathieu Carbou
  */
-class PassiveManagementAgentServerEntity extends PassiveProxiedServerEntity<ManagementAgent, Void, Void> {
-  PassiveManagementAgentServerEntity(PassiveManagementAgent managementAgent) {
-    super(managementAgent, null, null);
-  }
+@CommonComponent
+public interface ManagementCallExecutor {
+  void executeManagementCall(String managementCallIdentifier, ContextualCall<?> call);
 }

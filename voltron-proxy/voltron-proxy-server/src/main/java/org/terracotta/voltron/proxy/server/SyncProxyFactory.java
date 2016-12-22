@@ -16,6 +16,7 @@
 package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.voltron.proxy.MessageType;
 import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 
@@ -36,7 +37,7 @@ class SyncProxyFactory {
         new Class<?>[]{synchronizerType},
         (proxy, method, args) -> {
           final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
-          ProxyEntityMessage proxyEntityMessage = new ProxyEntityMessage(methodDescriptor, args, true);
+          ProxyEntityMessage proxyEntityMessage = new ProxyEntityMessage(methodDescriptor, args, MessageType.SYNC);
           PassiveSynchronizationChannel<ProxyEntityMessage> channel = currentChannel.get();
           if (channel == null) {
             throw new IllegalStateException("No PassiveSynchronizationChannel set to current thread");
