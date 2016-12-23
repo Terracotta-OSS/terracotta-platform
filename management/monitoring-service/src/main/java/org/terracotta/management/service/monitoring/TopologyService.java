@@ -355,24 +355,32 @@ class TopologyService implements PlatformListener {
   }
 
   synchronized void setClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
-    getClient(consumerId, clientDescriptor).ifPresent(client -> {
+    Optional<Client> optional = getClient(consumerId, clientDescriptor);
+    if (optional.isPresent()) {
+      Client client = optional.get();
       String notif = client.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "CLIENT_REGISTRY_UPDATED").orElse("CLIENT_REGISTRY_AVAILABLE");
       if (!notif.isEmpty()) {
         client.setManagementRegistry(newRegistry);
         firingService.fireNotification(new ContextualNotification(client.getContext(), notif));
       }
-    });
+    } else {
+      LOGGER.warn("[0] setClientManagementRegistry(): Client descriptor " + clientDescriptor + " did not fetch entity " + consumerId);
+    }
   }
 
   synchronized void setClientTags(long consumerId, ClientDescriptor clientDescriptor, String[] tags) {
-    getClient(consumerId, clientDescriptor).ifPresent(client -> {
+    Optional<Client> optional = getClient(consumerId, clientDescriptor);
+    if (optional.isPresent()) {
+      Client client = optional.get();
       Set<String> currtags = new HashSet<>(client.getTags());
       Set<String> newTags = new HashSet<>(Arrays.asList(tags));
       if (!currtags.equals(newTags)) {
         client.setTags(tags);
         firingService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
       }
-    });
+    } else {
+      LOGGER.warn("[0] setClientTags(): Client descriptor " + clientDescriptor + " did not fetch entity " + consumerId);
+    }
   }
 
   synchronized Optional<Context> getEntityContext(String serverName, long consumerId) {
