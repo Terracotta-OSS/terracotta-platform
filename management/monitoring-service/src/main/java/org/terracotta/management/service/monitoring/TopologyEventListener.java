@@ -22,14 +22,29 @@ import org.terracotta.entity.ClientDescriptor;
  */
 interface TopologyEventListener {
 
+  /**
+   * Callback called when platform told the monitoring service that a service became active
+   */
   void onBecomeActive();
 
+  /**
+   * Callback called when platform told the monitoring service that a fetch happened
+   */
   void onFetch(long consumerId, ClientDescriptor clientDescriptor);
 
+  /**
+   * Callback called when platform told the monitoring service that an unfetch
+   */
   void onUnfetch(long consumerId, ClientDescriptor clientDescriptor);
 
+  /**
+   * Callback called when platform told the monitoring service that an entity has been destroyed
+   */
   void onEntityDestroyed(long consumerId);
 
-  void onEntityFailover(long consumerId);
+  /**
+   * Callback called when platform told the monitoring service that an entity has been created
+   */
+  void onEntityCreated(long consumerId);
 
 }

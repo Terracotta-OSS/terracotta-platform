@@ -21,6 +21,7 @@ import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.observer.OperationObserver;
 
+import java.io.Closeable;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ import static org.terracotta.statistics.StatisticBuilder.operation;
 /**
  * @author Mathieu Carbou
  */
-public class ClientCache implements Cache {
+public class ClientCache implements Cache, Closeable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientCache.class);
 
@@ -159,4 +160,8 @@ public class ClientCache implements Cache {
     data.remove(key, val);
   }
 
+  @Override
+  public void close() {
+    delegate.close();
+  }
 }

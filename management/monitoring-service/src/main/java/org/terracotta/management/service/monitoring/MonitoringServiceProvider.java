@@ -55,7 +55,8 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       ClientMonitoringService.class, // for management entity
       ManagementService.class, // for TMS Entity
       ActiveEntityMonitoringService.class, // monitoring of an active entity
-      PassiveEntityMonitoringService.class // monitoring of a passive entity
+      PassiveEntityMonitoringService.class, // monitoring of a passive entity
+      EntityEventService.class // enables entities to listen for monitoring events (workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426)
   );
 
   private final Map<Long, DefaultManagementService> managementServices = new ConcurrentHashMap<>();
@@ -63,14 +64,15 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private final Map<Long, DefaultConsumerManagementRegistry> consumerManagementRegistries = new ConcurrentHashMap<>();
   private final Map<Long, DefaultActiveEntityMonitoringService> activeEntityMonitoringServices = new ConcurrentHashMap<>();
   private final Map<Long, DefaultPassiveEntityMonitoringService> passiveEntityMonitoringServices = new ConcurrentHashMap<>();
+  private final Map<Long, DefaultEntityEventService> entityEventServices = new ConcurrentHashMap<>();
 
   private final TimeSource timeSource = TimeSource.BEST;
   private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry(consumerManagementRegistries);
   private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
   private final StatisticsServiceFactory statisticsServiceFactory = new StatisticsServiceFactory(sharedManagementRegistry, timeSource);
+  private final DefaultFiringService firingService = new DefaultFiringService(sequenceGenerator, managementServices, clientMonitoringServices);
 
   private PlatformConfiguration platformConfiguration;
-  private DefaultFiringService firingService;
   private TopologyService topologyService;
   private IStripeMonitoring platformListenerAdapter;
 
@@ -86,10 +88,8 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
-    this.firingService = new DefaultFiringService(sequenceGenerator, managementServices, clientMonitoringServices);
-    this.topologyService = new TopologyService(firingService, timeSource, platformConfiguration);
+    this.topologyService = new TopologyService(firingService, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
-
     this.topologyService.addTopologyEventListener(new TopologyEventListenerAdapter() {
       @Override
       public void onEntityDestroyed(long consumerId) {
@@ -97,6 +97,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         topologyService.removeTopologyEventListener(managementServices.remove(consumerId));
         topologyService.removeTopologyEventListener(clientMonitoringServices.remove(consumerId));
         topologyService.removeTopologyEventListener(consumerManagementRegistries.remove(consumerId));
+        topologyService.removeTopologyEventListener(entityEventServices.remove(consumerId));
         passiveEntityMonitoringServices.remove(consumerId);
         activeEntityMonitoringServices.remove(consumerId);
       }
@@ -111,7 +112,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+  public synchronized <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
     // for platform, which requests either a IStripeMonitoring to send platform events or a IStripeMonitoring to send callbacks from passive entities
@@ -124,6 +125,24 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       }
     }
 
+    if (EntityEventService.class == serviceType) {
+      LOGGER.trace("[{}] getService({})", consumerID, EntityEventService.class.getSimpleName());
+      // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426 (on failover, entity initialization is done before we are aware of them)
+      // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/409 (in a failover, we are not aware of passive entity destruction)
+      DefaultEntityEventService entityEventService = entityEventServices.remove(consumerID);
+      if (entityEventService != null) {
+        LOGGER.trace("[{}] getService({}): clearing previous instance", consumerID, EntityEventService.class.getSimpleName());
+        topologyService.removeTopologyEventListener(entityEventService);
+        entityEventService.clear();
+      }
+      // create a new registry
+      LOGGER.trace("[{}] getService({})", consumerID, EntityEventService.class.getSimpleName());
+      entityEventService = new DefaultEntityEventService(consumerID);
+      topologyService.addTopologyEventListener(entityEventService);
+      entityEventServices.put(consumerID, entityEventService);
+      return serviceType.cast(entityEventService);
+    }
+
     // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
     if (SharedManagementRegistry.class == serviceType) {
       LOGGER.trace("[{}] getService({})", consumerID, SharedManagementRegistry.class.getSimpleName());
@@ -134,13 +153,14 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     if (ConsumerManagementRegistry.class == serviceType) {
       if (configuration instanceof ConsumerManagementRegistryConfiguration) {
         ConsumerManagementRegistryConfiguration consumerManagementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
+        // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/409
         // in a failover, we are not aware of passive entity destruction so if we find a previous service with the same consumer id, we clean it
         // this is true for this service specifically
         DefaultConsumerManagementRegistry managementRegistry = consumerManagementRegistries.remove(consumerID);
         if (managementRegistry != null) {
           LOGGER.trace("[{}] getService({}): clearing previous instance", consumerID, ConsumerManagementRegistry.class.getSimpleName());
           topologyService.removeTopologyEventListener(managementRegistry);
-          managementRegistry.onEntityDestroyed(consumerID);
+          managementRegistry.clear();
         }
         // create a new registry
         LOGGER.trace("[{}] getService({})", consumerID, ConsumerManagementRegistry.class.getSimpleName());

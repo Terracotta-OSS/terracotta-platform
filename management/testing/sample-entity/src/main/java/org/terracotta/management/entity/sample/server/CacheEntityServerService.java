@@ -17,14 +17,19 @@ package org.terracotta.management.entity.sample.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.Cache;
+import org.terracotta.management.entity.sample.server.management.Management;
+import org.terracotta.management.service.monitoring.EntityEventListenerAdapter;
+import org.terracotta.management.service.monitoring.EntityEventService;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -43,14 +48,33 @@ public class CacheEntityServerService extends ProxyServerEntityService<Cache, St
   public ActiveCacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) {
     LOGGER.trace("createActiveEntity({})", identifier);
     Map<String, String> data = registry.getService(new MapConfiguration(identifier));
-    return new ActiveCacheServerEntity(new ServerCache(identifier, data), registry);
+    ServerCache cache = new ServerCache(identifier, data);
+    Management management = new Management(cache.getName(), registry, true);
+
+    ActiveCacheServerEntity entity = new ActiveCacheServerEntity(cache, management);
+
+    // workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426
+    EntityEventService entityEventService = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(EntityEventService.class)));
+    entityEventService.addEntityEventListener(new EntityEventListenerAdapter() {
+      @Override
+      public void onCreated() {
+        LOGGER.trace("[{}] onCreated()", identifier);
+        if(management.init()) {
+          management.serverCacheCreated(cache);
+        }
+      }
+    });
+
+    return entity;
   }
 
   @Override
   protected PassiveCacheServerEntity createPassiveEntity(ServiceRegistry registry, String identifier) {
     LOGGER.trace("createPassiveEntity({})", identifier);
     Map<String, String> data = registry.getService(new MapConfiguration(identifier));
-    return new PassiveCacheServerEntity(new ServerCache(identifier, data), registry);
+    ServerCache cache = new ServerCache(identifier, data);
+    Management management = new Management(cache.getName(), registry, false);
+    return new PassiveCacheServerEntity(cache, management);
   }
 
   @Override

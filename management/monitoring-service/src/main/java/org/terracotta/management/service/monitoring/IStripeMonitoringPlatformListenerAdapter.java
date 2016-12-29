@@ -95,11 +95,19 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
           PlatformEntity platformEntity = (PlatformEntity) value;
           requireNonNull(entities.get(sender.getServerName()), "Inconsistent monitoring tree: server did not joined stripe first: " + sender.getServerName())
               .put(name, platformEntity);
-          // an active server is reporting a passive entity: it *can* be that a failover is occurring
-          if (!platformEntity.isActive && sender.getServerName().equals(currentActive)) {
-            delegate.serverEntityFailover(sender, platformEntity);
-          } else {
+          // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/405
+          if (platformEntity.isActive || !sender.getServerName().equals(currentActive)) {
             delegate.serverEntityCreated(sender, platformEntity);
+          } else {
+            // event about a passive entity on an active server
+            // this is illegal, but platform was previously sending
+            // us some combinations like that in case of a failover
+            // when passive server become active and replays events
+            // regarding its old passive entities.
+            // Now, in new tc-core versions, we do not receive such
+            // events anymore so we are unable to keep track of failover
+            // transition for entities (https://github.com/Terracotta-OSS/terracotta-core/issues/405)
+            LOGGER.warn("Ignoring platform event for passive entity {} created on new active server {} after a failover", platformEntity, sender.getServerName());
           }
           return true;
         }

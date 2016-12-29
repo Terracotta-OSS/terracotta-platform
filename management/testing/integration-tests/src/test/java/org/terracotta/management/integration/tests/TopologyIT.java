@@ -89,9 +89,6 @@ public class TopologyIT extends AbstractSingleTest {
     String actual = removeRandomValues(currentJson);
     String expected = readJson("notifications.json").toString();
 
-    System.out.println("This is the actual topology : " + actual);
-    System.out.println("This is the expected topology : " + expected);
-
     assertEquals(expected, actual);
   }
 

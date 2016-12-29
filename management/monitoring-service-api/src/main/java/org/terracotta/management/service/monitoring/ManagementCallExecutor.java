@@ -21,7 +21,10 @@ import org.terracotta.management.model.call.ContextualReturn;
 
 /**
  * Interface passed to a {@link ManagementServiceConfiguration}, that is responsible to execute a management call
- * and set the result by calling {@link EntityMonitoringService#answerManagementCall(String, ContextualReturn)}
+ * and set back the result by calling {@link EntityMonitoringService#answerManagementCall(String, ContextualReturn)}.
+ * <p>
+ * Management call execution can be done directly through the callback, or could also be redirected to the right server
+ * with {@link org.terracotta.entity.IEntityMessenger}
  *
  * @author Mathieu Carbou
  */
