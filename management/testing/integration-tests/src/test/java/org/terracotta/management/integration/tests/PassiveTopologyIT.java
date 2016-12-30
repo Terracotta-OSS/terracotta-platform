@@ -16,16 +16,22 @@
 package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
-import org.terracotta.management.model.capabilities.descriptors.Settings;
+import org.terracotta.management.entity.sample.Cache;
+import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
-import org.terracotta.management.model.cluster.ServerEntity;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.registry.collect.StatisticConfiguration;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.util.stream.Stream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou
@@ -44,6 +50,62 @@ public class PassiveTopologyIT extends AbstractHATest {
 
     // and compare
     assertEquals(readJson("passive.json").toString(), actual);
+  }
+
+  @Test
+  public void notification_on_entity_creation_and_destruction() throws Exception {
+    // clear buffer
+    tmsAgentService.readMessages();
+
+    StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
+        .setAverageWindowDuration(1, TimeUnit.MINUTES)
+        .setHistorySize(100)
+        .setHistoryInterval(1, TimeUnit.SECONDS)
+        .setTimeToDisable(5, TimeUnit.SECONDS);
+    CacheFactory cacheFactory = new CacheFactory(cluster.getConnectionURI().resolve("/random-1"), statisticConfiguration);
+    cacheFactory.init();
+    Cache cache = cacheFactory.getCache("my-cache");
+    cache.put("key", "val");
+
+    cacheFactory.destroyCache("my-cache");
+    cacheFactory.close();
+
+    List<ContextualNotification> notifs = tmsAgentService.readMessages()
+        .stream()
+        .filter(message -> message.getType().equals("NOTIFICATION"))
+        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+        .collect(Collectors.toList());
+
+    while (!Thread.currentThread().isInterrupted() && notifs.stream().filter(contextualNotification -> contextualNotification.getType().equals("SERVER_ENTITY_DESTROYED")).count() != 2) {
+      notifs.addAll(tmsAgentService.readMessages()
+          .stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .collect(Collectors.toList()));
+    }
+
+    assertThat(notifs.stream().map(ContextualNotification::getType).collect(Collectors.toList()), hasItems(
+        "CLIENT_CONNECTED",
+        "SERVER_ENTITY_FETCHED",
+        "CLIENT_REGISTRY_AVAILABLE",
+        "CLIENT_TAGS_UPDATED",
+        "CLIENT_INIT",
+        "ENTITY_REGISTRY_AVAILABLE",
+        "ENTITY_REGISTRY_UPDATED",
+        "SERVER_CACHE_CREATED",
+        "SERVER_ENTITY_CREATED",
+        "SERVER_ENTITY_CREATED",
+        "ENTITY_REGISTRY_AVAILABLE",
+        "ENTITY_REGISTRY_UPDATED",
+        "SERVER_ENTITY_FETCHED",
+        "CLIENT_REGISTRY_UPDATED",
+        "CLIENT_CACHE_CREATED",
+        "SERVER_ENTITY_UNFETCHED",
+        "SERVER_CACHE_DESTROYED",
+        "SERVER_ENTITY_DESTROYED",
+        "SERVER_ENTITY_DESTROYED",
+        "CLIENT_CLOSE"
+    ));
   }
 
 }

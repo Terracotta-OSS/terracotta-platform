@@ -16,18 +16,22 @@
 package org.terracotta.management.integration.tests;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
-import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.AbstractStatisticHistory;
+import org.terracotta.management.model.stats.history.CounterHistory;
+import org.terracotta.management.model.stats.history.RatioHistory;
+import org.terracotta.management.model.stats.history.SizeHistory;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -81,29 +85,32 @@ public class FailoverIT extends AbstractHATest {
 
     System.out.println(actual);
 
-    //TODO: change this file content: topology-after-failover.json - there should be tags on clients and management registry
     assertEquals(readJson("topology-after-failover.json"), readJsonStr(actual));
   }
 
   @Test
   public void notifications_after_failover() throws Exception {
     // read messages
-    List<Message> messages = tmsAgentService.readMessages();
-
-    List<ContextualNotification> notifs = messages.stream()
+    List<ContextualNotification> notifs = tmsAgentService.readMessages().stream()
         .filter(message -> message.getType().equals("NOTIFICATION"))
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
         .collect(Collectors.toList());
 
-    assertThat(
-        notifs.stream().map(ContextualNotification::getType).collect(Collectors.toList()),
-        hasItems(
-            "SERVER_JOINED", "SERVER_STATE_CHANGED",
-            "SERVER_ENTITY_CREATED", "SERVER_ENTITY_CREATED", "SERVER_ENTITY_CREATED", "SERVER_ENTITY_CREATED",
-            "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_AVAILABLE",
-            "CLIENT_CONNECTED", "CLIENT_CONNECTED", "CLIENT_CONNECTED",
-            "SERVER_ENTITY_FETCHED", "SERVER_ENTITY_FETCHED", "SERVER_ENTITY_FETCHED", "SERVER_ENTITY_FETCHED"));
+    Collection<String> allNotifs = Arrays.asList(
+        "SERVER_JOINED", "SERVER_STATE_CHANGED",
+        "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
+        "CLIENT_CONNECTED",
+        "SERVER_ENTITY_FETCHED",
+        "CLIENT_TAGS_UPDATED", "CLIENT_REGISTRY_AVAILABLE", "CLIENT_RECONNECTED");
 
+    while (!Thread.currentThread().isInterrupted() && !notifs.stream().map(ContextualNotification::getType).collect(Collectors.toSet()).containsAll(allNotifs)) {
+      notifs.addAll(tmsAgentService.readMessages().stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .collect(Collectors.toList()));
+    }
+
+    assertThat(notifs.stream().map(ContextualNotification::getType).collect(Collectors.toList()).containsAll(allNotifs), is(true));
     assertThat(notifs.get(1).getContext().get(Server.NAME_KEY), equalTo(oldPassive.getServerName()));
     assertThat(notifs.get(1).getAttributes().get("state"), equalTo("ACTIVE"));
   }
@@ -111,6 +118,57 @@ public class FailoverIT extends AbstractHATest {
   @Test
   public void puts_can_be_seen_on_other_clients_after_failover() throws Exception {
     assertThat(get(1, "clients", "client1"), equalTo("Mathieu"));
+  }
+
+  @Test
+  public void management_call_and_stats_after_failover() throws Exception {
+    System.out.println("Please be patient... Test can take about 15s...");
+
+
+    triggerServerStatComputation("Cluster:HitCount", "Cluster:MissCount", "Cluster:HitRatio", "ServerCache:Size");
+
+    put(0, "pets", "pet1", "Cubitus");
+    get(1, "pets", "pet1"); // hit
+
+    queryAllRemoteStatsUntil(stats -> stats
+        .stream()
+        .map(o -> o.getStatistic(CounterHistory.class, "Cluster:HitCount"))
+        .map(AbstractStatisticHistory::getLast)
+        .filter(sample -> sample.getValue() == 1L) // 1 hit
+        .findFirst()
+        .isPresent());
+
+    get(1, "pets", "pet2"); // miss
+
+    queryAllRemoteStatsUntil(stats -> {
+      boolean test = true;
+
+      test &= stats
+          .stream()
+          .map(o -> o.getStatistic(CounterHistory.class, "Cluster:MissCount"))
+          .map(AbstractStatisticHistory::getLast)
+          .filter(sample -> sample.getValue() == 1L) // 1 miss
+          .findFirst()
+          .isPresent();
+
+      test &= stats
+          .stream()
+          .map(o -> o.getStatistic(RatioHistory.class, "Cluster:HitRatio"))
+          .map(AbstractStatisticHistory::getLast)
+          .filter(sample -> sample.getValue() == 0.5d) // 1 hit for 2 gets
+          .findFirst()
+          .isPresent();
+
+      test &= stats
+          .stream()
+          .map(o -> o.getStatistic(SizeHistory.class, "ServerCache:Size"))
+          .map(AbstractStatisticHistory::getLast)
+          .filter(sample -> sample.getValue() == 1L) // size 1 on heap of entity
+          .findFirst()
+          .isPresent();
+
+      return test;
+    });
   }
 
 }

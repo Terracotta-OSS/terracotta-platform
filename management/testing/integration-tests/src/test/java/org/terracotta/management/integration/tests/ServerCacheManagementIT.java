@@ -114,7 +114,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
   @Test
   public void can_receive_server_statistics() throws Exception {
     System.out.println("Please be patient... Test can take about 15s...");
-    triggerServerStatComputation();
+    triggerServerStatComputation("Cluster:HitCount", "Cluster:MissCount", "Cluster:HitRatio", "ServerCache:Size");
 
     put(0, "pets", "pet1", "Cubitus");
     get(1, "pets", "pet1"); // hit
@@ -159,29 +159,6 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
       return test;
     });
 
-  }
-
-  private void triggerServerStatComputation() throws Exception {
-    // trigger stats computation and wait for all stats to have been computed at least once
-    ServerEntity serverEntity = tmsAgentService.readTopology()
-        .activeServerEntityStream()
-        .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
-        .findFirst()
-        .get();
-
-    tmsAgentService.updateCollectedStatistics(
-        serverEntity.getContext(),
-        "ServerCacheStatistics",
-        Arrays.asList("Cluster:HitCount", "Cluster:MissCount", "Cluster:HitRatio", "ServerCache:Size")
-    ).waitForReturn();
-
-    queryAllRemoteStatsUntil(stats -> !stats.isEmpty() && !stats
-        .stream()
-        .flatMap(o -> o.getStatistics().values().stream())
-        .map(statistic -> (StatisticHistory<?, ?>) statistic)
-        .filter(statisticHistory -> statisticHistory.getValue().length == 0)
-        .findFirst()
-        .isPresent());
   }
 
 }

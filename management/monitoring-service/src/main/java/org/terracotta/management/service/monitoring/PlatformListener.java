@@ -38,19 +38,6 @@ interface PlatformListener {
 
   void serverEntityDestroyed(PlatformServer sender, PlatformEntity entity);
 
-  /**
-   * Called when the passive takes over an active.
-   * 1. Passive becomes active
-   * 2. Voltron will "replay" the passive monitoring states (entities)
-   * 3. serverEntityFailover() will be called with these passive entities originating from the new active server
-   * 4. Voltron will then create a new monitoring tree
-   * 5. New active entities are created
-   * 6. serverEntityCreated() will be called with the new active entities
-   * <p>
-   * So this method enables to see the ongoing transitions of entities that were on a passive
-   */
-  void serverEntityFailover(PlatformServer sender, PlatformEntity entity);
-
   void serverStateChanged(PlatformServer sender, ServerState state);
 
   void clientConnected(PlatformConnectedClient client);

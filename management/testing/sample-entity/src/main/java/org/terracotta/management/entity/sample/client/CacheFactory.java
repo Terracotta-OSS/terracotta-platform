@@ -19,6 +19,10 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.connection.entity.EntityRef;
+import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.exception.PermanentEntityException;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.management.Management;
 import org.terracotta.management.model.context.ContextContainer;
@@ -88,6 +92,19 @@ public class CacheFactory implements Closeable {
 
       return clientCache;
     });
+  }
+
+  public void destroyCache(String name) {
+    ClientCache clientCache = caches.remove(name);
+    if (clientCache != null) {
+      clientCache.close();
+    }
+    try {
+      EntityRef<CacheEntity, String> ref = connection.getEntityRef(CacheEntity.class, 1, uri.getPath().substring(1) + "/" + name);
+      ref.destroy();
+    } catch (EntityNotProvidedException | PermanentEntityException | EntityNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public Connection getConnection() {

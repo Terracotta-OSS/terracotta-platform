@@ -17,7 +17,6 @@ package org.terracotta.management.entity.sample.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
@@ -32,10 +31,10 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSy
   private final Management management;
   private final ServerCache cache;
 
-  PassiveCacheServerEntity(ServerCache cache, ServiceRegistry serviceRegistry) {
+  PassiveCacheServerEntity(ServerCache cache, Management management) {
     super(cache, cache, null);
     this.cache = cache;
-    this.management = new Management(cache.getName(), serviceRegistry, false);
+    this.management = management;
   }
 
   @Override

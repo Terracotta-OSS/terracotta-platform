@@ -16,21 +16,30 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.registry.CapabilityManagementSupport;
-
-import java.util.Collection;
+import org.terracotta.entity.ClientDescriptor;
 
 /**
- * Special management registry that aggregates all created entity management registry on a server to run query and management calls on them.
- * <p>
- * {@link CapabilityManagementSupport} is able to route the call to the right exposed object thanks to the {@link org.terracotta.management.model.context.Context} objects passed.
- *
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface SharedManagementRegistry extends CapabilityManagementSupport {
+public class EntityEventListenerAdapter implements EntityEventListener {
+  @Override
+  public void onCreated() {
 
-  Collection<ContextContainer> getContextContainers();
+  }
 
+  @Override
+  public void onFetch(ClientDescriptor clientDescriptor) {
+
+  }
+
+  @Override
+  public void onUnfetch(ClientDescriptor clientDescriptor) {
+
+  }
+
+  @Override
+  public void onDestroyed() {
+
+  }
 }

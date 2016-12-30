@@ -35,7 +35,7 @@ public class HAStatisticsIT extends AbstractHATest {
   @Test
   public void can_do_remote_management_calls_on_servers() throws Exception {
     try {
-      triggerServerStatComputation();
+      triggerServerStatComputation("Cluster:PutCount");
 
       Set<String> servers = new HashSet<>();
 
@@ -59,7 +59,7 @@ public class HAStatisticsIT extends AbstractHATest {
   public void test_passive_stats() throws Exception {
     try {
       System.out.println("Please be patient... Test can take about 15s...");
-      triggerServerStatComputation();
+      triggerServerStatComputation("Cluster:PutCount");
 
       //System.out.println("put(pet1=Cubitus)");
       put(0, "pets", "pet1", "Cubitus"); // put on both active and passive
@@ -98,35 +98,6 @@ public class HAStatisticsIT extends AbstractHATest {
       e.printStackTrace();
       throw e;
     }
-  }
-
-  private void triggerServerStatComputation() throws Exception {
-    // trigger stats computation and wait for all stats to have been computed at least once
-    tmsAgentService.readTopology().serverStream().forEach(server -> {
-      ServerEntity serverEntity = server
-          .serverEntityStream()
-          .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
-          .findFirst()
-          .get();
-
-      try {
-        tmsAgentService.updateCollectedStatistics(
-            serverEntity.getContext(),
-            "ServerCacheStatistics",
-            Arrays.asList("Cluster:PutCount")
-        ).waitForReturn();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-
-    queryAllRemoteStatsUntil(stats -> !stats.isEmpty() && !stats
-        .stream()
-        .flatMap(o -> o.getStatistics().values().stream())
-        .map(statistic -> (StatisticHistory<?, ?>) statistic)
-        .filter(statisticHistory -> statisticHistory.getValue().length == 0)
-        .findFirst()
-        .isPresent());
   }
 
 }

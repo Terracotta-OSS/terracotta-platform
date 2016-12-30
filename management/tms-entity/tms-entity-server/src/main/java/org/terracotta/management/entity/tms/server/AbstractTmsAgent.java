@@ -41,29 +41,36 @@ abstract class AbstractTmsAgent implements TmsAgent, TmsAgentMessenger {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
+  private boolean initialized;
+
   AbstractTmsAgent(ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService entityMonitoringService, SharedManagementRegistry sharedManagementRegistry) {
     this.consumerManagementRegistry = Objects.requireNonNull(consumerManagementRegistry);
     this.entityMonitoringService = Objects.requireNonNull(entityMonitoringService);
     this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);
   }
 
-  void init() {
-    logger.trace("[{}] init()", entityMonitoringService.getConsumerId());
+  // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426
+  synchronized void init() {
+    if (!initialized) {
+      logger.trace("[{}] init()", entityMonitoringService.getConsumerId());
 
-    ContextContainer contextContainer = consumerManagementRegistry.getContextContainer();
+      ContextContainer contextContainer = consumerManagementRegistry.getContextContainer();
 
-    // the context for the collector, created from the the registry of the tms entity
-    Context context = Context.create(contextContainer.getName(), contextContainer.getValue());
+      // the context for the collector, created from the the registry of the tms entity
+      Context context = Context.create(contextContainer.getName(), contextContainer.getValue());
 
-    // we create a provider that will receive management calls to control the global voltron's statistic collector
-    // this provider will thus be on top of the tms entity
-    StatisticCollectorManagementProvider collectorManagementProvider = new StatisticCollectorManagementProvider(context);
-    consumerManagementRegistry.addManagementProvider(collectorManagementProvider);
+      // we create a provider that will receive management calls to control the global voltron's statistic collector
+      // this provider will thus be on top of the tms entity
+      StatisticCollectorManagementProvider collectorManagementProvider = new StatisticCollectorManagementProvider(context);
+      consumerManagementRegistry.addManagementProvider(collectorManagementProvider);
 
-    // start the stat collector (it won't collect any stats though, because they need to be configured through a management call)
-    collectorManagementProvider.init();
+      // start the stat collector (it won't collect any stats though, because they need to be configured through a management call)
+      collectorManagementProvider.init();
 
-    consumerManagementRegistry.refresh();
+      consumerManagementRegistry.refresh();
+
+      initialized = true;
+    }
   }
 
   @Override

@@ -17,7 +17,6 @@ package org.terracotta.management.entity.sample.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
@@ -35,22 +34,23 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
   private final ServerCache cache;
   private final ServerCache.Listener listener = (key, value) -> fireMessage(Serializable[].class, new Serializable[]{"remove", key, value}, true);
 
-  ActiveCacheServerEntity(ServerCache cache, ServiceRegistry serviceRegistry) {
+  ActiveCacheServerEntity(ServerCache cache, Management management) {
     super(cache, null);
     this.cache = cache;
 
     // callback clients on eviction
     cache.addListener(listener);
 
-    this.management = new Management(cache.getName(), serviceRegistry, true);
+    this.management = management;
   }
 
   @Override
   public void createNew() {
     super.createNew();
     LOGGER.trace("[{}] createNew()", cache.getName());
-    management.init();
-    management.serverCacheCreated(cache);
+    if (management.init()) {
+      management.serverCacheCreated(cache);
+    }
   }
 
   @Override

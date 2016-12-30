@@ -37,8 +37,7 @@ class TopologyEventListenerAdapter implements TopologyEventListener {
   }
 
   @Override
-  public void onEntityFailover(long consumerId) {
-
+  public void onEntityCreated(long consumerId) {
   }
 
   @Override

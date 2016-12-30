@@ -151,11 +151,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   }
 
   @Override
-  public void onEntityFailover(long consumerId) {
-    if (consumerId == this.consumerId) {
-      LOGGER.trace("[{}] onEntityFailover()", this.consumerId);
-      clear();
-    }
+  public void onEntityCreated(long consumerId) {
   }
 
   void fireMessage(Message message) {

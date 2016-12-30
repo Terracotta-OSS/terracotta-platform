@@ -32,7 +32,9 @@ import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
 import org.terracotta.management.entity.tms.client.TmsAgentService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
+import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.model.stats.StatisticHistory;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
 import org.terracotta.testing.rules.Cluster;
 
@@ -40,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +63,7 @@ public abstract class AbstractTest {
   private final ObjectMapper mapper = new ObjectMapper().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 
   private Connection managementConnection;
-  private Cluster cluster;
+  protected Cluster cluster;
 
   protected final List<CacheFactory> webappNodes = new ArrayList<>();
   protected final Map<String, List<Cache>> caches = new HashMap<>();
@@ -227,6 +230,35 @@ public abstract class AbstractTest {
         .replaceAll("\"id\":\"[^\"]*\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:SINGLE:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
         .replaceAll("testServer1", "testServer0");
+  }
+
+  protected void triggerServerStatComputation(String... statNames) throws Exception {
+    // trigger stats computation and wait for all stats to have been computed at least once
+    tmsAgentService.readTopology().serverStream().forEach(server -> {
+      ServerEntity serverEntity = server
+          .serverEntityStream()
+          .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
+          .findFirst()
+          .get();
+
+      try {
+        tmsAgentService.updateCollectedStatistics(
+            serverEntity.getContext(),
+            "ServerCacheStatistics",
+            Arrays.asList(statNames)
+        ).waitForReturn();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    queryAllRemoteStatsUntil(stats -> !stats.isEmpty() && !stats
+        .stream()
+        .flatMap(o -> o.getStatistics().values().stream())
+        .map(statistic -> (StatisticHistory<?, ?>) statistic)
+        .filter(statisticHistory -> statisticHistory.getValue().length == 0)
+        .findFirst()
+        .isPresent());
   }
 
 }

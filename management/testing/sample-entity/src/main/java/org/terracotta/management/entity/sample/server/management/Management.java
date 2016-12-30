@@ -41,6 +41,8 @@ public class Management {
   private final ConsumerManagementRegistry managementRegistry;
   private final String cacheName;
 
+  private boolean initialized;
+
   public Management(String cacheName, ServiceRegistry serviceRegistry, boolean active) {
     this.cacheName = cacheName;
     EntityMonitoringService monitoringService;
@@ -67,11 +69,17 @@ public class Management {
     }
   }
 
-  public void init() {
-    if (managementRegistry != null) {
-      LOGGER.trace("[{}] init()", cacheName);
-
-      managementRegistry.refresh(); // send to voltron the registry at entity init
+  // workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426
+  public synchronized boolean init() {
+    if (!initialized) {
+      if (managementRegistry != null) {
+        LOGGER.trace("[{}] init()", cacheName);
+        managementRegistry.refresh(); // send to voltron the registry at entity init
+      }
+      initialized = true;
+      return true;
+    } else {
+      return false;
     }
   }
 

@@ -29,6 +29,8 @@ import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServic
 import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
+import org.terracotta.management.service.monitoring.EntityEventListenerAdapter;
+import org.terracotta.management.service.monitoring.EntityEventService;
 import org.terracotta.management.service.monitoring.ManagementCallExecutor;
 import org.terracotta.management.service.monitoring.ManagementService;
 import org.terracotta.management.service.monitoring.ManagementServiceConfiguration;
@@ -56,6 +58,8 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
   @Override
   public ActiveTmsAgentServerEntity createActiveEntity(ServiceRegistry registry, TmsAgentConfig configuration) {
     LOGGER.trace("createActiveEntity()");
+
+    // get services
     TmsAgentMessenger tmsAgentMessenger = createMessenger(registry);
     ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
     ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration(communicator, new ManagementCallExecutor() {
@@ -70,7 +74,18 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
         .addServerManagementProviders()
         .setStatisticConfiguration(configuration.getStatisticConfiguration())));
     SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
-    return new ActiveTmsAgentServerEntity(new ActiveTmsAgent(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry));
+    ActiveTmsAgent tmsAgent = new ActiveTmsAgent(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
+
+    // workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426
+    EntityEventService entityEventService = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(EntityEventService.class)));
+    entityEventService.addEntityEventListener(new EntityEventListenerAdapter() {
+      @Override
+      public void onCreated() {
+        tmsAgent.init();
+      }
+    });
+
+    return new ActiveTmsAgentServerEntity(tmsAgent);
   }
 
   @Override

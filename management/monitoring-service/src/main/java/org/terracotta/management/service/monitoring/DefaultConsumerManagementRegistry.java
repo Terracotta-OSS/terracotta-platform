@@ -92,8 +92,8 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
 
   @Override
   public void onBecomeActive() {
-    LOGGER.trace("[{}] onBecomeActive()", consumerId);
-    clear();
+    // do not clear any state because on failover, onBecomeActive() is called after the new active entities are created
+    // so it would clear the providers added by entities at creation time
   }
 
   @Override
@@ -113,14 +113,11 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
   }
 
   @Override
-  public void onEntityFailover(long consumerId) {
-    if (consumerId == this.consumerId) {
-      LOGGER.trace("[{}] onEntityFailover()", consumerId);
-      clear();
-    }
+  public void onEntityCreated(long consumerId) {
   }
 
-  private void clear() {
+  void clear() {
+    LOGGER.trace("[{}] clear()", consumerId);
     managementProviders.forEach(ManagementProvider::close);
     managementProviders.clear();
     previouslyExposed.clear();
