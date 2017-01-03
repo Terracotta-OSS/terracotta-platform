@@ -113,7 +113,7 @@ public class StatisticsRegistryMetadata {
     return samples;
   }
 
-  public Collection<? extends StatisticDescriptor> getDescriptors() {
+  public Collection<StatisticDescriptor> getDescriptors() {
     Set<StatisticDescriptor> capabilities = new HashSet<StatisticDescriptor>();
 
     if (statisticsRegistry != null) {
