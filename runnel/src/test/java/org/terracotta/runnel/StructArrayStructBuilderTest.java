@@ -28,10 +28,12 @@ import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.fail;
 
 /**
  * @author Ludovic Orban
@@ -96,16 +98,17 @@ public class StructArrayStructBuilderTest {
 
     StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
-    assertThat(sad.string("key"), is("1"));
-    assertThat(sad.<Type>enm("type").get(), is(Type.STRING));
-    assertThat(sad.string("string"), is("one"));
-    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> anotherStruct = sad.struct("anotherStruct");
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> first = sad.next();
+    assertThat(first.string("key"), is("1"));
+    assertThat(first.<Type>enm("type").get(), is(Type.STRING));
+    assertThat(first.string("string"), is("one"));
+    StructDecoder<StructDecoder<StructArrayDecoder<StructDecoder<Void>>>> anotherStruct = first.struct("anotherStruct");
     assertThat(anotherStruct.int32("aaa"), is(1));
     anotherStruct.end();
-    sad.next();
-    assertThat(sad.string("key"), is("2"));
-    assertThat(sad.<Type>enm("type").get(), is(Type.STRING));
-    assertThat(sad.string("string"), is("two"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> second = sad.next();
+    assertThat(second.string("key"), is("2"));
+    assertThat(second.<Type>enm("type").get(), is(Type.STRING));
+    assertThat(second.string("string"), is("two"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -139,13 +142,14 @@ public class StructArrayStructBuilderTest {
 
     StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
-    assertThat(sad.string("key"), is("1"));
-    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
-    assertThat(sad.string("string"), is("one"));
-    sad.next();
-    assertThat(sad.string("key"), is("2"));
-    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
-    assertThat(sad.string("string"), is("two"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> first = sad.next();
+    assertThat(first.string("key"), is("1"));
+    assertThat(first.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(first.string("string"), is("one"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> second = sad.next();
+    assertThat(second.string("key"), is("2"));
+    assertThat(second.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(second.string("string"), is("two"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -199,9 +203,10 @@ public class StructArrayStructBuilderTest {
 
     StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
-    assertThat(sad.string("key"), is("1"));
-    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
-    assertThat(sad.string("string"), is("one"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> first = sad.next();
+    assertThat(first.string("key"), is("1"));
+    assertThat(first.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(first.string("string"), is("one"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -232,9 +237,10 @@ public class StructArrayStructBuilderTest {
 
     StructArrayDecoder sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
-    assertThat(sad.string("key"), is("1"));
-    sad.next();
-    assertThat(sad.string("string"), is("two"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> first = sad.next();
+    assertThat(first.string("key"), is("1"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> second = sad.next();
+    assertThat(second.string("string"), is("two"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
@@ -324,14 +330,21 @@ public class StructArrayStructBuilderTest {
     assertThat(decoder.string("name"), is("joe"));
     StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(2));
-    assertThat(sad.string("key"), is("1"));
-    assertThat(sad.enm("type").get(), Is.<Object>is(Type.STRING));
-    assertThat(sad.string("string"), is("one"));
-    sad.next();
-    assertThat(sad.string("key"), is("2"));
-    assertThat(sad.enm("type").isValid(), is(false));
-    assertThat(sad.string("string"), is("two"));
-    sad.next();
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> first = sad.next();
+    assertThat(first.string("key"), is("1"));
+    assertThat(first.enm("type").get(), Is.<Object>is(Type.STRING));
+    assertThat(first.string("string"), is("one"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> second = sad.next();
+    assertThat(second.string("key"), is("2"));
+    assertThat(second.enm("type").isValid(), is(false));
+    assertThat(second.string("string"), is("two"));
+    assertThat(sad.hasNext(), is(false));
+    try {
+      sad.next();
+      fail("Expected NoSuchElementException");
+    } catch (NoSuchElementException e) {
+      //expected
+    }
     sad.end();
     assertThat(decoder.int64("id"), is(999L));
   }
@@ -378,17 +391,18 @@ public class StructArrayStructBuilderTest {
 
     StructArrayDecoder<StructDecoder<Void>> sad = decoder.structs("mapEntry");
     assertThat(sad.length(), is(3));
-    assertThat(sad.string("key"), is(nullValue()));
-    assertThat(sad.enm("type").isFound(), is(false));
-    assertThat(sad.string("string"), is("a"));
-    sad.next();
-    assertThat(sad.string("key"), is(nullValue()));
-    assertThat(sad.enm("type").isFound(), is(false));
-    assertThat(sad.string("string"), is("b"));
-    sad.next();
-    assertThat(sad.string("key"), is(nullValue()));
-    assertThat(sad.enm("type").isFound(), is(false));
-    assertThat(sad.string("string"), is("c"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> first = sad.next();
+    assertThat(first.string("key"), is(nullValue()));
+    assertThat(first.enm("type").isFound(), is(false));
+    assertThat(first.string("string"), is("a"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> second = sad.next();
+    assertThat(second.string("key"), is(nullValue()));
+    assertThat(second.enm("type").isFound(), is(false));
+    assertThat(second.string("string"), is("b"));
+    StructDecoder<StructArrayDecoder<StructDecoder<Void>>> third = sad.next();
+    assertThat(third.string("key"), is(nullValue()));
+    assertThat(third.enm("type").isFound(), is(false));
+    assertThat(third.string("string"), is("c"));
     sad.end();
 
     assertThat(decoder.int64("id"), is(999L));
