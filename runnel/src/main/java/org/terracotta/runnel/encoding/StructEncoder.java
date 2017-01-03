@@ -124,10 +124,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder>
   }
 
   public StructEncoder<P> struct(String name, StructEncoderFunction<StructEncoder<StructEncoder<P>>> function) {
-    StructField field = fieldSearcher.findField(name, StructField.class, null);
-    List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new StructDataHolder(values, field.index()));
-    StructEncoder<StructEncoder<P>> subStructEncoder = new StructEncoder<StructEncoder<P>>(field, values, this);
+    StructEncoder<StructEncoder<P>> subStructEncoder = struct(name);
     function.encode(subStructEncoder);
     subStructEncoder.end();
     return this;
@@ -226,18 +223,14 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder>
     return new StructArrayEncoder<StructEncoder<P>>(values, this, ((StructField) field.subField()));
   }
 
-  public <T> StructEncoder<P> structs(String name, T[] array, StructArrayEncoderFunction<T, StructArrayEncoder<StructEncoder<P>>> function) {
+  public <T> StructEncoder<P> structs(String name, T[] array, StructArrayEncoderFunction<T, StructEncoder<?>> function) {
     return structs(name, Arrays.asList(array), function);
   }
 
-  public <T> StructEncoder<P> structs(String name, Iterable<T> iterable, StructArrayEncoderFunction<T, StructArrayEncoder<StructEncoder<P>>> function) {
-    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
-    List<StructDataHolder> values = new ArrayList<StructDataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
-    StructArrayEncoder<StructEncoder<P>> subStructArrayEncoder = new StructArrayEncoder<StructEncoder<P>>(values, this, ((StructField) field.subField()));
+  public <T> StructEncoder<P> structs(String name, Iterable<T> iterable, StructArrayEncoderFunction<T, StructEncoder<?>> function) {
+    StructArrayEncoder<StructEncoder<P>> subStructArrayEncoder = structs(name);
     for (T t : iterable) {
-      function.encode(subStructArrayEncoder, t);
-      subStructArrayEncoder.next();
+      function.encode(subStructArrayEncoder.add(), t);
     }
     subStructArrayEncoder.end();
     return this;

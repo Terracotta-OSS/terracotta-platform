@@ -71,17 +71,20 @@ public class StructArrayStructBuilderTest {
       struct.encoder()
         .string("name", "joe")
         .structs("mapEntry")
-          .string("key", "1")
-          .enm("type", Type.STRING)
-          .string("string", "one")
-          .struct("anotherStruct")
-            .int32("aaa", 1)
+          .add()
+            .string("key", "1")
+            .enm("type", Type.STRING)
+            .string("string", "one")
+            .struct("anotherStruct")
+              .int32("aaa", 1)
+              .end()
+            .end()
+          .add()
+            .string("key", "2")
+            .enm("type", Type.STRING)
+            .string("string", "two")
+            .end()
           .end()
-        .next()
-          .string("key", "2")
-          .enm("type", Type.STRING)
-          .string("string", "two")
-        .end()
         .int64("id", 999L)
         .encode();
 
@@ -116,9 +119,9 @@ public class StructArrayStructBuilderTest {
 
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>, StructArrayEncoder<StructEncoder<Void>>>() {
+        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>, StructEncoder<?>>() {
           @Override
-          public void encode(StructArrayEncoder<StructEncoder<Void>> encoder, Map.Entry<String, String> entry) {
+          public void encode(StructEncoder<?> encoder, Map.Entry<String, String> entry) {
             encoder
                 .string("key", entry.getKey())
                 .enm("type", Type.STRING)
@@ -152,13 +155,15 @@ public class StructArrayStructBuilderTest {
   public void testDump() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry")
+        .structs("mapEntry").add()
           .string("key", "1")
           .enm("type", Type.STRING)
           .string("string", "one")
-        .next()
+          .end()
+        .add()
           .string("key", "2")
           .string("string", "two")
+          .end()
         .end()
         .int64("id", 999L)
         .encode();
@@ -172,14 +177,16 @@ public class StructArrayStructBuilderTest {
   public void testSkipArrayEntry() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry")
+        .structs("mapEntry").add()
           .string("key", "1")
           .enm("type", Type.STRING)
           .string("string", "one")
-        .next()
+          .end()
+        .add()
           .string("key", "2")
           .enm("type", Type.STRING)
           .string("string", "two")
+          .end()
         .end()
         .int64("id", 999L)
         .encode();
@@ -204,13 +211,15 @@ public class StructArrayStructBuilderTest {
   public void testSkipStructEntry() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry")
+        .structs("mapEntry").add()
           .string("key", "1")
           .enm("type", Type.STRING)
           .string("string", "one")
-        .next()
+          .end()
+        .add()
           .string("key", "2")
           .string("string", "two")
+          .end()
         .end()
         .int64("id", 999L)
         .encode();
@@ -235,14 +244,16 @@ public class StructArrayStructBuilderTest {
   public void testSkipStructsContents() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry")
+        .structs("mapEntry").add()
           .string("key", "1")
           .enm("type", Type.STRING)
           .string("string", "one")
-        .next()
+          .end()
+        .add()
           .string("key", "2")
           .enm("type", Type.STRING)
           .string("string", "two")
+          .end()
         .end()
         .int64("id", 999L)
         .encode();
@@ -264,13 +275,15 @@ public class StructArrayStructBuilderTest {
   public void testSkipArray() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry")
+        .structs("mapEntry").add()
           .string("key", "1")
           .enm("type", Type.STRING)
           .string("string", "one")
-        .next()
+          .end()
+        .add()
           .string("key", "2")
           .string("string", "two")
+          .end()
         .end()
         .int64("id", 999L)
         .encode();
@@ -285,16 +298,21 @@ public class StructArrayStructBuilderTest {
 
   @Test
   public void testNextBeforeEnd() throws Exception {
-    ByteBuffer bb = struct.encoder()
-        .string("name", "joe")
-        .structs("mapEntry")
-          .string("key", "1")
-          .enm("type", Type.STRING)
-          .string("string", "one")
-        .next()
-          .string("key", "2")
-          .string("string", "two")
-        .next()
+
+    StructArrayEncoder<StructEncoder<Void>> arrayEncoder = struct.encoder()
+            .string("name", "joe")
+            .structs("mapEntry");
+
+    arrayEncoder.add()
+      .string("key", "1")
+      .enm("type", Type.STRING)
+      .string("string", "one")
+      .end()
+    .add()
+      .string("key", "2")
+      .string("string", "two");
+
+    ByteBuffer bb = arrayEncoder.add().end()
         .end()
         .int64("id", 999L)
         .encode();
@@ -342,12 +360,12 @@ public class StructArrayStructBuilderTest {
   public void testStructArrayEmptyFirstField() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry")
-          .string("string", "a")
-        .next()
-          .string("string", "b")
-        .next()
-          .string("string", "c")
+        .structs("mapEntry").add()
+          .string("string", "a").end()
+        .add()
+          .string("string", "b").end()
+        .add()
+          .string("string", "c").end()
         .end()
         .int64("id", 999L)
         .encode();
