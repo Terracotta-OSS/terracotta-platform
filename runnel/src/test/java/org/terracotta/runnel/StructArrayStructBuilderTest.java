@@ -20,8 +20,8 @@ import org.junit.Test;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructArrayEncoder;
-import org.terracotta.runnel.encoding.StructArrayEncoderFunction;
 import org.terracotta.runnel.encoding.StructEncoder;
+import org.terracotta.runnel.encoding.StructEncoderFunction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -119,7 +119,7 @@ public class StructArrayStructBuilderTest {
 
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .structs("mapEntry", stuff.entrySet(), new StructArrayEncoderFunction<Map.Entry<String, String>, StructEncoder<?>>() {
+        .structs("mapEntry", stuff.entrySet(), new StructEncoderFunction<Map.Entry<String, String>>() {
           @Override
           public void encode(StructEncoder<?> encoder, Map.Entry<String, String> entry) {
             encoder
