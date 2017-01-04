@@ -30,7 +30,7 @@ import org.terracotta.runnel.utils.ReadBuffer;
 public class FieldDecoder {
 
   private final Metadata metadata;
-  private ReadBuffer readBuffer;
+  private final ReadBuffer readBuffer;
   private int lastIndex = -1;
   private int readAheadIndex = -1;
 
@@ -69,12 +69,6 @@ public class FieldDecoder {
       return null;
     }
     return field.decode(readBuffer);
-  }
-
-
-  public void reset(ReadBuffer readBuffer) {
-    this.lastIndex = -1;
-    this.readBuffer = readBuffer;
   }
 
   private  <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {

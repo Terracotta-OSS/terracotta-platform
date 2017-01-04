@@ -30,10 +30,6 @@ public class FieldSearcher {
     this.metadata = metadata;
   }
 
-  public void reset() {
-    this.lastIndex = -1;
-  }
-
   public <T extends Field, S extends Field> T findField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
     T field = (T) metadata.getFieldByName(name);
     if (field == null) {

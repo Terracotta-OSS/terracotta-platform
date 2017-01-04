@@ -21,6 +21,8 @@ import org.terracotta.runnel.encoding.StructEncoder;
 import org.terracotta.runnel.encoding.StructEncoderFunction;
 
 import java.nio.ByteBuffer;
+import java.util.AbstractMap;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -80,11 +82,11 @@ public class StructStructBuilderTest {
   public void testReadAll_withLambda() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .struct("mapEntry", new StructEncoderFunction<StructEncoder<StructEncoder<Void>>>() {
+        .struct("mapEntry", new AbstractMap.SimpleEntry<String, String>("1", "one"), new StructEncoderFunction<Map.Entry<String, String>>() {
           @Override
-          public void encode(StructEncoder<StructEncoder<Void>> encoder) {
-            encoder.string("key", "1")
-                .string("value", "one");
+          public void encode(StructEncoder<?> encoder, Map.Entry<String, String> entry) {
+            encoder.string("key", entry.getKey())
+                .string("value", entry.getValue());
           }
         })
         .int64("id", 999L)
