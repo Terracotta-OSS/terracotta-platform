@@ -175,7 +175,9 @@ class TopologyService implements PlatformListener {
 
     firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
 
-    topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
+    if (sender.getServerName().equals(platformConfiguration.getServerName())) {
+      topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
+    }
   }
 
   @Override
@@ -203,7 +205,9 @@ class TopologyService implements PlatformListener {
       fetches.remove(platformEntity.consumerID);
     }
 
-    topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
+    if (sender.getServerName().equals(platformConfiguration.getServerName())) {
+      topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
+    }
 
     firingService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
   }

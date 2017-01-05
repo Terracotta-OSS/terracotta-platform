@@ -45,15 +45,6 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
   }
 
   @Override
-  public void createNew() {
-    super.createNew();
-    LOGGER.trace("[{}] createNew()", cache.getName());
-    if (management.init()) {
-      management.serverCacheCreated(cache);
-    }
-  }
-
-  @Override
   public void destroy() {
     LOGGER.trace("[{}] destroy()", cache.getName());
     management.serverCacheDestroyed(cache);
