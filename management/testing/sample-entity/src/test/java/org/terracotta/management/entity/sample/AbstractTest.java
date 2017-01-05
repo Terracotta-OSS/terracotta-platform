@@ -38,8 +38,8 @@ import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
 import org.terracotta.management.entity.tms.client.TmsAgentService;
 import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
+import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 import org.terracotta.offheapresource.OffHeapResourcesProvider;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
@@ -186,12 +186,7 @@ public abstract class AbstractTest {
   }
 
   protected void addWebappNode() throws Exception {
-    StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
-        .setAverageWindowDuration(1, TimeUnit.MINUTES)
-        .setHistorySize(100)
-        .setHistoryInterval(1, TimeUnit.SECONDS)
-        .setTimeToDisable(5, TimeUnit.SECONDS);
-    CacheFactory cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510/pet-clinic"), statisticConfiguration);
+    CacheFactory cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510/pet-clinic"));
     cacheFactory.init();
     webappNodes.add(cacheFactory);
   }
@@ -214,14 +209,29 @@ public abstract class AbstractTest {
     // create a tms entity
     TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());
     TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
-        .setMaximumUnreadMessages(1024 * 1024)
-        .setStatisticConfiguration(new StatisticConfiguration()
-            .setAverageWindowDuration(1, TimeUnit.MINUTES)
-            .setHistorySize(100)
-            .setHistoryInterval(1, TimeUnit.SECONDS)
-            .setTimeToDisable(5, TimeUnit.SECONDS)));
+        .setMaximumUnreadMessages(1024 * 1024));
     this.tmsAgentService = new TmsAgentService(tmsAgentEntity);
     this.tmsAgentService.setOperationTimeout(10, TimeUnit.SECONDS);
+  }
+
+  protected void triggerServerStatComputation() throws Exception {
+    // trigger stats computation and wait for all stats to have been computed at least once
+    tmsAgentService.readTopology().serverStream().forEach(server -> {
+      ServerEntity serverEntity = server
+          .serverEntityStream()
+          .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
+          .findFirst()
+          .get();
+
+      try {
+        tmsAgentService.startStatisticCollector(
+            serverEntity.getContext(),
+            1, TimeUnit.SECONDS
+        ).waitForReturn();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {

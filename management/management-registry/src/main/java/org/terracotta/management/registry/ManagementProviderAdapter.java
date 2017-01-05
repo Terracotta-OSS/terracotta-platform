@@ -78,7 +78,7 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
   }
 
   @Override
-  public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames, long since) {
+  public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames) {
     throw new UnsupportedOperationException("Not a statistics provider : " + getCapabilityName());
   }
 

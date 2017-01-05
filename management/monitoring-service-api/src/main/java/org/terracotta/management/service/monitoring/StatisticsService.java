@@ -16,9 +16,7 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.context.extended.StatisticsRegistry;
 import org.terracotta.management.registry.collect.StatisticCollector;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 /**
  * This statistic service is injected into {@link org.terracotta.management.registry.ManagementProvider} objects implementing
@@ -26,9 +24,5 @@ import org.terracotta.management.registry.collect.StatisticConfiguration;
  */
 @CommonComponent
 public interface StatisticsService {
-  StatisticsRegistry createStatisticsRegistry(Object contextObject);
-
   StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
-
-  StatisticConfiguration getStatisticConfiguration();
 }

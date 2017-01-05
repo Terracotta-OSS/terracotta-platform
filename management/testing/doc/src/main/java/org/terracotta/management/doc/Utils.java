@@ -24,11 +24,9 @@ import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
 import org.terracotta.management.entity.tms.client.TmsAgentService;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.net.URI;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
@@ -45,12 +43,7 @@ class Utils {
   static TmsAgentService createTmsAgentService(Connection connection, String entityName) throws EntityConfigurationException {
     TmsAgentEntityFactory factory = new TmsAgentEntityFactory(connection, entityName);
     TmsAgentEntity tmsAgentEntity = factory.retrieveOrCreate(new TmsAgentConfig()
-        .setMaximumUnreadMessages(1024 * 1024)
-        .setStatisticConfiguration(new StatisticConfiguration()
-            .setAverageWindowDuration(1, TimeUnit.MINUTES)
-            .setHistorySize(100)
-            .setHistoryInterval(1, TimeUnit.SECONDS)
-            .setTimeToDisable(5, TimeUnit.SECONDS)));
+        .setMaximumUnreadMessages(1024 * 1024));
     return new TmsAgentService(tmsAgentEntity);
   }
 

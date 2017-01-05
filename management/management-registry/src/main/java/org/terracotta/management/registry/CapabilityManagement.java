@@ -41,6 +41,8 @@ public interface CapabilityManagement {
 
   StatisticQuery.Builder queryStatistics(Collection<String> statisticNames);
 
+  StatisticQuery.Builder queryAllStatistics();
+
   /**
    * Call an action of a managed object's capability.
    *

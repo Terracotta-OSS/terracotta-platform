@@ -39,8 +39,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static java.util.Arrays.asList;
-
 /**
  * @author Mathieu Carbou
  */
@@ -63,35 +61,7 @@ public class ReadStatistics {
 
     Context context = serverEntity.getContext();
 
-    tmsAgentService.updateCollectedStatistics(context, "PoolStatistics", asList(
-        "Pool:AllocatedSize"
-    )).waitForReturn();
-
-    tmsAgentService.updateCollectedStatistics(context, "ServerStoreStatistics", asList(
-        "Store:AllocatedMemory",
-        "Store:DataAllocatedMemory",
-        "Store:OccupiedMemory",
-        "Store:DataOccupiedMemory",
-        "Store:Entries",
-        "Store:UsedSlotCount",
-        "Store:DataVitalMemory",
-        "Store:VitalMemory",
-        "Store:ReprobeLength",
-        "Store:RemovedSlotCount",
-        "Store:DataSize",
-        "Store:TableCapacity"
-    )).waitForReturn();
-
-    tmsAgentService.updateCollectedStatistics(context, "OffHeapResourceStatistics", asList(
-        "OffHeapResource:AllocatedMemory"
-    )).waitForReturn();
-
-    tmsAgentService.updateCollectedStatistics(context, "ServerCacheStatistics", asList(
-        "Cluster:HitCount",
-        "Cluster:MissCount",
-        "Cluster:HitRatio",
-        "ServerCache:Size"))
-        .waitForReturn();
+    tmsAgentService.startStatisticCollector(context, 5, TimeUnit.SECONDS).waitForReturn();
 
     // TRIGGER CLIENT-SIDE STATS COMPUTATION
 
@@ -105,7 +75,7 @@ public class ReadStatistics {
               .with("appName", "pet-clinic");
 
           try {
-            tmsAgentService.updateCollectedStatistics(ctx, "CacheStatistics", asList("Cache:HitCount", "Cache:MissCount", "Cache:HitRatio", "ClientCache:Size")).waitForReturn();
+            tmsAgentService.startStatisticCollector(ctx, 5, TimeUnit.SECONDS).waitForReturn();
           } catch (Exception e) {
             throw new RuntimeException(e);
           }

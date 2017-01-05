@@ -69,12 +69,16 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private final TimeSource timeSource = TimeSource.BEST;
   private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry(consumerManagementRegistries);
   private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
-  private final StatisticsServiceFactory statisticsServiceFactory = new StatisticsServiceFactory(sharedManagementRegistry, timeSource);
+  private final DefaultStatisticsService statisticsService = new DefaultStatisticsService(sharedManagementRegistry);
   private final DefaultFiringService firingService = new DefaultFiringService(sequenceGenerator, managementServices, clientMonitoringServices);
 
   private PlatformConfiguration platformConfiguration;
   private TopologyService topologyService;
   private IStripeMonitoring platformListenerAdapter;
+
+  public MonitoringServiceProvider() {
+    Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+  }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
@@ -107,7 +111,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   @Override
   public void close() {
-    this.statisticsServiceFactory.close();
+    this.statisticsService.close();
   }
 
   @SuppressWarnings("unchecked")
@@ -164,7 +168,6 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         }
         // create a new registry
         LOGGER.trace("[{}] getService({})", consumerID, ConsumerManagementRegistry.class.getSimpleName());
-        StatisticsService statisticsService = statisticsServiceFactory.createStatisticsService(consumerManagementRegistryConfiguration.getStatisticConfiguration());
         managementRegistry = new DefaultConsumerManagementRegistry(
             consumerID,
             consumerManagementRegistryConfiguration.getEntityMonitoringService(),

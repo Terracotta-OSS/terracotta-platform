@@ -101,58 +101,25 @@
     "descriptors": [
       {
         "name": "Cluster:ClearCount",
-        "type": "COUNTER_HISTORY"
-      },
-      {
-        "name": "Cluster:ClearRate",
-        "type": "RATE_HISTORY"
+        "type": "COUNTER"
       },
       {
         "name": "Cluster:HitCount",
-        "type": "COUNTER_HISTORY"
-      },
-      {
-        "name": "Cluster:HitRate",
-        "type": "RATE_HISTORY"
-      },
-      {
-        "name": "Cluster:HitRatio",
-        "type": "RATIO_HISTORY"
+        "type": "COUNTER"
       },
       {
         "name": "Cluster:MissCount",
-        "type": "COUNTER_HISTORY"
-      },
-      {
-        "name": "Cluster:MissRate",
-        "type": "RATE_HISTORY"
-      },
-      {
-        "name": "Cluster:MissRatio",
-        "type": "RATIO_HISTORY"
+        "type": "COUNTER"
       },
       {
         "name": "Cluster:PutCount",
-        "type": "COUNTER_HISTORY"
-      },
-      {
-        "name": "Cluster:PutRate",
-        "type": "RATE_HISTORY"
+        "type": "COUNTER"
       },
       {
         "name": "ServerCache:Size",
-        "type": "SIZE_HISTORY"
+        "type": "SIZE"
       }
     ],
-    "name": "ServerCacheStatistics",
-    "properties": {
-      "averageWindowDuration": 1,
-      "averageWindowUnit": "MINUTES",
-      "historyInterval": 1,
-      "historyIntervalUnit": "SECONDS",
-      "historySize": 100,
-      "timeToDisable": 5,
-      "timeToDisableUnit": "SECONDS"
-    }
+    "name": "ServerCacheStatistics"
   }
 ]

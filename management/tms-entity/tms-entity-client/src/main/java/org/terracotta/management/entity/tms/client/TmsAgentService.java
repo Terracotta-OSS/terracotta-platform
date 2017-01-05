@@ -25,7 +25,6 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
@@ -97,14 +96,22 @@ public class TmsAgentService {
     return get(entity.readMessages());
   }
 
-  public ManagementCall<Void> updateCollectedStatistics(Context context, String capabilityName, Collection<String> statisticNames) throws InterruptedException, ExecutionException, TimeoutException {
+  public ManagementCall<Void> startStatisticCollector(Context context, long interval, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     return call(
         context,
         "StatisticCollectorCapability",
-        "updateCollectedStatistics",
+        "startStatisticCollector",
         Void.TYPE,
-        new Parameter(capabilityName),
-        new Parameter(statisticNames, Collection.class.getName()));
+        new Parameter(interval, long.class.getName()),
+        new Parameter(unit, TimeUnit.class.getName()));
+  }
+
+  public ManagementCall<Void> stopStatisticCollector(Context context) throws InterruptedException, ExecutionException, TimeoutException {
+    return call(
+        context,
+        "StatisticCollectorCapability",
+        "stopStatisticCollector",
+        Void.TYPE);
   }
 
   public <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException {

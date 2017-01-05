@@ -71,8 +71,7 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
     })));
     ActiveEntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new ActiveEntityMonitoringServiceConfiguration()));
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
-        .addServerManagementProviders()
-        .setStatisticConfiguration(configuration.getStatisticConfiguration())));
+        .addServerManagementProviders()));
     SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
     ActiveTmsAgent tmsAgent = new ActiveTmsAgent(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
 
@@ -94,8 +93,7 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
     IMonitoringProducer monitoringProducer = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)));
     PassiveEntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new PassiveEntityMonitoringServiceConfiguration(monitoringProducer)));
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
-        .addServerManagementProviders()
-        .setStatisticConfiguration(configuration.getStatisticConfiguration())));
+        .addServerManagementProviders()));
     SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
     return new PassiveTmsAgentServerEntity(new PassiveTmsAgent(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry));
   }

@@ -84,7 +84,7 @@ public class ClientCache implements Cache, Closeable {
     putObserver.begin();
     try {
       delegate.put(key, value);
-      putObserver.end(PutOutcome.PUT);
+      putObserver.end(PutOutcome.SUCCESS);
     } catch (RuntimeException e) {
       putObserver.end(PutOutcome.FAILURE);
       throw e;

@@ -25,6 +25,7 @@ import org.terracotta.management.registry.ManagementRegistry;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -68,6 +69,14 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
         .flatMap(r -> r.getCapabilities().stream())
         .sorted(CAPABILITY_COMPARATOR)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public Collection<String> getCapabilityNames() {
+    return registries.values()
+        .stream()
+        .flatMap(r -> r.getCapabilityNames().stream())
+        .collect(Collectors.toCollection(TreeSet::new));
   }
 
 }

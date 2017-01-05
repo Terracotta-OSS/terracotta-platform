@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.server.ServerCache;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
@@ -29,7 +28,6 @@ import org.terracotta.management.service.monitoring.PassiveEntityMonitoringServi
 import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
@@ -55,12 +53,7 @@ public class Management {
     if (monitoringService == null) {
       this.managementRegistry = null;
     } else {
-      this.managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ConsumerManagementRegistryConfiguration(monitoringService)
-          .setStatisticConfiguration(new StatisticConfiguration()
-              .setAverageWindowDuration(1, TimeUnit.MINUTES)
-              .setHistorySize(100)
-              .setHistoryInterval(1, TimeUnit.SECONDS)
-              .setTimeToDisable(5, TimeUnit.SECONDS))));
+      this.managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ConsumerManagementRegistryConfiguration(monitoringService)));
       this.managementRegistry.addManagementProvider(new ServerCacheSettingsManagementProvider());
       this.managementRegistry.addManagementProvider(new ServerCacheCallManagementProvider());
       this.managementRegistry.addManagementProvider(new ServerCacheStatisticsManagementProvider());

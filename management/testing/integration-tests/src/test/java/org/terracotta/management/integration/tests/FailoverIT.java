@@ -20,10 +20,8 @@ import org.junit.Test;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.model.stats.AbstractStatisticHistory;
-import org.terracotta.management.model.stats.history.CounterHistory;
-import org.terracotta.management.model.stats.history.RatioHistory;
-import org.terracotta.management.model.stats.history.SizeHistory;
+import org.terracotta.management.model.stats.primitive.Counter;
+import org.terracotta.management.model.stats.primitive.Size;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -122,21 +120,16 @@ public class FailoverIT extends AbstractHATest {
 
   @Test
   public void management_call_and_stats_after_failover() throws Exception {
-    System.out.println("Please be patient... Test can take about 15s...");
-
-
-    triggerServerStatComputation("Cluster:HitCount", "Cluster:MissCount", "Cluster:HitRatio", "ServerCache:Size");
+    triggerServerStatComputation();
 
     put(0, "pets", "pet1", "Cubitus");
     get(1, "pets", "pet1"); // hit
 
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
-        .map(o -> o.getStatistic(CounterHistory.class, "Cluster:HitCount"))
-        .map(AbstractStatisticHistory::getLast)
-        .filter(sample -> sample.getValue() == 1L) // 1 hit
-        .findFirst()
-        .isPresent());
+        .filter(o -> o.hasStatistic("Cluster:HitCount", Counter.class))
+        .map(o -> o.getStatistic(Counter.class, "Cluster:HitCount"))
+        .anyMatch(sample -> sample.getValue() == 1L)); // 1 hit
 
     get(1, "pets", "pet2"); // miss
 
@@ -145,27 +138,15 @@ public class FailoverIT extends AbstractHATest {
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic(CounterHistory.class, "Cluster:MissCount"))
-          .map(AbstractStatisticHistory::getLast)
-          .filter(sample -> sample.getValue() == 1L) // 1 miss
-          .findFirst()
-          .isPresent();
+          .filter(o -> o.hasStatistic("Cluster:MissCount", Counter.class))
+          .map(o -> o.getStatistic(Counter.class, "Cluster:MissCount"))
+          .anyMatch(sample -> sample.getValue() == 1L); // 1 miss
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic(RatioHistory.class, "Cluster:HitRatio"))
-          .map(AbstractStatisticHistory::getLast)
-          .filter(sample -> sample.getValue() == 0.5d) // 1 hit for 2 gets
-          .findFirst()
-          .isPresent();
-
-      test &= stats
-          .stream()
-          .map(o -> o.getStatistic(SizeHistory.class, "ServerCache:Size"))
-          .map(AbstractStatisticHistory::getLast)
-          .filter(sample -> sample.getValue() == 1L) // size 1 on heap of entity
-          .findFirst()
-          .isPresent();
+          .filter(o -> o.hasStatistic("ServerCache:Size", Size.class))
+          .map(o -> o.getStatistic(Size.class, "ServerCache:Size"))
+          .anyMatch(sample -> sample.getValue() == 1L); // size 1 on heap of entity
 
       return test;
     });

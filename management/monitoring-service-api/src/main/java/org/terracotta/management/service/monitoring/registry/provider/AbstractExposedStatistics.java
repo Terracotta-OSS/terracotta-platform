@@ -16,51 +16,45 @@
 package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.context.extended.StatisticsRegistry;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.Statistic;
-import org.terracotta.management.registry.collect.StatisticsRegistryMetadata;
+import org.terracotta.management.registry.collect.StatisticRegistry;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Map;
 
 @CommonComponent
 public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBindingManagementProvider.ExposedAliasBinding<T> implements Closeable {
 
-  private final StatisticsRegistry statisticsRegistry;
-  private final StatisticsRegistryMetadata statisticsRegistryMetadata;
+  private final StatisticRegistry statisticRegistry;
 
-  protected AbstractExposedStatistics(Context context, T binding, StatisticsRegistry statisticsRegistry) {
+  protected AbstractExposedStatistics(Context context, T binding, Object contextObject) {
     super(context, binding);
-    // allows it to be null
-    this.statisticsRegistry = statisticsRegistry;
-    this.statisticsRegistryMetadata = new StatisticsRegistryMetadata(statisticsRegistry);
+    this.statisticRegistry = new StatisticRegistry(contextObject);
   }
 
   @Override
   public void close() {
-    if (statisticsRegistry != null) {
-      statisticsRegistry.clearRegistrations();
-    }
   }
 
-  protected StatisticsRegistry getStatisticsRegistry() {
-    return statisticsRegistry;
-  }
-
-  protected StatisticsRegistryMetadata getStatisticsRegistryMetadata() {
-    return statisticsRegistryMetadata;
+  protected StatisticRegistry getRegistry() {
+    return statisticRegistry;
   }
 
   @SuppressWarnings("unchecked")
-  public Statistic<?, ?> queryStatistic(String fullStatisticName, long since) {
-    return statisticsRegistryMetadata.queryStatistic(fullStatisticName, since);
+  public Statistic<?, ?> queryStatistic(String fullStatisticName) {
+    return statisticRegistry.queryStatistic(fullStatisticName);
+  }
+
+  public Map<String, Statistic<?, ?>> queryStatistics() {
+    return statisticRegistry.queryStatistics();
   }
 
   @Override
   public Collection<? extends StatisticDescriptor> getDescriptors() {
-    return statisticsRegistryMetadata.getDescriptors();
+    return statisticRegistry.getDescriptors();
   }
 
 }

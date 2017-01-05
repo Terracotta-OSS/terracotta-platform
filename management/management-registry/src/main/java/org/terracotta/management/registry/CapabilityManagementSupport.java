@@ -47,4 +47,5 @@ public interface CapabilityManagementSupport {
    */
   Collection<? extends Capability> getCapabilities();
 
+  Collection<String> getCapabilityNames();
 }

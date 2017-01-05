@@ -21,10 +21,8 @@ import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -45,6 +43,7 @@ public class PassiveTopologyIT extends AbstractHATest {
         .replace(passive.getServerName(), "stripe-PASSIVE"));
 
     String actual = removeRandomValues(currentPassive[0]);
+    System.out.println(actual);
 
     // and compare
     assertEquals(readJson("passive.json").toString(), actual);
@@ -55,12 +54,7 @@ public class PassiveTopologyIT extends AbstractHATest {
     // clear buffer
     tmsAgentService.readMessages();
 
-    StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
-        .setAverageWindowDuration(1, TimeUnit.MINUTES)
-        .setHistorySize(100)
-        .setHistoryInterval(1, TimeUnit.SECONDS)
-        .setTimeToDisable(5, TimeUnit.SECONDS);
-    CacheFactory cacheFactory = new CacheFactory(cluster.getConnectionURI().resolve("/random-1"), statisticConfiguration);
+    CacheFactory cacheFactory = new CacheFactory(cluster.getConnectionURI().resolve("/random-1"));
     cacheFactory.init();
     Cache cache = cacheFactory.getCache("my-cache");
     cache.put("key", "val");

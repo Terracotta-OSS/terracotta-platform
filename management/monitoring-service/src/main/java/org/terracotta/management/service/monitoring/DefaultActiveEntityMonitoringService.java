@@ -77,7 +77,7 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
 
   @Override
   public void answerManagementCall(String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
-    logger.trace("[{}] answerManagementCall({}, executed={}, error={})", getConsumerId(), managementCallIdentifier, contextualReturn.hasExecuted(), contextualReturn.errorThrown());
+    logger.trace("[{}] answerManagementCall({}, {})", getConsumerId(), managementCallIdentifier, contextualReturn);
     firingService.fireManagementCallAnswer(managementCallIdentifier, contextualReturn);
   }
 

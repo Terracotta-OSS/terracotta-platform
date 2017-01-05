@@ -16,7 +16,6 @@
 package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.capabilities.StatisticsCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
@@ -132,22 +131,6 @@ public final class ManagementRegistry implements Serializable {
         descriptorList.add(toMap(o));
       }
     }
-
-    if (capability instanceof StatisticsCapability) {
-      map.put("properties", toMap(((StatisticsCapability) capability).getProperties()));
-    }
-    return map;
-  }
-
-  private static Map<String, Object> toMap(StatisticsCapability.Properties properties) {
-    Map<String, Object> map = new LinkedHashMap<>();
-    map.put("averageWindowDuration", properties.getAverageWindowDuration());
-    map.put("averageWindowUnit", properties.getAverageWindowUnit().name());
-    map.put("historyInterval", properties.getHistoryInterval());
-    map.put("historyIntervalUnit", properties.getHistoryIntervalUnit().name());
-    map.put("historySize", properties.getHistorySize());
-    map.put("timeToDisable", properties.getTimeToDisable());
-    map.put("timeToDisableUnit", properties.getTimeToDisableUnit().name());
     return map;
   }
 
@@ -161,7 +144,7 @@ public final class ManagementRegistry implements Serializable {
   private static Map<String, Object> toMap(StatisticDescriptor descriptor) {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("name", descriptor.getName());
-    map.put("type", descriptor.getType().name());
+    map.put("type", descriptor.getType());
     return map;
   }
 

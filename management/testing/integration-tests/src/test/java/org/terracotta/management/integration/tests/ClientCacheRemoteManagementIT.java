@@ -20,13 +20,10 @@ import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.AbstractStatisticHistory;
-import org.terracotta.management.model.stats.StatisticHistory;
-import org.terracotta.management.model.stats.history.CounterHistory;
-import org.terracotta.management.model.stats.history.RatioHistory;
-import org.terracotta.management.model.stats.history.SizeHistory;
+import org.terracotta.management.model.stats.primitive.Counter;
+import org.terracotta.management.model.stats.primitive.Size;
 
-import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -90,7 +87,6 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
   @Test
   public void can_receive_client_statistics() throws Exception {
-    System.out.println("Please be patient... Test can take about 15s...");
     triggerClientStatComputation();
 
     put(0, "pets", "pet1", "Cubitus");
@@ -99,11 +95,8 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
-        .map(o -> o.getStatistic(CounterHistory.class, "Cache:HitCount"))
-        .map(AbstractStatisticHistory::getLast)
-        .filter(sample -> sample.getValue() == 1L) // 1 hit
-        .findFirst()
-        .isPresent());
+        .map(o -> o.getStatistic(Counter.class, "Cache:HitCount"))
+        .anyMatch(counter -> counter.getValue() == 1L)); // 1 hit
 
     get(0, "pets", "pet2"); // miss on client 0
     get(1, "pets", "pet2"); // miss on client 0
@@ -113,27 +106,13 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic(CounterHistory.class, "Cache:MissCount"))
-          .map(AbstractStatisticHistory::getLast)
-          .filter(sample -> sample.getValue() == 1L) // 1 miss
-          .findFirst()
-          .isPresent();
+          .map(o -> o.getStatistic(Counter.class, "Cache:MissCount"))
+          .anyMatch(counter -> counter.getValue() == 1L); // 1 miss
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic(RatioHistory.class, "Cache:HitRatio"))
-          .map(AbstractStatisticHistory::getLast)
-          .filter(sample -> sample.getValue() == 0.5d) // 1 hit for 2 gets
-          .findFirst()
-          .isPresent();
-
-      test &= stats
-          .stream()
-          .map(o -> o.getStatistic(SizeHistory.class, "ClientCache:Size"))
-          .map(AbstractStatisticHistory::getLast)
-          .filter(sample -> sample.getValue() == 1L) // size 1 on heap of entity
-          .findFirst()
-          .isPresent();
+          .map(o -> o.getStatistic(Size.class, "ClientCache:Size"))
+          .anyMatch(counter -> counter.getValue() == 1L); // size 1 on heap of entity
 
       return test;
     });
@@ -152,19 +131,10 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
     Context context = client.getContext()
         .with("appName", "pet-clinic");
 
-    tmsAgentService.updateCollectedStatistics(
+    tmsAgentService.startStatisticCollector(
         context,
-        "CacheStatistics",
-        Arrays.asList("Cache:HitCount", "Cache:MissCount", "Cache:HitRatio", "ClientCache:Size")
+        5, TimeUnit.SECONDS
     ).waitForReturn();
-
-    queryAllRemoteStatsUntil(stats -> !stats.isEmpty() && !stats
-        .stream()
-        .flatMap(o -> o.getStatistics().values().stream())
-        .map(statistic -> (StatisticHistory<?, ?>) statistic)
-        .filter(statisticHistory -> statisticHistory.getValue().length == 0)
-        .findFirst()
-        .isPresent());
   }
 
 }

@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -99,6 +100,15 @@ public class DefaultManagementRegistry implements ManagementRegistry {
     }
     Collections.sort(capabilities, CAPABILITY_COMPARATOR);
     return capabilities;
+  }
+
+  @Override
+  public Collection<String> getCapabilityNames() {
+    Collection<String> names = new TreeSet<String>();
+    for (ManagementProvider<?> managementProvider : managementProviders) {
+      names.add(managementProvider.getCapabilityName());
+    }
+    return names;
   }
 
   @Override

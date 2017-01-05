@@ -29,26 +29,7 @@ public interface StatisticQuery extends Query<ContextualStatistics> {
    */
   Collection<String> getStatisticNames();
 
-  /**
-   * The query will only collect statistics computed since this time.
-   * This allows for example to filter out the list of returned values within some {@link org.terracotta.management.model.stats.Statistic}
-   * such as {@link org.terracotta.management.model.stats.history.RateHistory}
-   *
-   * @return A unix timestamp
-   */
-  long getSince();
-
   interface Builder extends QueryBuilder<Builder, StatisticQuery> {
-
-    /**
-     * The query will only collect statistics computed since this time.
-     * This allows for example to filter out the list of returned values within some {@link org.terracotta.management.model.stats.Statistic}
-     * such as {@link org.terracotta.management.model.stats.history.RateHistory}
-     *
-     * @param unixTimestampMs The unix timestamp
-     * @return this builder
-     */
-    Builder since(long unixTimestampMs);
 
   }
 

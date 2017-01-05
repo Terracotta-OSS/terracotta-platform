@@ -23,13 +23,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.terracotta.management.entity.sample.client.CacheFactory;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 import org.terracotta.testing.rules.BasicExternalCluster;
 import org.terracotta.testing.rules.Cluster;
 
 import java.io.File;
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 
@@ -60,13 +58,8 @@ public class SimpleGalvanIT {
 
   @Before
   public void setUp() throws Exception {
-    StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
-        .setAverageWindowDuration(1, TimeUnit.MINUTES)
-        .setHistorySize(100)
-        .setHistoryInterval(1, TimeUnit.SECONDS)
-        .setTimeToDisable(5, TimeUnit.SECONDS);
     URI uri = CLUSTER.getConnectionURI().resolve("/pif");
-    cacheFactory = new CacheFactory(uri, statisticConfiguration);
+    cacheFactory = new CacheFactory(uri);
   }
 
   @After
