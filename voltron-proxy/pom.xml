@@ -29,7 +29,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.2-SNAPSHOT</version>
+    <version>5.2.0-pre10</version>
   </parent>
 
   <groupId>org.terracotta.voltron.proxy</groupId>
