@@ -23,12 +23,10 @@ import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.registry.collect.StatisticConfiguration;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;

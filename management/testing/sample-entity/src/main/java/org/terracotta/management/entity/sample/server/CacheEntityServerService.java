@@ -59,9 +59,8 @@ public class CacheEntityServerService extends ProxyServerEntityService<Cache, St
       @Override
       public void onCreated() {
         LOGGER.trace("[{}] onCreated()", identifier);
-        if(management.init()) {
-          management.serverCacheCreated(cache);
-        }
+        management.init();
+        management.serverCacheCreated(cache);
       }
     });
 

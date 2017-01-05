@@ -87,7 +87,9 @@ public class PassiveStartupIT extends AbstractHATest {
         .map(contextualNotification -> contextualNotification.getAttributes().get("state"))
         .forEach(states::add);
 
-    while (!Thread.currentThread().isInterrupted() && !(states.contains("SYNCHRONIZING") && states.contains("PASSIVE"))) {
+    while (!Thread.currentThread().isInterrupted()
+        && !(states.contains("SYNCHRONIZING") && states.contains("PASSIVE"))
+        && !notifs.stream().anyMatch(contextualNotification -> contextualNotification.getType().equals("SYNC_END"))) {
       tmsAgentService.readMessages().stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))
           .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
