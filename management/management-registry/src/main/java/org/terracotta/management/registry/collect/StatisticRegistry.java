@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.terracotta.context.query.Matchers.attributes;
@@ -53,6 +52,16 @@ import static org.terracotta.context.query.Matchers.subclassOf;
 import static org.terracotta.context.query.QueryBuilder.queryBuilder;
 
 /**
+ * This class replaces the previous {@link org.terracotta.context.extended.StatisticsRegistry}
+ * in the cases where you do not need any sampling and history.
+ * <p>
+ * This class typically does a sort of mapping between the registrations and the discovered
+ * operations or passthrough statistics.
+ * <p>
+ * This class also supporte the generation of management metadata from the discovered statistics.
+ * <p>
+ * Non thread-safe.
+ *
  * @author Mathieu Carbou
  */
 public class StatisticRegistry {
@@ -62,11 +71,12 @@ public class StatisticRegistry {
   private final Map<String, StatisticType> statisticTypes = new HashMap<String, StatisticType>();
 
   public StatisticRegistry(Object contextObject) {
+    //TODO: https://github.com/Terracotta-OSS/terracotta-platform/issues/262
     this.contextObject = contextObject; // allows null, in this case it will be a no-op registry
   }
 
   public Collection<StatisticDescriptor> getDescriptors() {
-    Set<StatisticDescriptor> descriptors = new HashSet<StatisticDescriptor>();
+    Set<StatisticDescriptor> descriptors = new HashSet<StatisticDescriptor>(statistics.size());
     for (Map.Entry<String, ValueStatistic<? extends Number>> entry : statistics.entrySet()) {
       String fullStatName = entry.getKey();
       StatisticType type = statisticTypes.get(fullStatName);
@@ -75,10 +85,13 @@ public class StatisticRegistry {
     return descriptors;
   }
 
+  /**
+   * Query a statistic based on the full statistic name. Returns null if not found.
+   */
   public Statistic<?, ?> queryStatistic(String fullStatisticName) {
     ValueStatistic<? extends Number> statistic = statistics.get(fullStatisticName);
     if (statistic == null) {
-      throw new IllegalArgumentException("No registered statistic named '" + fullStatisticName + "'");
+      return null;
     }
     StatisticType type = statisticTypes.get(fullStatisticName);
     switch (type) {
@@ -94,9 +107,12 @@ public class StatisticRegistry {
   }
 
   public Map<String, Statistic<?, ?>> queryStatistics() {
-    Map<String, Statistic<?, ?>> stats = new TreeMap<String, Statistic<?, ?>>();
+    Map<String, Statistic<?, ?>> stats = new HashMap<String, Statistic<?, ?>>();
     for (String fullStatName : statistics.keySet()) {
-      stats.put(fullStatName, queryStatistic(fullStatName));
+      Statistic<?, ?> statistic = queryStatistic(fullStatName);
+      if (statistic != null) {
+        stats.put(fullStatName, statistic);
+      }
     }
     return stats;
   }
@@ -152,12 +168,7 @@ public class StatisticRegistry {
         .descendants()
         .filter(context(attributes(Matchers.<Map<String, Object>>allOf(
             hasAttribute("name", descriptor.getObserverName()),
-            hasAttribute("tags", new Matcher<Set<String>>() {
-              @Override
-              protected boolean matchesSafely(Set<String> object) {
-                return object.containsAll(descriptor.getTags());
-              }
-            })))))
+            hasTags(descriptor.getTags())))))
         .filter(context(identifier(subclassOf(ValueStatistic.class))))
         .build().execute(Collections.singleton(ContextManager.nodeFor(contextObject)));
 
@@ -188,12 +199,7 @@ public class StatisticRegistry {
         .filter(context(attributes(Matchers.<Map<String, Object>>allOf(
             hasAttribute("type", descriptor.getType()),
             hasAttribute("name", descriptor.getObserverName()),
-            hasAttribute("tags", new Matcher<Set<String>>() {
-              @Override
-              protected boolean matchesSafely(Set<String> object) {
-                return object.containsAll(descriptor.getTags());
-              }
-            })))))
+            hasTags(descriptor.getTags())))))
         .filter(context(identifier(subclassOf(OperationStatistic.class))))
         .build().execute(Collections.singleton(ContextManager.nodeFor(contextObject)));
 
@@ -217,6 +223,15 @@ public class StatisticRegistry {
         });
       }
     }
+  }
+
+  private Matcher<Map<String, Object>> hasTags(final Collection<String> tags) {
+    return hasAttribute("tags", new Matcher<Collection<String>>() {
+      @Override
+      protected boolean matchesSafely(Collection<String> object) {
+        return object.containsAll(tags);
+      }
+    });
   }
 
   private <N extends Number> void registerStatistic(String fullStatName, StatisticType type, ValueStatistic<N> accessor) {

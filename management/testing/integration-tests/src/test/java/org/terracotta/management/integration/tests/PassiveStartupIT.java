@@ -26,12 +26,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -113,8 +111,8 @@ public class PassiveStartupIT extends AbstractHATest {
             "SERVER_STATE_CHANGED",
             "SERVER_ENTITY_CREATED",
             "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
-            "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_UPDATED",
-            "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_UPDATED",
+            "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
+            "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
             "SERVER_STATE_CHANGED",
             "SYNC_END"
         ));

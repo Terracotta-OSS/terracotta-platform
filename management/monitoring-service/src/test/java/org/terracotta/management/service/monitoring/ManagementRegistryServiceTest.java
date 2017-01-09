@@ -116,8 +116,7 @@ public class ManagementRegistryServiceTest {
     registry.register(new MyObject("myCacheManagerName2", "myCacheName2"));
     registry.refresh();
 
-    assertThat(buffer.size(), equalTo(1));
-    assertThat(buffer.read().unwrap(ContextualNotification.class).get(0).getType(), equalTo("ENTITY_REGISTRY_UPDATED"));
+    assertThat(buffer.size(), equalTo(0));
   }
 
 }

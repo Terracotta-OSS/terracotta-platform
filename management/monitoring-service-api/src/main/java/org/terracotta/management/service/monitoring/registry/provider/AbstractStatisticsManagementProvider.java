@@ -46,6 +46,8 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
 
   @Override
   public final Collection<? extends Descriptor> getDescriptors() {
+    // To keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
     List<StatisticDescriptor> list = new ArrayList<>((Collection<? extends StatisticDescriptor>) super.getDescriptors());
     Collections.sort(list, STATISTIC_DESCRIPTOR_COMPARATOR);
     return list;
@@ -53,6 +55,8 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
 
   @Override
   public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames) {
+    // To keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
     Map<String, Statistic<?, ?>> statistics = new TreeMap<>();
     AbstractExposedStatistics<T> exposedObject = (AbstractExposedStatistics<T>) findExposedObject(context);
     if (exposedObject != null) {
@@ -60,10 +64,9 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
         statistics.putAll(exposedObject.queryStatistics());
       } else {
         for (String statisticName : statisticNames) {
-          try {
-            statistics.put(statisticName, exposedObject.queryStatistic(statisticName));
-          } catch (IllegalArgumentException ignored) {
-            // ignore when statisticName does not exist and throws an exception
+          Statistic<?, ?> statistic = exposedObject.queryStatistic(statisticName);
+          if (statistic != null) {
+            statistics.put(statisticName, statistic);
           }
         }
       }

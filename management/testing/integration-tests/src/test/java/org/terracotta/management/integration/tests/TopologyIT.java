@@ -53,7 +53,6 @@ public class TopologyIT extends AbstractSingleTest {
 
     Map<String, List<Message>> messsageByTypes = messages.stream().collect(Collectors.groupingBy(Message::getType));
     assertThat(messsageByTypes.size(), equalTo(2));
-    assertThat(messsageByTypes.get("NOTIFICATION").size(), equalTo(34));
     assertThat(messsageByTypes.get("TOPOLOGY").size(), equalTo(1));
 
     List<ContextualNotification> notifs = messages.stream()
@@ -62,16 +61,13 @@ public class TopologyIT extends AbstractSingleTest {
         .collect(Collectors.toList());
 
     Map<String, List<ContextualNotification>> notifsByTypes = notifs.stream().collect(Collectors.groupingBy(ContextualNotification::getType));
-    assertThat(notifsByTypes.size(), equalTo(11));
 
-    assertThat(notifsByTypes.get("CLIENT_REGISTRY_UPDATED").size(), equalTo(4));
     assertThat(notifsByTypes.get("CLIENT_CACHE_CREATED").size(), equalTo(4));
     assertThat(notifsByTypes.get("CLIENT_INIT").size(), equalTo(2));
     assertThat(notifsByTypes.get("SERVER_ENTITY_CREATED").size(), equalTo(4));
     assertThat(notifsByTypes.get("SERVER_CACHE_CREATED").size(), equalTo(2));
     assertThat(notifsByTypes.get("CLIENT_REGISTRY_AVAILABLE").size(), equalTo(2));
     assertThat(notifsByTypes.get("CLIENT_CONNECTED").size(), equalTo(2));
-    assertThat(notifsByTypes.get("ENTITY_REGISTRY_UPDATED").size(), equalTo(2));
     assertThat(notifsByTypes.get("CLIENT_TAGS_UPDATED").size(), equalTo(2));
     assertThat(notifsByTypes.get("SERVER_ENTITY_FETCHED").size(), equalTo(7));
     assertThat(notifsByTypes.get("ENTITY_REGISTRY_AVAILABLE").size(), equalTo(3));

@@ -338,8 +338,7 @@ public class VoltronMonitoringServiceTest {
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
 
     messages = messages();
-    assertThat(messages.size(), equalTo(1));
-    assertThat(notificationTypes(messages), equalTo(Arrays.asList("ENTITY_REGISTRY_UPDATED")));
+    assertThat(messages.size(), equalTo(0));
   }
 
   @Test

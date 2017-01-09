@@ -131,6 +131,8 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   @SuppressWarnings("unchecked")
   @Override
   public Collection<? extends Descriptor> getDescriptors() {
+    // LinkedHashSet to keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
     Collection<Descriptor> capabilities = new LinkedHashSet<Descriptor>();
     for (ExposedObject o : exposedObjects) {
       capabilities.addAll(((ExposedObject<T>) o).getDescriptors());

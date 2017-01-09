@@ -279,6 +279,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
   }
 
+  //TODO: BUGFIX: https://github.com/Terracotta-OSS/terracotta-platform/issues/260
   private void addServerManagementProviders(long consumerId, ConsumerManagementRegistry consumerManagementRegistry) {
     LOGGER.trace("[0] addServerManagementProviders({})", consumerId);
     // manage offheap service if it is there

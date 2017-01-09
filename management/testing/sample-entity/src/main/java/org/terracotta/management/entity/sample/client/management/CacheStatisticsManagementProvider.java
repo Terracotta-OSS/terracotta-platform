@@ -59,12 +59,16 @@ class CacheStatisticsManagementProvider extends AbstractManagementProvider<Clien
   @Override
   public final Collection<? extends Descriptor> getDescriptors() {
     List<StatisticDescriptor> list = new ArrayList<>((Collection<? extends StatisticDescriptor>) super.getDescriptors());
+    // To keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
     Collections.sort(list, STATISTIC_DESCRIPTOR_COMPARATOR);
     return list;
   }
 
   @Override
   public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames) {
+    // To keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
     Map<String, Statistic<?, ?>> statistics = new TreeMap<String, Statistic<?, ?>>();
     ExposedClientCache exposedClientCache = (ExposedClientCache) findExposedObject(context);
     if (exposedClientCache != null) {
@@ -72,10 +76,9 @@ class CacheStatisticsManagementProvider extends AbstractManagementProvider<Clien
         statistics.putAll(exposedClientCache.queryStatistics());
       } else {
         for (String statisticName : statisticNames) {
-          try {
-            statistics.put(statisticName, exposedClientCache.queryStatistic(statisticName));
-          } catch (IllegalArgumentException ignored) {
-            // ignore when statisticName does not exist and throws an exception
+          Statistic<?, ?> statistic = exposedClientCache.queryStatistic(statisticName);
+          if (statistic != null) {
+            statistics.put(statisticName, statistic);
           }
         }
       }
