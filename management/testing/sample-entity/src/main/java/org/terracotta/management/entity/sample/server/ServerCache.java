@@ -86,7 +86,7 @@ public class ServerCache implements Cache, CacheSync {
       String old = data.put(key, value);
       simulateLatency();
       removed(key, old);
-      putObserver.end(CacheOperationOutcomes.PutOutcome.PUT);
+      putObserver.end(CacheOperationOutcomes.PutOutcome.SUCCESS);
     } catch (RuntimeException e) {
       putObserver.end(CacheOperationOutcomes.PutOutcome.FAILURE);
       throw e;

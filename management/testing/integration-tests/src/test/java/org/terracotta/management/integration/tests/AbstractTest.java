@@ -34,15 +34,12 @@ import org.terracotta.management.entity.tms.client.TmsAgentService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.model.stats.StatisticHistory;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 import org.terracotta.testing.rules.Cluster;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -151,12 +148,7 @@ public abstract class AbstractTest {
   }
 
   protected void addWebappNode(URI uri) throws Exception {
-    StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
-        .setAverageWindowDuration(1, TimeUnit.MINUTES)
-        .setHistorySize(100)
-        .setHistoryInterval(1, TimeUnit.SECONDS)
-        .setTimeToDisable(5, TimeUnit.SECONDS);
-    CacheFactory cacheFactory = new CacheFactory(uri, statisticConfiguration);
+    CacheFactory cacheFactory = new CacheFactory(uri);
     cacheFactory.init();
     webappNodes.add(cacheFactory);
   }
@@ -179,12 +171,7 @@ public abstract class AbstractTest {
     // create a tms entity
     TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());
     TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
-        .setMaximumUnreadMessages(1024 * 1024)
-        .setStatisticConfiguration(new StatisticConfiguration()
-            .setAverageWindowDuration(1, TimeUnit.MINUTES)
-            .setHistorySize(100)
-            .setHistoryInterval(1, TimeUnit.SECONDS)
-            .setTimeToDisable(5, TimeUnit.SECONDS)));
+        .setMaximumUnreadMessages(1024 * 1024));
     this.tmsAgentService = new TmsAgentService(tmsAgentEntity);
     this.tmsAgentService.setOperationTimeout(60, TimeUnit.SECONDS);
   }
@@ -232,7 +219,7 @@ public abstract class AbstractTest {
         .replaceAll("testServer1", "testServer0");
   }
 
-  protected void triggerServerStatComputation(String... statNames) throws Exception {
+  protected void triggerServerStatComputation() throws Exception {
     // trigger stats computation and wait for all stats to have been computed at least once
     tmsAgentService.readTopology().serverStream().forEach(server -> {
       ServerEntity serverEntity = server
@@ -242,23 +229,14 @@ public abstract class AbstractTest {
           .get();
 
       try {
-        tmsAgentService.updateCollectedStatistics(
+        tmsAgentService.startStatisticCollector(
             serverEntity.getContext(),
-            "ServerCacheStatistics",
-            Arrays.asList(statNames)
+            1, TimeUnit.SECONDS
         ).waitForReturn();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     });
-
-    queryAllRemoteStatsUntil(stats -> !stats.isEmpty() && !stats
-        .stream()
-        .flatMap(o -> o.getStatistics().values().stream())
-        .map(statistic -> (StatisticHistory<?, ?>) statistic)
-        .filter(statisticHistory -> statisticHistory.getValue().length == 0)
-        .findFirst()
-        .isPresent());
   }
 
 }

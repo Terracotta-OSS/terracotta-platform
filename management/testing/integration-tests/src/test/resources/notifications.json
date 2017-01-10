@@ -170,19 +170,6 @@
   {
     "attributes": {},
     "context": {
-      "stripeId": "SINGLE",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
-      "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
-      "entityName": "pet-clinic/pets",
-      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
-      "consumerId": "3"
-    },
-    "type": "ENTITY_REGISTRY_UPDATED"
-  },
-  {
-    "attributes": {},
-    "context": {
       "consumerId": "3",
       "alias": "pet-clinic/pets",
       "type": "ServerCache",
@@ -213,13 +200,6 @@
   {
     "attributes": {},
     "context": {
-      "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
-    },
-    "type": "CLIENT_REGISTRY_UPDATED"
-  },
-  {
-    "attributes": {},
-    "context": {
       "appName": "pet-clinic",
       "cacheName": "pets",
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
@@ -240,13 +220,6 @@
       "consumerId": "3"
     },
     "type": "SERVER_ENTITY_FETCHED"
-  },
-  {
-    "attributes": {},
-    "context": {
-      "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
-    },
-    "type": "CLIENT_REGISTRY_UPDATED"
   },
   {
     "attributes": {},
@@ -286,19 +259,6 @@
   {
     "attributes": {},
     "context": {
-      "stripeId": "SINGLE",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
-      "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
-      "entityName": "pet-clinic/clients",
-      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
-      "consumerId": "4"
-    },
-    "type": "ENTITY_REGISTRY_UPDATED"
-  },
-  {
-    "attributes": {},
-    "context": {
       "consumerId": "4",
       "alias": "pet-clinic/clients",
       "type": "ServerCache",
@@ -329,13 +289,6 @@
   {
     "attributes": {},
     "context": {
-      "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
-    },
-    "type": "CLIENT_REGISTRY_UPDATED"
-  },
-  {
-    "attributes": {},
-    "context": {
       "appName": "pet-clinic",
       "cacheName": "clients",
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
@@ -356,13 +309,6 @@
       "consumerId": "4"
     },
     "type": "SERVER_ENTITY_FETCHED"
-  },
-  {
-    "attributes": {},
-    "context": {
-      "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
-    },
-    "type": "CLIENT_REGISTRY_UPDATED"
   },
   {
     "attributes": {},

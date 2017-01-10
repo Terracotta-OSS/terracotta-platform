@@ -17,8 +17,8 @@ package org.terracotta.management.service.monitoring;
 
 import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.action.Named;
-import org.terracotta.management.registry.action.RequiredContext;
+import org.terracotta.management.registry.Named;
+import org.terracotta.management.registry.RequiredContext;
 
 /**
  * @author Mathieu Carbou

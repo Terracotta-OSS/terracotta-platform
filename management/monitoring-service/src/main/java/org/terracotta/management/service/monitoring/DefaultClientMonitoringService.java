@@ -95,7 +95,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
 
   @Override
   public void answerManagementCall(ClientDescriptor caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
-    LOGGER.trace("[{}] answerManagementCall({})", consumerId, managementCallIdentifier);
+    LOGGER.trace("[{}] answerManagementCall({}, {})", consumerId, managementCallIdentifier, contextualReturn);
     firingService.fireManagementCallAnswer(managementCallIdentifier, contextualReturn);
   }
 

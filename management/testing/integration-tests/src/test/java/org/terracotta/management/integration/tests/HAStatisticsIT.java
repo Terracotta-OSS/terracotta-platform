@@ -16,14 +16,10 @@
 package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.model.cluster.Server;
-import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.model.stats.StatisticHistory;
-import org.terracotta.management.model.stats.history.CounterHistory;
+import org.terracotta.management.model.stats.primitive.Counter;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,7 +31,7 @@ public class HAStatisticsIT extends AbstractHATest {
   @Test
   public void can_do_remote_management_calls_on_servers() throws Exception {
     try {
-      triggerServerStatComputation("Cluster:PutCount");
+      triggerServerStatComputation();
 
       Set<String> servers = new HashSet<>();
 
@@ -58,8 +54,7 @@ public class HAStatisticsIT extends AbstractHATest {
   @Test
   public void test_passive_stats() throws Exception {
     try {
-      System.out.println("Please be patient... Test can take about 15s...");
-      triggerServerStatComputation("Cluster:PutCount");
+      triggerServerStatComputation();
 
       //System.out.println("put(pet1=Cubitus)");
       put(0, "pets", "pet1", "Cubitus"); // put on both active and passive
@@ -77,11 +72,11 @@ public class HAStatisticsIT extends AbstractHATest {
             String serverName = stat.getContext().get(Server.NAME_KEY);
             //System.out.println("server: " + serverName);
 
-            CounterHistory counterHistory = stat.getStatistic(CounterHistory.class, "Cluster:PutCount");
+            Counter counter = stat.getStatistic(Counter.class, "Cluster:PutCount");
             //System.out.println("counterHistory: " + counterHistory.getLast().getValue());
 
             // if the counter history is not yet 1, return false, we continue looping
-            if (counterHistory.getLast() == null || counterHistory.getLast().getValue() < 1L) {
+            if (counter.getValue()< 1L) {
               return false;
 
             } else {

@@ -27,7 +27,6 @@ import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.management.Management;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagementSupport;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -37,7 +36,6 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -52,20 +50,12 @@ public class CacheFactory implements Closeable {
   private Connection connection;
   private CacheEntityFactory cacheEntityFactory;
 
-  public CacheFactory(URI uri) {
-    this(uri, new StatisticConfiguration()
-        .setAverageWindowDuration(1, TimeUnit.MINUTES)
-        .setHistorySize(100)
-        .setHistoryInterval(1, TimeUnit.SECONDS)
-        .setTimeToDisable(30, TimeUnit.SECONDS));
-  }
-
-  public CacheFactory(URI u, StatisticConfiguration statisticConfiguration) {
+  public CacheFactory(URI u) {
     if (u.getPath() == null || u.getPath().isEmpty()) {
       throw new IllegalArgumentException(u.toString());
     }
     this.uri = u;
-    this.management = new Management(new ContextContainer("appName", u.getPath().substring(1)), statisticConfiguration);
+    this.management = new Management(new ContextContainer("appName", u.getPath().substring(1)));
   }
 
   public CapabilityManagementSupport getManagementRegistry() {

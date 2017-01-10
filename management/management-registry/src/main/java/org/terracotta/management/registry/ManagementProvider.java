@@ -85,11 +85,10 @@ public interface ManagementProvider<T> {
    * Collect statistics, if the provider supports this.
    *
    * @param context        the context.
-   * @param statisticNames the statistic names to collect.
-   * @param since          The unix time in ms from where to return the statistics for statistics based on samples.
-   * @return the statistic map, the key being the statistic namesø.
+   * @param statisticNames the statistic names to collect. If empty, collect ALL statistics
+   * @return the statistic map, the key being the statistic names.
    */
-  Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames, long since);
+  Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames);
 
   /**
    * Call an action, if the provider supports this.

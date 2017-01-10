@@ -16,23 +16,18 @@
 package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.context.extended.StatisticsRegistry;
-import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.capabilities.StatisticsCapability;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.Statistic;
+import org.terracotta.management.registry.Named;
+import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.action.Named;
-import org.terracotta.management.registry.action.RequiredContext;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
+import org.terracotta.management.registry.collect.StatisticRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,8 +35,6 @@ import java.util.TreeMap;
 @RequiredContext({@Named("consumerId")})
 @CommonComponent
 public abstract class AbstractStatisticsManagementProvider<T extends AliasBinding> extends AliasBindingManagementProvider<T> {
-
-  private static final Comparator<StatisticDescriptor> STATISTIC_DESCRIPTOR_COMPARATOR = Comparator.comparing(StatisticDescriptor::getName);
 
   public AbstractStatisticsManagementProvider(Class<? extends T> type) {
     super(type);
@@ -53,40 +46,29 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
   }
 
   @Override
-  public Capability getCapability() {
-    StatisticConfiguration configuration = getStatisticsService().getStatisticConfiguration();
-    StatisticsCapability.Properties properties = new StatisticsCapability.Properties(
-        configuration.averageWindowDuration(),
-        configuration.averageWindowUnit(),
-        configuration.historySize(),
-        configuration.historyInterval(),
-        configuration.historyIntervalUnit(),
-        configuration.timeToDisable(),
-        configuration.timeToDisableUnit());
-    return new StatisticsCapability(getCapabilityName(), properties, getDescriptors(), getCapabilityContext());
-  }
-
-  @Override
   public final Collection<? extends Descriptor> getDescriptors() {
-    Collection<StatisticDescriptor> capabilities = new HashSet<>();
-    for (ExposedObject o : getExposedObjects()) {
-      capabilities.addAll(((AbstractExposedStatistics<?>) o).getDescriptors());
-    }
-    List<StatisticDescriptor> list = new ArrayList<>(capabilities);
+    // To keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
+    List<StatisticDescriptor> list = new ArrayList<>((Collection<? extends StatisticDescriptor>) super.getDescriptors());
     Collections.sort(list, STATISTIC_DESCRIPTOR_COMPARATOR);
     return list;
   }
 
   @Override
-  public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames, long since) {
+  public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames) {
+    // To keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
     Map<String, Statistic<?, ?>> statistics = new TreeMap<>();
     AbstractExposedStatistics<T> exposedObject = (AbstractExposedStatistics<T>) findExposedObject(context);
     if (exposedObject != null) {
-      for (String statisticName : statisticNames) {
-        try {
-          statistics.put(statisticName, exposedObject.queryStatistic(statisticName, since));
-        } catch (IllegalArgumentException ignored) {
-          // ignore when statisticName does not exist and throws an exception
+      if (statisticNames == null || statisticNames.isEmpty()) {
+        statistics.putAll(exposedObject.queryStatistics());
+      } else {
+        for (String statisticName : statisticNames) {
+          Statistic<?, ?> statistic = exposedObject.queryStatistic(statisticName);
+          if (statistic != null) {
+            statistics.put(statisticName, statistic);
+          }
         }
       }
     }
@@ -95,11 +77,15 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
 
   @Override
   protected AbstractExposedStatistics<T> wrap(T managedObject) {
-    StatisticsRegistry statisticsRegistry = createStatisticsRegistry(managedObject);
     Context context = Context.empty()
         .with("consumerId", String.valueOf(getMonitoringService().getConsumerId()))
         .with("alias", managedObject.getAlias());
-    return internalWrap(context, managedObject, statisticsRegistry);
+    StatisticRegistry statisticRegistry = getStatisticRegistry(managedObject);
+    return internalWrap(context, managedObject, statisticRegistry);
+  }
+
+  protected StatisticRegistry getStatisticRegistry(T managedObject) {
+    return new StatisticRegistry(managedObject.getValue());
   }
 
   @Override
@@ -107,10 +93,6 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
     throw new UnsupportedOperationException();
   }
 
-  protected StatisticsRegistry createStatisticsRegistry(T managedObject) {
-    return getStatisticsService().createStatisticsRegistry(managedObject.getValue());
-  }
-
-  protected abstract AbstractExposedStatistics<T> internalWrap(Context context, T managedObject, StatisticsRegistry statisticsRegistry);
+  protected abstract AbstractExposedStatistics<T> internalWrap(Context context, T managedObject, StatisticRegistry statisticsRegistry);
 
 }

@@ -15,10 +15,11 @@
  */
 package org.terracotta.management.service.monitoring.registry;
 
-import org.terracotta.context.extended.StatisticsRegistry;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.action.Named;
-import org.terracotta.management.registry.action.RequiredContext;
+import org.terracotta.management.registry.Named;
+import org.terracotta.management.registry.RequiredContext;
+import org.terracotta.management.registry.collect.StatisticProvider;
+import org.terracotta.management.registry.collect.StatisticRegistry;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractExposedStatistics;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractStatisticsManagementProvider;
 
@@ -30,6 +31,7 @@ import static org.terracotta.context.extended.ValueStatisticDescriptor.descripto
 
 @Named("OffHeapResourceStatistics")
 @RequiredContext({@Named("consumerId"), @Named("type"), @Named("alias")})
+@StatisticProvider
 public class OffHeapResourceStatisticsManagementProvider extends AbstractStatisticsManagementProvider<OffHeapResourceBinding> {
 
   public OffHeapResourceStatisticsManagementProvider() {
@@ -37,16 +39,16 @@ public class OffHeapResourceStatisticsManagementProvider extends AbstractStatist
   }
 
   @Override
-  protected AbstractExposedStatistics<OffHeapResourceBinding> internalWrap(Context context, OffHeapResourceBinding managedObject, StatisticsRegistry statisticsRegistry) {
-    return new OffHeapResourceBindingExposedStatistics(context, managedObject, statisticsRegistry);
+  protected AbstractExposedStatistics<OffHeapResourceBinding> internalWrap(Context context, OffHeapResourceBinding managedObject, StatisticRegistry statisticRegistry) {
+    return new OffHeapResourceBindingExposedStatistics(context, managedObject, statisticRegistry);
   }
 
   private static class OffHeapResourceBindingExposedStatistics extends AbstractExposedStatistics<OffHeapResourceBinding> {
 
-    OffHeapResourceBindingExposedStatistics(Context context, OffHeapResourceBinding binding, StatisticsRegistry statisticsRegistry) {
-      super(context, binding, statisticsRegistry);
+    OffHeapResourceBindingExposedStatistics(Context context, OffHeapResourceBinding binding, StatisticRegistry statisticRegistry) {
+      super(context, binding, statisticRegistry);
 
-      statisticsRegistry.registerSize("AllocatedMemory", descriptor("allocatedMemory", tags("tier", "OffHeapResource")));
+      getRegistry().registerSize("AllocatedMemory", descriptor("allocatedMemory", tags("tier", "OffHeapResource")));
     }
 
     @Override

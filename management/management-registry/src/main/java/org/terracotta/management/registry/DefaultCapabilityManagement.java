@@ -44,6 +44,11 @@ public class DefaultCapabilityManagement implements CapabilityManagement {
   }
 
   @Override
+  public StatisticQuery.Builder queryAllStatistics() {
+    return new DefaultStatisticQueryBuilder(capabilityManagement, capabilityName);
+  }
+
+  @Override
   public <T> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters) {
     return new DefaultCallQueryBuilder<T>(capabilityManagement, capabilityName, methodName, returnType, parameters);
   }

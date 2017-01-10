@@ -17,11 +17,8 @@ package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.util.Objects;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * @author Mathieu Carbou
@@ -31,11 +28,6 @@ public class ConsumerManagementRegistryConfiguration implements ServiceConfigura
 
   private final EntityMonitoringService entityMonitoringService;
   private boolean addServerManagementProviders;
-  private StatisticConfiguration statisticConfiguration = new StatisticConfiguration(
-      60, SECONDS,
-      100, 1, SECONDS,
-      30, SECONDS
-  );
 
   public ConsumerManagementRegistryConfiguration(EntityMonitoringService entityMonitoringService) {
     this.entityMonitoringService = Objects.requireNonNull(entityMonitoringService);
@@ -52,15 +44,6 @@ public class ConsumerManagementRegistryConfiguration implements ServiceConfigura
 
   public boolean wantsServerManagementProviders() {
     return addServerManagementProviders;
-  }
-
-  public StatisticConfiguration getStatisticConfiguration() {
-    return statisticConfiguration;
-  }
-
-  public ConsumerManagementRegistryConfiguration setStatisticConfiguration(StatisticConfiguration statisticConfiguration) {
-    this.statisticConfiguration = statisticConfiguration;
-    return this;
   }
 
   @Override

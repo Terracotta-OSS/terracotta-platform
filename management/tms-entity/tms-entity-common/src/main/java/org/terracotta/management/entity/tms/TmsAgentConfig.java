@@ -15,28 +15,19 @@
  */
 package org.terracotta.management.entity.tms;
 
-import org.terracotta.management.registry.collect.StatisticConfiguration;
-
 import java.io.Serializable;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * @author Mathieu Carbou
  */
 public final class TmsAgentConfig implements Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   // name must be hardcoded because it reference a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.tms.client.TmsAgentEntity";
 
   private int maximumUnreadMessages = 1024 * 1024;
-  private StatisticConfiguration statisticConfiguration = new StatisticConfiguration(
-      60, SECONDS,
-      100, 1, SECONDS,
-      30, SECONDS
-  );
 
   public int getMaximumUnreadMessages() {
     return maximumUnreadMessages;
@@ -44,15 +35,6 @@ public final class TmsAgentConfig implements Serializable {
 
   public TmsAgentConfig setMaximumUnreadMessages(int maximumUnreadMessages) {
     this.maximumUnreadMessages = maximumUnreadMessages;
-    return this;
-  }
-
-  public StatisticConfiguration getStatisticConfiguration() {
-    return statisticConfiguration;
-  }
-
-  public TmsAgentConfig setStatisticConfiguration(StatisticConfiguration statisticConfiguration) {
-    this.statisticConfiguration = statisticConfiguration;
     return this;
   }
 

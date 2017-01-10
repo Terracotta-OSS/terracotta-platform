@@ -22,10 +22,8 @@ import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.model.stats.StatisticHistory;
-import org.terracotta.management.model.stats.history.CounterHistory;
-import org.terracotta.management.model.stats.history.RatioHistory;
-import org.terracotta.management.model.stats.history.SizeHistory;
+import org.terracotta.management.model.stats.primitive.Counter;
+import org.terracotta.management.model.stats.primitive.Size;
 import org.terracotta.management.registry.CapabilityManagementSupport;
 
 import java.util.List;
@@ -122,62 +120,35 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
 
   @Test
   public void can_query_local_stats() throws Exception {
-    System.out.println("Please be patient... Test can take about 5s...");
-
-    triggerStatComputation(0, "pets");
-    triggerStatComputation(1, "pets");
-
     put(0, "pets", "pet1", "Cubitus");
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .getStatistic(CounterHistory.class, "Cache:HitCount")
-        .getLast()
+        .getStatistic(Counter.class, "Cache:HitCount")
         .getValue() == 0L); // 0 hit
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .getStatistic(CounterHistory.class, "Cache:HitCount")
-        .getLast()
+        .getStatistic(Counter.class, "Cache:HitCount")
         .getValue() == 0L); // 0 miss
 
     get(1, "pets", "pet1"); // hit
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .getStatistic(CounterHistory.class, "Cache:HitCount")
-        .getLast()
+        .getStatistic(Counter.class, "Cache:HitCount")
         .getValue() == 1L); // 1 hit
 
     get(1, "pets", "pet2"); // miss
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .getStatistic(CounterHistory.class, "Cache:MissCount")
-        .getLast()
+        .getStatistic(Counter.class, "Cache:MissCount")
         .getValue() == 1L); // 1 miss
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .getStatistic(RatioHistory.class, "Cache:HitRatio")
-        .getLast()
-        .getValue() == 0.5d); // 1 hit for 2 gets
-
-    queryAllStatsUntil(1, "pets", stats -> stats
-        .getStatistic(SizeHistory.class, "ClientCache:Size")
-        .getLast()
+        .getStatistic(Size.class, "ClientCache:Size")
         .getValue() == 1L); // size 1 on heap of client 1
 
     queryAllStatsUntil(0, "pets", stats -> stats
-        .getStatistic(SizeHistory.class, "ClientCache:Size")
-        .getLast()
+        .getStatistic(Size.class, "ClientCache:Size")
         .getValue() == 0L); // size 0 on heap of client 0
-  }
-
-  private void triggerStatComputation(int node, String cacheName) {
-    // trigger stats computation and wait for all stats to have been computed at least once
-    queryAllStatsUntil(node, cacheName, stats -> !stats.getStatistics()
-        .values()
-        .stream()
-        .map(statistic -> (StatisticHistory<?, ?>) statistic)
-        .filter(statisticHistory -> statisticHistory.getLast() == null)
-        .findFirst()
-        .isPresent());
   }
 
   private void queryAllStatsUntil(int node, String cacheName, Predicate<ContextualStatistics> test) {

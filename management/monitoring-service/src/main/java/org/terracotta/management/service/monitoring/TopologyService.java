@@ -327,10 +327,10 @@ class TopologyService implements PlatformListener {
     stripe.getServerByName(serverName)
         .flatMap(server -> server.getServerEntity(consumerId))
         .ifPresent(serverEntity -> {
-          String notif = serverEntity.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "ENTITY_REGISTRY_UPDATED").orElse("ENTITY_REGISTRY_AVAILABLE");
-          if (!notif.isEmpty()) {
-            serverEntity.setManagementRegistry(newRegistry);
-            firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), notif));
+          boolean hadRegistry = serverEntity.getManagementRegistry().isPresent();
+          serverEntity.setManagementRegistry(newRegistry);
+          if (!hadRegistry) {
+            firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_AVAILABLE"));
           }
         });
   }
@@ -339,10 +339,10 @@ class TopologyService implements PlatformListener {
     Optional<Client> optional = getClient(consumerId, clientDescriptor);
     if (optional.isPresent()) {
       Client client = optional.get();
-      String notif = client.getManagementRegistry().map(current -> current.equals(newRegistry) ? "" : "CLIENT_REGISTRY_UPDATED").orElse("CLIENT_REGISTRY_AVAILABLE");
-      if (!notif.isEmpty()) {
-        client.setManagementRegistry(newRegistry);
-        firingService.fireNotification(new ContextualNotification(client.getContext(), notif));
+      boolean hadRegistry = client.getManagementRegistry().isPresent();
+      client.setManagementRegistry(newRegistry);
+      if (!hadRegistry) {
+        firingService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_REGISTRY_AVAILABLE"));
       }
     } else {
       LOGGER.warn("[0] setClientManagementRegistry(): Client descriptor " + clientDescriptor + " did not fetch entity " + consumerId);

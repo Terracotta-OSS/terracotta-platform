@@ -20,10 +20,11 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.AbstractActionManagementProvider;
 import org.terracotta.management.registry.action.Exposed;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.action.Named;
+import org.terracotta.management.registry.Named;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
@@ -54,19 +55,14 @@ public class StatisticCollectorProvider<T extends StatisticCollector> extends Ab
     }
 
     @Exposed
-    public void updateCollectedStatistics(@Named("capabilityName") String capabilityName,
-                                          @Named("statisticNames") Collection<String> statisticNames) {
-      collectorService.updateCollectedStatistics(capabilityName, statisticNames);
-    }
-
-    @Exposed
     public void stopStatisticCollector() {
       collectorService.stopStatisticCollector();
     }
 
     @Exposed
-    public void startStatisticCollector() {
-      collectorService.startStatisticCollector();
+    public void startStatisticCollector(@Named("interval") long interval,
+                                        @Named("unit") TimeUnit unit) {
+      collectorService.startStatisticCollector(interval, unit);
     }
 
     @Override

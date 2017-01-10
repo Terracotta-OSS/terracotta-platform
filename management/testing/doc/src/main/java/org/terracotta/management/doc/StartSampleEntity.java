@@ -18,12 +18,10 @@ package org.terracotta.management.doc;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.CacheFactory;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.net.URI;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -31,12 +29,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class StartSampleEntity {
   public static void main(String[] args) throws ConnectionException, ExecutionException, TimeoutException, InterruptedException {
-    StatisticConfiguration statisticConfiguration = new StatisticConfiguration()
-        .setAverageWindowDuration(1, TimeUnit.MINUTES)
-        .setHistorySize(100)
-        .setHistoryInterval(1, TimeUnit.SECONDS)
-        .setTimeToDisable(5, TimeUnit.SECONDS);
-    CacheFactory cacheFactory = new CacheFactory(URI.create("terracotta://localhost:9510/pet-clinic"), statisticConfiguration);
+    CacheFactory cacheFactory = new CacheFactory(URI.create("terracotta://localhost:9510/pet-clinic"));
 
     cacheFactory.init();
 

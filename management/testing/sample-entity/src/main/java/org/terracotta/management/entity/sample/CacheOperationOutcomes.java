@@ -60,7 +60,7 @@ public interface CacheOperationOutcomes {
     /**
      * put.
      */
-    PUT,
+    SUCCESS,
     /**
      * failure
      */

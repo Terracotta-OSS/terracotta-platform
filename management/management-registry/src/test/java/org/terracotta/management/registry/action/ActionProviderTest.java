@@ -82,7 +82,7 @@ public class ActionProviderTest {
   @Test
   public void testCollectStatistics() throws Exception {
     try {
-      managementProvider.collectStatistics(null, null, System.currentTimeMillis());
+      managementProvider.collectStatistics(null, null);
       fail("expected UnsupportedOperationException");
     } catch (UnsupportedOperationException uoe) {
       // expected

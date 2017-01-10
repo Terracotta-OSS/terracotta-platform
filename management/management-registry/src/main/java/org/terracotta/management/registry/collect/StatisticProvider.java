@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.model.stats;
+package org.terracotta.management.registry.collect;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * @author Mathieu Carbou
+ * Mark a provider as providing statistics
+ *
+ * @author Ludovic Orban
  */
-public interface StatisticHistory<V, U> extends Statistic<Sample<V>[], U> {
-
-  /**
-   * @return last sample or null
-   */
-  Sample<V> getLast();
-
-  /**
-   * @return first sample or null
-   */
-  Sample<V> getFirst();
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+@Inherited
+public @interface StatisticProvider {
 }

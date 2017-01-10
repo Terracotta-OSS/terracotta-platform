@@ -29,7 +29,6 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.registry.collect.DefaultStatisticCollector;
-import org.terracotta.management.registry.collect.StatisticConfiguration;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -53,13 +52,13 @@ public class Management {
 
   private ManagementAgentService managementAgent;
 
-  public Management(ContextContainer contextContainer, StatisticConfiguration statisticConfiguration) {
+  public Management(ContextContainer contextContainer) {
     this.parentContext = Context.create(contextContainer.getName(), contextContainer.getValue());
 
     // create a client-side management registry and add some providers for stats, calls and settings
     this.managementRegistry = new DefaultManagementRegistry(contextContainer);
     managementRegistry.addManagementProvider(new CacheSettingsManagementProvider(parentContext));
-    managementRegistry.addManagementProvider(new CacheStatisticsManagementProvider(parentContext, scheduledExecutorService, statisticConfiguration));
+    managementRegistry.addManagementProvider(new CacheStatisticsManagementProvider(parentContext));
     managementRegistry.addManagementProvider(new CacheCallManagementProvider(parentContext));
     managementRegistry.addManagementProvider(new CacheStatisticCollectorManagementProvider(parentContext));
 
@@ -71,11 +70,9 @@ public class Management {
           try {
             managementAgent.pushStatistics(statistics);
           } catch (Exception e) {
-            throw new RuntimeException(e); // do not do that in a real app, this is useful for testing purposes
+            LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
           }
-        },
-        System::currentTimeMillis,
-        statisticConfiguration);
+        });
 
     // register the collector in the registry so that we can manage it
     managementRegistry.register(statisticCollector);
@@ -87,9 +84,6 @@ public class Management {
 
   public void init(Connection connection) throws ExecutionException, InterruptedException, TimeoutException {
     LOGGER.trace("[{}] init()", managementRegistry.getContextContainer().getValue());
-
-    // activate stat collection
-    statisticCollector.startStatisticCollector();
 
     // connect the management entity to this registry to bridge the voltorn monitoring service
     try {
@@ -113,14 +107,17 @@ public class Management {
   public void close() {
     LOGGER.trace("[{}] close()", managementRegistry.getContextContainer().getValue());
 
+    statisticCollector.stopStatisticCollector();
+
     try {
       managementAgent.pushNotification(new ContextualNotification(parentContext, "CLIENT_CLOSE"));
     } catch (Exception e) {
       throw new RuntimeException(e); // do not do that in a real app, this is useful for testing purposes
     }
-    managementAgent.close();
-    statisticCollector.stopStatisticCollector();
+
     executorService.shutdown();
+
+    managementAgent.close();
     scheduledExecutorService.shutdown();
   }
 

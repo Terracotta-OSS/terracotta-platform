@@ -16,7 +16,6 @@
 package org.terracotta.management.model.capabilities.descriptors;
 
 import org.terracotta.management.model.Objects;
-import org.terracotta.management.model.stats.StatisticType;
 
 import java.io.Serializable;
 
@@ -26,12 +25,12 @@ import java.io.Serializable;
  */
 public final class StatisticDescriptor implements Descriptor, Serializable {
 
-  private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 2;
 
   private final String name;
-  private final StatisticType type;
+  private final String type;
 
-  public StatisticDescriptor(String name, StatisticType type) {
+  public StatisticDescriptor(String name, String type) {
     this.name = Objects.requireNonNull(name);
     this.type = Objects.requireNonNull(type);
   }
@@ -40,7 +39,7 @@ public final class StatisticDescriptor implements Descriptor, Serializable {
     return name;
   }
 
-  public StatisticType getType() {
+  public String getType() {
     return type;
   }
 
@@ -61,7 +60,7 @@ public final class StatisticDescriptor implements Descriptor, Serializable {
     StatisticDescriptor that = (StatisticDescriptor) o;
 
     if (!name.equals(that.name)) return false;
-    return type == that.type;
+    return type.equals(that.type);
 
   }
 

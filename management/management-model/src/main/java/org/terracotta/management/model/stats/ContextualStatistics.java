@@ -78,6 +78,14 @@ public final class ContextualStatistics implements Iterable<Statistic<?, ?>>, Co
     return filtered.values().iterator().next();
   }
 
+  public boolean hasStatistic(String name) {
+    return statistics.containsKey(name);
+  }
+
+  public <T extends Statistic<?, ?>> boolean hasStatistic(String name, Class<T> type) {
+    return type.isInstance(statistics.get(name));
+  }
+
   /**
    * Returns the only possible statistic for a specific type and name
    *

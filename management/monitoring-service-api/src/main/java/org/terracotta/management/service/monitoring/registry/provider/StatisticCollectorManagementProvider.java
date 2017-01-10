@@ -18,9 +18,9 @@ package org.terracotta.management.service.monitoring.registry.provider;
 import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.registry.Named;
+import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.action.Named;
-import org.terracotta.management.registry.action.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticCollector;
 import org.terracotta.management.registry.collect.StatisticCollectorProvider;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
@@ -57,7 +57,6 @@ public class StatisticCollectorManagementProvider extends StatisticCollectorProv
     StatisticCollector statisticCollector = statisticsService.createStatisticCollector(
         statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
     register(statisticCollector);
-    statisticCollector.startStatisticCollector();
   }
 
 }

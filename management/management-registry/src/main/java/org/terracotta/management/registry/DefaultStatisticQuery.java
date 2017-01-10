@@ -36,16 +36,14 @@ public class DefaultStatisticQuery implements StatisticQuery {
   private final String capabilityName;
   private final Collection<String> statisticNames;
   private final Collection<Context> contexts;
-  private final long since;
 
-  public DefaultStatisticQuery(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts, long since) {
+  public DefaultStatisticQuery(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts) {
     this.capabilityManagement = capabilityManagement;
     this.capabilityName = capabilityName;
     this.statisticNames = Collections.unmodifiableSet(new LinkedHashSet<String>(statisticNames));
-    this.since = since;
     this.contexts = Collections.unmodifiableCollection(new ArrayList<Context>(contexts));
 
-    if(contexts.isEmpty()) {
+    if (contexts.isEmpty()) {
       throw new IllegalArgumentException("You did not specify any context to extract the statistics from");
     }
   }
@@ -66,11 +64,6 @@ public class DefaultStatisticQuery implements StatisticQuery {
   }
 
   @Override
-  public long getSince() {
-    return since;
-  }
-
-  @Override
   public ResultSet<ContextualStatistics> execute() {
     Map<Context, ContextualStatistics> contextualStatistics = new LinkedHashMap<Context, ContextualStatistics>(contexts.size());
     Collection<ManagementProvider<?>> managementProviders = capabilityManagement.getManagementProvidersByCapability(capabilityName);
@@ -79,7 +72,7 @@ public class DefaultStatisticQuery implements StatisticQuery {
       Map<String, Statistic<?, ?>> statistics = new HashMap<String, Statistic<?, ?>>();
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
-          statistics.putAll(managementProvider.collectStatistics(context, statisticNames, since));
+          statistics.putAll(managementProvider.collectStatistics(context, statisticNames));
         }
       }
       contextualStatistics.put(context, new ContextualStatistics(capabilityName, context, statistics));
