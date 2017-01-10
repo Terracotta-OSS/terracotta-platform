@@ -19,6 +19,7 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticProvider;
+import org.terracotta.management.registry.collect.StatisticRegistry;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractExposedStatistics;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractStatisticsManagementProvider;
 
@@ -38,14 +39,14 @@ public class OffHeapResourceStatisticsManagementProvider extends AbstractStatist
   }
 
   @Override
-  protected AbstractExposedStatistics<OffHeapResourceBinding> internalWrap(Context context, OffHeapResourceBinding managedObject, Object contextObject) {
-    return new OffHeapResourceBindingExposedStatistics(context, managedObject, contextObject);
+  protected AbstractExposedStatistics<OffHeapResourceBinding> internalWrap(Context context, OffHeapResourceBinding managedObject, StatisticRegistry statisticRegistry) {
+    return new OffHeapResourceBindingExposedStatistics(context, managedObject, statisticRegistry);
   }
 
   private static class OffHeapResourceBindingExposedStatistics extends AbstractExposedStatistics<OffHeapResourceBinding> {
 
-    OffHeapResourceBindingExposedStatistics(Context context, OffHeapResourceBinding binding, Object contextObject) {
-      super(context, binding, contextObject);
+    OffHeapResourceBindingExposedStatistics(Context context, OffHeapResourceBinding binding, StatisticRegistry statisticRegistry) {
+      super(context, binding, statisticRegistry);
 
       getRegistry().registerSize("AllocatedMemory", descriptor("allocatedMemory", tags("tier", "OffHeapResource")));
     }

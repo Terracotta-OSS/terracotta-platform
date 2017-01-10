@@ -23,6 +23,7 @@ import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.collect.StatisticRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,12 +80,12 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
     Context context = Context.empty()
         .with("consumerId", String.valueOf(getMonitoringService().getConsumerId()))
         .with("alias", managedObject.getAlias());
-    Object contextObject = getContextObject(managedObject);
-    return internalWrap(context, managedObject, contextObject);
+    StatisticRegistry statisticRegistry = getStatisticRegistry(managedObject);
+    return internalWrap(context, managedObject, statisticRegistry);
   }
 
-  protected Object getContextObject(T managedObject) {
-    return managedObject.getValue();
+  protected StatisticRegistry getStatisticRegistry(T managedObject) {
+    return new StatisticRegistry(managedObject.getValue());
   }
 
   @Override
@@ -92,6 +93,6 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
     throw new UnsupportedOperationException();
   }
 
-  protected abstract AbstractExposedStatistics<T> internalWrap(Context context, T managedObject, Object contextObject);
+  protected abstract AbstractExposedStatistics<T> internalWrap(Context context, T managedObject, StatisticRegistry statisticsRegistry);
 
 }

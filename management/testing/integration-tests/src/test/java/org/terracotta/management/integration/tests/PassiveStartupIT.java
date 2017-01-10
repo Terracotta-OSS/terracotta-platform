@@ -125,7 +125,7 @@ public class PassiveStartupIT extends AbstractHATest {
     // test state transition of passive
     assertThat(
         states,
-        equalTo(Arrays.asList("SYNCHRONIZING", "PASSIVE")));
+        hasItems("SYNCHRONIZING", "PASSIVE"));
 
 
     assertThat(notifs.stream()

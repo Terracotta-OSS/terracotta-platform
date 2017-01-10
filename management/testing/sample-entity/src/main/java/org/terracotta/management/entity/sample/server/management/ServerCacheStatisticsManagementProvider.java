@@ -21,6 +21,7 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticProvider;
+import org.terracotta.management.registry.collect.StatisticRegistry;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractExposedStatistics;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractStatisticsManagementProvider;
 
@@ -39,14 +40,14 @@ class ServerCacheStatisticsManagementProvider extends AbstractStatisticsManageme
   }
 
   @Override
-  protected AbstractExposedStatistics<ServerCacheBinding> internalWrap(Context context, ServerCacheBinding managedObject, Object contextObject) {
-    return new ServerCacheExposedStatistics(context, managedObject, contextObject);
+  protected AbstractExposedStatistics<ServerCacheBinding> internalWrap(Context context, ServerCacheBinding managedObject, StatisticRegistry statisticRegistry) {
+    return new ServerCacheExposedStatistics(context, managedObject, statisticRegistry);
   }
 
   private static class ServerCacheExposedStatistics extends AbstractExposedStatistics<ServerCacheBinding> {
 
-    ServerCacheExposedStatistics(Context context, ServerCacheBinding binding, Object contextObject) {
-      super(context, binding, contextObject);
+    ServerCacheExposedStatistics(Context context, ServerCacheBinding binding, StatisticRegistry statisticRegistry) {
+      super(context, binding, statisticRegistry);
 
       OperationStatisticDescriptor<CacheOperationOutcomes.GetOutcome> get = OperationStatisticDescriptor.descriptor("get", singleton("cluster"), CacheOperationOutcomes.GetOutcome.class);
       OperationStatisticDescriptor<CacheOperationOutcomes.PutOutcome> put = OperationStatisticDescriptor.descriptor("put", singleton("cluster"), CacheOperationOutcomes.PutOutcome.class);

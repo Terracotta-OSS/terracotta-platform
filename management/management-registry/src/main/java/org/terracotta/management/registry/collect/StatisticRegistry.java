@@ -21,6 +21,7 @@ import org.terracotta.context.extended.OperationStatisticDescriptor;
 import org.terracotta.context.extended.ValueStatisticDescriptor;
 import org.terracotta.context.query.Matcher;
 import org.terracotta.context.query.Matchers;
+import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.stats.MemoryUnit;
 import org.terracotta.management.model.stats.NumberUnit;
@@ -66,13 +67,14 @@ import static org.terracotta.context.query.QueryBuilder.queryBuilder;
  */
 public class StatisticRegistry {
 
+  private static final Object ME = new Object();
+
   private final Object contextObject;
   private final Map<String, ValueStatistic<? extends Number>> statistics = new HashMap<String, ValueStatistic<? extends Number>>();
   private final Map<String, StatisticType> statisticTypes = new HashMap<String, StatisticType>();
 
   public StatisticRegistry(Object contextObject) {
-    //TODO: https://github.com/Terracotta-OSS/terracotta-platform/issues/262
-    this.contextObject = contextObject; // allows null, in this case it will be a no-op registry
+    this.contextObject = Objects.requireNonNull(contextObject);
   }
 
   public Collection<StatisticDescriptor> getDescriptors() {
@@ -241,4 +243,7 @@ public class StatisticRegistry {
     statisticTypes.put(fullStatName, type);
   }
 
+  public static final StatisticRegistry noop() {
+    return new StatisticRegistry(ME);
+  }
 }

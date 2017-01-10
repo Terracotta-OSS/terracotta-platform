@@ -30,9 +30,9 @@ public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBind
 
   private final StatisticRegistry statisticRegistry;
 
-  protected AbstractExposedStatistics(Context context, T binding, Object contextObject) {
+  protected AbstractExposedStatistics(Context context, T binding, StatisticRegistry statisticRegistry) {
     super(context, binding);
-    this.statisticRegistry = new StatisticRegistry(contextObject);
+    this.statisticRegistry = statisticRegistry;
   }
 
   @Override
