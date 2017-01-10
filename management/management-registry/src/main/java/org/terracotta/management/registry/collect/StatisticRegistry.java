@@ -162,7 +162,8 @@ public class StatisticRegistry {
   }
 
   private <N extends Number> void registerStatistic(String statNameSuffix, StatisticType type, final ValueStatisticDescriptor descriptor) {
-    if (contextObject == null) {
+    TreeNode treeNode = ContextManager.nodeFor(contextObject);
+    if(treeNode == null) {
       return;
     }
 
@@ -172,7 +173,7 @@ public class StatisticRegistry {
             hasAttribute("name", descriptor.getObserverName()),
             hasTags(descriptor.getTags())))))
         .filter(context(identifier(subclassOf(ValueStatistic.class))))
-        .build().execute(Collections.singleton(ContextManager.nodeFor(contextObject)));
+        .build().execute(Collections.singleton(treeNode));
 
     if (!result.isEmpty()) {
       for (TreeNode node : result) {
@@ -192,7 +193,8 @@ public class StatisticRegistry {
   }
 
   private <T extends Enum<T>> void registerStatistic(String statNameSuffix, StatisticType type, final OperationStatisticDescriptor<T> descriptor, final EnumSet<T> outcomes) {
-    if (contextObject == null) {
+    TreeNode treeNode = ContextManager.nodeFor(contextObject);
+    if(treeNode == null) {
       return;
     }
 
@@ -203,7 +205,7 @@ public class StatisticRegistry {
             hasAttribute("name", descriptor.getObserverName()),
             hasTags(descriptor.getTags())))))
         .filter(context(identifier(subclassOf(OperationStatistic.class))))
-        .build().execute(Collections.singleton(ContextManager.nodeFor(contextObject)));
+        .build().execute(Collections.singleton(treeNode));
 
     if (!result.isEmpty()) {
       for (TreeNode node : result) {
