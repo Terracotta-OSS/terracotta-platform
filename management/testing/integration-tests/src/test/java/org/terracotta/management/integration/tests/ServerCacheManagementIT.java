@@ -22,8 +22,6 @@ import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.primitive.Counter;
-import org.terracotta.management.model.stats.primitive.Size;
 
 import java.util.ArrayList;
 
@@ -116,9 +114,9 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
 
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
-        .filter(o -> o.hasStatistic("Cluster:HitCount", Counter.class))
-        .map(o -> o.getStatistic(Counter.class, "Cluster:HitCount"))
-        .anyMatch(counter -> counter.getValue() == 1L));
+        .filter(o -> o.hasStatistic("Cluster:HitCount"))
+        .map(o -> o.getStatistic("Cluster:HitCount"))
+        .anyMatch(counter -> counter.longValue() == 1L));
 
     get(1, "pets", "pet2"); // miss
 
@@ -127,15 +125,15 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
 
       test &= stats
           .stream()
-          .filter(o -> o.hasStatistic("Cluster:MissCount", Counter.class))
-          .map(o -> o.getStatistic(Counter.class, "Cluster:MissCount"))
-          .anyMatch(counter -> counter.getValue() == 1L); // 1 miss
+          .filter(o -> o.hasStatistic("Cluster:MissCount"))
+          .map(o -> o.getStatistic("Cluster:MissCount"))
+          .anyMatch(counter -> counter.longValue() == 1L); // 1 miss
 
       test &= stats
           .stream()
-          .filter(o -> o.hasStatistic("ServerCache:Size", Size.class))
-          .map(o -> o.getStatistic(Size.class, "ServerCache:Size"))
-          .anyMatch(size -> size.getValue() == 1L); // // size 1 on heap of entity
+          .filter(o -> o.hasStatistic("ServerCache:Size"))
+          .map(o -> o.getStatistic("ServerCache:Size"))
+          .anyMatch(size -> size.longValue() == 1L); // // size 1 on heap of entity
 
       return test;
     });

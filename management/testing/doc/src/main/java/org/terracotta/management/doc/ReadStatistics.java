@@ -27,7 +27,6 @@ import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.model.stats.Statistic;
 
 import java.io.IOException;
 import java.util.List;
@@ -94,7 +93,7 @@ public class ReadStatistics {
             .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())
             .forEach(statistics -> {
               System.out.println(statistics.getContext());
-              for (Map.Entry<String, Statistic<?, ?>> entry : statistics.getStatistics().entrySet()) {
+              for (Map.Entry<String, Number> entry : statistics.getStatistics().entrySet()) {
                 System.out.println(" - " + entry.getKey() + "=" + entry.getValue());
               }
             });

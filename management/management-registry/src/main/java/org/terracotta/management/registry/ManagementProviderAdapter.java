@@ -21,7 +21,6 @@ import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.Collection;
@@ -78,7 +77,7 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
   }
 
   @Override
-  public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames) {
+  public Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames) {
     throw new UnsupportedOperationException("Not a statistics provider : " + getCapabilityName());
   }
 

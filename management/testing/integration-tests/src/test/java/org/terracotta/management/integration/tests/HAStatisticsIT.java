@@ -18,7 +18,6 @@ package org.terracotta.management.integration.tests;
 import org.junit.Test;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.model.stats.primitive.Counter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -72,11 +71,11 @@ public class HAStatisticsIT extends AbstractHATest {
             String serverName = stat.getContext().get(Server.NAME_KEY);
             //System.out.println("server: " + serverName);
 
-            Counter counter = stat.getStatistic(Counter.class, "Cluster:PutCount");
+            Number counter = stat.getStatistic("Cluster:PutCount");
             //System.out.println("counterHistory: " + counterHistory.getLast().getValue());
 
             // if the counter history is not yet 1, return false, we continue looping
-            if (counter.getValue()< 1L) {
+            if (counter.longValue()< 1L) {
               return false;
 
             } else {

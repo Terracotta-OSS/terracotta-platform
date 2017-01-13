@@ -17,7 +17,6 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.model.stats.Statistic;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,7 +68,7 @@ public class DefaultStatisticQuery implements StatisticQuery {
     Collection<ManagementProvider<?>> managementProviders = capabilityManagement.getManagementProvidersByCapability(capabilityName);
 
     for (Context context : contexts) {
-      Map<String, Statistic<?, ?>> statistics = new HashMap<String, Statistic<?, ?>>();
+      Map<String, Number> statistics = new HashMap<String, Number>();
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
           statistics.putAll(managementProvider.collectStatistics(context, statisticNames));

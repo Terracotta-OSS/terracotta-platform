@@ -18,7 +18,6 @@ package org.terracotta.management.service.monitoring.registry.provider;
 import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.collect.StatisticRegistry;
 
 import java.io.Closeable;
@@ -44,11 +43,11 @@ public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBind
   }
 
   @SuppressWarnings("unchecked")
-  public Statistic<?, ?> queryStatistic(String fullStatisticName) {
+  public Number queryStatistic(String fullStatisticName) {
     return statisticRegistry.queryStatistic(fullStatisticName);
   }
 
-  public Map<String, Statistic<?, ?>> queryStatistics() {
+  public Map<String, Number> queryStatistics() {
     return statisticRegistry.queryStatistics();
   }
 

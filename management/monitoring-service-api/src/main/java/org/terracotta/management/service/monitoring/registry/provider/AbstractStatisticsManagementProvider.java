@@ -19,7 +19,6 @@ import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.action.ExposedObject;
@@ -55,17 +54,17 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
   }
 
   @Override
-  public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames) {
+  public Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames) {
     // To keep ordering because these objects end up in an immutable
     // topology so this is easier for testing to compare with json payloads
-    Map<String, Statistic<?, ?>> statistics = new TreeMap<>();
+    Map<String, Number> statistics = new TreeMap<>();
     AbstractExposedStatistics<T> exposedObject = (AbstractExposedStatistics<T>) findExposedObject(context);
     if (exposedObject != null) {
       if (statisticNames == null || statisticNames.isEmpty()) {
         statistics.putAll(exposedObject.queryStatistics());
       } else {
         for (String statisticName : statisticNames) {
-          Statistic<?, ?> statistic = exposedObject.queryStatistic(statisticName);
+          Number statistic = exposedObject.queryStatistic(statisticName);
           if (statistic != null) {
             statistics.put(statisticName, statistic);
           }

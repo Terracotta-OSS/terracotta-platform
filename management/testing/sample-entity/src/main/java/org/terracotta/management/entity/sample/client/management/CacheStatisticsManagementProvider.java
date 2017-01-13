@@ -22,7 +22,6 @@ import org.terracotta.management.entity.sample.client.ClientCache;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
@@ -66,17 +65,17 @@ class CacheStatisticsManagementProvider extends AbstractManagementProvider<Clien
   }
 
   @Override
-  public Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames) {
+  public Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames) {
     // To keep ordering because these objects end up in an immutable
     // topology so this is easier for testing to compare with json payloads
-    Map<String, Statistic<?, ?>> statistics = new TreeMap<String, Statistic<?, ?>>();
+    Map<String, Number> statistics = new TreeMap<>();
     ExposedClientCache exposedClientCache = (ExposedClientCache) findExposedObject(context);
     if (exposedClientCache != null) {
       if (statisticNames == null || statisticNames.isEmpty()) {
         statistics.putAll(exposedClientCache.queryStatistics());
       } else {
         for (String statisticName : statisticNames) {
-          Statistic<?, ?> statistic = exposedClientCache.queryStatistic(statisticName);
+          Number statistic = exposedClientCache.queryStatistic(statisticName);
           if (statistic != null) {
             statistics.put(statisticName, statistic);
           }
@@ -112,11 +111,11 @@ class CacheStatisticsManagementProvider extends AbstractManagementProvider<Clien
       statisticRegistry.registerSize("Size", ValueStatisticDescriptor.descriptor("size", singleton("cache")));
     }
 
-    Statistic<?, ?> queryStatistic(String fullStatisticName) {
+    Number queryStatistic(String fullStatisticName) {
       return statisticRegistry.queryStatistic(fullStatisticName);
     }
 
-    Map<String, Statistic<?, ?>> queryStatistics() {
+    Map<String, Number> queryStatistics() {
       return statisticRegistry.queryStatistics();
     }
 
