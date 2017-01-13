@@ -23,15 +23,6 @@ import org.terracotta.context.query.Matcher;
 import org.terracotta.context.query.Matchers;
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
-import org.terracotta.management.model.stats.MemoryUnit;
-import org.terracotta.management.model.stats.NumberUnit;
-import org.terracotta.management.model.stats.Statistic;
-import org.terracotta.management.model.stats.primitive.Average;
-import org.terracotta.management.model.stats.primitive.Counter;
-import org.terracotta.management.model.stats.primitive.Duration;
-import org.terracotta.management.model.stats.primitive.Rate;
-import org.terracotta.management.model.stats.primitive.Ratio;
-import org.terracotta.management.model.stats.primitive.Size;
 import org.terracotta.statistics.OperationStatistic;
 import org.terracotta.statistics.ValueStatistic;
 import org.terracotta.statistics.extended.StatisticType;
@@ -43,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static org.terracotta.context.query.Matchers.attributes;
 import static org.terracotta.context.query.Matchers.context;
@@ -90,28 +80,15 @@ public class StatisticRegistry {
   /**
    * Query a statistic based on the full statistic name. Returns null if not found.
    */
-  public Statistic<?, ?> queryStatistic(String fullStatisticName) {
+  public Number queryStatistic(String fullStatisticName) {
     ValueStatistic<? extends Number> statistic = statistics.get(fullStatisticName);
-    if (statistic == null) {
-      return null;
-    }
-    StatisticType type = statisticTypes.get(fullStatisticName);
-    switch (type) {
-      case COUNTER: return new Counter(statistic.value().longValue(), NumberUnit.COUNT);
-      case RATE: return new Rate(statistic.value().doubleValue(), TimeUnit.SECONDS);
-      case RATIO: return new Ratio(statistic.value().doubleValue(), NumberUnit.RATIO);
-      case SIZE: return new Size(statistic.value().longValue(), MemoryUnit.B);
-      case LATENCY_MIN: return new Duration(statistic.value().longValue(), TimeUnit.MILLISECONDS);
-      case LATENCY_MAX: return new Duration(statistic.value().longValue(), TimeUnit.MILLISECONDS);
-      case LATENCY_AVG: return new Average(statistic.value().doubleValue(), TimeUnit.MILLISECONDS);
-      default: throw new UnsupportedOperationException(type.name());
-    }
+    return statistic == null ? null : statistic.value();
   }
 
-  public Map<String, Statistic<?, ?>> queryStatistics() {
-    Map<String, Statistic<?, ?>> stats = new HashMap<String, Statistic<?, ?>>();
+  public Map<String, Number> queryStatistics() {
+    Map<String, Number> stats = new HashMap<String, Number>(statistics.size());
     for (String fullStatName : statistics.keySet()) {
-      Statistic<?, ?> statistic = queryStatistic(fullStatName);
+      Number statistic = queryStatistic(fullStatName);
       if (statistic != null) {
         stats.put(fullStatName, statistic);
       }

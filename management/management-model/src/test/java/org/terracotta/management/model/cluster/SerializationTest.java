@@ -26,24 +26,12 @@ import org.terracotta.management.model.capabilities.descriptors.StatisticDescrip
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.model.stats.MemoryUnit;
-import org.terracotta.management.model.stats.NumberUnit;
-import org.terracotta.management.model.stats.Statistic;
-import org.terracotta.management.model.stats.primitive.Average;
-import org.terracotta.management.model.stats.primitive.Counter;
-import org.terracotta.management.model.stats.primitive.Duration;
-import org.terracotta.management.model.stats.primitive.Rate;
-import org.terracotta.management.model.stats.primitive.Ratio;
-import org.terracotta.management.model.stats.primitive.Size;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -91,20 +79,6 @@ public class SerializationTest {
     ContextualNotification notif = new ContextualNotification(context, "TYPE", Context.create("key", "val"));
     assertEquals(notif, copy(notif));
     assertEquals(notif.hashCode(), copy(notif).hashCode());
-  }
-
-  @Test
-  public void test_contextualStats() throws Exception {
-    ContextualStatistics statistics = new ContextualStatistics("capability", context, new HashMap<String, Statistic<?, ?>>() {{
-      put("stat11", new Average(1.0, TimeUnit.MILLISECONDS));
-      put("stat12", new Counter(1L, NumberUnit.COUNT));
-      put("stat13", new Duration(1L, TimeUnit.DAYS));
-      put("stat14", new Rate(1.0, TimeUnit.DAYS));
-      put("stat15", new Ratio(1.0, NumberUnit.RATIO));
-      put("stat16", new Size(1L, MemoryUnit.B));
-    }});
-    assertEquals(statistics, copy(statistics));
-    assertEquals(statistics.hashCode(), copy(statistics).hashCode());
   }
 
   @SuppressWarnings("unchecked")

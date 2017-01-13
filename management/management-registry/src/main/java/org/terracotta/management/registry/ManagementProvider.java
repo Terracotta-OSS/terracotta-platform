@@ -20,7 +20,6 @@ import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.Collection;
@@ -88,7 +87,7 @@ public interface ManagementProvider<T> {
    * @param statisticNames the statistic names to collect. If empty, collect ALL statistics
    * @return the statistic map, the key being the statistic names.
    */
-  Map<String, Statistic<?, ?>> collectStatistics(Context context, Collection<String> statisticNames);
+  Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames);
 
   /**
    * Call an action, if the provider supports this.

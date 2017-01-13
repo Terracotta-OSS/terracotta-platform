@@ -20,8 +20,6 @@ import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.primitive.Counter;
-import org.terracotta.management.model.stats.primitive.Size;
 
 import java.util.concurrent.TimeUnit;
 
@@ -95,8 +93,8 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
-        .map(o -> o.getStatistic(Counter.class, "Cache:HitCount"))
-        .anyMatch(counter -> counter.getValue() == 1L)); // 1 hit
+        .map(o -> o.getStatistic("Cache:HitCount"))
+        .anyMatch(counter -> counter.longValue() == 1L)); // 1 hit
 
     get(0, "pets", "pet2"); // miss on client 0
     get(1, "pets", "pet2"); // miss on client 0
@@ -106,13 +104,13 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic(Counter.class, "Cache:MissCount"))
-          .anyMatch(counter -> counter.getValue() == 1L); // 1 miss
+          .map(o -> o.getStatistic("Cache:MissCount"))
+          .anyMatch(counter -> counter.longValue() == 1L); // 1 miss
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic(Size.class, "ClientCache:Size"))
-          .anyMatch(counter -> counter.getValue() == 1L); // size 1 on heap of entity
+          .map(o -> o.getStatistic("ClientCache:Size"))
+          .anyMatch(counter -> counter.longValue() == 1L); // size 1 on heap of entity
 
       return test;
     });
