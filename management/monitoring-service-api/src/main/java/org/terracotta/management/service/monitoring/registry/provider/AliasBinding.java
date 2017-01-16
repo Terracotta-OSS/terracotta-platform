@@ -43,15 +43,12 @@ public class AliasBinding {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     AliasBinding that = (AliasBinding) o;
-    if (!alias.equals(that.alias)) return false;
-    return value.equals(that.value);
+    return alias.equals(that.alias);
   }
 
   @Override
   public int hashCode() {
-    int result = alias.hashCode();
-    result = 31 * result + value.hashCode();
-    return result;
+    return alias.hashCode();
   }
 
   @Override

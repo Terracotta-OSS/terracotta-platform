@@ -44,15 +44,12 @@ public class ClientBinding {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ClientBinding that = (ClientBinding) o;
-    if (!clientDescriptor.equals(that.clientDescriptor)) return false;
-    return value.equals(that.value);
+    return clientDescriptor.equals(that.clientDescriptor);
   }
 
   @Override
   public int hashCode() {
-    int result = clientDescriptor.hashCode();
-    result = 31 * result + value.hashCode();
-    return result;
+    return clientDescriptor.hashCode();
   }
 
   @Override
