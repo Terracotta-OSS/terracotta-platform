@@ -30,6 +30,7 @@ import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
+import org.terracotta.management.entity.tms.client.SingleStripeTmsAgentService;
 import org.terracotta.management.entity.tms.client.TmsAgentService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.ServerEntity;
@@ -172,7 +173,7 @@ public abstract class AbstractTest {
     TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());
     TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
         .setMaximumUnreadMessages(1024 * 1024));
-    this.tmsAgentService = new TmsAgentService(tmsAgentEntity);
+    this.tmsAgentService = new SingleStripeTmsAgentService(tmsAgentEntity);
     this.tmsAgentService.setOperationTimeout(60, TimeUnit.SECONDS);
   }
 
