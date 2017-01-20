@@ -22,11 +22,11 @@ import org.terracotta.entity.ServiceConfiguration;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public class ActiveEntityMonitoringServiceConfiguration implements ServiceConfiguration<ActiveEntityMonitoringService> {
+public class ActiveEntityMonitoringServiceConfiguration implements ServiceConfiguration<EntityMonitoringService> {
 
   @Override
-  public Class<ActiveEntityMonitoringService> getServiceType() {
-    return ActiveEntityMonitoringService.class;
+  public Class<EntityMonitoringService> getServiceType() {
+    return EntityMonitoringService.class;
   }
 
 }

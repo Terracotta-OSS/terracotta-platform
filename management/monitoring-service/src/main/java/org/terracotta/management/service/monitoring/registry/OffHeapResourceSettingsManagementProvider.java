@@ -51,12 +51,7 @@ public class OffHeapResourceSettingsManagementProvider extends AliasBindingManag
   private static class ExposedOffHeapResourceBinding extends ExposedAliasBinding<OffHeapResourceBinding> {
 
     ExposedOffHeapResourceBinding(Context context, OffHeapResourceBinding binding) {
-      super(context, binding);
-    }
-
-    @Override
-    public Context getContext() {
-      return super.getContext().with("type", "OffHeapResource");
+      super(context.with("type", "OffHeapResource"), binding);
     }
 
     @Override

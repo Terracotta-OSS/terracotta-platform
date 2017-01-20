@@ -16,13 +16,19 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
+ * Class used by entities requiring to push some data into the monitoring service
+ *
  * @author Mathieu Carbou
  */
 @CommonComponent
@@ -70,4 +76,10 @@ public interface EntityMonitoringService {
    * @return The current server name
    */
   String getServerName();
+
+  /**
+   * Map this {@link ClientDescriptor} to a useful {@link ClientIdentifier} to go over the network
+   * as soon as monitoring service is made aware of the fetch
+   */
+  CompletableFuture<ClientIdentifier> getClientIdentifier(ClientDescriptor clientDescriptor);
 }

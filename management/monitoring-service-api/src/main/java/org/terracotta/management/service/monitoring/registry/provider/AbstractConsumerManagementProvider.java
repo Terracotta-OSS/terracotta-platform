@@ -21,9 +21,10 @@ import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.management.service.monitoring.StatisticsService;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Mathieu Carbou
@@ -32,7 +33,6 @@ import java.util.Objects;
 public abstract class AbstractConsumerManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware {
 
   private EntityMonitoringService monitoringService;
-  private StatisticsService statisticsService;
 
   public AbstractConsumerManagementProvider(Class<? extends T> managedType) {
     super(managedType);
@@ -43,17 +43,25 @@ public abstract class AbstractConsumerManagementProvider<T> extends AbstractMana
     this.monitoringService = Objects.requireNonNull(monitoringService);
   }
 
-  @Override
-  public void setStatisticsService(StatisticsService statisticsService) {
-    this.statisticsService = statisticsService;
-  }
-
   protected EntityMonitoringService getMonitoringService() {
     return Objects.requireNonNull(monitoringService);
   }
 
-  protected StatisticsService getStatisticsService() {
-    return Objects.requireNonNull(statisticsService);
+  @Override
+  public void register(T managedObject) {
+    try {
+      registerAsync(managedObject).toCompletableFuture().get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    }
+  }
+
+  public CompletableFuture<Void> registerAsync(T managedObject) {
+    super.register(managedObject);
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override

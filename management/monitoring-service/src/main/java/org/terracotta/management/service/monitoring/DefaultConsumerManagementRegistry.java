@@ -21,45 +21,135 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.registry.AbstractManagementProvider;
-import org.terracotta.management.registry.DefaultManagementRegistry;
+import org.terracotta.management.registry.CapabilityManagement;
+import org.terracotta.management.registry.DefaultCapabilityManagement;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.service.monitoring.registry.provider.AbstractConsumerManagementProvider;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implements ConsumerManagementRegistry, TopologyEventListener {
+class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, TopologyEventListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
+  private static final Comparator<Capability> CAPABILITY_COMPARATOR = new Comparator<Capability>() {
+    @Override
+    public int compare(Capability o1, Capability o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
 
   private final long consumerId;
   private final EntityMonitoringService monitoringService;
-  private final StatisticsService statisticsService;
+  private final ContextContainer contextContainer;
+  private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
 
   private Collection<? extends Capability> previouslyExposed = Collections.emptyList();
 
-  DefaultConsumerManagementRegistry(long consumerId, EntityMonitoringService monitoringService, StatisticsService statisticsService) {
-    super(new ContextContainer("consumerId", String.valueOf(consumerId)));
+  DefaultConsumerManagementRegistry(long consumerId, EntityMonitoringService monitoringService) {
+    this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
     this.consumerId = consumerId;
     this.monitoringService = Objects.requireNonNull(monitoringService);
-    this.statisticsService = Objects.requireNonNull(statisticsService);
+  }
+
+  @Override
+  public ContextContainer getContextContainer() {
+    return contextContainer;
   }
 
   @Override
   public void addManagementProvider(ManagementProvider<?> provider) {
     LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass().getSimpleName());
+    String name = provider.getCapabilityName();
+    for (ManagementProvider<?> managementProvider : managementProviders) {
+      if (managementProvider.getCapabilityName().equals(name)) {
+        throw new IllegalStateException("Duplicated management provider name : " + name);
+      }
+    }
     if (provider instanceof MonitoringServiceAware) {
       ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
-      ((MonitoringServiceAware) provider).setStatisticsService(statisticsService);
     }
-    super.addManagementProvider(provider);
+    managementProviders.add(provider);
+  }
+
+  @Override
+  public void removeManagementProvider(ManagementProvider<?> provider) {
+    managementProviders.remove(provider);
+  }
+
+  @Override
+  public CapabilityManagement withCapability(String capabilityName) {
+    return new DefaultCapabilityManagement(this, capabilityName);
+  }
+
+  @Override
+  public Collection<? extends Capability> getCapabilities() {
+    List<Capability> capabilities = new ArrayList<Capability>();
+    for (ManagementProvider<?> managementProvider : managementProviders) {
+      capabilities.add(managementProvider.getCapability());
+    }
+    Collections.sort(capabilities, CAPABILITY_COMPARATOR);
+    return capabilities;
+  }
+
+  @Override
+  public Collection<String> getCapabilityNames() {
+    Collection<String> names = new TreeSet<String>();
+    for (ManagementProvider<?> managementProvider : managementProviders) {
+      names.add(managementProvider.getCapabilityName());
+    }
+    return names;
+  }
+
+  @Override
+  public List<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
+    List<ManagementProvider<?>> allProviders = new ArrayList<ManagementProvider<?>>();
+    for (ManagementProvider<?> provider : managementProviders) {
+      if (provider.getCapabilityName().equals(capabilityName)) {
+        allProviders.add(provider);
+      }
+    }
+    return allProviders;
+  }
+
+  @Override
+  public CompletableFuture<Void> register(Object managedObject) {
+    LOGGER.trace("[{}] register()", consumerId, managedObject);
+    List<CompletableFuture<Void>> futures = new ArrayList<>(managementProviders.size());
+    for (ManagementProvider managementProvider : managementProviders) {
+      if (managementProvider.getManagedType().isInstance(managedObject)) {
+        if (managementProvider instanceof AbstractConsumerManagementProvider) {
+          CompletableFuture<Void> future = ((AbstractConsumerManagementProvider) managementProvider).registerAsync(managedObject);
+          futures.add(future);
+        } else {
+          managementProvider.register(managedObject);
+        }
+      }
+    }
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public void unregister(Object managedObject) {
+    for (ManagementProvider managementProvider : managementProviders) {
+      if (managementProvider.getManagedType().isInstance(managedObject)) {
+        managementProvider.unregister(managedObject);
+      }
+    }
   }
 
   @Override
@@ -79,8 +169,8 @@ class DefaultConsumerManagementRegistry extends DefaultManagementRegistry implem
   public boolean pushServerEntityNotification(Object managedObjectSource, String type, Map<String, String> attrs) {
     LOGGER.trace("[{}] pushServerEntityNotification({})", consumerId, type);
     for (ManagementProvider managementProvider : managementProviders) {
-      if (managementProvider instanceof AbstractManagementProvider && managementProvider.getManagedType().isInstance(managedObjectSource)) {
-        ExposedObject<Object> exposedObject = ((AbstractManagementProvider<Object>) managementProvider).findExposedObject(managedObjectSource);
+      if (managementProvider.getManagedType().isInstance(managedObjectSource)) {
+        ExposedObject<Object> exposedObject = managementProvider.findExposedObject(managedObjectSource);
         if (exposedObject != null) {
           monitoringService.pushNotification(new ContextualNotification(exposedObject.getContext(), type, attrs));
           return true;

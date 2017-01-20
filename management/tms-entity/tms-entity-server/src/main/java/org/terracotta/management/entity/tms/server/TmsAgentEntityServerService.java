@@ -25,16 +25,13 @@ import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.entity.tms.TmsAgentVersion;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.message.Message;
-import org.terracotta.management.service.monitoring.ActiveEntityMonitoringService;
 import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
-import org.terracotta.management.service.monitoring.EntityEventListenerAdapter;
-import org.terracotta.management.service.monitoring.EntityEventService;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
 import org.terracotta.management.service.monitoring.ManagementCallExecutor;
 import org.terracotta.management.service.monitoring.ManagementService;
 import org.terracotta.management.service.monitoring.ManagementServiceConfiguration;
-import org.terracotta.management.service.monitoring.PassiveEntityMonitoringService;
 import org.terracotta.management.service.monitoring.PassiveEntityMonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.SharedManagementRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -69,20 +66,11 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
         tmsAgentMessenger.executeManagementCall(managementCallIdentifier, call);
       }
     })));
-    ActiveEntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new ActiveEntityMonitoringServiceConfiguration()));
+    EntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new ActiveEntityMonitoringServiceConfiguration()));
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
         .addServerManagementProviders()));
     SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
     ActiveTmsAgent tmsAgent = new ActiveTmsAgent(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
-
-    // workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426
-    EntityEventService entityEventService = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(EntityEventService.class)));
-    entityEventService.addEntityEventListener(new EntityEventListenerAdapter() {
-      @Override
-      public void onCreated() {
-        tmsAgent.init();
-      }
-    });
 
     return new ActiveTmsAgentServerEntity(tmsAgent);
   }
@@ -91,7 +79,7 @@ public class TmsAgentEntityServerService extends ProxyServerEntityService<TmsAge
   protected PassiveTmsAgentServerEntity createPassiveEntity(ServiceRegistry registry, TmsAgentConfig configuration) {
     LOGGER.trace("createPassiveEntity()");
     IMonitoringProducer monitoringProducer = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)));
-    PassiveEntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new PassiveEntityMonitoringServiceConfiguration(monitoringProducer)));
+    EntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new PassiveEntityMonitoringServiceConfiguration(monitoringProducer)));
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
         .addServerManagementProviders()));
     SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));

@@ -23,7 +23,7 @@ import org.terracotta.monitoring.IMonitoringProducer;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public class PassiveEntityMonitoringServiceConfiguration implements ServiceConfiguration<PassiveEntityMonitoringService> {
+public class PassiveEntityMonitoringServiceConfiguration implements ServiceConfiguration<EntityMonitoringService> {
 
   private final IMonitoringProducer monitoringProducer;
 
@@ -32,8 +32,8 @@ public class PassiveEntityMonitoringServiceConfiguration implements ServiceConfi
   }
 
   @Override
-  public Class<PassiveEntityMonitoringService> getServiceType() {
-    return PassiveEntityMonitoringService.class;
+  public Class<EntityMonitoringService> getServiceType() {
+    return EntityMonitoringService.class;
   }
 
   public IMonitoringProducer getMonitoringProducer() {

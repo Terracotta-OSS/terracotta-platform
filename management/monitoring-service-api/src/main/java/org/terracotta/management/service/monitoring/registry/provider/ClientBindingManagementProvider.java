@@ -16,17 +16,16 @@
 package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.service.monitoring.ActiveEntityMonitoringService;
-import org.terracotta.management.service.monitoring.EntityMonitoringService;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @CommonComponent
 public class ClientBindingManagementProvider<T extends ClientBinding> extends AbstractConsumerManagementProvider<T> {
@@ -36,36 +35,23 @@ public class ClientBindingManagementProvider<T extends ClientBinding> extends Ab
   }
 
   @Override
-  public ExposedClientBinding<T> register(T managedObject) {
-    if (getManagedType() == managedObject.getClass()) {
-      return (ExposedClientBinding<T>) super.register(managedObject);
-    }
-    return null;
+  public CompletableFuture<Void> registerAsync(T managedObject) {
+    // a register call with a data bounded to a client descriptor (client information) should be delayed
+    // until the monitoring service is made aware of the fetch information, so that it can translate
+    // this client descriptor into an M&M client identifier that uniquely identifies a client and can
+    // go over the network
+    ClientDescriptor clientDescriptor = managedObject.getClientDescriptor();
+    CompletableFuture<ClientIdentifier> stage = getMonitoringService().getClientIdentifier(clientDescriptor);
+    return stage.thenCompose(clientIdentifier -> {
+      managedObject.resolvedClientIdentifier = clientIdentifier;
+      return super.registerAsync(managedObject);
+    });
   }
 
   @Override
-  public ExposedClientBinding<T> unregister(T managedObject) {
-    if (getManagedType() == managedObject.getClass()) {
-      return (ExposedClientBinding<T>) super.unregister(managedObject);
-    }
-    return null;
-  }
-
-  @Override
-  public void setMonitoringService(EntityMonitoringService monitoringService) {
-    if (!(monitoringService instanceof ActiveEntityMonitoringService)) {
-      throw new IllegalArgumentException("Monitoring service is not a " + ActiveEntityMonitoringService.class.getName());
-    }
-    super.setMonitoringService(monitoringService);
-  }
-
-  @Override
-  protected ExposedObject<T> wrap(T managedObject) {
-    ActiveEntityMonitoringService monitoringService = (ActiveEntityMonitoringService) getMonitoringService();
-    ClientIdentifier clientIdentifier = monitoringService.getClientIdentifier(managedObject.getClientDescriptor());
-    Context context = Context.empty()
-        .with("consumerId", String.valueOf(monitoringService.getConsumerId()))
-        .with(Client.KEY, clientIdentifier.getClientId());
+  protected ExposedClientBinding<T> wrap(T managedObject) {
+    Context context = Context.create("consumerId", String.valueOf(getMonitoringService().getConsumerId()))
+        .with("alias", managedObject.resolvedClientIdentifier.getClientId());
     return internalWrap(context, managedObject);
   }
 

@@ -48,8 +48,7 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
   }
 
   @Override
-  public ExposedObject<T> register(Object managedObject) {
-    return null;
+  public void register(Object managedObject) {
   }
 
   @Override
@@ -57,8 +56,7 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
   }
 
   @Override
-  public ExposedObject<T> unregister(Object managedObject) {
-    return null;
+  public void unregister(Object managedObject) {
   }
 
   @Override
@@ -99,5 +97,10 @@ public class ManagementProviderAdapter<T> implements ManagementProvider<T> {
   @Override
   public Collection<ExposedObject<T>> getExposedObjects() {
     return Collections.emptyList();
+  }
+
+  @Override
+  public ExposedObject<T> findExposedObject(T managedObject) {
+    return null;
   }
 }

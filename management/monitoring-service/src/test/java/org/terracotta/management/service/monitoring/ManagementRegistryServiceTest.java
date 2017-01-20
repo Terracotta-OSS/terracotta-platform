@@ -98,7 +98,7 @@ public class ManagementRegistryServiceTest {
     ReadOnlyBuffer<Message> buffer = managementService.createMessageBuffer(100);
 
     // a consumer asks for a service
-    ActiveEntityMonitoringService activeEntityMonitoringService = provider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
+    EntityMonitoringService activeEntityMonitoringService = provider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
     ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(activeEntityMonitoringService));
     registry.addManagementProvider(new MyManagementProvider());
 

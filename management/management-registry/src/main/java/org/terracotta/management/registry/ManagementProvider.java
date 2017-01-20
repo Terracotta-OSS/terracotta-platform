@@ -46,7 +46,7 @@ public interface ManagementProvider<T> {
    * @param managedObject the object to manage.
    * @return true if the object has been registered
    */
-  ExposedObject<T> register(T managedObject);
+  void register(T managedObject);
 
   /**
    * Unregister a managed object from the current provider.
@@ -54,7 +54,7 @@ public interface ManagementProvider<T> {
    * @param managedObject the managed object.
    * @return true if the object has been registered
    */
-  ExposedObject<T> unregister(T managedObject);
+  void unregister(T managedObject);
 
   /**
    * Get the set of capability descriptors the current provider provides.
@@ -124,4 +124,6 @@ public interface ManagementProvider<T> {
   void close();
 
   Collection<ExposedObject<T>> getExposedObjects();
+
+  ExposedObject<T> findExposedObject(T managedObject);
 }

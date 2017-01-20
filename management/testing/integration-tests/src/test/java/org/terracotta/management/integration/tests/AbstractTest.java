@@ -211,6 +211,7 @@ public abstract class AbstractTest {
         .replaceAll("\"startTime\":[0-9]+", "\"startTime\":0")
         .replaceAll("\"upTimeSec\":[0-9]+", "\"upTimeSec\":0")
         .replaceAll("\"id\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",\"pid\":[0-9]+", "\"id\":\"0@127.0.0.1:$1:<uuid>\",\"pid\":0")
+        .replaceAll("\"alias\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",", "\"alias\":\"0@127.0.0.1:$1:<uuid>\",")
         .replaceAll("\"buildId\":\"[^\"]*\"", "\"buildId\":\"Build ID\"")
         .replaceAll("\"version\":\"[^\"]*\"", "\"version\":\"<version>\"")
         .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")

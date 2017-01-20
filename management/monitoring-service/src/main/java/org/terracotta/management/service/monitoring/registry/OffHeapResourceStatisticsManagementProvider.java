@@ -44,18 +44,11 @@ public class OffHeapResourceStatisticsManagementProvider extends AbstractStatist
   }
 
   private static class OffHeapResourceBindingExposedStatistics extends AbstractExposedStatistics<OffHeapResourceBinding> {
-
     OffHeapResourceBindingExposedStatistics(Context context, OffHeapResourceBinding binding, StatisticRegistry statisticRegistry) {
-      super(context, binding, statisticRegistry);
+      super(context.with("type", "OffHeapResource"), binding, statisticRegistry);
 
       getRegistry().registerSize("AllocatedMemory", descriptor("allocatedMemory", tags("tier", "OffHeapResource")));
     }
-
-    @Override
-    public Context getContext() {
-      return super.getContext().with("type", "OffHeapResource");
-    }
-
   }
 
   private static Set<String> tags(String... tags) {return new HashSet<>(asList(tags));}

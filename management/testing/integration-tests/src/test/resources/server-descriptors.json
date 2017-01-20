@@ -7,6 +7,39 @@
           "required": true
         },
         {
+          "name": "type",
+          "required": true
+        },
+        {
+          "name": "alias",
+          "required": true
+        }
+      ]
+    },
+    "descriptors": [
+      {
+        "consumerId": "4",
+        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+        "type": "ClientState",
+        "attached": true
+      },
+      {
+        "consumerId": "4",
+        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+        "type": "ClientState",
+        "attached": true
+      }
+    ],
+    "name": "ClientStateSettings"
+  },
+  {
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "consumerId",
+          "required": true
+        },
+        {
           "name": "cacheName",
           "required": true
         }

@@ -52,12 +52,7 @@ class ServerCacheSettingsManagementProvider extends AliasBindingManagementProvid
   private static class ExposedServerCacheBinding extends ExposedAliasBinding<ServerCacheBinding> {
 
     ExposedServerCacheBinding(Context context, ServerCacheBinding binding) {
-      super(context, binding);
-    }
-
-    @Override
-    public Context getContext() {
-      return super.getContext().with("type", "ServerCache");
+      super(context.with("type", "ServerCache"), binding);
     }
 
     @Override

@@ -17,6 +17,7 @@ package org.terracotta.management.entity.sample.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
@@ -45,6 +46,20 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
   }
 
   @Override
+  public void connected(ClientDescriptor clientDescriptor) {
+    super.connected(clientDescriptor);
+    LOGGER.trace("[{}] connected({})", cache.getName(), clientDescriptor);
+    management.attach(clientDescriptor);
+  }
+
+  @Override
+  public void disconnected(ClientDescriptor clientDescriptor) {
+    LOGGER.trace("[{}] disconnected({})", cache.getName(), clientDescriptor);
+    management.detach(clientDescriptor);
+    super.disconnected(clientDescriptor);
+  }
+
+  @Override
   public void destroy() {
     LOGGER.trace("[{}] destroy()", cache.getName());
     management.serverCacheDestroyed(cache);
@@ -58,6 +73,20 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
       LOGGER.trace("[{}] synchronize({})", cache.getName(), concurrencyKey);
       getSynchronizer().syncCacheDataInPassives(cache.getData());
     }
+  }
+
+  @Override
+  public void createNew() {
+    LOGGER.trace("[{}] createNew()", cache.getName());
+    management.init();
+    management.serverCacheCreated(cache);
+  }
+
+  @Override
+  public void loadExisting() {
+    LOGGER.trace("[{}] loadExisting()", cache.getName());
+    management.init();
+    management.serverCacheCreated(cache);
   }
 
 }

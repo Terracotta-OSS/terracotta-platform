@@ -28,9 +28,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class ActiveTmsAgentServerEntity extends ActiveProxiedServerEntity<TmsAgent, Void, Void, TmsAgentMessenger> {
 
   private final AtomicBoolean connected = new AtomicBoolean();
+  private final ActiveTmsAgent tmsAgent;
 
   ActiveTmsAgentServerEntity(ActiveTmsAgent tmsAgent) {
     super(tmsAgent, tmsAgent);
+    this.tmsAgent = tmsAgent;
   }
 
   @Override
@@ -45,6 +47,16 @@ class ActiveTmsAgentServerEntity extends ActiveProxiedServerEntity<TmsAgent, Voi
   public void disconnected(ClientDescriptor clientDescriptor) {
     connected.set(false);
     super.disconnected(clientDescriptor);
+  }
+
+  @Override
+  public void createNew() {
+    tmsAgent.init();
+  }
+
+  @Override
+  public void loadExisting() {
+    tmsAgent.init();
   }
 
 }
