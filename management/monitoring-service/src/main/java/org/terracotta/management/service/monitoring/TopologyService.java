@@ -54,15 +54,15 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.CLIENT_CONNECTED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.CLIENT_DISCONNECTED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_CREATED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_DESTROYED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_FETCHED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_UNFETCHED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_JOINED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_LEFT;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_STATE_CHANGED;
+import static org.terracotta.management.service.monitoring.Notification.CLIENT_CONNECTED;
+import static org.terracotta.management.service.monitoring.Notification.CLIENT_DISCONNECTED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_CREATED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_DESTROYED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_FETCHED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_UNFETCHED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_JOINED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_LEFT;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_STATE_CHANGED;
 
 /**
  * @author Mathieu Carbou
@@ -367,7 +367,7 @@ class TopologyService implements PlatformListener {
       boolean hadRegistry = client.getManagementRegistry().isPresent();
       client.setManagementRegistry(newRegistry);
       if (!hadRegistry) {
-        firingService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_REGISTRY_AVAILABLE"));
+        firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_REGISTRY_AVAILABLE.name()));
       }
     });
     return future.thenApply(AbstractNode::getContext);
@@ -382,7 +382,7 @@ class TopologyService implements PlatformListener {
       Set<String> newTags = new HashSet<>(Arrays.asList(tags));
       if (!currtags.equals(newTags)) {
         client.setTags(tags);
-        firingService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
+        firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_TAGS_UPDATED.name()));
       }
     });
   }
@@ -419,7 +419,7 @@ class TopologyService implements PlatformListener {
       boolean hadRegistry = serverEntity.getManagementRegistry().isPresent();
       serverEntity.setManagementRegistry(newRegistry);
       if (!hadRegistry) {
-        firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_AVAILABLE"));
+        firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), Notification.ENTITY_REGISTRY_AVAILABLE.name()));
       }
     });
   }
@@ -507,21 +507,6 @@ class TopologyService implements PlatformListener {
         connection.remoteAddress.getHostAddress(),
         connection.name == null || connection.name.isEmpty() ? "UNKNOWN" : connection.name,
         connection.uuid);
-  }
-
-  enum Notification {
-    SERVER_ENTITY_CREATED,
-    SERVER_ENTITY_DESTROYED,
-
-    SERVER_ENTITY_FETCHED,
-    SERVER_ENTITY_UNFETCHED,
-
-    CLIENT_CONNECTED,
-    CLIENT_DISCONNECTED,
-
-    SERVER_JOINED,
-    SERVER_LEFT,
-    SERVER_STATE_CHANGED,
   }
 
 }

@@ -68,7 +68,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
     this.managementCallExecutor = Objects.requireNonNull(managementCallExecutor);
-    this.full = new ContextualNotification(Context.create(ServerEntity.CONSUMER_ID, Long.toString(consumerId)), "LOST_MESSAGES");
+    this.full = new ContextualNotification(Context.create(ServerEntity.CONSUMER_ID, Long.toString(consumerId)), Notification.LOST_MESSAGES.name());
   }
 
   @Override
