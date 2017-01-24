@@ -335,7 +335,7 @@ class TopologyService implements PlatformListener {
   // ======================================================================
 
   /**
-   * Records stats that needs to be send in future (or now) when the client fetch info will have arrived
+   * Records stats that needs to be sent in future (or now) when the client fetch info will have arrived
    */
   void willPushClientStatistics(long consumerId, ClientDescriptor from, ContextualStatistics... statistics) {
     getFetchClient(consumerId, from).thenAccept(client -> {
@@ -348,7 +348,7 @@ class TopologyService implements PlatformListener {
   }
 
   /**
-   * Records notification that needs to be send in future (or now) when the client fetch info will have arrived
+   * Records notification that needs to be sent in future (or now) when the client fetch info will have arrived
    */
   void willPushClientNotification(long consumerId, ClientDescriptor from, ContextualNotification notification) {
     getFetchClient(consumerId, from).thenAccept(client -> {
@@ -359,7 +359,7 @@ class TopologyService implements PlatformListener {
   }
 
   /**
-   * Records registry that needs to be send in future (or now) when the client will have arrived
+   * Records registry that needs to be sent in future (or now) when the client will have arrived
    */
   CompletableFuture<Context> willSetClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
     CompletableFuture<Client> future = getFetchClient(consumerId, clientDescriptor);
@@ -374,7 +374,7 @@ class TopologyService implements PlatformListener {
   }
 
   /**
-   * Records tags that needs to be send in future (or now) when the client info will have arrived
+   * Records tags that needs to be sent in future (or now) when the client info will have arrived
    */
   void willSetClientTags(long consumerId, ClientDescriptor clientDescriptor, String[] tags) {
     getFetchClient(consumerId, clientDescriptor).thenAccept(client -> {
@@ -388,7 +388,7 @@ class TopologyService implements PlatformListener {
   }
 
   /**
-   * Records stats that needs to be send in future (or now) when the entity will have arrived
+   * Records stats that needs to be sent in future (or now) when the entity will have arrived
    */
   void willPushEntityStatistics(long consumerId, String serverName, ContextualStatistics... statistics) {
     getServerEntity(consumerId, serverName).thenAccept(serverEntity -> {
@@ -401,7 +401,7 @@ class TopologyService implements PlatformListener {
   }
 
   /**
-   * Records notification that needs to be send in future (or now) when the entity will have arrived
+   * Records notification that needs to be sent in future (or now) when the entity will have arrived
    */
   void willPushEntityNotification(long consumerId, String serverName, ContextualNotification notification) {
     getServerEntity(consumerId, serverName).thenAccept(serverEntity -> {
@@ -412,7 +412,7 @@ class TopologyService implements PlatformListener {
   }
 
   /**
-   * Records registry that needs to be send in future (or now) when the entity will have arrived
+   * Records registry that needs to be sent in future (or now) when the entity will have arrived
    */
   void willSetEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {
     getServerEntity(consumerId, serverName).thenAccept(serverEntity -> {
