@@ -45,16 +45,21 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
         .flatMap(ServerEntity::getManagementRegistry)
         .get();
 
-    assertThat(registry.getCapabilities().size(), equalTo(3));
+    assertThat(registry.getCapabilities().size(), equalTo(4));
 
     assertThat(registry.getCapability("ServerCacheSettings"), is(notNullValue()));
     assertThat(registry.getCapability("ServerCacheStatistics"), is(notNullValue()));
     assertThat(registry.getCapability("ServerCacheCalls"), is(notNullValue()));
+    assertThat(registry.getCapability("ClientStateSettings"), is(notNullValue()));
 
     Settings serverCacheSettings = new ArrayList<>(registry.getCapability("ServerCacheSettings").get().getDescriptors(Settings.class)).get(1);
     serverCacheSettings.set("time", 0L);
 
-    assertEquals(readJson("server-descriptors.json"), toJson(registry.getCapabilities()));
+    String actual = toJson(registry.getCapabilities()).toString();
+    actual = removeRandomValues(actual);
+    String expected = readJson("server-descriptors.json").toString();
+    System.out.println(actual);
+    assertEquals(expected, actual);
 
     registry = tmsAgentService.readTopology()
         .activeServerEntityStream()

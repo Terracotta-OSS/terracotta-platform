@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -71,6 +73,8 @@ public class TopologyIT extends AbstractSingleTest {
     assertThat(notifsByTypes.get("CLIENT_TAGS_UPDATED").size(), equalTo(2));
     assertThat(notifsByTypes.get("SERVER_ENTITY_FETCHED").size(), equalTo(7));
     assertThat(notifsByTypes.get("ENTITY_REGISTRY_AVAILABLE").size(), equalTo(3));
+    assertThat(notifsByTypes.get("CLIENT_ATTACHED").size(), equalTo(4));
+    assertThat(notifsByTypes.get("CLIENT_DETACHED"), is(nullValue()));
   }
 
   @Test

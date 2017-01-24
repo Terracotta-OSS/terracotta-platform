@@ -17,13 +17,12 @@ package org.terracotta.management.entity.sample.server.management;
 
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.registry.Named;
+import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.action.AbstractActionManagementProvider;
 import org.terracotta.management.registry.action.Exposed;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.Named;
-import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.management.service.monitoring.StatisticsService;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 
 import java.util.Collection;
@@ -45,11 +44,6 @@ public class ServerCacheCallManagementProvider extends AbstractActionManagementP
   @Override
   public void setMonitoringService(EntityMonitoringService monitoringService) {
     this.monitoringService = monitoringService;
-  }
-
-  @Override
-  public void setStatisticsService(StatisticsService statisticsService) {
-    // we do not care about this service
   }
 
   @Override

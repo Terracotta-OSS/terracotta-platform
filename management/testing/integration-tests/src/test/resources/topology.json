@@ -123,6 +123,37 @@
                 },
                 "capabilities": [
                   {
+                    "name": "ClientStateSettings",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "consumerId": "4",
+                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+                        "type": "ClientState",
+                        "attached": true
+                      },
+                      {
+                        "consumerId": "4",
+                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+                        "type": "ClientState",
+                        "attached": true
+                      }
+                    ]
+                  },
+                  {
                     "name": "ServerCacheCalls",
                     "context": [
                       {
@@ -253,6 +284,37 @@
                   "subContexts": []
                 },
                 "capabilities": [
+                  {
+                    "name": "ClientStateSettings",
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "consumerId": "3",
+                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+                        "type": "ClientState",
+                        "attached": true
+                      },
+                      {
+                        "consumerId": "3",
+                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+                        "type": "ClientState",
+                        "attached": true
+                      }
+                    ]
+                  },
                   {
                     "name": "ServerCacheCalls",
                     "context": [

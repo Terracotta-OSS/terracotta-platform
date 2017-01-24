@@ -69,6 +69,12 @@ public class Management {
         statistics -> {
           try {
             managementAgent.pushStatistics(statistics);
+          } catch (ExecutionException e) {
+            // hack to avoid printing warnings each time we close the connection when tests ends
+            Throwable t = e.getCause();
+            if (!t.getMessage().endsWith("connection closed")) {
+              LOGGER.warn("Unable to push statistics: " + e.getCause().getMessage(), e.getCause());
+            }
           } catch (Exception e) {
             LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
           }

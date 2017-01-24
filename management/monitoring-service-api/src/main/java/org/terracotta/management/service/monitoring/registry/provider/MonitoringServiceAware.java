@@ -17,10 +17,8 @@ package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.management.service.monitoring.StatisticsService;
 
 @CommonComponent
 public interface MonitoringServiceAware {
   void setMonitoringService(EntityMonitoringService monitoringService);
-  void setStatisticsService(StatisticsService statisticsService);
 }

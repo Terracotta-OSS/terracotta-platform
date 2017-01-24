@@ -58,29 +58,21 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   @Override
   public void pushNotification(ClientDescriptor from, ContextualNotification notification) {
     LOGGER.trace("[{}] pushNotification({}, {})", consumerId, from, notification);
-    topologyService.getClientContext(consumerId, from).ifPresent(context -> {
-      notification.setContext(notification.getContext().with(context));
-      firingService.fireNotification(notification);
-    });
+    topologyService.willPushClientNotification(consumerId, from, notification);
   }
 
   @Override
   public void pushStatistics(ClientDescriptor from, ContextualStatistics... statistics) {
     if (statistics.length > 0) {
       LOGGER.trace("[{}] pushStatistics({}, {})", consumerId, from, statistics.length);
-      topologyService.getClientContext(consumerId, from).ifPresent(context -> {
-        for (ContextualStatistics statistic : statistics) {
-          statistic.setContext(statistic.getContext().with(context));
-        }
-        firingService.fireStatistics(statistics);
-      });
+      topologyService.willPushClientStatistics(consumerId, from, statistics);
     }
   }
 
   @Override
   public void exposeTags(ClientDescriptor from, String... tags) {
     LOGGER.trace("[{}] exposeTags({}, {})", consumerId, from, Arrays.toString(tags));
-    topologyService.setClientTags(consumerId, from, tags);
+    topologyService.willSetClientTags(consumerId, from, tags);
   }
 
   @Override
@@ -88,9 +80,8 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
     LOGGER.trace("[{}] exposeManagementRegistry({}, {})", consumerId, from, contextContainer);
     ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
     newRegistry.addCapabilities(capabilities);
-    topologyService.setClientManagementRegistry(consumerId, from, newRegistry);
-    topologyService.getManageableClientContext(consumerId, from)
-        .ifPresent(context -> manageableClients.put(from, context));
+    topologyService.willSetClientManagementRegistry(consumerId, from, newRegistry)
+        .thenAccept(context -> manageableClients.put(from, context));
   }
 
   @Override

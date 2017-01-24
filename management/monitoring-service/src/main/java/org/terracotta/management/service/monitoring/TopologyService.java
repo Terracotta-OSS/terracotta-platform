@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
+import org.terracotta.management.model.cluster.AbstractNode;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
@@ -31,6 +32,7 @@ import org.terracotta.management.model.cluster.ServerEntityIdentifier;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.monitoring.PlatformConnectedClient;
 import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformServer;
@@ -49,17 +51,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.CLIENT_CONNECTED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.CLIENT_DISCONNECTED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_CREATED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_DESTROYED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_FETCHED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_ENTITY_UNFETCHED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_JOINED;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_LEFT;
-import static org.terracotta.management.service.monitoring.TopologyService.Notification.SERVER_STATE_CHANGED;
+import static org.terracotta.management.service.monitoring.Notification.CLIENT_CONNECTED;
+import static org.terracotta.management.service.monitoring.Notification.CLIENT_DISCONNECTED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_CREATED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_DESTROYED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_FETCHED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_UNFETCHED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_JOINED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_LEFT;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_STATE_CHANGED;
 
 /**
  * @author Mathieu Carbou
@@ -70,7 +73,10 @@ class TopologyService implements PlatformListener {
 
   private final Cluster cluster;
   private final Stripe stripe;
-  private final Map<Long, Map<ClientDescriptor, ClientIdentifier>> fetches = new HashMap<>();
+  // map of topology client created per fetch (client descriptor), per entity, on the active server
+  private final Map<Long, Map<ClientDescriptor, CompletableFuture<Client>>> fetches = new HashMap<>();
+  // map of entities created per consumer id on each server
+  private final Map<String, Map<Long, CompletableFuture<ServerEntity>>> entities = new HashMap<>();
   private final FiringService firingService;
   private final PlatformConfiguration platformConfiguration;
   private final List<TopologyEventListener> topologyEventListeners = new CopyOnWriteArrayList<>();
@@ -145,6 +151,8 @@ class TopologyService implements PlatformListener {
     Context context = server.getContext();
     server.remove();
 
+    entities.remove(platformServer.getServerName());
+
     firingService.fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
   }
 
@@ -168,10 +176,7 @@ class TopologyService implements PlatformListener {
 
     server.addServerEntity(entity);
 
-    if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
-      // keep track of fetches per entity for an active server
-      fetches.put(platformEntity.consumerID, new HashMap<>());
-    }
+    getServerEntity(platformEntity.consumerID, sender.getServerName()).complete(entity);
 
     firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
 
@@ -200,6 +205,8 @@ class TopologyService implements PlatformListener {
 
     Context context = entity.getContext();
     entity.remove();
+
+    entities.get(sender.getServerName()).remove(platformEntity.consumerID);
 
     if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
       fetches.remove(platformEntity.consumerID);
@@ -262,7 +269,7 @@ class TopologyService implements PlatformListener {
       throw newIllegalTopologyState("Unable to fetch entity " + platformEntity + " from client " + client);
     }
 
-    fetches.get(platformEntity.consumerID).put(clientDescriptor, clientIdentifier);
+    getFetchClient(platformEntity.consumerID, clientDescriptor).complete(client);
 
     topologyEventListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
 
@@ -323,51 +330,106 @@ class TopologyService implements PlatformListener {
     }
   }
 
-  synchronized void setEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {
-    stripe.getServerByName(serverName)
-        .flatMap(server -> server.getServerEntity(consumerId))
-        .ifPresent(serverEntity -> {
-          boolean hadRegistry = serverEntity.getManagementRegistry().isPresent();
-          serverEntity.setManagementRegistry(newRegistry);
-          if (!hadRegistry) {
-            firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), "ENTITY_REGISTRY_AVAILABLE"));
-          }
-        });
+  // ======================================================================
+  // ENTITIES and CLIENTS topology completion by adding management metadata
+  // ======================================================================
+
+  /**
+   * Records stats that needs to be sent in future (or now) when the client fetch info will have arrived
+   */
+  void willPushClientStatistics(long consumerId, ClientDescriptor from, ContextualStatistics... statistics) {
+    getFetchClient(consumerId, from).thenAccept(client -> {
+      Context context = client.getContext();
+      for (ContextualStatistics statistic : statistics) {
+        statistic.setContext(statistic.getContext().with(context));
+      }
+      firingService.fireStatistics(statistics);
+    });
   }
 
-  synchronized void setClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
-    Optional<Client> optional = getClient(consumerId, clientDescriptor);
-    if (optional.isPresent()) {
-      Client client = optional.get();
+  /**
+   * Records notification that needs to be sent in future (or now) when the client fetch info will have arrived
+   */
+  void willPushClientNotification(long consumerId, ClientDescriptor from, ContextualNotification notification) {
+    getFetchClient(consumerId, from).thenAccept(client -> {
+      Context context = client.getContext();
+      notification.setContext(notification.getContext().with(context));
+      firingService.fireNotification(notification);
+    });
+  }
+
+  /**
+   * Records registry that needs to be sent in future (or now) when the client will have arrived
+   */
+  CompletableFuture<Context> willSetClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
+    CompletableFuture<Client> future = getFetchClient(consumerId, clientDescriptor);
+    future.thenAccept(client -> {
       boolean hadRegistry = client.getManagementRegistry().isPresent();
       client.setManagementRegistry(newRegistry);
       if (!hadRegistry) {
-        firingService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_REGISTRY_AVAILABLE"));
+        firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_REGISTRY_AVAILABLE.name()));
       }
-    } else {
-      LOGGER.warn("[0] setClientManagementRegistry(): Client descriptor " + clientDescriptor + " did not fetch entity " + consumerId);
-    }
+    });
+    return future.thenApply(AbstractNode::getContext);
   }
 
-  synchronized void setClientTags(long consumerId, ClientDescriptor clientDescriptor, String[] tags) {
-    Optional<Client> optional = getClient(consumerId, clientDescriptor);
-    if (optional.isPresent()) {
-      Client client = optional.get();
+  /**
+   * Records tags that needs to be sent in future (or now) when the client info will have arrived
+   */
+  void willSetClientTags(long consumerId, ClientDescriptor clientDescriptor, String[] tags) {
+    getFetchClient(consumerId, clientDescriptor).thenAccept(client -> {
       Set<String> currtags = new HashSet<>(client.getTags());
       Set<String> newTags = new HashSet<>(Arrays.asList(tags));
       if (!currtags.equals(newTags)) {
         client.setTags(tags);
-        firingService.fireNotification(new ContextualNotification(client.getContext(), "CLIENT_TAGS_UPDATED"));
+        firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_TAGS_UPDATED.name()));
       }
-    } else {
-      LOGGER.warn("[0] setClientTags(): Client descriptor " + clientDescriptor + " did not fetch entity " + consumerId);
-    }
+    });
   }
 
-  synchronized Optional<Context> getEntityContext(String serverName, long consumerId) {
-    return stripe.getServerByName(serverName)
-        .flatMap(server -> server.getServerEntity(consumerId))
-        .map(ServerEntity::getContext);
+  /**
+   * Records stats that needs to be sent in future (or now) when the entity will have arrived
+   */
+  void willPushEntityStatistics(long consumerId, String serverName, ContextualStatistics... statistics) {
+    getServerEntity(consumerId, serverName).thenAccept(serverEntity -> {
+      Context context = serverEntity.getContext();
+      for (ContextualStatistics statistic : statistics) {
+        statistic.setContext(statistic.getContext().with(context));
+      }
+      firingService.fireStatistics(statistics);
+    });
+  }
+
+  /**
+   * Records notification that needs to be sent in future (or now) when the entity will have arrived
+   */
+  void willPushEntityNotification(long consumerId, String serverName, ContextualNotification notification) {
+    getServerEntity(consumerId, serverName).thenAccept(serverEntity -> {
+      Context context = serverEntity.getContext();
+      notification.setContext(notification.getContext().with(context));
+      firingService.fireNotification(notification);
+    });
+  }
+
+  /**
+   * Records registry that needs to be sent in future (or now) when the entity will have arrived
+   */
+  void willSetEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {
+    getServerEntity(consumerId, serverName).thenAccept(serverEntity -> {
+      boolean hadRegistry = serverEntity.getManagementRegistry().isPresent();
+      serverEntity.setManagementRegistry(newRegistry);
+      if (!hadRegistry) {
+        firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), Notification.ENTITY_REGISTRY_AVAILABLE.name()));
+      }
+    });
+  }
+
+  // ==============
+  // QUERY TOPOLOGY
+  // ==============
+
+  CompletableFuture<ClientIdentifier> getClientIdentifier(long consumerId, ClientDescriptor clientDescriptor) {
+    return getFetchClient(consumerId, clientDescriptor).thenApply(Client::getClientIdentifier);
   }
 
   synchronized Optional<Context> getManageableEntityContext(String serverName, long consumerId) {
@@ -384,19 +446,8 @@ class TopologyService implements PlatformListener {
         .map(ServerEntity::getContext);
   }
 
-  synchronized Optional<Context> getClientContext(long consumerId, ClientDescriptor clientDescriptor) {
-    return getClient(consumerId, clientDescriptor)
-        .map(Client::getContext);
-  }
-
   synchronized Optional<Context> getManageableClientContext(ClientIdentifier clientIdentifier) {
     return cluster.getClient(clientIdentifier)
-        .filter(Client::isManageable)
-        .map(Client::getContext);
-  }
-
-  synchronized Optional<Context> getManageableClientContext(long consumerId, ClientDescriptor clientDescriptor) {
-    return getClient(consumerId, clientDescriptor)
         .filter(Client::isManageable)
         .map(Client::getContext);
   }
@@ -415,14 +466,6 @@ class TopologyService implements PlatformListener {
     }
   }
 
-  boolean isCurrentServerActive() {
-    return currentActive != null && currentActive.getServerName().equals(platformConfiguration.getServerName());
-  }
-
-  String getCurrentServerName() {
-    return platformConfiguration.getServerName();
-  }
-
   void addTopologyEventListener(TopologyEventListener topologyEventListener) {
     topologyEventListeners.add(Objects.requireNonNull(topologyEventListener));
   }
@@ -433,6 +476,10 @@ class TopologyService implements PlatformListener {
     }
   }
 
+  private boolean isCurrentServerActive() {
+    return currentActive != null && currentActive.getServerName().equals(platformConfiguration.getServerName());
+  }
+
   private Server getActiveServer() {
     if (currentActive == null) {
       throw newIllegalTopologyState("No active server defined!");
@@ -440,13 +487,14 @@ class TopologyService implements PlatformListener {
     return currentActive;
   }
 
-  private Optional<Client> getClient(long consumerId, ClientDescriptor clientDescriptor) {
-    Map<ClientDescriptor, ClientIdentifier> map = fetches.get(consumerId);
-    if (map == null) {
-      return Optional.empty();
-    }
-    ClientIdentifier clientIdentifier = map.get(clientDescriptor);
-    return clientIdentifier == null ? Optional.empty() : cluster.getClient(clientIdentifier);
+  private synchronized CompletableFuture<Client> getFetchClient(long consumerId, ClientDescriptor clientDescriptor) {
+    Map<ClientDescriptor, CompletableFuture<Client>> map = fetches.computeIfAbsent(consumerId, cid -> new HashMap<>());
+    return map.computeIfAbsent(clientDescriptor, cd -> new CompletableFuture<>());
+  }
+
+  private synchronized CompletableFuture<ServerEntity> getServerEntity(long consumerId, String serverName) {
+    Map<Long, CompletableFuture<ServerEntity>> map = entities.computeIfAbsent(serverName, name -> new HashMap<>());
+    return map.computeIfAbsent(consumerId, cd -> new CompletableFuture<>());
   }
 
   private IllegalStateException newIllegalTopologyState(String message) {
@@ -459,21 +507,6 @@ class TopologyService implements PlatformListener {
         connection.remoteAddress.getHostAddress(),
         connection.name == null || connection.name.isEmpty() ? "UNKNOWN" : connection.name,
         connection.uuid);
-  }
-
-  enum Notification {
-    SERVER_ENTITY_CREATED,
-    SERVER_ENTITY_DESTROYED,
-
-    SERVER_ENTITY_FETCHED,
-    SERVER_ENTITY_UNFETCHED,
-
-    CLIENT_CONNECTED,
-    CLIENT_DISCONNECTED,
-
-    SERVER_JOINED,
-    SERVER_LEFT,
-    SERVER_STATE_CHANGED,
   }
 
 }

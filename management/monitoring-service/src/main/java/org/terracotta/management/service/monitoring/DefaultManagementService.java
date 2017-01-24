@@ -33,7 +33,6 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.sequence.Sequence;
 import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.voltron.proxy.MessageType;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
 import java.util.Collection;
@@ -58,9 +57,9 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   private final ManagementCallExecutor managementCallExecutor;
   private final TopologyService topologyService;
   private final Map<ClientDescriptor, Collection<String>> managementCallRequests = new ConcurrentHashMap<>();
+  private final ContextualNotification full;
 
   private volatile ReadWriteBuffer<Message> buffer;
-  private volatile ContextualNotification full;
 
   DefaultManagementService(long consumerId, TopologyService topologyService, FiringService firingService, ClientCommunicator clientCommunicator, SequenceGenerator sequenceGenerator, ManagementCallExecutor managementCallExecutor) {
     this.consumerId = consumerId;
@@ -69,6 +68,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
     this.managementCallExecutor = Objects.requireNonNull(managementCallExecutor);
+    this.full = new ContextualNotification(Context.create(ServerEntity.CONSUMER_ID, Long.toString(consumerId)), Notification.LOST_MESSAGES.name());
   }
 
   @Override
@@ -101,7 +101,8 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     if (context.contains(Client.KEY)) {
       // handle client call
       ClientIdentifier to = ClientIdentifier.valueOf(context.get(Client.KEY));
-      fullContext = context.with(topologyService.getManageableClientContext(to).orElseThrow(() -> new IllegalStateException("Client " + to + " is either not found or not manageable")));
+      fullContext = context.with(topologyService.getManageableClientContext(to)
+          .orElseThrow(() -> new IllegalStateException("Client " + to + " is either not found or not manageable")));
     }
 
     if ((context.contains(Server.NAME_KEY) || context.contains(Server.KEY))
@@ -192,15 +193,13 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     }
   }
 
+  //TODO: send notifications directly to TMS https://github.com/Terracotta-OSS/terracotta-platform/issues/195
   private void push(Message message) {
     ReadWriteBuffer<Message> buffer = this.buffer;
     if (buffer != null) {
       LOGGER.trace("[{}] push({})", consumerId, message);
       if (buffer.put(message) != null) {
         // notify the loss of messages if the ring buffer is full
-        if (full == null) {
-          full = new ContextualNotification(topologyService.getEntityContext(topologyService.getCurrentServerName(), consumerId).get(), "LOST_MESSAGES");
-        }
         buffer.put(new DefaultMessage(nextSequence(), "NOTIFICATION", full));
       }
     }
@@ -232,7 +231,6 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
 
   private void clear() {
     managementCallRequests.clear();
-    full = null;
     if (buffer != null) {
       buffer.clear();
     }

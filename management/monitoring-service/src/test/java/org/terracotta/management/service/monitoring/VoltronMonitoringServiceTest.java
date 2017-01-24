@@ -56,11 +56,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -102,8 +99,8 @@ public class VoltronMonitoringServiceTest {
   // a monitoring service (and buffer) retrieved from our entity 1
   ManagementService managementService;
   ClientMonitoringService clientMonitoringService;
-  ActiveEntityMonitoringService activeEntityMonitoringService;
-  PassiveEntityMonitoringService passiveEntityMonitoringService;
+  EntityMonitoringService activeEntityMonitoringService;
+  EntityMonitoringService passiveEntityMonitoringService;
   ReadOnlyBuffer<Message> buffer;
 
   @Before
@@ -393,18 +390,6 @@ public class VoltronMonitoringServiceTest {
     verify(clientCommunicator, times(1)).sendNoResponse(eq(new FakeDesc("2-1")), any(EntityResponse.class));
     verify(clientCommunicator, times(1)).sendNoResponse(eq(new FakeDesc("1-1")), any(EntityResponse.class));
     verifyNoMoreInteractions(clientCommunicator);
-  }
-
-  @Test
-  public void test_client_identifiers() throws Exception {
-    test_fetch_entity();
-    assertThat(activeEntityMonitoringService.getClientIdentifier(new FakeDesc("1-1")), equalTo(ClientIdentifier.create(111, "127.0.0.1", "name", "uuid-1")));
-    try {
-      activeEntityMonitoringService.getClientIdentifier(new FakeDesc("1-2"));
-      fail();
-    } catch (Exception e) {
-      assertThat(e, is(instanceOf(IllegalStateException.class)));
-    }
   }
 
   private void assertTopologyEquals(String file) throws Exception {

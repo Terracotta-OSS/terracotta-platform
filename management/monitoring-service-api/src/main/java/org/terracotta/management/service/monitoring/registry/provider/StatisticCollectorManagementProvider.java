@@ -17,46 +17,14 @@ package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
-import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.collect.StatisticCollector;
 import org.terracotta.management.registry.collect.StatisticCollectorProvider;
-import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.management.service.monitoring.StatisticsService;
 
-@Named("StatisticCollectorCapability")
 @RequiredContext({@Named("consumerId")})
 @CommonComponent
-public class StatisticCollectorManagementProvider extends StatisticCollectorProvider<StatisticCollector> implements MonitoringServiceAware {
-
-  private StatisticsService statisticsService;
-  private EntityMonitoringService monitoringService;
-
+public class StatisticCollectorManagementProvider extends StatisticCollectorProvider {
   public StatisticCollectorManagementProvider(Context context) {
-    super(StatisticCollector.class, context);
+    super(context);
   }
-
-  @Override
-  public void setMonitoringService(EntityMonitoringService monitoringService) {
-    this.monitoringService = monitoringService;
-  }
-
-  @Override
-  public void setStatisticsService(StatisticsService statisticsService) {
-    this.statisticsService = statisticsService;
-  }
-
-  @Override
-  protected void dispose(ExposedObject<StatisticCollector> exposedObject) {
-    exposedObject.getTarget().stopStatisticCollector();
-  }
-
-  public void init() {
-    StatisticCollector statisticCollector = statisticsService.createStatisticCollector(
-        statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
-    register(statisticCollector);
-  }
-
 }

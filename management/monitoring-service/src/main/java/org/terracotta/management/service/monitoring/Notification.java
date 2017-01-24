@@ -15,14 +15,27 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
-import org.terracotta.management.registry.collect.StatisticCollector;
-
 /**
- * This statistic service is injected into {@link org.terracotta.management.registry.ManagementProvider} objects implementing
- * {@link org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware} when they are added into a {@link ConsumerManagementRegistry}
+ * @author Mathieu Carbou
  */
-@CommonComponent
-public interface StatisticsService {
-  StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
+enum Notification {
+  SERVER_ENTITY_CREATED,
+  SERVER_ENTITY_DESTROYED,
+
+  SERVER_ENTITY_FETCHED,
+  SERVER_ENTITY_UNFETCHED,
+
+  CLIENT_CONNECTED,
+  CLIENT_DISCONNECTED,
+
+  SERVER_JOINED,
+  SERVER_LEFT,
+  SERVER_STATE_CHANGED,
+
+  LOST_MESSAGES,
+
+  CLIENT_REGISTRY_AVAILABLE,
+  CLIENT_TAGS_UPDATED,
+
+  ENTITY_REGISTRY_AVAILABLE
 }

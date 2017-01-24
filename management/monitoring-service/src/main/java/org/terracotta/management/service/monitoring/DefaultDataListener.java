@@ -60,29 +60,20 @@ class DefaultDataListener implements DataListener {
     switch (name) {
 
       case TOPIC_SERVER_ENTITY_NOTIFICATION: {
-        // handles data coming from PassiveEntityMonitoringService.pushNotification()
+        // handles data coming from DefaultPassiveEntityMonitoringService.pushNotification()
         ContextualNotification notification = (ContextualNotification) data;
         Context notificationContext = notification.getContext();
         if (notificationContext.contains(ServerEntity.CONSUMER_ID)) {
           consumerId = Long.parseLong(notificationContext.get(ServerEntity.CONSUMER_ID));
         }
-        topologyService.getEntityContext(sender.getServerName(), consumerId).ifPresent(context -> {
-          notification.setContext(notification.getContext().with(context));
-          firingService.fireNotification(notification);
-        });
+        topologyService.willPushEntityNotification(consumerId, sender.getServerName(), notification);
         break;
       }
 
       case TOPIC_SERVER_ENTITY_STATISTICS: {
-        // handles data coming from PassiveEntityMonitoringService.pushStatistics()
+        // handles data coming from DefaultPassiveEntityMonitoringService.pushStatistics()
         ContextualStatistics[] statistics = (ContextualStatistics[]) data;
-        for (ContextualStatistics statistic : statistics) {
-          Context statContext = statistic.getContext();
-          long cid = statContext.contains(ServerEntity.CONSUMER_ID) ? Long.parseLong(statContext.get(ServerEntity.CONSUMER_ID)) : consumerId;
-          topologyService.getEntityContext(sender.getServerName(), cid)
-              .ifPresent(context -> statistic.setContext(statistic.getContext().with(context)));
-        }
-        firingService.fireStatistics(statistics);
+        topologyService.willPushEntityStatistics(consumerId, sender.getServerName(), statistics);
         break;
       }
 
@@ -100,7 +91,7 @@ class DefaultDataListener implements DataListener {
     if (path.length == 1 && "registry".equals(path[0])) {
       // handles data coming from DefaultMonitoringService.exposeServerEntityManagementRegistry()
       ManagementRegistry newRegistry = (ManagementRegistry) data;
-      topologyService.setEntityManagementRegistry(consumerId, sender.getServerName(), newRegistry);
+      topologyService.willSetEntityManagementRegistry(consumerId, sender.getServerName(), newRegistry);
 
     } else if (path.length == 2 && "management-answer".equals(path[0])) {
       // handles data coming from DefaultMonitoringService.answerManagementCall()

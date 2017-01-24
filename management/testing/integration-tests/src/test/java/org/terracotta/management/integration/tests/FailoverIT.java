@@ -97,7 +97,8 @@ public class FailoverIT extends AbstractHATest {
         "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
         "CLIENT_CONNECTED",
         "SERVER_ENTITY_FETCHED",
-        "CLIENT_TAGS_UPDATED", "CLIENT_REGISTRY_AVAILABLE", "CLIENT_RECONNECTED");
+        "CLIENT_TAGS_UPDATED", "CLIENT_REGISTRY_AVAILABLE", "CLIENT_RECONNECTED",
+        "CLIENT_ATTACHED");
 
     while (!Thread.currentThread().isInterrupted() && !notifs.stream().map(ContextualNotification::getType).collect(Collectors.toSet()).containsAll(allNotifs)) {
       notifs.addAll(tmsAgentService.readMessages().stream()

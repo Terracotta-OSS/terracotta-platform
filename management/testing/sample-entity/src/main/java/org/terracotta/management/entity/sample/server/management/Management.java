@@ -18,6 +18,7 @@ package org.terracotta.management.entity.sample.server.management;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.server.ServerCache;
 import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
@@ -57,11 +58,13 @@ public class Management {
       this.managementRegistry.addManagementProvider(new ServerCacheSettingsManagementProvider());
       this.managementRegistry.addManagementProvider(new ServerCacheCallManagementProvider());
       this.managementRegistry.addManagementProvider(new ServerCacheStatisticsManagementProvider());
+      if (active) {
+        this.managementRegistry.addManagementProvider(new ClientStateSettingsManagementProvider());
+      }
     }
   }
 
-  // workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426
-  public synchronized void init() {
+  public void init() {
     if (managementRegistry != null) {
       LOGGER.trace("[{}] init()", cacheName);
       managementRegistry.refresh(); // send to voltron the registry at entity init
@@ -72,10 +75,8 @@ public class Management {
     if (managementRegistry != null) {
       LOGGER.trace("[{}] serverCacheCreated()", cacheName);
 
-      managementRegistry.register(new ServerCacheBinding(cache));
-      managementRegistry.refresh();
-
-      managementRegistry.pushServerEntityNotification(new ServerCacheBinding(cache), "SERVER_CACHE_CREATED");
+      managementRegistry.registerAndRefresh(new ServerCacheBinding(cache))
+          .thenRun(() -> managementRegistry.pushServerEntityNotification(new ServerCacheBinding(cache), "SERVER_CACHE_CREATED"));
     }
   }
 
@@ -102,4 +103,25 @@ public class Management {
       managementRegistry.pushServerEntityNotification(new ServerCacheBinding(cache), "SYNC_END");
     }
   }
+
+  public void attach(ClientDescriptor clientDescriptor) {
+    if (managementRegistry != null) {
+      LOGGER.trace("[{}] attach({})", cacheName, clientDescriptor);
+
+      managementRegistry.registerAndRefresh(new ClientStateBinding(clientDescriptor, true))
+          .thenRun(() -> managementRegistry.pushServerEntityNotification(new ClientStateBinding(clientDescriptor, true), "CLIENT_ATTACHED"));
+    }
+  }
+
+  public void detach(ClientDescriptor clientDescriptor) {
+    if (managementRegistry != null) {
+      LOGGER.trace("[{}] detach({})", cacheName, clientDescriptor);
+
+      managementRegistry.pushServerEntityNotification(new ClientStateBinding(clientDescriptor, true), "CLIENT_DETACHED");
+
+      managementRegistry.unregisterAndRefresh(new ClientStateBinding(clientDescriptor, false));
+      managementRegistry.refresh();
+    }
+  }
+
 }

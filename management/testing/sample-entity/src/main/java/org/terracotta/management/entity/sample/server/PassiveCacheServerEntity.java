@@ -39,7 +39,6 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSy
 
   @Override
   public void createNew() {
-    super.createNew();
     LOGGER.trace("[{}] createNew()", cache.getName());
     management.init();
     management.serverCacheCreated(cache);
@@ -49,7 +48,6 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSy
   public void destroy() {
     LOGGER.trace("[{}] destroy()", cache.getName());
     management.serverCacheDestroyed(cache);
-    super.destroy();
   }
 
   @Override

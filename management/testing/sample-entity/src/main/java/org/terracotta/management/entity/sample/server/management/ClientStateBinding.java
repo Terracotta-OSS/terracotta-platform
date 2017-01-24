@@ -13,33 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.entity.sample.server.management;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.management.service.monitoring.registry.provider.ClientBinding;
 
-/**
- * @author Mathieu Carbou
- */
-@CommonComponent
-public class EntityEventListenerAdapter implements EntityEventListener {
-  @Override
-  public void onCreated() {
-
+final class ClientStateBinding extends ClientBinding {
+  ClientStateBinding(ClientDescriptor clientDescriptor, boolean attached) {
+    super(clientDescriptor, attached);
   }
 
   @Override
-  public void onFetch(ClientDescriptor clientDescriptor) {
-
-  }
-
-  @Override
-  public void onUnfetch(ClientDescriptor clientDescriptor) {
-
-  }
-
-  @Override
-  public void onDestroyed() {
-
+  public Boolean getValue() {
+    return (Boolean) super.getValue();
   }
 }

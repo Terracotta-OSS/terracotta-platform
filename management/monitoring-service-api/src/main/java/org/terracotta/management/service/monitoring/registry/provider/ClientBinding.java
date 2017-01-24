@@ -17,6 +17,7 @@ package org.terracotta.management.service.monitoring.registry.provider;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.management.model.cluster.ClientIdentifier;
 
 import java.util.Objects;
 
@@ -25,6 +26,8 @@ public class ClientBinding {
 
   private final ClientDescriptor clientDescriptor;
   private final Object value;
+
+  volatile ClientIdentifier resolvedClientIdentifier;
 
   public ClientBinding(ClientDescriptor clientDescriptor, Object value) {
     this.clientDescriptor = Objects.requireNonNull(clientDescriptor);

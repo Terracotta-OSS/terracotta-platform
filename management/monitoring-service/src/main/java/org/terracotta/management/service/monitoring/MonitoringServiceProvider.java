@@ -23,12 +23,17 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.registry.collect.StatisticCollector;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
 import org.terracotta.management.service.monitoring.registry.OffHeapResourceBinding;
 import org.terracotta.management.service.monitoring.registry.OffHeapResourceSettingsManagementProvider;
 import org.terracotta.management.service.monitoring.registry.OffHeapResourceStatisticsManagementProvider;
+import org.terracotta.management.service.monitoring.registry.provider.StatisticCollectorManagementProvider;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.offheapresource.OffHeapResourceIdentifier;
@@ -54,9 +59,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       ConsumerManagementRegistry.class, // registry for an entity
       ClientMonitoringService.class, // for management entity
       ManagementService.class, // for TMS Entity
-      ActiveEntityMonitoringService.class, // monitoring of an active entity
-      PassiveEntityMonitoringService.class, // monitoring of a passive entity
-      EntityEventService.class // enables entities to listen for monitoring events (workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426)
+      EntityMonitoringService.class // monitoring of an active or passive entity
   );
 
   private final Map<Long, DefaultManagementService> managementServices = new ConcurrentHashMap<>();
@@ -64,7 +67,6 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private final Map<Long, DefaultConsumerManagementRegistry> consumerManagementRegistries = new ConcurrentHashMap<>();
   private final Map<Long, DefaultActiveEntityMonitoringService> activeEntityMonitoringServices = new ConcurrentHashMap<>();
   private final Map<Long, DefaultPassiveEntityMonitoringService> passiveEntityMonitoringServices = new ConcurrentHashMap<>();
-  private final Map<Long, DefaultEntityEventService> entityEventServices = new ConcurrentHashMap<>();
 
   private final TimeSource timeSource = TimeSource.BEST;
   private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry(consumerManagementRegistries);
@@ -77,6 +79,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private IStripeMonitoring platformListenerAdapter;
 
   public MonitoringServiceProvider() {
+    // because only passthrough is calling close(), not tc-core, so this is to cleanly close services (thread pools) at shutdown
     Runtime.getRuntime().addShutdownHook(new Thread(this::close));
   }
 
@@ -101,7 +104,6 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         topologyService.removeTopologyEventListener(managementServices.remove(consumerId));
         topologyService.removeTopologyEventListener(clientMonitoringServices.remove(consumerId));
         topologyService.removeTopologyEventListener(consumerManagementRegistries.remove(consumerId));
-        topologyService.removeTopologyEventListener(entityEventServices.remove(consumerId));
         passiveEntityMonitoringServices.remove(consumerId);
         activeEntityMonitoringServices.remove(consumerId);
       }
@@ -129,24 +131,6 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       }
     }
 
-    if (EntityEventService.class == serviceType) {
-      LOGGER.trace("[{}] getService({})", consumerID, EntityEventService.class.getSimpleName());
-      // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/426 (on failover, entity initialization is done before we are aware of them)
-      // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/409 (in a failover, we are not aware of passive entity destruction)
-      DefaultEntityEventService entityEventService = entityEventServices.remove(consumerID);
-      if (entityEventService != null) {
-        LOGGER.trace("[{}] getService({}): clearing previous instance", consumerID, EntityEventService.class.getSimpleName());
-        topologyService.removeTopologyEventListener(entityEventService);
-        entityEventService.clear();
-      }
-      // create a new registry
-      LOGGER.trace("[{}] getService({})", consumerID, EntityEventService.class.getSimpleName());
-      entityEventService = new DefaultEntityEventService(consumerID);
-      topologyService.addTopologyEventListener(entityEventService);
-      entityEventServices.put(consumerID, entityEventService);
-      return serviceType.cast(entityEventService);
-    }
-
     // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
     if (SharedManagementRegistry.class == serviceType) {
       LOGGER.trace("[{}] getService({})", consumerID, SharedManagementRegistry.class.getSimpleName());
@@ -157,6 +141,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     if (ConsumerManagementRegistry.class == serviceType) {
       if (configuration instanceof ConsumerManagementRegistryConfiguration) {
         ConsumerManagementRegistryConfiguration consumerManagementRegistryConfiguration = (ConsumerManagementRegistryConfiguration) configuration;
+        EntityMonitoringService monitoringService = consumerManagementRegistryConfiguration.getEntityMonitoringService();
         // Workaround for https://github.com/Terracotta-OSS/terracotta-core/issues/409
         // in a failover, we are not aware of passive entity destruction so if we find a previous service with the same consumer id, we clean it
         // this is true for this service specifically
@@ -170,10 +155,9 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         LOGGER.trace("[{}] getService({})", consumerID, ConsumerManagementRegistry.class.getSimpleName());
         managementRegistry = new DefaultConsumerManagementRegistry(
             consumerID,
-            consumerManagementRegistryConfiguration.getEntityMonitoringService(),
-            statisticsService);
+            monitoringService);
         if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
-          addServerManagementProviders(consumerID, managementRegistry);
+          addServerManagementProviders(consumerID, managementRegistry, monitoringService);
         }
         topologyService.addTopologyEventListener(managementRegistry);
         consumerManagementRegistries.put(consumerID, managementRegistry);
@@ -231,12 +215,14 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       }
     }
 
-    // get or creates a monitoring service for an active entity
-    if (ActiveEntityMonitoringService.class == serviceType) {
+    // get or creates a monitoring service for an active or passive entity
+    if (EntityMonitoringService.class == serviceType) {
+
+      // active case
       if (configuration instanceof ActiveEntityMonitoringServiceConfiguration) {
         DefaultActiveEntityMonitoringService activeEntityMonitoringService = this.activeEntityMonitoringServices.get(consumerID);
         if (activeEntityMonitoringService == null) {
-          LOGGER.trace("[{}] getService({})", consumerID, ActiveEntityMonitoringService.class.getSimpleName());
+          LOGGER.trace("[{}] getService({})", consumerID, EntityMonitoringService.class.getSimpleName());
           ActiveEntityMonitoringServiceConfiguration activeEntityMonitoringServiceConfiguration = (ActiveEntityMonitoringServiceConfiguration) configuration;
           activeEntityMonitoringService = new DefaultActiveEntityMonitoringService(
               consumerID,
@@ -245,20 +231,15 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
               platformConfiguration);
           activeEntityMonitoringServices.put(consumerID, activeEntityMonitoringService);
         } else {
-          LOGGER.trace("[{}] getService({}): re-using.", consumerID, ActiveEntityMonitoringService.class.getSimpleName());
+          LOGGER.trace("[{}] getService({}): re-using.", consumerID, EntityMonitoringService.class.getSimpleName());
         }
         return serviceType.cast(activeEntityMonitoringService);
-      } else {
-        throw new IllegalArgumentException("Missing configuration " + ActiveEntityMonitoringServiceConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
-      }
-    }
 
-    // get or creates a monitoring service for a passive entity, bridging calls to IMonitoringProducer
-    if (PassiveEntityMonitoringService.class == serviceType) {
-      if (configuration instanceof PassiveEntityMonitoringServiceConfiguration) {
+        // passive case
+      } else if (configuration instanceof PassiveEntityMonitoringServiceConfiguration) {
         DefaultPassiveEntityMonitoringService passiveEntityMonitoringService = passiveEntityMonitoringServices.get(consumerID);
         if (passiveEntityMonitoringService == null) {
-          LOGGER.trace("[{}] getService({})", consumerID, PassiveEntityMonitoringService.class.getSimpleName());
+          LOGGER.trace("[{}] getService({})", consumerID, EntityMonitoringService.class.getSimpleName());
           PassiveEntityMonitoringServiceConfiguration passiveEntityMonitoringServiceConfiguration = (PassiveEntityMonitoringServiceConfiguration) configuration;
           IMonitoringProducer monitoringProducer = passiveEntityMonitoringServiceConfiguration.getMonitoringProducer();
           if (monitoringProducer == null) {
@@ -268,7 +249,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           passiveEntityMonitoringService = new DefaultPassiveEntityMonitoringService(consumerID, monitoringProducer, platformConfiguration);
           passiveEntityMonitoringServices.put(consumerID, passiveEntityMonitoringService);
         } else {
-          LOGGER.trace("[{}] getService({}): re-using.", consumerID, PassiveEntityMonitoringService.class.getSimpleName());
+          LOGGER.trace("[{}] getService({}): re-using.", consumerID, EntityMonitoringService.class.getSimpleName());
         }
         return serviceType.cast(passiveEntityMonitoringService);
       } else {
@@ -279,9 +260,23 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
   }
 
-  //TODO: BUGFIX: https://github.com/Terracotta-OSS/terracotta-platform/issues/260
-  private void addServerManagementProviders(long consumerId, ConsumerManagementRegistry consumerManagementRegistry) {
+  private void addServerManagementProviders(long consumerId, ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService monitoringService) {
     LOGGER.trace("[0] addServerManagementProviders({})", consumerId);
+
+    // The context for the collector is created from the the registry of the entity wanting server-side providers.
+    // We create a provider that will receive management calls to control the global voltron's statistic collector.
+    // This provider will thus be on top of the entity wanting to collect server-side stats
+    ContextContainer contextContainer = consumerManagementRegistry.getContextContainer();
+    Context context = Context.create(contextContainer.getName(), contextContainer.getValue());
+    StatisticCollectorManagementProvider collectorManagementProvider = new StatisticCollectorManagementProvider(context);
+    consumerManagementRegistry.addManagementProvider(collectorManagementProvider);
+
+    // add a collector service, not started by default, but that can be started through a remote management call
+    StatisticCollector statisticCollector = statisticsService.createStatisticCollector(
+        statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
+    consumerManagementRegistry.register(statisticCollector);
+
+    //TODO: BUGFIX: https://github.com/Terracotta-OSS/terracotta-platform/issues/260
     // manage offheap service if it is there
     Collection<OffHeapResources> offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class);
     if (!offHeapResources.isEmpty()) {

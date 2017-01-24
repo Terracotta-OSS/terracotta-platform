@@ -78,26 +78,21 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   }
 
   @Override
-  public ExposedObject<T> register(T managedObject) {
+  public void register(T managedObject) {
     ExposedObject<T> exposedObject = wrap(managedObject);
-    if (this.exposedObjects.add(exposedObject)) {
-      return exposedObject;
-    } else {
-      return null;
-    }
+    this.exposedObjects.add(exposedObject);
   }
 
   @Override
-  public ExposedObject<T> unregister(T managedObject) {
+  public void unregister(T managedObject) {
     for (ExposedObject<T> exposedObject : exposedObjects) {
       if (exposedObject.getTarget().equals(managedObject)) {
         if (this.exposedObjects.remove(exposedObject)) {
           dispose(exposedObject);
-          return exposedObject;
+          return;
         }
       }
     }
-    return null;
   }
 
   @Override
@@ -182,6 +177,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
     return null;
   }
 
+  @Override
   public ExposedObject<T> findExposedObject(T managedObject) {
     for (ExposedObject<T> exposed : exposedObjects) {
       if (exposed.getTarget().equals(managedObject)) {

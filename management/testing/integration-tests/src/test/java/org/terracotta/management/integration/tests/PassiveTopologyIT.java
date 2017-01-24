@@ -93,7 +93,9 @@ public class PassiveTopologyIT extends AbstractHATest {
         "SERVER_CACHE_DESTROYED",
         "SERVER_ENTITY_DESTROYED",
         "SERVER_ENTITY_DESTROYED",
-        "CLIENT_CLOSE"
+        "CLIENT_CLOSE",
+        "CLIENT_ATTACHED",
+        "CLIENT_DETACHED"
     ));
   }
 

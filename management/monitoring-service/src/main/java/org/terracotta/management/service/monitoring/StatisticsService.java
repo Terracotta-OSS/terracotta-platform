@@ -15,18 +15,12 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
+import org.terracotta.management.registry.collect.StatisticCollector;
 
 /**
- * Class used by passive entities requiring to push some data into the monitoring service.
- * <p>
- * Data is redirecting through the IMonitoringProducer of platform, which will send the data back to the active.
- * <p>
- * The active will receive the data in the DefaultDataListener.
- *
- * @author Mathieu Carbou
+ * This statistic service is injected into {@link org.terracotta.management.registry.ManagementProvider} objects implementing
+ * {@link org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware} when they are added into a {@link ConsumerManagementRegistry}
  */
-@CommonComponent
-public interface PassiveEntityMonitoringService extends EntityMonitoringService {
-
+interface StatisticsService {
+  StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
 }

@@ -16,11 +16,14 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.registry.CapabilityManagementSupport;
+import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ManagementRegistry;
 
-import java.io.Closeable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An entity can use such registry to expose / unexpose any supported object.
@@ -31,7 +34,43 @@ import java.util.Map;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ConsumerManagementRegistry extends ManagementRegistry {
+public interface ConsumerManagementRegistry extends CapabilityManagementSupport {
+
+  /**
+   * Get the management context required to make use of the
+   * registered objects' capabilities.
+   *
+   * @return a this management registry context.
+   */
+  ContextContainer getContextContainer();
+
+  /**
+   * Adds to this registry a specific management provider for object types T
+   *
+   * @param provider The management provider instance
+   */
+  void addManagementProvider(ManagementProvider<?> provider);
+
+  /**
+   * Removes from this registry a specific management provider for object types T
+   *
+   * @param provider The management provider instance
+   */
+  void removeManagementProvider(ManagementProvider<?> provider);
+
+  /**
+   * Register an object in the management registry.
+   *
+   * @param managedObject the managed object.
+   */
+  CompletableFuture<Void> register(Object managedObject);
+
+  /**
+   * Unregister an object from the management registry.
+   *
+   * @param managedObject the managed object.
+   */
+  void unregister(Object managedObject);
 
   /**
    * Used to force an update of the metadata exposed in the server.
@@ -44,9 +83,8 @@ public interface ConsumerManagementRegistry extends ManagementRegistry {
 
   boolean pushServerEntityNotification(Object managedObjectSource, String type, Map<String, String> attrs);
 
-  default void registerAndRefresh(Object managedObject) {
-    register(managedObject);
-    refresh();
+  default CompletableFuture<Void> registerAndRefresh(Object managedObject) {
+    return register(managedObject).thenRun(this::refresh);
   }
 
   default void unregisterAndRefresh(Object managedObject) {

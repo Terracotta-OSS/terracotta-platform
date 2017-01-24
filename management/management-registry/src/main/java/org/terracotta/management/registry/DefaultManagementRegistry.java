@@ -65,26 +65,22 @@ public class DefaultManagementRegistry implements ManagementRegistry {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean register(Object managedObject) {
-    boolean b = false;
+  public void register(Object managedObject) {
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
-        b |= managementProvider.register(managedObject) != null;
+        managementProvider.register(managedObject);
       }
     }
-    return b;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean unregister(Object managedObject) {
-    boolean b = false;
+  public void unregister(Object managedObject) {
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
-        b |= managementProvider.unregister(managedObject) != null;
+        managementProvider.unregister(managedObject);
       }
     }
-    return b;
   }
 
   @Override

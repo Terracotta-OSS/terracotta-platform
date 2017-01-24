@@ -47,7 +47,7 @@ class ServerCacheStatisticsManagementProvider extends AbstractStatisticsManageme
   private static class ServerCacheExposedStatistics extends AbstractExposedStatistics<ServerCacheBinding> {
 
     ServerCacheExposedStatistics(Context context, ServerCacheBinding binding, StatisticRegistry statisticRegistry) {
-      super(context, binding, statisticRegistry);
+      super(context.with("type", "ServerCache"), binding, statisticRegistry);
 
       OperationStatisticDescriptor<CacheOperationOutcomes.GetOutcome> get = OperationStatisticDescriptor.descriptor("get", singleton("cluster"), CacheOperationOutcomes.GetOutcome.class);
       OperationStatisticDescriptor<CacheOperationOutcomes.PutOutcome> put = OperationStatisticDescriptor.descriptor("put", singleton("cluster"), CacheOperationOutcomes.PutOutcome.class);
@@ -60,12 +60,6 @@ class ServerCacheStatisticsManagementProvider extends AbstractStatisticsManageme
 
       getRegistry().registerSize("Size", descriptor("size", singleton("cluster")));
     }
-
-    @Override
-    public Context getContext() {
-      return super.getContext().with("type", "ServerCache");
-    }
-
   }
 
 }

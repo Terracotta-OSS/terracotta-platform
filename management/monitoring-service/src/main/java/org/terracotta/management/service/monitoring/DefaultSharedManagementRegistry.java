@@ -45,7 +45,7 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
   public Collection<ContextContainer> getContextContainers() {
     return registries.values()
         .stream()
-        .map(ManagementRegistry::getContextContainer)
+        .map(ConsumerManagementRegistry::getContextContainer)
         .collect(Collectors.toList());
   }
 

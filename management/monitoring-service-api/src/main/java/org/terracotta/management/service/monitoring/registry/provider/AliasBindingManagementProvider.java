@@ -32,19 +32,10 @@ public class AliasBindingManagementProvider<T extends AliasBinding> extends Abst
   }
 
   @Override
-  public ExposedAliasBinding<T> register(T managedObject) {
-    if(getManagedType() == managedObject.getClass()) {
-      return (ExposedAliasBinding<T>) super.register(managedObject);
-    }
-    return null;
-  }
-
-  @Override
-  public ExposedAliasBinding<T> unregister(T managedObject) {
-    if(getManagedType() == managedObject.getClass()) {
-      return (ExposedAliasBinding<T>) super.unregister(managedObject);
-    }
-    return null;
+  protected ExposedAliasBinding<T> wrap(T managedObject) {
+    Context context = Context.create("consumerId", String.valueOf(getMonitoringService().getConsumerId()))
+        .with("alias", managedObject.getAlias());
+    return internalWrap(context, managedObject);
   }
 
   @Override
@@ -60,7 +51,7 @@ public class AliasBindingManagementProvider<T extends AliasBinding> extends Abst
 
     public ExposedAliasBinding(Context context, T binding) {
       this.binding = Objects.requireNonNull(binding);
-      this.context = context.with("alias", binding.getAlias());
+      this.context = Objects.requireNonNull(context);
     }
 
     public T getBinding() {
@@ -95,6 +86,7 @@ public class AliasBindingManagementProvider<T extends AliasBinding> extends Abst
       return binding.equals(that.binding);
 
     }
+
     @Override
     public int hashCode() {
       return binding.hashCode();

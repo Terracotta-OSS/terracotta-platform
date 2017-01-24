@@ -19,20 +19,19 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.ManagementRegistry;
-import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Mathieu Carbou
  */
-public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitoringService implements ActiveEntityMonitoringService {
+public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitoringService {
 
   private final TopologyService topologyService;
   private final FiringService firingService;
@@ -42,7 +41,7 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
     super(consumerId, platformConfiguration);
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
-    this.serverName = topologyService.getCurrentServerName();
+    this.serverName = platformConfiguration.getServerName();
   }
 
   @Override
@@ -50,28 +49,20 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
     logger.trace("[{}] exposeManagementRegistry({})", getConsumerId(), contextContainer);
     ManagementRegistry registry = ManagementRegistry.create(contextContainer);
     registry.addCapabilities(capabilities);
-    topologyService.setEntityManagementRegistry(getConsumerId(), serverName, registry);
+    topologyService.willSetEntityManagementRegistry(getConsumerId(), serverName, registry);
   }
 
   @Override
   public void pushNotification(ContextualNotification notification) {
     logger.trace("[{}] pushNotification({})", getConsumerId(), notification);
-    topologyService.getEntityContext(serverName, getConsumerId()).ifPresent(context -> {
-      notification.setContext(notification.getContext().with(context));
-      firingService.fireNotification(notification);
-    });
+    topologyService.willPushEntityNotification(getConsumerId(), serverName, notification);
   }
 
   @Override
   public void pushStatistics(ContextualStatistics... statistics) {
     if (statistics.length > 0) {
       logger.trace("[{}] pushStatistics({})", getConsumerId(), statistics.length);
-      for (ContextualStatistics statistic : statistics) {
-        Context statContext = statistic.getContext();
-        topologyService.getEntityContext(serverName, getConsumerId())
-            .ifPresent(context -> statistic.setContext(statistic.getContext().with(context)));
-      }
-      firingService.fireStatistics(statistics);
+      topologyService.willPushEntityStatistics(getConsumerId(), serverName, statistics);
     }
   }
 
@@ -82,10 +73,9 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
   }
 
   @Override
-  public ClientIdentifier getClientIdentifier(ClientDescriptor clientDescriptor) {
-    return topologyService.getClientContext(getConsumerId(), clientDescriptor)
-        .map(context -> ClientIdentifier.valueOf(context.get(Client.KEY)))
-        .orElseThrow(() -> new IllegalStateException("ClientDescriptor " + clientDescriptor + " is not a client of entity " + getConsumerId()));
+  public CompletableFuture<ClientIdentifier> getClientIdentifier(ClientDescriptor clientDescriptor) {
+    logger.trace("[{}] getClientIdentifier({})", getConsumerId(), clientDescriptor);
+    return topologyService.getClientIdentifier(getConsumerId(), clientDescriptor);
   }
 
 }
