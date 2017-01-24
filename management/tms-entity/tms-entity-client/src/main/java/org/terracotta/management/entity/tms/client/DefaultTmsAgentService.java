@@ -39,7 +39,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author Mathieu Carbou
  */
-public class SingleStripeTmsAgentService implements TmsAgentService {
+public class DefaultTmsAgentService implements TmsAgentService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TmsAgentService.class);
 
@@ -55,7 +55,7 @@ public class SingleStripeTmsAgentService implements TmsAgentService {
 
   private long timeout = 5000;
 
-  public SingleStripeTmsAgentService(final TmsAgentEntity entity) {
+  public DefaultTmsAgentService(final TmsAgentEntity entity) {
     this.entity = Objects.requireNonNull(entity);
     this.entity.registerMessageListener(Message.class, message -> {
       LOGGER.trace("onMessage({})", message);

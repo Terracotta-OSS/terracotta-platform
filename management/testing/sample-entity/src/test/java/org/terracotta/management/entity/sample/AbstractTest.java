@@ -207,7 +207,7 @@ public abstract class AbstractTest {
     TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());
     TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
         .setMaximumUnreadMessages(1024 * 1024));
-    this.tmsAgentService = new SingleStripeTmsAgentService(tmsAgentEntity);
+    this.tmsAgentService = new DefaultTmsAgentService(tmsAgentEntity);
     this.tmsAgentService.setOperationTimeout(10, TimeUnit.SECONDS);
   }
 
