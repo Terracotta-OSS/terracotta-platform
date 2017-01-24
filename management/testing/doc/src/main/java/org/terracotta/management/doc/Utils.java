@@ -23,7 +23,7 @@ import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
-import org.terracotta.management.entity.tms.client.SingleStripeTmsAgentService;
+import org.terracotta.management.entity.tms.client.DefaultTmsAgentService;
 import org.terracotta.management.entity.tms.client.TmsAgentService;
 
 import java.net.URI;
@@ -45,7 +45,7 @@ class Utils {
     TmsAgentEntityFactory factory = new TmsAgentEntityFactory(connection, entityName);
     TmsAgentEntity tmsAgentEntity = factory.retrieveOrCreate(new TmsAgentConfig()
         .setMaximumUnreadMessages(1024 * 1024));
-    return new SingleStripeTmsAgentService(tmsAgentEntity);
+    return new DefaultTmsAgentService(tmsAgentEntity);
   }
 
 }
