@@ -59,6 +59,7 @@ import static org.terracotta.management.service.monitoring.Notification.CLIENT_D
 import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_CREATED;
 import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_DESTROYED;
 import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_FETCHED;
+import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_RECONFIGURED;
 import static org.terracotta.management.service.monitoring.Notification.SERVER_ENTITY_UNFETCHED;
 import static org.terracotta.management.service.monitoring.Notification.SERVER_JOINED;
 import static org.terracotta.management.service.monitoring.Notification.SERVER_LEFT;
@@ -183,6 +184,20 @@ class TopologyService implements PlatformListener {
     if (sender.getServerName().equals(platformConfiguration.getServerName())) {
       topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
     }
+  }
+
+  @Override
+  public void serverEntityReconfigured(PlatformServer sender, PlatformEntity platformEntity) {
+    LOGGER.trace("[0] serverEntityReconfigured({}, {})", sender.getServerName(), platformEntity);
+
+    Server server = stripe.getServerByName(sender.getServerName())
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
+    ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
+
+    ServerEntity entity = server.getServerEntity(identifier)
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server entity " + identifier + " on server " + sender.getServerName()));
+
+    firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_RECONFIGURED.name()));
   }
 
   @Override

@@ -20,6 +20,7 @@ package org.terracotta.management.service.monitoring;
  */
 enum Notification {
   SERVER_ENTITY_CREATED,
+  SERVER_ENTITY_RECONFIGURED,
   SERVER_ENTITY_DESTROYED,
 
   SERVER_ENTITY_FETCHED,

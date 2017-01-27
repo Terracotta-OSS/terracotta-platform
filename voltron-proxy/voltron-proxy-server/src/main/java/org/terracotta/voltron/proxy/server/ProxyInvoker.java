@@ -122,6 +122,10 @@ class ProxyInvoker<T> implements MessageFiring {
     clients.remove(descriptor);
   }
 
+  public Set<ClientDescriptor> getClients() {
+    return clients;
+  }
+
   private void handleExceptionOnSend(MessageCodecException ex) {
     throw new RuntimeException(ex);
   }

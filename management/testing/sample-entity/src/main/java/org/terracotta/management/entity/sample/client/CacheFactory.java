@@ -74,7 +74,8 @@ public class CacheFactory implements Closeable {
 
   public Cache getCache(String name) {
     return caches.computeIfAbsent(name, s -> {
-      CacheEntity cacheEntity = cacheEntityFactory.retrieveOrCreate(uri.getPath().substring(1) + "/" + name);
+      String entityName = uri.getPath().substring(1) + "/" + name;
+      CacheEntity cacheEntity = cacheEntityFactory.retrieveOrCreate(entityName, entityName);
       ClientCache clientCache = new ClientCache(name, cacheEntity);
 
       // add a cache to the local registry for stat and calls and send a notification
