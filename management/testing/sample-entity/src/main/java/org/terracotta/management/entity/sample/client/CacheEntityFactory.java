@@ -26,7 +26,7 @@ import org.terracotta.exception.EntityVersionMismatchException;
 /**
  * @author Mathieu Carbou
  */
-class CacheEntityFactory {
+public class CacheEntityFactory {
 
   private final Connection connection;
 
@@ -34,12 +34,12 @@ class CacheEntityFactory {
     this.connection = connection;
   }
 
-  public CacheEntity retrieveOrCreate(String entityName) {
+  public CacheEntity retrieveOrCreate(String entityName, String cacheName) {
     try {
       return retrieve(entityName);
     } catch (EntityNotFoundException e) {
       try {
-        return create(entityName);
+        return create(entityName, cacheName);
       } catch (EntityAlreadyExistsException f) {
         throw new AssertionError(e);
       }
@@ -54,21 +54,28 @@ class CacheEntityFactory {
     }
   }
 
-  public CacheEntity create(final String identifier) throws EntityAlreadyExistsException {
-    EntityRef<CacheEntity, String> ref = getEntityRef(identifier);
+  public CacheEntity create(String entityName, String cacheName) throws EntityAlreadyExistsException {
+    EntityRef<CacheEntity, String> ref = getEntityRef(entityName);
     try {
-      ref.create(identifier);
+      ref.create(cacheName);
       return ref.fetchEntity();
-    } catch (EntityNotProvidedException | EntityVersionMismatchException | EntityNotFoundException e) {
-      throw new AssertionError(e);
-    } catch (EntityConfigurationException e) {
+    } catch (EntityNotProvidedException | EntityVersionMismatchException | EntityNotFoundException | EntityConfigurationException e) {
       throw new AssertionError(e);
     }
   }
 
-  private EntityRef<CacheEntity, String> getEntityRef(String entityName) {
+  public void reconfigure(String entityName, String cacheName) throws EntityAlreadyExistsException {
+    EntityRef<CacheEntity, String> ref = getEntityRef(entityName);
     try {
-      return connection.getEntityRef(CacheEntity.class, 1, entityName);
+      ref.reconfigure(cacheName);
+    } catch (EntityNotProvidedException | EntityNotFoundException | EntityConfigurationException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  private EntityRef<CacheEntity, String> getEntityRef(String identifier) {
+    try {
+      return connection.getEntityRef(CacheEntity.class, 1, identifier);
     } catch (EntityNotProvidedException e) {
       throw new AssertionError(e);
     }

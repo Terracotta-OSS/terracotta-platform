@@ -18,6 +18,7 @@ package org.terracotta.voltron.proxy.server;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
@@ -34,6 +35,7 @@ import org.terracotta.voltron.proxy.ProxyEntityResponse;
 import org.terracotta.voltron.proxy.ProxyMessageCodec;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -95,14 +97,7 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
 
   @Override
   public final ActiveProxiedServerEntity<T, S, R, M> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
-    C config = null;
-    if (configType == Void.TYPE) {
-      if (configuration != null && configuration.length > 0) {
-        throw new IllegalArgumentException("No config expected here!");
-      }
-    } else {
-      config = configType.cast(messageCodec.getCodec().decode(configType, configuration));
-    }
+    C config = decodeConfig(configuration);
     ActiveProxiedServerEntity<T, S, R, M> activeEntity = createActiveEntity(registry, config);
 
     if (eventTypes != null && eventTypes.length > 0) {
@@ -124,14 +119,7 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
 
   @Override
   public final PassiveProxiedServerEntity<T, S, M> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
-    C config = null;
-    if (configType == Void.TYPE) {
-      if (configuration != null && configuration.length > 0) {
-        throw new IllegalArgumentException("No config expected here!");
-      }
-    } else {
-      config = configType.cast(messageCodec.getCodec().decode(configType, configuration));
-    }
+    C config = decodeConfig(configuration);
     return createPassiveEntity(registry, config);
   }
 
@@ -145,15 +133,37 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
     return executionStrategy;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public final <AP extends CommonServerEntity<ProxyEntityMessage, ProxyEntityResponse>> AP reconfigureEntity(ServiceRegistry registry, AP oldEntity, byte[] configuration) throws ConfigurationException {
+    C config = decodeConfig(configuration);
     if (oldEntity instanceof PassiveServerEntity) {
-      return (AP) createPassiveEntity(registry, configuration);
+      return (AP) reconfigurePassiveEntity(registry, (PassiveProxiedServerEntity<T, S, M>) oldEntity, config);
     } else if (oldEntity instanceof ActiveServerEntity) {
-      return (AP) createActiveEntity(registry, configuration);
+      return (AP) reconfigureActiveEntity(registry, (ActiveProxiedServerEntity<T, S, R, M>) oldEntity, config);
     } else {
       throw new AssertionError("unknown entity type");
     }
+  }
+
+  protected ActiveProxiedServerEntity<T, S, R, M> reconfigureActiveEntity(ServiceRegistry registry, ActiveProxiedServerEntity<T, S, R, M> currentEntity, C config) throws ConfigurationException {
+    // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be change accordingly to your needs.
+    Set<ClientDescriptor> clients = new HashSet<>(currentEntity.getEntityInvoker().getClients());
+    currentEntity.destroy();
+    ActiveProxiedServerEntity<T, S, R, M> entity = createActiveEntity(registry, config);
+    entity.createNew();
+    for (ClientDescriptor clientDescriptor : clients) {
+      entity.connected(clientDescriptor);
+    }
+    return entity;
+  }
+
+  protected PassiveProxiedServerEntity<T, S, M> reconfigurePassiveEntity(ServiceRegistry registry, PassiveProxiedServerEntity<T, S, M> currentEntity, C config) throws ConfigurationException {
+    // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be change accordingly to your needs.
+    currentEntity.destroy();
+    PassiveProxiedServerEntity<T, S, M> entity = createPassiveEntity(registry, config);
+    entity.createNew();
+    return entity;
   }
 
   protected final void setCodec(Codec codec) {
@@ -180,5 +190,17 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
   protected abstract ActiveProxiedServerEntity<T, S, R, M> createActiveEntity(ServiceRegistry registry, C configuration);
 
   protected abstract PassiveProxiedServerEntity<T, S, M> createPassiveEntity(ServiceRegistry registry, C configuration);
+
+  private C decodeConfig(byte[] configuration) {
+    C config = null;
+    if (configType == Void.TYPE) {
+      if (configuration != null && configuration.length > 0) {
+        throw new IllegalArgumentException("No config expected here!");
+      }
+    } else {
+      config = configType.cast(messageCodec.getCodec().decode(configType, configuration));
+    }
+    return config;
+  }
 
 }

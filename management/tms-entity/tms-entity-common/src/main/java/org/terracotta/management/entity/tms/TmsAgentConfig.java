@@ -16,6 +16,7 @@
 package org.terracotta.management.entity.tms;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
@@ -28,6 +29,7 @@ public final class TmsAgentConfig implements Serializable {
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.tms.client.TmsAgentEntity";
 
   private int maximumUnreadMessages = 1024 * 1024;
+  private String stripeName = "SINGLE";
 
   public int getMaximumUnreadMessages() {
     return maximumUnreadMessages;
@@ -38,9 +40,21 @@ public final class TmsAgentConfig implements Serializable {
     return this;
   }
 
-  @Override
-  public String toString() {
-    return "TmsAgentConfig{" + "maximumUnreadMessages=" + maximumUnreadMessages + '}';
+  public String getStripeName() {
+    return stripeName;
   }
 
+  public TmsAgentConfig setStripeName(String stripeName) {
+    this.stripeName = Objects.requireNonNull(stripeName);
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("TmsAgentConfig{");
+    sb.append("maximumUnreadMessages=").append(maximumUnreadMessages);
+    sb.append(", stripeName='").append(stripeName).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }

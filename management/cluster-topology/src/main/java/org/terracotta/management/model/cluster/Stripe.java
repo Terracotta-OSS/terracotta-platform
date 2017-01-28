@@ -144,7 +144,7 @@ public final class Stripe extends AbstractNode<Cluster> {
   public void remove() {
     Cluster parent = getParent();
     if (parent != null) {
-      parent.removeClient(getId());
+      parent.removeStripe(getId());
     }
   }
 

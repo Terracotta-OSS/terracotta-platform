@@ -19,6 +19,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
@@ -45,16 +46,18 @@ class ActiveTmsAgent extends AbstractTmsAgent {
 
   private final ReadOnlyBuffer<Message> buffer;
   private final ManagementService managementService;
+  private final String stripeName;
 
   ActiveTmsAgent(TmsAgentConfig config, ManagementService managementService, ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService entityMonitoringService, SharedManagementRegistry sharedManagementRegistry) {
     super(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
     this.managementService = Objects.requireNonNull(managementService);
     this.buffer = managementService.createMessageBuffer(config.getMaximumUnreadMessages());
+    this.stripeName = config.getStripeName();
   }
 
   @Override
   public Future<Cluster> readTopology() {
-    return CompletableFuture.completedFuture(managementService.readTopology());
+    return CompletableFuture.completedFuture(readCluster());
   }
 
   @Override
@@ -63,8 +66,7 @@ class ActiveTmsAgent extends AbstractTmsAgent {
     buffer.drainTo(messages);
 
     if (!messages.isEmpty()) {
-      Cluster cluster = managementService.readTopology();
-      messages.add(new DefaultMessage(managementService.nextSequence(), "TOPOLOGY", cluster));
+      messages.add(new DefaultMessage(managementService.nextSequence(), "TOPOLOGY", readCluster()));
       messages.sort(MESSAGE_COMPARATOR);
     }
 
@@ -74,6 +76,21 @@ class ActiveTmsAgent extends AbstractTmsAgent {
   @Override
   public Future<String> call(@ClientId Object callerDescriptor, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
     return CompletableFuture.completedFuture(managementService.sendManagementCallRequest((ClientDescriptor) callerDescriptor, context, capabilityName, methodName, returnType, parameters));
+  }
+
+  private Cluster readCluster() {
+    Cluster cluster = managementService.readTopology();
+    // if we want a specific name for our stripe, just rename it
+    if (!stripeName.equals(cluster.getSingleStripe().getName())) {
+      Stripe namedStripe = Stripe.create(stripeName);
+      Stripe currentStripe = cluster.getSingleStripe();
+      // move servers
+      currentStripe.serverStream().forEach(namedStripe::addServer);
+      // remove current stripe and add new one
+      cluster.removeStripe(currentStripe.getId());
+      cluster.addStripe(namedStripe);
+    }
+    return cluster;
   }
 
 }

@@ -36,6 +36,8 @@ interface PlatformListener {
 
   void serverEntityCreated(PlatformServer sender, PlatformEntity entity);
 
+  void serverEntityReconfigured(PlatformServer sender, PlatformEntity entity);
+
   void serverEntityDestroyed(PlatformServer sender, PlatformEntity entity);
 
   void serverStateChanged(PlatformServer sender, ServerState state);
