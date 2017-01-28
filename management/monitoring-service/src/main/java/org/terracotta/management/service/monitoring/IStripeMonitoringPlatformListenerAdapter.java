@@ -152,14 +152,6 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
     switch (parents[parents.length - 1]) {
 
       case "entities": {
-        // ignore removeNode() if fetches are in progress on active server
-        if (sender.getServerName().equals(currentActive)) {
-          for (PlatformClientFetchedEntity fetch : fetches.values()) {
-            if (fetch.entityIdentifier.equals(name)) {
-              return false;
-            }
-          }
-        }
         Map<String, PlatformEntity> serverEntities = entities.get(sender.getServerName());
         PlatformEntity entity = serverEntities.remove(name);
         if (entity != null) {
