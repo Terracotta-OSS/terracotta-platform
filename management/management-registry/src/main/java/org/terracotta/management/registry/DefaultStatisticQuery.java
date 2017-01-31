@@ -71,7 +71,12 @@ public class DefaultStatisticQuery implements StatisticQuery {
       Map<String, Number> statistics = new HashMap<String, Number>();
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
-          statistics.putAll(managementProvider.collectStatistics(context, statisticNames));
+          for (Map.Entry<String, Number> entry : managementProvider.collectStatistics(context, statisticNames).entrySet()) {
+            if (entry.getValue().doubleValue() >= 0) {
+              statistics.put(entry.getKey(), entry.getValue());
+            }
+          }
+
         }
       }
       contextualStatistics.put(context, new ContextualStatistics(capabilityName, context, statistics));

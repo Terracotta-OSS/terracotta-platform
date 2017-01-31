@@ -104,11 +104,16 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
 
-    List<Message> messages = tmsAgentService.readMessages();
-    List<ContextualNotification> notifs = messages.stream()
-        .filter(message -> message.getType().equals("NOTIFICATION"))
-        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
+    List<Message> messages;
+    List<ContextualNotification> notifs;
+    do {
+      messages = tmsAgentService.readMessages();
+      notifs = messages.stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .collect(Collectors.toList());
+    } while (!Thread.currentThread().isInterrupted()
+        && notifs.stream().noneMatch(contextualNotification -> contextualNotification.getType().equals("SERVER_ENTITY_RECONFIGURED")));
 
     String currentJson = toJson(notifs).toString();
     String actual = removeRandomValues(currentJson);
