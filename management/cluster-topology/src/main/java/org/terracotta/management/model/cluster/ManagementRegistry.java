@@ -103,7 +103,11 @@ public final class ManagementRegistry implements Serializable {
 
   @Override
   public String toString() {
-    return contextContainer.getValue();
+    final StringBuilder sb = new StringBuilder("ManagementRegistry{");
+    sb.append("contextContainer=").append(contextContainer);
+    sb.append(", capabilities=").append(capabilities.size());
+    sb.append('}');
+    return sb.toString();
   }
 
   public Map<String, Object> toMap() {

@@ -45,19 +45,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, TopologyEventListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
-  private static final Comparator<Capability> CAPABILITY_COMPARATOR = new Comparator<Capability>() {
-    @Override
-    public int compare(Capability o1, Capability o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  private static final Comparator<Capability> CAPABILITY_COMPARATOR = Comparator.comparing(Capability::getName);
 
   private final long consumerId;
   private final EntityMonitoringService monitoringService;
   private final ContextContainer contextContainer;
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
-
-  private Collection<? extends Capability> previouslyExposed = Collections.emptyList();
 
   DefaultConsumerManagementRegistry(long consumerId, EntityMonitoringService monitoringService) {
     this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
@@ -139,7 +132,9 @@ class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, T
         }
       }
     }
-    return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+    return futures.isEmpty() ?
+        CompletableFuture.completedFuture(null) :
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
   }
 
   @SuppressWarnings("unchecked")
@@ -153,15 +148,12 @@ class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, T
   }
 
   @Override
-  public synchronized void refresh() {
+  public void refresh() {
     LOGGER.trace("[{}] refresh()", consumerId);
     Collection<? extends Capability> capabilities = getCapabilities();
-    if (!previouslyExposed.equals(capabilities)) {
-      Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
-      // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
-      monitoringService.exposeManagementRegistry(getContextContainer(), capabilitiesArray);
-      previouslyExposed = capabilities;
-    }
+    Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
+    // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
+    monitoringService.exposeManagementRegistry(getContextContainer(), capabilitiesArray);
   }
 
   @SuppressWarnings("unchecked")
@@ -210,6 +202,5 @@ class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, T
     LOGGER.trace("[{}] clear()", consumerId);
     managementProviders.forEach(ManagementProvider::close);
     managementProviders.clear();
-    previouslyExposed.clear();
   }
 }

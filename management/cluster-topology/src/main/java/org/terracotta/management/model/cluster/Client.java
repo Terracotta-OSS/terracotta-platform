@@ -43,7 +43,7 @@ public final class Client extends AbstractNode<Cluster> {
   private final ClientIdentifier clientIdentifier;
   private final SortedSet<String> tags = new TreeSet<>();
   private String hostName;
-  private ManagementRegistry managementRegistry;
+  private volatile ManagementRegistry managementRegistry;
 
   private Client(ClientIdentifier clientIdentifier) {
     super(clientIdentifier.getClientId());
