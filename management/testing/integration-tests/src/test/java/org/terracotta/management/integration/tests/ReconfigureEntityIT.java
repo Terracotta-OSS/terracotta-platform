@@ -83,7 +83,6 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology-before-reconfigure.json").toString();
-    System.out.println(actual);
     assertEquals(expected, actual);
 
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
@@ -93,7 +92,6 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     currentTopo = toJson(cluster.toMap()).toString();
     actual = removeRandomValues(currentTopo);
     expected = readJson("topology-reconfigured.json").toString();
-    System.out.println(actual);
     assertEquals(expected, actual);
   }
 

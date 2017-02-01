@@ -79,8 +79,6 @@ public class FailoverIT extends AbstractHATest {
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
 
-    System.out.println(actual);
-
     assertEquals(readJson("topology-after-failover.json"), readJsonStr(actual));
   }
 

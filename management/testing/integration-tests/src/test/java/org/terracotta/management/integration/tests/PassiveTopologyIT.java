@@ -43,7 +43,6 @@ public class PassiveTopologyIT extends AbstractHATest {
         .replace(passive.getServerName(), "stripe-PASSIVE"));
 
     String actual = removeRandomValues(currentPassive[0]);
-    System.out.println(actual);
 
     // and compare
     assertEquals(readJson("passive.json").toString(), actual);

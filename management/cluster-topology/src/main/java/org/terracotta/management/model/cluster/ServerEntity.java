@@ -33,7 +33,7 @@ public final class ServerEntity extends AbstractNode<Server> {
   public static final String CONSUMER_ID = "consumerId";
 
   private final ServerEntityIdentifier identifier;
-  private ManagementRegistry managementRegistry;
+  private volatile ManagementRegistry managementRegistry;
   private long consumerId;
 
   // matches management registry config, or entity id, or service type

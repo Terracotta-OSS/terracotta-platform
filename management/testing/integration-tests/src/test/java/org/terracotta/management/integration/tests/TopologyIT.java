@@ -45,7 +45,6 @@ public class TopologyIT extends AbstractSingleTest {
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology.json").toString();
-    System.out.println(actual);
     assertEquals(expected, actual);
   }
 

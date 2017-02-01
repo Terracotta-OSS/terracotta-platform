@@ -58,7 +58,6 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     String actual = toJson(registry.getCapabilities()).toString();
     actual = removeRandomValues(actual);
     String expected = readJson("server-descriptors.json").toString();
-    System.out.println(actual);
     assertEquals(expected, actual);
 
     registry = tmsAgentService.readTopology()
