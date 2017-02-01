@@ -24,11 +24,16 @@ import org.terracotta.management.entity.tms.client.DefaultTmsAgentService;
 import org.terracotta.management.entity.tms.client.TmsAgentEntity;
 import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
 import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.model.cluster.Stripe;
+import org.terracotta.management.model.notification.ContextualNotification;
 
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -53,6 +58,24 @@ public class StripeNamedIT extends AbstractSingleTest {
     tmsAgentService.setOperationTimeout(60, TimeUnit.SECONDS);
 
     assertThat(tmsAgentService.readTopology().getSingleStripe().getName(), equalTo("MY SUPER STRIPE"));
+
+    // clear previous notifs
+    tmsAgentService.readMessages();
+
+    // create a new cache and serevr entity
+    getCaches("orders");
+
+    List<ContextualNotification> notifications = tmsAgentService.readMessages()
+        .stream()
+        .filter(message -> message.getType().equals("NOTIFICATION"))
+        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+        .filter(contextualNotification -> contextualNotification.getContext().contains(Stripe.KEY))
+        .collect(Collectors.toList());
+
+    assertThat(notifications.isEmpty(), is(false));
+    for (ContextualNotification notification : notifications) {
+      assertThat(notification.getContext().get(Stripe.KEY), equalTo("MY SUPER STRIPE"));
+    }
   }
 
 }

@@ -21,6 +21,7 @@ import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
@@ -66,6 +67,12 @@ class ActiveTmsAgent extends AbstractTmsAgent {
     buffer.drainTo(messages);
 
     if (!messages.isEmpty()) {
+      for (Message message : messages) {
+        message.unwrap(Contextual.class)
+            .stream()
+            .filter(contextual -> contextual.getContext().contains(Stripe.KEY))
+            .forEach(contextual -> contextual.setContext(contextual.getContext().with(Stripe.KEY, stripeName)));
+      }
       messages.add(new DefaultMessage(managementService.nextSequence(), "TOPOLOGY", readCluster()));
       messages.sort(MESSAGE_COMPARATOR);
     }
@@ -75,6 +82,9 @@ class ActiveTmsAgent extends AbstractTmsAgent {
 
   @Override
   public Future<String> call(@ClientId Object callerDescriptor, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
+    if(context.contains(Stripe.KEY)) {
+      context = context.with(Stripe.KEY, "SINGLE");
+    }
     return CompletableFuture.completedFuture(managementService.sendManagementCallRequest((ClientDescriptor) callerDescriptor, context, capabilityName, methodName, returnType, parameters));
   }
 
