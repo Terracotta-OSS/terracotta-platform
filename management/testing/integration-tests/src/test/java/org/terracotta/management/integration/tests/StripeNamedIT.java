@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -53,11 +54,15 @@ public class StripeNamedIT extends AbstractSingleTest {
     TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName() + "-2");
     TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
         .setMaximumUnreadMessages(1024 * 1024)
-        .setStripeName("MY SUPER STRIPE"));
+        .setStripeName("MY_SUPER_STRIPE"));
     TmsAgentService tmsAgentService = new DefaultTmsAgentService(tmsAgentEntity);
     tmsAgentService.setOperationTimeout(60, TimeUnit.SECONDS);
 
-    assertThat(tmsAgentService.readTopology().getSingleStripe().getName(), equalTo("MY SUPER STRIPE"));
+    String currentTopo = toJson(tmsAgentService.readTopology().toMap()).toString();
+    String actual = removeRandomValues(currentTopo);
+    String expected = readJson("topology-renamed.json").toString();
+    System.out.println(actual);
+    assertEquals(expected, actual);
 
     // clear previous notifs
     tmsAgentService.readMessages();
@@ -74,7 +79,7 @@ public class StripeNamedIT extends AbstractSingleTest {
 
     assertThat(notifications.isEmpty(), is(false));
     for (ContextualNotification notification : notifications) {
-      assertThat(notification.getContext().get(Stripe.KEY), equalTo("MY SUPER STRIPE"));
+      assertThat(notification.getContext().get(Stripe.KEY), equalTo("MY_SUPER_STRIPE"));
     }
   }
 
