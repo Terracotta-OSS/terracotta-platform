@@ -217,7 +217,7 @@ public abstract class AbstractTest {
         .replaceAll("\"version\":\"[^\"]*\"", "\"version\":\"<version>\"")
         .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")
         .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
-        .replaceAll("\"id\":\"[^\"]*\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:SINGLE:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
+        .replaceAll("\"id\":\"[^\"]+:(\\w+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
         .replaceAll("testServer1", "testServer0");
   }

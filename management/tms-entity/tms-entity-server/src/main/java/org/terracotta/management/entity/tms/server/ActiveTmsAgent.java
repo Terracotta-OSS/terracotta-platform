@@ -19,6 +19,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.tms.TmsAgentConfig;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
+import org.terracotta.management.model.cluster.Connection;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
@@ -82,7 +83,7 @@ class ActiveTmsAgent extends AbstractTmsAgent {
 
   @Override
   public Future<String> call(@ClientId Object callerDescriptor, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
-    if(context.contains(Stripe.KEY)) {
+    if (context.contains(Stripe.KEY)) {
       context = context.with(Stripe.KEY, "SINGLE");
     }
     return CompletableFuture.completedFuture(managementService.sendManagementCallRequest((ClientDescriptor) callerDescriptor, context, capabilityName, methodName, returnType, parameters));
@@ -92,13 +93,33 @@ class ActiveTmsAgent extends AbstractTmsAgent {
     Cluster cluster = managementService.readTopology();
     // if we want a specific name for our stripe, just rename it
     if (!stripeName.equals(cluster.getSingleStripe().getName())) {
+
       Stripe namedStripe = Stripe.create(stripeName);
       Stripe currentStripe = cluster.getSingleStripe();
+
       // move servers
       currentStripe.serverStream().forEach(namedStripe::addServer);
+
+      // add stripe
+      cluster.addStripe(namedStripe);
+
+      cluster.clientStream().forEach(client -> {
+        // hole a list of connections to delete after
+        List<Connection> toDelete = new ArrayList<>(client.getConnectionCount());
+        List<Connection> toAdd = new ArrayList<>(client.getConnectionCount());
+
+        client.connectionStream().forEach(currentConn -> {
+          toDelete.add(currentConn);
+          namedStripe.getServer(currentConn.getServerId())
+              .ifPresent(server -> toAdd.add(Connection.create(currentConn.getLogicalConnectionUid(), server, currentConn.getClientEndpoint())));
+        });
+
+        toDelete.forEach(Connection::remove);
+        toAdd.forEach(client::addConnection);
+      });
+
       // remove current stripe and add new one
       cluster.removeStripe(currentStripe.getId());
-      cluster.addStripe(namedStripe);
     }
     return cluster;
   }
