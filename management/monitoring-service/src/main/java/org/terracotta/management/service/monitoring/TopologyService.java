@@ -281,9 +281,7 @@ class TopologyService implements PlatformListener {
     ServerEntity entity = currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
 
-    if (!connection.fetchServerEntity(platformEntity.name, platformEntity.typeName)) {
-      throw newIllegalTopologyState("Unable to fetch entity " + platformEntity + " from client " + client);
-    }
+    connection.fetchServerEntity(platformEntity.name, platformEntity.typeName);
 
     firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
 

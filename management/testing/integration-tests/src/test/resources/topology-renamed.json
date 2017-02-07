@@ -570,7 +570,9 @@
           },
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
-          "serverEntityIds": {}
+          "serverEntityIds": {
+            "StripeNamedIT:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+          }
         }
       ],
       "managementRegistry": null
@@ -595,7 +597,9 @@
           },
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
-          "serverEntityIds": {}
+          "serverEntityIds": {
+            "StripeNamedIT-2:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+          }
         }
       ],
       "managementRegistry": null
@@ -623,7 +627,11 @@
           },
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
-          "serverEntityIds": {}
+          "serverEntityIds": {
+            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
+            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
+            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
+          }
         }
       ],
       "managementRegistry": {
@@ -798,7 +806,11 @@
           },
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
-          "serverEntityIds": {}
+          "serverEntityIds": {
+            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
+            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
+            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
+          }
         }
       ],
       "managementRegistry": {
