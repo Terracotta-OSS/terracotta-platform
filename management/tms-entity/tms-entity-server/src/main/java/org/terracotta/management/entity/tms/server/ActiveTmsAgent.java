@@ -111,7 +111,11 @@ class ActiveTmsAgent extends AbstractTmsAgent {
         client.connectionStream().forEach(currentConn -> {
           toDelete.add(currentConn);
           namedStripe.getServer(currentConn.getServerId())
-              .ifPresent(server -> toAdd.add(Connection.create(currentConn.getLogicalConnectionUid(), server, currentConn.getClientEndpoint())));
+              .ifPresent(server -> {
+                Connection newConnection = Connection.create(currentConn.getLogicalConnectionUid(), server, currentConn.getClientEndpoint());
+                currentConn.fetchedServerEntityStream().forEach(serverEntity -> newConnection.fetchServerEntity(serverEntity.getServerEntityIdentifier()));
+                toAdd.add(newConnection);
+              });
         });
 
         toDelete.forEach(Connection::remove);

@@ -30,6 +30,8 @@ public final class Connection extends AbstractNode<Client> {
 
   public static final String KEY = "connectionId";
 
+  // There is no validation done on the content of this field, except when using #fetchedServerEntityStream and #getFetchedServerEntityCount.
+  // So at other places where this map is used, you could see wrong values (i.e. it is possible to add a entity if that is not in the topology)
   private final Map<String, Long> serverEntityIds = new TreeMap<>();
   private final Endpoint clientEndpoint;
   private final String stripeId;
@@ -174,20 +176,9 @@ public final class Connection extends AbstractNode<Client> {
   }
 
   public boolean fetchServerEntity(ServerEntityIdentifier serverEntityIdentifier) {
-    if (!isConnected()) {
-      throw new IllegalStateException("not connnected");
-    }
     String id = serverEntityIdentifier.getId();
-    if (!getServer().flatMap(server -> server.getServerEntity(serverEntityIdentifier)).isPresent()) {
-      serverEntityIds.remove(id);
-      return false;
-    }
     Long count = serverEntityIds.get(id);
-    if (count == null || count <= 0) {
-      serverEntityIds.put(id, 1L);
-      return true;
-    }
-    serverEntityIds.put(id, count + 1);
+    serverEntityIds.put(id, count == null || count <= 0 ? 1L : count + 1);
     return true;
   }
 
@@ -196,7 +187,7 @@ public final class Connection extends AbstractNode<Client> {
   }
 
   public boolean hasFetchedServerEntity(ServerEntityIdentifier serverEntityIdentifier) {
-    return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(serverEntityIdentifier)).findFirst().isPresent();
+    return fetchedServerEntityStream().anyMatch(serverEntity -> serverEntity.is(serverEntityIdentifier));
   }
 
   public boolean isConnectedTo(Server server) {
