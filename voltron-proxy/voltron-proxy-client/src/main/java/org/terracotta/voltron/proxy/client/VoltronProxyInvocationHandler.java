@@ -22,6 +22,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityUserException;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.MessageType;
@@ -150,9 +151,18 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       return new ProxiedInvokeFuture(builder.invoke());
 
     } else {
-      ProxyEntityResponse proxyEntityResponse = builder.invoke().get();
-      return proxyEntityResponse == null ? null : proxyEntityResponse.getResponse();
+      return getResponse(builder.invoke().get());
     }
+  }
+
+  private static Object getResponse(ProxyEntityResponse proxyEntityResponse) throws EntityUserException {
+    if (proxyEntityResponse == null) {
+      return null;
+    }
+    if (proxyEntityResponse.getMessageType() == MessageType.ERROR) {
+      throw (EntityUserException) proxyEntityResponse.getResponse();
+    }
+    return proxyEntityResponse.getResponse();
   }
 
   private static class ProxiedInvokeFuture implements Future {
@@ -187,7 +197,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     @Override
     public Object get() throws InterruptedException, ExecutionException {
       try {
-        return future.get().getResponse();
+        return getResponse(future.get());
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }
@@ -196,7 +206,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     @Override
     public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       try {
-        return future.getWithTimeout(timeout, unit).getResponse();
+        return getResponse(future.getWithTimeout(timeout, unit));
       } catch (EntityException e) {
         throw new ExecutionException(e);
       }

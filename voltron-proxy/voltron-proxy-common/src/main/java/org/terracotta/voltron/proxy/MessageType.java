@@ -22,5 +22,5 @@ import com.tc.classloader.CommonComponent;
  */
 @CommonComponent
 public enum MessageType {
-  MESSAGE, SYNC, MESSENGER
+  MESSAGE, SYNC, MESSENGER, ERROR
 }

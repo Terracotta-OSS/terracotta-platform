@@ -46,7 +46,7 @@ public class StripeNamedIT extends AbstractSingleTest {
   public void stripe_can_be_named() throws Exception {
     // connects to server
     Properties properties = new Properties();
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, getClass().getSimpleName());
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, getClass().getSimpleName() + "-2"); // to have a different name than the client created in the super class
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     Connection managementConnection = ConnectionFactory.connect(voltron.getConnectionURI(), properties);
 
@@ -61,7 +61,7 @@ public class StripeNamedIT extends AbstractSingleTest {
     String currentTopo = toJson(tmsAgentService.readTopology().toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology-renamed.json").toString();
-    System.out.println(actual);
+
     assertEquals(expected, actual);
 
     // clear previous notifs
