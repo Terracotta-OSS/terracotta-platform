@@ -18,6 +18,7 @@ package org.terracotta.management.sequence;
 import java.lang.management.ManagementFactory;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -31,17 +32,24 @@ class Defaults {
   private static final int PID_BITLENGTH = 16;
   private static final long PID_BITMASK = (1L << PID_BITLENGTH) - 1;
 
+  private static final byte[] NO_MAC = new byte[6];
+
   static final int SEQ_BITLENGTH = 18;
   static final long SEQ_BITMASK = (1L << SEQ_BITLENGTH) - 1;
 
   static final int INSTANCE_BITLENGTH = 18;
   static final int INSTANCE_BITMASK = (1 << INSTANCE_BITLENGTH) - 1;
 
+  static {
+    byte b = 0;
+    Arrays.fill(NO_MAC, b);
+  }
+
   static final NodeIdSource MAC_PID_NODE_ID_SOURCE = new NodeIdSource() {
     @Override
     public long getNodeId() {
       // at least 6 bytes
-      byte[] mac = readFirstNonLoopbackMacAddress();
+      byte[] mac = readMacAddress();
       long nodeId = 0;
       // we consider the 6 last bytes only,
       for (int i = Math.max(0, mac.length - 6); i < mac.length; i++) {
@@ -84,12 +92,14 @@ class Defaults {
     }
   };
 
-  static byte[] readFirstNonLoopbackMacAddress() {
+  static byte[] readMacAddress() {
     List<NetworkInterface> networkInterfaces;
     try {
       networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
     } catch (SocketException e) {
-      throw new IllegalStateException("Machine has no network interfaces!", e);
+      // this can only occur while testing in a computer locally with no network.
+      // So mac address will be irrelevant because the system time will be the same across all started servers
+      return NO_MAC;
     }
 
     // order interfaces by name
@@ -127,7 +137,9 @@ class Defaults {
       }
     }
 
-    throw new IllegalStateException("Unable to read a MAC address");
+    // this can only occur while testing in a computer locally with no network.
+    // So mac address will be irrelevant because the system time will be the same across all started servers
+    return NO_MAC;
   }
 
   static long readPID() {
