@@ -44,14 +44,14 @@ public class FailoverIT extends AbstractHATest {
   public void setUp() throws Exception {
     super.setUp();
 
-    Cluster cluster = tmsAgentService.readTopology();
+    Cluster cluster = nmsService.readTopology();
     oldActive = cluster.serverStream().filter(Server::isActive).findFirst().get();
     oldPassive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
     assertThat(oldActive.getState(), equalTo(Server.State.ACTIVE));
     assertThat(oldPassive.getState(), equalTo(Server.State.PASSIVE));
 
     // clear buffer
-    tmsAgentService.readMessages();
+    nmsService.readMessages();
 
     // add some data from client 0
     put(0, "clients", "client1", "Mathieu");
@@ -65,7 +65,7 @@ public class FailoverIT extends AbstractHATest {
   public void all_registries_reexposed_after_failover() throws Exception {
     int clientReconnected = 0;
     do {
-      clientReconnected += tmsAgentService.readMessages()
+      clientReconnected += nmsService.readMessages()
           .stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))
           .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
@@ -73,7 +73,7 @@ public class FailoverIT extends AbstractHATest {
           .count();
     } while (clientReconnected < 2);
 
-    Cluster cluster = tmsAgentService.readTopology();
+    Cluster cluster = nmsService.readTopology();
 
     // removes all random values
     String currentTopo = toJson(cluster.toMap()).toString();
@@ -85,7 +85,7 @@ public class FailoverIT extends AbstractHATest {
   @Test
   public void notifications_after_failover() throws Exception {
     // read messages
-    List<ContextualNotification> notifs = tmsAgentService.readMessages().stream()
+    List<ContextualNotification> notifs = nmsService.readMessages().stream()
         .filter(message -> message.getType().equals("NOTIFICATION"))
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
         .collect(Collectors.toList());
@@ -99,7 +99,7 @@ public class FailoverIT extends AbstractHATest {
         "CLIENT_ATTACHED");
 
     while (!Thread.currentThread().isInterrupted() && !notifs.stream().map(ContextualNotification::getType).collect(Collectors.toSet()).containsAll(allNotifs)) {
-      notifs.addAll(tmsAgentService.readMessages().stream()
+      notifs.addAll(nmsService.readMessages().stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))
           .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
           .collect(Collectors.toList()));

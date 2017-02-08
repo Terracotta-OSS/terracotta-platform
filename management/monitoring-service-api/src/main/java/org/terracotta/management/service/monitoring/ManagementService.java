@@ -24,7 +24,7 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.sequence.Sequence;
 
 /**
- * Class used by the active tms entity to monitor the stripe ans send management calls
+ * Class used by the active NMS Entity to monitor the stripe ans send management calls
  *
  * @author Mathieu Carbou
  */

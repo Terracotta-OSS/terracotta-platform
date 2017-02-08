@@ -25,13 +25,13 @@ import org.junit.rules.Timeout;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.CacheFactory;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.entity.tms.client.TmsAgentEntity;
-import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
-import org.terracotta.management.entity.tms.client.DefaultTmsAgentService;
-import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.entity.nms.client.NmsEntity;
+import org.terracotta.management.entity.nms.client.NmsEntityFactory;
+import org.terracotta.management.entity.nms.client.DefaultNmsService;
+import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -65,7 +65,7 @@ public abstract class AbstractTest {
 
   protected final List<CacheFactory> webappNodes = new ArrayList<>();
   protected final Map<String, List<Cache>> caches = new HashMap<>();
-  protected TmsAgentService tmsAgentService;
+  protected NmsService nmsService;
 
   @Rule
   public Timeout timeout = Timeout.seconds(60);
@@ -169,19 +169,19 @@ public abstract class AbstractTest {
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     this.managementConnection = ConnectionFactory.connect(uri, properties);
 
-    // create a tms entity
-    TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());
-    TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
+    // create a NMS Entity
+    NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
+    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
         .setMaximumUnreadMessages(1024 * 1024)
         .setStripeName("SINGLE"));
-    this.tmsAgentService = new DefaultTmsAgentService(tmsAgentEntity);
-    this.tmsAgentService.setOperationTimeout(60, TimeUnit.SECONDS);
+    this.nmsService = new DefaultNmsService(nmsEntity);
+    this.nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
   }
 
   protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {
     List<? extends ContextualStatistics> statistics;
     do {
-      statistics = tmsAgentService.readMessages()
+      statistics = nmsService.readMessages()
           .stream()
           .filter(message -> message.getType().equals("STATISTICS"))
           .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())
@@ -219,20 +219,21 @@ public abstract class AbstractTest {
         .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"id\":\"[^\"]+:(\\w+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
+        .replaceAll("-2", "")
         .replaceAll("testServer1", "testServer0");
   }
 
   protected void triggerServerStatComputation() throws Exception {
     // trigger stats computation and wait for all stats to have been computed at least once
-    tmsAgentService.readTopology().serverStream().forEach(server -> {
+    nmsService.readTopology().serverStream().forEach(server -> {
       ServerEntity serverEntity = server
           .serverEntityStream()
-          .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
+          .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE))
           .findFirst()
           .get();
 
       try {
-        tmsAgentService.startStatisticCollector(
+        nmsService.startStatisticCollector(
             serverEntity.getContext(),
             1, TimeUnit.SECONDS
         ).waitForReturn();

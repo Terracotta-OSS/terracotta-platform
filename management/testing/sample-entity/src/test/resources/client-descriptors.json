@@ -111,7 +111,7 @@
     }
   },
   {
-    "name": "ManagementAgentService",
+    "name": "NmsAgentService",
     "descriptors": [],
     "capabilityContext": {
       "attributes": []

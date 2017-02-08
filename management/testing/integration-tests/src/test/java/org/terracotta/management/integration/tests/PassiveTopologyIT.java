@@ -36,7 +36,7 @@ public class PassiveTopologyIT extends AbstractHATest {
 
   @Test
   public void topology_includes_passives() throws Exception {
-    Cluster cluster = tmsAgentService.readTopology();
+    Cluster cluster = nmsService.readTopology();
     Server passive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
     final String[] currentPassive = {toJson(passive.toMap()).toString()};
     cluster.clientStream().forEach(client -> currentPassive[0] = currentPassive[0]
@@ -51,7 +51,7 @@ public class PassiveTopologyIT extends AbstractHATest {
   @Test
   public void notification_on_entity_creation_and_destruction() throws Exception {
     // clear buffer
-    tmsAgentService.readMessages();
+    nmsService.readMessages();
 
     CacheFactory cacheFactory = new CacheFactory(cluster.getConnectionURI().resolve("/random-1"));
     cacheFactory.init();
@@ -61,14 +61,14 @@ public class PassiveTopologyIT extends AbstractHATest {
     cacheFactory.destroyCache("my-cache");
     cacheFactory.close();
 
-    List<ContextualNotification> notifs = tmsAgentService.readMessages()
+    List<ContextualNotification> notifs = nmsService.readMessages()
         .stream()
         .filter(message -> message.getType().equals("NOTIFICATION"))
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
         .collect(Collectors.toList());
 
     while (!Thread.currentThread().isInterrupted() && notifs.stream().filter(contextualNotification -> contextualNotification.getType().equals("SERVER_ENTITY_DESTROYED")).count() != 2) {
-      notifs.addAll(tmsAgentService.readMessages()
+      notifs.addAll(nmsService.readMessages()
           .stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))
           .flatMap(message -> message.unwrap(ContextualNotification.class).stream())

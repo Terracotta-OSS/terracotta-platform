@@ -50,7 +50,7 @@ public class PassiveStartupIT extends AbstractHATest {
     voltron.getClusterControl().terminateOnePassive();
 
     commonSetUp(voltron);
-    tmsAgentService.readMessages();
+    nmsService.readMessages();
   }
 
   @Test
@@ -65,13 +65,13 @@ public class PassiveStartupIT extends AbstractHATest {
 
     assertThat(get(1, "clients", "client1"), equalTo("Mat"));
 
-    Server active = tmsAgentService.readTopology().serverStream().filter(Server::isActive).findFirst().get();
-    Server passive = tmsAgentService.readTopology().serverStream().filter(server -> !server.isActive()).findFirst().get();
+    Server active = nmsService.readTopology().serverStream().filter(Server::isActive).findFirst().get();
+    Server passive = nmsService.readTopology().serverStream().filter(server -> !server.isActive()).findFirst().get();
     assertThat(active.getState(), equalTo(Server.State.ACTIVE));
     assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
 
     // read messages
-    Map<String, List<Message>> map = tmsAgentService.readMessages().stream().collect(Collectors.groupingBy(Message::getType));
+    Map<String, List<Message>> map = nmsService.readMessages().stream().collect(Collectors.groupingBy(Message::getType));
     assertThat(map.size(), equalTo(2));
     assertThat(map.keySet(), hasItem("TOPOLOGY"));
     assertThat(map.keySet(), hasItem("NOTIFICATION"));
@@ -91,7 +91,7 @@ public class PassiveStartupIT extends AbstractHATest {
     while (!Thread.currentThread().isInterrupted()
         && !(states.contains("SYNCHRONIZING") && states.contains("PASSIVE"))
         && notifs.stream().noneMatch(contextualNotification -> contextualNotification.getType().equals("SYNC_END"))) {
-      tmsAgentService.readMessages().stream()
+      nmsService.readMessages().stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))
           .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
           .forEach(contextualNotification -> {

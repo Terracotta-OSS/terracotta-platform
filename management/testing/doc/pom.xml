@@ -36,10 +36,10 @@
   </properties>
 
   <dependencies>
-    <!-- management cli -->
+    <!-- management client to read the monitoring service-->
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>management-client</artifactId>
+      <artifactId>mnm-nms</artifactId>
       <version>${project.version}</version>
     </dependency>
 

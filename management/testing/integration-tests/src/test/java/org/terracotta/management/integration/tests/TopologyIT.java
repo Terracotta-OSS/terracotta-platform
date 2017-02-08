@@ -16,17 +16,13 @@
 package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
-import org.terracotta.management.model.capabilities.descriptors.Settings;
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Cluster;
-import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -41,7 +37,7 @@ public class TopologyIT extends AbstractSingleTest {
 
   @Test
   public void can_read_topology() throws Exception {
-    Cluster cluster = tmsAgentService.readTopology();
+    Cluster cluster = nmsService.readTopology();
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology.json").toString();
@@ -50,7 +46,7 @@ public class TopologyIT extends AbstractSingleTest {
 
   @Test
   public void can_read_messages() throws Exception {
-    List<Message> messages = tmsAgentService.readMessages();
+    List<Message> messages = nmsService.readMessages();
 
     Map<String, List<Message>> messsageByTypes = messages.stream().collect(Collectors.groupingBy(Message::getType));
     assertThat(messsageByTypes.size(), equalTo(2));
@@ -78,7 +74,7 @@ public class TopologyIT extends AbstractSingleTest {
 
   @Test
   public void notifications_have_a_source_context() throws Exception {
-    List<Message> messages = tmsAgentService.readMessages();
+    List<Message> messages = nmsService.readMessages();
     List<ContextualNotification> notifs = messages.stream()
         .filter(message -> message.getType().equals("NOTIFICATION"))
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())

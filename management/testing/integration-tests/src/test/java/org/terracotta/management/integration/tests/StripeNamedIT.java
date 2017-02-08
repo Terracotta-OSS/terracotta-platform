@@ -19,11 +19,11 @@ import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.entity.tms.client.DefaultTmsAgentService;
-import org.terracotta.management.entity.tms.client.TmsAgentEntity;
-import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
-import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.entity.nms.NmsConfig;
+import org.terracotta.management.entity.nms.client.DefaultNmsService;
+import org.terracotta.management.entity.nms.client.NmsEntity;
+import org.terracotta.management.entity.nms.client.NmsEntityFactory;
+import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.notification.ContextualNotification;
 
@@ -50,27 +50,27 @@ public class StripeNamedIT extends AbstractSingleTest {
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     Connection managementConnection = ConnectionFactory.connect(voltron.getConnectionURI(), properties);
 
-    // create a tms entity
-    TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName() + "-2");
-    TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
+    // create a NMS Entity
+    NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName() + "-2");
+    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
         .setMaximumUnreadMessages(1024 * 1024)
         .setStripeName("MY_SUPER_STRIPE"));
-    TmsAgentService tmsAgentService = new DefaultTmsAgentService(tmsAgentEntity);
-    tmsAgentService.setOperationTimeout(60, TimeUnit.SECONDS);
+    NmsService nmsService = new DefaultNmsService(nmsEntity);
+    nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
 
-    String currentTopo = toJson(tmsAgentService.readTopology().toMap()).toString();
+    String currentTopo = toJson(nmsService.readTopology().toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology-renamed.json").toString();
 
     assertEquals(expected, actual);
 
     // clear previous notifs
-    tmsAgentService.readMessages();
+    nmsService.readMessages();
 
     // create a new cache and serevr entity
     getCaches("orders");
 
-    List<ContextualNotification> notifications = tmsAgentService.readMessages()
+    List<ContextualNotification> notifications = nmsService.readMessages()
         .stream()
         .filter(message -> message.getType().equals("NOTIFICATION"))
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())

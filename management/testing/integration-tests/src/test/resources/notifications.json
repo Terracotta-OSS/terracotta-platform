@@ -5,9 +5,9 @@
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
-      "entityId": "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "entityName": "TopologyIT",
-      "entityType": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
       "consumerId": "1"
     },
     "type": "SERVER_ENTITY_CREATED"
@@ -18,9 +18,9 @@
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
-      "entityId": "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "entityName": "TopologyIT",
-      "entityType": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
       "consumerId": "1"
     },
     "type": "ENTITY_REGISTRY_AVAILABLE"
@@ -33,9 +33,9 @@
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
-      "entityId": "TopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "entityName": "TopologyIT",
-      "entityType": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
       "consumerId": "1"
     },
     "type": "SERVER_ENTITY_FETCHED"
@@ -53,9 +53,9 @@
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
-      "entityId": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
-      "entityName": "ManagementAgent",
-      "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
+      "entityId": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+      "entityName": "NmsAgent",
+      "entityType": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "consumerId": "2"
     },
     "type": "SERVER_ENTITY_CREATED"
@@ -68,9 +68,9 @@
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
-      "entityId": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
-      "entityName": "ManagementAgent",
-      "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
+      "entityId": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+      "entityName": "NmsAgent",
+      "entityType": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "consumerId": "2"
     },
     "type": "SERVER_ENTITY_FETCHED"
@@ -112,9 +112,9 @@
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
-      "entityId": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
-      "entityName": "ManagementAgent",
-      "entityType": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
+      "entityId": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+      "entityName": "NmsAgent",
+      "entityType": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "consumerId": "2"
     },
     "type": "SERVER_ENTITY_FETCHED"

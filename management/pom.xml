@@ -37,11 +37,12 @@
     <module>cluster-topology</module>
     <module>monitoring-service-api</module>
     <module>monitoring-service</module>
-    <module>management-entity</module>
-    <module>tms-entity</module>
-    <module>distribution/management-common</module>
-    <module>distribution/management-client</module>
-    <module>distribution/management-server</module>
+    <module>nms-agent-entity</module>
+    <module>nms-entity</module>
+    <module>distribution/mnm-common</module>
+    <module>distribution/mnm-nms</module>
+    <module>distribution/mnm-nms-agent</module>
+    <module>distribution/mnm-server</module>
     <module>testing/sample-entity</module>
     <module>testing/integration-tests</module>
     <module>testing/doc</module>

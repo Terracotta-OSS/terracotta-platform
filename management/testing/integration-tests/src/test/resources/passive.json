@@ -2,15 +2,15 @@
   "id": "stripe-PASSIVE",
   "serverEntities": [
     {
-      "id": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
-      "type": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
-      "name": "ManagementAgent",
+      "id": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+      "type": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+      "name": "NmsAgent",
       "consumerId": 2,
       "managementRegistry": null
     },
     {
-      "id": "PassiveTopologyIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
-      "type": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
+      "id": "PassiveTopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
+      "type": "org.terracotta.management.entity.nms.client.NmsEntity",
       "name": "PassiveTopologyIT",
       "consumerId": 1,
       "managementRegistry": {

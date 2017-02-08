@@ -4,7 +4,7 @@
 
 2. Unzip
 
-3. Put management-server.jar inside `server/plugins/lib`
+3. Put mnm-server.jar inside `server/plugins/lib`
 
 4. Put a file named `tc-config.xml` inside `server` folder with this content:
 

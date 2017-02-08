@@ -17,7 +17,7 @@ package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
 import org.terracotta.exception.EntityUserException;
-import org.terracotta.management.entity.tms.client.IllegalManagementCallException;
+import org.terracotta.management.entity.nms.client.IllegalManagementCallException;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
@@ -42,7 +42,7 @@ public class UserErrorsIT extends AbstractSingleTest {
 
   @Test
   public void management_call_to_inexisting_client() throws Exception {
-    Client client = tmsAgentService.readTopology()
+    Client client = nmsService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
         .findFirst()
@@ -56,18 +56,18 @@ public class UserErrorsIT extends AbstractSingleTest {
         .with("cacheName", "pets");
 
     try {
-      tmsAgentService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
+      nmsService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
     } catch (TimeoutException | InterruptedException | CancellationException | IllegalManagementCallException e) {
       fail();
     } catch (ExecutionException e) {
       assertThat(e.getCause(), is(instanceOf(EntityUserException.class)));
-      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.tms.server.ActiveTmsAgent: exception in user code: java.lang.IllegalArgumentException: Client 1@127.0.0.1:NAME:uuid is either not found or not manageable"));
+      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNms: exception in user code: java.lang.IllegalArgumentException: Client 1@127.0.0.1:NAME:uuid is either not found or not manageable"));
     }
   }
 
   @Test
   public void management_call_to_inexisting_entity() throws Exception {
-    ServerEntity serverEntity = tmsAgentService.readTopology()
+    ServerEntity serverEntity = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(e -> e.getName().equals("pet-clinic/pets"))
         .findFirst()
@@ -78,12 +78,12 @@ public class UserErrorsIT extends AbstractSingleTest {
         .with(Server.NAME_KEY, "INEXISTING");
 
     try {
-      tmsAgentService.call(context, "ServerCacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
+      nmsService.call(context, "ServerCacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
     } catch (TimeoutException | InterruptedException | CancellationException | IllegalManagementCallException e) {
       fail();
     } catch (ExecutionException e) {
       assertThat(e.getCause(), is(instanceOf(EntityUserException.class)));
-      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.tms.server.ActiveTmsAgent: exception in user code: java.lang.IllegalArgumentException: Server Entity {stripeId=SINGLE, serverId=testServer0, serverName=INEXISTING, entityId=pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity, entityName=pet-clinic/pets, entityType=org.terracotta.management.entity.sample.client.CacheEntity, consumerId=3, cacheName=pet-clinic/pets} is either not found or not manageable"));
+      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNms: exception in user code: java.lang.IllegalArgumentException: Server Entity {stripeId=SINGLE, serverId=testServer0, serverName=INEXISTING, entityId=pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity, entityName=pet-clinic/pets, entityType=org.terracotta.management.entity.sample.client.CacheEntity, consumerId=3, cacheName=pet-clinic/pets} is either not found or not manageable"));
     }
   }
 

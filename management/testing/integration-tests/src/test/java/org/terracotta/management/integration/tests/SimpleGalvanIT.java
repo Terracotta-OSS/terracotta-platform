@@ -69,7 +69,7 @@ public class SimpleGalvanIT {
 
   @Test
   public void simpleTest_one_active() throws Exception {
-    cacheFactory.init(); // create and fetches management entity
+    cacheFactory.init(); // create and fetches NMS Agent Entity
     cacheFactory.getCache("paf"); // create and fetch sample entity
   }
 }

@@ -19,9 +19,9 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.entity.tms.client.IllegalManagementCallException;
-import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.entity.nms.NmsConfig;
+import org.terracotta.management.entity.nms.client.IllegalManagementCallException;
+import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
@@ -46,21 +46,21 @@ public class ReadStatistics {
     String className = ReadStatistics.class.getSimpleName();
 
     Connection connection = Utils.createConnection(className, args.length == 1 ? args[0] : "terracotta://localhost:9510");
-    TmsAgentService tmsAgentService = Utils.createTmsAgentService(connection, className);
+    NmsService nmsService = Utils.createNmsService(connection, className);
 
-    Cluster cluster = tmsAgentService.readTopology();
+    Cluster cluster = nmsService.readTopology();
 
     // TRIGGER SERVER-SIDE STATS COMPUTATION
 
     ServerEntity serverEntity = cluster
         .activeServerEntityStream()
-        .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
+        .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE))
         .findFirst()
         .get();
 
     Context context = serverEntity.getContext();
 
-    tmsAgentService.startStatisticCollector(context, 5, TimeUnit.SECONDS).waitForReturn();
+    nmsService.startStatisticCollector(context, 5, TimeUnit.SECONDS).waitForReturn();
 
     // TRIGGER CLIENT-SIDE STATS COMPUTATION
 
@@ -74,7 +74,7 @@ public class ReadStatistics {
               .with("appName", "pet-clinic");
 
           try {
-            tmsAgentService.startStatisticCollector(ctx, 5, TimeUnit.SECONDS).waitForReturn();
+            nmsService.startStatisticCollector(ctx, 5, TimeUnit.SECONDS).waitForReturn();
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -85,7 +85,7 @@ public class ReadStatistics {
     ScheduledFuture<?> task = executorService.scheduleWithFixedDelay(() -> {
       try {
 
-        List<Message> messages = tmsAgentService.readMessages();
+        List<Message> messages = nmsService.readMessages();
         System.out.println(messages.size() + " messages");
         messages
             .stream()

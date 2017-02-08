@@ -51,7 +51,7 @@ public abstract class AbstractHATest extends AbstractTest {
     voltron.getClusterControl().waitForActive();
     voltron.getClusterControl().waitForRunningPassivesInStandby();
     commonSetUp(voltron);
-    tmsAgentService.readMessages();
+    nmsService.readMessages();
   }
 
   @After
