@@ -49,6 +49,11 @@
       <artifactId>standard-cluster-services</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>connection-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.terracotta.voltron.proxy</groupId>

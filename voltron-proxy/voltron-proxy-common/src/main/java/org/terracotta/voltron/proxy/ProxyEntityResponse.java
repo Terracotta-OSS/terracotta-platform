@@ -17,6 +17,7 @@ package org.terracotta.voltron.proxy;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.EntityUserException;
 
 /**
  * @author cdennis
@@ -38,6 +39,10 @@ public final class ProxyEntityResponse implements EntityResponse {
 
   public static ProxyEntityResponse messengerResponse(Class<?> responseType, Object response) {
     return response(MessageType.MESSENGER, responseType, response);
+  }
+
+  public static ProxyEntityResponse error(EntityUserException error) {
+    return response(MessageType.ERROR, EntityUserException.class, error);
   }
 
   private final MessageType messageType;

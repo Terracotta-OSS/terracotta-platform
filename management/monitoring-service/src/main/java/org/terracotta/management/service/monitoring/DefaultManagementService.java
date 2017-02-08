@@ -102,7 +102,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
       // handle client call
       ClientIdentifier to = ClientIdentifier.valueOf(context.get(Client.KEY));
       fullContext = context.with(topologyService.getManageableClientContext(to)
-          .orElseThrow(() -> new IllegalStateException("Client " + to + " is either not found or not manageable")));
+          .orElseThrow(() -> new IllegalArgumentException("Client " + to + " is either not found or not manageable")));
     }
 
     if ((context.contains(Server.NAME_KEY) || context.contains(Server.KEY))
@@ -112,7 +112,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
       Context entityCtx = (context.contains(ServerEntity.CONSUMER_ID) ?
           topologyService.getManageableEntityContext(serverName, Long.parseLong(context.get(ServerEntity.CONSUMER_ID))) :
           topologyService.getManageableEntityContext(serverName, context.get(ServerEntity.NAME_KEY), context.get(ServerEntity.TYPE_KEY)))
-          .orElseThrow(() -> new IllegalStateException("Server Entity " + context + " is either not found or not manageable"));
+          .orElseThrow(() -> new IllegalArgumentException("Server Entity " + context + " is either not found or not manageable"));
       fullContext = context.with(entityCtx);
     }
 

@@ -17,6 +17,7 @@ package org.terracotta.voltron.proxy;
 
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
+import org.terracotta.exception.EntityUserException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -80,24 +81,12 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
     if (r == null) {
       return new byte[0];
     }
-
     MessageType messageType = r.getMessageType();
-
-    Map<Class<?>, Byte> mapping = responseMappings.get(messageType);
-    if (mapping == null) {
-      throw new AssertionError("WAT, no mapping for " + messageType);
-    }
-
-    Byte messageTypeIdentifier = mapping.get(r.getResponseType());
-    if (messageTypeIdentifier == null) {
-      throw new AssertionError("WAT, no mapping for " + r.getResponseType().getName());
-    }
-
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     DataOutputStream output = new DataOutputStream(byteOut);
     try {
       output.writeByte(messageType.ordinal());
-      output.writeByte(messageTypeIdentifier);
+      output.writeByte(messageType == MessageType.ERROR ? 0 : getMessageTypeIdentifier(r));
       output.write(codec.encode(r.getResponseType(), r.getResponse()));
       output.close();
     } catch (IOException e) {
@@ -111,19 +100,8 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
     if (buffer.length == 0) {
       return null;
     }
-
     MessageType messageType = MessageType.values()[buffer[0]];
-
-    Map<Byte, Class<?>> mapping = reverseResponseMappings.get(messageType);
-    if (mapping == null) {
-      throw new AssertionError("WAT, no mapping for " + messageType);
-    }
-
-    Class<?> responseType = mapping.get(buffer[1]);
-    if (responseType == null) {
-      throw new AssertionError("WAT, no mapping for method " + buffer[1] + " for messageType " + messageType);
-    }
-
+    Class<?> responseType = messageType == MessageType.ERROR ? EntityUserException.class : getResponseType(messageType, buffer[1]);
     Object o = codec.decode(responseType, buffer, 2, buffer.length - 2);
     return ProxyEntityResponse.response(messageType, responseType, o);
   }
@@ -133,16 +111,7 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
     try {
       MessageType messageType = message.getType();
       MethodDescriptor method = message.getMethod();
-
-      Map<MethodDescriptor, Byte> mapping = reverseMethodMappings.get(messageType);
-      if (mapping == null) {
-        throw new AssertionError("WAT, no mapping for " + messageType);
-      }
-
-      Byte methodIdentifier = mapping.get(method);
-      if (methodIdentifier == null) {
-        throw new AssertionError("WAT, no mapping for " + method.toGenericString());
-      }
+      Byte methodIdentifier = getMethodIdentifier(message);
 
       Object[] args = message.getArguments();
       final Annotation[][] parameterAnnotations = method.getParameterAnnotations();
@@ -172,18 +141,64 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
   @Override
   public ProxyEntityMessage decodeMessage(final byte[] buffer) {
     MessageType messageType = MessageType.values()[buffer[0]];
+    MethodDescriptor method = getMethod(messageType, buffer[1]);
+    return new ProxyEntityMessage(method, codec.decode(method.getParameterTypes(), buffer, 2, buffer.length - 2), messageType);
+  }
 
+  private MethodDescriptor getMethod(MessageType messageType, Byte b) {
     Map<Byte, MethodDescriptor> mapping = methodMappings.get(messageType);
     if (mapping == null) {
-      throw new AssertionError("WAT, no mapping for " + messageType);
+      throw new AssertionError("No mapping for " + messageType);
     }
 
-    MethodDescriptor method = mapping.get(buffer[1]);
+    MethodDescriptor method = mapping.get(b);
     if (method == null) {
-      throw new AssertionError("WAT, no mapping for method " + buffer[1] + " for messageType " + messageType);
+      throw new AssertionError("No mapping for method " + b + " for messageType " + messageType);
     }
 
-    return new ProxyEntityMessage(method, codec.decode(method.getParameterTypes(), buffer, 2, buffer.length - 2), messageType);
+    return method;
+  }
+
+  private Class<?> getResponseType(MessageType messageType, Byte b) {
+    Map<Byte, Class<?>> mapping = reverseResponseMappings.get(messageType);
+    if (mapping == null) {
+      throw new AssertionError("No mapping for " + messageType);
+    }
+
+    Class<?> responseType = mapping.get(b);
+    if (responseType == null) {
+      throw new AssertionError("No mapping for method " + b + " for messageType " + messageType);
+    }
+
+    return responseType;
+  }
+
+  private Byte getMethodIdentifier(ProxyEntityMessage message) {
+    Map<MethodDescriptor, Byte> mapping = reverseMethodMappings.get(message.getType());
+    if (mapping == null) {
+      throw new AssertionError("No mapping for " + message.getType());
+    }
+
+    Byte methodIdentifier = mapping.get(message.getMethod());
+    if (methodIdentifier == null) {
+      throw new AssertionError("No mapping for " + message.getMethod().toGenericString());
+    }
+
+    return methodIdentifier;
+  }
+
+  private Byte getMessageTypeIdentifier(ProxyEntityResponse response) {
+    Map<Class<?>, Byte> mapping = responseMappings.get(response.getMessageType());
+    if (mapping == null) {
+      throw new AssertionError("No mapping for " + response.getMessageType());
+    }
+
+    Byte messageTypeIdentifier = mapping.get(response.getResponseType());
+    if (messageTypeIdentifier == null) {
+      throw new AssertionError("No mapping for " + response.getResponseType().getName());
+    }
+
+    return messageTypeIdentifier;
   }
 
 }

@@ -551,13 +551,13 @@
   ],
   "clients": [
     {
-      "id": "0@127.0.0.1:StripeNamedIT:<uuid>",
+      "id": "0@127.0.0.1:StripeNamedIT-2:<uuid>",
       "pid": 0,
       "hostAddress": "127.0.0.1",
-      "name": "StripeNamedIT",
+      "name": "StripeNamedIT-2",
       "logicalConnectionUid": "<uuid>",
       "vmId": "0@127.0.0.1",
-      "clientId": "0@127.0.0.1:StripeNamedIT:<uuid>",
+      "clientId": "0@127.0.0.1:StripeNamedIT-2:<uuid>",
       "hostName": "<hostname>",
       "tags": [],
       "connections": [
@@ -571,7 +571,7 @@
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
           "serverEntityIds": {
-            "StripeNamedIT:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+            "StripeNamedIT-2:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
           }
         }
       ],
@@ -598,7 +598,7 @@
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
           "serverEntityIds": {
-            "StripeNamedIT-2:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+            "StripeNamedIT:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
           }
         }
       ],
