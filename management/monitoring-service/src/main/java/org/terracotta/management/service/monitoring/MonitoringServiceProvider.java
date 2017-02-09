@@ -57,8 +57,8 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       IStripeMonitoring.class, // for platform
       SharedManagementRegistry.class, // access all registries
       ConsumerManagementRegistry.class, // registry for an entity
-      ClientMonitoringService.class, // for management entity
-      ManagementService.class, // for TMS Entity
+      ClientMonitoringService.class, // for NMS Agent Entity
+      ManagementService.class, // for NMS Entity
       EntityMonitoringService.class // monitoring of an active or passive entity
   );
 

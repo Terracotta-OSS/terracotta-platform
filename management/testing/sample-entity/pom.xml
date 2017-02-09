@@ -39,12 +39,12 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>management-common</artifactId>
+      <artifactId>mnm-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>management-client</artifactId>
+      <artifactId>mnm-nms-agent</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -74,7 +74,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>management-server</artifactId>
+      <artifactId>mnm-server</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -110,6 +110,14 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
       <version>2.6.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- management client for testing to read the monitoring service-->
+    <dependency>
+      <groupId>org.terracotta.management.dist</groupId>
+      <artifactId>mnm-nms</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

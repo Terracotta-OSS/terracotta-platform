@@ -43,16 +43,10 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    <!-- management stack -->
+    <!-- management client to read the monitoring service-->
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>management-common</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>management-client</artifactId>
+      <artifactId>mnm-nms</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -117,12 +111,12 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>management-common</artifactId>
+                  <artifactId>mnm-common</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>management-server</artifactId>
+                  <artifactId>mnm-server</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>

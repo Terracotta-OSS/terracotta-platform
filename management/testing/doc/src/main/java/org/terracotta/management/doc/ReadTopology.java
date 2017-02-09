@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.Cluster;
 
@@ -44,7 +44,7 @@ public class ReadTopology {
     String className = ReadTopology.class.getSimpleName();
 
     Connection connection = Utils.createConnection(className, args.length == 1 ? args[0] : "terracotta://localhost:9510");
-    TmsAgentService service = Utils.createTmsAgentService(connection, className);
+    NmsService service = Utils.createNmsService(connection, className);
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     ObjectMapper mapper = new ObjectMapper();

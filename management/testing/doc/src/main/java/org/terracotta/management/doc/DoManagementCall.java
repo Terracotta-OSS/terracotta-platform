@@ -19,8 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.management.entity.tms.client.IllegalManagementCallException;
-import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.entity.nms.client.IllegalManagementCallException;
+import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ServerEntity;
@@ -39,9 +39,9 @@ public class DoManagementCall {
     String className = DoManagementCall.class.getSimpleName();
 
     Connection connection = Utils.createConnection(className, args.length == 1 ? args[0] : "terracotta://localhost:9510");
-    TmsAgentService tmsAgentService = Utils.createTmsAgentService(connection, className);
+    NmsService nmsService = Utils.createNmsService(connection, className);
 
-    Cluster cluster = tmsAgentService.readTopology();
+    Cluster cluster = nmsService.readTopology();
 
     // REMOTE MANAGEMENT CALL ON A CLIENT
     cluster
@@ -55,7 +55,7 @@ public class DoManagementCall {
 
           try {
             // 3. do a clear management call on a client
-            tmsAgentService.call(context, "ActionsCapability", "clear", Void.TYPE).waitForReturn();
+            nmsService.call(context, "ActionsCapability", "clear", Void.TYPE).waitForReturn();
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -68,7 +68,7 @@ public class DoManagementCall {
         .findFirst()
         .get();
     Context cacheName = serverEntity.getContext().with("cacheName", "pet-clinic/pets");
-    tmsAgentService.call(cacheName, "ServerCacheCalls", "clear", Void.TYPE).waitForReturn();
+    nmsService.call(cacheName, "ServerCacheCalls", "clear", Void.TYPE).waitForReturn();
 
     System.in.read();
 

@@ -1,5 +1,6 @@
-Builds 3 jars:
+Builds 4 jars:
 
-- management-common (common classes for both client-side and server-side) = model + registry + topology + sequence
-- management-client (classes of entities used client-side)
-- management-server (classes of entities and services used server-side)
+- mnm-common: common classes for both client-side and server-side (model + registry + topology + sequence)
+- mnm-server: classes of entities and services used server-side for management in a clustered environment, including monitoring service
+- mnm-nms: classes of entities used client-side to access the monitoring service in a clustered environment
+- mnm-nms-agent: classes of entities used client-side to add support for management in a clustered environment in a client project

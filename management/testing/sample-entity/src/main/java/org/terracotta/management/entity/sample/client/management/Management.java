@@ -19,9 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.management.entity.management.ManagementAgentConfig;
-import org.terracotta.management.entity.management.client.ManagementAgentEntityFactory;
-import org.terracotta.management.entity.management.client.ManagementAgentService;
+import org.terracotta.management.entity.nms.agent.NmsAgentConfig;
+import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityFactory;
+import org.terracotta.management.entity.nms.agent.client.NmsAgentService;
 import org.terracotta.management.entity.sample.client.ClientCache;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
@@ -50,7 +50,7 @@ public class Management {
   private final Context parentContext;
   private final ManagementRegistry managementRegistry;
 
-  private ManagementAgentService managementAgent;
+  private NmsAgentService nmsAgentService;
 
   public Management(ContextContainer contextContainer) {
     this.parentContext = Context.create(contextContainer.getName(), contextContainer.getValue());
@@ -68,7 +68,7 @@ public class Management {
         scheduledExecutorService,
         statistics -> {
           try {
-            managementAgent.pushStatistics(statistics);
+            nmsAgentService.pushStatistics(statistics);
           } catch (ExecutionException e) {
             // hack to avoid printing warnings each time we close the connection when tests ends
             Throwable t = e.getCause();
@@ -91,23 +91,23 @@ public class Management {
   public void init(Connection connection) throws ExecutionException, InterruptedException, TimeoutException {
     LOGGER.trace("[{}] init()", managementRegistry.getContextContainer().getValue());
 
-    // connect the management entity to this registry to bridge the voltorn monitoring service
+    // connect the NMS Agent Entity to this registry to bridge the voltorn monitoring service
     try {
-      managementAgent = new ManagementAgentService(new ManagementAgentEntityFactory(connection)
-          .retrieveOrCreate(new ManagementAgentConfig()));
+      nmsAgentService = new NmsAgentService(new NmsAgentEntityFactory(connection)
+          .retrieveOrCreate(new NmsAgentConfig()));
     } catch (EntityConfigurationException e) {
       throw new ExecutionException(e);
     }
-    managementAgent.setManagementCallExecutor(executorService);
-    managementAgent.setOperationTimeout(5, TimeUnit.SECONDS);
-    managementAgent.setManagementRegistry(managementRegistry);
+    nmsAgentService.setManagementCallExecutor(executorService);
+    nmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
+    nmsAgentService.setManagementRegistry(managementRegistry);
 
     // initialize the agent and send the registry info inside voltron
-    managementAgent.init();
+    nmsAgentService.init();
 
     // set some tags and push a notif
-    managementAgent.setTags("caches", managementRegistry.getContextContainer().getValue());
-    managementAgent.pushNotification(new ContextualNotification(parentContext, "CLIENT_INIT"));
+    nmsAgentService.setTags("caches", managementRegistry.getContextContainer().getValue());
+    nmsAgentService.pushNotification(new ContextualNotification(parentContext, "CLIENT_INIT"));
   }
 
   public void close() {
@@ -116,21 +116,21 @@ public class Management {
     statisticCollector.stopStatisticCollector();
 
     try {
-      managementAgent.pushNotification(new ContextualNotification(parentContext, "CLIENT_CLOSE"));
+      nmsAgentService.pushNotification(new ContextualNotification(parentContext, "CLIENT_CLOSE"));
     } catch (Exception e) {
       throw new RuntimeException(e); // do not do that in a real app, this is useful for testing purposes
     }
 
     executorService.shutdown();
 
-    managementAgent.close();
+    nmsAgentService.close();
     scheduledExecutorService.shutdown();
   }
 
   public void clientCacheCreated(ClientCache clientCache) {
     managementRegistry.register(clientCache);
     try {
-      managementAgent.pushNotification(new ContextualNotification(parentContext.with("cacheName", clientCache.getName()), "CLIENT_CACHE_CREATED"));
+      nmsAgentService.pushNotification(new ContextualNotification(parentContext.with("cacheName", clientCache.getName()), "CLIENT_CACHE_CREATED"));
     } catch (Exception e) {
       throw new RuntimeException(e); // do not do that in a real app, this is useful for testing purposes
     }

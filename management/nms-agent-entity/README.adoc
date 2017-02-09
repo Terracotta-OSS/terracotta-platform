@@ -1,0 +1,3 @@
+The NMS Agent Entity is used client-side to bridge a client's management registry (with some management metadata about some client-side objects) to the server monitoring service.
+
+This entity enables a client to send its client-side statistics and notifications to the server, and also receive and respond to management calls.

@@ -35,13 +35,13 @@ public class PassiveLeaveIT extends AbstractHATest {
 
   @Test
   public void get_notifications_when_passive_leaves() throws Exception {
-    Server active = tmsAgentService.readTopology().serverStream().filter(Server::isActive).findFirst().get();
-    Server passive = tmsAgentService.readTopology().serverStream().filter(server -> !server.isActive()).findFirst().get();
+    Server active = nmsService.readTopology().serverStream().filter(Server::isActive).findFirst().get();
+    Server passive = nmsService.readTopology().serverStream().filter(server -> !server.isActive()).findFirst().get();
     assertThat(active.getState(), equalTo(Server.State.ACTIVE));
     assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
 
     // clear notification buffer
-    tmsAgentService.readMessages();
+    nmsService.readMessages();
 
     // remove one passive
     voltron.getClusterControl().terminateOnePassive();
@@ -49,7 +49,7 @@ public class PassiveLeaveIT extends AbstractHATest {
     // wait for SERVER_LEFT message
     List<Message> messages;
     do {
-      messages = tmsAgentService.readMessages();
+      messages = nmsService.readMessages();
 
       if (messages.stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))

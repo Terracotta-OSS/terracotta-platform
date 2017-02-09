@@ -8,16 +8,16 @@
           "id": "testServer0",
           "serverEntities": [
             {
-              "id": "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity",
-              "type": "org.terracotta.management.entity.management.client.ManagementAgentEntity",
-              "name": "ManagementAgent",
+              "id": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+              "type": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+              "name": "NmsAgent",
               "consumerId": 2,
               "managementRegistry": null
             },
             {
-              "id": "StripeNamedIT-2:org.terracotta.management.entity.tms.client.TmsAgentEntity",
-              "type": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
-              "name": "StripeNamedIT-2",
+              "id": "StripeNamedIT:org.terracotta.management.entity.nms.client.NmsEntity",
+              "type": "org.terracotta.management.entity.nms.client.NmsEntity",
+              "name": "StripeNamedIT",
               "consumerId": 5,
               "managementRegistry": {
                 "contextContainer": {
@@ -112,8 +112,8 @@
               }
             },
             {
-              "id": "StripeNamedIT:org.terracotta.management.entity.tms.client.TmsAgentEntity",
-              "type": "org.terracotta.management.entity.tms.client.TmsAgentEntity",
+              "id": "StripeNamedIT:org.terracotta.management.entity.nms.client.NmsEntity",
+              "type": "org.terracotta.management.entity.nms.client.NmsEntity",
               "name": "StripeNamedIT",
               "consumerId": 1,
               "managementRegistry": {
@@ -551,13 +551,13 @@
   ],
   "clients": [
     {
-      "id": "0@127.0.0.1:StripeNamedIT-2:<uuid>",
+      "id": "0@127.0.0.1:StripeNamedIT:<uuid>",
       "pid": 0,
       "hostAddress": "127.0.0.1",
-      "name": "StripeNamedIT-2",
+      "name": "StripeNamedIT",
       "logicalConnectionUid": "<uuid>",
       "vmId": "0@127.0.0.1",
-      "clientId": "0@127.0.0.1:StripeNamedIT-2:<uuid>",
+      "clientId": "0@127.0.0.1:StripeNamedIT:<uuid>",
       "hostName": "<hostname>",
       "tags": [],
       "connections": [
@@ -571,7 +571,7 @@
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
           "serverEntityIds": {
-            "StripeNamedIT-2:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+            "StripeNamedIT:org.terracotta.management.entity.nms.client.NmsEntity": 1
           }
         }
       ],
@@ -598,7 +598,7 @@
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
           "serverEntityIds": {
-            "StripeNamedIT:org.terracotta.management.entity.tms.client.TmsAgentEntity": 1
+            "StripeNamedIT:org.terracotta.management.entity.nms.client.NmsEntity": 1
           }
         }
       ],
@@ -628,7 +628,7 @@
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
           "serverEntityIds": {
-            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
+            "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
             "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
             "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
           }
@@ -746,7 +746,7 @@
             ]
           },
           {
-            "name": "ManagementAgentService",
+            "name": "NmsAgentService",
             "context": [],
             "descriptors": []
           },
@@ -807,7 +807,7 @@
           "stripeId": "MY_SUPER_STRIPE",
           "serverId": "testServer0",
           "serverEntityIds": {
-            "ManagementAgent:org.terracotta.management.entity.management.client.ManagementAgentEntity": 1,
+            "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
             "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
             "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
           }
@@ -925,7 +925,7 @@
             ]
           },
           {
-            "name": "ManagementAgentService",
+            "name": "NmsAgentService",
             "context": [],
             "descriptors": []
           },

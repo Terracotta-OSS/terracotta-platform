@@ -79,7 +79,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
 
   @Test
   public void topology_after_reconfigure() throws Exception {
-    Cluster cluster = tmsAgentService.readTopology();
+    Cluster cluster = nmsService.readTopology();
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology-before-reconfigure.json").toString();
@@ -88,7 +88,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
 
-    cluster = tmsAgentService.readTopology();
+    cluster = nmsService.readTopology();
     currentTopo = toJson(cluster.toMap()).toString();
     actual = removeRandomValues(currentTopo);
     expected = readJson("topology-reconfigured.json").toString();
@@ -97,7 +97,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
 
   @Test
   public void notification_after_reconfigure() throws Exception {
-    tmsAgentService.readMessages();
+    nmsService.readMessages();
 
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
@@ -105,7 +105,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     List<Message> messages;
     List<ContextualNotification> notifs;
     do {
-      messages = tmsAgentService.readMessages();
+      messages = nmsService.readMessages();
       notifs = messages.stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))
           .flatMap(message -> message.unwrap(ContextualNotification.class).stream())

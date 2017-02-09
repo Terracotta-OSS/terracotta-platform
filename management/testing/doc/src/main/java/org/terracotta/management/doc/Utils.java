@@ -20,11 +20,11 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.entity.tms.client.TmsAgentEntity;
-import org.terracotta.management.entity.tms.client.TmsAgentEntityFactory;
-import org.terracotta.management.entity.tms.client.DefaultTmsAgentService;
-import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.entity.nms.NmsConfig;
+import org.terracotta.management.entity.nms.client.NmsEntity;
+import org.terracotta.management.entity.nms.client.NmsEntityFactory;
+import org.terracotta.management.entity.nms.client.DefaultNmsService;
+import org.terracotta.management.entity.nms.client.NmsService;
 
 import java.net.URI;
 import java.util.Properties;
@@ -41,11 +41,11 @@ class Utils {
     return ConnectionFactory.connect(URI.create(uri), properties);
   }
 
-  static TmsAgentService createTmsAgentService(Connection connection, String entityName) throws EntityConfigurationException {
-    TmsAgentEntityFactory factory = new TmsAgentEntityFactory(connection, entityName);
-    TmsAgentEntity tmsAgentEntity = factory.retrieveOrCreate(new TmsAgentConfig()
+  static NmsService createNmsService(Connection connection, String entityName) throws EntityConfigurationException {
+    NmsEntityFactory factory = new NmsEntityFactory(connection, entityName);
+    NmsEntity nmsEntity = factory.retrieveOrCreate(new NmsConfig()
         .setMaximumUnreadMessages(1024 * 1024));
-    return new DefaultTmsAgentService(tmsAgentEntity);
+    return new DefaultNmsService(nmsEntity);
   }
 
 }

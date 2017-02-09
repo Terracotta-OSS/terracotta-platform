@@ -36,7 +36,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
   @Test
   public void can_access_remote_management_registry_of_client() throws Exception {
-    ManagementRegistry registry = tmsAgentService.readTopology()
+    ManagementRegistry registry = nmsService.readTopology()
         .clientStream()
         .filter(cli -> cli.getName().equals("pet-clinic"))
         .findFirst()
@@ -49,14 +49,14 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
     assertThat(registry.getCapability("CacheStatistics"), is(notNullValue()));
     assertThat(registry.getCapability("CacheCalls"), is(notNullValue()));
     assertThat(registry.getCapability("StatisticCollectorCapability"), is(notNullValue()));
-    assertThat(registry.getCapability("ManagementAgentService"), is(notNullValue()));
+    assertThat(registry.getCapability("NmsAgentService"), is(notNullValue()));
 
     assertEquals(readJson("client-descriptors.json"), toJson(registry.getCapabilities()));
   }
 
   @Test
   public void can_do_remote_management_calls_on_client() throws Exception {
-    Client client = tmsAgentService.readTopology()
+    Client client = nmsService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
         .findFirst()
@@ -68,19 +68,19 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
         .with("cacheName", "pets");
 
     // put
-    tmsAgentService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
+    nmsService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
 
     // get
-    assertThat(tmsAgentService.call(context, "CacheCalls", "get", String.class, new Parameter("pet1")).waitForReturn(), equalTo("Cat"));
+    assertThat(nmsService.call(context, "CacheCalls", "get", String.class, new Parameter("pet1")).waitForReturn(), equalTo("Cat"));
 
     // size
-    assertThat(tmsAgentService.call(context, "CacheCalls", "size", int.class).waitForReturn(), is(1));
+    assertThat(nmsService.call(context, "CacheCalls", "size", int.class).waitForReturn(), is(1));
 
     // clear
-    tmsAgentService.call(context, "CacheCalls", "clear", Void.TYPE).waitForReturn();
+    nmsService.call(context, "CacheCalls", "clear", Void.TYPE).waitForReturn();
 
     // size again
-    assertThat(tmsAgentService.call(context, "CacheCalls", "size", int.class).waitForReturn(), is(0));
+    assertThat(nmsService.call(context, "CacheCalls", "size", int.class).waitForReturn(), is(0));
   }
 
   @Test
@@ -119,7 +119,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
   private void triggerClientStatComputation() throws Exception {
     // trigger stats computation and wait for all stats to have been computed at least once
-    Client client = tmsAgentService.readTopology()
+    Client client = nmsService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
         .findFirst()
@@ -129,7 +129,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
     Context context = client.getContext()
         .with("appName", "pet-clinic");
 
-    tmsAgentService.startStatisticCollector(
+    nmsService.startStatisticCollector(
         context,
         5, TimeUnit.SECONDS
     ).waitForReturn();

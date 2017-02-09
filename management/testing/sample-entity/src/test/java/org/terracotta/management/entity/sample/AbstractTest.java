@@ -26,17 +26,19 @@ import org.junit.rules.Timeout;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
-import org.terracotta.management.entity.management.client.ManagementAgentEntityClientService;
-import org.terracotta.management.entity.management.server.ManagementAgentEntityServerService;
+import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityClientService;
+import org.terracotta.management.entity.nms.agent.server.NmsAgentEntityServerService;
+import org.terracotta.management.entity.nms.NmsConfig;
+import org.terracotta.management.entity.nms.client.DefaultNmsService;
+import org.terracotta.management.entity.nms.client.NmsEntity;
+import org.terracotta.management.entity.nms.client.NmsEntityClientService;
+import org.terracotta.management.entity.nms.client.NmsEntityFactory;
+import org.terracotta.management.entity.nms.client.NmsService;
+import org.terracotta.management.entity.nms.server.NmsEntityServerService;
 import org.terracotta.management.entity.sample.client.CacheEntityClientService;
 import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.entity.sample.server.CacheEntityServerService;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
-import org.terracotta.management.entity.tms.client.*;
-import org.terracotta.management.entity.tms.server.TmsAgentEntityServerService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
-import org.terracotta.management.model.cluster.ServerEntity;
-import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.offheapresource.OffHeapResourcesProvider;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
@@ -55,11 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Mathieu Carbou
@@ -73,7 +71,7 @@ public abstract class AbstractTest {
 
   protected final List<CacheFactory> webappNodes = new ArrayList<>();
   protected final Map<String, List<Cache>> caches = new HashMap<>();
-  protected TmsAgentService tmsAgentService;
+  protected NmsService nmsService;
 
   @Rule
   public Timeout timeout = Timeout.seconds(60);
@@ -90,11 +88,11 @@ public abstract class AbstractTest {
       server.registerClientEntityService(new CacheEntityClientService());
       server.registerServerEntityService(new CacheEntityServerService());
 
-      server.registerClientEntityService(new ManagementAgentEntityClientService());
-      server.registerServerEntityService(new ManagementAgentEntityServerService());
+      server.registerClientEntityService(new NmsAgentEntityClientService());
+      server.registerServerEntityService(new NmsAgentEntityServerService());
 
-      server.registerClientEntityService(new TmsAgentEntityClientService());
-      server.registerServerEntityService(new TmsAgentEntityServerService());
+      server.registerClientEntityService(new NmsEntityClientService());
+      server.registerServerEntityService(new NmsEntityServerService());
 
       OffheapResourcesType resources = new OffheapResourcesType();
       ResourceType resource = new ResourceType();
@@ -203,53 +201,12 @@ public abstract class AbstractTest {
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     this.managementConnection = ConnectionFactory.connect(URI.create("passthrough://stripe-1:9510/"), properties);
 
-    // create a tms entity
-    TmsAgentEntityFactory tmsAgentEntityFactory = new TmsAgentEntityFactory(managementConnection, getClass().getSimpleName());
-    TmsAgentEntity tmsAgentEntity = tmsAgentEntityFactory.retrieveOrCreate(new TmsAgentConfig()
+    // create a NMS Entity
+    NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
+    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
         .setMaximumUnreadMessages(1024 * 1024));
-    this.tmsAgentService = new DefaultTmsAgentService(tmsAgentEntity);
-    this.tmsAgentService.setOperationTimeout(10, TimeUnit.SECONDS);
-  }
-
-  protected void triggerServerStatComputation() throws Exception {
-    // trigger stats computation and wait for all stats to have been computed at least once
-    tmsAgentService.readTopology().serverStream().forEach(server -> {
-      ServerEntity serverEntity = server
-          .serverEntityStream()
-          .filter(e -> e.getType().equals(TmsAgentConfig.ENTITY_TYPE))
-          .findFirst()
-          .get();
-
-      try {
-        tmsAgentService.startStatisticCollector(
-            serverEntity.getContext(),
-            1, TimeUnit.SECONDS
-        ).waitForReturn();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
-
-  protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {
-    List<? extends ContextualStatistics> statistics;
-    do {
-      statistics = tmsAgentService.readMessages()
-          .stream()
-          .filter(message -> message.getType().equals("STATISTICS"))
-          .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())
-          .collect(Collectors.toList());
-      // PLEASE KEEP THIS ! Really useful when troubleshooting stats!
-      /*if (!statistics.isEmpty()) {
-        System.out.println("received at " + System.currentTimeMillis() + ":");
-        statistics.stream()
-            .flatMap(o -> o.getStatistics().entrySet().stream())
-            .forEach(System.out::println);
-      }*/
-      Thread.sleep(500);
-    } while (!Thread.currentThread().isInterrupted() && (statistics.isEmpty() || !test.test(statistics)));
-    assertFalse(Thread.currentThread().isInterrupted());
-    assertTrue(test.test(statistics));
+    this.nmsService = new DefaultNmsService(nmsEntity);
+    this.nmsService.setOperationTimeout(10, TimeUnit.SECONDS);
   }
 
 }

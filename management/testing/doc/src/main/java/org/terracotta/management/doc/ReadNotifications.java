@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.management.entity.tms.client.TmsAgentService;
+import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
@@ -40,7 +40,7 @@ public class ReadNotifications {
     String className = ReadNotifications.class.getSimpleName();
 
     Connection connection = Utils.createConnection(className, args.length == 1 ? args[0] : "terracotta://localhost:9510");
-    TmsAgentService service = Utils.createTmsAgentService(connection, className);
+    NmsService service = Utils.createNmsService(connection, className);
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 

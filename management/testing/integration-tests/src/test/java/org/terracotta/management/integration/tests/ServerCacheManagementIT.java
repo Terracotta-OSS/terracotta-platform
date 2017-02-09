@@ -16,7 +16,7 @@
 package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
-import org.terracotta.management.entity.tms.TmsAgentConfig;
+import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.cluster.ManagementRegistry;
@@ -38,7 +38,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
 
   @Test
   public void can_access_remote_management_registry_on_server() throws Exception {
-    ManagementRegistry registry = tmsAgentService.readTopology()
+    ManagementRegistry registry = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(serverEntity -> serverEntity.getName().equals("pet-clinic/clients"))
         .findFirst()
@@ -60,9 +60,9 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     String expected = readJson("server-descriptors.json").toString();
     assertEquals(expected, actual);
 
-    registry = tmsAgentService.readTopology()
+    registry = nmsService.readTopology()
         .activeServerEntityStream()
-        .filter(serverEntity -> serverEntity.getType().equals(TmsAgentConfig.ENTITY_TYPE))
+        .filter(serverEntity -> serverEntity.getType().equals(NmsConfig.ENTITY_TYPE))
         .findFirst()
         .flatMap(ServerEntity::getManagementRegistry)
         .get();
@@ -75,7 +75,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
 
   @Test
   public void can_do_remote_management_calls_on_server() throws Exception {
-    ServerEntity serverEntity = tmsAgentService.readTopology()
+    ServerEntity serverEntity = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(e -> e.getName().equals("pet-clinic/pets"))
         .findFirst()
@@ -84,13 +84,13 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     Context context = serverEntity.getContext().with("cacheName", "pet-clinic/pets");
 
     // put
-    tmsAgentService.call(context, "ServerCacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
+    nmsService.call(context, "ServerCacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();
 
     // get
-    assertThat(tmsAgentService.call(context, "ServerCacheCalls", "get", String.class, new Parameter("pet1")).waitForReturn(), equalTo("Cat"));
+    assertThat(nmsService.call(context, "ServerCacheCalls", "get", String.class, new Parameter("pet1")).waitForReturn(), equalTo("Cat"));
 
     // size of server store
-    assertThat(tmsAgentService.call(context, "ServerCacheCalls", "size", int.class).waitForReturn(), is(1));
+    assertThat(nmsService.call(context, "ServerCacheCalls", "size", int.class).waitForReturn(), is(1));
 
     // put on client heaps
     assertThat(get(0, "pets", "pet1"), equalTo("Cat")); // hit
@@ -99,14 +99,14 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     assertThat(size(1, "pets"), equalTo(1)); // size of client's heap
 
     // clear
-    tmsAgentService.call(context, "ServerCacheCalls", "clear", Void.TYPE).waitForReturn();
+    nmsService.call(context, "ServerCacheCalls", "clear", Void.TYPE).waitForReturn();
 
     // verify invalidation propagated to clients and their heap is cleared
     assertThat(size(0, "pets"), equalTo(0)); // size of client's heap
     assertThat(size(1, "pets"), equalTo(0)); // size of client's heap
 
     // size again of server store
-    assertThat(tmsAgentService.call(context, "ServerCacheCalls", "size", int.class).waitForReturn(), is(0));
+    assertThat(nmsService.call(context, "ServerCacheCalls", "size", int.class).waitForReturn(), is(0));
   }
 
   @Test
