@@ -346,6 +346,7 @@ public final class Server extends AbstractNode<Stripe> {
     //  UNINITIALIZED->SYNCHRONIZING->PASSIVE->ACTIVE
     //  UNINITIALIZED->ACTIVE
 
+    UNREACHABLE,
     UNINITIALIZED,
     SYNCHRONIZING,
     PASSIVE,
