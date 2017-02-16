@@ -28,10 +28,10 @@
     <maven-forge-plugin.version>1.2.16</maven-forge-plugin.version>
     <slf4j.version>1.7.7</slf4j.version>
     <logback.version>1.1.3</logback.version>
-    <terracotta-apis.version>1.2.0-pre14</terracotta-apis.version>
-    <tcconfig.version>10.2.0-pre14</tcconfig.version>
-    <passthrough-testing.version>1.2.0-pre14</passthrough-testing.version>
-    <terracotta-core.version>5.2.0-pre14</terracotta-core.version>
+    <terracotta-apis.version>1.2.0-pre15</terracotta-apis.version>
+    <tcconfig.version>10.2.0-pre15</tcconfig.version>
+    <passthrough-testing.version>1.2.0-pre15</passthrough-testing.version>
+    <terracotta-core.version>5.2.0-pre15</terracotta-core.version>
     <statistics.version>1.4.3</statistics.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
