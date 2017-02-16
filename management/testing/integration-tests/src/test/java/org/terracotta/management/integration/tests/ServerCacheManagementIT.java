@@ -122,6 +122,14 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
         .map(o -> o.getStatistic("Cluster:HitCount"))
         .anyMatch(counter -> counter.longValue() == 1L));
 
+    queryAllRemoteStatsUntil(stats -> {
+      String currentJson = toJson(stats).toString();
+      String actual = removeRandomValues(currentJson);
+      String expected = readJson("stats.json").toString();
+      assertEquals(expected, actual);
+      return true;
+    });
+
     get(1, "pets", "pet2"); // miss
 
     queryAllRemoteStatsUntil(stats -> {

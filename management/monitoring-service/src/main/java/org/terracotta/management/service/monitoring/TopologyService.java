@@ -54,6 +54,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.terracotta.management.service.monitoring.Notification.CLIENT_CONNECTED;
 import static org.terracotta.management.service.monitoring.Notification.CLIENT_DISCONNECTED;
@@ -410,24 +412,31 @@ class TopologyService implements PlatformListener {
    * Records stats that needs to be sent in future (or now) when the entity will have arrived
    */
   void willPushEntityStatistics(long consumerId, String serverName, ContextualStatistics... statistics) {
-    whenServerEntity(consumerId, serverName).execute(serverEntity -> {
-      Context context = serverEntity.getContext();
-      for (ContextualStatistics statistic : statistics) {
-        statistic.setContext(statistic.getContext().with(context));
-      }
-      LOGGER.trace("[{}] willPushEntityStatistics({}, {})", consumerId, serverName, statistics.length);
-      firingService.fireStatistics(statistics);
-    });
+    // Stats are collected by the NMS entity collector so the consumer id calling willPushEntityStatistics
+    // will be the consumer id of the NMS entity. Thus we have to retrieve the server entity thanks to the
+    // context that is hold in the stat results
+    Stream.of(statistics)
+        .collect(Collectors.groupingBy(o -> Long.parseLong(o.getContext().getOrDefault(ServerEntity.CONSUMER_ID, String.valueOf(consumerId)))))
+        .forEach((cid, cid_stats) -> whenServerEntity(cid, serverName).execute(serverEntity -> {
+          Context context = serverEntity.getContext();
+          for (ContextualStatistics statistic : cid_stats) {
+            statistic.setContext(statistic.getContext().with(context));
+          }
+          LOGGER.trace("[{}] willPushEntityStatistics({}, {})", cid, serverName, cid_stats.size());
+          firingService.fireStatistics(cid_stats.toArray(new ContextualStatistics[cid_stats.size()]));
+        }));
   }
 
   /**
    * Records notification that needs to be sent in future (or now) when the entity will have arrived
    */
   void willPushEntityNotification(long consumerId, String serverName, ContextualNotification notification) {
-    whenServerEntity(consumerId, serverName).execute(serverEntity -> {
+    // notifications contains a context, but if this context contains an origin consumer id, do not override it
+    long cid = Long.parseLong(notification.getContext().getOrDefault(ServerEntity.CONSUMER_ID, String.valueOf(consumerId)));
+    whenServerEntity(cid, serverName).execute(serverEntity -> {
       Context context = serverEntity.getContext();
       notification.setContext(notification.getContext().with(context));
-      LOGGER.trace("[{}] willPushEntityNotification({}, {})", consumerId, serverName, notification);
+      LOGGER.trace("[{}] willPushEntityNotification({}, {})", cid, serverName, notification);
       firingService.fireNotification(notification);
     });
   }

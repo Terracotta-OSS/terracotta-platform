@@ -1,0 +1,64 @@
+[
+  {
+    "capability": "OffHeapResourceStatistics",
+    "context": {
+      "consumerId": "1",
+      "alias": "primary-server-resource",
+      "type": "OffHeapResource",
+      "stripeId": "SINGLE",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "entityId": "ServerCacheManagementIT:org.terracotta.management.entity.nms.client.NmsEntity",
+      "entityName": "ServerCacheManagementIT",
+      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity"
+    },
+    "empty": false,
+    "statistics": {
+      "OffHeapResource:AllocatedMemory": 0
+    }
+  },
+  {
+    "capability": "ServerCacheStatistics",
+    "context": {
+      "consumerId": "3",
+      "alias": "pet-clinic/pets",
+      "type": "ServerCache",
+      "stripeId": "SINGLE",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
+      "entityName": "pet-clinic/pets",
+      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
+    },
+    "empty": false,
+    "statistics": {
+      "Cluster:HitCount": 1,
+      "Cluster:PutCount": 1,
+      "Cluster:MissCount": 0,
+      "Cluster:ClearCount": 0,
+      "ServerCache:Size": 1
+    }
+  },
+  {
+    "capability": "ServerCacheStatistics",
+    "context": {
+      "consumerId": "4",
+      "alias": "pet-clinic/clients",
+      "type": "ServerCache",
+      "stripeId": "SINGLE",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
+      "entityName": "pet-clinic/clients",
+      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
+    },
+    "empty": false,
+    "statistics": {
+      "Cluster:HitCount": 0,
+      "Cluster:PutCount": 0,
+      "Cluster:MissCount": 0,
+      "Cluster:ClearCount": 0,
+      "ServerCache:Size": 0
+    }
+  }
+]
