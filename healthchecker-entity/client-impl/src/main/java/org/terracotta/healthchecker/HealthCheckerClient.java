@@ -25,7 +25,6 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.exception.EntityException;
 
 /**
  *
@@ -73,8 +72,10 @@ public class HealthCheckerClient implements HealthCheck {
         try {
 //  not intended for use but implemented in case a future use arises
           return invoke.get().toString();
-        } catch (EntityException ee) {
-          throw new ExecutionException(ee);
+        } catch (InterruptedException interrupt) {
+          throw interrupt;
+        } catch (Throwable t) {
+          throw new ExecutionException(t);
         }
       }
 
@@ -82,8 +83,10 @@ public class HealthCheckerClient implements HealthCheck {
       public String get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         try {
           return invoke.getWithTimeout(timeout, unit).toString();
-        } catch (EntityException ee) {
-          throw new ExecutionException(ee);
+        } catch (InterruptedException interrupt) {
+          throw interrupt;
+        } catch (Throwable t) {
+          throw new ExecutionException(t);
         }
       } 
     };
