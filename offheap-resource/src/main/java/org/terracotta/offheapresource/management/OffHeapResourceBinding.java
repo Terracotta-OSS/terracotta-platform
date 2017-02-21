@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring.registry;
+package org.terracotta.offheapresource.management;
 
 import org.terracotta.management.service.monitoring.registry.provider.AliasBinding;
 import org.terracotta.offheapresource.OffHeapResource;

@@ -23,21 +23,11 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.registry.collect.StatisticCollector;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
-import org.terracotta.management.service.monitoring.registry.OffHeapResourceBinding;
-import org.terracotta.management.service.monitoring.registry.OffHeapResourceSettingsManagementProvider;
-import org.terracotta.management.service.monitoring.registry.OffHeapResourceStatisticsManagementProvider;
-import org.terracotta.management.service.monitoring.registry.provider.StatisticCollectorManagementProvider;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
-import org.terracotta.offheapresource.OffHeapResourceIdentifier;
-import org.terracotta.offheapresource.OffHeapResources;
 
 import java.io.Closeable;
 import java.util.Arrays;
@@ -71,12 +61,13 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private final TimeSource timeSource = TimeSource.BEST;
   private final DefaultSharedManagementRegistry sharedManagementRegistry = new DefaultSharedManagementRegistry(consumerManagementRegistries);
   private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
-  private final DefaultStatisticsService statisticsService = new DefaultStatisticsService(sharedManagementRegistry);
+  private final DefaultStatisticService statisticsService = new DefaultStatisticService(sharedManagementRegistry);
   private final DefaultFiringService firingService = new DefaultFiringService(sequenceGenerator, managementServices, clientMonitoringServices);
 
   private PlatformConfiguration platformConfiguration;
   private TopologyService topologyService;
   private IStripeMonitoring platformListenerAdapter;
+  private ManagementPlugins managementPlugins;
 
   public MonitoringServiceProvider() {
     // because only passthrough is calling close(), not tc-core, so this is to cleanly close services (thread pools) at shutdown
@@ -95,6 +86,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
+    this.managementPlugins = new ManagementPlugins(platformConfiguration, statisticsService);
     this.topologyService = new TopologyService(firingService, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
     this.topologyService.addTopologyEventListener(new TopologyEventListenerAdapter() {
@@ -157,7 +149,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
             consumerID,
             monitoringService);
         if (consumerManagementRegistryConfiguration.wantsServerManagementProviders()) {
-          addServerManagementProviders(consumerID, managementRegistry, monitoringService);
+          managementPlugins.registerServerManagementProviders(consumerID, managementRegistry, monitoringService);
         }
         topologyService.addTopologyEventListener(managementRegistry);
         consumerManagementRegistries.put(consumerID, managementRegistry);
@@ -258,37 +250,6 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     }
 
     throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
-  }
-
-  private void addServerManagementProviders(long consumerId, ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService monitoringService) {
-    LOGGER.trace("[0] addServerManagementProviders({})", consumerId);
-
-    // The context for the collector is created from the the registry of the entity wanting server-side providers.
-    // We create a provider that will receive management calls to control the global voltron's statistic collector.
-    // This provider will thus be on top of the entity wanting to collect server-side stats
-    ContextContainer contextContainer = consumerManagementRegistry.getContextContainer();
-    Context context = Context.create(contextContainer.getName(), contextContainer.getValue());
-    StatisticCollectorManagementProvider collectorManagementProvider = new StatisticCollectorManagementProvider(context);
-    consumerManagementRegistry.addManagementProvider(collectorManagementProvider);
-
-    // add a collector service, not started by default, but that can be started through a remote management call
-    StatisticCollector statisticCollector = statisticsService.createStatisticCollector(
-        statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
-    consumerManagementRegistry.register(statisticCollector);
-
-    //TODO: BUGFIX: https://github.com/Terracotta-OSS/terracotta-platform/issues/260
-    // manage offheap service if it is there
-    Collection<OffHeapResources> offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class);
-    if (!offHeapResources.isEmpty()) {
-      consumerManagementRegistry.addManagementProvider(new OffHeapResourceSettingsManagementProvider());
-      consumerManagementRegistry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
-      for (OffHeapResources offHeapResource : offHeapResources) {
-        for (OffHeapResourceIdentifier identifier : offHeapResource.getAllIdentifiers()) {
-          LOGGER.trace("[0] addServerManagementProviders({}, OffHeapResource:{})", consumerId, identifier.getName());
-          consumerManagementRegistry.register(new OffHeapResourceBinding(identifier.getName(), offHeapResource.getOffHeapResource(identifier)));
-        }
-      }
-    }
   }
 
 }

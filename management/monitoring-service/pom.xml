@@ -76,12 +76,6 @@
       <artifactId>standard-cluster-services</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>offheap-resource</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <groupId>junit</groupId>

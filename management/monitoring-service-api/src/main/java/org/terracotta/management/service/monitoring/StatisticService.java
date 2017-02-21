@@ -15,12 +15,14 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.registry.collect.StatisticCollector;
 
 /**
  * This statistic service is injected into {@link org.terracotta.management.registry.ManagementProvider} objects implementing
  * {@link org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware} when they are added into a {@link ConsumerManagementRegistry}
  */
-interface StatisticsService {
+@CommonComponent
+public interface StatisticService {
   StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
 }
