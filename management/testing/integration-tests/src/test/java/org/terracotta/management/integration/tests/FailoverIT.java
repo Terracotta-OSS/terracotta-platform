@@ -46,8 +46,12 @@ public class FailoverIT extends AbstractHATest {
 
     Cluster cluster = nmsService.readTopology();
     oldActive = cluster.serverStream().filter(Server::isActive).findFirst().get();
-    oldPassive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
     assertThat(oldActive.getState(), equalTo(Server.State.ACTIVE));
+
+    do {
+      cluster = nmsService.readTopology();
+      oldPassive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
+    } while (!Thread.currentThread().isInterrupted() && oldPassive.getState() != Server.State.PASSIVE);
     assertThat(oldPassive.getState(), equalTo(Server.State.PASSIVE));
 
     // clear buffer
