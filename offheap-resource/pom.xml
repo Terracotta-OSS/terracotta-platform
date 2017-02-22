@@ -43,6 +43,13 @@
       <version>${statistics.version}</version>
     </dependency>
 
+    <!-- activate management provider support -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>

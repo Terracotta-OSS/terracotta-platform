@@ -34,9 +34,9 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Mathieu Carbou
  */
-class DefaultStatisticsService implements StatisticsService, Closeable {
+class DefaultStatisticService implements StatisticService, Closeable {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStatisticsService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStatisticService.class);
 
   private static final AtomicLong managementSchedulerCount = new AtomicLong();
 
@@ -54,7 +54,7 @@ class DefaultStatisticsService implements StatisticsService, Closeable {
 
   private final CapabilityManagementSupport capabilityManagementSupport;
 
-  DefaultStatisticsService(CapabilityManagementSupport capabilityManagementSupport) {
+  DefaultStatisticService(CapabilityManagementSupport capabilityManagementSupport) {
     this.capabilityManagementSupport = Objects.requireNonNull(capabilityManagementSupport);
   }
 
