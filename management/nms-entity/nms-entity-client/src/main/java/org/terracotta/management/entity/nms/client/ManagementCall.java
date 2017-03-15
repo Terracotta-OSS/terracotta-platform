@@ -18,6 +18,7 @@ package org.terracotta.management.entity.nms.client;
 import org.terracotta.management.model.context.Context;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -37,4 +38,6 @@ public interface ManagementCall<T> {
   void cancel();
 
   boolean isCanceled();
+
+  CompletionStage<T> asCompletionStage();
 }

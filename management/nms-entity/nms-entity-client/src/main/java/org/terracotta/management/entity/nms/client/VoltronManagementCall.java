@@ -22,6 +22,7 @@ import org.terracotta.management.model.context.Context;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -83,6 +84,11 @@ class VoltronManagementCall<T> implements ManagementCall<T> {
   @Override
   public boolean isCanceled() {
     return future.isCancelled();
+  }
+
+  @Override
+  public CompletionStage<T> asCompletionStage() {
+    return future;
   }
 
   @Override
