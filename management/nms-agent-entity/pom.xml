@@ -31,7 +31,7 @@
   <parent>
     <groupId>org.terracotta.management</groupId>
     <artifactId>terracotta-management</artifactId>
-    <version>5.2-SNAPSHOT</version>
+    <version>5.2.1</version>
   </parent>
 
   <artifactId>nms-agent-entity</artifactId>
