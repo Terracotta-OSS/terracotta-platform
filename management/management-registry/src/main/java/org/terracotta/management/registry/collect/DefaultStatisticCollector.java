@@ -41,76 +41,94 @@ public class DefaultStatisticCollector implements StatisticCollector {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStatisticCollector.class);
 
-  private final CapabilityManagementSupport managementRegistry;
   private final ScheduledExecutorService scheduledExecutorService;
-  private final Collector collector;
-  ;
-  private ScheduledFuture<?> task;
+  private final Runnable runnable;
 
-  public DefaultStatisticCollector(CapabilityManagementSupport capabilityManagementSupport,
+  private volatile boolean scheduled;
+
+  private ScheduledFuture<?> task;
+  private long intervalMs;
+
+  public DefaultStatisticCollector(final CapabilityManagementSupport managementRegistry,
                                    ScheduledExecutorService scheduledExecutorService,
-                                   Collector collector) {
-    this.managementRegistry = Objects.requireNonNull(capabilityManagementSupport);
+                                   final Collector collector) {
+
     this.scheduledExecutorService = Objects.requireNonNull(scheduledExecutorService);
-    this.collector = Objects.requireNonNull(collector);
+
+    Objects.requireNonNull(managementRegistry);
+    Objects.requireNonNull(collector);
+
+    this.runnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          if (scheduled) {
+            Collection<ContextualStatistics> statistics = new ArrayList<ContextualStatistics>();
+
+            for (String capabilityName : managementRegistry.getCapabilityNames()) {
+
+              Set<Context> allContexts = new LinkedHashSet<Context>();
+
+              for (ManagementProvider<?> managementProvider : managementRegistry.getManagementProvidersByCapability(capabilityName)) {
+                if (managementProvider.getClass().isAnnotationPresent(StatisticProvider.class)) {
+                  for (ExposedObject<?> exposedObject : managementProvider.getExposedObjects()) {
+                    allContexts.add(exposedObject.getContext());
+                  }
+                }
+              }
+
+              if (!allContexts.isEmpty()) {
+                CapabilityManagement capabilityManagement = managementRegistry.withCapability(capabilityName);
+                ResultSet<ContextualStatistics> resultSet = capabilityManagement
+                    .queryAllStatistics()
+                    .on(allContexts)
+                    .build()
+                    .execute();
+                for (ContextualStatistics contextualStatistics : resultSet) {
+                  statistics.add(contextualStatistics);
+                }
+              }
+            }
+
+            if (scheduled && !statistics.isEmpty()) {
+              collector.onStatistics(statistics);
+            }
+          }
+        } catch (RuntimeException e) {
+          LOGGER.warn("StatisticCollector failed: " + e.getMessage(), e);
+        }
+      }
+    };
   }
 
   @Override
   public synchronized void startStatisticCollector(long interval, TimeUnit unit) {
-    if (task == null) {
+    if (interval <= 0) {
+      throw new IllegalArgumentException("Bad interval: " + interval);
+    }
+
+    final long itv = TimeUnit.MILLISECONDS.convert(interval, unit);
+
+    // cancel the current task if it is scheduled with a different time
+    if (scheduled && intervalMs != itv) {
+      stopStatisticCollector();
+    }
+
+    if (!scheduled) {
       LOGGER.trace("startStatisticCollector({}, {})", interval, unit);
-      task = scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            if (task != null) {
-              Collection<ContextualStatistics> statistics = new ArrayList<ContextualStatistics>();
-
-              for (String capabilityName : managementRegistry.getCapabilityNames()) {
-
-                Set<Context> allContexts = new LinkedHashSet<Context>();
-
-                for (ManagementProvider<?> managementProvider : managementRegistry.getManagementProvidersByCapability(capabilityName)) {
-                  if (managementProvider.getClass().isAnnotationPresent(StatisticProvider.class)) {
-                    for (ExposedObject<?> exposedObject : managementProvider.getExposedObjects()) {
-                      allContexts.add(exposedObject.getContext());
-                    }
-                  }
-                }
-
-                if (!allContexts.isEmpty()) {
-                  CapabilityManagement capabilityManagement = managementRegistry.withCapability(capabilityName);
-                  ResultSet<ContextualStatistics> resultSet = capabilityManagement
-                      .queryAllStatistics()
-                      .on(allContexts)
-                      .build()
-                      .execute();
-                  for (ContextualStatistics contextualStatistics : resultSet) {
-                    statistics.add(contextualStatistics);
-                  }
-                }
-              }
-
-
-              if (task != null && !statistics.isEmpty()) {
-                collector.onStatistics(statistics);
-              }
-            }
-          } catch (RuntimeException e) {
-            LOGGER.warn("StatisticCollector failed: " + e.getMessage(), e);
-          }
-        }
-      }, 0, interval, unit);
+      scheduled = true;
+      intervalMs = itv;
+      task = scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, intervalMs, TimeUnit.MILLISECONDS);
     }
   }
 
   @Override
   public synchronized void stopStatisticCollector() {
-    if (task != null) {
+    if (scheduled) {
       LOGGER.trace("stopStatisticCollector()");
-      ScheduledFuture<?> _task = task;
+      scheduled = false;
+      task.cancel(false);
       task = null;
-      _task.cancel(false);
     }
   }
 

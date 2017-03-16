@@ -70,13 +70,12 @@ public class Management {
           try {
             nmsAgentService.pushStatistics(statistics);
           } catch (ExecutionException e) {
-            // hack to avoid printing warnings each time we close the connection when tests ends
-            Throwable t = e.getCause();
-            if (!t.getMessage().endsWith("connection closed")) {
-              LOGGER.warn("Unable to push statistics: " + e.getCause().getMessage(), e.getCause());
-            }
+            LOGGER.warn("Unable to push statistics: " + e.getCause().getMessage(), e.getCause());
           } catch (Exception e) {
-            LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
+            // hack to avoid printing warnings each time we close the connection when tests ends
+            if (!e.getClass().getName().equals("org.terracotta.exception.ConnectionClosedException")) {
+              LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
+            }
           }
         });
 

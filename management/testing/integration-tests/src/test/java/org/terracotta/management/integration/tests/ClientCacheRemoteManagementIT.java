@@ -117,22 +117,4 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
   }
 
-  private void triggerClientStatComputation() throws Exception {
-    // trigger stats computation and wait for all stats to have been computed at least once
-    Client client = nmsService.readTopology()
-        .clientStream()
-        .filter(e -> e.getName().equals("pet-clinic"))
-        .findFirst()
-        .get();
-
-    // similar to cacheManagerName and cacheName context
-    Context context = client.getContext()
-        .with("appName", "pet-clinic");
-
-    nmsService.startStatisticCollector(
-        context,
-        5, TimeUnit.SECONDS
-    ).waitForReturn();
-  }
-
 }

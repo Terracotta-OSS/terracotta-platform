@@ -25,6 +25,9 @@ import java.util.concurrent.TimeUnit;
  */
 public interface StatisticCollector {
 
+  /**
+   * Starts the statistic collector, or, if already started, reschedule it with the new given settings if they have changed.
+   */
   void startStatisticCollector(long interval, TimeUnit unit);
 
   void stopStatisticCollector();

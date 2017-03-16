@@ -18,12 +18,11 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
  */
-public final class ServerEntity extends AbstractNode<Server> {
+public final class ServerEntity extends AbstractManageableNode<Server> {
 
   private static final long serialVersionUID = 3;
 
@@ -33,22 +32,12 @@ public final class ServerEntity extends AbstractNode<Server> {
   public static final String CONSUMER_ID = "consumerId";
 
   private final ServerEntityIdentifier identifier;
-  private volatile ManagementRegistry managementRegistry;
   private long consumerId;
 
   // matches management registry config, or entity id, or service type
   private ServerEntity(ServerEntityIdentifier identifier) {
     super(identifier.getId());
     this.identifier = identifier;
-  }
-
-  public Optional<ManagementRegistry> getManagementRegistry() {
-    return Optional.ofNullable(managementRegistry);
-  }
-
-  public ServerEntity setManagementRegistry(ManagementRegistry managementRegistry) {
-    this.managementRegistry = managementRegistry;
-    return this;
   }
 
   public long getConsumerId() {
@@ -70,10 +59,6 @@ public final class ServerEntity extends AbstractNode<Server> {
 
   public boolean isType(String type) {
     return getType().equals(type);
-  }
-
-  public boolean isManageable() {
-    return managementRegistry != null;
   }
 
   public String getName() {
@@ -124,16 +109,13 @@ public final class ServerEntity extends AbstractNode<Server> {
 
     ServerEntity that = (ServerEntity) o;
 
-    if (!identifier.equals(that.identifier)) return false;
-    return managementRegistry != null ? managementRegistry.equals(that.managementRegistry) : that.managementRegistry == null;
-
+    return identifier.equals(that.identifier);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + (managementRegistry != null ? managementRegistry.hashCode() : 0);
     return result;
   }
 
@@ -143,7 +125,7 @@ public final class ServerEntity extends AbstractNode<Server> {
     map.put("type", getType());
     map.put("name", getName());
     map.put("consumerId", getConsumerId());
-    map.put("managementRegistry", managementRegistry == null ? null : managementRegistry.toMap());
+    map.put("managementRegistry", getManagementRegistry().map(ManagementRegistry::toMap).orElse(null));
     return map;
   }
 

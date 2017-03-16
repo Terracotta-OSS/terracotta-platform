@@ -19,6 +19,7 @@ import org.terracotta.management.model.context.Context;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-public final class Client extends AbstractNode<Cluster> {
+public final class Client extends AbstractManageableNode<Cluster> {
 
   private static final long serialVersionUID = 2;
 
@@ -43,24 +44,10 @@ public final class Client extends AbstractNode<Cluster> {
   private final ClientIdentifier clientIdentifier;
   private final SortedSet<String> tags = new TreeSet<>();
   private String hostName;
-  private volatile ManagementRegistry managementRegistry;
 
   private Client(ClientIdentifier clientIdentifier) {
     super(clientIdentifier.getClientId());
     this.clientIdentifier = Objects.requireNonNull(clientIdentifier);
-  }
-
-  public Optional<ManagementRegistry> getManagementRegistry() {
-    return Optional.ofNullable(managementRegistry);
-  }
-
-  public Client setManagementRegistry(ManagementRegistry managementRegistry) {
-    this.managementRegistry = managementRegistry;
-    return this;
-  }
-
-  public boolean isManageable() {
-    return managementRegistry != null;
   }
 
   public Collection<String> getTags() {
@@ -203,7 +190,7 @@ public final class Client extends AbstractNode<Cluster> {
   }
 
   public boolean isConnected() {
-    return connectionStream().filter(Connection::isConnected).findFirst().isPresent();
+    return connectionStream().anyMatch(Connection::isConnected);
   }
 
   public boolean hasFetchedServerEntity(String name, String type) {
@@ -230,9 +217,7 @@ public final class Client extends AbstractNode<Cluster> {
     if (!connections.equals(client.connections)) return false;
     if (!clientIdentifier.equals(client.clientIdentifier)) return false;
     if (!tags.equals(client.tags)) return false;
-    if (hostName != null ? !hostName.equals(client.hostName) : client.hostName != null) return false;
-    return managementRegistry != null ? managementRegistry.equals(client.managementRegistry) : client.managementRegistry == null;
-
+    return hostName != null ? hostName.equals(client.hostName) : client.hostName == null;
   }
 
   @Override
@@ -242,7 +227,6 @@ public final class Client extends AbstractNode<Cluster> {
     result = 31 * result + clientIdentifier.hashCode();
     result = 31 * result + tags.hashCode();
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
-    result = 31 * result + (managementRegistry != null ? managementRegistry.hashCode() : 0);
     return result;
   }
 
@@ -257,8 +241,8 @@ public final class Client extends AbstractNode<Cluster> {
     map.put("clientId", getClientId());
     map.put("hostName", getHostName());
     map.put("tags", tags);
-    map.put("connections", connectionStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(Connection::toMap).collect(Collectors.toList()));
-    map.put("managementRegistry", managementRegistry == null ? null : managementRegistry.toMap());
+    map.put("connections", connectionStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Connection::toMap).collect(Collectors.toList()));
+    map.put("managementRegistry", getManagementRegistry().map(ManagementRegistry::toMap).orElse(null));
     return map;
   }
 

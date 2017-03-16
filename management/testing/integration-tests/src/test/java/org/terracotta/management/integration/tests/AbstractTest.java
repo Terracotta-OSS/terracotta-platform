@@ -26,12 +26,12 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.management.entity.nms.NmsConfig;
-import org.terracotta.management.entity.sample.Cache;
-import org.terracotta.management.entity.sample.client.CacheFactory;
+import org.terracotta.management.entity.nms.client.DefaultNmsService;
 import org.terracotta.management.entity.nms.client.NmsEntity;
 import org.terracotta.management.entity.nms.client.NmsEntityFactory;
-import org.terracotta.management.entity.nms.client.DefaultNmsService;
 import org.terracotta.management.entity.nms.client.NmsService;
+import org.terracotta.management.entity.sample.Cache;
+import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -46,6 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -224,23 +226,45 @@ public abstract class AbstractTest {
   }
 
   protected void triggerServerStatComputation() throws Exception {
-    // trigger stats computation and wait for all stats to have been computed at least once
-    nmsService.readTopology().serverStream().forEach(server -> {
-      ServerEntity serverEntity = server
-          .serverEntityStream()
-          .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE))
-          .findFirst()
-          .get();
+    triggerServerStatComputation(1, TimeUnit.SECONDS);
+  }
 
-      try {
-        nmsService.startStatisticCollector(
-            serverEntity.getContext(),
-            1, TimeUnit.SECONDS
-        ).waitForReturn();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+  protected void triggerServerStatComputation(long interval, TimeUnit unit) throws Exception {
+    // trigger stats computation and wait for all stats to have been computed at least once
+    CompletableFuture.allOf(nmsService.readTopology()
+        .serverEntityStream()
+        .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE))
+        .map(ServerEntity::getContext)
+        .map(context -> {
+          try {
+            return nmsService.startStatisticCollector(context, interval, unit).asCompletionStage();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .map(CompletionStage::toCompletableFuture)
+        .toArray(CompletableFuture[]::new)).get();
+  }
+
+  protected void triggerClientStatComputation() throws Exception {
+    triggerClientStatComputation(1, TimeUnit.SECONDS);
+  }
+
+  protected void triggerClientStatComputation(long interval, TimeUnit unit) throws Exception {
+    // trigger stats computation and wait for all stats to have been computed at least once
+    CompletableFuture.allOf(nmsService.readTopology()
+        .clientStream()
+        .filter(client -> client.getName().equals("pet-clinic"))
+        .map(client -> client.getContext().with("appName", "pet-clinic"))
+        .map(context -> {
+          try {
+            return nmsService.startStatisticCollector(context, interval, unit).asCompletionStage();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .map(CompletionStage::toCompletableFuture)
+        .toArray(CompletableFuture[]::new)).get();
   }
 
 }
