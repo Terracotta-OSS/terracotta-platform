@@ -36,9 +36,10 @@ public class SerializationCodec implements Codec {
     return decode(type, buffer, 0, buffer.length);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T decode(Class<T> type, byte[] buffer, int offset, int len) {
-    return type.cast(deserialize(buffer, offset, len));
+    return type.isPrimitive() ? (T) deserialize(buffer, offset, len) : type.cast(deserialize(buffer, offset, len));
   }
 
   @Override
@@ -61,7 +62,7 @@ public class SerializationCodec implements Codec {
   public Object[] decode(Class<?>[] types, byte[] buffer, int offset, int len) {
     Object[] oo = (Object[]) deserialize(buffer, offset, len);
     for (int i = 0; i < oo.length; i++) {
-      oo[i] = types[i].cast(oo[i]);
+      oo[i] = types[i].isPrimitive() ? oo[i] : types[i].cast(oo[i]);
     }
     return oo;
   }
@@ -84,6 +85,9 @@ public class SerializationCodec implements Codec {
   }
 
   private Object deserialize(byte[] buffer, int offset, int len) {
+    if(len == 0 || buffer.length == 0) {
+      return null;
+    }
     ByteArrayInputStream bin = new ByteArrayInputStream(buffer, offset, len);
     try {
       ObjectInputStream ois = new ObjectInputStream(bin);
