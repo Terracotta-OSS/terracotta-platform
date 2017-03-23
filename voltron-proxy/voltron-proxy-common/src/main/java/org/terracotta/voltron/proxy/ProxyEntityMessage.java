@@ -19,7 +19,6 @@ import org.terracotta.entity.EntityMessage;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Alex Snaps
@@ -29,7 +28,6 @@ public class ProxyEntityMessage implements EntityMessage {
   private final MethodDescriptor method;
   private final Object[] args;
 
-  private final AtomicBoolean consumed = new AtomicBoolean(false);
   private final MessageType type;
 
   public ProxyEntityMessage(final MethodDescriptor method, final Object[] args, MessageType type) {
@@ -47,11 +45,6 @@ public class ProxyEntityMessage implements EntityMessage {
   }
 
   public Object invoke(final Object target, final Object clientDescriptor) throws InvocationTargetException, IllegalAccessException {
-
-    if(!consumed.compareAndSet(false, true)) {
-      throw new IllegalStateException("Message was consumed already!");
-    }
-
     if (clientDescriptor != null) {
       final Annotation[][] allAnnotations = method.getParameterAnnotations();
       for (int i = 0; i < allAnnotations.length; i++) {
@@ -68,9 +61,6 @@ public class ProxyEntityMessage implements EntityMessage {
   }
 
   public Object invoke(final Object target) throws InvocationTargetException, IllegalAccessException {
-    if(!consumed.compareAndSet(false, true)) {
-      throw new IllegalStateException("Message was consumed already!");
-    }
     return method.invoke(target, args);
   }
 
