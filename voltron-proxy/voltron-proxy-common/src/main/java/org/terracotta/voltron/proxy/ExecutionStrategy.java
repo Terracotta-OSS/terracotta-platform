@@ -34,8 +34,8 @@ public @interface ExecutionStrategy {
   enum Location {
     ACTIVE,
     PASSIVE,
-    BOTH,
-    NONE
+    NONE,
+    BOTH
   }
 
 }
