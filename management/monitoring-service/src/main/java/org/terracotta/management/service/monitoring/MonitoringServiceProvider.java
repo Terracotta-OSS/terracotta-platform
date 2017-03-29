@@ -192,10 +192,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           managementService = new DefaultManagementService(
               consumerID,
               topologyService,
-              firingService,
-              managementServiceConfiguration.getClientCommunicator(),
-              sequenceGenerator,
-              managementServiceConfiguration.getManagementCallExecutor());
+              firingService);
           topologyService.addTopologyEventListener(managementService);
           managementServices.put(consumerID, managementService);
         } else {

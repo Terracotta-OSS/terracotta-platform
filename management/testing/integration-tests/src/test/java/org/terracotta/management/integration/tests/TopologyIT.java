@@ -21,14 +21,9 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou
@@ -46,39 +41,29 @@ public class TopologyIT extends AbstractSingleTest {
 
   @Test
   public void can_read_messages() throws Exception {
-    List<Message> messages = nmsService.readMessages();
-
-    Map<String, List<Message>> messsageByTypes = messages.stream().collect(Collectors.groupingBy(Message::getType));
-    assertThat(messsageByTypes.size(), equalTo(2));
-    assertThat(messsageByTypes.get("TOPOLOGY").size(), equalTo(1));
-
-    List<ContextualNotification> notifs = messages.stream()
-        .filter(message -> message.getType().equals("NOTIFICATION"))
-        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
-
-    Map<String, List<ContextualNotification>> notifsByTypes = notifs.stream().collect(Collectors.groupingBy(ContextualNotification::getType));
-
-    assertThat(notifsByTypes.get("CLIENT_CACHE_CREATED").size(), equalTo(4));
-    assertThat(notifsByTypes.get("CLIENT_INIT").size(), equalTo(2));
-    assertThat(notifsByTypes.get("SERVER_ENTITY_CREATED").size(), equalTo(4));
-    assertThat(notifsByTypes.get("SERVER_CACHE_CREATED").size(), equalTo(2));
-    assertThat(notifsByTypes.get("CLIENT_REGISTRY_AVAILABLE").size(), equalTo(2));
-    assertThat(notifsByTypes.get("CLIENT_CONNECTED").size(), equalTo(2));
-    assertThat(notifsByTypes.get("CLIENT_TAGS_UPDATED").size(), equalTo(2));
-    assertThat(notifsByTypes.get("SERVER_ENTITY_FETCHED").size(), equalTo(7));
-    assertThat(notifsByTypes.get("ENTITY_REGISTRY_AVAILABLE").size(), equalTo(3));
-    assertThat(notifsByTypes.get("CLIENT_ATTACHED").size(), equalTo(4));
-    assertThat(notifsByTypes.get("CLIENT_DETACHED"), is(nullValue()));
+    waitForAllNotifications(
+        "CLIENT_CACHE_CREATED", "CLIENT_CACHE_CREATED", "CLIENT_CACHE_CREATED", "CLIENT_CACHE_CREATED",
+        "CLIENT_INIT", "CLIENT_INIT",
+        "SERVER_ENTITY_CREATED", "SERVER_ENTITY_CREATED", "SERVER_ENTITY_CREATED", "SERVER_ENTITY_CREATED",
+        "SERVER_CACHE_CREATED", "SERVER_CACHE_CREATED",
+        "CLIENT_REGISTRY_AVAILABLE", "CLIENT_REGISTRY_AVAILABLE",
+        "CLIENT_CONNECTED", "CLIENT_CONNECTED",
+        "CLIENT_TAGS_UPDATED", "CLIENT_TAGS_UPDATED",
+        "SERVER_ENTITY_FETCHED", "SERVER_ENTITY_FETCHED",
+        "ENTITY_REGISTRY_AVAILABLE", "ENTITY_REGISTRY_AVAILABLE",
+        "CLIENT_ATTACHED", "CLIENT_ATTACHED");
   }
 
   @Test
   public void notifications_have_a_source_context() throws Exception {
-    List<Message> messages = nmsService.readMessages();
-    List<ContextualNotification> notifs = messages.stream()
-        .filter(message -> message.getType().equals("NOTIFICATION"))
-        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
+    List<ContextualNotification> notifs = waitForAllNotifications(
+        "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "SERVER_ENTITY_FETCHED", 
+        "CLIENT_CONNECTED", "SERVER_ENTITY_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_REGISTRY_AVAILABLE",
+        "CLIENT_TAGS_UPDATED", "CLIENT_INIT", "CLIENT_CONNECTED", "SERVER_ENTITY_FETCHED", "CLIENT_REGISTRY_AVAILABLE",
+        "CLIENT_TAGS_UPDATED", "CLIENT_INIT", "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "SERVER_CACHE_CREATED",
+        "SERVER_ENTITY_FETCHED", "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_ATTACHED",
+        "CLIENT_CACHE_CREATED", "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "SERVER_CACHE_CREATED", "SERVER_ENTITY_FETCHED",
+        "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED");
 
     String currentJson = toJson(notifs).toString();
     String actual = removeRandomValues(currentJson);

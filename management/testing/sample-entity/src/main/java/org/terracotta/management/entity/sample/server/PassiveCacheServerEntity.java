@@ -21,10 +21,12 @@ import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
 
+import java.util.Map;
+
 /**
  * @author Mathieu Carbou
  */
-class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSync, Void> {
+class PassiveCacheServerEntity extends PassiveProxiedServerEntity implements Cache, CacheSync {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PassiveCacheServerEntity.class);
 
@@ -32,7 +34,6 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSy
   private final ServerCache cache;
 
   PassiveCacheServerEntity(ServerCache cache, Management management) {
-    super(cache, cache, null);
     this.cache = cache;
     this.management = management;
   }
@@ -70,5 +71,34 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity<Cache, CacheSy
   @Override
   public void endSyncConcurrencyKey(int concurrencyKey) {
     LOGGER.trace("[{}] endSyncConcurrencyKey({})", cache.getName(), concurrencyKey);
+  }
+
+
+  @Override
+  public void syncCacheDataInPassives(Map<String, String> data) {
+    LOGGER.trace("[{}] syncCacheDataInPassives({})", cache.getName(), data.size());
+    clear();
+    for (Map.Entry<String, String> entry : data.entrySet()) {
+      put(entry.getKey(), entry.getValue());
+    }
+  }
+
+  @Override
+  public void put(String key, String value) {cache.put(key, value);}
+
+  @Override
+  public String get(String key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void remove(String key) {cache.remove(key);}
+
+  @Override
+  public void clear() {cache.clear();}
+
+  @Override
+  public int size() {
+    throw new UnsupportedOperationException();
   }
 }

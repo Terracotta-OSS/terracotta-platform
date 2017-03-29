@@ -34,6 +34,7 @@ import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.ServerEntity;
+import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.testing.rules.Cluster;
 
@@ -41,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -174,7 +176,6 @@ public abstract class AbstractTest {
     // create a NMS Entity
     NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
     NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
-        .setMaximumUnreadMessages(1024 * 1024)
         .setStripeName("SINGLE"));
     this.nmsService = new DefaultNmsService(nmsEntity);
     this.nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
@@ -267,4 +268,18 @@ public abstract class AbstractTest {
         .toArray(CompletableFuture[]::new)).get();
   }
 
+  protected List<ContextualNotification> waitForAllNotifications(String... notificationTypes) throws InterruptedException {
+    List<String> waitingFor = new ArrayList<>(Arrays.asList(notificationTypes));
+    return nmsService.waitForMessage(message -> {
+      if (message.getType().equals("NOTIFICATION")) {
+        for (ContextualNotification notification : message.unwrap(ContextualNotification.class)) {
+          waitingFor.remove(notification.getType());
+        }
+      }
+      return waitingFor.isEmpty();
+    }).stream()
+        .filter(message -> message.getType().equals("NOTIFICATION"))
+        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+        .collect(Collectors.toList());
+  }
 }

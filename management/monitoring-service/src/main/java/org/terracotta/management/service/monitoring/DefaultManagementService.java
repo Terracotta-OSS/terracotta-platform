@@ -17,7 +17,6 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.Parameter;
@@ -27,13 +26,8 @@ import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.message.DefaultMessage;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
-import org.terracotta.management.model.notification.ContextualNotification;
-import org.terracotta.management.sequence.Sequence;
-import org.terracotta.management.sequence.SequenceGenerator;
-import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
 import java.util.Collection;
 import java.util.Map;
@@ -52,43 +46,27 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
 
   private final long consumerId;
   private final FiringService firingService;
-  private final ClientCommunicator clientCommunicator;
-  private final SequenceGenerator sequenceGenerator;
-  private final ManagementCallExecutor managementCallExecutor;
   private final TopologyService topologyService;
   private final Map<ClientDescriptor, Collection<String>> managementCallRequests = new ConcurrentHashMap<>();
-  private final ContextualNotification full;
 
-  private volatile ReadWriteBuffer<Message> buffer;
+  private volatile ManagementExecutor managementExecutor;
 
-  DefaultManagementService(long consumerId, TopologyService topologyService, FiringService firingService, ClientCommunicator clientCommunicator, SequenceGenerator sequenceGenerator, ManagementCallExecutor managementCallExecutor) {
+  DefaultManagementService(long consumerId, TopologyService topologyService, FiringService firingService) {
     this.consumerId = consumerId;
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
-    this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
-    this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
-    this.managementCallExecutor = Objects.requireNonNull(managementCallExecutor);
-    this.full = new ContextualNotification(Context.create(ServerEntity.CONSUMER_ID, Long.toString(consumerId)), Notification.LOST_MESSAGES.name());
+  }
+
+  @Override
+  public void setManagementExecutor(ManagementExecutor managementExecutor) {
+    LOGGER.trace("[{}] setManagementExecutor({})", consumerId, managementExecutor);
+    this.managementExecutor = Objects.requireNonNull(managementExecutor);
   }
 
   @Override
   public Cluster readTopology() {
     LOGGER.trace("[{}] readTopology()", consumerId);
     return topologyService.getClusterCopy();
-  }
-
-  @Override
-  public synchronized ReadOnlyBuffer<Message> createMessageBuffer(int maxBufferSize) {
-    LOGGER.trace("[{}] createMessageBuffer({})", consumerId, maxBufferSize);
-    if (buffer == null) {
-      buffer = new RingBuffer<>(maxBufferSize);
-    }
-    return buffer;
-  }
-
-  @Override
-  public Sequence nextSequence() {
-    return sequenceGenerator.next();
   }
 
   @Override
@@ -121,7 +99,9 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     }
 
     track(caller, managementCallIdentifier);
+
     firingService.fireManagementCallRequest(managementCallIdentifier, new ContextualCall<>(fullContext, capabilityName, methodName, returnType, parameters));
+
     return managementCallIdentifier;
   }
 
@@ -155,13 +135,14 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   public void onEntityCreated(long consumerId) {
   }
 
-  void fireMessage(Message message) {
+  void onMessageToSend(Message message) {
     switch (message.getType()) {
 
-      //TODO: send notifications directly to TMS https://github.com/Terracotta-OSS/terracotta-platform/issues/195
       case "NOTIFICATION":
       case "STATISTICS":
-        push(message);
+        if (managementExecutor != null) {
+          managementExecutor.sendMessageToClients(message);
+        }
         break;
 
       case "MANAGEMENT_CALL":
@@ -169,39 +150,23 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
         String managementCallIdentifier = managementCallMessage.getManagementCallIdentifier();
         if (isTracked(managementCallIdentifier)) {
           ContextualCall call = managementCallMessage.unwrap(ContextualCall.class).get(0);
-          managementCallExecutor.executeManagementCall(managementCallIdentifier, call);
+          if (managementExecutor != null) {
+            managementExecutor.executeManagementCallOnServer(managementCallIdentifier, call);
+          }
         }
         break;
 
       case "MANAGEMENT_CALL_RETURN":
         ManagementCallMessage managementCallResultMessage = (ManagementCallMessage) message;
-        unTrack(managementCallResultMessage.getManagementCallIdentifier())
-            .ifPresent(clientDescriptor -> send(clientDescriptor, message));
+        unTrack(managementCallResultMessage.getManagementCallIdentifier()).ifPresent(clientDescriptor -> {
+          if (managementExecutor != null) {
+            managementExecutor.sendMessageToClient(message, clientDescriptor);
+          }
+        });
         break;
 
       default:
         throw new UnsupportedOperationException(message.getType());
-    }
-  }
-
-  private void send(ClientDescriptor client, Message message) {
-    LOGGER.trace("[{}] send({}, {})", consumerId, client, message);
-    try {
-      clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(Message.class, message));
-    } catch (Exception e) {
-      LOGGER.error("Unable to send message " + message + " to client " + client);
-    }
-  }
-
-  //TODO: send notifications directly to TMS https://github.com/Terracotta-OSS/terracotta-platform/issues/195
-  private void push(Message message) {
-    ReadWriteBuffer<Message> buffer = this.buffer;
-    if (buffer != null) {
-      LOGGER.trace("[{}] push({})", consumerId, message);
-      if (buffer.put(message) != null) {
-        // notify the loss of messages if the ring buffer is full
-        buffer.put(new DefaultMessage(nextSequence(), "NOTIFICATION", full));
-      }
     }
   }
 
@@ -231,9 +196,6 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
 
   private void clear() {
     managementCallRequests.clear();
-    if (buffer != null) {
-      buffer.clear();
-    }
   }
 
 }

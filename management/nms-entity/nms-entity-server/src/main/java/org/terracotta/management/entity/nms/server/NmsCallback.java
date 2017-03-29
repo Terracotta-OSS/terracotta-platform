@@ -15,10 +15,15 @@
  */
 package org.terracotta.management.entity.nms.server;
 
+import org.terracotta.entity.IEntityMessenger.ScheduledToken;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.voltron.proxy.ConcurrencyStrategy;
+import org.terracotta.voltron.proxy.EntityMessenger.Frequency;
 import org.terracotta.voltron.proxy.ExecutionStrategy;
+import org.terracotta.voltron.proxy.server.Messenger;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.ACTIVE;
 import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.BOTH;
 
 /**
@@ -26,10 +31,14 @@ import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.BOTH;
  *
  * @author Mathieu Carbou
  */
-public interface NmsMessenger {
+public interface NmsCallback extends Messenger {
 
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = BOTH)
-  void executeManagementCall(String managementCallIdentifier, ContextualCall<?> call);
+  void entityCallbackToExecuteManagementCall(String managementCallIdentifier, ContextualCall<?> call);
 
+  @ConcurrencyStrategy(key = 17)
+  @ExecutionStrategy(location = ACTIVE)
+  @Frequency(value = 500, unit = MILLISECONDS)
+  ScheduledToken entityCallbackToSendMessagesToClients();
 }

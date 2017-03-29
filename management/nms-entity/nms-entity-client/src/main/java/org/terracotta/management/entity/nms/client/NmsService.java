@@ -20,26 +20,52 @@ import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.Message;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 /**
  * @author Anthony Dahanne
  */
 public interface NmsService {
-    NmsService setOperationTimeout(long duration, TimeUnit unit);
 
-    Cluster readTopology() throws TimeoutException, InterruptedException, ExecutionException;
+  Comparator<Message> MESSAGE_COMPARATOR = Comparator.comparing(Message::getSequence);
 
-    List<Message> readMessages() throws InterruptedException, ExecutionException, TimeoutException;
+  NmsService setOperationTimeout(long duration, TimeUnit unit);
 
-    ManagementCall<Void> startStatisticCollector(Context context, long interval, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
+  Cluster readTopology() throws TimeoutException, InterruptedException, ExecutionException;
 
-    ManagementCall<Void> stopStatisticCollector(Context context) throws InterruptedException, ExecutionException, TimeoutException;
+  /**
+   * Wait for a message to arrive in the queue
+   */
+  Message waitForMessage() throws InterruptedException;
 
-    <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException;
+  /**
+   * Wait for a message to arrive in the queue for a maximum amount of time
+   */
+  Message waitForMessage(long time, TimeUnit unit) throws InterruptedException, TimeoutException;
 
-    void cancelAllManagementCalls();
+  /**
+   * Drain all messages received in the queue. Drained messages are ordered by their sequence
+   */
+  List<Message> readMessages();
+
+  /**
+   * Wait for a message until the predicate returns true and returns the collected messages during this time, sorted by sequence
+   *
+   * @param predicate A function that takes as a parameter the newly received message
+   * @throws InterruptedException In case the call is interrupted
+   */
+  List<Message> waitForMessage(Predicate<Message> predicate) throws InterruptedException;
+
+  ManagementCall<Void> startStatisticCollector(Context context, long interval, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
+
+  ManagementCall<Void> stopStatisticCollector(Context context) throws InterruptedException, ExecutionException, TimeoutException;
+
+  <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException;
+
+  void cancelAllManagementCalls();
 }

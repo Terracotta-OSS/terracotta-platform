@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
@@ -53,6 +54,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -101,7 +104,13 @@ public class VoltronMonitoringServiceTest {
   ClientMonitoringService clientMonitoringService;
   EntityMonitoringService activeEntityMonitoringService;
   EntityMonitoringService passiveEntityMonitoringService;
-  ReadOnlyBuffer<Message> buffer;
+  BlockingQueue<Message> buffer = new LinkedBlockingQueue<>();
+  ManagementExecutor managementExecutor = Mockito.spy(new ManagementExecutorAdapter() {
+    @Override
+    public void sendMessageToClients(Message message) {
+      buffer.add(message);
+    }
+  });
 
   @Before
   public void setUp() throws Exception {
@@ -134,8 +143,8 @@ public class VoltronMonitoringServiceTest {
     activeDataListener = activeServiceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
 
     clientCommunicator = mock(ClientCommunicator.class);
-    managementService = activeServiceProvider.getService(1, new ManagementServiceConfiguration(clientCommunicator, mock(ManagementCallExecutor.class)));
-    buffer = managementService.createMessageBuffer(100);
+    managementService = activeServiceProvider.getService(1, new ManagementServiceConfiguration());
+    managementService.setManagementExecutor(managementExecutor);
 
     clientMonitoringService = activeServiceProvider.getService(1, new ClientMonitoringServiceConfiguration(clientCommunicator));
     activeEntityMonitoringService = activeServiceProvider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
@@ -388,8 +397,11 @@ public class VoltronMonitoringServiceTest {
         ContextualReturn.notExecuted("capabilityName", Context.empty(), "methodName"));
 
     verify(clientCommunicator, times(1)).sendNoResponse(eq(new FakeDesc("2-1")), any(EntityResponse.class));
-    verify(clientCommunicator, times(1)).sendNoResponse(eq(new FakeDesc("1-1")), any(EntityResponse.class));
     verifyNoMoreInteractions(clientCommunicator);
+    
+    verify(managementExecutor, times(1)).sendMessageToClient(any(Message.class), eq(new FakeDesc("1-1")));
+    verify(managementExecutor, times(4)).sendMessageToClients(any(Message.class)); // notifs and stats
+    verifyNoMoreInteractions(managementExecutor);
   }
 
   private void assertTopologyEquals(String file) throws Exception {

@@ -20,29 +20,79 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.nms.agent.NmsAgent;
 import org.terracotta.management.entity.nms.agent.ReconnectData;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.management.service.monitoring.ClientMonitoringService;
+import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
+import org.terracotta.voltron.proxy.server.Messenger;
+
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * @author Mathieu Carbou
  */
-class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<NmsAgent, Void, ReconnectData, Void> {
+class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, ReconnectData, Messenger> implements NmsAgent {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveNmsAgentServerEntity.class);
 
-  private final ActiveNmsAgent activeNmsAgent;
+  private final ClientMonitoringService clientMonitoringService;
 
-  ActiveNmsAgentServerEntity(ActiveNmsAgent activeNmsAgent) {
-    super(activeNmsAgent, null);
-    this.activeNmsAgent = activeNmsAgent;
+  ActiveNmsAgentServerEntity(ClientMonitoringService clientMonitoringService) {
+    this.clientMonitoringService = Objects.requireNonNull(clientMonitoringService);
   }
 
   @Override
   protected void onReconnect(ClientDescriptor clientDescriptor, ReconnectData reconnectData) {
     if (reconnectData != null) {
       LOGGER.trace("onReconnect({})", clientDescriptor);
-      activeNmsAgent.exposeTags(clientDescriptor, reconnectData.tags);
-      activeNmsAgent.exposeManagementMetadata(clientDescriptor, reconnectData.contextContainer, reconnectData.capabilities);
-      activeNmsAgent.pushNotification(clientDescriptor, reconnectData.contextualNotification);
+      exposeTags(clientDescriptor, reconnectData.tags);
+      exposeManagementMetadata(clientDescriptor, reconnectData.contextContainer, reconnectData.capabilities);
+      pushNotification(clientDescriptor, reconnectData.contextualNotification);
     }
   }
+
+  @Override
+  public Future<Void> pushNotification(@ClientId Object caller, ContextualNotification notification) {
+    if (notification != null) {
+      clientMonitoringService.pushNotification((ClientDescriptor) caller, notification);
+    }
+    return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  public Future<Void> pushStatistics(@ClientId Object caller, ContextualStatistics... statistics) {
+    if (statistics != null && statistics.length > 0) {
+      clientMonitoringService.pushStatistics((ClientDescriptor) caller, statistics);
+    }
+    return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  public Future<Void> exposeManagementMetadata(@ClientId Object caller, ContextContainer contextContainer, Capability... capabilities) {
+    if (contextContainer != null && capabilities != null) {
+      clientMonitoringService.exposeManagementRegistry((ClientDescriptor) caller, contextContainer, capabilities);
+    }
+    return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  public Future<Void> exposeTags(@ClientId Object caller, String... tags) {
+    if (tags != null) {
+      clientMonitoringService.exposeTags((ClientDescriptor) caller, tags);
+    }
+    return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  public Future<Void> answerManagementCall(@ClientId Object caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
+    clientMonitoringService.answerManagementCall((ClientDescriptor) caller, managementCallIdentifier, contextualReturn);
+    return CompletableFuture.completedFuture(null);
+  }
+
 }

@@ -18,18 +18,15 @@ package org.terracotta.management.entity.nms.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.nms.Nms;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.NmsVersion;
-import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
 import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.management.service.monitoring.ManagementCallExecutor;
 import org.terracotta.management.service.monitoring.ManagementService;
 import org.terracotta.management.service.monitoring.ManagementServiceConfiguration;
 import org.terracotta.management.service.monitoring.PassiveEntityMonitoringServiceConfiguration;
@@ -43,36 +40,27 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class NmsEntityServerService extends ProxyServerEntityService<Nms, NmsConfig, Void, Void, NmsMessenger> {
+public class NmsEntityServerService extends ProxyServerEntityService<NmsConfig, Void, Void, NmsCallback> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsEntityServerService.class);
 
   public NmsEntityServerService() {
-    super(Nms.class, NmsConfig.class, new Class<?>[]{Message.class}, null, null, NmsMessenger.class);
+    super(Nms.class, NmsConfig.class, new Class<?>[]{Message.class}, null, null, NmsCallback.class);
     setCodec(new SerializationCodec());
   }
 
   @Override
   public ActiveNmsServerEntity createActiveEntity(ServiceRegistry registry, NmsConfig configuration) {
     LOGGER.trace("createActiveEntity()");
-
     // get services
-    NmsMessenger nmsMessenger = createMessenger(registry);
-    ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
-    ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration(communicator, new ManagementCallExecutor() {
-      @Override
-      public void executeManagementCall(String managementCallIdentifier, ContextualCall<?> call) {
-        LOGGER.trace("executeManagementCall({}, {})", managementCallIdentifier, call);
-        nmsMessenger.executeManagementCall(managementCallIdentifier, call);
-      }
-    })));
+    ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration()));
     EntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new ActiveEntityMonitoringServiceConfiguration()));
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
         .addServerManagementProviders()));
     SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
-    ActiveNms activeNms = new ActiveNms(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
-
-    return new ActiveNmsServerEntity(activeNms);
+    ActiveNmsServerEntity entity = new ActiveNmsServerEntity(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
+    managementService.setManagementExecutor(entity);
+    return entity;
   }
 
   @Override
@@ -83,7 +71,7 @@ public class NmsEntityServerService extends ProxyServerEntityService<Nms, NmsCon
     ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
         .addServerManagementProviders()));
     SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
-    return new PassiveNmsServerEntity(new PassiveNms(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry));
+    return new PassiveNmsServerEntity(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
   }
 
   @Override

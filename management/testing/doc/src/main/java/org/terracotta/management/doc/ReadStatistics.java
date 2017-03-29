@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.doc;
 
-import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
@@ -83,24 +82,20 @@ public class ReadStatistics {
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     ScheduledFuture<?> task = executorService.scheduleWithFixedDelay(() -> {
-      try {
 
-        List<Message> messages = nmsService.readMessages();
-        System.out.println(messages.size() + " messages");
-        messages
-            .stream()
-            .filter(message -> message.getType().equals("STATISTICS"))
-            .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())
-            .forEach(statistics -> {
-              System.out.println(statistics.getContext());
-              for (Map.Entry<String, Number> entry : statistics.getStatistics().entrySet()) {
-                System.out.println(" - " + entry.getKey() + "=" + entry.getValue());
-              }
-            });
+      List<Message> messages = nmsService.readMessages();
+      System.out.println(messages.size() + " messages");
+      messages
+          .stream()
+          .filter(message -> message.getType().equals("STATISTICS"))
+          .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())
+          .forEach(statistics -> {
+            System.out.println(statistics.getContext());
+            for (Map.Entry<String, Number> entry : statistics.getStatistics().entrySet()) {
+              System.out.println(" - " + entry.getKey() + "=" + entry.getValue());
+            }
+          });
 
-      } catch (InterruptedException | ExecutionException | TimeoutException e) {
-        LoggerFactory.getLogger(className).error("ERR: " + e.getMessage(), e);
-      }
     }, 0, 5, TimeUnit.SECONDS);
 
     System.in.read();
