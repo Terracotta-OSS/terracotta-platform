@@ -48,24 +48,24 @@ public class CacheEntityFactory {
 
   public CacheEntity retrieve(String entityName) throws EntityNotFoundException {
     try {
-      return getEntityRef(entityName).fetchEntity();
+      return getEntityRef(entityName).fetchEntity(null);
     } catch (EntityVersionMismatchException e) {
       throw new AssertionError(e);
     }
   }
 
   public CacheEntity create(String entityName, String cacheName) throws EntityAlreadyExistsException {
-    EntityRef<CacheEntity, String> ref = getEntityRef(entityName);
+    EntityRef<CacheEntity, String, Object> ref = getEntityRef(entityName);
     try {
       ref.create(cacheName);
-      return ref.fetchEntity();
+      return ref.fetchEntity(null);
     } catch (EntityNotProvidedException | EntityVersionMismatchException | EntityNotFoundException | EntityConfigurationException e) {
       throw new AssertionError(e);
     }
   }
 
   public void reconfigure(String entityName, String cacheName) throws EntityAlreadyExistsException {
-    EntityRef<CacheEntity, String> ref = getEntityRef(entityName);
+    EntityRef<CacheEntity, String, Object> ref = getEntityRef(entityName);
     try {
       ref.reconfigure(cacheName);
     } catch (EntityNotProvidedException | EntityNotFoundException | EntityConfigurationException e) {
@@ -73,7 +73,7 @@ public class CacheEntityFactory {
     }
   }
 
-  private EntityRef<CacheEntity, String> getEntityRef(String identifier) {
+  private EntityRef<CacheEntity, String, Object> getEntityRef(String identifier) {
     try {
       return connection.getEntityRef(CacheEntity.class, 1, identifier);
     } catch (EntityNotProvidedException e) {

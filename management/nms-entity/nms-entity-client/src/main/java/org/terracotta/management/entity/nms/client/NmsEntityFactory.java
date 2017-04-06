@@ -56,23 +56,23 @@ public class NmsEntityFactory {
 
   public NmsEntity retrieve() throws EntityNotFoundException {
     try {
-      return getEntityRef().fetchEntity();
+      return getEntityRef().fetchEntity(null);
     } catch (EntityVersionMismatchException e) {
       throw new AssertionError(e);
     }
   }
 
   public NmsEntity create(NmsConfig config) throws EntityAlreadyExistsException, EntityConfigurationException {
-    EntityRef<NmsEntity, NmsConfig> ref = getEntityRef();
+    EntityRef<NmsEntity, NmsConfig, Object> ref = getEntityRef();
     try {
       ref.create(config);
-      return ref.fetchEntity();
+      return ref.fetchEntity(null);
     } catch (EntityNotProvidedException | EntityVersionMismatchException | EntityNotFoundException e) {
       throw new AssertionError(e);
     }
   }
 
-  private EntityRef<NmsEntity, NmsConfig> getEntityRef() {
+  private EntityRef<NmsEntity, NmsConfig, Object> getEntityRef() {
     try {
       return connection.getEntityRef(NmsEntity.class, NmsVersion.LATEST.version(), entityName);
     } catch (EntityNotProvidedException e) {

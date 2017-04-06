@@ -67,7 +67,7 @@ public class HealthCheckerFactoryTest {
 
     EntityRef ref = mock(EntityRef.class);
     HealthCheck hc = mock(HealthCheck.class);
-    when(ref.fetchEntity()).thenReturn(hc);
+    when(ref.fetchEntity(null)).thenReturn(hc);
     final Timer timer = new Timer();
     when(hc.getTimer()).thenReturn(timer);
     when(hc.ping(anyString())).thenThrow(new IllegalStateException("not connected"));

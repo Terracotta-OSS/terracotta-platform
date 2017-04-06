@@ -24,7 +24,7 @@ import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 import org.terracotta.voltron.proxy.ProxyMessageCodec;
 
-public abstract class ProxyEntityClientService<T extends Entity & ServerMessageAware, C> implements EntityClientService<T, C, ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ProxyEntityClientService<T extends Entity & ServerMessageAware, C> implements EntityClientService<T, C, ProxyEntityMessage, ProxyEntityResponse, Object> {
 
   private final Class<T> clientType;
   private final Class<? super T> type;
@@ -46,7 +46,7 @@ public abstract class ProxyEntityClientService<T extends Entity & ServerMessageA
   }
 
   @Override
-  public T create(EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint) {
+  public T create(EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint, Object userData) {
     return ClientProxyFactory.createEntityProxy(clientType, type, endpoint, messageTypes, messageCodec.getCodec());
   }
 
