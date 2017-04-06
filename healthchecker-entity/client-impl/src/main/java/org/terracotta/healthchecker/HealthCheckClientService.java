@@ -24,7 +24,7 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.MessageCodec;
 
 @SuppressWarnings("rawtypes")
-public class HealthCheckClientService implements EntityClientService<HealthCheck, Properties, HealthCheckReq, HealthCheckRsp>  {
+public class HealthCheckClientService implements EntityClientService<HealthCheck, Properties, HealthCheckReq, HealthCheckRsp, Object>  {
   private final HealthCheckerCodec CODEC = new HealthCheckerCodec();
 
   @Override
@@ -56,7 +56,7 @@ public class HealthCheckClientService implements EntityClientService<HealthCheck
   }
 
   @Override
-  public HealthCheck create(EntityClientEndpoint<HealthCheckReq, HealthCheckRsp> endpoint) {
+  public HealthCheck create(EntityClientEndpoint<HealthCheckReq, HealthCheckRsp> endpoint, Object userData) {
     return new HealthCheckerClient(endpoint);
   }
 

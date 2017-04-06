@@ -24,7 +24,7 @@ import org.terracotta.entity.map.common.MapOperation;
 import org.terracotta.entity.map.common.MapResponse;
 
 @SuppressWarnings("rawtypes")
-public class TerracottaClusteredMapClientService implements EntityClientService<ConcurrentClusteredMap, Void, MapOperation, MapResponse> {
+public class TerracottaClusteredMapClientService implements EntityClientService<ConcurrentClusteredMap, Void, MapOperation, MapResponse, Object> {
   @Override
   public boolean handlesEntityType(Class<ConcurrentClusteredMap> cls) {
     return cls == ConcurrentClusteredMap.class;
@@ -42,7 +42,7 @@ public class TerracottaClusteredMapClientService implements EntityClientService<
 
   @SuppressWarnings("unchecked")
   @Override
-  public ConcurrentClusteredMap create(EntityClientEndpoint endpoint) {
+  public ConcurrentClusteredMap create(EntityClientEndpoint endpoint, Object userData) {
     return new TerracottaClusteredMap(endpoint);
   }
 

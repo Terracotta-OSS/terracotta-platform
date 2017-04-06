@@ -61,9 +61,9 @@ public class ClusteredConcurrentMapPassthroughTest {
       }
     });
     Connection connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
-    EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
+    EntityRef<ConcurrentClusteredMap, Object, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
     entityRef.create(null);
-    clusteredMap = entityRef.fetchEntity();
+    clusteredMap = entityRef.fetchEntity(null);
     clusteredMap.setTypes(Long.class, String.class);
   }
 
@@ -88,8 +88,8 @@ public class ClusteredConcurrentMapPassthroughTest {
     clusteredMap.put(key, value);
 
     Connection connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
-    EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
-    ConcurrentClusteredMap<Long, String> mapFromOtherClient = entityRef.fetchEntity();
+    EntityRef<ConcurrentClusteredMap, Object, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, MAP_NAME);
+    ConcurrentClusteredMap<Long, String> mapFromOtherClient = entityRef.fetchEntity(null);
     mapFromOtherClient.setTypes(Long.class, String.class);
 
     assertThat(mapFromOtherClient.get(key), is(value));
@@ -127,9 +127,9 @@ public class ClusteredConcurrentMapPassthroughTest {
   @Test
   public void testWithCustomType() throws Exception {
     Connection connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
-    EntityRef<ConcurrentClusteredMap, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
+    EntityRef<ConcurrentClusteredMap, Object, Object> entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
     entityRef.create(null);
-    ConcurrentClusteredMap<Long, Person> map = entityRef.fetchEntity();
+    ConcurrentClusteredMap<Long, Person> map = entityRef.fetchEntity(null);
     map.setTypes(Long.class, Person.class);
 
     map.put(33L, new Person("Iron Man", 33));
@@ -137,7 +137,7 @@ public class ClusteredConcurrentMapPassthroughTest {
 
     connection = ConnectionFactory.connect(URI.create(CLUSTER_URI), new Properties());
     entityRef = connection.getEntityRef(ConcurrentClusteredMap.class, ConcurrentClusteredMap.VERSION, "person-map");
-    map = entityRef.fetchEntity();
+    map = entityRef.fetchEntity(null);
     map.setTypes(Long.class, Person.class);
 
     assertThat(map.get(33L).name, is("Iron Man"));

@@ -56,17 +56,17 @@ public class NmsAgentEntityFactory {
 
   public NmsAgentEntity retrieve() throws EntityNotFoundException {
     try {
-      return getEntityRef().fetchEntity();
+      return getEntityRef().fetchEntity(null);
     } catch (EntityVersionMismatchException e) {
       throw new AssertionError(e);
     }
   }
 
   public NmsAgentEntity create(NmsAgentConfig config) throws EntityAlreadyExistsException, EntityConfigurationException {
-    EntityRef<NmsAgentEntity, NmsAgentConfig> ref = getEntityRef();
+    EntityRef<NmsAgentEntity, NmsAgentConfig, Object> ref = getEntityRef();
     try {
       ref.create(config);
-      return ref.fetchEntity();
+      return ref.fetchEntity(null);
     } catch (EntityNotProvidedException e) {
       throw new AssertionError(e);
     } catch (EntityVersionMismatchException e) {
@@ -76,7 +76,7 @@ public class NmsAgentEntityFactory {
     }
   }
 
-  private EntityRef<NmsAgentEntity, NmsAgentConfig> getEntityRef() {
+  private EntityRef<NmsAgentEntity, NmsAgentConfig, Object> getEntityRef() {
     try {
       return connection.getEntityRef(NmsAgentEntity.class, NmsAgentVersion.LATEST.version(), ENTITYNAME);
     } catch (EntityNotProvidedException e) {
