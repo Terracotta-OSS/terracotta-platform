@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.doc;
 
-import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
@@ -25,12 +24,10 @@ import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author Mathieu Carbou
@@ -45,20 +42,16 @@ public class ReadNotifications {
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     ScheduledFuture<?> task = executorService.scheduleWithFixedDelay(() -> {
-      try {
 
-        // READ M&M MESSAGES and filter NOTIFICATIONS
-        List<Message> messages = service.readMessages();
-        System.out.println(messages.size() + " messages");
-        messages
-            .stream()
-            .filter(message -> message.getType().equals("NOTIFICATION"))
-            .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-            .forEach(notification -> System.out.println(" - " + notification.getType() + ":\n   - " + notification.getContext() + "\n   - " + notification.getAttributes()));
+      // READ M&M MESSAGES and filter NOTIFICATIONS
+      List<Message> messages = service.readMessages();
+      System.out.println(messages.size() + " messages");
+      messages
+          .stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .forEach(notification -> System.out.println(" - " + notification.getType() + ":\n   - " + notification.getContext() + "\n   - " + notification.getAttributes()));
 
-      } catch (InterruptedException | ExecutionException | TimeoutException e) {
-        LoggerFactory.getLogger(className).error("ERR: " + e.getMessage(), e);
-      }
     }, 0, 5, TimeUnit.SECONDS);
 
     System.in.read();

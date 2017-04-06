@@ -23,7 +23,9 @@ import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -119,8 +121,8 @@ class ProxyInvoker<T> implements MessageFiring {
     clients.remove(descriptor);
   }
 
-  public Set<ClientDescriptor> getClients() {
-    return clients;
+  public Collection<ClientDescriptor> getClients() {
+    return new ArrayList<>(clients);
   }
 
   private void handleExceptionOnSend(MessageCodecException ex) {

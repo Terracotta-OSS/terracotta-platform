@@ -18,13 +18,11 @@ package org.terracotta.management.entity.nms;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.message.Message;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.ConcurrencyStrategy;
 import org.terracotta.voltron.proxy.ExecutionStrategy;
 
-import java.util.List;
 import java.util.concurrent.Future;
 
 import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.ACTIVE;
@@ -38,11 +36,6 @@ public interface Nms {
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<Cluster> readTopology();
-
-  @Async(Async.Ack.NONE)
-  @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
-  @ExecutionStrategy(location = ACTIVE)
-  Future<List<Message>> readMessages();
 
   /**
    * Execute a management call on the server and returns the results

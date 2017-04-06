@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -30,6 +29,8 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -54,7 +55,14 @@ public class ManagementRegistryServiceTest {
   IStripeMonitoring dataListener;
   long now = System.currentTimeMillis();
   PlatformServer server = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9520, "version", "build", now);
-
+  List<Message> buffer = new ArrayList<>();
+  ManagementExecutor managementExecutor = new ManagementExecutorAdapter() {
+    @Override
+    public void sendMessageToClients(Message message) {
+      buffer.add(message);
+    }
+  };
+  
   @Before
   public void setUp() throws Exception {
     provider.initialize(null, new MyPlatformConfiguration("server-1"));
@@ -94,8 +102,8 @@ public class ManagementRegistryServiceTest {
     platformListener.addNode(server, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName", 1, true));
 
     dataListener = provider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
-    managementService = provider.getService(1, new ManagementServiceConfiguration(mock(ClientCommunicator.class), mock(ManagementCallExecutor.class)));
-    ReadOnlyBuffer<Message> buffer = managementService.createMessageBuffer(100);
+    managementService = provider.getService(1, new ManagementServiceConfiguration());
+    managementService.setManagementExecutor(managementExecutor);
 
     // a consumer asks for a service
     EntityMonitoringService activeEntityMonitoringService = provider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
@@ -107,7 +115,7 @@ public class ManagementRegistryServiceTest {
     registry.refresh();
 
     assertThat(buffer.size(), equalTo(1));
-    assertThat(buffer.read().unwrap(ContextualNotification.class).get(0).getType(), equalTo("ENTITY_REGISTRY_AVAILABLE"));
+    assertThat(buffer.remove(0).unwrap(ContextualNotification.class).get(0).getType(), equalTo("ENTITY_REGISTRY_AVAILABLE"));
     assertThat(buffer.size(), equalTo(0));
 
     registry.refresh();

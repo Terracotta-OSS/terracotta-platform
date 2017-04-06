@@ -16,19 +16,27 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.ContextualCall;
-import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.message.Message;
 
 /**
- * Interface passed to a {@link ManagementServiceConfiguration}, that is responsible to execute a management call
- * and set back the result by calling {@link EntityMonitoringService#answerManagementCall(String, ContextualReturn)}.
- * <p>
- * Management call execution can be done directly through the callback, or could also be redirected to the right server
- * with {@link org.terracotta.entity.IEntityMessenger}
- *
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ManagementCallExecutor {
-  void executeManagementCall(String managementCallIdentifier, ContextualCall<?> call);
+public class ManagementExecutorAdapter implements ManagementExecutor {
+  @Override
+  public void executeManagementCallOnServer(String managementCallIdentifier, ContextualCall<?> call) {
+    
+  }
+
+  @Override
+  public void sendMessageToClients(Message message) {
+
+  }
+
+  @Override
+  public void sendMessageToClient(Message message, ClientDescriptor to) {
+
+  }
 }

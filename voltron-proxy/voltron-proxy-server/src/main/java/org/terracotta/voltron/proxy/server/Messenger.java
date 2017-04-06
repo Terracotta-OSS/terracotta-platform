@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
-
-import com.tc.classloader.CommonComponent;
-import org.terracotta.entity.ServiceConfiguration;
+package org.terracotta.voltron.proxy.server;
 
 /**
+ * This interface can be extened by a proxy interface, and the proxy interface be implemented by entities.
+ * <p>
+ * This allows an entity to use the {@link org.terracotta.entity.IEntityMessenger} capabilities through a
+ * defined proxy interface
+ * <p>
+ * Calls gets transformed and sent to active / passive according to annotations put on the proxy interface.
+ * <p>
+ * Works like a standard entity proxy interface
+ *
  * @author Mathieu Carbou
  */
-@CommonComponent
-public class ManagementServiceConfiguration implements ServiceConfiguration<ManagementService> {
-
-  @Override
-  public Class<ManagementService> getServiceType() {
-    return ManagementService.class;
-  }
-
+public interface Messenger {
+  void unSchedule();
 }

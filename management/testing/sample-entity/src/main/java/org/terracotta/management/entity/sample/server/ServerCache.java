@@ -35,7 +35,7 @@ import static org.terracotta.statistics.StatisticBuilder.operation;
 /**
  * @author Mathieu Carbou
  */
-public class ServerCache implements Cache, CacheSync {
+public class ServerCache implements Cache {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerCache.class);
 
@@ -142,15 +142,6 @@ public class ServerCache implements Cache, CacheSync {
   @Override
   public int size() {
     return data.size();
-  }
-
-  @Override
-  public void syncCacheDataInPassives(Map<String, String> data) {
-    LOGGER.trace("[{}] syncCacheDataInPassives({})", name, data.size());
-    clear();
-    for (Map.Entry<String, String> entry : data.entrySet()) {
-      put(entry.getKey(), entry.getValue());
-    }
   }
 
   public String getName() {

@@ -21,6 +21,7 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.server.Messenger;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
 import java.io.Serializable;
@@ -31,7 +32,7 @@ import java.util.Set;
 /**
  * @author Mathieu Carbou
  */
-public class CacheEntityServerService extends ProxyServerEntityService<Cache, String, CacheSync, Void, Void> {
+public class CacheEntityServerService extends ProxyServerEntityService<String, CacheSync, Void, Messenger> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CacheEntityServerService.class);
 
@@ -46,8 +47,7 @@ public class CacheEntityServerService extends ProxyServerEntityService<Cache, St
     Map<String, String> data = registry.getService(new MapConfiguration(identifier));
     ServerCache cache = new ServerCache(identifier, data);
     Management management = new Management(cache.getName(), registry, true);
-    ActiveCacheServerEntity entity = new ActiveCacheServerEntity(cache, management);
-    return entity;
+    return new ActiveCacheServerEntity(cache, management);
   }
 
   @Override

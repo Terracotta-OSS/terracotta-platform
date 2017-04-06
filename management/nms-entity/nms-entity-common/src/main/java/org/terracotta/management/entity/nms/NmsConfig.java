@@ -23,22 +23,12 @@ import java.util.Objects;
  */
 public final class NmsConfig implements Serializable {
 
-  private static final long serialVersionUID = 2;
+  private static final long serialVersionUID = 3;
 
   // name must be hardcoded because it reference a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.nms.client.NmsEntity";
 
-  private int maximumUnreadMessages = 1024 * 1024;
   private String stripeName = "SINGLE";
-
-  public int getMaximumUnreadMessages() {
-    return maximumUnreadMessages;
-  }
-
-  public NmsConfig setMaximumUnreadMessages(int maximumUnreadMessages) {
-    this.maximumUnreadMessages = maximumUnreadMessages;
-    return this;
-  }
 
   public String getStripeName() {
     return stripeName;
@@ -52,8 +42,7 @@ public final class NmsConfig implements Serializable {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("NmsConfig{");
-    sb.append("maximumUnreadMessages=").append(maximumUnreadMessages);
-    sb.append(", stripeName='").append(stripeName).append('\'');
+    sb.append("stripeName='").append(stripeName).append('\'');
     sb.append('}');
     return sb.toString();
   }

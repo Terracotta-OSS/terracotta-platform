@@ -43,8 +43,7 @@ class Utils {
 
   static NmsService createNmsService(Connection connection, String entityName) throws EntityConfigurationException {
     NmsEntityFactory factory = new NmsEntityFactory(connection, entityName);
-    NmsEntity nmsEntity = factory.retrieveOrCreate(new NmsConfig()
-        .setMaximumUnreadMessages(1024 * 1024));
+    NmsEntity nmsEntity = factory.retrieveOrCreate(new NmsConfig());
     return new DefaultNmsService(nmsEntity);
   }
 

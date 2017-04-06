@@ -18,6 +18,7 @@ package org.terracotta.management.entity.sample.client.management;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.management.entity.nms.agent.NmsAgentConfig;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityFactory;
@@ -73,7 +74,7 @@ public class Management {
             LOGGER.warn("Unable to push statistics: " + e.getCause().getMessage(), e.getCause());
           } catch (Exception e) {
             // hack to avoid printing warnings each time we close the connection when tests ends
-            if (!e.getClass().getName().equals("org.terracotta.exception.ConnectionClosedException")) {
+            if (!(e instanceof ConnectionClosedException)) {
               LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
             }
           }

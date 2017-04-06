@@ -20,14 +20,8 @@ import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
-import org.terracotta.management.model.notification.ContextualNotification;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou
@@ -61,22 +55,7 @@ public class PassiveTopologyIT extends AbstractHATest {
     cacheFactory.destroyCache("my-cache");
     cacheFactory.close();
 
-    List<ContextualNotification> notifs = nmsService.readMessages()
-        .stream()
-        .filter(message -> message.getType().equals("NOTIFICATION"))
-        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
-
-    while (!Thread.currentThread().isInterrupted() && notifs.stream().filter(contextualNotification -> contextualNotification.getType().equals("SERVER_ENTITY_DESTROYED")).count() != 2) {
-      notifs.addAll(nmsService.readMessages()
-          .stream()
-          .filter(message -> message.getType().equals("NOTIFICATION"))
-          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-          .collect(Collectors.toList()));
-    }
-
-    assertThat(notifs.stream().map(ContextualNotification::getType).collect(Collectors.toList()), hasItems(
-        "CLIENT_CONNECTED",
+    waitForAllNotifications("CLIENT_CONNECTED",
         "SERVER_ENTITY_FETCHED",
         "CLIENT_REGISTRY_AVAILABLE",
         "CLIENT_TAGS_UPDATED",
@@ -94,8 +73,7 @@ public class PassiveTopologyIT extends AbstractHATest {
         "SERVER_ENTITY_DESTROYED",
         "CLIENT_CLOSE",
         "CLIENT_ATTACHED",
-        "CLIENT_DETACHED"
-    ));
+        "CLIENT_DETACHED");
   }
 
 }

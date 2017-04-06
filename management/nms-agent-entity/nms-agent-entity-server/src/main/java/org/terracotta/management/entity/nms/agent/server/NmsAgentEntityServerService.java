@@ -28,6 +28,7 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ClientMonitoringService;
 import org.terracotta.management.service.monitoring.ClientMonitoringServiceConfiguration;
 import org.terracotta.voltron.proxy.SerializationCodec;
+import org.terracotta.voltron.proxy.server.Messenger;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
 import java.util.Objects;
@@ -35,7 +36,7 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-public class NmsAgentEntityServerService extends ProxyServerEntityService<NmsAgent, NmsAgentConfig, Void, ReconnectData, Void> {
+public class NmsAgentEntityServerService extends ProxyServerEntityService<NmsAgentConfig, Void, ReconnectData, Messenger> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsAgentEntityServerService.class);
 
@@ -47,17 +48,16 @@ public class NmsAgentEntityServerService extends ProxyServerEntityService<NmsAge
 
   @Override
   public ActiveNmsAgentServerEntity createActiveEntity(ServiceRegistry registry, NmsAgentConfig configuration) {
+    LOGGER.trace("createActiveEntity()");
     ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
     ClientMonitoringService clientMonitoringService = Objects.requireNonNull(registry.getService(new ClientMonitoringServiceConfiguration(communicator)));
-    ActiveNmsAgent activeNmsAgent = new ActiveNmsAgent(clientMonitoringService);
-    LOGGER.trace("createActiveEntity()");
-    return new ActiveNmsAgentServerEntity(activeNmsAgent);
+    return new ActiveNmsAgentServerEntity(clientMonitoringService);
   }
 
   @Override
   protected PassiveNmsAgentServerEntity createPassiveEntity(ServiceRegistry registry, NmsAgentConfig configuration) {
     LOGGER.trace("createPassiveEntity()");
-    return new PassiveNmsAgentServerEntity(new PassiveNmsAgent());
+    return new PassiveNmsAgentServerEntity();
   }
 
   @Override

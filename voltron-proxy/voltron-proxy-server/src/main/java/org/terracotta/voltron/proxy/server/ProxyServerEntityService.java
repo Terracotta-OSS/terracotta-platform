@@ -40,13 +40,12 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * @param <T> The interface of the entity proxy implementation
  * @param <C> Entity config type
  * @param <S> Void, or the interface type to sync to passives
  * @param <R> Void, or the reconnect data type
  * @author Mathieu Carbou
  */
-public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityServerService<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> implements EntityServerService<ProxyEntityMessage, ProxyEntityResponse> {
 
   private final Class<C> configType;
   private final Class<?>[] eventTypes;
@@ -68,7 +67,7 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
     }
   };
 
-  public ProxyServerEntityService(Class<T> proxyType, Class<C> configType, Class<?>[] eventTypes, Class<S> synchronizerType, Class<R> reconnectDataType, Class<M> messengerType) {
+  public ProxyServerEntityService(Class<?> proxyType, Class<C> configType, Class<?>[] eventTypes, Class<S> synchronizerType, Class<R> reconnectDataType, Class<M> messengerType) {
     this.configType = Objects.requireNonNull(configType);
 
     this.eventTypes = eventTypes; // can be null
@@ -96,9 +95,9 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
   }
 
   @Override
-  public final ActiveProxiedServerEntity<T, S, R, M> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public final ActiveProxiedServerEntity<S, R, M> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
     C config = decodeConfig(configuration);
-    ActiveProxiedServerEntity<T, S, R, M> activeEntity = createActiveEntity(registry, config);
+    ActiveProxiedServerEntity<S, R, M> activeEntity = createActiveEntity(registry, config);
 
     if (eventTypes != null && eventTypes.length > 0) {
       ClientCommunicator clientCommunicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
@@ -114,11 +113,16 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
       activeEntity.setReconnect(reconnectDataType, messageCodec.getCodec());
     }
 
+    if (messengerType != null) {
+      IEntityMessenger entityMessenger = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
+      activeEntity.setMessenger(MessengerProxyFactory.createProxy(messengerType, entityMessenger));
+    }
+
     return activeEntity;
   }
 
   @Override
-  public final PassiveProxiedServerEntity<T, S, M> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public final PassiveProxiedServerEntity createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
     C config = decodeConfig(configuration);
     return createPassiveEntity(registry, config);
   }
@@ -138,19 +142,19 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
   public final <AP extends CommonServerEntity<ProxyEntityMessage, ProxyEntityResponse>> AP reconfigureEntity(ServiceRegistry registry, AP oldEntity, byte[] configuration) throws ConfigurationException {
     C config = decodeConfig(configuration);
     if (oldEntity instanceof PassiveServerEntity) {
-      return (AP) reconfigurePassiveEntity(registry, (PassiveProxiedServerEntity<T, S, M>) oldEntity, config);
+      return (AP) reconfigurePassiveEntity(registry, (PassiveProxiedServerEntity) oldEntity, config);
     } else if (oldEntity instanceof ActiveServerEntity) {
-      return (AP) reconfigureActiveEntity(registry, (ActiveProxiedServerEntity<T, S, R, M>) oldEntity, config);
+      return (AP) reconfigureActiveEntity(registry, (ActiveProxiedServerEntity<S, R, M>) oldEntity, config);
     } else {
       throw new AssertionError("unknown entity type");
     }
   }
 
-  protected ActiveProxiedServerEntity<T, S, R, M> reconfigureActiveEntity(ServiceRegistry registry, ActiveProxiedServerEntity<T, S, R, M> currentEntity, C config) throws ConfigurationException {
+  protected ActiveProxiedServerEntity<S, R, M> reconfigureActiveEntity(ServiceRegistry registry, ActiveProxiedServerEntity<S, R, M> currentEntity, C config) throws ConfigurationException {
     // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be change accordingly to your needs.
     Set<ClientDescriptor> clients = new HashSet<>(currentEntity.getEntityInvoker().getClients());
     currentEntity.destroy();
-    ActiveProxiedServerEntity<T, S, R, M> entity = createActiveEntity(registry, config);
+    ActiveProxiedServerEntity<S, R, M> entity = createActiveEntity(registry, config);
     entity.createNew();
     for (ClientDescriptor clientDescriptor : clients) {
       entity.connected(clientDescriptor);
@@ -158,10 +162,10 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
     return entity;
   }
 
-  protected PassiveProxiedServerEntity<T, S, M> reconfigurePassiveEntity(ServiceRegistry registry, PassiveProxiedServerEntity<T, S, M> currentEntity, C config) throws ConfigurationException {
+  protected PassiveProxiedServerEntity reconfigurePassiveEntity(ServiceRegistry registry, PassiveProxiedServerEntity currentEntity, C config) throws ConfigurationException {
     // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be change accordingly to your needs.
     currentEntity.destroy();
-    PassiveProxiedServerEntity<T, S, M> entity = createPassiveEntity(registry, config);
+    PassiveProxiedServerEntity entity = createPassiveEntity(registry, config);
     entity.createNew();
     return entity;
   }
@@ -173,23 +177,15 @@ public abstract class ProxyServerEntityService<T, C, S, R, M> implements EntityS
     }
   }
 
-  protected final M createMessenger(ServiceRegistry registry) {
-    if (messengerType == null) {
-      throw new IllegalStateException("No messengerType defined in constructor");
-    }
-    IEntityMessenger entityMessenger = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
-    return MessengerProxyFactory.createProxy(messengerType, entityMessenger);
-  }
-
   // can be overriden / implemented
 
   protected Set<Integer> getKeysForSynchronization() {
     return Collections.emptySet();
   }
 
-  protected abstract ActiveProxiedServerEntity<T, S, R, M> createActiveEntity(ServiceRegistry registry, C configuration);
+  protected abstract ActiveProxiedServerEntity<S, R, M> createActiveEntity(ServiceRegistry registry, C configuration);
 
-  protected abstract PassiveProxiedServerEntity<T, S, M> createPassiveEntity(ServiceRegistry registry, C configuration);
+  protected abstract PassiveProxiedServerEntity createPassiveEntity(ServiceRegistry registry, C configuration);
 
   private C decodeConfig(byte[] configuration) {
     C config = null;

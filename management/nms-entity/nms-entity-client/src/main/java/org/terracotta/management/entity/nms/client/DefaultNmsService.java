@@ -25,9 +25,12 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -35,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 
 /**
  * @author Mathieu Carbou
@@ -45,6 +49,7 @@ public class DefaultNmsService implements NmsService {
 
   private final Queue<VoltronManagementCall<?>> managementCalls = new ConcurrentLinkedQueue<>();
   private final NmsEntity entity;
+  private final BlockingQueue<Message> incomingMessageQueue;
 
   // this RW lock is to prevent any message listener callback to iterate over the list of managementCalls
   // before this list gets updated in the call() method.
@@ -56,7 +61,12 @@ public class DefaultNmsService implements NmsService {
   private long timeout = 5000;
 
   public DefaultNmsService(final NmsEntity entity) {
+    this(entity, new ArrayBlockingQueue<>(1024 * 1024));
+  }
+
+  public DefaultNmsService(final NmsEntity entity, BlockingQueue<Message> incomingMessageQueue) {
     this.entity = Objects.requireNonNull(entity);
+    this.incomingMessageQueue = incomingMessageQueue;
     this.entity.registerMessageListener(Message.class, message -> {
       LOGGER.trace("onMessage({})", message);
 
@@ -66,16 +76,22 @@ public class DefaultNmsService implements NmsService {
           lock.readLock().lock();
           try {
             managementCalls
-                    .stream()
-                    .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
-                    .findFirst()
-                    .ifPresent(managementCall -> complete(managementCall, message.unwrap(ContextualReturn.class).get(0)));
+                .stream()
+                .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
+                .findFirst()
+                .ifPresent(managementCall -> complete(managementCall, message.unwrap(ContextualReturn.class).get(0)));
           } finally {
             lock.readLock().unlock();
           }
           break;
 
-        //TODO: send notifications directly to TMS https://github.com/Terracotta-OSS/terracotta-platform/issues/195
+        case "NOTIFICATION":
+        case "STATISTICS":
+          boolean offered = incomingMessageQueue.offer(message);
+          if (!offered) {
+            LOGGER.trace("Queue is full - Message lost: ", message);
+          }
+          break;
 
         default:
           LOGGER.warn("Received unsupported message: " + message);
@@ -92,26 +108,58 @@ public class DefaultNmsService implements NmsService {
     return get(entity.readTopology());
   }
 
-  public List<Message> readMessages() throws InterruptedException, ExecutionException, TimeoutException {
-    return get(entity.readMessages());
+  @Override
+  public Message waitForMessage() throws InterruptedException {
+    return incomingMessageQueue.take();
+  }
+
+  @Override
+  public Message waitForMessage(long time, TimeUnit unit) throws InterruptedException, TimeoutException {
+    Message message = incomingMessageQueue.poll(time, unit);
+    if (message == null) {
+      throw new TimeoutException("No message arrived within " + time + " " + unit);
+    }
+    return message;
+  }
+
+  @Override
+  public List<Message> waitForMessage(Predicate<Message> predicate) throws InterruptedException {
+    List<Message> collected = new ArrayList<>();
+    Message message;
+    do {
+      message = waitForMessage();
+      collected.add(message);
+    }
+    while (!predicate.test(message));
+    collected.sort(MESSAGE_COMPARATOR);
+    return collected;
+  }
+
+  public List<Message> readMessages() {
+    List<Message> messages = new ArrayList<>(incomingMessageQueue.size());
+    incomingMessageQueue.drainTo(messages);
+    if (!messages.isEmpty()) {
+      messages.sort(MESSAGE_COMPARATOR);
+    }
+    return messages;
   }
 
   public ManagementCall<Void> startStatisticCollector(Context context, long interval, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     return call(
-            context,
-            "StatisticCollectorCapability",
-            "startStatisticCollector",
-            Void.TYPE,
-            new Parameter(interval, long.class.getName()),
-            new Parameter(unit, TimeUnit.class.getName()));
+        context,
+        "StatisticCollectorCapability",
+        "startStatisticCollector",
+        Void.TYPE,
+        new Parameter(interval, long.class.getName()),
+        new Parameter(unit, TimeUnit.class.getName()));
   }
 
   public ManagementCall<Void> stopStatisticCollector(Context context) throws InterruptedException, ExecutionException, TimeoutException {
     return call(
-            context,
-            "StatisticCollectorCapability",
-            "stopStatisticCollector",
-            Void.TYPE);
+        context,
+        "StatisticCollectorCapability",
+        "stopStatisticCollector",
+        Void.TYPE);
   }
 
   public <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException {
