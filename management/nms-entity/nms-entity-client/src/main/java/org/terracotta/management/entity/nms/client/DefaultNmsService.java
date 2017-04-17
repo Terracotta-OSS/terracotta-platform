@@ -25,31 +25,33 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou
  */
-public class DefaultNmsService implements NmsService {
+public class DefaultNmsService implements NmsService, Closeable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsService.class);
 
   private final Queue<VoltronManagementCall<?>> managementCalls = new ConcurrentLinkedQueue<>();
   private final NmsEntity entity;
-  private final BlockingQueue<Message> incomingMessageQueue;
+  private final BlockingQueue<Optional<Message>> incomingMessageQueue;
 
   // this RW lock is to prevent any message listener callback to iterate over the list of managementCalls
   // before this list gets updated in the call() method.
@@ -59,109 +61,94 @@ public class DefaultNmsService implements NmsService {
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private long timeout = 5000;
+  private volatile boolean closed;
 
   public DefaultNmsService(final NmsEntity entity) {
-    this(entity, new ArrayBlockingQueue<>(1024 * 1024));
+    this(entity, new LinkedBlockingQueue<>());
   }
 
-  public DefaultNmsService(final NmsEntity entity, BlockingQueue<Message> incomingMessageQueue) {
+  public DefaultNmsService(final NmsEntity entity, BlockingQueue<Optional<Message>> incomingMessageQueue) {
     this.entity = Objects.requireNonNull(entity);
     this.incomingMessageQueue = incomingMessageQueue;
     this.entity.registerMessageListener(Message.class, message -> {
-      LOGGER.trace("onMessage({})", message);
+      if (!closed) {
+        LOGGER.trace("onMessage({})", message);
 
-      switch (message.getType()) {
+        switch (message.getType()) {
 
-        case "MANAGEMENT_CALL_RETURN":
-          lock.readLock().lock();
-          try {
-            managementCalls
-                .stream()
-                .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
-                .findFirst()
-                .ifPresent(managementCall -> complete(managementCall, message.unwrap(ContextualReturn.class).get(0)));
-          } finally {
-            lock.readLock().unlock();
-          }
-          break;
+          case "MANAGEMENT_CALL_RETURN":
+            lock.readLock().lock();
+            try {
+              managementCalls
+                  .stream()
+                  .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
+                  .findFirst()
+                  .ifPresent(managementCall -> complete(managementCall, message.unwrap(ContextualReturn.class).get(0)));
+            } finally {
+              lock.readLock().unlock();
+            }
+            break;
 
-        case "NOTIFICATION":
-        case "STATISTICS":
-          boolean offered = incomingMessageQueue.offer(message);
-          if (!offered) {
-            LOGGER.trace("Queue is full - Message lost: ", message);
-          }
-          break;
+          case "NOTIFICATION":
+          case "STATISTICS":
+            boolean offered = incomingMessageQueue.offer(Optional.of(message));
+            if (!offered) {
+              LOGGER.trace("Queue is full - Message lost: ", message);
+            }
+            break;
 
-        default:
-          LOGGER.warn("Received unsupported message: " + message);
+          default:
+            LOGGER.warn("Received unsupported message: " + message);
+
+        }
       }
     });
   }
 
+  @Override
   public NmsService setOperationTimeout(long duration, TimeUnit unit) {
     this.timeout = TimeUnit.MILLISECONDS.convert(duration, unit);
     return this;
   }
 
+  @Override
   public Cluster readTopology() throws TimeoutException, InterruptedException, ExecutionException {
     return get(entity.readTopology());
   }
 
   @Override
   public Message waitForMessage() throws InterruptedException {
-    return incomingMessageQueue.take();
+    Optional<Message> o = incomingMessageQueue.take();
+    if (!o.isPresent()) {
+      throw new InterruptedException();
+    }
+    return o.get();
   }
 
   @Override
   public Message waitForMessage(long time, TimeUnit unit) throws InterruptedException, TimeoutException {
-    Message message = incomingMessageQueue.poll(time, unit);
-    if (message == null) {
+    Optional<Message> o = incomingMessageQueue.poll(time, unit);
+    if (o == null) {
       throw new TimeoutException("No message arrived within " + time + " " + unit);
     }
-    return message;
+    if (!o.isPresent()) {
+      throw new InterruptedException();
+    }
+    return o.get();
   }
 
   @Override
-  public List<Message> waitForMessage(Predicate<Message> predicate) throws InterruptedException {
-    List<Message> collected = new ArrayList<>();
-    Message message;
-    do {
-      message = waitForMessage();
-      collected.add(message);
-    }
-    while (!predicate.test(message));
-    collected.sort(MESSAGE_COMPARATOR);
-    return collected;
-  }
-
   public List<Message> readMessages() {
-    List<Message> messages = new ArrayList<>(incomingMessageQueue.size());
-    incomingMessageQueue.drainTo(messages);
+    List<Optional<Message>> optionals = new ArrayList<>(incomingMessageQueue.size());
+    incomingMessageQueue.drainTo(optionals);
+    List<Message> messages = optionals.stream().filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     if (!messages.isEmpty()) {
       messages.sort(MESSAGE_COMPARATOR);
     }
     return messages;
   }
 
-  public ManagementCall<Void> startStatisticCollector(Context context, long interval, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    return call(
-        context,
-        "StatisticCollectorCapability",
-        "startStatisticCollector",
-        Void.TYPE,
-        new Parameter(interval, long.class.getName()),
-        new Parameter(unit, TimeUnit.class.getName()));
-  }
-
-  public ManagementCall<Void> stopStatisticCollector(Context context) throws InterruptedException, ExecutionException, TimeoutException {
-    return call(
-        context,
-        "StatisticCollectorCapability",
-        "stopStatisticCollector",
-        Void.TYPE);
-  }
-
+  @Override
   public <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException {
     LOGGER.trace("call({}, {}, {})", context, capabilityName, methodName);
     lock.writeLock().lock();
@@ -175,6 +162,7 @@ public class DefaultNmsService implements NmsService {
     }
   }
 
+  @Override
   public void cancelAllManagementCalls() {
     while (!managementCalls.isEmpty()) {
       VoltronManagementCall<?> call = managementCalls.poll();
@@ -182,6 +170,18 @@ public class DefaultNmsService implements NmsService {
         call.cancel();
       }
     }
+  }
+
+  @Override
+  public void close() {
+    // close status not checked because if we do we should also check for the other methods
+    // this is ok to call it several times
+    closed = true;
+    incomingMessageQueue.offer(Optional.empty()); // allows waiting threads to be interrupt
+  }
+
+  private <V> V get(Future<V> future) throws ExecutionException, TimeoutException, InterruptedException {
+    return future.get(timeout, TimeUnit.MILLISECONDS);
   }
 
   private static <T> void complete(VoltronManagementCall<T> managementCall, ContextualReturn<?> aReturn) {
@@ -195,10 +195,6 @@ public class DefaultNmsService implements NmsService {
       // no target found for this management call
       managementCall.completeExceptionally(new IllegalManagementCallException(aReturn.getContext(), aReturn.getCapability(), aReturn.getMethodName()));
     }
-  }
-
-  private <V> V get(Future<V> future) throws ExecutionException, TimeoutException, InterruptedException {
-    return future.get(timeout, TimeUnit.MILLISECONDS);
   }
 
 }
