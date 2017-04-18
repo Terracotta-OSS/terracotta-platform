@@ -20,6 +20,7 @@ import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.Message;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -59,11 +60,35 @@ public interface NmsService {
    * @param predicate A function that takes as a parameter the newly received message
    * @throws InterruptedException In case the call is interrupted
    */
-  List<Message> waitForMessage(Predicate<Message> predicate) throws InterruptedException;
+  default List<Message> waitForMessage(Predicate<Message> predicate) throws InterruptedException {
+    List<Message> collected = new ArrayList<>();
+    Message message;
+    do {
+      message = waitForMessage();
+      collected.add(message);
+    }
+    while (!predicate.test(message));
+    collected.sort(MESSAGE_COMPARATOR);
+    return collected;
+  }
 
-  ManagementCall<Void> startStatisticCollector(Context context, long interval, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
+  default ManagementCall<Void> startStatisticCollector(Context context, long interval, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    return call(
+        context,
+        "StatisticCollectorCapability",
+        "startStatisticCollector",
+        Void.TYPE,
+        new Parameter(interval, long.class.getName()),
+        new Parameter(unit, TimeUnit.class.getName()));
+  }
 
-  ManagementCall<Void> stopStatisticCollector(Context context) throws InterruptedException, ExecutionException, TimeoutException;
+  default ManagementCall<Void> stopStatisticCollector(Context context) throws InterruptedException, ExecutionException, TimeoutException {
+    return call(
+        context,
+        "StatisticCollectorCapability",
+        "stopStatisticCollector",
+        Void.TYPE);
+  }
 
   <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException;
 
