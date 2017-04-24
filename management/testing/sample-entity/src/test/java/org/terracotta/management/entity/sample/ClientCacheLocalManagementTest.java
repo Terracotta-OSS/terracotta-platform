@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -45,11 +46,12 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
   public void can_access_local_management_registry() throws Exception {
     CapabilityManagementSupport registry = webappNodes.get(0).getManagementRegistry();
 
-    assertThat(registry.getCapabilities().size(), equalTo(5));
+    assertThat(registry.getCapabilities().size(), equalTo(6));
 
     assertThat(registry.getManagementProvidersByCapability("CacheSettings").size(), equalTo(1));
     assertThat(registry.getManagementProvidersByCapability("CacheStatistics").size(), equalTo(1));
     assertThat(registry.getManagementProvidersByCapability("CacheCalls").size(), equalTo(1));
+    assertThat(registry.getManagementProvidersByCapability("DiagnosticCalls").size(), equalTo(1));
     assertThat(registry.getManagementProvidersByCapability("StatisticCollectorCapability").size(), equalTo(1));
     assertThat(registry.getManagementProvidersByCapability("NmsAgentService").size(), equalTo(1));
 
