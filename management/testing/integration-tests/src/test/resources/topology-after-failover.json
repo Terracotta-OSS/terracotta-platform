@@ -622,6 +622,17 @@
             ]
           },
           {
+            "name": "DiagnosticCalls",
+            "context": [],
+            "descriptors": [
+              {
+                "name": "getThreadDump",
+                "returnType": "java.lang.String",
+                "parameters": []
+              }
+            ]
+          },
+          {
             "name": "NmsAgentService",
             "context": [],
             "descriptors": []
@@ -797,6 +808,17 @@
               {
                 "name": "ClientCache:Size",
                 "type": "SIZE"
+              }
+            ]
+          },
+          {
+            "name": "DiagnosticCalls",
+            "context": [],
+            "descriptors": [
+              {
+                "name": "getThreadDump",
+                "returnType": "java.lang.String",
+                "parameters": []
               }
             ]
           },
