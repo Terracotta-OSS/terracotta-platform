@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 /**
  * @author Mathieu Carbou
  */
-class VoltronManagementCall<T> implements ManagementCall<T> {
+public class VoltronManagementCall<T> implements ManagementCall<T> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(VoltronManagementCall.class);
 
@@ -42,7 +42,7 @@ class VoltronManagementCall<T> implements ManagementCall<T> {
   private final long timeout;
   private final Consumer<VoltronManagementCall<?>> onDone;
 
-  VoltronManagementCall(String managementCallId, Context target, Class<T> returnType, long timeout, Consumer<VoltronManagementCall<?>> onDone) {
+  public VoltronManagementCall(String managementCallId, Context target, Class<T> returnType, long timeout, Consumer<VoltronManagementCall<?>> onDone) {
     this.target = Objects.requireNonNull(target);
     this.managementCallId = Objects.requireNonNull(managementCallId);
     this.returnType = Objects.requireNonNull(returnType);

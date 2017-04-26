@@ -25,7 +25,6 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
 /**
  * @author Mathieu Carbou
  */
-public class DefaultNmsService implements NmsService, Closeable {
+public class DefaultNmsService implements NmsService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsService.class);
 
@@ -61,8 +60,7 @@ public class DefaultNmsService implements NmsService, Closeable {
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private long timeout = 5000;
-  private volatile boolean closed;
-
+  
   public DefaultNmsService(final NmsEntity entity) {
     this(entity, new LinkedBlockingQueue<>());
   }
@@ -71,36 +69,34 @@ public class DefaultNmsService implements NmsService, Closeable {
     this.entity = Objects.requireNonNull(entity);
     this.incomingMessageQueue = incomingMessageQueue;
     this.entity.registerMessageListener(Message.class, message -> {
-      if (!closed) {
-        LOGGER.trace("onMessage({})", message);
+      LOGGER.trace("onMessage({})", message);
 
-        switch (message.getType()) {
+      switch (message.getType()) {
 
-          case "MANAGEMENT_CALL_RETURN":
-            lock.readLock().lock();
-            try {
-              managementCalls
-                  .stream()
-                  .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
-                  .findFirst()
-                  .ifPresent(managementCall -> complete(managementCall, message.unwrap(ContextualReturn.class).get(0)));
-            } finally {
-              lock.readLock().unlock();
-            }
-            break;
+        case "MANAGEMENT_CALL_RETURN":
+          lock.readLock().lock();
+          try {
+            managementCalls
+                .stream()
+                .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
+                .findFirst()
+                .ifPresent(managementCall -> complete(managementCall, message.unwrap(ContextualReturn.class).get(0)));
+          } finally {
+            lock.readLock().unlock();
+          }
+          break;
 
-          case "NOTIFICATION":
-          case "STATISTICS":
-            boolean offered = incomingMessageQueue.offer(Optional.of(message));
-            if (!offered) {
-              LOGGER.trace("Queue is full - Message lost: ", message);
-            }
-            break;
+        case "NOTIFICATION":
+        case "STATISTICS":
+          boolean offered = incomingMessageQueue.offer(Optional.of(message));
+          if (!offered) {
+            LOGGER.trace("Queue is full - Message lost: ", message);
+          }
+          break;
 
-          default:
-            LOGGER.warn("Received unsupported message: " + message);
+        default:
+          LOGGER.warn("Received unsupported message: " + message);
 
-        }
       }
     });
   }
@@ -170,14 +166,6 @@ public class DefaultNmsService implements NmsService, Closeable {
         call.cancel();
       }
     }
-  }
-
-  @Override
-  public void close() {
-    // close status not checked because if we do we should also check for the other methods
-    // this is ok to call it several times
-    closed = true;
-    incomingMessageQueue.offer(Optional.empty()); // allows waiting threads to be interrupt
   }
 
   private <V> V get(Future<V> future) throws ExecutionException, TimeoutException, InterruptedException {

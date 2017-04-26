@@ -17,11 +17,12 @@ package org.terracotta.management.entity.nms.client;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.management.entity.nms.Nms;
+import org.terracotta.voltron.proxy.client.EndpointListenerAware;
 import org.terracotta.voltron.proxy.client.ServerMessageAware;
 
 /**
  * @author Mathieu Carbou
  */
-public interface NmsEntity extends Nms, Entity, ServerMessageAware {
+public interface NmsEntity extends Nms, Entity, ServerMessageAware, EndpointListenerAware {
 
 }

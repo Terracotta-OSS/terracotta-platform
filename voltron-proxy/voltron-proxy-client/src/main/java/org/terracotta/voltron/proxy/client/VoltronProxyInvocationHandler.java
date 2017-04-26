@@ -63,13 +63,11 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint;
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
-  private final Codec codec;
 
-  private EndpointListener endpointListener;
+  private volatile EndpointListener endpointListener;
 
   VoltronProxyInvocationHandler(final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, Collection<Class<?>> events, final Codec codec) {
     this.entityClientEndpoint = entityClientEndpoint;
-    this.codec = codec;
     this.listeners = new ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<MessageListener>>();
     if (events.size() > 0) {
       for (Class<?> aClass : events) {
