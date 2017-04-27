@@ -72,11 +72,10 @@ public class Management {
             nmsAgentService.pushStatistics(statistics);
           } catch (ExecutionException e) {
             LOGGER.warn("Unable to push statistics: " + e.getCause().getMessage(), e.getCause());
+          } catch (ConnectionClosedException ignored) {
+            // avoid printing warnings each time we close the connection when tests ends
           } catch (Exception e) {
-            // hack to avoid printing warnings each time we close the connection when tests ends
-            if (!(e instanceof ConnectionClosedException)) {
-              LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
-            }
+            LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
           }
         });
 

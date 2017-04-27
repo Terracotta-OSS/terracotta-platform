@@ -22,6 +22,7 @@ import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -71,6 +72,12 @@ public class PassiveStartupIT extends AbstractHATest {
         "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
         "SERVER_STATE_CHANGED",
         "SYNC_END");
+
+    Predicate<ContextualNotification> gotPassive = n -> n.getType().equals("SERVER_STATE_CHANGED") && "PASSIVE".equals(n.getAttributes().get("state"));
+    boolean gotPassiveNotif = collected.stream().anyMatch(gotPassive);
+    if (!gotPassiveNotif) {
+      nmsService.waitForMessage(message -> message.getType().equals("NOTIFICATION") && message.unwrap(ContextualNotification.class).stream().anyMatch(gotPassive));
+    }
 
     Set<String> states = collected.stream()
         .filter(contextualNotification -> contextualNotification.getType().equals("SERVER_STATE_CHANGED"))

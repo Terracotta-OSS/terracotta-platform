@@ -17,6 +17,7 @@ package org.terracotta.management.entity.nms.agent.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.management.entity.nms.agent.ReconnectData;
 import org.terracotta.management.entity.nms.agent.client.diag.DiagnosticProvider;
 import org.terracotta.management.entity.nms.agent.client.diag.DiagnosticUtility;
@@ -57,6 +58,7 @@ public class NmsAgentService implements Closeable {
 
   private volatile ManagementRegistry registry;
   private volatile boolean bridging = false;
+  private volatile boolean disconnected = false;
   private Capability[] previouslyExposedCapabilities;
   private String[] previouslyExposedTags;
 
@@ -87,6 +89,8 @@ public class NmsAgentService implements Closeable {
         } catch (InterruptedException e) {
           LOGGER.error("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
           Thread.currentThread().interrupt();
+        } catch (ConnectionClosedException e) {
+          NmsAgentService.this.close();
         } catch (Exception e) {
           LOGGER.error("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
         }
@@ -120,7 +124,12 @@ public class NmsAgentService implements Closeable {
                   // check again in case the management call takes some time
                   if (bridging) {
                     LOGGER.trace("answerManagementCall({}, {})", message, contextualCall);
-                    get(entity.answerManagementCall(null, ((ManagementCallMessage) message).getManagementCallIdentifier(), aReturn));
+                    try {
+                      get(entity.answerManagementCall(null, ((ManagementCallMessage) message).getManagementCallIdentifier(), aReturn));
+                    } catch (ConnectionClosedException e) {
+                      disconnected = true;
+                      throw e;
+                    }
                   }
                 }
               } catch (Exception err) {
@@ -185,6 +194,10 @@ public class NmsAgentService implements Closeable {
       registry.register(new DiagnosticUtility());
       bridging = true;
     }
+  }
+
+  public boolean isDisconnected() {
+    return disconnected;
   }
 
   @Override
