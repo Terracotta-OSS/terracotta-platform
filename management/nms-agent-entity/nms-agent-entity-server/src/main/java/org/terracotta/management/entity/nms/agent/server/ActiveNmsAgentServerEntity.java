@@ -48,6 +48,12 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
   }
 
   @Override
+  public void destroy() {
+    clientMonitoringService.close();
+    super.destroy();
+  }
+
+  @Override
   protected void onReconnect(ClientDescriptor clientDescriptor, ReconnectData reconnectData) {
     if (reconnectData != null) {
       LOGGER.trace("onReconnect({})", clientDescriptor);

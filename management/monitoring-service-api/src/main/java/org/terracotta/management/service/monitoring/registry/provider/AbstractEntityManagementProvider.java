@@ -30,11 +30,11 @@ import java.util.concurrent.ExecutionException;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public abstract class AbstractConsumerManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware {
+public abstract class AbstractEntityManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware {
 
   private EntityMonitoringService monitoringService;
 
-  public AbstractConsumerManagementProvider(Class<? extends T> managedType) {
+  public AbstractEntityManagementProvider(Class<? extends T> managedType) {
     super(managedType);
   }
 

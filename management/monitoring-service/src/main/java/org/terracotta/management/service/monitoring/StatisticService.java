@@ -15,18 +15,12 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
-import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.management.registry.collect.StatisticCollector;
 
 /**
- * @author Mathieu Carbou
+ * This statistic service is injected into {@link org.terracotta.management.registry.ManagementProvider} objects implementing
+ * {@link org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware} when they are added into a {@link EntityManagementRegistry}
  */
-@CommonComponent
-public class ActiveEntityMonitoringServiceConfiguration implements ServiceConfiguration<EntityMonitoringService> {
-
-  @Override
-  public Class<EntityMonitoringService> getServiceType() {
-    return EntityMonitoringService.class;
-  }
-
+interface StatisticService {
+  StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
 }

@@ -48,14 +48,14 @@ public class DefaultManagementRegistry implements ManagementRegistry {
   }
 
   @Override
-  public void addManagementProvider(ManagementProvider<?> provider) {
+  public boolean addManagementProvider(ManagementProvider<?> provider) {
     String name = provider.getCapabilityName();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       if (managementProvider.getCapabilityName().equals(name)) {
-        throw new IllegalStateException("Duplicated management provider name : " + name);
+        return false;
       }
     }
-    managementProviders.add(provider);
+    return managementProviders.add(provider);
   }
 
   @Override

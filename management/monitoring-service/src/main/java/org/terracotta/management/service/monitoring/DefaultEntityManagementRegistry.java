@@ -17,7 +17,6 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -25,7 +24,7 @@ import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.service.monitoring.registry.provider.AbstractConsumerManagementProvider;
+import org.terracotta.management.service.monitoring.registry.provider.AbstractEntityManagementProvider;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 
 import java.util.ArrayList;
@@ -42,20 +41,34 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Mathieu Carbou
  */
-class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, TopologyEventListener {
+class DefaultEntityManagementRegistry implements EntityManagementRegistry, TopologyEventListener {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConsumerManagementRegistry.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultEntityManagementRegistry.class);
   private static final Comparator<Capability> CAPABILITY_COMPARATOR = Comparator.comparing(Capability::getName);
 
   private final long consumerId;
   private final EntityMonitoringService monitoringService;
+  private final DefaultSharedEntityManagementRegistry sharedManagementRegistry;
+  private final TopologyService topologyService;
+  private final Collection<ManageableServerComponent> manageableServerComponents;
   private final ContextContainer contextContainer;
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
 
-  DefaultConsumerManagementRegistry(long consumerId, EntityMonitoringService monitoringService) {
+  DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService, DefaultSharedEntityManagementRegistry sharedManagementRegistry, TopologyService topologyService, Collection<ManageableServerComponent> manageableServerComponents) {
     this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
     this.consumerId = consumerId;
     this.monitoringService = Objects.requireNonNull(monitoringService);
+    this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);
+    this.topologyService = Objects.requireNonNull(topologyService);
+    this.manageableServerComponents = Objects.requireNonNull(manageableServerComponents);
+
+    topologyService.addTopologyEventListener(this);
+    sharedManagementRegistry.addManagementService(this);
+  }
+
+  @Override
+  public EntityMonitoringService getMonitoringService() {
+    return monitoringService;
   }
 
   @Override
@@ -64,18 +77,21 @@ class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, T
   }
 
   @Override
-  public void addManagementProvider(ManagementProvider<?> provider) {
+  public boolean addManagementProvider(ManagementProvider<?> provider) {
     LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass().getSimpleName());
     String name = provider.getCapabilityName();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       if (managementProvider.getCapabilityName().equals(name)) {
-        throw new IllegalStateException("Duplicated management provider name : " + name);
+        return false;
       }
     }
-    if (provider instanceof MonitoringServiceAware) {
-      ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
+    boolean added = managementProviders.add(provider);
+    if (added) {
+      if (provider instanceof MonitoringServiceAware) {
+        ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
+      }
     }
-    managementProviders.add(provider);
+    return added;
   }
 
   @Override
@@ -124,8 +140,8 @@ class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, T
     List<CompletableFuture<Void>> futures = new ArrayList<>(managementProviders.size());
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
-        if (managementProvider instanceof AbstractConsumerManagementProvider) {
-          CompletableFuture<Void> future = ((AbstractConsumerManagementProvider) managementProvider).registerAsync(managedObject);
+        if (managementProvider instanceof AbstractEntityManagementProvider) {
+          CompletableFuture<Void> future = ((AbstractEntityManagementProvider) managementProvider).registerAsync(managedObject);
           futures.add(future);
         } else {
           managementProvider.register(managedObject);
@@ -172,35 +188,19 @@ class DefaultConsumerManagementRegistry implements ConsumerManagementRegistry, T
     return false;
   }
 
-  @Override
-  public void onBecomeActive() {
-    // do not clear any state because on failover, onBecomeActive() is called after the new active entities are created
-    // so it would clear the providers added by entities at creation time
-  }
-
-  @Override
-  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
-  }
-
-  @Override
-  public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
-  }
-
-  @Override
-  public void onEntityDestroyed(long consumerId) {
-    if (consumerId == this.consumerId) {
-      LOGGER.trace("[{}] onEntityDestroyed()", consumerId);
-      clear();
-    }
-  }
-
-  @Override
-  public void onEntityCreated(long consumerId) {
-  }
-
   void clear() {
     LOGGER.trace("[{}] clear()", consumerId);
     managementProviders.forEach(ManagementProvider::close);
     managementProviders.clear();
   }
+
+  @Override
+  public void close() {
+    LOGGER.trace("[{}] close()", consumerId);
+    manageableServerComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryClose(this));
+    clear();
+    topologyService.removeTopologyEventListener(this);
+    sharedManagementRegistry.removeManagementService(this);
+  }
+
 }

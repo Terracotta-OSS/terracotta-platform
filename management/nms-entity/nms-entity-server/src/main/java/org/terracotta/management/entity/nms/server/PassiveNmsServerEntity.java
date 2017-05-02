@@ -25,9 +25,8 @@ import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
-import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.management.service.monitoring.SharedManagementRegistry;
+import org.terracotta.management.service.monitoring.EntityManagementRegistry;
+import org.terracotta.management.service.monitoring.SharedEntityManagementRegistry;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
 
@@ -41,23 +40,27 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PassiveNmsServerEntity.class);
 
-  private final ConsumerManagementRegistry consumerManagementRegistry;
-  private final EntityMonitoringService entityMonitoringService;
-  private final SharedManagementRegistry sharedManagementRegistry;
+  private final EntityManagementRegistry entityManagementRegistry;
+  private final SharedEntityManagementRegistry sharedEntityManagementRegistry;
 
-  PassiveNmsServerEntity(ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService entityMonitoringService, SharedManagementRegistry sharedManagementRegistry) {
-    this.consumerManagementRegistry = Objects.requireNonNull(consumerManagementRegistry);
-    this.entityMonitoringService = Objects.requireNonNull(entityMonitoringService);
-    this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);
+  PassiveNmsServerEntity(EntityManagementRegistry entityManagementRegistry, SharedEntityManagementRegistry sharedEntityManagementRegistry) {
+    this.entityManagementRegistry = Objects.requireNonNull(entityManagementRegistry);
+    this.sharedEntityManagementRegistry = Objects.requireNonNull(sharedEntityManagementRegistry);
   }
 
   // PassiveProxiedServerEntity
-  
+
+  @Override
+  public void destroy() {
+    entityManagementRegistry.close();
+    super.destroy();
+  }
+
   @Override
   public void createNew() {
     super.createNew();
-    LOGGER.trace("[{}] createNew()", entityMonitoringService.getConsumerId());
-    consumerManagementRegistry.refresh();
+    LOGGER.trace("[{}] createNew()", entityManagementRegistry.getMonitoringService().getConsumerId());
+    entityManagementRegistry.refresh();
   }
 
   // NmsCallback
@@ -68,15 +71,15 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
     if (serverName == null) {
       throw new IllegalArgumentException("Bad context: " + call.getContext());
     }
-    if (entityMonitoringService.getServerName().equals(serverName)) {
-      LOGGER.trace("[{}] entityCallbackToExecuteManagementCall({}, {}, {}, {})", entityMonitoringService.getConsumerId(), managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
-      ContextualReturn<?> contextualReturn = sharedManagementRegistry.withCapability(call.getCapability())
+    if (entityManagementRegistry.getMonitoringService().getServerName().equals(serverName)) {
+      LOGGER.trace("[{}] entityCallbackToExecuteManagementCall({}, {}, {}, {})", entityManagementRegistry.getMonitoringService().getConsumerId(), managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
+      ContextualReturn<?> contextualReturn = sharedEntityManagementRegistry.withCapability(call.getCapability())
           .call(call.getMethodName(), call.getReturnType(), call.getParameters())
           .on(call.getContext())
           .build()
           .execute()
           .getSingleResult();
-      entityMonitoringService.answerManagementCall(managementCallIdentifier, contextualReturn);
+      entityManagementRegistry.getMonitoringService().answerManagementCall(managementCallIdentifier, contextualReturn);
     }
   }
 

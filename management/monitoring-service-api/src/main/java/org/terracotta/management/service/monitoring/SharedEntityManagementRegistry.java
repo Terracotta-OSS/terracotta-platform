@@ -29,7 +29,7 @@ import java.util.Collection;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface SharedManagementRegistry extends CapabilityManagementSupport {
+public interface SharedEntityManagementRegistry extends CapabilityManagementSupport {
 
   Collection<ContextContainer> getContextContainers();
 

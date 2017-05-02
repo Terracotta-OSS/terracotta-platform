@@ -20,39 +20,33 @@ import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
 import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.management.registry.ManagementRegistry;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map;
+import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou
  */
-class DefaultSharedManagementRegistry implements SharedManagementRegistry {
+class DefaultSharedEntityManagementRegistry implements SharedEntityManagementRegistry {
 
   private static final Comparator<Capability> CAPABILITY_COMPARATOR = Comparator.comparing(Capability::getName);
 
-  private final Map<Long, DefaultConsumerManagementRegistry> registries;
-
-  DefaultSharedManagementRegistry(Map<Long, DefaultConsumerManagementRegistry> registries) {
-    this.registries = registries;
-  }
+  private final List<DefaultEntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
 
   @Override
   public Collection<ContextContainer> getContextContainers() {
-    return registries.values()
-        .stream()
-        .map(ConsumerManagementRegistry::getContextContainer)
+    return registries.stream()
+        .map(EntityManagementRegistry::getContextContainer)
         .collect(Collectors.toList());
   }
 
   @Override
   public Collection<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
-    return registries.values()
-        .stream()
+    return registries.stream()
         .flatMap(registry -> registry.getManagementProvidersByCapability(capabilityName).stream())
         .collect(Collectors.toList());
   }
@@ -64,8 +58,7 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
 
   @Override
   public Collection<? extends Capability> getCapabilities() {
-    return registries.values()
-        .stream()
+    return registries.stream()
         .flatMap(r -> r.getCapabilities().stream())
         .sorted(CAPABILITY_COMPARATOR)
         .collect(Collectors.toList());
@@ -73,10 +66,16 @@ class DefaultSharedManagementRegistry implements SharedManagementRegistry {
 
   @Override
   public Collection<String> getCapabilityNames() {
-    return registries.values()
-        .stream()
+    return registries.stream()
         .flatMap(r -> r.getCapabilityNames().stream())
         .collect(Collectors.toCollection(TreeSet::new));
   }
 
+  void addManagementService(DefaultEntityManagementRegistry managementRegistry) {
+    registries.add(managementRegistry);
+  }
+
+  void removeManagementService(DefaultEntityManagementRegistry managementRegistry) {
+    registries.remove(managementRegistry);
+  }
 }

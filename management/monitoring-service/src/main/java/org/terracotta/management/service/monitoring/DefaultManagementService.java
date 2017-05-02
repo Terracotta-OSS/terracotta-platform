@@ -45,16 +45,19 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultManagementService.class);
 
   private final long consumerId;
-  private final FiringService firingService;
+  private final DefaultFiringService firingService;
   private final TopologyService topologyService;
   private final Map<ClientDescriptor, Collection<String>> managementCallRequests = new ConcurrentHashMap<>();
 
   private volatile ManagementExecutor managementExecutor;
 
-  DefaultManagementService(long consumerId, TopologyService topologyService, FiringService firingService) {
+  DefaultManagementService(long consumerId, TopologyService topologyService, DefaultFiringService firingService) {
     this.consumerId = consumerId;
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
+
+    topologyService.addTopologyEventListener(this);
+    firingService.addManagementService(this);
   }
 
   @Override
@@ -112,27 +115,12 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   }
 
   @Override
-  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
-  }
-
-  @Override
   public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
     if (consumerId == this.consumerId) {
-      LOGGER.trace("[{}] onUnfetch({})", this.consumerId, clientDescriptor);
-      managementCallRequests.remove(clientDescriptor);
+      if (managementCallRequests.remove(clientDescriptor) != null) {
+        LOGGER.trace("[{}] onUnfetch({})", this.consumerId, clientDescriptor);
+      }
     }
-  }
-
-  @Override
-  public void onEntityDestroyed(long consumerId) {
-    if (consumerId == this.consumerId) {
-      LOGGER.trace("[{}] onEntityDestroyed()", this.consumerId);
-      clear();
-    }
-  }
-
-  @Override
-  public void onEntityCreated(long consumerId) {
   }
 
   void onMessageToSend(Message message) {
@@ -198,4 +186,11 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     managementCallRequests.clear();
   }
 
+  @Override
+  public void close() {
+    LOGGER.trace("[{}] close()", this.consumerId);
+    clear();
+    topologyService.removeTopologyEventListener(this);
+    firingService.removeManagementService(this);
+  }
 }

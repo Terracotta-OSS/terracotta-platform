@@ -17,9 +17,14 @@ package org.terracotta.offheapresource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.management.service.monitoring.EntityManagementRegistry;
+import org.terracotta.management.service.monitoring.ManageableServerComponent;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
+import org.terracotta.offheapresource.management.OffHeapResourceBinding;
+import org.terracotta.offheapresource.management.OffHeapResourceSettingsManagementProvider;
+import org.terracotta.offheapresource.management.OffHeapResourceStatisticsManagementProvider;
 import org.terracotta.statistics.StatisticsManager;
 
 import java.math.BigInteger;
@@ -39,10 +44,10 @@ import java.util.concurrent.Callable;
  * allows for the partitioning and control of memory usage by entities
  * consuming this service.
  */
-public class OffHeapResourcesProvider implements OffHeapResources {
+public class OffHeapResourcesProvider implements OffHeapResources, ManageableServerComponent {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourcesProvider.class);
-          
+
   private final Map<OffHeapResourceIdentifier, OffHeapResource> resources = new HashMap<>();
 
   public OffHeapResourcesProvider(OffheapResourcesType configuration) {
@@ -83,7 +88,24 @@ public class OffHeapResourcesProvider implements OffHeapResources {
     return resources.get(identifier);
   }
 
-   static BigInteger convert(BigInteger value, MemoryUnit unit) {
+  @Override
+  public void onManagementRegistryCreated(EntityManagementRegistry registry) {
+    LOGGER.trace("[{}] onManagementRegistryCreated()", registry.getMonitoringService().getConsumerId());
+
+    registry.addManagementProvider(new OffHeapResourceSettingsManagementProvider());
+    registry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
+
+    for (OffHeapResourceIdentifier identifier : getAllIdentifiers()) {
+      LOGGER.trace("[{}] onManagementRegistryCreated() - Exposing OffHeapResource:{}", registry.getMonitoringService().getConsumerId(), identifier.getName());
+      registry.register(new OffHeapResourceBinding(identifier.getName(), getOffHeapResource(identifier)));
+    }
+  }
+
+  @Override
+  public void onManagementRegistryClose(EntityManagementRegistry registry) {
+  }
+
+  static BigInteger convert(BigInteger value, MemoryUnit unit) {
     switch (unit) {
       case B: return value.shiftLeft(0);
       case K_B: return value.shiftLeft(10);
@@ -96,6 +118,7 @@ public class OffHeapResourcesProvider implements OffHeapResources {
   }
 
   private static final BigInteger MAX_LONG_PLUS_ONE = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
+
   static long longValueExact(BigInteger value) {
     if (value.compareTo(MAX_LONG_PLUS_ONE) < 0) {
       return value.longValue();

@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 @CommonComponent
-public class AliasBindingManagementProvider<T extends AliasBinding> extends AbstractConsumerManagementProvider<T> {
+public class AliasBindingManagementProvider<T extends AliasBinding> extends AbstractEntityManagementProvider<T> {
 
   public AliasBindingManagementProvider(Class<? extends T> type) {
     super(type);
