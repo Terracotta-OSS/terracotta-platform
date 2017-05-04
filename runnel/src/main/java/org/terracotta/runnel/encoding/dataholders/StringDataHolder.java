@@ -45,7 +45,7 @@ public class StringDataHolder extends AbstractDataHolder {
 
 
   private ByteBuffer encodeString(String object) {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream(object.length());
+    ByteArrayOutputStream bout = new ByteArrayOutputStream(2 * object.length() + 1);
     try {
       int length = object.length();
       int i = 0;

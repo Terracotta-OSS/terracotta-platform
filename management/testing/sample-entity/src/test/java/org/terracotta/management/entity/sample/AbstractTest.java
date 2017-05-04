@@ -203,8 +203,7 @@ public abstract class AbstractTest {
 
     // create a NMS Entity
     NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
-    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
-        .setMaximumUnreadMessages(1024 * 1024));
+    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig());
     this.nmsService = new DefaultNmsService(nmsEntity);
     this.nmsService.setOperationTimeout(10, TimeUnit.SECONDS);
   }

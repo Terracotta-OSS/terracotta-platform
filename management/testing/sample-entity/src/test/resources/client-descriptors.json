@@ -111,6 +111,19 @@
     }
   },
   {
+    "name": "DiagnosticCalls",
+    "descriptors": [
+      {
+        "name": "getThreadDump",
+        "returnType": "java.lang.String",
+        "parameters": []
+      }
+    ],
+    "capabilityContext": {
+      "attributes": []
+    }
+  },
+  {
     "name": "NmsAgentService",
     "descriptors": [],
     "capabilityContext": {

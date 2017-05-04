@@ -61,7 +61,7 @@ public class UserErrorsIT extends AbstractSingleTest {
       fail();
     } catch (ExecutionException e) {
       assertThat(e.getCause(), is(instanceOf(EntityUserException.class)));
-      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNms: exception in user code: java.lang.IllegalArgumentException: Client 1@127.0.0.1:NAME:uuid is either not found or not manageable"));
+      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNmsServerEntity: exception in user code: java.lang.IllegalArgumentException: Client 1@127.0.0.1:NAME:uuid is either not found or not manageable"));
     }
   }
 
@@ -83,7 +83,7 @@ public class UserErrorsIT extends AbstractSingleTest {
       fail();
     } catch (ExecutionException e) {
       assertThat(e.getCause(), is(instanceOf(EntityUserException.class)));
-      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNms: exception in user code: java.lang.IllegalArgumentException: Server Entity {stripeId=SINGLE, serverId=testServer0, serverName=INEXISTING, entityId=pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity, entityName=pet-clinic/pets, entityType=org.terracotta.management.entity.sample.client.CacheEntity, consumerId=3, cacheName=pet-clinic/pets} is either not found or not manageable"));
+      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNmsServerEntity: exception in user code: java.lang.IllegalArgumentException: Server Entity {stripeId=SINGLE, serverId=testServer0, serverName=INEXISTING, entityId=pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity, entityName=pet-clinic/pets, entityType=org.terracotta.management.entity.sample.client.CacheEntity, consumerId=3, cacheName=pet-clinic/pets} is either not found or not manageable"));
     }
   }
 

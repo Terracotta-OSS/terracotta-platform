@@ -91,7 +91,7 @@ public class CacheFactory implements Closeable {
       clientCache.close();
     }
     try {
-      EntityRef<CacheEntity, String> ref = connection.getEntityRef(CacheEntity.class, 1, uri.getPath().substring(1) + "/" + name);
+      EntityRef<CacheEntity, String, Object> ref = connection.getEntityRef(CacheEntity.class, 1, uri.getPath().substring(1) + "/" + name);
       ref.destroy();
     } catch (EntityNotProvidedException | PermanentEntityException | EntityNotFoundException e) {
       throw new RuntimeException(e);

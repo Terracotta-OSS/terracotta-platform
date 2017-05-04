@@ -19,39 +19,18 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
-import java.util.Objects;
-
 /**
  * @author Mathieu Carbou
  */
-public abstract class PassiveProxiedServerEntity<T, S, M> implements PassiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class PassiveProxiedServerEntity implements PassiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
 
-  private final T entity;
-  private final S synchronizer;
-  private final M messenger;
-
-  private final ProxyInvoker<T> entityInvoker;
-  private final ProxyInvoker<S> synchronizerInvoker;
-  private final ProxyInvoker<M> messengerInvoker;
-
-  public PassiveProxiedServerEntity(T entity, S synchronizer, M messenger) {
-    this.entity = Objects.requireNonNull(entity);
-    this.synchronizer = synchronizer; // can be null
-    this.messenger = messenger; // can be null
-    this.entityInvoker = new ProxyInvoker<>(entity);
-    this.synchronizerInvoker = new ProxyInvoker<>(synchronizer);
-    this.messengerInvoker = new ProxyInvoker<>(messenger);
-  }
+  private final ProxyInvoker<?> entityInvoker = new ProxyInvoker<>(this);
 
   @Override
   public void invoke(final ProxyEntityMessage msg) {
     switch (msg.getType()) {
       case SYNC:
-        synchronizerInvoker.invoke(msg);
-        break;
       case MESSENGER:
-        messengerInvoker.invoke(msg);
-        break;
       case MESSAGE:
         entityInvoker.invoke(msg);
         break;
@@ -88,18 +67,6 @@ public abstract class PassiveProxiedServerEntity<T, S, M> implements PassiveServ
   @Override
   public void destroy() {
     // Don't care I think
-  }
-
-  protected final T getEntity() {
-    return entity;
-  }
-
-  protected final S getSynchronizer() {
-    return synchronizer;
-  }
-
-  protected final M getMessenger() {
-    return messenger;
   }
 
 }

@@ -18,6 +18,8 @@ package org.terracotta.management.entity.nms.agent.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.entity.nms.agent.ReconnectData;
+import org.terracotta.management.entity.nms.agent.client.diag.DiagnosticProvider;
+import org.terracotta.management.entity.nms.agent.client.diag.DiagnosticUtility;
 import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -91,6 +93,7 @@ public class NmsAgentService implements Closeable {
       }
     }
   };
+  private ManagementProvider<?> diagnosticProvider = new DiagnosticProvider(DiagnosticUtility.class);
 
   public NmsAgentService(final NmsAgentEntity entity) {
     this.entity = Objects.requireNonNull(entity);
@@ -176,7 +179,10 @@ public class NmsAgentService implements Closeable {
     if (!bridging) {
       LOGGER.trace("setManagementRegistry({})", registry.getContextContainer().getValue());
       this.registry = registry;
+      registry.addManagementProvider(diagnosticProvider);
+      // management provider must be added last
       registry.addManagementProvider(managementProvider);
+      registry.register(new DiagnosticUtility());
       bridging = true;
     }
   }

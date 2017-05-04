@@ -22,37 +22,26 @@ import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
-import java.util.Objects;
+import java.util.Collection;
 
 /**
  * @author Alex Snaps
  */
-public abstract class ActiveProxiedServerEntity<T, S, R, M> implements ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
+public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> implements ActiveServerEntity<ProxyEntityMessage, ProxyEntityResponse> {
 
-  private final T entity;
+  private final ProxyInvoker<?> entityInvoker = new ProxyInvoker<>(this);
+
   private S synchronizer;
-  private final M messenger;
-
-  private final ProxyInvoker<T> entityInvoker;
-  private final ProxyInvoker<M> messengerInvoker;
-
+  private M messenger;
   private Codec codec;
   private Class<R> reconnectDataType;
-
-  public ActiveProxiedServerEntity(T entity, M messenger) {
-    this.entity = Objects.requireNonNull(entity);
-    this.messenger = messenger; // can be null
-    this.entityInvoker = new ProxyInvoker<>(entity);
-    this.messengerInvoker = new ProxyInvoker<>(messenger);
-  }
 
   @Override
   public final ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
     switch (msg.getType()) {
       case MESSAGE:
-        return entityInvoker.invoke(msg, clientDescriptor);
       case MESSENGER:
-        return messengerInvoker.invoke(msg, clientDescriptor);
+        return entityInvoker.invoke(msg, clientDescriptor);
       default:
         throw new AssertionError(msg.getType());
     }
@@ -104,7 +93,9 @@ public abstract class ActiveProxiedServerEntity<T, S, R, M> implements ActiveSer
 
   @Override
   public void destroy() {
-    // Don't care I think
+    if (messenger != null) {
+      messenger.unSchedule();
+    }
   }
 
   protected void synchronizeKeyToPassive(int concurrencyKey) {
@@ -115,11 +106,9 @@ public abstract class ActiveProxiedServerEntity<T, S, R, M> implements ActiveSer
 
   protected final <M> void fireMessage(Class<M> type, M message, boolean echo) {entityInvoker.fireMessage(type, message, echo);}
 
-  protected final <M> void fireMessage(Class<M> type, M message, ClientDescriptor[] clients) {entityInvoker.fireMessage(type, message, clients);}
+  protected final <M> void fireMessage(Class<M> type, M message, ClientDescriptor... clients) {entityInvoker.fireMessage(type, message, clients);}
 
-  protected final T getEntity() {
-    return entity;
-  }
+  protected final Collection<ClientDescriptor> getClients() {return entityInvoker.getClients();}
 
   protected final S getSynchronizer() {
     return synchronizer;
@@ -129,12 +118,16 @@ public abstract class ActiveProxiedServerEntity<T, S, R, M> implements ActiveSer
     return messenger;
   }
 
-  final ProxyInvoker<T> getEntityInvoker() {
+  final ProxyInvoker<?> getEntityInvoker() {
     return entityInvoker;
   }
 
   final void setSynchronizer(S synchronizer) {
     this.synchronizer = synchronizer;
+  }
+
+  final void setMessenger(M messenger) {
+    this.messenger = messenger;
   }
 
   final void setReconnect(Class<R> reconnectDataType, Codec codec) {

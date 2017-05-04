@@ -42,6 +42,10 @@ public final class Cluster implements Contextual {
   private Cluster() {
   }
 
+  public boolean isEmpty() {
+    return stripes.isEmpty();
+  }
+  
   public Stream<Client> clientStream() {
     return clients.values().stream();
   }

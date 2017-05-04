@@ -22,11 +22,9 @@ import org.junit.runners.JUnit4;
 import org.junit.runners.MethodSorters;
 import org.terracotta.management.entity.sample.client.CacheEntityFactory;
 import org.terracotta.management.model.cluster.Cluster;
-import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -102,16 +100,10 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
 
-    List<Message> messages;
-    List<ContextualNotification> notifs;
-    do {
-      messages = nmsService.readMessages();
-      notifs = messages.stream()
-          .filter(message -> message.getType().equals("NOTIFICATION"))
-          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-          .collect(Collectors.toList());
-    } while (!Thread.currentThread().isInterrupted()
-        && notifs.stream().noneMatch(contextualNotification -> contextualNotification.getType().equals("SERVER_ENTITY_RECONFIGURED")));
+    String[] latestReceivedNotifs = {"SERVER_CACHE_DESTROYED", "SERVER_CACHE_CREATED", "CLIENT_ATTACHED", "CLIENT_ATTACHED", "SERVER_ENTITY_RECONFIGURED"};
+    List<ContextualNotification> notifs = waitForAllNotifications(latestReceivedNotifs);
+    notifs = notifs.subList(notifs.size() - latestReceivedNotifs.length, notifs.size());
+
 
     String currentJson = toJson(notifs).toString();
     String actual = removeRandomValues(currentJson);

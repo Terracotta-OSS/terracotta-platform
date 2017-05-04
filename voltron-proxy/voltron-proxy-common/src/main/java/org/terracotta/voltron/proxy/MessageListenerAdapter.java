@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
-
-import com.tc.classloader.CommonComponent;
-import org.terracotta.entity.ServiceConfiguration;
+package org.terracotta.voltron.proxy;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
-public class ManagementServiceConfiguration implements ServiceConfiguration<ManagementService> {
-
+public class MessageListenerAdapter<T> implements MessageListener<T> {
   @Override
-  public Class<ManagementService> getServiceType() {
-    return ManagementService.class;
+  public void onMessage(T message) {
+    
   }
-
 }

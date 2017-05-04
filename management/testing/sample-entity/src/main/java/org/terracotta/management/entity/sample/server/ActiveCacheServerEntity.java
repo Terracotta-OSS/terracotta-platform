@@ -21,13 +21,14 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
+import org.terracotta.voltron.proxy.server.Messenger;
 
 import java.io.Serializable;
 
 /**
  * @author Mathieu Carbou
  */
-class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync, Void, Void> {
+class ActiveCacheServerEntity extends ActiveProxiedServerEntity<CacheSync, Void, Messenger> implements Cache {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveCacheServerEntity.class);
 
@@ -36,7 +37,6 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
   private final ServerCache.Listener listener = (key, value) -> fireMessage(Serializable[].class, new Serializable[]{"remove", key, value}, true);
 
   ActiveCacheServerEntity(ServerCache cache, Management management) {
-    super(cache, null);
     this.cache = cache;
 
     // callback clients on eviction
@@ -77,6 +77,7 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
 
   @Override
   public void createNew() {
+    super.createNew();
     LOGGER.trace("[{}] createNew()", cache.getName());
     management.init();
     management.serverCacheCreated(cache);
@@ -84,9 +85,24 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<Cache, CacheSync
 
   @Override
   public void loadExisting() {
+    super.loadExisting();
     LOGGER.trace("[{}] loadExisting()", cache.getName());
     management.init();
     management.serverCacheCreated(cache);
   }
 
+  @Override
+  public void put(String key, String value) {cache.put(key, value);}
+
+  @Override
+  public String get(String key) {return cache.get(key);}
+
+  @Override
+  public void remove(String key) {cache.remove(key);}
+
+  @Override
+  public void clear() {cache.clear();}
+
+  @Override
+  public int size() {return cache.size();}
 }

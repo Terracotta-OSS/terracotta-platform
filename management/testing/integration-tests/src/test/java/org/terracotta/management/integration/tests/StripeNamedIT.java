@@ -24,7 +24,9 @@ import org.terracotta.management.entity.nms.client.DefaultNmsService;
 import org.terracotta.management.entity.nms.client.NmsEntity;
 import org.terracotta.management.entity.nms.client.NmsEntityFactory;
 import org.terracotta.management.entity.nms.client.NmsService;
+import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Stripe;
+import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -53,7 +56,6 @@ public class StripeNamedIT extends AbstractSingleTest {
     // create a NMS Entity
     NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName() + "-2");
     NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
-        .setMaximumUnreadMessages(1024 * 1024)
         .setStripeName("MY_SUPER_STRIPE"));
     NmsService nmsService = new DefaultNmsService(nmsEntity);
     nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
@@ -67,19 +69,25 @@ public class StripeNamedIT extends AbstractSingleTest {
     // clear previous notifs
     nmsService.readMessages();
 
-    // create a new cache and serevr entity
+    // create a new cache and server entity
     getCaches("orders");
 
-    List<ContextualNotification> notifications = nmsService.readMessages()
+    List<Message> messages = nmsService.waitForMessage(message -> message.getType().equals("NOTIFICATION")
+        && message.unwrap(ContextualNotification.class)
+        .stream()
+        .anyMatch(n -> n.getType().equals("CLIENT_CACHE_CREATED") && "orders".equals(n.getContext().get("cacheName"))));
+
+    List<ContextualNotification> notifications = messages
         .stream()
         .filter(message -> message.getType().equals("NOTIFICATION"))
         .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .filter(contextualNotification -> contextualNotification.getContext().contains(Stripe.KEY))
         .collect(Collectors.toList());
 
-    assertThat(notifications.isEmpty(), is(false));
+    assertThat(notifications.size(), is(not(equalTo(0))));
     for (ContextualNotification notification : notifications) {
-      assertThat(notification.getContext().get(Stripe.KEY), equalTo("MY_SUPER_STRIPE"));
+      if(!notification.getContext().contains(Client.KEY)) {
+        assertThat(notification.getContext().get(Stripe.KEY), equalTo("MY_SUPER_STRIPE"));  
+      }
     }
   }
 

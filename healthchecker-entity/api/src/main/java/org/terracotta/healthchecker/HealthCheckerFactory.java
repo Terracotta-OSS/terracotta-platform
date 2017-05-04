@@ -54,8 +54,8 @@ public class HealthCheckerFactory {
    */
   public static TimeoutManager startHealthChecker(Connection connection, int probeFrequencyPerMinute, long probeTimeoutInMillis) {
     try {
-      EntityRef<HealthCheck, Properties> check = connection.getEntityRef(HealthCheck.class, HealthCheck.VERSION, NAME);
-      HealthCheck hc = check.fetchEntity();
+      EntityRef<HealthCheck, Properties, Object> check = connection.getEntityRef(HealthCheck.class, HealthCheck.VERSION, NAME);
+      HealthCheck hc = check.fetchEntity(null);
       if (probeFrequencyPerMinute < 1 || probeFrequencyPerMinute > 120) {
         throw new IllegalArgumentException("probe frequency must be greater than zero and less than 120");
       }

@@ -45,19 +45,19 @@ class DefaultFiringService implements FiringService {
   @Override
   public void fireNotification(ContextualNotification notification) {
     DefaultMessage message = new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", notification);
-    managementServices.values().forEach(managementService -> managementService.fireMessage(message));
+    managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
   }
 
   @Override
   public void fireStatistics(ContextualStatistics[] statistics) {
     DefaultMessage message = new DefaultMessage(sequenceGenerator.next(), "STATISTICS", statistics);
-    managementServices.values().forEach(managementService -> managementService.fireMessage(message));
+    managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
   }
 
   @Override
   public void fireManagementCallAnswer(String managementCallIdentifier, ContextualReturn<?> answer) {
     DefaultManagementCallMessage message = new DefaultManagementCallMessage(managementCallIdentifier, sequenceGenerator.next(), "MANAGEMENT_CALL_RETURN", answer);
-    managementServices.values().forEach(managementService -> managementService.fireMessage(message));
+    managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
   }
 
   @Override
@@ -66,7 +66,7 @@ class DefaultFiringService implements FiringService {
     if (call.getContext().contains(Client.KEY)) {
       clientMonitoringServices.values().forEach(clientMonitoringService -> clientMonitoringService.fireMessage(message));
     } else {
-      managementServices.values().forEach(managementService -> managementService.fireMessage(message));
+      managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
     }
   }
 

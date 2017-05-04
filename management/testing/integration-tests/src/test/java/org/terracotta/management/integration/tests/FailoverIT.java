@@ -21,10 +21,7 @@ import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.notification.ContextualNotification;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -89,29 +86,16 @@ public class FailoverIT extends AbstractHATest {
   @Test
   public void notifications_after_failover() throws Exception {
     // read messages
-    List<ContextualNotification> notifs = nmsService.readMessages().stream()
-        .filter(message -> message.getType().equals("NOTIFICATION"))
-        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
-
-    Collection<String> allNotifs = Arrays.asList(
-        "SERVER_JOINED", "SERVER_STATE_CHANGED",
+    List<ContextualNotification> collected = waitForAllNotifications("SERVER_JOINED", "SERVER_STATE_CHANGED",
         "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
         "CLIENT_CONNECTED",
         "SERVER_ENTITY_FETCHED",
         "CLIENT_TAGS_UPDATED", "CLIENT_REGISTRY_AVAILABLE", "CLIENT_RECONNECTED",
         "CLIENT_ATTACHED");
-
-    while (!Thread.currentThread().isInterrupted() && !notifs.stream().map(ContextualNotification::getType).collect(Collectors.toSet()).containsAll(allNotifs)) {
-      notifs.addAll(nmsService.readMessages().stream()
-          .filter(message -> message.getType().equals("NOTIFICATION"))
-          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-          .collect(Collectors.toList()));
-    }
-
-    assertThat(notifs.stream().map(ContextualNotification::getType).collect(Collectors.toList()).containsAll(allNotifs), is(true));
-    assertThat(notifs.get(1).getContext().get(Server.NAME_KEY), equalTo(oldPassive.getServerName()));
-    assertThat(notifs.get(1).getAttributes().get("state"), equalTo("ACTIVE"));
+    
+    ContextualNotification stateChanged = collected.stream().filter(contextualNotification -> contextualNotification.getType().equals("SERVER_STATE_CHANGED")).findFirst().get();
+    assertThat(stateChanged.getAttributes().get("state"), equalTo("ACTIVE"));
+    assertThat(stateChanged.getContext().get(Server.NAME_KEY), equalTo(oldPassive.getServerName()));
   }
 
   @Test

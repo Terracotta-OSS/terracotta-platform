@@ -20,8 +20,6 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.message.Message;
-import org.terracotta.management.sequence.Sequence;
 
 /**
  * Class used by the active NMS Entity to monitor the stripe ans send management calls
@@ -31,6 +29,8 @@ import org.terracotta.management.sequence.Sequence;
 @CommonComponent
 public interface ManagementService {
 
+  void setManagementExecutor(ManagementExecutor managementExecutor);
+    
   /**
    * @return the current topology. You must not apply any mutation to the returned object.
    * A cluster is a composition of several clients and stripes, but the returned cluster will only have one stripe: the one we are currently on.
@@ -48,19 +48,5 @@ public interface ManagementService {
    * @return An unique identifier for this management call
    */
   String sendManagementCallRequest(ClientDescriptor caller, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
-
-  /**
-   * Can be called from active entity only
-   *
-   * @return The buffer containing all best effort messages, including statistics and notifications.
-   */
-  ReadOnlyBuffer<Message> createMessageBuffer(int maxBufferSize);
-
-  /**
-   * Can be called from active entity only
-   *
-   * @return The next sequence to use to build a monitoring message
-   */
-  Sequence nextSequence();
 
 }
