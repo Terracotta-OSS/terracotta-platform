@@ -16,9 +16,16 @@
 package org.terracotta.offheapresource;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.w3c.dom.Document;
@@ -36,14 +43,24 @@ import static org.terracotta.offheapresource.OffHeapResourcesProvider.longValueE
  */
 public class OffHeapResourceConfigurationParserTest {
 
+  private OffHeapResourceConfigurationParser parser;
+  private DocumentBuilderFactory domBuilderFactory;
+
+  @Before
+  public void setUp() throws Exception {
+    parser = new OffHeapResourceConfigurationParser();
+
+    Collection<Source> schemaSources = new ArrayList<>();
+    schemaSources.add(new StreamSource(getClass().getResourceAsStream("/terracotta.xsd")));
+    schemaSources.add(parser.getXmlSchema());
+
+    domBuilderFactory = DocumentBuilderFactory.newInstance();
+    domBuilderFactory.setNamespaceAware(true);
+    domBuilderFactory.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaSources.toArray(new Source[schemaSources.size()])));
+  }
+
   @Test
   public void testValidParse() throws Exception {
-    OffHeapResourceConfigurationParser parser = new OffHeapResourceConfigurationParser();
-
-    DocumentBuilderFactory domBuilderFactory = DocumentBuilderFactory.newInstance();
-    domBuilderFactory.setNamespaceAware(true);
-    domBuilderFactory.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(parser.getXmlSchema()));
-    
     Document dom = domBuilderFactory.newDocumentBuilder().parse(getClass().getResourceAsStream("/configs/valid.xml"));
 
     OffHeapResourcesProvider config = parser.parse(dom.getDocumentElement(), "what is this thing?");
@@ -54,13 +71,6 @@ public class OffHeapResourceConfigurationParserTest {
 
   @Test
   public void testNoResources() throws Exception {
-    OffHeapResourceConfigurationParser parser = new OffHeapResourceConfigurationParser();
-
-    DocumentBuilderFactory domBuilderFactory = DocumentBuilderFactory.newInstance();
-    domBuilderFactory.setNamespaceAware(true);
-    domBuilderFactory.setValidating(true);
-    domBuilderFactory.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(parser.getXmlSchema()));
-
     Document dom = domBuilderFactory.newDocumentBuilder().parse(getClass().getResourceAsStream("/configs/no-resources.xml"));
 
     try {

@@ -18,6 +18,9 @@ package org.terracotta.offheapresource;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -27,6 +30,7 @@ import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 
+import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.w3c.dom.Element;
 
@@ -53,7 +57,10 @@ public class OffHeapResourceConfigurationParser implements ExtendedConfigParser 
     try {
       JAXBContext jaxbContext = JAXBContext.newInstance(OffheapResourcesType.class.getPackage().getName(), OffHeapResourceConfigurationParser.class.getClassLoader());
       Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-      unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(getXmlSchema()));
+      Collection<Source> schemaSources = new ArrayList<>();
+      schemaSources.add(new StreamSource(TCConfigurationParser.TERRACOTTA_XML_SCHEMA.openStream()));
+      schemaSources.add(getXmlSchema());
+      unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaSources.toArray(new Source[schemaSources.size()])));
       @SuppressWarnings("unchecked")
       JAXBElement<OffheapResourcesType> parsed = (JAXBElement<OffheapResourcesType>) unmarshaller.unmarshal(elmnt);
       return new OffHeapResourcesProvider(parsed.getValue());

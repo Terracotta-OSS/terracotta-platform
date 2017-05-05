@@ -20,9 +20,12 @@
 <xs:schema version="1.0" elementFormDefault="qualified"
            xmlns:or="http://www.terracotta.org/config/offheap-resource"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tc="http://www.terracotta.org/config"
            targetNamespace="http://www.terracotta.org/config/offheap-resource">
 
-  <xs:element name="offheap-resources" type="or:offheap-resources-type">
+  <xs:import namespace="http://www.terracotta.org/config"/>
+
+  <xs:element name="offheap-resources" type="or:offheap-resources-type" substitutionGroup="tc:config-content">
     <xs:annotation>
       <xs:documentation xml:lang="en">
         An enumeration of the resources that will be made available by this service.
