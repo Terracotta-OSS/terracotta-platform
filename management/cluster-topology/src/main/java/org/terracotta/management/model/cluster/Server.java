@@ -18,7 +18,6 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 
 import java.time.Clock;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -340,27 +339,66 @@ public final class Server extends AbstractNode<Stripe> {
     return new Server(serverName, serverName);
   }
 
+  /**
+   * Possibles transitions:
+   * <pre>
+   * STARTING ➡ UNINITIALIZED ➡ SYNCHRONIZING ➡ PASSIVE ➡ ACTIVE
+   *    ⬇                                         ⬆        ⬆
+   *     ----------------------------------------------------
+   * </pre>
+   */
   public enum State {
 
-    //  Currently the possible transitions for a server are:
-    //  UNINITIALIZED->SYNCHRONIZING->PASSIVE->ACTIVE
-    //  UNINITIALIZED->ACTIVE
-
+    /**
+     * When a server is not reachable, this will be the status used
+     */
     UNREACHABLE,
-    UNINITIALIZED,
-    SYNCHRONIZING,
-    PASSIVE,
-    ACTIVE,
 
+    /**
+     * Server is bootstrapping
+     */
+    STARTING("STARTING", "START_STATE"),
+
+    /**
+     * A fresh server
+     */
+    UNINITIALIZED("UNINITIALIZED", "PASSIVE-UNINITIALIZED"),
+
+    /**
+     * Passive server is synchronizing with active server
+     */
+    SYNCHRONIZING("SYNCHRONIZING", "PASSIVE-SYNCING"),
+
+    /**
+     * Passive server is up and ready to replicate
+     */
+    PASSIVE("PASSIVE", "PASSIVE-STANDBY"),
+
+    /**
+     * Active server is ready to receive clients
+     */
+    ACTIVE("ACTIVE", "ACTIVE-COORDINATOR"),
+
+    /**
+     * Status returned when parsing failed
+     */
     UNKNOWN;
 
-    public static State parse(String state) {
-      if (state == null) {
+    private final String[] mappings;
+
+    State(String... mappings) {
+      this.mappings = mappings == null ? new String[0] : mappings;
+    }
+
+    public static State parse(String value) {
+      if (value == null) {
         return UNKNOWN;
       }
       for (State serverState : State.values()) {
-        if (serverState.name().equalsIgnoreCase(state)) {
-          return serverState;
+        for (String mapping : serverState.mappings) {
+          if (mapping.equalsIgnoreCase(value)) {
+            return serverState;
+          }
         }
       }
       return UNKNOWN;
