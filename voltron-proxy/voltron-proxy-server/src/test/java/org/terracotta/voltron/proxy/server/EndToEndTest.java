@@ -86,6 +86,10 @@ public class EndToEndTest {
         return 42;
       }
     }).activateEvents(new ClientCommunicator() {
+      @Override
+      public void closeClientConnection(ClientDescriptor clientDescriptor) {
+
+      }
       public void sendNoResponse(final ClientDescriptor clientDescriptor, final EntityResponse message) {
         delegate.get().handleMessage(message);
       }
@@ -149,6 +153,11 @@ public class EndToEndTest {
     final FiringClientIdAware firingClientIdAware = new FiringClientIdAware();
     final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> msgCodec = new ProxyMessageCodec(ClientIdAware.class, new Class[] {Integer.class});
     final ProxyInvoker<ClientIdAware> proxyInvoker = new ProxyInvoker<ClientIdAware>(firingClientIdAware).activateEvents(new ClientCommunicator() {
+      @Override
+      public void closeClientConnection(ClientDescriptor clientDescriptor) {
+        
+      }
+
       public void sendNoResponse(final ClientDescriptor clientDescriptor, final EntityResponse message) {
         ProxyEntityResponse pem = (ProxyEntityResponse) message;
         listener.onMessage((Integer) pem.getResponse());
