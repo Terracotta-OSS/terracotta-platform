@@ -357,7 +357,7 @@ public final class Server extends AbstractNode<Stripe> {
     /**
      * Server is bootstrapping
      */
-    STARTING("STARTING", "START_STATE"),
+    STARTING("STARTING", "START_STATE", "START-STATE"),
 
     /**
      * A fresh server
