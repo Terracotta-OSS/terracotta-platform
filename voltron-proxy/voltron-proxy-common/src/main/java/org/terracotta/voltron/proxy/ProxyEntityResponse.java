@@ -17,7 +17,7 @@ package org.terracotta.voltron.proxy;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.entity.EntityUserException;
 
 /**
  * @author cdennis

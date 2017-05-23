@@ -17,6 +17,8 @@ package org.terracotta.management.entity.sample.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.ConfigurationException;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
@@ -42,21 +44,29 @@ public class CacheEntityServerService extends ProxyServerEntityService<String, C
   }
 
   @Override
-  public ActiveCacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) {
+  public ActiveCacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) throws ConfigurationException {
     LOGGER.trace("createActiveEntity({})", identifier);
-    Map<String, String> data = registry.getService(new MapConfiguration(identifier));
-    ServerCache cache = new ServerCache(identifier, data);
-    Management management = new Management(cache.getName(), registry, true);
-    return new ActiveCacheServerEntity(cache, management);
+    try {
+      Map<String, String> data = registry.getService(new MapConfiguration(identifier));
+      ServerCache cache = new ServerCache(identifier, data);
+      Management management = new Management(cache.getName(), registry, true);
+      return new ActiveCacheServerEntity(cache, management);
+    } catch (ServiceException e) {
+      throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
+    }
   }
 
   @Override
-  protected PassiveCacheServerEntity createPassiveEntity(ServiceRegistry registry, String identifier) {
+  protected PassiveCacheServerEntity createPassiveEntity(ServiceRegistry registry, String identifier) throws ConfigurationException {
     LOGGER.trace("createPassiveEntity({})", identifier);
-    Map<String, String> data = registry.getService(new MapConfiguration(identifier));
-    ServerCache cache = new ServerCache(identifier, data);
-    Management management = new Management(cache.getName(), registry, false);
-    return new PassiveCacheServerEntity(cache, management);
+    try {
+      Map<String, String> data = registry.getService(new MapConfiguration(identifier));
+      ServerCache cache = new ServerCache(identifier, data);
+      Management management = new Management(cache.getName(), registry, false);
+      return new PassiveCacheServerEntity(cache, management);
+    } catch (ServiceException e) {
+      throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
+    }
   }
 
   @Override

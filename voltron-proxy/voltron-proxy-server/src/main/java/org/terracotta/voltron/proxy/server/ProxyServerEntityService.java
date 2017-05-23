@@ -27,6 +27,7 @@ import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.Codec;
@@ -95,13 +96,17 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
   }
 
   @Override
-  public final ActiveProxiedServerEntity<S, R, M> createActiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public final ActiveProxiedServerEntity<S, R, M> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     C config = decodeConfig(configuration);
     ActiveProxiedServerEntity<S, R, M> activeEntity = createActiveEntity(registry, config);
 
     if (eventTypes != null && eventTypes.length > 0) {
-      ClientCommunicator clientCommunicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
-      activeEntity.getEntityInvoker().activateEvents(clientCommunicator, eventTypes);
+      try {
+        ClientCommunicator clientCommunicator = registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class));
+        activeEntity.getEntityInvoker().activateEvents(clientCommunicator, eventTypes);
+      } catch (ServiceException e) {
+        throw new ConfigurationException("Unable to retrieve ClientCommunicator: " + e.getMessage());
+      }
     }
 
     if (synchronizerType != null) {
@@ -114,15 +119,19 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
     }
 
     if (messengerType != null) {
-      IEntityMessenger entityMessenger = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
-      activeEntity.setMessenger(MessengerProxyFactory.createProxy(messengerType, entityMessenger));
+      try {
+        IEntityMessenger entityMessenger = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
+        activeEntity.setMessenger(MessengerProxyFactory.createProxy(messengerType, entityMessenger));
+      } catch (ServiceException e) {
+        throw new ConfigurationException("Unable to retrieve IEntityMessenger: " + e.getMessage());
+      }
     }
 
     return activeEntity;
   }
 
   @Override
-  public final PassiveProxiedServerEntity createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public final PassiveProxiedServerEntity createPassiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     C config = decodeConfig(configuration);
     return createPassiveEntity(registry, config);
   }
@@ -183,9 +192,9 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
     return Collections.emptySet();
   }
 
-  protected abstract ActiveProxiedServerEntity<S, R, M> createActiveEntity(ServiceRegistry registry, C configuration);
+  protected abstract ActiveProxiedServerEntity<S, R, M> createActiveEntity(ServiceRegistry registry, C configuration) throws ConfigurationException;
 
-  protected abstract PassiveProxiedServerEntity createPassiveEntity(ServiceRegistry registry, C configuration);
+  protected abstract PassiveProxiedServerEntity createPassiveEntity(ServiceRegistry registry, C configuration) throws ConfigurationException;
 
   private C decodeConfig(byte[] configuration) {
     C config = null;

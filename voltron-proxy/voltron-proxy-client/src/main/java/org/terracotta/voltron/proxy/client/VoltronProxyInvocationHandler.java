@@ -22,7 +22,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.MessageType;
@@ -198,6 +198,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         return getResponse(future.get());
       } catch (EntityException e) {
         throw new ExecutionException(e);
+      } catch (EntityUserException e) {
+        throw new ExecutionException(e);
       }
     }
 
@@ -206,6 +208,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       try {
         return getResponse(future.getWithTimeout(timeout, unit));
       } catch (EntityException e) {
+        throw new ExecutionException(e);
+      } catch (EntityUserException e) {
         throw new ExecutionException(e);
       }
     }
