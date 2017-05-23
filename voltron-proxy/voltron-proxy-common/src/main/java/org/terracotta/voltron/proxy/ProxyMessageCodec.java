@@ -17,7 +17,7 @@ package org.terracotta.voltron.proxy;
 
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.entity.EntityUserException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;

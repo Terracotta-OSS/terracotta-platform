@@ -16,7 +16,7 @@
 package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.management.entity.nms.client.IllegalManagementCallException;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Client;
