@@ -36,6 +36,5 @@ public interface ManageableServerComponent {
    */
   void onManagementRegistryCreated(EntityManagementRegistry registry);
 
-  //TODO: require https://github.com/Terracotta-OSS/terracotta-platform/issues/324 to work properly
   void onManagementRegistryClose(EntityManagementRegistry registry);
 }
