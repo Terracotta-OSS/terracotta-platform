@@ -24,8 +24,9 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.sequence.SequenceGenerator;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Mathieu Carbou
@@ -33,41 +34,54 @@ import java.util.Objects;
 class DefaultFiringService implements FiringService {
 
   private final SequenceGenerator sequenceGenerator;
-  private final Map<Long, DefaultManagementService> managementServices;
-  private final Map<Long, DefaultClientMonitoringService> clientMonitoringServices;
+  private final List<DefaultManagementService> managementServices = new CopyOnWriteArrayList<>();
+  private final List<DefaultClientMonitoringService> clientMonitoringServices = new CopyOnWriteArrayList<>();
 
-  DefaultFiringService(SequenceGenerator sequenceGenerator, Map<Long, DefaultManagementService> managementServices, Map<Long, DefaultClientMonitoringService> clientMonitoringServices) {
+  DefaultFiringService(SequenceGenerator sequenceGenerator) {
     this.sequenceGenerator = Objects.requireNonNull(sequenceGenerator);
-    this.managementServices = Objects.requireNonNull(managementServices);
-    this.clientMonitoringServices = Objects.requireNonNull(clientMonitoringServices);
   }
 
   @Override
   public void fireNotification(ContextualNotification notification) {
     DefaultMessage message = new DefaultMessage(sequenceGenerator.next(), "NOTIFICATION", notification);
-    managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
+    managementServices.forEach(managementService -> managementService.onMessageToSend(message));
   }
 
   @Override
   public void fireStatistics(ContextualStatistics[] statistics) {
     DefaultMessage message = new DefaultMessage(sequenceGenerator.next(), "STATISTICS", statistics);
-    managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
+    managementServices.forEach(managementService -> managementService.onMessageToSend(message));
   }
 
   @Override
   public void fireManagementCallAnswer(String managementCallIdentifier, ContextualReturn<?> answer) {
     DefaultManagementCallMessage message = new DefaultManagementCallMessage(managementCallIdentifier, sequenceGenerator.next(), "MANAGEMENT_CALL_RETURN", answer);
-    managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
+    managementServices.forEach(managementService -> managementService.onMessageToSend(message));
   }
 
   @Override
   public void fireManagementCallRequest(String managementCallIdentifier, ContextualCall<?> call) {
     DefaultManagementCallMessage message = new DefaultManagementCallMessage(managementCallIdentifier, sequenceGenerator.next(), "MANAGEMENT_CALL", call);
     if (call.getContext().contains(Client.KEY)) {
-      clientMonitoringServices.values().forEach(clientMonitoringService -> clientMonitoringService.fireMessage(message));
+      clientMonitoringServices.forEach(clientMonitoringService -> clientMonitoringService.fireMessage(message));
     } else {
-      managementServices.values().forEach(managementService -> managementService.onMessageToSend(message));
+      managementServices.forEach(managementService -> managementService.onMessageToSend(message));
     }
   }
 
+  void addClientMonitoringService(DefaultClientMonitoringService clientMonitoringService) {
+    clientMonitoringServices.add(clientMonitoringService);
+  }
+
+  void removeClientMonitoringService(DefaultClientMonitoringService clientMonitoringService) {
+    clientMonitoringServices.remove(clientMonitoringService);
+  }
+
+  void addManagementService(DefaultManagementService managementService) {
+    managementServices.add(managementService);
+  }
+
+  void removeManagementService(DefaultManagementService managementService) {
+    managementServices.remove(managementService);
+  }
 }

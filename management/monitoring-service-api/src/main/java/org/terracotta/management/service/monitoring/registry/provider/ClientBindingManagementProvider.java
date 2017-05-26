@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 @CommonComponent
-public class ClientBindingManagementProvider<T extends ClientBinding> extends AbstractConsumerManagementProvider<T> {
+public class ClientBindingManagementProvider<T extends ClientBinding> extends AbstractEntityManagementProvider<T> {
 
   public ClientBindingManagementProvider(Class<? extends T> type) {
     super(type);

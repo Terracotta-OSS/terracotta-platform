@@ -17,11 +17,14 @@ package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
+
+import java.io.Closeable;
 
 /**
  * Class used by to push some data into the monitoring service concerning client management information
@@ -29,7 +32,7 @@ import org.terracotta.management.model.stats.ContextualStatistics;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ClientMonitoringService {
+public interface ClientMonitoringService extends Closeable {
 
   /**
    * Push a new client-side notification coming from a client descriptor in the monitoring service. This will be put in a best effort-buffer.
@@ -69,4 +72,9 @@ public interface ClientMonitoringService {
    */
   void answerManagementCall(ClientDescriptor caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn);
 
+  /**
+   * Closes this service from {@link CommonServerEntity#destroy()}
+   */
+  @Override
+  void close();
 }

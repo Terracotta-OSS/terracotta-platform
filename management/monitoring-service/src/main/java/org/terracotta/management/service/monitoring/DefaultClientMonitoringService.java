@@ -43,16 +43,19 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClientMonitoringService.class);
 
   private final long consumerId;
-  private final FiringService firingService;
+  private final DefaultFiringService firingService;
   private final ClientCommunicator clientCommunicator;
   private final TopologyService topologyService;
   private final Map<ClientDescriptor, Context> manageableClients = new ConcurrentHashMap<>();
 
-  DefaultClientMonitoringService(long consumerId, TopologyService topologyService, FiringService firingService, ClientCommunicator clientCommunicator) {
+  DefaultClientMonitoringService(long consumerId, TopologyService topologyService, DefaultFiringService firingService, ClientCommunicator clientCommunicator) {
     this.consumerId = consumerId;
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
     this.clientCommunicator = Objects.requireNonNull(clientCommunicator);
+
+    topologyService.addTopologyEventListener(this);
+    firingService.addClientMonitoringService(this);
   }
 
   @Override
@@ -97,27 +100,12 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   }
 
   @Override
-  public void onFetch(long consumerId, ClientDescriptor clientDescriptor) {
-  }
-
-  @Override
   public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
     if (consumerId == this.consumerId) {
-      LOGGER.trace("[{}] onUnfetch({})", this.consumerId, clientDescriptor);
-      manageableClients.remove(clientDescriptor);
+      if (manageableClients.remove(clientDescriptor) != null) {
+        LOGGER.trace("[{}] onUnfetch({})", this.consumerId, clientDescriptor);
+      }
     }
-  }
-
-  @Override
-  public void onEntityDestroyed(long consumerId) {
-    if (consumerId == this.consumerId) {
-      LOGGER.trace("[{}] onEntityDestroyed()", this.consumerId);
-      clear();
-    }
-  }
-
-  @Override
-  public void onEntityCreated(long consumerId) {
   }
 
   void fireMessage(Message message) {
@@ -151,4 +139,11 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
     manageableClients.clear();
   }
 
+  @Override
+  public void close() {
+    LOGGER.trace("[{}] close()", this.consumerId);
+    clear();
+    topologyService.removeTopologyEventListener(this);
+    firingService.removeClientMonitoringService(this);
+  }
 }

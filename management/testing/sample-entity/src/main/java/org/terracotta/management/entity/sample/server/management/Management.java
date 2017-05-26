@@ -17,48 +17,31 @@ package org.terracotta.management.entity.sample.server.management;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.server.ServerCache;
-import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
-import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.management.service.monitoring.PassiveEntityMonitoringServiceConfiguration;
-import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.management.service.monitoring.EntityManagementRegistry;
+import org.terracotta.management.service.monitoring.ManagementRegistryConfiguration;
 
+import java.io.Closeable;
 import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
-public class Management {
+public class Management implements Closeable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Management.class);
 
-  private final ConsumerManagementRegistry managementRegistry;
+  private final EntityManagementRegistry managementRegistry;
   private final String cacheName;
 
   public Management(String cacheName, ServiceRegistry serviceRegistry, boolean active) throws ConfigurationException {
     this.cacheName = cacheName;
-    EntityMonitoringService monitoringService;
-
     try {
-      if (active) {
-        monitoringService = Objects.requireNonNull(serviceRegistry.getService(new ActiveEntityMonitoringServiceConfiguration()));
-      } else {
-        IMonitoringProducer monitoringProducer = serviceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
-        monitoringService = Objects.requireNonNull(serviceRegistry.getService(new PassiveEntityMonitoringServiceConfiguration(monitoringProducer)));
-      }
-    } catch (ServiceException e) {
-      throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
-    }
-
-    try {
-      this.managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ConsumerManagementRegistryConfiguration(monitoringService)));
+      managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ManagementRegistryConfiguration(serviceRegistry, active)));
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
     }
@@ -68,6 +51,11 @@ public class Management {
     if (active) {
       this.managementRegistry.addManagementProvider(new ClientStateSettingsManagementProvider());
     }
+  }
+
+  @Override
+  public void close() {
+    managementRegistry.close();
   }
 
   public void init() {

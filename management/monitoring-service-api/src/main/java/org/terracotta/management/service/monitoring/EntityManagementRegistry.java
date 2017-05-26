@@ -16,11 +16,12 @@
 package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagementSupport;
 import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.management.registry.ManagementRegistry;
 
+import java.io.Closeable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +35,12 @@ import java.util.concurrent.CompletableFuture;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ConsumerManagementRegistry extends CapabilityManagementSupport {
+public interface EntityManagementRegistry extends CapabilityManagementSupport, Closeable {
+
+  /**
+   * @return the monitoring service associated to this entity
+   */
+  EntityMonitoringService getMonitoringService();
 
   /**
    * Get the management context required to make use of the
@@ -45,11 +51,12 @@ public interface ConsumerManagementRegistry extends CapabilityManagementSupport 
   ContextContainer getContextContainer();
 
   /**
-   * Adds to this registry a specific management provider for object types T
+   * Adds to this registry a specific management provider for object types T.
    *
    * @param provider The management provider instance
+   * @return false if the management provider name already exists
    */
-  void addManagementProvider(ManagementProvider<?> provider);
+  boolean addManagementProvider(ManagementProvider<?> provider);
 
   /**
    * Removes from this registry a specific management provider for object types T
@@ -92,4 +99,9 @@ public interface ConsumerManagementRegistry extends CapabilityManagementSupport 
     refresh();
   }
 
+  /**
+   * Closes this service from {@link CommonServerEntity#destroy()}
+   */
+  @Override
+  void close();
 }

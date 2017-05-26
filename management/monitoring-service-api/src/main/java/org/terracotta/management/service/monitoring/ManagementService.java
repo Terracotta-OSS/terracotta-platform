@@ -17,9 +17,12 @@ package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.context.Context;
+
+import java.io.Closeable;
 
 /**
  * Class used by the active NMS Entity to monitor the stripe ans send management calls
@@ -27,7 +30,7 @@ import org.terracotta.management.model.context.Context;
  * @author Mathieu Carbou
  */
 @CommonComponent
-public interface ManagementService {
+public interface ManagementService extends Closeable {
 
   void setManagementExecutor(ManagementExecutor managementExecutor);
     
@@ -49,4 +52,9 @@ public interface ManagementService {
    */
   String sendManagementCallRequest(ClientDescriptor caller, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);
 
+  /**
+   * Closes this service from {@link CommonServerEntity#destroy()}
+   */
+  @Override
+  void close();
 }

@@ -17,36 +17,56 @@ package org.terracotta.management.service.monitoring;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.monitoring.IMonitoringProducer;
 
+import java.util.Collection;
 import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
 @CommonComponent
-public class ClientMonitoringServiceConfiguration implements ServiceConfiguration<ClientMonitoringService> {
-  
+public class ManagementRegistryConfiguration implements ServiceConfiguration<EntityManagementRegistry> {
+
   private final ServiceRegistry registry;
+  private final boolean active;
+  private final boolean addServerLevelCapabilities;
 
-  public ClientMonitoringServiceConfiguration(ServiceRegistry registry) {
+  public ManagementRegistryConfiguration(ServiceRegistry registry, boolean active) {
+    this(registry, active, false);
+  }
+
+  public ManagementRegistryConfiguration(ServiceRegistry registry, boolean active, boolean addServerLevelCapabilities) {
     this.registry = Objects.requireNonNull(registry);
+    this.active = active;
+    this.addServerLevelCapabilities = addServerLevelCapabilities;
   }
 
-  @Override
-  public Class<ClientMonitoringService> getServiceType() {
-    return ClientMonitoringService.class;
+  public boolean isActive() {
+    return active;
   }
 
-  public ClientCommunicator getClientCommunicator() {
+  public boolean wantsServerLevelCapabilities() {
+    return addServerLevelCapabilities;
+  }
+
+  public Class<EntityManagementRegistry> getServiceType() {
+    return EntityManagementRegistry.class;
+  }
+
+  public IMonitoringProducer getMonitoringProducer() {
     try {
-      return Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
+      return Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)));
     } catch (ServiceException e) {
       // IMonitoringProducer is a mandatory platform service
       throw new AssertionError(e);
     }
+  }
+
+  public Collection<ManageableServerComponent> getManageableVoltronComponents() {
+    return registry.getServices(new BasicServiceConfiguration<>(ManageableServerComponent.class));
   }
 }

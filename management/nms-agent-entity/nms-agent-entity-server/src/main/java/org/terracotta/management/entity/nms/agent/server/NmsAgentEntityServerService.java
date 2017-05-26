@@ -17,8 +17,6 @@ package org.terracotta.management.entity.nms.agent.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
@@ -52,8 +50,7 @@ public class NmsAgentEntityServerService extends ProxyServerEntityService<NmsAge
   public ActiveNmsAgentServerEntity createActiveEntity(ServiceRegistry registry, NmsAgentConfig configuration) throws ConfigurationException {
     LOGGER.trace("createActiveEntity()");
     try {
-      ClientCommunicator communicator = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(ClientCommunicator.class)));
-      ClientMonitoringService clientMonitoringService = Objects.requireNonNull(registry.getService(new ClientMonitoringServiceConfiguration(communicator)));
+      ClientMonitoringService clientMonitoringService = Objects.requireNonNull(registry.getService(new ClientMonitoringServiceConfiguration(registry)));
       return new ActiveNmsAgentServerEntity(clientMonitoringService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());

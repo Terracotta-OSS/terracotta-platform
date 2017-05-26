@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -62,7 +63,7 @@ public class ManagementRegistryServiceTest {
       buffer.add(message);
     }
   };
-  
+
   @Before
   public void setUp() throws Exception {
     provider.initialize(null, new MyPlatformConfiguration("server-1"));
@@ -106,8 +107,7 @@ public class ManagementRegistryServiceTest {
     managementService.setManagementExecutor(managementExecutor);
 
     // a consumer asks for a service
-    EntityMonitoringService activeEntityMonitoringService = provider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
-    ConsumerManagementRegistry registry = provider.getService(1, new ConsumerManagementRegistryConfiguration(activeEntityMonitoringService));
+    EntityManagementRegistry registry = provider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
     registry.addManagementProvider(new MyManagementProvider());
 
     // then register some objects

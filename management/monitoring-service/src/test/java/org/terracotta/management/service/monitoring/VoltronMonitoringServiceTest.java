@@ -26,6 +26,7 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -146,8 +147,15 @@ public class VoltronMonitoringServiceTest {
     managementService = activeServiceProvider.getService(1, new ManagementServiceConfiguration());
     managementService.setManagementExecutor(managementExecutor);
 
-    clientMonitoringService = activeServiceProvider.getService(1, new ClientMonitoringServiceConfiguration(clientCommunicator));
-    activeEntityMonitoringService = activeServiceProvider.getService(1, new ActiveEntityMonitoringServiceConfiguration());
+    clientMonitoringService = activeServiceProvider.getService(1, new ClientMonitoringServiceConfiguration(mock(ServiceRegistry.class)) {
+      @Override
+      public ClientCommunicator getClientCommunicator() {
+        return clientCommunicator;
+      }
+    });
+
+    EntityManagementRegistry activeRegistry = activeServiceProvider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
+    activeEntityMonitoringService = activeRegistry.getMonitoringService();
   }
 
   @Test
@@ -319,7 +327,13 @@ public class VoltronMonitoringServiceTest {
         activeDataListener.pushBestEffortsData(passive, name, data);
       }
     };
-    passiveEntityMonitoringService = passiveServiceProvider.getService(3, new PassiveEntityMonitoringServiceConfiguration(monitoringProducer));
+    EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
+      @Override
+      public  IMonitoringProducer getMonitoringProducer() {
+        return monitoringProducer;
+      }
+    });
+    passiveEntityMonitoringService = passiveRegistry.getMonitoringService();
 
     passiveEntityMonitoringService.exposeManagementRegistry(
         new ContextContainer("k", "v"),
@@ -398,7 +412,7 @@ public class VoltronMonitoringServiceTest {
 
     verify(clientCommunicator, times(1)).sendNoResponse(eq(new FakeDesc("2-1")), any(EntityResponse.class));
     verifyNoMoreInteractions(clientCommunicator);
-    
+
     verify(managementExecutor, times(1)).sendMessageToClient(any(Message.class), eq(new FakeDesc("1-1")));
     verify(managementExecutor, times(4)).sendMessageToClients(any(Message.class)); // notifs and stats
     verifyNoMoreInteractions(managementExecutor);

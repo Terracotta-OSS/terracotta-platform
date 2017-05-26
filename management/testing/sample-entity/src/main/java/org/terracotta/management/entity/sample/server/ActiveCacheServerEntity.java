@@ -62,8 +62,9 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<CacheSync, Void,
   @Override
   public void destroy() {
     LOGGER.trace("[{}] destroy()", cache.getName());
-    management.serverCacheDestroyed(cache);
     cache.removeListener(listener);
+    management.serverCacheDestroyed(cache);
+    management.close();
     super.destroy();
   }
 

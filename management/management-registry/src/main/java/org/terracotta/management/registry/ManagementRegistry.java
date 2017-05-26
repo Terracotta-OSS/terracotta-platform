@@ -28,8 +28,9 @@ public interface ManagementRegistry extends CapabilityManagementSupport {
    * Adds to this registry a specific management provider for object types T
    *
    * @param provider The management provider instance
+   * @return false if the management provider name already exists
    */
-  void addManagementProvider(ManagementProvider<?> provider);
+  boolean addManagementProvider(ManagementProvider<?> provider);
 
   /**
    * Removes from this registry a specific management provider for object types T

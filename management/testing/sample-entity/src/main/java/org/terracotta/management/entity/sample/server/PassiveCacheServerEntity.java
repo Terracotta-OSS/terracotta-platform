@@ -49,6 +49,7 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity implements Cac
   public void destroy() {
     LOGGER.trace("[{}] destroy()", cache.getName());
     management.serverCacheDestroyed(cache);
+    management.close();
   }
 
   @Override

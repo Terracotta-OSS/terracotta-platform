@@ -25,15 +25,11 @@ import org.terracotta.management.entity.nms.Nms;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.NmsVersion;
 import org.terracotta.management.model.message.Message;
-import org.terracotta.management.service.monitoring.ActiveEntityMonitoringServiceConfiguration;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistryConfiguration;
-import org.terracotta.management.service.monitoring.EntityMonitoringService;
+import org.terracotta.management.service.monitoring.EntityManagementRegistry;
+import org.terracotta.management.service.monitoring.ManagementRegistryConfiguration;
 import org.terracotta.management.service.monitoring.ManagementService;
 import org.terracotta.management.service.monitoring.ManagementServiceConfiguration;
-import org.terracotta.management.service.monitoring.PassiveEntityMonitoringServiceConfiguration;
-import org.terracotta.management.service.monitoring.SharedManagementRegistry;
-import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.management.service.monitoring.SharedEntityManagementRegistry;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
@@ -57,11 +53,9 @@ public class NmsEntityServerService extends ProxyServerEntityService<NmsConfig, 
     // get services
     try {
       ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration()));
-      EntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new ActiveEntityMonitoringServiceConfiguration()));
-      ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
-          .addServerManagementProviders()));
-      SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
-      ActiveNmsServerEntity entity = new ActiveNmsServerEntity(configuration, managementService, consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
+      EntityManagementRegistry entityManagementRegistry = Objects.requireNonNull(registry.getService(new ManagementRegistryConfiguration(registry, true, true)));
+      SharedEntityManagementRegistry sharedEntityManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedEntityManagementRegistry.class)));
+      ActiveNmsServerEntity entity = new ActiveNmsServerEntity(configuration, managementService, entityManagementRegistry, sharedEntityManagementRegistry);
       managementService.setManagementExecutor(entity);
       return entity;
     } catch (ServiceException e) {
@@ -73,12 +67,9 @@ public class NmsEntityServerService extends ProxyServerEntityService<NmsConfig, 
   protected PassiveNmsServerEntity createPassiveEntity(ServiceRegistry registry, NmsConfig configuration) throws ConfigurationException {
     LOGGER.trace("createPassiveEntity()");
     try {
-      IMonitoringProducer monitoringProducer = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class)));
-      EntityMonitoringService entityMonitoringService = Objects.requireNonNull(registry.getService(new PassiveEntityMonitoringServiceConfiguration(monitoringProducer)));
-      ConsumerManagementRegistry consumerManagementRegistry = Objects.requireNonNull(registry.getService(new ConsumerManagementRegistryConfiguration(entityMonitoringService)
-          .addServerManagementProviders()));
-      SharedManagementRegistry sharedManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedManagementRegistry.class)));
-      return new PassiveNmsServerEntity(consumerManagementRegistry, entityMonitoringService, sharedManagementRegistry);
+      EntityManagementRegistry entityManagementRegistry = Objects.requireNonNull(registry.getService(new ManagementRegistryConfiguration(registry, false, true)));
+      SharedEntityManagementRegistry sharedEntityManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedEntityManagementRegistry.class)));
+      return new PassiveNmsServerEntity(entityManagementRegistry, sharedEntityManagementRegistry);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
     }

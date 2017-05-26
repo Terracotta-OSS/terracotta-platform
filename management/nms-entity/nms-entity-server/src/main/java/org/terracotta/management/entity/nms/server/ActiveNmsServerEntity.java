@@ -32,11 +32,10 @@ import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.model.message.Message;
-import org.terracotta.management.service.monitoring.ConsumerManagementRegistry;
-import org.terracotta.management.service.monitoring.EntityMonitoringService;
+import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.ManagementExecutor;
 import org.terracotta.management.service.monitoring.ManagementService;
-import org.terracotta.management.service.monitoring.SharedManagementRegistry;
+import org.terracotta.management.service.monitoring.SharedEntityManagementRegistry;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
 
@@ -61,28 +60,33 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
 
   private final ManagementService managementService;
   private final String stripeName;
-  private final ConsumerManagementRegistry consumerManagementRegistry;
-  private final EntityMonitoringService entityMonitoringService;
-  private final SharedManagementRegistry sharedManagementRegistry;
+  private final EntityManagementRegistry entityManagementRegistry;
+  private final SharedEntityManagementRegistry sharedEntityManagementRegistry;
   private final long consumerId;
   private final BlockingQueue<ToSend> messagesToBeSent = new LinkedBlockingQueue<>();
 
-  ActiveNmsServerEntity(NmsConfig config, ManagementService managementService, ConsumerManagementRegistry consumerManagementRegistry, EntityMonitoringService entityMonitoringService, SharedManagementRegistry sharedManagementRegistry) {
-    this.consumerManagementRegistry = Objects.requireNonNull(consumerManagementRegistry);
-    this.entityMonitoringService = Objects.requireNonNull(entityMonitoringService);
-    this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);
+  ActiveNmsServerEntity(NmsConfig config, ManagementService managementService, EntityManagementRegistry entityManagementRegistry, SharedEntityManagementRegistry sharedEntityManagementRegistry) {
+    this.entityManagementRegistry = Objects.requireNonNull(entityManagementRegistry);
+    this.sharedEntityManagementRegistry = Objects.requireNonNull(sharedEntityManagementRegistry);
     this.managementService = Objects.requireNonNull(managementService);
     this.stripeName = config.getStripeName();
-    this.consumerId = entityMonitoringService.getConsumerId();
+    this.consumerId = entityManagementRegistry.getMonitoringService().getConsumerId();
   }
 
   // ActiveProxiedServerEntity
 
   @Override
+  public void destroy() {
+    entityManagementRegistry.close();
+    managementService.close();
+    super.destroy();
+  }
+
+  @Override
   public void createNew() {
     super.createNew();
     LOGGER.trace("[{}] createNew()", consumerId);
-    consumerManagementRegistry.refresh();
+    entityManagementRegistry.refresh();
     // start scheduling of thsi call
     getMessenger().entityCallbackToSendMessagesToClients();
   }
@@ -91,7 +95,7 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
   public void loadExisting() {
     super.loadExisting();
     LOGGER.trace("[{}] loadExisting()", consumerId);
-    consumerManagementRegistry.refresh();
+    entityManagementRegistry.refresh();
     // start scheduling of this call
     getMessenger().entityCallbackToSendMessagesToClients();
   }
@@ -104,15 +108,15 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
     if (serverName == null) {
       throw new IllegalArgumentException("Bad context: " + call.getContext());
     }
-    if (entityMonitoringService.getServerName().equals(serverName)) {
+    if (entityManagementRegistry.getMonitoringService().getServerName().equals(serverName)) {
       LOGGER.trace("[{}] entityCallbackToExecuteManagementCall({}, {}, {}, {})", consumerId, managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
-      ContextualReturn<?> contextualReturn = sharedManagementRegistry.withCapability(call.getCapability())
+      ContextualReturn<?> contextualReturn = sharedEntityManagementRegistry.withCapability(call.getCapability())
           .call(call.getMethodName(), call.getReturnType(), call.getParameters())
           .on(call.getContext())
           .build()
           .execute()
           .getSingleResult();
-      entityMonitoringService.answerManagementCall(managementCallIdentifier, contextualReturn);
+      entityManagementRegistry.getMonitoringService().answerManagementCall(managementCallIdentifier, contextualReturn);
     }
   }
 
