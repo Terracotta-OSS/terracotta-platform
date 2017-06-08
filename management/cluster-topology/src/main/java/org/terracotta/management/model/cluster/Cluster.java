@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
@@ -184,6 +185,33 @@ public final class Cluster implements Contextual {
 
   public Stream<Server> serverStream() {
     return stripeStream().flatMap(Stripe::serverStream);
+  }
+
+  public String getClusterTierName(String clientId, String cacheAlias) {
+
+    if(cacheAlias != null) {
+      Optional<Client> optional = this.getClient(clientId);
+      if(optional.isPresent()) {
+        Client clientFromTopology = optional.get();
+
+        if(clientFromTopology.getManagementRegistry().isPresent()) {
+          while(clientFromTopology.getManagementRegistry().get().getCapability("SettingsCapability").get().getDescriptors().iterator().hasNext()) {
+            Descriptor descriptor = clientFromTopology.getManagementRegistry().get().getCapability("SettingsCapability").get().getDescriptors().iterator().next();
+
+            if(((Map) descriptor).containsKey("cacheName") &&  ((Map) descriptor).get("cacheName").equals(cacheAlias)) {
+
+              for(Map.Entry<String, Map<String, String>> entry : ((Map<String, Map<String, String>>)((Map)descriptor).get("resourcePools")).entrySet() ) {
+                if(entry.getKey().toLowerCase().startsWith("clustered")) {
+                  return entry.getValue().get("clusterTier");
+                }
+              }
+              return "";
+            }
+          }
+        }
+      }
+    }
+    return "";
   }
 
   @Override
