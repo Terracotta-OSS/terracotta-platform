@@ -8,7 +8,7 @@
       "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "entityName": "TopologyIT",
       "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
-      "consumerId": "1"
+      "consumerId": "2"
     },
     "type": "SERVER_ENTITY_CREATED"
   },
@@ -21,7 +21,7 @@
       "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "entityName": "TopologyIT",
       "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
-      "consumerId": "1"
+      "consumerId": "2"
     },
     "type": "ENTITY_REGISTRY_AVAILABLE"
   },
@@ -36,7 +36,7 @@
       "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "entityName": "TopologyIT",
       "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
-      "consumerId": "1"
+      "consumerId": "2"
     },
     "type": "SERVER_ENTITY_FETCHED"
   },
@@ -46,19 +46,6 @@
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
     },
     "type": "CLIENT_CONNECTED"
-  },
-  {
-    "attributes": {},
-    "context": {
-      "stripeId": "SINGLE",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
-      "entityId": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
-      "entityName": "NmsAgent",
-      "entityType": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
-      "consumerId": "2"
-    },
-    "type": "SERVER_ENTITY_CREATED"
   },
   {
     "attributes": {
@@ -71,7 +58,7 @@
       "entityId": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "entityName": "NmsAgent",
       "entityType": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
-      "consumerId": "2"
+      "consumerId": "1"
     },
     "type": "SERVER_ENTITY_FETCHED"
   },
@@ -115,7 +102,7 @@
       "entityId": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "entityName": "NmsAgent",
       "entityType": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
-      "consumerId": "2"
+      "consumerId": "1"
     },
     "type": "SERVER_ENTITY_FETCHED"
   },

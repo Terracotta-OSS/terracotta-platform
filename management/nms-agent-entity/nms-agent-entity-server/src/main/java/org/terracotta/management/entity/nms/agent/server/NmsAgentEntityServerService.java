@@ -15,14 +15,13 @@
  */
 package org.terracotta.management.entity.nms.agent.server;
 
+import com.tc.classloader.PermanentEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.nms.agent.NmsAgent;
-import org.terracotta.management.entity.nms.agent.NmsAgentConfig;
-import org.terracotta.management.entity.nms.agent.NmsAgentVersion;
 import org.terracotta.management.entity.nms.agent.ReconnectData;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.service.monitoring.ClientMonitoringService;
@@ -31,26 +30,26 @@ import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.Messenger;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
-import java.util.Objects;
-
 /**
  * @author Mathieu Carbou
  */
-public class NmsAgentEntityServerService extends ProxyServerEntityService<NmsAgentConfig, Void, ReconnectData, Messenger> {
+@PermanentEntity(type = "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity", names = {"NmsAgent"}, version = 1)
+public class NmsAgentEntityServerService extends ProxyServerEntityService<Void, Void, ReconnectData, Messenger> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsAgentEntityServerService.class);
 
   public NmsAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(NmsAgent.class, NmsAgentConfig.class, new Class<?>[]{Message.class}, null, ReconnectData.class, null);
+    super(NmsAgent.class, Void.class, new Class<?>[]{Message.class}, null, ReconnectData.class, null);
     setCodec(new SerializationCodec());
   }
 
   @Override
-  public ActiveNmsAgentServerEntity createActiveEntity(ServiceRegistry registry, NmsAgentConfig configuration) throws ConfigurationException {
+  public ActiveNmsAgentServerEntity createActiveEntity(ServiceRegistry registry, Void configuration) throws ConfigurationException {
     LOGGER.trace("createActiveEntity()");
     try {
-      ClientMonitoringService clientMonitoringService = Objects.requireNonNull(registry.getService(new ClientMonitoringServiceConfiguration(registry)));
+      ClientMonitoringService clientMonitoringService = registry.getService(new ClientMonitoringServiceConfiguration(registry));
+      //clientMonitoringService can be null if no monitoring jar in the serevr classpath
       return new ActiveNmsAgentServerEntity(clientMonitoringService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
@@ -58,18 +57,18 @@ public class NmsAgentEntityServerService extends ProxyServerEntityService<NmsAge
   }
 
   @Override
-  protected PassiveNmsAgentServerEntity createPassiveEntity(ServiceRegistry registry, NmsAgentConfig configuration) {
+  protected PassiveNmsAgentServerEntity createPassiveEntity(ServiceRegistry registry, Void configuration) {
     LOGGER.trace("createPassiveEntity()");
     return new PassiveNmsAgentServerEntity();
   }
 
   @Override
   public long getVersion() {
-    return NmsAgentVersion.LATEST.version();
+    return 1;
   }
 
   @Override
   public boolean handlesEntityType(String typeName) {
-    return NmsAgentConfig.ENTITY_TYPE.equals(typeName);
+    return "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity".equals(typeName);
   }
 }

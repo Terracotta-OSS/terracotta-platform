@@ -5,17 +5,17 @@
       "id": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "type": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "name": "NmsAgent",
-      "consumerId": 2,
+      "consumerId": 1,
       "managementRegistry": null
     },
     {
       "id": "PassiveTopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "type": "org.terracotta.management.entity.nms.client.NmsEntity",
       "name": "PassiveTopologyIT",
-      "consumerId": 1,
+      "consumerId": 2,
       "managementRegistry": {
         "contextContainer": {
-          "consumerId": "1",
+          "consumerId": "2",
           "subContexts": []
         },
         "capabilities": [
@@ -37,7 +37,7 @@
             ],
             "descriptors": [
               {
-                "consumerId": "1",
+                "consumerId": "2",
                 "alias": "primary-server-resource",
                 "type": "OffHeapResource",
                 "capacity": 67108864,

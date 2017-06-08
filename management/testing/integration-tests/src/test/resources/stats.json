@@ -2,7 +2,7 @@
   {
     "capability": "OffHeapResourceStatistics",
     "context": {
-      "consumerId": "1",
+      "consumerId": "2",
       "alias": "primary-server-resource",
       "type": "OffHeapResource",
       "stripeId": "SINGLE",

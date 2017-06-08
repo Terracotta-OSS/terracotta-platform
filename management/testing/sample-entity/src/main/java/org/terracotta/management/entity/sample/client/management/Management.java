@@ -19,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.exception.ConnectionClosedException;
-import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.management.entity.nms.agent.NmsAgentConfig;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityFactory;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentService;
 import org.terracotta.management.entity.sample.client.ClientCache;
@@ -91,12 +89,7 @@ public class Management {
     LOGGER.trace("[{}] init()", managementRegistry.getContextContainer().getValue());
 
     // connect the NMS Agent Entity to this registry to bridge the voltorn monitoring service
-    try {
-      nmsAgentService = new NmsAgentService(new NmsAgentEntityFactory(connection)
-          .retrieveOrCreate(new NmsAgentConfig()));
-    } catch (EntityConfigurationException e) {
-      throw new ExecutionException(e);
-    }
+    nmsAgentService = new NmsAgentService(new NmsAgentEntityFactory(connection).retrieve());
     nmsAgentService.setManagementCallExecutor(executorService);
     nmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
     nmsAgentService.setManagementRegistry(managementRegistry);
