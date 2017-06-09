@@ -16,7 +16,6 @@
 package org.terracotta.management.entity.nms.agent.client;
 
 import org.terracotta.management.entity.nms.agent.NmsAgent;
-import org.terracotta.management.entity.nms.agent.NmsAgentConfig;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
@@ -24,11 +23,11 @@ import org.terracotta.voltron.proxy.client.ProxyEntityClientService;
 /**
  * @author Mathieu Carbou
  */
-public class NmsAgentEntityClientService extends ProxyEntityClientService<NmsAgentEntity, NmsAgentConfig> {
+public class NmsAgentEntityClientService extends ProxyEntityClientService<NmsAgentEntity, Void> {
 
   public NmsAgentEntityClientService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
-    super(NmsAgentEntity.class, NmsAgent.class, NmsAgentConfig.class, new Class<?>[] {Message.class});
+    super(NmsAgentEntity.class, NmsAgent.class, Void.class, new Class<?>[] {Message.class});
     setCodec(new SerializationCodec());
   }
 

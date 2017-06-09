@@ -30,7 +30,6 @@ import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
 import org.terracotta.voltron.proxy.server.Messenger;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -44,18 +43,20 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
   private final ClientMonitoringService clientMonitoringService;
 
   ActiveNmsAgentServerEntity(ClientMonitoringService clientMonitoringService) {
-    this.clientMonitoringService = Objects.requireNonNull(clientMonitoringService);
+    this.clientMonitoringService = clientMonitoringService;
   }
 
   @Override
   public void destroy() {
-    clientMonitoringService.close();
+    if (clientMonitoringService != null) {
+      clientMonitoringService.close();
+    }
     super.destroy();
   }
 
   @Override
   protected void onReconnect(ClientDescriptor clientDescriptor, ReconnectData reconnectData) {
-    if (reconnectData != null) {
+    if (reconnectData != null && clientMonitoringService != null) {
       LOGGER.trace("onReconnect({})", clientDescriptor);
       exposeTags(clientDescriptor, reconnectData.tags);
       exposeManagementMetadata(clientDescriptor, reconnectData.contextContainer, reconnectData.capabilities);
@@ -65,7 +66,7 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
 
   @Override
   public Future<Void> pushNotification(@ClientId Object caller, ContextualNotification notification) {
-    if (notification != null) {
+    if (notification != null && clientMonitoringService != null) {
       clientMonitoringService.pushNotification((ClientDescriptor) caller, notification);
     }
     return CompletableFuture.completedFuture(null);
@@ -73,7 +74,7 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
 
   @Override
   public Future<Void> pushStatistics(@ClientId Object caller, ContextualStatistics... statistics) {
-    if (statistics != null && statistics.length > 0) {
+    if (clientMonitoringService != null && statistics != null && statistics.length > 0) {
       clientMonitoringService.pushStatistics((ClientDescriptor) caller, statistics);
     }
     return CompletableFuture.completedFuture(null);
@@ -81,7 +82,7 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
 
   @Override
   public Future<Void> exposeManagementMetadata(@ClientId Object caller, ContextContainer contextContainer, Capability... capabilities) {
-    if (contextContainer != null && capabilities != null) {
+    if (clientMonitoringService != null && contextContainer != null && capabilities != null) {
       clientMonitoringService.exposeManagementRegistry((ClientDescriptor) caller, contextContainer, capabilities);
     }
     return CompletableFuture.completedFuture(null);
@@ -89,7 +90,7 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
 
   @Override
   public Future<Void> exposeTags(@ClientId Object caller, String... tags) {
-    if (tags != null) {
+    if (clientMonitoringService != null && tags != null) {
       clientMonitoringService.exposeTags((ClientDescriptor) caller, tags);
     }
     return CompletableFuture.completedFuture(null);
@@ -97,7 +98,9 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
 
   @Override
   public Future<Void> answerManagementCall(@ClientId Object caller, String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
-    clientMonitoringService.answerManagementCall((ClientDescriptor) caller, managementCallIdentifier, contextualReturn);
+    if (clientMonitoringService != null) {
+      clientMonitoringService.answerManagementCall((ClientDescriptor) caller, managementCallIdentifier, contextualReturn);
+    }
     return CompletableFuture.completedFuture(null);
   }
 

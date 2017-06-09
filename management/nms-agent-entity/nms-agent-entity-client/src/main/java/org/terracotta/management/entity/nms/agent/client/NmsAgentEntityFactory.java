@@ -17,20 +17,16 @@ package org.terracotta.management.entity.nms.agent.client;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.exception.EntityAlreadyExistsException;
-import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
-import org.terracotta.management.entity.nms.agent.NmsAgentConfig;
-import org.terracotta.management.entity.nms.agent.NmsAgentVersion;
 
 /**
  * @author Mathieu Carbou
  */
 public class NmsAgentEntityFactory {
 
-  public static final String ENTITYNAME = "NmsAgent";
+  private static final String ENTITYNAME = "NmsAgent";
 
   private final Connection connection;
 
@@ -38,47 +34,19 @@ public class NmsAgentEntityFactory {
     this.connection = connection;
   }
 
-  public NmsAgentEntity retrieveOrCreate(NmsAgentConfig config) throws EntityConfigurationException {
-    try {
-      return retrieve();
-    } catch (EntityNotFoundException e) {
-      try {
-        return create(config);
-      } catch (EntityAlreadyExistsException f) {
-        try {
-          return retrieve();
-        } catch (EntityNotFoundException e1) {
-          throw new AssertionError(e);
-        }
-      }
-    }
-  }
-
-  public NmsAgentEntity retrieve() throws EntityNotFoundException {
+  public NmsAgentEntity retrieve() {
     try {
       return getEntityRef().fetchEntity(null);
     } catch (EntityVersionMismatchException e) {
       throw new AssertionError(e);
-    }
-  }
-
-  public NmsAgentEntity create(NmsAgentConfig config) throws EntityAlreadyExistsException, EntityConfigurationException {
-    EntityRef<NmsAgentEntity, NmsAgentConfig, Object> ref = getEntityRef();
-    try {
-      ref.create(config);
-      return ref.fetchEntity(null);
-    } catch (EntityNotProvidedException e) {
-      throw new AssertionError(e);
-    } catch (EntityVersionMismatchException e) {
-      throw new AssertionError(e);
     } catch (EntityNotFoundException e) {
-      throw new AssertionError(e);
+      throw new AssertionError(e); // entity is permanent
     }
   }
 
-  private EntityRef<NmsAgentEntity, NmsAgentConfig, Object> getEntityRef() {
+  private EntityRef<NmsAgentEntity, Void, Object> getEntityRef() {
     try {
-      return connection.getEntityRef(NmsAgentEntity.class, NmsAgentVersion.LATEST.version(), ENTITYNAME);
+      return connection.getEntityRef(NmsAgentEntity.class, 1, ENTITYNAME);
     } catch (EntityNotProvidedException e) {
       throw new AssertionError(e);
     }
