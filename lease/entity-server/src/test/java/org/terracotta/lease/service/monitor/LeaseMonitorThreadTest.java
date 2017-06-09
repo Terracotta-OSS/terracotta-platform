@@ -42,16 +42,16 @@ public class LeaseMonitorThreadTest {
     assertTrue(leaseMonitorThread.isDaemon());
     leaseMonitorThread.start();
 
-    verify(timeSource, timeout(1000L).times(1)).sleep(200L);
+    verify(timeSource, timeout(10_000L).times(1)).sleep(200L);
     verify(leaseState, times(1)).checkLeases();
 
     timeSource.tickMillis(200L);
 
-    verify(timeSource, timeout(1000L).times(2)).sleep(200L);
+    verify(timeSource, timeout(10_000L).times(2)).sleep(200L);
     verify(leaseState, times(2)).checkLeases();
 
     leaseMonitorThread.interrupt();
-    leaseMonitorThread.join(1000L);
+    leaseMonitorThread.join(10_000L);
     assertFalse(leaseMonitorThread.isAlive());
   }
 }
