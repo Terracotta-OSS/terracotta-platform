@@ -48,7 +48,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>lease-entity-api</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

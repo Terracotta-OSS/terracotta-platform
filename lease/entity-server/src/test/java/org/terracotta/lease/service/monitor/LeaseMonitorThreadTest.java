@@ -24,6 +24,7 @@ import org.terracotta.lease.TestTimeSource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -45,10 +46,12 @@ public class LeaseMonitorThreadTest {
     verify(timeSource, timeout(10_000L).times(1)).sleep(200L);
     verify(leaseState, times(1)).checkLeases();
 
-    timeSource.tickMillis(200L);
+    Thread tickThread = new Thread(() -> timeSource.tickMillis(200L));
+    tickThread.setDaemon(true);
+    tickThread.start();
 
-    verify(timeSource, timeout(10_000L).times(2)).sleep(200L);
-    verify(leaseState, times(2)).checkLeases();
+    verify(timeSource, timeout(10_000L).atLeast(2)).sleep(200L);
+    verify(leaseState, atLeast(2)).checkLeases();
 
     leaseMonitorThread.interrupt();
     leaseMonitorThread.join(10_000L);
