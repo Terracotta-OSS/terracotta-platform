@@ -55,13 +55,13 @@ public class LeaseConfigurationParserTest {
 
     String xsd = stringBuilder.toString();
     assertTrue(xsd.contains("<xs:import namespace=\"http://www.terracotta.org/config\"/>"));
-    assertTrue(xsd.contains("<xs:element name=\"connection-leasing\" substitutionGroup=\"tc:service-content\">"));
-    assertTrue(xsd.contains("<xs:element type=\"xs:positiveInteger\" name=\"lease-length\"  minOccurs=\"1\" maxOccurs=\"1\">"));
+    assertTrue(xsd.contains("<xs:element name=\"connection-leasing\" type=\"lease:connection-leasing-type\" substitutionGroup=\"tc:service-content\">"));
+    assertTrue(xsd.contains("<xs:element name=\"lease-length\" type=\"lease:lease-length-type\" minOccurs=\"1\" maxOccurs=\"1\">"));
   }
 
   @Test
   public void parseValid() throws Exception {
-    Element connectionLeasingElement = getXMLConfigurationElement("5000");
+    Element connectionLeasingElement = getXMLConfigurationElement("5000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
     LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
@@ -71,7 +71,7 @@ public class LeaseConfigurationParserTest {
 
   @Test(expected = NumberFormatException.class)
   public void parseNotANumber() throws Exception {
-    Element connectionLeasingElement = getXMLConfigurationElement("BLAH");
+    Element connectionLeasingElement = getXMLConfigurationElement("BLAH", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
     parser.parse(connectionLeasingElement, "source");
@@ -79,7 +79,7 @@ public class LeaseConfigurationParserTest {
 
   @Test
   public void parseBigNumber() throws Exception {
-    Element connectionLeasingElement = getXMLConfigurationElement("1000000000000");
+    Element connectionLeasingElement = getXMLConfigurationElement("1000000000000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
     LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
@@ -89,7 +89,39 @@ public class LeaseConfigurationParserTest {
 
   @Test(expected = NumberFormatException.class)
   public void parseTooBigNumber() throws Exception {
-    Element connectionLeasingElement = getXMLConfigurationElement("10000000000000");
+    Element connectionLeasingElement = getXMLConfigurationElement("10000000000000", "milliseconds");
+
+    LeaseConfigurationParser parser = new LeaseConfigurationParser();
+    parser.parse(connectionLeasingElement, "source");
+  }
+
+  @Test(expected = NumberFormatException.class)
+  public void parseTooBigNumberHours() throws Exception {
+    Element connectionLeasingElement = getXMLConfigurationElement("2562048", "hours");
+
+    LeaseConfigurationParser parser = new LeaseConfigurationParser();
+    parser.parse(connectionLeasingElement, "source");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseUnknownUnits() throws Exception {
+    Element connectionLeasingElement = getXMLConfigurationElement("1", "month");
+
+    LeaseConfigurationParser parser = new LeaseConfigurationParser();
+    parser.parse(connectionLeasingElement, "source");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseTooSmallUnits() throws Exception {
+    Element connectionLeasingElement = getXMLConfigurationElement("1000000000", "nanoseconds");
+
+    LeaseConfigurationParser parser = new LeaseConfigurationParser();
+    parser.parse(connectionLeasingElement, "source");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseTooBigUnits() throws Exception {
+    Element connectionLeasingElement = getXMLConfigurationElement("1", "days");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
     parser.parse(connectionLeasingElement, "source");
@@ -97,7 +129,7 @@ public class LeaseConfigurationParserTest {
 
   @Test
   public void parseMax() throws Exception {
-    Element connectionLeasingElement = getXMLConfigurationElement("MAX");
+    Element connectionLeasingElement = getXMLConfigurationElement("MAX", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
     LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
@@ -105,12 +137,13 @@ public class LeaseConfigurationParserTest {
     assertEquals(LeaseServiceProvider.MAX_LEASE_LENGTH, configuration.getLeaseLength());
   }
 
-  private Element getXMLConfigurationElement(String leaseLengthText) throws Exception {
+  private Element getXMLConfigurationElement(String leaseLengthText, String timeUnit) throws Exception {
     DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
     Document document = documentBuilder.newDocument();
 
     Element connectionLeasingElement = document.createElementNS(LEASE_NAMESPACE, "connection-leasing");
     Element leaseLengthElement = document.createElementNS(LEASE_NAMESPACE, "lease-length");
+    leaseLengthElement.setAttribute("unit", timeUnit);
 
     leaseLengthElement.setTextContent(leaseLengthText);
     connectionLeasingElement.appendChild(leaseLengthElement);

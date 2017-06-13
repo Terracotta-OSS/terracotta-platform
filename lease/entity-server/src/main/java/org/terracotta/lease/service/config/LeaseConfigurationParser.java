@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.transform.Source;
@@ -27,7 +26,15 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.terracotta.lease.service.LeaseServiceProvider.MAX_LEASE_LENGTH;
 
 public class LeaseConfigurationParser implements ServiceConfigParser {
@@ -36,7 +43,10 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
   private static final String NAMESPACE_STRING = "http://www.terracotta.org/service/lease";
   private static final URI NAMESPACE_URI = URI.create(NAMESPACE_STRING);
   private static final String LEASE_LENGTH_ELEMENT_NAME =  "lease-length";
+  private static final String TIME_UNIT_ATTRIBUTE_NAME =  "unit";
   private static final String MAX = "MAX";
+  private static final List<TimeUnit> VALID_TIME_UNITS = Arrays.asList(MILLISECONDS, SECONDS, MINUTES, HOURS);
+  private static final String VALID_TIME_UNITS_STRING = VALID_TIME_UNITS.stream().map(Object::toString).map(String::toLowerCase).collect(Collectors.joining(", "));
 
   @Override
   public Source getXmlSchema() throws IOException {
@@ -60,7 +70,8 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
       throw new AssertionError("The schema for connection-leasing element requires one and only one lease-length element");
     }
 
-    Node leaseLengthElement = childElements.item(0);
+    Element leaseLengthElement = (Element) childElements.item(0);
+
     String leaseLengthString = leaseLengthElement.getTextContent();
     LOGGER.info("Found lease length XML text: " + leaseLengthString);
 
@@ -68,12 +79,27 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
       return new LeaseConfiguration(MAX_LEASE_LENGTH);
     }
 
-    long leaseLength = Long.parseLong(leaseLengthString);
+    String timeUnitString = leaseLengthElement.getAttribute(TIME_UNIT_ATTRIBUTE_NAME);
+    LOGGER.info("Found lease length time unit: " + timeUnitString);
 
-    if (leaseLength > MAX_LEASE_LENGTH) {
-      throw new NumberFormatException("Lease length must be less than or equal to: " + MAX_LEASE_LENGTH);
+    TimeUnit timeUnit;
+    try {
+      timeUnit = TimeUnit.valueOf(timeUnitString.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown time unit: " + timeUnitString + ". Must be one of " + VALID_TIME_UNITS_STRING + ".", e);
     }
 
-    return new LeaseConfiguration(leaseLength);
+    if (!VALID_TIME_UNITS.contains(timeUnit)) {
+      throw new IllegalArgumentException("Invalid lease time unit: " + timeUnitString + ". Must be one of " + VALID_TIME_UNITS_STRING + ".");
+    }
+
+    long leaseLength = Long.parseLong(leaseLengthString);
+
+    long maxLeaseLengthInMatchingUnits = timeUnit.convert(MAX_LEASE_LENGTH, MILLISECONDS);
+    if (leaseLength > maxLeaseLengthInMatchingUnits) {
+      throw new NumberFormatException("Lease length in " + timeUnitString + " must be less than or equal to: " + maxLeaseLengthInMatchingUnits);
+    }
+
+    return new LeaseConfiguration(TimeUnit.MILLISECONDS.convert(leaseLength, timeUnit));
   }
 }
