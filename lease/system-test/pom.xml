@@ -46,30 +46,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>lease-common</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lease-entity-api</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lease-entity-common</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lease-entity-client</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>lease-entity-server</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>

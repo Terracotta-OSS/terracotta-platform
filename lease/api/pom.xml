@@ -51,7 +51,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>lease-entity-api</artifactId>
+      <artifactId>lease-entity-client</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
