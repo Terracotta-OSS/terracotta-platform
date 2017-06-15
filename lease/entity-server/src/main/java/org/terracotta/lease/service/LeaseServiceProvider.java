@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  * LeaseServiceProvider consumes the LeaseConfiguration objects (generated from XML parsing) and then creates the
  * connection leasing components, such as LeaseState and LeaseMonitorThread.
  */
+@BuiltinService
 public class LeaseServiceProvider implements ServiceProvider {
   public static long MAX_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   private static long DEFAULT_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);

@@ -53,7 +53,7 @@ public class LeaseSystemTest {
             server -> {
               server.registerClientEntityService(new LeaseAcquirerClientService());
               server.registerServerEntityService(new LeaseAcquirerServerService());
-              server.registerServiceProvider(new LeaseServiceProvider(), new LeaseConfiguration(500L));
+              server.registerOverrideServiceProvider(new LeaseServiceProvider(), new LeaseConfiguration(500L));
             });
 
     cluster.startAllServers();
@@ -68,12 +68,7 @@ public class LeaseSystemTest {
     Connection connection = ConnectionFactory.connect(clusterURI, properties);
     LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
 
-    while(true) {
-      Lease lease = leaseMaintainer.getCurrentLease();
-      if (lease.isValidAndContiguous(lease)) {
-        break;
-      }
-    }
+    LeaseTestUtil.waitForValidLease(leaseMaintainer);
 
     Lease lease1 = leaseMaintainer.getCurrentLease();
     Thread.sleep(1000L);
@@ -92,12 +87,7 @@ public class LeaseSystemTest {
     LeaseDelayedConnection delayedConnection = new LeaseDelayedConnection(connection);
     LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(delayedConnection);
 
-    while(true) {
-      Lease lease = leaseMaintainer.getCurrentLease();
-      if (lease.isValidAndContiguous(lease)) {
-        break;
-      }
-    }
+    LeaseTestUtil.waitForValidLease(leaseMaintainer);
 
     delayedConnection.setDelay(700L);
 

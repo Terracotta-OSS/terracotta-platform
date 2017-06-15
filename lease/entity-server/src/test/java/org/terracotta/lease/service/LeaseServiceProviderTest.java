@@ -29,7 +29,7 @@ import org.terracotta.lease.service.config.LeaseConfiguration;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -79,7 +79,7 @@ public class LeaseServiceProviderTest {
   }
 
   @Test
-  public void isNotBuiltinService() {
-    assertNull(LeaseServiceProvider.class.getAnnotation(BuiltinService.class));
+  public void isBuiltinService() {
+    assertNotNull(LeaseServiceProvider.class.getAnnotation(BuiltinService.class));
   }
 }
