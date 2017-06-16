@@ -42,9 +42,9 @@ interface PlatformListener {
 
   void serverStateChanged(PlatformServer sender, ServerState state);
 
-  void clientConnected(PlatformConnectedClient client);
+  void clientConnected(PlatformServer currentActive, PlatformConnectedClient client);
 
-  void clientDisconnected(PlatformConnectedClient client);
+  void clientDisconnected(PlatformServer currentActive, PlatformConnectedClient client);
 
   void clientFetch(PlatformConnectedClient client, PlatformEntity entity, ClientDescriptor clientDescriptor);
 

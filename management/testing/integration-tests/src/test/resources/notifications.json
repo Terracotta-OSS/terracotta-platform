@@ -41,9 +41,13 @@
     "type": "SERVER_ENTITY_FETCHED"
   },
   {
-    "attributes": {},
-    "context": {
+    "attributes": {
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
+    },
+    "context": {
+      "stripeId": "SINGLE",
+      "serverId": "testServer0",
+      "serverName": "testServer0"
     },
     "type": "CLIENT_CONNECTED"
   },
@@ -85,9 +89,13 @@
     "type": "CLIENT_INIT"
   },
   {
-    "attributes": {},
-    "context": {
+    "attributes": {
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
+    },
+    "context": {
+      "stripeId": "SINGLE",
+      "serverId": "testServer0",
+      "serverName": "testServer0"
     },
     "type": "CLIENT_CONNECTED"
   },

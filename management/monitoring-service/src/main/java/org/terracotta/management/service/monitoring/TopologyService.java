@@ -238,9 +238,12 @@ class TopologyService implements PlatformListener {
   }
 
   @Override
-  public synchronized void clientConnected(PlatformConnectedClient platformConnectedClient) {
+  public synchronized void clientConnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientConnected({})", platformConnectedClient);
 
+    Server server = stripe.getServerByName(currentActive.getServerName())
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing active server: " + currentActive.getServerName()));
+    
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
@@ -250,21 +253,24 @@ class TopologyService implements PlatformListener {
 
     client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint));
 
-    firingService.fireNotification(new ContextualNotification(client.getContext(), CLIENT_CONNECTED.name()));
+    firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
   }
 
   @Override
-  public synchronized void clientDisconnected(PlatformConnectedClient platformConnectedClient) {
+  public synchronized void clientDisconnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientDisconnected({})", platformConnectedClient);
 
+    Server server = stripe.getServerByName(currentActive.getServerName())
+        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing active server: " + currentActive.getServerName()));
+    
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Client client = cluster.getClient(clientIdentifier)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
-    Context context = client.getContext();
+    Context clientContext = client.getContext();
 
     client.remove();
 
-    firingService.fireNotification(new ContextualNotification(context, CLIENT_DISCONNECTED.name()));
+    firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_DISCONNECTED.name(), clientContext));
   }
 
   @Override

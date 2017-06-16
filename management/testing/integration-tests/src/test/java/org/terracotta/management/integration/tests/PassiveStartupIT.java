@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -84,7 +84,8 @@ public class PassiveStartupIT extends AbstractHATest {
         .map(contextualNotification -> contextualNotification.getAttributes().get("state"))
         .collect(Collectors.toSet());
 
-    assertThat(states, hasItems("SYNCHRONIZING", "PASSIVE"));
+    assertThat(states.contains("SYNCHRONIZING"), is(true));
+    assertThat(states.contains("PASSIVE"), is(true));
 
     // only 1 server in source: passive server
     ContextualNotification stateChanged = collected.stream().filter(n -> n.getType().equals("SERVER_STATE_CHANGED")).findFirst().get();
