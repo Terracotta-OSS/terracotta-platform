@@ -50,7 +50,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
   private final ConcurrentMap<String, PlatformConnectedClient> clients = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, PlatformClientFetchedEntity> fetches = new ConcurrentHashMap<>();
 
-  private volatile String currentActive;
+  private volatile PlatformServer currentActive;
 
   IStripeMonitoringPlatformListenerAdapter(PlatformListener delegate) {
     this.delegate = Objects.requireNonNull(delegate);
@@ -60,7 +60,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
   public void serverDidBecomeActive(PlatformServer self) {
     LOGGER.trace("[0] serverDidBecomeActive({})", self.getServerName());
     entities.put(self.getServerName(), new ConcurrentHashMap<>());
-    currentActive = self.getServerName();
+    currentActive = self;
     delegate.serverDidBecomeActive(self);
   }
 
@@ -95,7 +95,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
           PlatformEntity platformEntity = (PlatformEntity) value;
           PlatformEntity previous = requireNonNull(entities.get(sender.getServerName()), "Inconsistent monitoring tree: server did not joined stripe first: " + sender.getServerName())
               .put(name, platformEntity);
-          if (platformEntity.isActive || !sender.getServerName().equals(currentActive)) {
+          if (platformEntity.isActive || !sender.getServerName().equals(currentActive.getServerName())) {
             if (previous == null) {
               delegate.serverEntityCreated(sender, platformEntity);
             } else {
@@ -106,8 +106,11 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
         }
 
         case "clients": {
+          if (currentActive == null) {
+            throw new IllegalStateException("No " + PlatformServer.class.getSimpleName() + " had become active");
+          }
           clients.put(name, (PlatformConnectedClient) value);
-          delegate.clientConnected((PlatformConnectedClient) value);
+          delegate.clientConnected(currentActive, (PlatformConnectedClient) value);
           return true;
         }
 
@@ -162,9 +165,12 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
       }
 
       case "clients": {
+        if (currentActive == null) {
+          throw new IllegalStateException("No " + PlatformServer.class.getSimpleName() + " had become active");
+        }
         PlatformConnectedClient client = clients.remove(name);
         if (client != null) {
-          delegate.clientDisconnected(client);
+          delegate.clientDisconnected(currentActive, client);
           return true;
         }
         return false;
