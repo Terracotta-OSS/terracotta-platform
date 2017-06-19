@@ -21,6 +21,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.lease.MockStateDumpCollector;
 import org.terracotta.lease.TestTimeSource;
 import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
@@ -28,8 +29,11 @@ import org.terracotta.lease.service.config.LeaseConfiguration;
 
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -82,4 +86,21 @@ public class LeaseServiceProviderTest {
   public void isBuiltinService() {
     assertNotNull(LeaseServiceProvider.class.getAnnotation(BuiltinService.class));
   }
+
+  @Test
+  public void testStateDump() throws Exception {
+    TestTimeSource timeSource = spy(new TestTimeSource());
+    TimeSourceProvider.setTimeSource(timeSource);
+    PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
+
+    LeaseConfiguration providerConfig = new LeaseConfiguration(1500L);
+    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
+    serviceProvider.initialize(providerConfig, platformConfiguration);
+
+    MockStateDumpCollector dumper = new MockStateDumpCollector();
+    serviceProvider.addStateTo(dumper);
+    assertThat(dumper.getMapping("LeaseLength"), is("1500"));
+    assertThat(dumper.getMapping("LeaseState"), notNullValue());
+  }
+
 }

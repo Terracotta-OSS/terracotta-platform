@@ -52,6 +52,7 @@
     <module>lease</module>
     <module>runnel</module>
     <module>management</module>
+    <module>client-message-tracker</module>
   </modules>
 
   <dependencyManagement>

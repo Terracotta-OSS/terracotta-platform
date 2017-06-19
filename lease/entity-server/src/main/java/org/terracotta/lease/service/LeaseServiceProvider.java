@@ -23,6 +23,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.lease.TimeSource;
 import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
@@ -129,5 +130,11 @@ public class LeaseServiceProvider implements ServiceProvider {
   private static long withLeaseLengthLog(long leaseLength) {
     LOGGER.info("Using lease length of " + leaseLength + "ms");
     return leaseLength;
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumper) {
+    stateDumper.addState("LeaseLength", Long.toString(leaseLength));
+    leaseState.addStateTo(stateDumper.subStateDumpCollector("LeaseState"));
   }
 }

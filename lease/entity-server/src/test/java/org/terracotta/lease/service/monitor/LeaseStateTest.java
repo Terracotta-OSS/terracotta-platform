@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.lease.MockStateDumpCollector;
 import org.terracotta.lease.TestTimeSource;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 
@@ -30,11 +31,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LeaseStateTest {
@@ -100,6 +104,27 @@ public class LeaseStateTest {
     leaseState.disconnected(clientDescriptor1);
     leaseState.disconnected(clientDescriptor2);
     leaseState.disconnected(clientDescriptor3);
+  }
+
+  @Test
+  public void testStateDump() {
+    MockStateDumpCollector stateDumper = new MockStateDumpCollector();
+
+    when(clientDescriptor1.toString()).thenReturn("client1");
+    when(clientDescriptor2.toString()).thenReturn("client2");
+    when(clientDescriptor3.toString()).thenReturn("client3");
+
+    assertTrue(leaseState.acquireLease(clientDescriptor1, 10L));
+    assertTrue(leaseState.acquireLease(clientDescriptor2, 20L));
+    assertTrue(leaseState.acquireLease(clientDescriptor3, 30L));
+
+    timeSource.tickMillis(25L);
+    leaseState.checkLeases();
+
+    leaseState.addStateTo(stateDumper);
+    assertThat(stateDumper.getMapping("client1"), is("expired"));
+    assertThat(stateDumper.getMapping("client2"), is("expired"));
+    assertThat(stateDumper.getMapping("client3"), is("valid"));
   }
 
   @Test
