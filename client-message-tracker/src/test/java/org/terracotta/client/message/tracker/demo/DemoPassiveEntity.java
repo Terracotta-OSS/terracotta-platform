@@ -15,9 +15,8 @@
  */
 package org.terracotta.client.message.tracker.demo;
 
-import org.terracotta.client.message.tracker.ClientMessageTracker;
-import org.terracotta.client.message.tracker.ClientMessageTrackerConfiguration;
-import org.terracotta.client.message.tracker.MessageTracker;
+import org.terracotta.client.message.tracker.OOOMessageHandler;
+import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
@@ -30,26 +29,48 @@ import org.terracotta.entity.ServiceRegistry;
 
 public class DemoPassiveEntity implements PassiveServerEntity {
 
-  private final ClientMessageTracker clientMessageTracker;
+  private final OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 
   public DemoPassiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
-    ClientMessageTrackerConfiguration clientMessageTrackerConfiguration =
-        new ClientMessageTrackerConfiguration("foo", new DummyTrackerPolicy());
-    clientMessageTracker = serviceRegistry.getService(clientMessageTrackerConfiguration);
+    OOOMessageHandlerConfiguration OOOMessageHandlerConfiguration =
+        new OOOMessageHandlerConfiguration("foo", new DummyTrackerPolicy());
+    messageHandler = serviceRegistry.getService(OOOMessageHandlerConfiguration);
   }
 
   @Override
   public void invokePassive(InvokeContext context, EntityMessage message) throws EntityUserException {
-    MessageTracker messageTracker = clientMessageTracker.getMessageTracker(context.getClientDescriptor());
-    messageTracker.reconcile(context.getOldestTransactionId());
-    EntityResponse response = messageTracker.getTrackedResponse(context.getCurrentTransactionId());
-    if (response == null) {
-      response = processMessage(message);
-      messageTracker.track(context.getCurrentTransactionId(), message, response);
+    InvokeContext realContext;
+    if (message instanceof DeferredMessage) {
+      DeferredMessage deferredMessage = (DeferredMessage) message;
+      realContext = new InvokeContext() {
+        @Override
+        public ClientDescriptor getClientDescriptor() {
+          return deferredMessage.getDeferredClientDescriptor();
+        }
+
+        @Override
+        public long getCurrentTransactionId() {
+          return deferredMessage.getDeferredTransactionId();
+        }
+
+        @Override
+        public long getOldestTransactionId() {
+          return context.getCurrentTransactionId();
+        }
+
+        @Override
+        public boolean isValidClientInformation() {
+          return true;
+        }
+      };
+    } else {
+      realContext = context;
     }
+
+    messageHandler.invoke(realContext, message, this::processMessage);
   }
 
-  private EntityResponse processMessage(EntityMessage message) {
+  private EntityResponse processMessage(InvokeContext context, EntityMessage message) {
     return null;
   }
 
@@ -75,7 +96,7 @@ public class DemoPassiveEntity implements PassiveServerEntity {
 
   @Override
   public void notifyClientDisconnectedFromActive(ClientDescriptor client) {
-    clientMessageTracker.untrackClient(client);
+    messageHandler.untrackClient(client);
   }
 
   @Override

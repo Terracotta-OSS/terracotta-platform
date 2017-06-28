@@ -15,9 +15,8 @@
  */
 package org.terracotta.client.message.tracker.demo;
 
-import org.terracotta.client.message.tracker.ClientMessageTracker;
-import org.terracotta.client.message.tracker.ClientMessageTrackerConfiguration;
-import org.terracotta.client.message.tracker.MessageTracker;
+import org.terracotta.client.message.tracker.OOOMessageHandler;
+import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConfigurationException;
@@ -31,12 +30,12 @@ import org.terracotta.entity.ServiceRegistry;
 
 public class DemoActiveEntity implements ActiveServerEntity {
 
-  private final ClientMessageTracker clientMessageTracker;
+  private final OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 
   public DemoActiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
-    ClientMessageTrackerConfiguration clientMessageTrackerConfiguration =
-        new ClientMessageTrackerConfiguration("foo", new DummyTrackerPolicy());
-    clientMessageTracker = serviceRegistry.getService(clientMessageTrackerConfiguration);
+    OOOMessageHandlerConfiguration OOOMessageHandlerConfiguration =
+        new OOOMessageHandlerConfiguration("foo", new DummyTrackerPolicy());
+    messageHandler = serviceRegistry.getService(OOOMessageHandlerConfiguration);
   }
 
   @Override
@@ -46,24 +45,15 @@ public class DemoActiveEntity implements ActiveServerEntity {
 
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {
-    clientMessageTracker.untrackClient(clientDescriptor);
+    messageHandler.untrackClient(clientDescriptor);
   }
 
   @Override
   public EntityResponse invokeActive(InvokeContext context, EntityMessage message) throws EntityUserException {
-    MessageTracker messageTracker = clientMessageTracker.getMessageTracker(context.getClientDescriptor());
-    messageTracker.reconcile(context.getOldestTransactionId());
-    EntityResponse response = messageTracker.getTrackedResponse(context.getCurrentTransactionId());
-    if (response != null) {
-      return response;
-    }
-
-    response = processMessage(message);
-    messageTracker.track(context.getCurrentTransactionId(), message, response);
-    return response;
+    return messageHandler.invoke(context, message, this::processMessage);
   }
 
-  private EntityResponse processMessage(EntityMessage message) {
+  private EntityResponse processMessage(InvokeContext context, EntityMessage message) {
     return null;
   }
 

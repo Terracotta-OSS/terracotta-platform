@@ -27,8 +27,8 @@ public class ClientMessageTrackerImpl implements ClientMessageTracker {
   private final TrackerPolicy trackerPolicy;
   private final ConcurrentMap<ClientDescriptor, MessageTracker> messageTrackers = new ConcurrentHashMap<>();
 
-  public ClientMessageTrackerImpl(TrackerPolicy trackerPolicy) {
-    this.trackerPolicy = trackerPolicy;
+  public ClientMessageTrackerImpl(TrackerPolicy TrackerPolicy) {
+    this.trackerPolicy = TrackerPolicy;
   }
 
   @Override

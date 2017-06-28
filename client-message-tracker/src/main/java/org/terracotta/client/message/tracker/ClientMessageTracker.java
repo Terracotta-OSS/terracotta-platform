@@ -16,13 +16,15 @@
 package org.terracotta.client.message.tracker;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.entity.StateDumpCollector;
 
 /**
  * Keeps track of the message trackers for individual clients.
  */
-public interface ClientMessageTracker extends StateDumpable {
+public interface ClientMessageTracker<M extends EntityMessage, R extends EntityResponse> extends StateDumpable {
 
   /**
    * Retrieve the message tracker of the client with the specified {@code clientDescriptor}
@@ -31,7 +33,7 @@ public interface ClientMessageTracker extends StateDumpable {
    * @param clientDescriptor a client descriptor
    * @return the message tracker associated with the specified {@code clientDescriptor}
    */
-  MessageTracker getMessageTracker(ClientDescriptor clientDescriptor);
+  MessageTracker<M, R> getMessageTracker(ClientDescriptor clientDescriptor);
 
   /**
    * Deregister a client from being tracked.

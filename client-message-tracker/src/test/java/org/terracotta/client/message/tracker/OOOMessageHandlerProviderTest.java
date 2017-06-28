@@ -23,22 +23,22 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
-public class ClientMessageTrackerProviderTest {
+public class OOOMessageHandlerProviderTest {
 
   @Test
   public void getService() throws Exception {
-    ClientMessageTrackerProvider provider =  new ClientMessageTrackerProvider();
-    ClientMessageTrackerConfiguration trackerConfiguration = new ClientMessageTrackerConfiguration("foo", mock(TrackerPolicy.class));
-    ClientMessageTracker tracker = provider.getService(1L, trackerConfiguration);
-    assertThat(provider.getService(2L, trackerConfiguration), sameInstance(tracker));
+    OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
+    OOOMessageHandlerConfiguration config = new OOOMessageHandlerConfiguration("foo", mock(TrackerPolicy.class));
+    OOOMessageHandler messageHandler = provider.getService(1L, config);
+    assertThat(provider.getService(2L, config), sameInstance(messageHandler));
 
-    trackerConfiguration = new ClientMessageTrackerConfiguration("bar", mock(TrackerPolicy.class));
-    assertThat(provider.getService(2L, trackerConfiguration), not(sameInstance(tracker)));
+    config = new OOOMessageHandlerConfiguration("bar", mock(TrackerPolicy.class));
+    assertThat(provider.getService(2L, config), not(sameInstance(messageHandler)));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void getServiceInvalidConfig() throws Exception {
-    ClientMessageTrackerProvider provider =  new ClientMessageTrackerProvider();
+    OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
     provider.getService(1L, mock(ServiceConfiguration.class));
   }
 

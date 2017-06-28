@@ -15,28 +15,28 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ClientDescriptor;
 
-public class ClientMessageTrackerConfiguration implements ServiceConfiguration<ClientMessageTracker> {
+class DummyClientDescriptor implements ClientDescriptor {
 
-  private final String entityIdentifier;
-  private final TrackerPolicy trackerPolicy;
+  private final int id;
 
-  public ClientMessageTrackerConfiguration(String entityIdentifier, TrackerPolicy trackerPolicy) {
-    this.entityIdentifier = entityIdentifier;
-    this.trackerPolicy = trackerPolicy;
-  }
-
-  public TrackerPolicy getTrackerPolicy() {
-    return trackerPolicy;
-  }
-
-  public String getEntityIdentifier() {
-    return entityIdentifier;
+  public DummyClientDescriptor(int id) {
+    this.id = id;
   }
 
   @Override
-  public Class<ClientMessageTracker> getServiceType() {
-    return ClientMessageTracker.class;
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DummyClientDescriptor that = (DummyClientDescriptor) o;
+
+    return id == that.id;
+  }
+
+  @Override
+  public int hashCode() {
+    return id;
   }
 }

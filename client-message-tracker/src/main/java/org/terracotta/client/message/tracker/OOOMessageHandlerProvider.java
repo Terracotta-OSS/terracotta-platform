@@ -15,13 +15,12 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.entity.StateDumper;
+import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,9 +28,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ClientMessageTrackerProvider implements ServiceProvider {
+public class OOOMessageHandlerProvider implements ServiceProvider {
 
-  private ConcurrentMap<String, ClientMessageTracker> serviceMap = new ConcurrentHashMap<>();
+  private ConcurrentMap<String, OOOMessageHandler> serviceMap = new ConcurrentHashMap<>();
+
   @Override
   public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration, PlatformConfiguration platformConfiguration) {
     return true;
@@ -39,18 +39,18 @@ public class ClientMessageTrackerProvider implements ServiceProvider {
 
   @Override
   public <T> T getService(long l, ServiceConfiguration<T> serviceConfiguration) {
-    if (serviceConfiguration instanceof ClientMessageTrackerConfiguration) {
-      ClientMessageTrackerConfiguration cmtServiceConfiguration = (ClientMessageTrackerConfiguration) serviceConfiguration;
-      ClientMessageTracker clientMessageTracker = serviceMap.computeIfAbsent(cmtServiceConfiguration.getEntityIdentifier(),
-          id -> new ClientMessageTrackerImpl(cmtServiceConfiguration.getTrackerPolicy()));
-      return serviceConfiguration.getServiceType().cast(clientMessageTracker);
+    if (serviceConfiguration instanceof OOOMessageHandlerConfiguration) {
+      OOOMessageHandlerConfiguration cmtServiceConfiguration = (OOOMessageHandlerConfiguration) serviceConfiguration;
+      OOOMessageHandler messageHandler = serviceMap.computeIfAbsent(cmtServiceConfiguration.getEntityIdentifier(),
+          id -> new OOOMessageHandlerImpl(cmtServiceConfiguration.getTrackerPolicy()));
+      return serviceConfiguration.getServiceType().cast(messageHandler);
     }
     throw new IllegalArgumentException("Unexpected configuration type: " + serviceConfiguration);
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Collections.singletonList(ClientMessageTracker.class);
+    return Collections.singletonList(OOOMessageHandler.class);
   }
 
   @Override
@@ -59,9 +59,9 @@ public class ClientMessageTrackerProvider implements ServiceProvider {
   }
 
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
-    for (Map.Entry<String, ClientMessageTracker> entry : serviceMap.entrySet()) {
-      entry.getValue().dumpStateTo(stateDumper.subStateDumper(entry.getKey().toString()));
+  public void addStateTo(StateDumpCollector stateDumper) {
+    for (Map.Entry<String, OOOMessageHandler> entry : serviceMap.entrySet()) {
+      entry.getValue().addStateTo(stateDumper.subStateDumpCollector(entry.getKey().toString()));
     }
   }
 }

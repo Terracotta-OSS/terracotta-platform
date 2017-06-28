@@ -25,7 +25,7 @@ import java.util.Map;
  * Keeps track of an entity's messages with their ids to their corresponding responses.
  * The decision on whether or not to track an {@link EntityMessage} is taken using the {@link TrackerPolicy} of the entity
  */
-public interface MessageTracker extends StateDumpable {
+public interface MessageTracker<M extends EntityMessage, R extends EntityResponse> extends StateDumpable {
 
   /**
    * Tracks the provided response associated with the given messageId.
@@ -36,7 +36,7 @@ public interface MessageTracker extends StateDumpable {
    * @param message Incoming entity message
    * @param response Outgoing entity response
    */
-  void track(long messageId, EntityMessage message, EntityResponse response);
+  void track(long messageId, M message, R response);
 
   /**
    * Returns the tracked response associated with the given message ID, null otherwise.
@@ -44,7 +44,7 @@ public interface MessageTracker extends StateDumpable {
    * @param messageId Tracked entity message ID
    * @return Tracked entity response
    */
-  EntityResponse getTrackedResponse(long messageId);
+  R getTrackedResponse(long messageId);
 
   /**
    * Clears messageId-response mappings for all ids less than the provided messageId.
@@ -59,5 +59,5 @@ public interface MessageTracker extends StateDumpable {
    *
    * @param trackedResponses a map of message id, response mappings
    */
-  void loadOnSync(Map<Long, EntityResponse> trackedResponses);
+  void loadOnSync(Map<Long, R> trackedResponses);
 }

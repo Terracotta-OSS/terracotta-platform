@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.client.message.tracker;
+package org.terracotta.client.message.tracker.demo;
 
+import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 
-/**
- * A {@link TrackerPolicy} for an entity defines which one of its messages types need once and only once invocation guarantee.
- * This will be used by the {@link ClientMessageTracker} to track such messages with their response cached.
- */
-public interface TrackerPolicy {
-
-  /**
-   * Indicates whether the specified message need to be tracked by {@link ClientMessageTracker} or not.
-   *
-   * @param message an entity message
-   * @return true for trackable messages and false for non-trackable messages
-   */
-  boolean trackable(EntityMessage message);
+public interface DeferredMessage extends EntityMessage {
+  long getDeferredTransactionId();
+  ClientDescriptor getDeferredClientDescriptor();
 }

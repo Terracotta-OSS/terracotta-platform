@@ -24,26 +24,26 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.LongStream;
 
-public class MessageTrackerImpl implements MessageTracker {
+public class MessageTrackerImpl<M extends EntityMessage, R extends EntityResponse> implements MessageTracker<M, R> {
 
-  private final TrackerPolicy trackerPolicy;
-  private final ConcurrentMap<Long, EntityResponse> trackedResponses;
+  private final TrackerPolicy TrackerPolicy;
+  private final ConcurrentMap<Long, R> trackedResponses;
   private volatile long lastReconciledMessageId = -1;
 
-  public MessageTrackerImpl(TrackerPolicy trackerPolicy) {
-    this.trackerPolicy = trackerPolicy;
+  public MessageTrackerImpl(TrackerPolicy TrackerPolicy) {
+    this.TrackerPolicy = TrackerPolicy;
     this.trackedResponses = new ConcurrentHashMap<>();
   }
 
   @Override
-  public void track(long messageId, EntityMessage message, EntityResponse response) {
-    if (trackerPolicy.trackable(message) && messageId > 0) {
+  public void track(long messageId, M message, R response) {
+    if (TrackerPolicy.trackable(message) && messageId > 0) {
       trackedResponses.put(messageId, response);
     }
   }
 
   @Override
-  public EntityResponse getTrackedResponse(long messageId) {
+  public R getTrackedResponse(long messageId) {
     return trackedResponses.get(messageId);
   }
 
@@ -56,7 +56,7 @@ public class MessageTrackerImpl implements MessageTracker {
   }
 
   @Override
-  public void loadOnSync(Map<Long, EntityResponse> trackedResponses) {
+  public void loadOnSync(Map<Long, R> trackedResponses) {
     trackedResponses.putAll(trackedResponses);
   }
 

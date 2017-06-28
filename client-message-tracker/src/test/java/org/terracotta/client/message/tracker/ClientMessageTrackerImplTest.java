@@ -48,27 +48,4 @@ public class ClientMessageTrackerImplTest {
     assertThat(clientMessageTracker.getMessageTracker(descriptor), not(sameInstance(messageTracker)));
   }
 
-  private static class DummyClientDescriptor implements ClientDescriptor {
-
-    private final int id;
-
-    public DummyClientDescriptor(int id) {
-      this.id = id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      DummyClientDescriptor that = (DummyClientDescriptor) o;
-
-      return id == that.id;
-    }
-
-    @Override
-    public int hashCode() {
-      return id;
-    }
-  }
 }
