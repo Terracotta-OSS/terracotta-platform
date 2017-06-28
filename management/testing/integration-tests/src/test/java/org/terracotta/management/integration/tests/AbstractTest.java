@@ -211,6 +211,8 @@ public abstract class AbstractTest {
         .replaceAll("\"groupPort\":[0-9]+", "\"groupPort\":0")
         .replaceAll("\"port\":[0-9]+", "\"port\":0")
         .replaceAll("\"activateTime\":[0-9]+", "\"activateTime\":0")
+        .replaceAll("\"availableAtTime\":[0-9]+", "\"availableAtTime\":0")
+        .replaceAll("\"OffHeapResource:AllocatedMemory\":[0-9]+", "\"OffHeapResource:AllocatedMemory\":0")
         .replaceAll("\"time\":[0-9]+", "\"time\":0")
         .replaceAll("\"startTime\":[0-9]+", "\"startTime\":0")
         .replaceAll("\"upTimeSec\":[0-9]+", "\"upTimeSec\":0")

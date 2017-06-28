@@ -17,6 +17,8 @@ package org.terracotta.offheapresource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.ManageableServerComponent;
 import org.terracotta.offheapresource.config.MemoryUnit;
@@ -44,7 +46,7 @@ import java.util.concurrent.Callable;
  * allows for the partitioning and control of memory usage by entities
  * consuming this service.
  */
-public class OffHeapResourcesProvider implements OffHeapResources, ManageableServerComponent {
+public class OffHeapResourcesProvider implements OffHeapResources, ManageableServerComponent, StateDumpable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourcesProvider.class);
 
@@ -103,6 +105,17 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
 
   @Override
   public void onManagementRegistryClose(EntityManagementRegistry registry) {
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector dump) {
+    for (Map.Entry<OffHeapResourceIdentifier, OffHeapResource> entry : resources.entrySet()) {
+      OffHeapResourceIdentifier identifier = entry.getKey();
+      OffHeapResource resource = entry.getValue();
+      StateDumpCollector offHeapDump = dump.subStateDumpCollector(identifier.getName());
+      offHeapDump.addState("capacity", String.valueOf(resource.capacity()));
+      offHeapDump.addState("available", String.valueOf(resource.available()));
+    }
   }
 
   static BigInteger convert(BigInteger value, MemoryUnit unit) {

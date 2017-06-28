@@ -41,7 +41,7 @@
                 "alias": "primary-server-resource",
                 "type": "OffHeapResource",
                 "capacity": 67108864,
-                "availableAtTime": 67108864
+                "availableAtTime": 0
               },
               {
                 "type": "OffHeapResourceSettingsManagementProvider",
