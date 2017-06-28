@@ -172,6 +172,7 @@ public class DefaultNmsService implements NmsService {
     return future.get(timeout, TimeUnit.MILLISECONDS);
   }
 
+  @SuppressWarnings("unchecked")
   private static <T> void complete(VoltronManagementCall<T> managementCall, ContextualReturn<?> aReturn) {
     try {
       // we have a value returned

@@ -43,6 +43,7 @@ public class CacheEntityServerService extends ProxyServerEntityService<String, C
     setCodec(new SerializationCodec());
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public ActiveCacheServerEntity createActiveEntity(ServiceRegistry registry, String identifier) throws ConfigurationException {
     LOGGER.trace("createActiveEntity({})", identifier);
@@ -56,6 +57,7 @@ public class CacheEntityServerService extends ProxyServerEntityService<String, C
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected PassiveCacheServerEntity createPassiveEntity(ServiceRegistry registry, String identifier) throws ConfigurationException {
     LOGGER.trace("createPassiveEntity({})", identifier);
