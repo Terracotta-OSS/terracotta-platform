@@ -17,8 +17,9 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.EntityUserException;
+import org.terracotta.entity.InvokeContext;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
@@ -46,7 +47,8 @@ class ProxyInvoker<T> implements MessageFiring {
     this.target = target;
   }
 
-  ProxyEntityResponse invoke(final ProxyEntityMessage message, final ClientDescriptor clientDescriptor) {
+  ProxyEntityResponse invoke(InvokeContext context, final ProxyEntityMessage message) {
+    ClientDescriptor clientDescriptor = context.getClientDescriptor();
     try {
       invocationContext.set(new InvocationContext(clientDescriptor));
       return ProxyEntityResponse.response(message.getType(), message.messageType(), message.invoke(target, clientDescriptor));
@@ -66,23 +68,6 @@ class ProxyInvoker<T> implements MessageFiring {
       return ProxyEntityResponse.error(entityUserException);
     } finally {
       invocationContext.remove();
-    }
-  }
-
-  void invoke(final ProxyEntityMessage message) {
-    try {
-      message.invoke(target);
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException(e);
-    } catch (InvocationTargetException e) {
-      Throwable target = e.getTargetException();
-      if (target instanceof Error) {
-        throw (Error) target;
-      }
-      if (target instanceof RuntimeException) {
-        throw (RuntimeException) target;
-      }
-      throw new RuntimeException(target.getMessage(), target);
     }
   }
 

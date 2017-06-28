@@ -23,6 +23,7 @@ import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
@@ -272,7 +273,27 @@ public class EndToEndTest {
       final FutureTask<ProxyEntityResponse> futureTask = new FutureTask<ProxyEntityResponse>(new Callable<ProxyEntityResponse>() {
         @Override
         public ProxyEntityResponse call() throws Exception {
-          return proxyInvoker.invoke(message, clientDescriptor);
+          return proxyInvoker.invoke(new InvokeContext() {
+            @Override
+            public ClientDescriptor getClientDescriptor() {
+              return clientDescriptor;
+            }
+
+            @Override
+            public long getCurrentTransactionId() {
+              return 0;
+            }
+
+            @Override
+            public long getOldestTransactionId() {
+              return 0;
+            }
+
+            @Override
+            public boolean isValidClientInformation() {
+              return false;
+            }
+          }, message);
         }
       });
       futureTask.run();

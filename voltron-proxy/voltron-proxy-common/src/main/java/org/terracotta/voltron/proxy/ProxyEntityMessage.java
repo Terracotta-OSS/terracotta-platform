@@ -60,10 +60,6 @@ public class ProxyEntityMessage implements EntityMessage {
     return method.invoke(target, args);
   }
 
-  public Object invoke(final Object target) throws InvocationTargetException, IllegalAccessException {
-    return method.invoke(target, args);
-  }
-
   public Class<?> messageType() {
     return method.getMessageType();
   }
