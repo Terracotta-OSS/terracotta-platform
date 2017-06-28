@@ -101,7 +101,7 @@
               <dependencyResource>
                 <groupId>org.terracotta</groupId>
                 <artifactId>tcconfig-schema</artifactId>
-                <version>${tcconfig.version}</version>
+                <version>${terracotta-configuration.version}</version>
                 <resource>catalog.cat</resource>
               </dependencyResource>
             </catalog>
@@ -110,7 +110,7 @@
             <episode>
               <groupId>org.terracotta</groupId>
               <artifactId>tcconfig-schema</artifactId>
-              <version>${tcconfig.version}</version>
+              <version>${terracotta-configuration.version}</version>
             </episode>
           </episodes>
         </configuration>
