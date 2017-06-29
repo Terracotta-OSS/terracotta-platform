@@ -134,6 +134,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
     return allProviders;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public CompletableFuture<Void> register(Object managedObject) {
     LOGGER.trace("[{}] register()", consumerId, managedObject);

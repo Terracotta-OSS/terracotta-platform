@@ -24,6 +24,9 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.offheapresource.OffHeapResource;
+import org.terracotta.offheapresource.OffHeapResourceIdentifier;
+import org.terracotta.offheapresource.OffHeapResources;
 
 import java.io.Closeable;
 import java.util.Arrays;
@@ -48,6 +51,10 @@ public class MapProvider implements ServiceProvider, Closeable {
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
+    OffHeapResources offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class).iterator().next();
+    OffHeapResource heapResource = offHeapResources.getOffHeapResource(OffHeapResourceIdentifier.identifier("primary-server-resource"));
+    // just to mimic some allocation
+    heapResource.reserve(12 * 1024 * 1024);
     return true;
   }
 
@@ -80,6 +87,10 @@ public class MapProvider implements ServiceProvider, Closeable {
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    stateDumper.addState("TrackedMaps", caches.keySet().toString());
+    StateDumpCollector caches = stateDumper.subStateDumpCollector("caches");
+    int c = 0;
+    for (String name : this.caches.keySet()) {
+      caches.addState(String.valueOf(c), name);
+    }
   }
 }

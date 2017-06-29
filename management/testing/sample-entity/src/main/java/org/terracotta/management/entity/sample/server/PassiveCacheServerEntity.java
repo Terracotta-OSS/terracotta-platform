@@ -17,6 +17,7 @@ package org.terracotta.management.entity.sample.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.server.PassiveProxiedServerEntity;
@@ -102,4 +103,11 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity implements Cac
   public int size() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  protected void dumpState(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("cacheName", cache.getName());
+    stateDumpCollector.addState("cacheSize", String.valueOf(cache.size()));
+  }
+
 }

@@ -18,6 +18,7 @@ package org.terracotta.management.entity.sample.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
@@ -106,4 +107,11 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<CacheSync, Void,
 
   @Override
   public int size() {return cache.size();}
+
+  @Override
+  protected void dumpState(StateDumpCollector dump) {
+    dump.addState("cacheName", cache.getName());
+    dump.addState("cacheSize", String.valueOf(cache.size()));
+  }
+
 }

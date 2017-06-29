@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.IEntityMessenger;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.nms.Nms;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.model.call.ContextualCall;
@@ -63,6 +64,8 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
   private final EntityManagementRegistry entityManagementRegistry;
   private final SharedEntityManagementRegistry sharedEntityManagementRegistry;
   private final long consumerId;
+  // NmsCallback.entityCallbackToSendMessagesToClients() is scheduled to be executed periodically after 500ms.
+  //TODO: load test to verify if this queue can leak, otherwise replace by a ring buffer (see git revision fa80424cc4b56826fa0ff184beb605bf1c39ffa4 to have one) 
   private final BlockingQueue<ToSend> messagesToBeSent = new LinkedBlockingQueue<>();
 
   ActiveNmsServerEntity(NmsConfig config, ManagementService managementService, EntityManagementRegistry entityManagementRegistry, SharedEntityManagementRegistry sharedEntityManagementRegistry) {
@@ -98,6 +101,13 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
     entityManagementRegistry.refresh();
     // start scheduling of this call
     getMessenger().entityCallbackToSendMessagesToClients();
+  }
+
+  @Override
+  protected void dumpState(StateDumpCollector dump) {
+    dump.addState("consumerId", String.valueOf(consumerId));
+    dump.addState("stripeName", String.valueOf(stripeName));
+    dump.addState("messageQueueSize", String.valueOf(messagesToBeSent.size()));
   }
 
   // NmsCallback

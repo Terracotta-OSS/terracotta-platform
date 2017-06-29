@@ -96,7 +96,7 @@ public abstract class AbstractTest {
 
       OffheapResourcesType resources = new OffheapResourcesType();
       ResourceType resource = new ResourceType();
-      resource.setName("primary-resource");
+      resource.setName("primary-server-resource");
       resource.setUnit(MemoryUnit.MB);
       resource.setValue(BigInteger.valueOf(32));
       resources.getResource().add(resource);

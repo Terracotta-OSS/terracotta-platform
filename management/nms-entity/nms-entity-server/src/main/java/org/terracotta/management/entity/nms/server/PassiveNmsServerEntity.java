@@ -18,6 +18,7 @@ package org.terracotta.management.entity.nms.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.IEntityMessenger;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.nms.Nms;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -61,6 +62,11 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
     super.createNew();
     LOGGER.trace("[{}] createNew()", entityManagementRegistry.getMonitoringService().getConsumerId());
     entityManagementRegistry.refresh();
+  }
+
+  @Override
+  protected void dumpState(StateDumpCollector dump) {
+    dump.addState("consumerId", String.valueOf(entityManagementRegistry.getMonitoringService().getConsumerId()));
   }
 
   // NmsCallback

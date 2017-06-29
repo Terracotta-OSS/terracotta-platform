@@ -17,7 +17,10 @@ package org.terracotta.voltron.proxy.server;
 
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.EntityUserException;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
@@ -37,13 +40,13 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
   private Class<R> reconnectDataType;
 
   @Override
-  public final ProxyEntityResponse invoke(final ClientDescriptor clientDescriptor, final ProxyEntityMessage msg) {
-    switch (msg.getType()) {
+  public ProxyEntityResponse invokeActive(InvokeContext context, ProxyEntityMessage message) throws EntityUserException {
+    switch (message.getType()) {
       case MESSAGE:
       case MESSENGER:
-        return entityInvoker.invoke(msg, clientDescriptor);
+        return entityInvoker.invoke(context, message);
       default:
-        throw new AssertionError(msg.getType());
+        throw new AssertionError(message.getType());
     }
   }
 
@@ -96,6 +99,24 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
     if (messenger != null) {
       messenger.unSchedule();
     }
+  }
+
+  @Override
+  public final void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("instance", this.toString());
+    // clients, by default for all active entities
+    Collection<ClientDescriptor> clients = getClients();
+    stateDumpCollector.addState("clientCount", String.valueOf(clients.size()));
+    StateDumpCollector clientsDumper = stateDumpCollector.subStateDumpCollector("clients");
+    int i = 0;
+    for (ClientDescriptor client : clients) {
+      clientsDumper.addState(String.valueOf(i++), client.toString());
+    }
+    // custom
+    dumpState(stateDumpCollector);
+  }
+
+  protected void dumpState(StateDumpCollector dump) {
   }
 
   protected void synchronizeKeyToPassive(int concurrencyKey) {

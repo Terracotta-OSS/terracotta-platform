@@ -44,6 +44,7 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
     ((AbstractExposedStatistics<T>) exposedObject).close();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public final Collection<? extends Descriptor> getDescriptors() {
     // To keep ordering because these objects end up in an immutable

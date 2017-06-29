@@ -15,7 +15,10 @@
  */
 package org.terracotta.voltron.proxy.server;
 
+import org.terracotta.entity.EntityUserException;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
@@ -27,15 +30,15 @@ public abstract class PassiveProxiedServerEntity implements PassiveServerEntity<
   private final ProxyInvoker<?> entityInvoker = new ProxyInvoker<>(this);
 
   @Override
-  public void invoke(final ProxyEntityMessage msg) {
-    switch (msg.getType()) {
+  public void invokePassive(InvokeContext context, ProxyEntityMessage message) throws EntityUserException {
+    switch (message.getType()) {
       case SYNC:
       case MESSENGER:
       case MESSAGE:
-        entityInvoker.invoke(msg);
+        entityInvoker.invoke(context, message);
         break;
       default:
-        throw new AssertionError(msg.getType());
+        throw new AssertionError(message.getType());
     }
   }
 
@@ -67,6 +70,15 @@ public abstract class PassiveProxiedServerEntity implements PassiveServerEntity<
   @Override
   public void destroy() {
     // Don't care I think
+  }
+
+  @Override
+  public final void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("instance", this.toString());
+    dumpState(stateDumpCollector);
+  }
+
+  protected void dumpState(StateDumpCollector stateDumpCollector) {
   }
 
 }
