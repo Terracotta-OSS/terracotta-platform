@@ -1,0 +1,111 @@
+/*
+ * Copyright Terracotta, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.terracotta.client.message.tracker.demo;
+
+import org.terracotta.client.message.tracker.OOOMessageHandler;
+import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ConfigurationException;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.EntityUserException;
+import org.terracotta.entity.InvokeContext;
+import org.terracotta.entity.PassiveServerEntity;
+import org.terracotta.entity.ServiceException;
+import org.terracotta.entity.ServiceRegistry;
+
+public class DemoPassiveEntity implements PassiveServerEntity {
+
+  private final OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
+
+  public DemoPassiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
+    OOOMessageHandlerConfiguration OOOMessageHandlerConfiguration =
+        new OOOMessageHandlerConfiguration("foo", new DummyTrackerPolicy());
+    messageHandler = serviceRegistry.getService(OOOMessageHandlerConfiguration);
+  }
+
+  @Override
+  public void invokePassive(InvokeContext context, EntityMessage message) throws EntityUserException {
+    InvokeContext realContext;
+    if (message instanceof DeferredMessage) {
+      DeferredMessage deferredMessage = (DeferredMessage) message;
+      realContext = new InvokeContext() {
+        @Override
+        public ClientDescriptor getClientDescriptor() {
+          return deferredMessage.getDeferredClientDescriptor();
+        }
+
+        @Override
+        public long getCurrentTransactionId() {
+          return deferredMessage.getDeferredTransactionId();
+        }
+
+        @Override
+        public long getOldestTransactionId() {
+          return context.getCurrentTransactionId();
+        }
+
+        @Override
+        public boolean isValidClientInformation() {
+          return true;
+        }
+      };
+    } else {
+      realContext = context;
+    }
+
+    messageHandler.invoke(realContext, message, this::processMessage);
+  }
+
+  private EntityResponse processMessage(InvokeContext context, EntityMessage message) {
+    return null;
+  }
+
+  @Override
+  public void startSyncEntity() {
+
+  }
+
+  @Override
+  public void endSyncEntity() {
+
+  }
+
+  @Override
+  public void startSyncConcurrencyKey(int i) {
+
+  }
+
+  @Override
+  public void endSyncConcurrencyKey(int i) {
+
+  }
+
+  @Override
+  public void notifyClientDisconnectedFromActive(ClientDescriptor client) {
+    messageHandler.untrackClient(client);
+  }
+
+  @Override
+  public void createNew() throws ConfigurationException {
+
+  }
+
+  @Override
+  public void destroy() {
+
+  }
+}

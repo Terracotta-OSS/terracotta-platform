@@ -23,6 +23,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.StateDumpCollector;
 
 import java.io.Closeable;
 import java.util.Arrays;
@@ -77,4 +78,8 @@ public class MapProvider implements ServiceProvider, Closeable {
     throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
   }
 
+  @Override
+  public void addStateTo(StateDumpCollector stateDumper) {
+    stateDumper.addState("TrackedMaps", caches.keySet().toString());
+  }
 }

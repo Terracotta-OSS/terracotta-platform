@@ -199,5 +199,4 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
     throw new IllegalStateException("Unable to provide service " + serviceType.getName() + " to consumerID: " + consumerID);
   }
-
 }

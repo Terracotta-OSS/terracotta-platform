@@ -18,9 +18,12 @@ package org.terracotta.lease.service.monitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.lease.TimeSource;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -28,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * The central component of the connection leasing code. This object holds the state of the leases for each client and
  * allows updates to that state in a thread-safe way.
  */
-public class LeaseState {
+public class LeaseState implements StateDumpable {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseState.class);
 
   private final TimeSource timeSource;
@@ -114,4 +117,13 @@ public class LeaseState {
       // Otherwise loop because another thread updated the lease whilst we looked at it
     }
   }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    for (Map.Entry<ClientDescriptor, Lease> entry : leases.entrySet()) {
+      String leaseState = entry.getValue() instanceof ValidLease ? "valid" : "expired";
+      stateDumpCollector.addState(entry.getKey().toString(), leaseState);
+    }
+  }
+
 }
