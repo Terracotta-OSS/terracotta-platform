@@ -47,10 +47,14 @@ public class LeaseMaintainerFactory {
     LeaseAcquirer leaseAcquirer = getLeaseAcquirer(connection);
 
     LeaseMaintainerImpl leaseMaintainer = new LeaseMaintainerImpl(leaseAcquirer);
-    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer);
-    leaseMaintenanceThread.start();
 
-    return new ThreadCleaningLeaseMaintainer(leaseMaintainer, leaseMaintenanceThread);
+    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer);
+    LeaseExpiryConnectionKillingThread leaseExpiryConnectionKillingThread = new LeaseExpiryConnectionKillingThread(leaseMaintainer, connection);
+
+    leaseMaintenanceThread.start();
+    leaseExpiryConnectionKillingThread.start();
+
+    return new ThreadCleaningLeaseMaintainer(leaseMaintainer, leaseMaintenanceThread, leaseExpiryConnectionKillingThread);
   }
 
   private static LeaseAcquirer getLeaseAcquirer(Connection connection) {

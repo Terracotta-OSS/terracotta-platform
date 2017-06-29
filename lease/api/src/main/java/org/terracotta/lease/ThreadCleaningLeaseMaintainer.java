@@ -19,16 +19,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThreadCleaningLeaseMaintainer.class);
 
   private final LeaseMaintainer delegate;
-  private final LeaseMaintenanceThread leaseMaintenanceThread;
+  private final List<Thread> threads;
 
-  ThreadCleaningLeaseMaintainer(LeaseMaintainer delegate, LeaseMaintenanceThread leaseMaintenanceThread) {
+  ThreadCleaningLeaseMaintainer(LeaseMaintainer delegate, Thread... threads) {
+    this(delegate, Arrays.asList(threads));
+  }
+
+  private ThreadCleaningLeaseMaintainer(LeaseMaintainer delegate, List<Thread> threads) {
     this.delegate = delegate;
-    this.leaseMaintenanceThread = leaseMaintenanceThread;
+    this.threads = threads;
   }
 
   @Override
@@ -38,11 +44,16 @@ class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
 
   @Override
   public void close() throws IOException {
-    try {
-      leaseMaintenanceThread.interrupt();
-      leaseMaintenanceThread.join();
-    } catch (InterruptedException e) {
-      LOGGER.error("Interrupted while shutting down LeaseMaintenanceThread", e);
+    for (Thread thread : threads) {
+      thread.interrupt();
+    }
+
+    for (Thread thread : threads) {
+      try {
+        thread.join();
+      } catch (InterruptedException e) {
+        LOGGER.error("Interrupted while shutting down Thread: " + thread, e);
+      }
     }
 
     delegate.close();
