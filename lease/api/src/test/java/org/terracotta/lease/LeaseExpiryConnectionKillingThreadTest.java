@@ -25,6 +25,7 @@ import org.terracotta.connection.Connection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -75,6 +76,15 @@ public class LeaseExpiryConnectionKillingThreadTest {
   @Test
   public void whenLeaseBecomesInvalidConnectionIsClosed() throws Exception {
     when(leaseMaintainer.getCurrentLease()).thenReturn(new LeaseImpl(timeSource, -200L, -100L));
+    thread.start();
+    verify(timeSource, timeout(1000L).times(1)).sleep(200L);
+    verify(connection).close();
+  }
+
+  @Test
+  public void whenLeaseBecomesInvalidConnectionIsClosedCopingWithConnectionAlreadyClosed() throws Exception {
+    when(leaseMaintainer.getCurrentLease()).thenReturn(new LeaseImpl(timeSource, -200L, -100L));
+    doThrow(IllegalStateException.class).when(connection).close();
     thread.start();
     verify(timeSource, timeout(1000L).times(1)).sleep(200L);
     verify(connection).close();

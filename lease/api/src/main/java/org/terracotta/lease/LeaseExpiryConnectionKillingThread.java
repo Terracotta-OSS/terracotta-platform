@@ -44,7 +44,11 @@ public class LeaseExpiryConnectionKillingThread extends Thread {
         if (!(lease instanceof NullLease)) {
           boolean validLease = lease.isValidAndContiguous(lease);
           if (!validLease) {
-            connection.close();
+            try {
+              connection.close();
+            } catch (IllegalStateException e) {
+              // Already closed.
+            }
           }
         }
 
