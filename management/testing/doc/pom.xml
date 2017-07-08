@@ -59,11 +59,6 @@
 
     <!-- logging -->
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>client-logging</artifactId>
-      <version>${terracotta-core.version}</version>
-    </dependency>
-    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>
