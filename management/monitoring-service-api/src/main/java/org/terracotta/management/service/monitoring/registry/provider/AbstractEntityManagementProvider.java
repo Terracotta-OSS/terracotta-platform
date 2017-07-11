@@ -19,7 +19,7 @@ import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
 
 import java.util.Objects;

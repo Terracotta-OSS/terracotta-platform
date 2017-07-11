@@ -24,7 +24,7 @@ import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.CapabilityManagementSupport;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ResultSet;
-import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.ExposedObject;
 
 import java.util.ArrayList;
 import java.util.Collection;

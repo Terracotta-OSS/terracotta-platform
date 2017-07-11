@@ -23,7 +23,7 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
 import org.terracotta.management.registry.ManagementProvider;
-import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractEntityManagementProvider;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 

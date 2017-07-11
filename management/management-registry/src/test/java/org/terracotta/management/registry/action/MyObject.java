@@ -17,6 +17,7 @@ package org.terracotta.management.registry.action;
 
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.Named;
 
 import java.util.Collection;

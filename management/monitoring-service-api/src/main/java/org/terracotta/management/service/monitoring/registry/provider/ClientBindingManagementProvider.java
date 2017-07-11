@@ -20,7 +20,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.ExposedObject;
 
 import java.util.Collection;
 import java.util.Collections;
