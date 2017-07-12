@@ -80,12 +80,12 @@ public class DiagnosticIT extends AbstractSingleTest {
       assertThat(dump, containsString("cacheSize="));
       
       // MapProvider
-      assertThat(dump, containsString(".caches"));
+      assertThat(dump, containsString("caches="));
       
       // Common on all active entities
       assertThat(dump, containsString("instance="));
       assertThat(dump, containsString("clientCount="));
-      assertThat(dump, containsString(".clients"));
+      assertThat(dump, containsString("clients="));
     }
   }
 
