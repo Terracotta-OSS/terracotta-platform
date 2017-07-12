@@ -57,4 +57,12 @@ public final class OffHeapResourceIdentifier implements ServiceConfiguration<Off
   public Class<OffHeapResource> getServiceType() {
     return OffHeapResource.class;
   }
+
+
+  @Override
+  public String toString() {
+    return "OffHeapResourceIdentifier{" +
+        "name='" + name + '\'' +
+        '}';
+  }
 }
