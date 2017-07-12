@@ -40,4 +40,21 @@ public class DefaultManagementCallMessage extends DefaultMessage implements Mana
     return managementCallIdentifier;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    DefaultManagementCallMessage that = (DefaultManagementCallMessage) o;
+
+    return managementCallIdentifier.equals(that.managementCallIdentifier);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + managementCallIdentifier.hashCode();
+    return result;
+  }
 }

@@ -15,11 +15,13 @@
  */
 package org.terracotta.management.registry;
 
+import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.context.Context;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -39,12 +41,12 @@ public class DefaultCallQuery<T> implements CallQuery<T> {
   private final Class<T> returnType;
 
   public DefaultCallQuery(CapabilityManagementSupport capabilityManagement, String capabilityName, String methodName, Class<T> returnType, Parameter[] parameters, Collection<Context> contexts) {
-    this.capabilityManagement = capabilityManagement;
-    this.capabilityName = capabilityName;
-    this.methodName = methodName;
-    this.parameters = parameters;
-    this.contexts = Collections.unmodifiableCollection(new ArrayList<Context>(contexts));
-    this.returnType = returnType;
+    this.capabilityManagement = Objects.requireNonNull(capabilityManagement);
+    this.capabilityName = Objects.requireNonNull(capabilityName);
+    this.methodName = Objects.requireNonNull(methodName);
+    this.parameters = Objects.requireNonNull(parameters);
+    this.contexts = Collections.unmodifiableCollection(new ArrayList<Context>(Objects.requireNonNull(contexts)));
+    this.returnType = Objects.requireNonNull(returnType);
 
     if(contexts.isEmpty()) {
       throw new IllegalArgumentException("You did not specify any context to execute the management call onto");
@@ -73,7 +75,7 @@ public class DefaultCallQuery<T> implements CallQuery<T> {
 
   @Override
   public Parameter[] getParameters() {
-    return parameters;
+    return Arrays.copyOf(parameters, parameters.length);
   }
 
   @Override

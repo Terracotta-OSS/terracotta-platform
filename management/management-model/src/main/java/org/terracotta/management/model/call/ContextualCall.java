@@ -19,6 +19,7 @@ import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 
 /**
@@ -61,7 +62,7 @@ public class ContextualCall<T> implements Contextual {
   }
 
   public Parameter[] getParameters() {
-    return parameters;
+    return Arrays.copyOf(parameters, parameters.length);
   }
 
   public Class<T> getReturnType() {
