@@ -22,6 +22,7 @@ import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.StateDumpCollector;
 
+import java.util.Map;
 import java.util.function.BiFunction;
 
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
@@ -49,6 +50,16 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   @Override
   public void untrackClient(ClientDescriptor clientDescriptor) {
     clientMessageTracker.untrackClient(clientDescriptor);
+  }
+
+  @Override
+  public Map<Long, R> getTrackedResponses(ClientDescriptor clientDescriptor) {
+    return this.clientMessageTracker.getMessageTracker(clientDescriptor).getTrackedResponses();
+  }
+
+  @Override
+  public void loadOnSync(ClientDescriptor clientDescriptor, Map<Long, R> trackedResponses) {
+    this.clientMessageTracker.getMessageTracker(clientDescriptor).loadOnSync(trackedResponses);
   }
 
   @Override

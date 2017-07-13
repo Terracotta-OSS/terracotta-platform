@@ -56,6 +56,11 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
   }
 
   @Override
+  public Map<Long, R> getTrackedResponses() {
+    return trackedResponses;
+  }
+
+  @Override
   public void loadOnSync(Map<Long, R> trackedResponses) {
     trackedResponses.putAll(trackedResponses);
   }
