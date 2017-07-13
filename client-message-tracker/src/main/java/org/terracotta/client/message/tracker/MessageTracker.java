@@ -54,6 +54,13 @@ public interface MessageTracker<M extends EntityMessage, R extends EntityRespons
   void reconcile(long messageId);
 
   /**
+   * Get all message id - response mappings
+
+   * @return
+   */
+  Map<Long, R> getTrackedResponses();
+
+  /**
    * Bulk load a set of message ids, response mappings.
    * To be used by a passive entity when the active syncs its message tracker data.
    *

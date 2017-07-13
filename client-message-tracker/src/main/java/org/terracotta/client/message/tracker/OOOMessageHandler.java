@@ -22,11 +22,15 @@ import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.StateDumpable;
 
+import com.tc.classloader.CommonComponent;
+
+import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
  * Entities that want once and only once message invocation guarantees can delegate their invokes to this service.
  */
+@CommonComponent
 public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResponse> extends StateDumpable {
 
   /**
@@ -47,4 +51,21 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    * @param clientDescriptor the client descriptor of the disconnected client
    */
   void untrackClient(ClientDescriptor clientDescriptor);
+
+  /**
+   * Get all message id - response mappings for the given {@code clientDescriptor}
+
+   * @param clientDescriptor a client descriptor
+   * @return a map with message id - response mappings
+   */
+  Map<Long, R> getTrackedResponses(ClientDescriptor clientDescriptor);
+
+  /**
+   * Bulk load a set of message ids, response mappings for the given client descriptor.
+   * To be used by a passive entity when the active syncs its message tracker data.
+   *
+   * @param clientDescriptor a client descriptor
+   * @param trackedResponses a map of message id, response mappings
+   */
+  void loadOnSync(ClientDescriptor clientDescriptor, Map<Long, R> trackedResponses);
 }

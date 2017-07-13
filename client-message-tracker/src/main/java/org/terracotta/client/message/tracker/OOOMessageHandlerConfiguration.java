@@ -17,6 +17,9 @@ package org.terracotta.client.message.tracker;
 
 import org.terracotta.entity.ServiceConfiguration;
 
+import com.tc.classloader.CommonComponent;
+
+@CommonComponent
 public class OOOMessageHandlerConfiguration implements ServiceConfiguration<OOOMessageHandler> {
 
   private final String entityIdentifier;

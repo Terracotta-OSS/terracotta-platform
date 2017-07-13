@@ -38,6 +38,11 @@
       <artifactId>entity-server-api</artifactId>
       <version>${terracotta-apis.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
+      <version>${terracotta-apis.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
