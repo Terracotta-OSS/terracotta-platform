@@ -32,6 +32,8 @@ import org.terracotta.lease.service.config.LeaseConfiguration;
 import org.terracotta.lease.service.monitor.LeaseMonitorThread;
 import org.terracotta.lease.service.monitor.LeaseState;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  * connection leasing components, such as LeaseState and LeaseMonitorThread.
  */
 @BuiltinService
-public class LeaseServiceProvider implements ServiceProvider {
+public class LeaseServiceProvider implements ServiceProvider, Closeable {
   public static long MAX_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   private static long DEFAULT_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProvider.class);
@@ -98,6 +100,10 @@ public class LeaseServiceProvider implements ServiceProvider {
 
   @Override
   public void prepareForSynchronization() throws ServiceProviderCleanupException {
+  }
+
+  @Override
+  public void close() {
     leaseMonitorThread.interrupt();
   }
 
