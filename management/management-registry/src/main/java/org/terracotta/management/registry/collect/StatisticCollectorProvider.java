@@ -65,6 +65,11 @@ public class StatisticCollectorProvider extends AbstractActionManagementProvider
     }
 
     @Exposed
+    public boolean isRunning() {
+      return collectorService.isRunning();
+    }
+    
+    @Exposed
     public void startStatisticCollector(@Named("interval") long interval,
                                         @Named("unit") TimeUnit unit) {
       collectorService.startStatisticCollector(interval, unit);
