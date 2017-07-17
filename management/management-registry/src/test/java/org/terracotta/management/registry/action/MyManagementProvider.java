@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.registry.action;
 
+import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 

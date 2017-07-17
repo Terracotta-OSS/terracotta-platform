@@ -18,6 +18,7 @@ package org.terracotta.management.registry;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-public class DefaultManagementRegistry implements ManagementRegistry {
+public class DefaultManagementRegistry implements ManagementRegistry, Closeable {
 
   private final ContextContainer contextContainer;
 
@@ -122,4 +123,16 @@ public class DefaultManagementRegistry implements ManagementRegistry {
   public ContextContainer getContextContainer() {
     return contextContainer;
   }
+
+  @Override
+  public void close() {
+    while (!managementProviders.isEmpty()) {
+      List<ManagementProvider<?>> providers = new ArrayList<ManagementProvider<?>>(this.managementProviders);
+      for (ManagementProvider<?> managementProvider : providers) {
+        managementProvider.close();
+      }
+      managementProviders.removeAll(providers);
+    }
+  }
+
 }

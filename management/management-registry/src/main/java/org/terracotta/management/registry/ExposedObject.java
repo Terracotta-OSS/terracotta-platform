@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.registry.action;
+package org.terracotta.management.registry;
 
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;

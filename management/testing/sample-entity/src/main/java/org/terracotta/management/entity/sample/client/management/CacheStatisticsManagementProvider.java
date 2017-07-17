@@ -19,22 +19,11 @@ import org.terracotta.context.extended.OperationStatisticDescriptor;
 import org.terracotta.context.extended.ValueStatisticDescriptor;
 import org.terracotta.management.entity.sample.CacheOperationOutcomes;
 import org.terracotta.management.entity.sample.client.ClientCache;
-import org.terracotta.management.model.capabilities.descriptors.Descriptor;
-import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.AbstractManagementProvider;
+import org.terracotta.management.registry.DefaultStatisticsExposedObject;
+import org.terracotta.management.registry.DefaultStatisticsManagementProvider;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
-import org.terracotta.management.registry.action.ExposedObject;
-import org.terracotta.management.registry.collect.StatisticProvider;
-import org.terracotta.management.registry.collect.StatisticRegistry;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static java.util.Collections.singleton;
 import static java.util.EnumSet.allOf;
@@ -45,8 +34,7 @@ import static java.util.EnumSet.of;
  */
 @Named("CacheStatistics")
 @RequiredContext({@Named("appName"), @Named("cacheName")})
-@StatisticProvider
-class CacheStatisticsManagementProvider extends AbstractManagementProvider<ClientCache> {
+class CacheStatisticsManagementProvider extends DefaultStatisticsManagementProvider<ClientCache> {
 
   private final Context parentContext;
 
@@ -56,51 +44,15 @@ class CacheStatisticsManagementProvider extends AbstractManagementProvider<Clien
   }
 
   @Override
-  public final Collection<? extends Descriptor> getDescriptors() {
-    List<StatisticDescriptor> list = new ArrayList<>((Collection<? extends StatisticDescriptor>) super.getDescriptors());
-    // To keep ordering because these objects end up in an immutable
-    // topology so this is easier for testing to compare with json payloads
-    Collections.sort(list, STATISTIC_DESCRIPTOR_COMPARATOR);
-    return list;
-  }
-
-  @Override
-  public Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames) {
-    // To keep ordering because these objects end up in an immutable
-    // topology so this is easier for testing to compare with json payloads
-    Map<String, Number> statistics = new TreeMap<>();
-    ExposedClientCache exposedClientCache = (ExposedClientCache) findExposedObject(context);
-    if (exposedClientCache != null) {
-      if (statisticNames == null || statisticNames.isEmpty()) {
-        statistics.putAll(exposedClientCache.queryStatistics());
-      } else {
-        for (String statisticName : statisticNames) {
-          Number statistic = exposedClientCache.queryStatistic(statisticName);
-          if (statistic != null) {
-            statistics.put(statisticName, statistic);
-          }
-        }
-      }
-    }
-    return statistics;
-  }
-
-  @Override
-  protected ExposedObject<ClientCache> wrap(ClientCache managedObject) {
+  protected ExposedClientCache wrap(ClientCache managedObject) {
     return new ExposedClientCache(managedObject, parentContext.with("cacheName", managedObject.getName()));
   }
 
-  private static class ExposedClientCache implements ExposedObject<ClientCache> {
-
-    private final ClientCache clientCache;
-    private final Context context;
-    private final StatisticRegistry statisticRegistry;
+  private static class ExposedClientCache extends DefaultStatisticsExposedObject<ClientCache> {
 
     ExposedClientCache(ClientCache clientCache, Context context) {
-      this.clientCache = clientCache;
-      this.context = context;
-      this.statisticRegistry = new StatisticRegistry(clientCache);
-
+      super(clientCache, context);
+      
       OperationStatisticDescriptor<CacheOperationOutcomes.GetOutcome> get = OperationStatisticDescriptor.descriptor("get", singleton("cache"), CacheOperationOutcomes.GetOutcome.class);
       OperationStatisticDescriptor<CacheOperationOutcomes.ClearOutcome> clear = OperationStatisticDescriptor.descriptor("clear", singleton("cache"), CacheOperationOutcomes.ClearOutcome.class);
 
@@ -110,34 +62,5 @@ class CacheStatisticsManagementProvider extends AbstractManagementProvider<Clien
 
       statisticRegistry.registerSize("Size", ValueStatisticDescriptor.descriptor("size", singleton("cache")));
     }
-
-    Number queryStatistic(String fullStatisticName) {
-      return statisticRegistry.queryStatistic(fullStatisticName);
-    }
-
-    Map<String, Number> queryStatistics() {
-      return statisticRegistry.queryStatistics();
-    }
-
-    @Override
-    public ClientCache getTarget() {
-      return clientCache;
-    }
-
-    @Override
-    public ClassLoader getClassLoader() {
-      return clientCache.getClass().getClassLoader();
-    }
-
-    @Override
-    public Context getContext() {
-      return context;
-    }
-
-    @Override
-    public Collection<? extends StatisticDescriptor> getDescriptors() {
-      return statisticRegistry.getDescriptors();
-    }
-
   }
 }

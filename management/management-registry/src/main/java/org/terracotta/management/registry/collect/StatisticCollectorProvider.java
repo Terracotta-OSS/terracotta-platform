@@ -20,7 +20,7 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.action.AbstractActionManagementProvider;
 import org.terracotta.management.registry.action.Exposed;
-import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.ExposedObject;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -64,6 +64,11 @@ public class StatisticCollectorProvider extends AbstractActionManagementProvider
       collectorService.stopStatisticCollector();
     }
 
+    @Exposed
+    public boolean isRunning() {
+      return collectorService.isRunning();
+    }
+    
     @Exposed
     public void startStatisticCollector(@Named("interval") long interval,
                                         @Named("unit") TimeUnit unit) {

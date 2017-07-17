@@ -134,6 +134,11 @@
     "name": "StatisticCollectorCapability",
     "descriptors": [
       {
+        "name": "isRunning",
+        "returnType": "boolean",
+        "parameters": []
+      },
+      {
         "name": "startStatisticCollector",
         "returnType": "void",
         "parameters": [

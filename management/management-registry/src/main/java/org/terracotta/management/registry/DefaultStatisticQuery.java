@@ -72,7 +72,7 @@ public class DefaultStatisticQuery implements StatisticQuery {
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
           for (Map.Entry<String, Number> entry : managementProvider.collectStatistics(context, statisticNames).entrySet()) {
-            if (entry.getValue() != null && (entry.getValue().doubleValue() >= 0 || entry.getValue().doubleValue() == Double.NaN)) {
+            if (entry.getValue() != null && (entry.getValue().doubleValue() >= 0 || Double.isNaN(entry.getValue().doubleValue()))) {
               statistics.put(entry.getKey(), entry.getValue());
             }
           }

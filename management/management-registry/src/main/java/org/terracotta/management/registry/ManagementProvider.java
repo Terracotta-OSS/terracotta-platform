@@ -20,7 +20,6 @@ import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.Collection;
 import java.util.Map;

@@ -1,42 +1,5 @@
 [
   {
-    "name": "CacheCalls",
-    "descriptors": [
-      {
-        "name": "clear",
-        "returnType": "void",
-        "parameters": []
-      },
-      {
-        "name": "get",
-        "returnType": "java.lang.String",
-        "parameters": [
-          {
-            "name": "key",
-            "type": "java.lang.String"
-          }
-        ]
-      },
-      {
-        "name": "put",
-        "returnType": "void",
-        "parameters": [
-          {
-            "name": "key",
-            "type": "java.lang.String"
-          },
-          {
-            "name": "value",
-            "type": "java.lang.String"
-          }
-        ]
-      },
-      {
-        "name": "size",
-        "returnType": "int",
-        "parameters": []
-      }
-    ],
     "capabilityContext": {
       "attributes": [
         {
@@ -48,10 +11,58 @@
           "required": true
         }
       ]
-    }
+    },
+    "descriptors": [
+      {
+        "name": "clear",
+        "parameters": [],
+        "returnType": "void"
+      },
+      {
+        "name": "get",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "java.lang.String"
+      },
+      {
+        "name": "put",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "java.lang.String"
+          },
+          {
+            "name": "value",
+            "type": "java.lang.String"
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "size",
+        "parameters": [],
+        "returnType": "int"
+      }
+    ],
+    "name": "CacheCalls"
   },
   {
-    "name": "CacheSettings",
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "appName",
+          "required": true
+        },
+        {
+          "name": "cacheName",
+          "required": true
+        }
+      ]
+    },
     "descriptors": [
       {
         "appName": "pet-clinic",
@@ -64,6 +75,9 @@
         "size": 0
       }
     ],
+    "name": "CacheSettings"
+  },
+  {
     "capabilityContext": {
       "attributes": [
         {
@@ -75,10 +89,7 @@
           "required": true
         }
       ]
-    }
-  },
-  {
-    "name": "CacheStatistics",
+    },
     "descriptors": [
       {
         "name": "Cache:ClearCount",
@@ -97,45 +108,45 @@
         "type": "SIZE"
       }
     ],
+    "name": "CacheStatistics"
+  },
+  {
+    "capabilityContext": {
+      "attributes": []
+    },
+    "descriptors": [
+      {
+        "name": "getThreadDump",
+        "parameters": [],
+        "returnType": "java.lang.String"
+      }
+    ],
+    "name": "DiagnosticCalls"
+  },
+  {
+    "capabilityContext": {
+      "attributes": []
+    },
+    "descriptors": [],
+    "name": "NmsAgentService"
+  },
+  {
     "capabilityContext": {
       "attributes": [
         {
           "name": "appName",
           "required": true
-        },
-        {
-          "name": "cacheName",
-          "required": true
         }
       ]
-    }
-  },
-  {
-    "name": "DiagnosticCalls",
+    },
     "descriptors": [
       {
-        "name": "getThreadDump",
-        "returnType": "java.lang.String",
-        "parameters": []
-      }
-    ],
-    "capabilityContext": {
-      "attributes": []
-    }
-  },
-  {
-    "name": "NmsAgentService",
-    "descriptors": [],
-    "capabilityContext": {
-      "attributes": []
-    }
-  },
-  {
-    "name": "StatisticCollectorCapability",
-    "descriptors": [
+        "name": "isRunning",
+        "parameters": [],
+        "returnType": "boolean"
+      },
       {
         "name": "startStatisticCollector",
-        "returnType": "void",
         "parameters": [
           {
             "name": "interval",
@@ -145,21 +156,15 @@
             "name": "unit",
             "type": "java.util.concurrent.TimeUnit"
           }
-        ]
+        ],
+        "returnType": "void"
       },
       {
         "name": "stopStatisticCollector",
-        "returnType": "void",
-        "parameters": []
+        "parameters": [],
+        "returnType": "void"
       }
     ],
-    "capabilityContext": {
-      "attributes": [
-        {
-          "name": "appName",
-          "required": true
-        }
-      ]
-    }
+    "name": "StatisticCollectorCapability"
   }
 ]

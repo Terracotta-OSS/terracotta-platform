@@ -21,7 +21,7 @@ import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.action.AbstractActionManagementProvider;
 import org.terracotta.management.registry.action.Exposed;
-import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.ExposedObject;
 
 import java.util.Collection;
 import java.util.Collections;

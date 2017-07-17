@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.management.service.monitoring;
+package org.terracotta.management.registry;
 
+import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
-import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.action.Exposed;
-import org.terracotta.management.registry.ExposedObject;
-import org.terracotta.management.registry.Named;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,41 +25,37 @@ import java.util.Collections;
 /**
  * @author Mathieu Carbou
  */
-public class MyObject implements ExposedObject<MyObject> {
+public class DefaultExposedObject<T> implements ExposedObject<T> {
+  
+  private final Context context;
+  private final T o;
 
-  final String cmName;
-  final String cName;
-
-  MyObject(String cmName, String cName) {
-    this.cmName = cmName;
-    this.cName = cName;
+  public DefaultExposedObject(T o, Context context) {
+    this.context = Objects.requireNonNull(context);
+    this.o = Objects.requireNonNull(o);
   }
 
-  @Exposed
-  public int incr(@Named("n") int n) {
-    if (n == Integer.MAX_VALUE) {
-      throw new IllegalArgumentException();
-    }
-    return n + 1;
+  public DefaultExposedObject(T o) {
+    this(o, Context.empty());
   }
 
   @Override
-  public MyObject getTarget() {
-    return this;
+  public T getTarget() {
+    return o;
   }
 
   @Override
   public ClassLoader getClassLoader() {
-    return MyObject.class.getClassLoader();
+    return o.getClass().getClassLoader();
   }
 
   @Override
   public Context getContext() {
-    return Context.empty().with("cacheManagerName", cmName).with("cacheName", cName);
+    return context;
   }
 
   @Override
   public Collection<? extends Descriptor> getDescriptors() {
-    return Collections.singletonList(new Settings().set("cmName", cmName).set("cName", cName));
+    return Collections.emptyList();
   }
 }

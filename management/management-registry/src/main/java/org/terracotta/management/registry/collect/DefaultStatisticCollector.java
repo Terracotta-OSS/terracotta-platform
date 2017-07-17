@@ -22,14 +22,15 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.CapabilityManagementSupport;
+import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ResultSet;
-import org.terracotta.management.registry.action.ExposedObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -44,8 +45,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
   private final ScheduledExecutorService scheduledExecutorService;
   private final Runnable runnable;
 
-  private volatile boolean scheduled;
-
+  private volatile boolean running;
   private ScheduledFuture<?> task;
   private long intervalMs;
 
@@ -62,7 +62,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
       @Override
       public void run() {
         try {
-          if (scheduled) {
+          if (running) {
             Collection<ContextualStatistics> statistics = new ArrayList<ContextualStatistics>();
 
             for (String capabilityName : managementRegistry.getCapabilityNames()) {
@@ -90,7 +90,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
               }
             }
 
-            if (scheduled && !statistics.isEmpty()) {
+            if (running && !statistics.isEmpty()) {
               collector.onStatistics(statistics);
             }
           }
@@ -110,26 +110,41 @@ public class DefaultStatisticCollector implements StatisticCollector {
     final long itv = TimeUnit.MILLISECONDS.convert(interval, unit);
 
     // cancel the current task if it is scheduled with a different time
-    if (scheduled && intervalMs != itv) {
+    if (running && intervalMs != itv) {
       stopStatisticCollector();
     }
 
-    if (!scheduled) {
+    if (!running) {
       LOGGER.trace("startStatisticCollector({}, {})", interval, unit);
-      scheduled = true;
       intervalMs = itv;
-      task = scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, intervalMs, TimeUnit.MILLISECONDS);
+      if (!scheduledExecutorService.isShutdown()) {
+        running = true;
+        try {
+          task = scheduledExecutorService.scheduleWithFixedDelay(runnable, intervalMs, intervalMs, TimeUnit.MILLISECONDS);
+        } catch (RejectedExecutionException e) {
+          running = false;
+          throw e;
+        }
+      }
     }
   }
 
   @Override
   public synchronized void stopStatisticCollector() {
-    if (scheduled) {
+    if (running) {
+      running = false;
       LOGGER.trace("stopStatisticCollector()");
-      scheduled = false;
-      task.cancel(false);
-      task = null;
+      ScheduledFuture<?> task = this.task;
+      if (task != null) {
+        task.cancel(false);
+        this.task = null;
+      }
     }
+  }
+
+  @Override
+  public boolean isRunning() {
+    return running;
   }
 
 }

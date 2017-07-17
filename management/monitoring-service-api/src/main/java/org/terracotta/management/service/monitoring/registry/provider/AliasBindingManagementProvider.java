@@ -18,7 +18,7 @@ package org.terracotta.management.service.monitoring.registry.provider;
 import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.action.ExposedObject;
+import org.terracotta.management.registry.ExposedObject;
 
 import java.util.Collection;
 import java.util.Collections;
