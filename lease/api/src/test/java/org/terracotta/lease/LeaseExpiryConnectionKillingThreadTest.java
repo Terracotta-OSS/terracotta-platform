@@ -77,7 +77,7 @@ public class LeaseExpiryConnectionKillingThreadTest {
   public void whenLeaseBecomesInvalidConnectionIsClosed() throws Exception {
     when(leaseMaintainer.getCurrentLease()).thenReturn(new LeaseImpl(timeSource, -200L, -100L));
     thread.start();
-    verify(timeSource, timeout(1000L).times(1)).sleep(200L);
+    thread.join();
     verify(connection).close();
   }
 
@@ -86,7 +86,7 @@ public class LeaseExpiryConnectionKillingThreadTest {
     when(leaseMaintainer.getCurrentLease()).thenReturn(new LeaseImpl(timeSource, -200L, -100L));
     doThrow(IllegalStateException.class).when(connection).close();
     thread.start();
-    verify(timeSource, timeout(1000L).times(1)).sleep(200L);
+    thread.join();
     verify(connection).close();
   }
 }

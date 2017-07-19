@@ -33,7 +33,7 @@ class LeaseMaintenanceThread extends Thread {
   }
 
   public void run() {
-    while (true) {
+    while (!Thread.interrupted()) {
       try {
         long waitLength = leaseMaintainer.refreshLease();
 
@@ -45,10 +45,10 @@ class LeaseMaintenanceThread extends Thread {
           timeSource.sleep(waitLength);
         }
       } catch (ConnectionClosedException e) {
-        break;
+        return;
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        break;
+        return;
       } catch (LeaseException e) {
         LOGGER.error("Error obtaining lease", e);
       }

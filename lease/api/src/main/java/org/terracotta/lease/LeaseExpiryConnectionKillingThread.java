@@ -37,7 +37,7 @@ public class LeaseExpiryConnectionKillingThread extends Thread {
   }
 
   public void run() {
-    while (true) {
+    while (!Thread.interrupted()) {
       try {
         Lease lease = leaseMaintainer.getCurrentLease();
 
@@ -49,6 +49,7 @@ public class LeaseExpiryConnectionKillingThread extends Thread {
             } catch (IllegalStateException e) {
               // Already closed.
             }
+            return;
           }
         }
 
@@ -57,7 +58,7 @@ public class LeaseExpiryConnectionKillingThread extends Thread {
         LOGGER.error("Closing connection, due to lease expiry, caused an error", e);
       } catch (InterruptedException e) {
         Thread.interrupted();
-        break;
+        return;
       }
     }
   }

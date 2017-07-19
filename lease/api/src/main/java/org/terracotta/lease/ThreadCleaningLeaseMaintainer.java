@@ -15,16 +15,11 @@
  */
 package org.terracotta.lease;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ThreadCleaningLeaseMaintainer.class);
-
   private final LeaseMaintainer delegate;
   private final List<Thread> threads;
 
@@ -48,13 +43,9 @@ class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
       thread.interrupt();
     }
 
-    for (Thread thread : threads) {
-      try {
-        thread.join();
-      } catch (InterruptedException e) {
-        LOGGER.error("Interrupted while shutting down Thread: " + thread, e);
-      }
-    }
+    // We could join on these threads, but that's not a great idea because
+    // LeaseExpiryConnectionKillingThread may be calling connection.close() leading to this method being called
+    // and each is then waiting for the other to complete - deadlock.
 
     delegate.close();
   }
