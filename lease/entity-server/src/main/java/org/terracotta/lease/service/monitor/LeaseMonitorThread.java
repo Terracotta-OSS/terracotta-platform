@@ -36,14 +36,14 @@ public class LeaseMonitorThread extends Thread {
 
   @Override
   public void run() {
-    while (true) {
+    while (!Thread.interrupted()) {
       leaseState.checkLeases();
 
       try {
         timeSource.sleep(LEASE_CHECK_INTERVAL_MILLIS);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        break;
+        return;
       }
     }
   }
