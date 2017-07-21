@@ -107,6 +107,40 @@ public class LeaseStateTest {
   }
 
   @Test
+  public void reconnectingSetsTheLeaseForTheClientToALeaseThatDoesNotExpire() {
+    assertTrue(leaseState.acquireLease(clientDescriptor1, 10L));
+    leaseState.reconnecting(clientDescriptor1);
+
+    timeSource.tickMillis(100L);
+
+    leaseState.checkLeases();
+    verifyNoMoreInteractions(clientConnectionCloser);
+  }
+
+  @Test
+  public void reconnectedSetsTheLeaseBackToALeaseThatCanExpire() {
+    assertTrue(leaseState.acquireLease(clientDescriptor1, 10L));
+    leaseState.reconnecting(clientDescriptor1);
+
+    timeSource.tickMillis(100L);
+
+    leaseState.reconnected(clientDescriptor1, 50L);
+
+    leaseState.checkLeases();
+    verifyNoMoreInteractions(clientConnectionCloser);
+
+    timeSource.tickMillis(30L);
+
+    leaseState.checkLeases();
+    verifyNoMoreInteractions(clientConnectionCloser);
+
+    timeSource.tickMillis(30L);
+
+    leaseState.checkLeases();
+    verify(clientConnectionCloser).closeClientConnection(clientDescriptor1);
+  }
+
+  @Test
   public void testStateDump() {
     MockStateDumpCollector stateDumper = new MockStateDumpCollector();
 
@@ -126,6 +160,7 @@ public class LeaseStateTest {
     assertThat(stateDumper.getMapping("client2"), is("expired"));
     assertThat(stateDumper.getMapping("client3"), is("valid"));
   }
+
 
   @Test
   public void multiThreadedThrashing() throws Exception {

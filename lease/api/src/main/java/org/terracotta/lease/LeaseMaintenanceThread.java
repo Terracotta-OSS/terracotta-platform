@@ -38,7 +38,7 @@ class LeaseMaintenanceThread extends Thread {
         long waitLength = leaseMaintainer.refreshLease();
 
         if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Calculated lease refresh wait: " + waitLength);
+          LOGGER.debug("Lease refresh wait: " + waitLength);
         }
 
         if (waitLength > 0) {

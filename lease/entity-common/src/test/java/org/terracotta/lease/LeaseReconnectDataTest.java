@@ -18,30 +18,13 @@ package org.terracotta.lease;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
-public class LeaseResponseTest {
+public class LeaseReconnectDataTest {
   @Test
-  public void notGranted() {
-    LeaseResponse response = LeaseResponse.leaseNotGranted();
-    assertFalse(response.isLeaseGranted());
-  }
-
-  @Test
-  public void granted() {
-    LeaseResponse response = LeaseResponse.leaseGranted(200L);
-    assertTrue(response.isLeaseGranted());
-    assertEquals(200L, response.getLeaseLength());
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void zeroLease() {
-    LeaseResponse.leaseGranted(0L);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void negativeLease() {
-    LeaseResponse.leaseGranted(-1L);
+  public void roundtripLeaseReconnectData() throws Exception {
+    LeaseReconnectData reconnectData = new LeaseReconnectData(7);
+    byte[] bytes = reconnectData.encode();
+    LeaseReconnectData roundtrippedData = LeaseReconnectData.decode(bytes);
+    assertEquals(7, roundtrippedData.getConnectionSequenceNumber());
   }
 }

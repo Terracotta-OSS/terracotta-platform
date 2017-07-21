@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 @RunWith(MockitoJUnitRunner.class)
 public class LeaseAcquirerClientServiceTest {
   @Mock
-  private EntityClientEndpoint<LeaseRequest, LeaseResponse> endpoint;
+  private EntityClientEndpoint<LeaseMessage, LeaseResponse> endpoint;
 
   @Test
   public void handlesCorrectClass() {
@@ -58,7 +58,7 @@ public class LeaseAcquirerClientServiceTest {
   @Test
   public void createCodec() {
     LeaseAcquirerClientService clientService = new LeaseAcquirerClientService();
-    MessageCodec<LeaseRequest, LeaseResponse> messageCodec = clientService.getMessageCodec();
+    MessageCodec<LeaseMessage, LeaseResponse> messageCodec = clientService.getMessageCodec();
     assertTrue(messageCodec instanceof LeaseAcquirerCodec);
   }
 }

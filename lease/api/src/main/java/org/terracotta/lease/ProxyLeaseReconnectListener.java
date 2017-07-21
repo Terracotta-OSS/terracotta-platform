@@ -15,11 +15,27 @@
  */
 package org.terracotta.lease;
 
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.runnel.encoding.StructEncoder;
+/**
+ * This class exists to break the dependency cycle in construction
+ */
+class ProxyLeaseReconnectListener implements LeaseReconnectListener {
+  private volatile LeaseReconnectListener underlying;
 
-public interface LeaseResponse extends EntityResponse {
-  LeaseResponseType getType();
+  public void setUnderlying(LeaseReconnectListener underlying) {
+    this.underlying = underlying;
+  }
 
-  void encode(StructEncoder<Void> parentEncoder);
+  @Override
+  public void reconnecting() {
+    if (underlying != null) {
+      underlying.reconnecting();
+    }
+  }
+
+  @Override
+  public void reconnected() {
+    if (underlying != null) {
+      underlying.reconnected();
+    }
+  }
 }

@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.lease;
+package org.terracotta.lease.service.monitor;
 
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.runnel.encoding.StructEncoder;
+public class ReconnectionLease implements Lease {
+  @Override
+  public boolean isExpired(long now) {
+    return false;
+  }
 
-public interface LeaseResponse extends EntityResponse {
-  LeaseResponseType getType();
-
-  void encode(StructEncoder<Void> parentEncoder);
+  @Override
+  public boolean allowRenewal() {
+    throw new AssertionError("There should not be an attempt to renew a ReconnectionLease");
+  }
 }

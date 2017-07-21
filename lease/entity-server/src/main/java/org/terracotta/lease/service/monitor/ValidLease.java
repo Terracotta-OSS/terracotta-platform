@@ -30,7 +30,17 @@ class ValidLease implements Lease {
     return leaseExpiry - now < 0;
   }
 
+  @Override
+  public boolean allowRenewal() {
+    return true;
+  }
+
   boolean expiresBefore(ValidLease newLease) {
     return leaseExpiry - newLease.leaseExpiry < 0;
+  }
+
+  @Override
+  public String toString() {
+    return "ValidLease{ leaseExpiry:" + leaseExpiry + " }";
   }
 }

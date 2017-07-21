@@ -24,6 +24,7 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityServerService;
+import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceConfiguration;
@@ -45,7 +46,7 @@ import static org.terracotta.lease.LeaseEntityConstants.ENTITY_VERSION;
  * The object that creates the active and passive entities for the connection leasing.
  */
 @PermanentEntity(type = "org.terracotta.lease.LeaseAcquirer", names = {ENTITY_NAME}, version = ENTITY_VERSION)
-public class LeaseAcquirerServerService implements EntityServerService<LeaseRequest, LeaseResponse> {
+public class LeaseAcquirerServerService implements EntityServerService<LeaseMessage, LeaseResponse> {
   private static final Logger LOGGER = LoggerFactory.getLogger(LeaseAcquirerServerService.class);
 
   @Override
@@ -59,12 +60,16 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseRequ
   }
 
   @Override
-  public ActiveServerEntity<LeaseRequest, LeaseResponse> createActiveEntity(ServiceRegistry serviceRegistry, byte[] bytes) throws ConfigurationException {
+  public ActiveServerEntity<LeaseMessage, LeaseResponse> createActiveEntity(ServiceRegistry serviceRegistry, byte[] bytes) throws ConfigurationException {
     ClientCommunicator clientCommunicator = getService(serviceRegistry, new BasicServiceConfiguration<>(ClientCommunicator.class));
+
     ClientConnectionCloser clientConnectionCloser = new ClientConnectionCloserImpl(clientCommunicator);
     LeaseServiceConfiguration leaseServiceConfiguration = new LeaseServiceConfiguration(clientConnectionCloser);
     LeaseService leaseService = getService(serviceRegistry, leaseServiceConfiguration);
-    return new ActiveLeaseAcquirer(leaseService);
+
+    IEntityMessenger entityMessenger = getService(serviceRegistry, new BasicServiceConfiguration<>(IEntityMessenger.class));
+
+    return new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
   }
 
   private <T> T getService(ServiceRegistry serviceRegistry, ServiceConfiguration<T> serviceConfiguration) throws ConfigurationException {
@@ -84,16 +89,24 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseRequ
   }
 
   @Override
-  public PassiveServerEntity<LeaseRequest, LeaseResponse> createPassiveEntity(ServiceRegistry serviceRegistry, byte[] bytes) throws ConfigurationException {
+  public PassiveServerEntity<LeaseMessage, LeaseResponse> createPassiveEntity(ServiceRegistry serviceRegistry, byte[] bytes) throws ConfigurationException {
     return new PassiveLeaseAcquirer();
   }
 
   @Override
-  public ConcurrencyStrategy<LeaseRequest> getConcurrencyStrategy(byte[] bytes) {
-    return new ConcurrencyStrategy<LeaseRequest>() {
+  public ConcurrencyStrategy<LeaseMessage> getConcurrencyStrategy(byte[] bytes) {
+    return new ConcurrencyStrategy<LeaseMessage>() {
       @Override
-      public int concurrencyKey(LeaseRequest leaseRequest) {
-        return ConcurrencyStrategy.UNIVERSAL_KEY;
+      public int concurrencyKey(LeaseMessage leaseMessage) {
+        LeaseMessageType messageType = leaseMessage.getType();
+        switch (messageType) {
+          case LEASE_REQUEST:
+            return ConcurrencyStrategy.UNIVERSAL_KEY;
+          case LEASE_RECONNECT_FINISHED:
+            return ConcurrencyStrategy.MANAGEMENT_KEY;
+          default:
+            throw new AssertionError("Unknown LeaseMessage type: " + messageType);
+        }
       }
 
       @Override
@@ -104,12 +117,12 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseRequ
   }
 
   @Override
-  public MessageCodec<LeaseRequest, LeaseResponse> getMessageCodec() {
+  public MessageCodec<LeaseMessage, LeaseResponse> getMessageCodec() {
     return new LeaseAcquirerCodec();
   }
 
   @Override
-  public SyncMessageCodec<LeaseRequest> getSyncMessageCodec() {
+  public SyncMessageCodec<LeaseMessage> getSyncMessageCodec() {
     return null;
   }
 }

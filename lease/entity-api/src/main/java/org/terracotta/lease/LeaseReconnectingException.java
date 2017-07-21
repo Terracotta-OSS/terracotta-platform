@@ -15,11 +15,11 @@
  */
 package org.terracotta.lease;
 
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.runnel.encoding.StructEncoder;
-
-public interface LeaseResponse extends EntityResponse {
-  LeaseResponseType getType();
-
-  void encode(StructEncoder<Void> parentEncoder);
+/**
+ * Indicates that a reconnection is in progress and so lease requests will not be useful.
+ */
+public class LeaseReconnectingException extends LeaseException {
+  LeaseReconnectingException(String message) {
+    super(message);
+  }
 }

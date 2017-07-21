@@ -16,14 +16,16 @@
 package org.terracotta.lease;
 
 import org.terracotta.entity.ConfigurationException;
+import org.terracotta.entity.EntityUserException;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
 
 /**
  * The passive server-side entity for connection leasing.
  */
-class PassiveLeaseAcquirer implements PassiveServerEntity<LeaseRequest, LeaseResponse> {
+class PassiveLeaseAcquirer implements PassiveServerEntity<LeaseMessage, LeaseResponse> {
   @Override
-  public void invoke(LeaseRequest leaseRequest) {
+  public void invokePassive(InvokeContext context, LeaseMessage message) throws EntityUserException {
   }
 
   @Override

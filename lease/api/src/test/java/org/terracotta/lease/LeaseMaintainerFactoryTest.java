@@ -24,6 +24,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -50,7 +51,7 @@ public class LeaseMaintainerFactoryTest {
     TimeSourceProvider.setTimeSource(timeSource);
 
     when(connection.getEntityRef(LeaseAcquirer.class, ENTITY_VERSION, ENTITY_NAME)).thenReturn(entityRef);
-    when(entityRef.fetchEntity(null)).thenReturn(leaseAcquirer);
+    when(entityRef.fetchEntity(any())).thenReturn(leaseAcquirer);
     when(leaseAcquirer.acquireLease()).thenReturn(6000L);
   }
 

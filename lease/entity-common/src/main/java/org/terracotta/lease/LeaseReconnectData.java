@@ -20,13 +20,14 @@ import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
 
-/**
- * A message to send from the client entity to the server entity to request a lease.
- */
-public class LeaseRequest implements LeaseMessage {
-  private final long connectionSequenceNumber;
+import java.nio.ByteBuffer;
 
-  public LeaseRequest(long connectionSequenceNumber) {
+public class LeaseReconnectData {
+  private static Struct reconnectStruct = createStruct();
+
+  private long connectionSequenceNumber;
+
+  public LeaseReconnectData(long connectionSequenceNumber) {
     this.connectionSequenceNumber = connectionSequenceNumber;
   }
 
@@ -34,29 +35,21 @@ public class LeaseRequest implements LeaseMessage {
     return connectionSequenceNumber;
   }
 
-  @Override
-  public LeaseMessageType getType() {
-    return LeaseMessageType.LEASE_REQUEST;
-  }
-
-  public static void addStruct(StructBuilder parentBuilder, int index) {
+  private static Struct createStruct() {
     StructBuilder builder = StructBuilder.newStructBuilder();
     builder.int64("connectionSequenceNumber", 10);
-    Struct struct = builder.build();
-
-    parentBuilder.struct("leaseRequest", index, struct);
+    return builder.build();
   }
 
-  @Override
-  public void encode(StructEncoder<Void> parentEncoder) {
-    StructEncoder<StructEncoder<Void>> encoder = parentEncoder.struct("leaseRequest");
+  public byte[] encode() {
+    StructEncoder<Void> encoder = reconnectStruct.encoder();
     encoder.int64("connectionSequenceNumber", connectionSequenceNumber);
-    encoder.end();
+    return encoder.encode().array();
   }
 
-  public static LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseRequest");
+  public static LeaseReconnectData decode(byte[] bytes) {
+    StructDecoder<Void> decoder = reconnectStruct.decoder(ByteBuffer.wrap(bytes));
     long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
-    return new LeaseRequest(connectionSequenceNumber);
+    return new LeaseReconnectData(connectionSequenceNumber);
   }
 }
