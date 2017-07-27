@@ -28,7 +28,7 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
 
   private final TrackerPolicy trackerPolicy;
   private final ConcurrentMap<Long, R> trackedResponses;
-  private volatile long lastReconciledMessageId = -1;
+  private volatile long lastReconciledMessageId = 0;
 
   public MessageTrackerImpl(TrackerPolicy trackerPolicy) {
     this.trackerPolicy = trackerPolicy;
@@ -50,7 +50,7 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
   @Override
   public void reconcile(long messageId) {
     if (messageId > lastReconciledMessageId) {
-      LongStream.rangeClosed(lastReconciledMessageId + 1, messageId).forEach(id -> trackedResponses.remove(id));
+      LongStream.range(lastReconciledMessageId, messageId).forEach(id -> trackedResponses.remove(id));
       lastReconciledMessageId = messageId;
     }
   }
