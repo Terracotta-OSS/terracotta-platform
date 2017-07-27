@@ -16,12 +16,13 @@
 package org.terracotta.client.message.tracker;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 
-class DummyClientDescriptor implements ClientDescriptor {
+class DummyClientSourceId implements ClientSourceId {
 
-  private final int id;
+  private final long id;
 
-  public DummyClientDescriptor(int id) {
+  public DummyClientSourceId(long id) {
     this.id = id;
   }
 
@@ -30,13 +31,23 @@ class DummyClientDescriptor implements ClientDescriptor {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    DummyClientDescriptor that = (DummyClientDescriptor) o;
+    DummyClientSourceId that = (DummyClientSourceId) o;
 
     return id == that.id;
   }
 
   @Override
   public int hashCode() {
+    return (int) id;
+  }
+
+  @Override
+  public long toLong() {
     return id;
+  }
+
+  @Override
+  public boolean matches(ClientDescriptor clientDescriptor) {
+    return clientDescriptor.getSourceId().toLong() == id;
   }
 }

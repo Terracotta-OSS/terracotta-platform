@@ -25,6 +25,7 @@ import org.mockito.Mockito;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -477,6 +478,11 @@ public class VoltronMonitoringServiceTest {
     @Override
     public String toString() {
       return id;
+    }
+
+    @Override
+    public ClientSourceId getSourceId() {
+      return null;
     }
   }
 

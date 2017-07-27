@@ -15,35 +15,41 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class ClientMessageTrackerImpl implements ClientMessageTracker {
 
   private final TrackerPolicy trackerPolicy;
-  private final ConcurrentMap<ClientDescriptor, MessageTracker> messageTrackers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<ClientSourceId, MessageTracker> messageTrackers = new ConcurrentHashMap<>();
 
   public ClientMessageTrackerImpl(TrackerPolicy TrackerPolicy) {
     this.trackerPolicy = TrackerPolicy;
   }
 
   @Override
-  public MessageTracker getMessageTracker(ClientDescriptor clientDescriptor) {
-    return messageTrackers.computeIfAbsent(clientDescriptor, d -> new MessageTrackerImpl(trackerPolicy));
+  public MessageTracker getMessageTracker(ClientSourceId clientSourceId) {
+    return messageTrackers.computeIfAbsent(clientSourceId, d -> new MessageTrackerImpl(trackerPolicy));
   }
 
   @Override
-  public void untrackClient(ClientDescriptor clientDescriptor) {
-    messageTrackers.remove(clientDescriptor);
+  public void untrackClient(ClientSourceId clientSourceId) {
+    messageTrackers.remove(clientSourceId);
+  }
+
+  @Override
+  public Set<ClientSourceId> getTrackedClients() {
+    return messageTrackers.keySet();
   }
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    for (Map.Entry<ClientDescriptor, MessageTracker> entry : messageTrackers.entrySet()) {
+    for (Map.Entry<ClientSourceId, MessageTracker> entry : messageTrackers.entrySet()) {
       entry.getValue().addStateTo(stateDumper.subStateDumpCollector(entry.getKey().toString()));
     }
   }

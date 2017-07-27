@@ -17,7 +17,7 @@ package org.terracotta.client.message.tracker;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeContext;
@@ -43,7 +43,7 @@ public class OOOMessageHandlerImplTest {
     when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(true); //Messages are trackable
     messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
 
-    InvokeContext context = new DummyContext(new DummyClientDescriptor(1), 25, 18);
+    InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response1 = mock(EntityResponse.class);
     EntityResponse response2 = mock(EntityResponse.class);
@@ -61,7 +61,7 @@ public class OOOMessageHandlerImplTest {
     when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(false);  //Messages are untrackable
     messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
 
-    InvokeContext context = new DummyContext(new DummyClientDescriptor(1), 25, 18);
+    InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
 
     EntityResponse response1 = mock(EntityResponse.class);
@@ -75,19 +75,19 @@ public class OOOMessageHandlerImplTest {
 
   private static class DummyContext implements InvokeContext {
 
-    private final ClientDescriptor clientDescriptor;
+    private final ClientSourceId clientSourceId;
     private final long currentTransactionId;
     private final long oldestTransactionId;
 
-    public DummyContext(ClientDescriptor clientDescriptor, long currentTransactionId, long oldestTransactionId) {
-      this.clientDescriptor = clientDescriptor;
+    public DummyContext(ClientSourceId clientSourceId, long currentTransactionId, long oldestTransactionId) {
+      this.clientSourceId = clientSourceId;
       this.currentTransactionId = currentTransactionId;
       this.oldestTransactionId = oldestTransactionId;
     }
 
     @Override
-    public ClientDescriptor getClientDescriptor() {
-      return clientDescriptor;
+    public ClientSourceId getClientSource() {
+      return clientSourceId;
     }
 
     @Override
@@ -103,6 +103,11 @@ public class OOOMessageHandlerImplTest {
     @Override
     public boolean isValidClientInformation() {
       return true;
+    }
+
+    @Override
+    public ClientSourceId makeClientSourceId(long l) {
+      return new DummyClientSourceId(l);
     }
   }
 }

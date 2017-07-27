@@ -18,6 +18,7 @@ package org.terracotta.client.message.tracker.demo;
 import org.terracotta.client.message.tracker.OOOMessageHandler;
 import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -43,9 +44,10 @@ public class DemoPassiveEntity implements PassiveServerEntity {
     if (message instanceof DeferredMessage) {
       DeferredMessage deferredMessage = (DeferredMessage) message;
       realContext = new InvokeContext() {
+
         @Override
-        public ClientDescriptor getClientDescriptor() {
-          return deferredMessage.getDeferredClientDescriptor();
+        public ClientSourceId getClientSource() {
+          return deferredMessage.getDeferredClientSource();
         }
 
         @Override
@@ -61,6 +63,11 @@ public class DemoPassiveEntity implements PassiveServerEntity {
         @Override
         public boolean isValidClientInformation() {
           return true;
+        }
+
+        @Override
+        public ClientSourceId makeClientSourceId(long l) {
+          return null;
         }
       };
     } else {
@@ -95,8 +102,8 @@ public class DemoPassiveEntity implements PassiveServerEntity {
   }
 
   @Override
-  public void notifyClientDisconnectedFromActive(ClientDescriptor client) {
-    messageHandler.untrackClient(client);
+  public void notifyDestroyed(ClientSourceId sourceId) {
+    messageHandler.untrackClient(sourceId);
   }
 
   @Override

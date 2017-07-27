@@ -17,8 +17,10 @@ package org.terracotta.client.message.tracker.demo;
 
 import org.terracotta.client.message.tracker.OOOMessageHandler;
 import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
+import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -40,16 +42,21 @@ public class DemoActiveEntity implements ActiveServerEntity {
 
   @Override
   public void connected(ClientDescriptor clientDescriptor) {
-
+    //no-op
   }
 
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {
-    messageHandler.untrackClient(clientDescriptor);
+    //no-op
   }
 
   @Override
-  public EntityResponse invokeActive(InvokeContext context, EntityMessage message) throws EntityUserException {
+  public void notifyDestroyed(ClientSourceId sourceId) {
+    messageHandler.untrackClient(sourceId);
+  }
+
+  @Override
+  public EntityResponse invokeActive(ActiveInvokeContext context, EntityMessage message) throws EntityUserException {
     return messageHandler.invoke(context, message, this::processMessage);
   }
 

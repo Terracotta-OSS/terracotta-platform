@@ -16,9 +16,10 @@
 package org.terracotta.client.message.tracker.demo;
 
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 
 public interface DeferredMessage extends EntityMessage {
   long getDeferredTransactionId();
-  ClientDescriptor getDeferredClientDescriptor();
+  ClientSourceId getDeferredClientSource();
 }

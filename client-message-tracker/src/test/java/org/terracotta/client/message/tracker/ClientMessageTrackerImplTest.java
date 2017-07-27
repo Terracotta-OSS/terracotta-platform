@@ -17,6 +17,7 @@ package org.terracotta.client.message.tracker;
 
 import org.junit.Test;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -30,18 +31,18 @@ public class ClientMessageTrackerImplTest {
 
   @Test
   public void getMessageTracker() throws Exception {
-    ClientDescriptor descriptor1 = new DummyClientDescriptor(1);
+    ClientSourceId descriptor1 = new DummyClientSourceId(1);
     MessageTracker messageTracker = this.clientMessageTracker.getMessageTracker(descriptor1);
     assertThat(messageTracker, notNullValue());
     assertThat(clientMessageTracker.getMessageTracker(descriptor1), sameInstance(messageTracker));
 
-    ClientDescriptor descriptor2 = new DummyClientDescriptor(2);
+    ClientSourceId descriptor2 = new DummyClientSourceId(2);
     assertThat(clientMessageTracker.getMessageTracker(descriptor2), not(sameInstance(messageTracker)));
   }
 
   @Test
   public void untrackClient() throws Exception {
-    ClientDescriptor descriptor = new DummyClientDescriptor(1);
+    ClientSourceId descriptor = new DummyClientSourceId(1);
     MessageTracker messageTracker = this.clientMessageTracker.getMessageTracker(descriptor);
 
     clientMessageTracker.untrackClient(descriptor);
