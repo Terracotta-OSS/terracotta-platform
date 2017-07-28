@@ -26,18 +26,18 @@ import java.util.stream.LongStream;
 
 public class MessageTrackerImpl<M extends EntityMessage, R extends EntityResponse> implements MessageTracker<M, R> {
 
-  private final TrackerPolicy TrackerPolicy;
+  private final TrackerPolicy trackerPolicy;
   private final ConcurrentMap<Long, R> trackedResponses;
-  private volatile long lastReconciledMessageId = -1;
+  private volatile long lastReconciledMessageId = 0;
 
-  public MessageTrackerImpl(TrackerPolicy TrackerPolicy) {
-    this.TrackerPolicy = TrackerPolicy;
+  public MessageTrackerImpl(TrackerPolicy trackerPolicy) {
+    this.trackerPolicy = trackerPolicy;
     this.trackedResponses = new ConcurrentHashMap<>();
   }
 
   @Override
   public void track(long messageId, M message, R response) {
-    if (TrackerPolicy.trackable(message) && messageId > 0) {
+    if (trackerPolicy.trackable(message) && messageId > 0) {
       trackedResponses.put(messageId, response);
     }
   }
@@ -50,7 +50,7 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
   @Override
   public void reconcile(long messageId) {
     if (messageId > lastReconciledMessageId) {
-      LongStream.rangeClosed(lastReconciledMessageId + 1, messageId).forEach(id -> trackedResponses.remove(id));
+      LongStream.range(lastReconciledMessageId, messageId).forEach(id -> trackedResponses.remove(id));
       lastReconciledMessageId = messageId;
     }
   }
@@ -67,6 +67,6 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    stateDumper.addState("TrackedResponses", trackedResponses.keySet().toString());
+    stateDumper.addState("TrackedResponses", trackedResponses.keySet());
   }
 }

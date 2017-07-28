@@ -32,7 +32,7 @@ public class MockStateDumpCollector implements StateDumpCollector {
   }
 
   @Override
-  public void addState(String s, String s1) {
+  public void addState(String s, Object s1) {
     map.put(s, s1);
   }
 

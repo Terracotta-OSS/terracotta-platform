@@ -35,7 +35,7 @@ public abstract class PassiveProxiedServerEntity implements PassiveServerEntity<
       case SYNC:
       case MESSENGER:
       case MESSAGE:
-        entityInvoker.invoke(context, message);
+        entityInvoker.invoke(message);
         break;
       default:
         throw new AssertionError(message.getType());

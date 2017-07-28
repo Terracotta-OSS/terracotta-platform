@@ -15,7 +15,7 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.EntityUserException;
@@ -23,6 +23,7 @@ import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
@@ -35,7 +36,7 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
 
   @Override
   public R invoke(InvokeContext context, M message, BiFunction<InvokeContext, M, R> invokeFunction) throws EntityUserException {
-    MessageTracker<M, R> messageTracker = clientMessageTracker.getMessageTracker(context.getClientDescriptor());
+    MessageTracker<M, R> messageTracker = clientMessageTracker.getMessageTracker(context.getClientSource());
     messageTracker.reconcile(context.getOldestTransactionId());
     R response = messageTracker.getTrackedResponse(context.getCurrentTransactionId());
     if (response != null) {
@@ -48,18 +49,23 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   }
 
   @Override
-  public void untrackClient(ClientDescriptor clientDescriptor) {
-    clientMessageTracker.untrackClient(clientDescriptor);
+  public void untrackClient(ClientSourceId clientSourceId) {
+    clientMessageTracker.untrackClient(clientSourceId);
   }
 
   @Override
-  public Map<Long, R> getTrackedResponses(ClientDescriptor clientDescriptor) {
-    return this.clientMessageTracker.getMessageTracker(clientDescriptor).getTrackedResponses();
+  public Set<ClientSourceId> getTrackedClients() {
+    return clientMessageTracker.getTrackedClients();
   }
 
   @Override
-  public void loadOnSync(ClientDescriptor clientDescriptor, Map<Long, R> trackedResponses) {
-    this.clientMessageTracker.getMessageTracker(clientDescriptor).loadOnSync(trackedResponses);
+  public Map<Long, R> getTrackedResponses(ClientSourceId clientSourceId) {
+    return this.clientMessageTracker.getMessageTracker(clientSourceId).getTrackedResponses();
+  }
+
+  @Override
+  public void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses) {
+    this.clientMessageTracker.getMessageTracker(clientSourceId).loadOnSync(trackedResponses);
   }
 
   @Override

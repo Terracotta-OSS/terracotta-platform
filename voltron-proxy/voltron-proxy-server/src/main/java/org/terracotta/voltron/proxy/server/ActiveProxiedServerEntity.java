@@ -15,6 +15,7 @@
  */
 package org.terracotta.voltron.proxy.server;
 
+import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityUserException;
@@ -40,7 +41,7 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
   private Class<R> reconnectDataType;
 
   @Override
-  public ProxyEntityResponse invokeActive(InvokeContext context, ProxyEntityMessage message) throws EntityUserException {
+  public ProxyEntityResponse invokeActive(ActiveInvokeContext context, ProxyEntityMessage message) throws EntityUserException {
     switch (message.getType()) {
       case MESSAGE:
       case MESSENGER:

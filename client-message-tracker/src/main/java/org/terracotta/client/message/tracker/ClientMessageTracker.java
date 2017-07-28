@@ -15,11 +15,12 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.StateDumpCollector;
+
+import java.util.Set;
 
 /**
  * Keeps track of the message trackers for individual clients.
@@ -27,19 +28,26 @@ import org.terracotta.entity.StateDumpCollector;
 public interface ClientMessageTracker<M extends EntityMessage, R extends EntityResponse> extends StateDumpable {
 
   /**
-   * Retrieve the message tracker of the client with the specified {@code clientDescriptor}
+   * Retrieve the message tracker of the client with the specified {@code clientSourceId}
    * If a tracker does not exist already create one and return.
    *
-   * @param clientDescriptor a client descriptor
-   * @return the message tracker associated with the specified {@code clientDescriptor}
+   * @param clientSourceId a client source id
+   * @return the message tracker associated with the specified {@code clientSourceId}
    */
-  MessageTracker<M, R> getMessageTracker(ClientDescriptor clientDescriptor);
+  MessageTracker<M, R> getMessageTracker(ClientSourceId clientSourceId);
 
   /**
    * Deregister a client from being tracked.
    *
-   * @param clientDescriptor a client descriptor
+   * @param clientSourceId a client source id
    */
-  void untrackClient(ClientDescriptor clientDescriptor);
+  void untrackClient(ClientSourceId clientSourceId);
+
+  /**
+   * Return ids of all the clients tracked by this tracker.
+   *
+   * @return set of tracked client sources
+   */
+  Set<ClientSourceId> getTrackedClients();
 
 }

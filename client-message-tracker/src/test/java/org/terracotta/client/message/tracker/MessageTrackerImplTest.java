@@ -81,10 +81,40 @@ public class MessageTrackerImplTest {
     assertThat(tracker.getTrackedResponse(2L), notNullValue());
     assertThat(tracker.getTrackedResponse(3L), notNullValue());
 
+    tracker.reconcile(1L);
+    assertThat(tracker.getTrackedResponse(1L), notNullValue());
+    assertThat(tracker.getTrackedResponse(2L), notNullValue());
+    assertThat(tracker.getTrackedResponse(3L), notNullValue());
+
     tracker.reconcile(2L);
+    assertThat(tracker.getTrackedResponse(1L), nullValue());
+    assertThat(tracker.getTrackedResponse(2L), notNullValue());
+    assertThat(tracker.getTrackedResponse(3L), notNullValue());
+
+    tracker.reconcile(3L);
     assertThat(tracker.getTrackedResponse(1L), nullValue());
     assertThat(tracker.getTrackedResponse(2L), nullValue());
     assertThat(tracker.getTrackedResponse(3L), notNullValue());
   }
 
+  @Test
+  public void testDuplicateReconcile() throws Exception {
+    EntityMessage message = mock(EntityMessage.class);
+    EntityResponse response = mock(EntityResponse.class);
+    when(trackerPolicy.trackable(message)).thenReturn(true);
+
+    MessageTracker tracker = new MessageTrackerImpl(trackerPolicy);
+    tracker.track(1L, message, response);
+    tracker.track(2L, message, response);
+    tracker.track(3L, message, response);
+
+    tracker.reconcile(2L);
+    assertThat(tracker.getTrackedResponse(1L), nullValue());
+    assertThat(tracker.getTrackedResponse(2L), notNullValue());
+
+    tracker.reconcile(2L);
+    assertThat(tracker.getTrackedResponse(1L), nullValue());
+    assertThat(tracker.getTrackedResponse(2L), notNullValue());
+
+  }
 }

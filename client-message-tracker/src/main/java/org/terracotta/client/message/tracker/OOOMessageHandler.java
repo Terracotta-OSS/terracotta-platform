@@ -15,7 +15,7 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.EntityUserException;
@@ -25,6 +25,7 @@ import org.terracotta.entity.StateDumpable;
 import com.tc.classloader.CommonComponent;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 /**
@@ -48,24 +49,31 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
   /**
    * Notify that a client has disconnected from the cluster and all knowledge about that client can be cleared.
    *
-   * @param clientDescriptor the client descriptor of the disconnected client
+   * @param clientSourceId the client descriptor of the disconnected client
    */
-  void untrackClient(ClientDescriptor clientDescriptor);
+  void untrackClient(ClientSourceId clientSourceId);
 
   /**
-   * Get all message id - response mappings for the given {@code clientDescriptor}
+   * Return ids of all the client sources tracked by this handler.
+   *
+   * @return set of tracked client sources
+   */
+  Set<ClientSourceId> getTrackedClients();
 
-   * @param clientDescriptor a client descriptor
+  /**
+   * Get all message id - response mappings for the given {@code clientSourceId}
+   *
+   * @param clientSourceId a client descriptor
    * @return a map with message id - response mappings
    */
-  Map<Long, R> getTrackedResponses(ClientDescriptor clientDescriptor);
+  Map<Long, R> getTrackedResponses(ClientSourceId clientSourceId);
 
   /**
    * Bulk load a set of message ids, response mappings for the given client descriptor.
    * To be used by a passive entity when the active syncs its message tracker data.
    *
-   * @param clientDescriptor a client descriptor
+   * @param clientSourceId a client descriptor
    * @param trackedResponses a map of message id, response mappings
    */
-  void loadOnSync(ClientDescriptor clientDescriptor, Map<Long, R> trackedResponses);
+  void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
 }

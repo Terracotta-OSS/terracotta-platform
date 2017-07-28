@@ -17,12 +17,13 @@ package org.terracotta.client.message.tracker;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeContext;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -43,7 +44,7 @@ public class OOOMessageHandlerImplTest {
     when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(true); //Messages are trackable
     messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
 
-    InvokeContext context = new DummyContext(new DummyClientDescriptor(1), 25, 18);
+    InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response1 = mock(EntityResponse.class);
     EntityResponse response2 = mock(EntityResponse.class);
@@ -61,7 +62,7 @@ public class OOOMessageHandlerImplTest {
     when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(false);  //Messages are untrackable
     messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
 
-    InvokeContext context = new DummyContext(new DummyClientDescriptor(1), 25, 18);
+    InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
 
     EntityResponse response1 = mock(EntityResponse.class);
@@ -73,21 +74,36 @@ public class OOOMessageHandlerImplTest {
     assertThat(entityResponse2, is(response2));
   }
 
+  @Test
+  public void testResentMessageWithSameCurrentAndOldestTxnId() throws Exception {
+    trackerPolicy = mock(TrackerPolicy.class);
+    when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(true); //Messages are trackable
+    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+
+    InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 25);
+    EntityMessage message = mock(EntityMessage.class);
+
+    EntityResponse entityResponse1 = messageHandler.invoke(context, message, (ctxt, msg) -> mock(EntityResponse.class));
+
+    EntityResponse entityResponse2 = messageHandler.invoke(context, message, (ctxt, msg) -> mock(EntityResponse.class));
+    assertThat(entityResponse2, sameInstance(entityResponse1));
+  }
+
   private static class DummyContext implements InvokeContext {
 
-    private final ClientDescriptor clientDescriptor;
+    private final ClientSourceId clientSourceId;
     private final long currentTransactionId;
     private final long oldestTransactionId;
 
-    public DummyContext(ClientDescriptor clientDescriptor, long currentTransactionId, long oldestTransactionId) {
-      this.clientDescriptor = clientDescriptor;
+    public DummyContext(ClientSourceId clientSourceId, long currentTransactionId, long oldestTransactionId) {
+      this.clientSourceId = clientSourceId;
       this.currentTransactionId = currentTransactionId;
       this.oldestTransactionId = oldestTransactionId;
     }
 
     @Override
-    public ClientDescriptor getClientDescriptor() {
-      return clientDescriptor;
+    public ClientSourceId getClientSource() {
+      return clientSourceId;
     }
 
     @Override
@@ -103,6 +119,11 @@ public class OOOMessageHandlerImplTest {
     @Override
     public boolean isValidClientInformation() {
       return true;
+    }
+
+    @Override
+    public ClientSourceId makeClientSourceId(long l) {
+      return new DummyClientSourceId(l);
     }
   }
 }

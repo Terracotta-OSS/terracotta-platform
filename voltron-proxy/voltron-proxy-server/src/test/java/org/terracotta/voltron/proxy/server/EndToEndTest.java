@@ -17,8 +17,10 @@ package org.terracotta.voltron.proxy.server;
 
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
+import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityResponse;
@@ -273,10 +275,15 @@ public class EndToEndTest {
       final FutureTask<ProxyEntityResponse> futureTask = new FutureTask<ProxyEntityResponse>(new Callable<ProxyEntityResponse>() {
         @Override
         public ProxyEntityResponse call() throws Exception {
-          return proxyInvoker.invoke(new InvokeContext() {
+          return proxyInvoker.invoke(new ActiveInvokeContext() {
             @Override
             public ClientDescriptor getClientDescriptor() {
               return clientDescriptor;
+            }
+
+            @Override
+            public ClientSourceId getClientSource() {
+              return null;
             }
 
             @Override
@@ -292,6 +299,11 @@ public class EndToEndTest {
             @Override
             public boolean isValidClientInformation() {
               return false;
+            }
+
+            @Override
+            public ClientSourceId makeClientSourceId(long l) {
+              return null;
             }
           }, message);
         }
@@ -326,7 +338,12 @@ public class EndToEndTest {
 
   }
 
-  private static class MyClientDescriptor implements ClientDescriptor {}
+  private static class MyClientDescriptor implements ClientDescriptor {
+    @Override
+    public ClientSourceId getSourceId() {
+      return null;
+    }
+  }
 
   public interface ClientIdAware extends ServerMessageAware {
 
