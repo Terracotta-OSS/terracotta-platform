@@ -109,6 +109,7 @@ public final class ServerEntity extends AbstractManageableNode<Server> {
 
     ServerEntity that = (ServerEntity) o;
 
+    if (consumerId != that.consumerId) return false;
     return identifier.equals(that.identifier);
   }
 
@@ -116,6 +117,7 @@ public final class ServerEntity extends AbstractManageableNode<Server> {
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + identifier.hashCode();
+    result = 31 * result + (int) (consumerId ^ (consumerId >>> 32));
     return result;
   }
 

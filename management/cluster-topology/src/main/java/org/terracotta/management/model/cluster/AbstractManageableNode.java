@@ -46,4 +46,21 @@ public abstract class AbstractManageableNode<P extends Contextual> extends Abstr
     return managementRegistry != null;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    AbstractManageableNode<?> that = (AbstractManageableNode<?>) o;
+
+    return managementRegistry != null ? managementRegistry.equals(that.managementRegistry) : that.managementRegistry == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (managementRegistry != null ? managementRegistry.hashCode() : 0);
+    return result;
+  }
 }
