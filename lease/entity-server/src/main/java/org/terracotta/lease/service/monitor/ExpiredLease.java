@@ -24,4 +24,9 @@ class ExpiredLease implements Lease {
   public boolean isExpired(long now) {
     return true;
   }
+
+  @Override
+  public boolean allowRenewal() {
+    return false;
+  }
 }

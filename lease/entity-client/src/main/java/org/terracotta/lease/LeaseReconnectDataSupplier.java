@@ -15,11 +15,6 @@
  */
 package org.terracotta.lease;
 
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.runnel.encoding.StructEncoder;
-
-public interface LeaseResponse extends EntityResponse {
-  LeaseResponseType getType();
-
-  void encode(StructEncoder<Void> parentEncoder);
+interface LeaseReconnectDataSupplier {
+  LeaseReconnectData getReconnectData();
 }

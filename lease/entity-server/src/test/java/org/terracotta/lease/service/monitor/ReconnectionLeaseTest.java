@@ -18,29 +18,17 @@ package org.terracotta.lease.service.monitor;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
-public class ValidLeaseTest {
+public class ReconnectionLeaseTest {
   @Test
-  public void notExpiredUntilExpired() {
-    ValidLease lease = new ValidLease(10L);
-    assertFalse(lease.isExpired(9L));
-    assertTrue(lease.isExpired(11L));
+  public void neverExpires() {
+    ReconnectionLease lease = new ReconnectionLease();
+    assertFalse(lease.isExpired(0L));
   }
 
-  @Test
-  public void compareTheExpiryOnTwoLeases() {
-    ValidLease lease1 = new ValidLease(10L);
-    ValidLease lease2 = new ValidLease(20L);
-    assertTrue(lease1.expiresBefore(lease2));
-    assertFalse(lease2.expiresBefore(lease1));
-    assertFalse(lease1.expiresBefore(lease1));
-    assertFalse(lease2.expiresBefore(lease2));
-  }
-
-  @Test
-  public void alwaysAllowRenewal() {
-    ValidLease lease = new ValidLease(10L);
-    assertTrue(lease.allowRenewal());
+  @Test(expected = AssertionError.class)
+  public void shouldNeverBeAskedIfItCanBeRenewed() {
+    ReconnectionLease lease = new ReconnectionLease();
+    lease.allowRenewal();
   }
 }

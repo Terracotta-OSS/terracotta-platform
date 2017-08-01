@@ -15,11 +15,11 @@
  */
 package org.terracotta.lease;
 
-import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.EntityMessage;
 import org.terracotta.runnel.encoding.StructEncoder;
 
-public interface LeaseResponse extends EntityResponse {
-  LeaseResponseType getType();
+public interface LeaseMessage extends EntityMessage {
+  LeaseMessageType getType();
 
   void encode(StructEncoder<Void> parentEncoder);
 }

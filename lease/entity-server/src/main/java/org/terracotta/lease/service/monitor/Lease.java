@@ -17,4 +17,6 @@ package org.terracotta.lease.service.monitor;
 
 interface Lease {
   boolean isExpired(long now);
+
+  boolean allowRenewal();
 }

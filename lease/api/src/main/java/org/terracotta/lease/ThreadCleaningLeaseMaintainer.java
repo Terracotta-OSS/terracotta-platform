@@ -18,6 +18,7 @@ package org.terracotta.lease;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
   private final LeaseMaintainer delegate;
@@ -35,6 +36,16 @@ class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
   @Override
   public Lease getCurrentLease() {
     return delegate.getCurrentLease();
+  }
+
+  @Override
+  public void waitForLease() throws InterruptedException {
+    delegate.waitForLease();
+  }
+
+  @Override
+  public boolean waitForLease(long timeout, TimeUnit timeUnit) throws InterruptedException {
+    return delegate.waitForLease(timeout, timeUnit);
   }
 
   @Override

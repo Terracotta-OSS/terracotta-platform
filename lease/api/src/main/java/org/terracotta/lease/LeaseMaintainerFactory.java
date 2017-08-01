@@ -44,9 +44,11 @@ public class LeaseMaintainerFactory {
    */
   public static LeaseMaintainer createLeaseMaintainer(Connection connection) {
     LOGGER.info("Creating LeaseMaintainer for connection: " + connection);
-    LeaseAcquirer leaseAcquirer = getLeaseAcquirer(connection);
+    ProxyLeaseReconnectListener leaseReconnectListener = new ProxyLeaseReconnectListener();
+    LeaseAcquirer leaseAcquirer = getLeaseAcquirer(connection, leaseReconnectListener);
 
     LeaseMaintainerImpl leaseMaintainer = new LeaseMaintainerImpl(leaseAcquirer);
+    leaseReconnectListener.setUnderlying(leaseMaintainer);
 
     LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer);
     LeaseExpiryConnectionKillingThread leaseExpiryConnectionKillingThread = new LeaseExpiryConnectionKillingThread(leaseMaintainer, connection);
@@ -57,10 +59,10 @@ public class LeaseMaintainerFactory {
     return new ThreadCleaningLeaseMaintainer(leaseMaintainer, leaseMaintenanceThread, leaseExpiryConnectionKillingThread);
   }
 
-  private static LeaseAcquirer getLeaseAcquirer(Connection connection) {
+  private static LeaseAcquirer getLeaseAcquirer(Connection connection, LeaseReconnectListener leaseReconnectListener) {
     try {
-      EntityRef<LeaseAcquirer, Properties, Object> entityRef = connection.getEntityRef(LeaseAcquirer.class, ENTITY_VERSION, ENTITY_NAME);
-      return entityRef.fetchEntity(null);
+      EntityRef<LeaseAcquirer, Properties, LeaseReconnectListener> entityRef = connection.getEntityRef(LeaseAcquirer.class, ENTITY_VERSION, ENTITY_NAME);
+      return entityRef.fetchEntity(leaseReconnectListener);
     } catch (EntityNotProvidedException e) {
       throw new IllegalStateException("LeaseAcquirer entity is not installed", e);
     } catch (EntityNotFoundException e) {

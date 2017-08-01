@@ -47,9 +47,24 @@ public class LeaseState implements StateDumpable {
     leases.remove(clientDescriptor);
   }
 
+  public void reconnecting(ClientDescriptor clientDescriptor) {
+    leases.put(clientDescriptor, new ReconnectionLease());
+  }
+
+  public void reconnected(ClientDescriptor clientDescriptor, long leaseLength) {
+    // No need to be thread-safe here because this is executed on the MANAGEMENT_KEY
+    Lease reconnectionLease = leases.get(clientDescriptor);
+
+    if (!(reconnectionLease instanceof ReconnectionLease)) {
+      throw new AssertionError("Got a reconnected event but the client does not have a ReconnectionLease");
+    }
+
+    ValidLease newLease = createLease(leaseLength);
+    leases.put(clientDescriptor, newLease);
+  }
+
   public boolean acquireLease(ClientDescriptor clientDescriptor, long leaseLength) {
-    long leaseExpiry = timeSource.nanoTime() + TimeUnit.MILLISECONDS.toNanos(leaseLength);
-    ValidLease newLease = new ValidLease(leaseExpiry);
+    ValidLease newLease = createLease(leaseLength);
 
     while (true) {
       Lease currentLease = leases.get(clientDescriptor);
@@ -60,7 +75,7 @@ public class LeaseState implements StateDumpable {
           return true;
         }
       } else {
-        if (!(currentLease instanceof ValidLease)) {
+        if (!currentLease.allowRenewal()) {
           return false; // This client's connection is being closed
         }
 
@@ -75,6 +90,11 @@ public class LeaseState implements StateDumpable {
         }
       }
     }
+  }
+
+  private ValidLease createLease(long leaseLength) {
+    long leaseExpiry = timeSource.nanoTime() + TimeUnit.MILLISECONDS.toNanos(leaseLength);
+    return new ValidLease(leaseExpiry);
   }
 
   void checkLeases() {
@@ -96,12 +116,17 @@ public class LeaseState implements StateDumpable {
         return; // Some other thread called checkLeases() and expired the lease
       }
 
-      if (!(lease instanceof ValidLease)) {
+      if (lease instanceof ExpiredLease) {
+        if (LOGGER.isTraceEnabled()) {
+          LOGGER.trace("Lease for client: " + clientDescriptor + " is an ExpiredLease");
+        }
         return; // Some other thread is expiring this lease - leave it alone
       }
 
       if (!lease.isExpired(now)) {
-        LOGGER.trace("Lease for client: " + clientDescriptor + " is still valid");
+        if (LOGGER.isTraceEnabled()) {
+          LOGGER.trace("Lease for client: " + clientDescriptor + " is still valid: " + lease);
+        }
         return; // The lease is still valid so no change needed
       }
 
@@ -125,5 +150,4 @@ public class LeaseState implements StateDumpable {
       stateDumpCollector.addState(entry.getKey().toString(), leaseState);
     }
   }
-
 }

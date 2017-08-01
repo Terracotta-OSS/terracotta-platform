@@ -23,6 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.lease.service.LeaseService;
@@ -30,6 +31,7 @@ import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -58,9 +60,9 @@ public class LeaseAcquirerServerServiceTest {
   @Test
   public void concurrencyStrategy() {
     LeaseAcquirerServerService serverService = new LeaseAcquirerServerService();
-    ConcurrencyStrategy<LeaseRequest> concurrencyStrategy = serverService.getConcurrencyStrategy(new byte[0]);
-    int concurrencyKey = concurrencyStrategy.concurrencyKey(new LeaseRequest());
-    assertEquals(ConcurrencyStrategy.UNIVERSAL_KEY, concurrencyKey);
+    ConcurrencyStrategy<LeaseMessage> concurrencyStrategy = serverService.getConcurrencyStrategy(new byte[0]);
+    assertEquals(ConcurrencyStrategy.UNIVERSAL_KEY, concurrencyStrategy.concurrencyKey(new LeaseRequest(0)));
+    assertEquals(ConcurrencyStrategy.MANAGEMENT_KEY, concurrencyStrategy.concurrencyKey(new LeaseReconnectFinished(UUID.randomUUID())));
   }
 
   @Test
@@ -73,12 +75,14 @@ public class LeaseAcquirerServerServiceTest {
   public void activeEntity() throws Exception {
     ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
     ClientCommunicator clientCommunicator = mock(ClientCommunicator.class);
+    IEntityMessenger entityMessenger = mock(IEntityMessenger.class);
     LeaseService leaseService = mock(LeaseService.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
     ArgumentCaptor<LeaseServiceConfiguration> configurationCaptor = ArgumentCaptor.forClass(LeaseServiceConfiguration.class);
     when(serviceRegistry.getService(configurationCaptor.capture())).thenReturn(leaseService);
     when(serviceRegistry.getService(argThat(serviceType(ClientCommunicator.class)))).thenReturn(clientCommunicator);
+    when(serviceRegistry.getService(argThat(serviceType(IEntityMessenger.class)))).thenReturn(entityMessenger);
 
     LeaseAcquirerServerService serverService = new LeaseAcquirerServerService();
     ActiveLeaseAcquirer activeEntity = (ActiveLeaseAcquirer) serverService.createActiveEntity(serviceRegistry, new byte[0]);

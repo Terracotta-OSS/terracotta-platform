@@ -13,34 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.lease.service.monitor;
+package org.terracotta.lease;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class ValidLeaseTest {
+public class LeaseRequestResultTest {
   @Test
-  public void notExpiredUntilExpired() {
-    ValidLease lease = new ValidLease(10L);
-    assertFalse(lease.isExpired(9L));
-    assertTrue(lease.isExpired(11L));
+  public void notGranted() {
+    LeaseRequestResult response = LeaseRequestResult.leaseNotGranted();
+    assertFalse(response.isLeaseGranted());
   }
 
   @Test
-  public void compareTheExpiryOnTwoLeases() {
-    ValidLease lease1 = new ValidLease(10L);
-    ValidLease lease2 = new ValidLease(20L);
-    assertTrue(lease1.expiresBefore(lease2));
-    assertFalse(lease2.expiresBefore(lease1));
-    assertFalse(lease1.expiresBefore(lease1));
-    assertFalse(lease2.expiresBefore(lease2));
+  public void granted() {
+    LeaseRequestResult response = LeaseRequestResult.leaseGranted(200L);
+    assertTrue(response.isLeaseGranted());
+    assertEquals(200L, response.getLeaseLength());
   }
 
-  @Test
-  public void alwaysAllowRenewal() {
-    ValidLease lease = new ValidLease(10L);
-    assertTrue(lease.allowRenewal());
+  @Test(expected = IllegalArgumentException.class)
+  public void zeroLease() {
+    LeaseRequestResult.leaseGranted(0L);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void negativeLease() {
+    LeaseRequestResult.leaseGranted(-1L);
   }
 }

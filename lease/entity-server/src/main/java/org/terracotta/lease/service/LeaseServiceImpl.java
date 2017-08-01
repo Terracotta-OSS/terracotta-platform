@@ -36,11 +36,6 @@ class LeaseServiceImpl implements LeaseService {
   }
 
   @Override
-  public void disconnected(ClientDescriptor clientDescriptor) {
-    leaseState.disconnected(clientDescriptor);
-  }
-
-  @Override
   public LeaseResult acquireLease(ClientDescriptor clientDescriptor) {
     LOGGER.debug("Client requested lease: " + clientDescriptor);
     boolean acquiredLease = leaseState.acquireLease(clientDescriptor, leaseLength);
@@ -52,5 +47,20 @@ class LeaseServiceImpl implements LeaseService {
       LOGGER.debug("Client lease request rejected because connection is closing: " + clientDescriptor);
       return LeaseResult.leaseNotGranted();
     }
+  }
+
+  @Override
+  public void disconnected(ClientDescriptor clientDescriptor) {
+    leaseState.disconnected(clientDescriptor);
+  }
+
+  @Override
+  public void reconnecting(ClientDescriptor clientDescriptor) {
+    leaseState.reconnecting(clientDescriptor);
+  }
+
+  @Override
+  public void reconnected(ClientDescriptor clientDescriptor) {
+    leaseState.reconnected(clientDescriptor, leaseLength);
   }
 }

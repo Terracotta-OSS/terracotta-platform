@@ -20,29 +20,46 @@ import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
-class LeaseAcquirerImpl implements LeaseAcquirer {
-  private final EntityClientEndpoint<LeaseRequest, LeaseResponse> endpoint;
+import java.util.concurrent.atomic.AtomicLong;
 
-  LeaseAcquirerImpl(EntityClientEndpoint<LeaseRequest, LeaseResponse> endpoint) {
+class LeaseAcquirerImpl implements LeaseAcquirer, LeaseReconnectListener, LeaseReconnectDataSupplier {
+  private final EntityClientEndpoint<LeaseMessage, LeaseResponse> endpoint;
+  private final LeaseReconnectListener reconnectListener;
+  private final AtomicLong connectionSequenceNumber = new AtomicLong();
+  private volatile boolean reconnecting;
+
+  LeaseAcquirerImpl(EntityClientEndpoint<LeaseMessage, LeaseResponse> endpoint, LeaseReconnectListener reconnectListener) {
     this.endpoint = endpoint;
+    this.reconnectListener = reconnectListener;
+    endpoint.setDelegate(new LeaseEndpointDelegate(this, this));
   }
 
   @Override
   public long acquireLease() throws LeaseException, InterruptedException {
+    long currentConnectionSequenceNumber = connectionSequenceNumber.get();
+
+    if (reconnecting) {
+      throw new LeaseReconnectingException("Will not attempt to acquire a lease as a reconnection is taking place");
+    }
+
     try {
       InvokeFuture<LeaseResponse> invokeFuture = endpoint.beginInvoke()
-              .message(new LeaseRequest())
+              .message(new LeaseRequest(currentConnectionSequenceNumber))
               .replicate(false)
               .ackCompleted()
               .invoke();
 
-      LeaseResponse leaseResponse = invokeFuture.get();
+      LeaseRequestResult leaseRequestResult = (LeaseRequestResult) invokeFuture.get();
 
-      if (!leaseResponse.isLeaseGranted()) {
+      if (!leaseRequestResult.isConnectionGood()) {
+        throw new LeaseReconnectingException("Attempted to acquire a lease but fail-over occurred");
+      }
+
+      if (!leaseRequestResult.isLeaseGranted()) {
         throw new LeaseException("Unable to obtain lease, the connection is being closed because the lease was not renewed soon enough");
       }
 
-      return leaseResponse.getLeaseLength();
+      return leaseRequestResult.getLeaseLength();
     } catch (MessageCodecException e) {
       throw new LeaseException(e);
     } catch (EntityException e) {
@@ -53,5 +70,23 @@ class LeaseAcquirerImpl implements LeaseAcquirer {
   @Override
   public void close() {
     endpoint.close();
+  }
+
+  @Override
+  public void reconnecting() {
+    reconnecting = true;
+    connectionSequenceNumber.incrementAndGet();
+    reconnectListener.reconnecting();
+  }
+
+  @Override
+  public void reconnected() {
+    reconnecting = false;
+    reconnectListener.reconnected();
+  }
+
+  @Override
+  public LeaseReconnectData getReconnectData() {
+    return new LeaseReconnectData(connectionSequenceNumber.get());
   }
 }

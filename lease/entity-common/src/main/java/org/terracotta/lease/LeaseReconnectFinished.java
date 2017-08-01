@@ -20,43 +20,51 @@ import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
 
-/**
- * A message to send from the client entity to the server entity to request a lease.
- */
-public class LeaseRequest implements LeaseMessage {
-  private final long connectionSequenceNumber;
+import java.util.UUID;
 
-  public LeaseRequest(long connectionSequenceNumber) {
-    this.connectionSequenceNumber = connectionSequenceNumber;
+/**
+ * A message that the ActiveLeaseAcquirer sends to itself so that it knows the reconnection process is completed
+ * and that messages are being delivered again. It uses the UUID to stand for the ClientDescriptor.
+ */
+public class LeaseReconnectFinished implements LeaseMessage {
+  private final UUID uuid;
+
+  public LeaseReconnectFinished(UUID uuid) {
+    this.uuid = uuid;
   }
 
-  public long getConnectionSequenceNumber() {
-    return connectionSequenceNumber;
+  public UUID getUUID() {
+    return uuid;
   }
 
   @Override
   public LeaseMessageType getType() {
-    return LeaseMessageType.LEASE_REQUEST;
+    return LeaseMessageType.LEASE_RECONNECT_FINISHED;
   }
 
   public static void addStruct(StructBuilder parentBuilder, int index) {
     StructBuilder builder = StructBuilder.newStructBuilder();
-    builder.int64("connectionSequenceNumber", 10);
+    builder.int64("uuidMSB", 10);
+    builder.int64("uuidLSB", 20);
     Struct struct = builder.build();
 
-    parentBuilder.struct("leaseRequest", index, struct);
+    parentBuilder.struct("leaseReconnectFinished", index, struct);
   }
 
   @Override
   public void encode(StructEncoder<Void> parentEncoder) {
-    StructEncoder<StructEncoder<Void>> encoder = parentEncoder.struct("leaseRequest");
-    encoder.int64("connectionSequenceNumber", connectionSequenceNumber);
+    StructEncoder<StructEncoder<Void>> encoder = parentEncoder.struct("leaseReconnectFinished");
+    encoder.int64("uuidMSB", uuid.getMostSignificantBits());
+    encoder.int64("uuidLSB", uuid.getLeastSignificantBits());
     encoder.end();
   }
 
   public static LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseRequest");
-    long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
-    return new LeaseRequest(connectionSequenceNumber);
+    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseReconnectFinished");
+    long uuidMSB = decoder.int64("uuidMSB");
+    long uuidLSB = decoder.int64("uuidLSB");
+
+    UUID uuid = new UUID(uuidMSB, uuidLSB);
+    return new LeaseReconnectFinished(uuid);
   }
 }

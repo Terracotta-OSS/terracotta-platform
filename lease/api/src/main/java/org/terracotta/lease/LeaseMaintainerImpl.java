@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -26,18 +27,21 @@ import java.util.concurrent.atomic.AtomicReference;
  * The implementation of LeaseMaintainer. It makes lease requests via the lease entity. Then, when lease
  * requests are granted, it updates the current lease to reflect that.
  */
-class LeaseMaintainerImpl implements LeaseMaintainer {
-  private static Logger LOGGER = LoggerFactory.getLogger(LeaseMaintainerImpl.class);
-  private static long MAXIMUM_WAIT_LENGTH = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseMaintainerImpl.class);
+  private static final long MAXIMUM_WAIT_LENGTH = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+  private static final long RETRY_MILLIS_DURING_RECONNECT = 200L;
 
   private final LeaseAcquirer leaseAcquirer;
   private final TimeSource timeSource;
   private final AtomicReference<LeaseInternal> currentLease;
+  private final CountDownLatch hasLease;
 
   LeaseMaintainerImpl(LeaseAcquirer leaseAcquirer) {
     this.leaseAcquirer = leaseAcquirer;
     this.timeSource = TimeSourceProvider.getTimeSource();
     this.currentLease = new AtomicReference<LeaseInternal>(new NullLease());
+    this.hasLease = new CountDownLatch(1);
   }
 
   @Override
@@ -46,20 +50,55 @@ class LeaseMaintainerImpl implements LeaseMaintainer {
   }
 
   @Override
+  public void waitForLease() throws InterruptedException {
+    hasLease.await();
+  }
+
+  @Override
+  public boolean waitForLease(long timeout, TimeUnit timeUnit) throws InterruptedException {
+    return hasLease.await(timeout, timeUnit);
+  }
+
+  @Override
   public void close() throws IOException {
     leaseAcquirer.close();
   }
 
-  synchronized long refreshLease() throws LeaseException, InterruptedException {
-    LOGGER.debug("Refreshing lease");
+  long refreshLease() throws LeaseException, InterruptedException {
+    try {
+      LOGGER.debug("Refreshing lease");
 
-    long leaseRequestStartNanos = timeSource.nanoTime();
-    long leaseLengthMillis = leaseAcquirer.acquireLease();
-    long leaseRequestEndNanos = timeSource.nanoTime();
+      while (true) {
+        LeaseInternal lease = currentLease.get();
 
-    updateLease(leaseRequestStartNanos, leaseRequestEndNanos, leaseLengthMillis);
+        long leaseRequestStartNanos = timeSource.nanoTime();
+        long leaseLengthMillis = leaseAcquirer.acquireLease();
+        long leaseRequestEndNanos = timeSource.nanoTime();
 
-    return calculateWaitLength(leaseRequestStartNanos, leaseRequestEndNanos, leaseLengthMillis);
+        boolean updated = updateLease(lease, leaseRequestStartNanos, leaseRequestEndNanos, leaseLengthMillis);
+
+        if (updated) {
+          hasLease.countDown();
+          return calculateWaitLength(leaseRequestStartNanos, leaseRequestEndNanos, leaseLengthMillis);
+        }
+
+        if (Thread.interrupted()) {
+          throw new InterruptedException();
+        }
+      }
+    } catch (LeaseReconnectingException e) {
+      LOGGER.debug(e.getMessage());
+      return RETRY_MILLIS_DURING_RECONNECT;
+    }
+  }
+
+  @Override
+  public void reconnecting() {
+    currentLease.set(new NullLease());
+  }
+
+  @Override
+  public void reconnected() {
   }
 
   private long calculateWaitLength(long leaseRequestStartNanos, long leaseRequestEndNanos, long leaseLengthMillis) {
@@ -71,7 +110,7 @@ class LeaseMaintainerImpl implements LeaseMaintainer {
     return Math.max(0, Math.min(MAXIMUM_WAIT_LENGTH, waitLength));
   }
 
-  private void updateLease(long leaseRequestStartNanos, long leaseRequestEndNanos, long leaseLengthMillis) {
+  private boolean updateLease(LeaseInternal lease, long leaseRequestStartNanos, long leaseRequestEndNanos, long leaseLengthMillis) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("updateLease: leaseRequestStartNanos: " + leaseRequestStartNanos + " leaseRequestEndNanos: " + leaseRequestEndNanos + " leaseLengthMillis: " + leaseLengthMillis);
     }
@@ -83,14 +122,20 @@ class LeaseMaintainerImpl implements LeaseMaintainer {
       LOGGER.warn("Received new lease but it expires before it starts.");
     }
 
-    LeaseInternal lease = currentLease.get();
     LeaseInternal updatedLease = lease.extend(timeSource, leaseStart, leaseExpiry);
-    currentLease.set(updatedLease); // refreshLease() is synchronized, so this is the only writer to currentLease and therefore this is safe.
+    boolean updated = currentLease.compareAndSet(lease, updatedLease);
 
-    logLease(lease, updatedLease);
+    logLease(updated, lease, updatedLease);
+
+    return updated;
   }
 
-  private void logLease(Lease previousLease, Lease newLease) {
+  private void logLease(boolean updated, Lease previousLease, Lease newLease) {
+    if (!updated) {
+      LOGGER.info("Received new lease, but could not use it because another lease was more recent, perhaps due to reconnect.");
+      return;
+    }
+
     boolean gap = !newLease.isValidAndContiguous(previousLease) && !(previousLease instanceof NullLease);
 
     if (LOGGER.isDebugEnabled()) {

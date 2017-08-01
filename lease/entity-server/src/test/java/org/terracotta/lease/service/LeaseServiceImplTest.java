@@ -59,11 +59,31 @@ public class LeaseServiceImplTest {
     LeaseState leaseState = mock(LeaseState.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    when(leaseState.acquireLease(clientDescriptor, 1000L)).thenReturn(false);
-
     LeaseServiceImpl leaseService = new LeaseServiceImpl(1000L, leaseState);
     leaseService.disconnected(clientDescriptor);
 
     verify(leaseState).disconnected(clientDescriptor);
+  }
+
+  @Test
+  public void delegatesReconnecting() {
+    LeaseState leaseState = mock(LeaseState.class);
+    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+
+    LeaseServiceImpl leaseService = new LeaseServiceImpl(1000L, leaseState);
+    leaseService.reconnecting(clientDescriptor);
+
+    verify(leaseState).reconnecting(clientDescriptor);
+  }
+
+  @Test
+  public void delegatesReconnected() {
+    LeaseState leaseState = mock(LeaseState.class);
+    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+
+    LeaseServiceImpl leaseService = new LeaseServiceImpl(1000L, leaseState);
+    leaseService.reconnected(clientDescriptor);
+
+    verify(leaseState).reconnected(clientDescriptor, 1000L);
   }
 }

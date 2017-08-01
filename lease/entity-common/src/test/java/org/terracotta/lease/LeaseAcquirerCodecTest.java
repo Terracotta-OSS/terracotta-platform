@@ -17,6 +17,8 @@ package org.terracotta.lease;
 
 import org.junit.Test;
 
+import java.util.UUID;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -24,31 +26,70 @@ import static org.junit.Assert.assertTrue;
 
 public class LeaseAcquirerCodecTest {
   @Test
-  public void roundtripRequest() throws Exception {
-    LeaseRequest request = new LeaseRequest();
+  public void roundtripLeaseRequest() throws Exception {
+    LeaseRequest message = new LeaseRequest(5);
     LeaseAcquirerCodec codec = new LeaseAcquirerCodec();
-    byte[] bytes = codec.encodeMessage(request);
-    assertEquals(0, bytes.length);
-    LeaseRequest roundtrippedRequest = codec.decodeMessage(bytes);
-    assertNotNull(roundtrippedRequest);
+    byte[] bytes = codec.encodeMessage(message);
+    LeaseRequest roundtrippedMessage = (LeaseRequest) codec.decodeMessage(bytes);
+    assertEquals(5, roundtrippedMessage.getConnectionSequenceNumber());
+  }
+
+  @Test
+  public void roundtripLeaseReconnectFinished() throws Exception {
+    UUID uuid = UUID.randomUUID();
+    LeaseReconnectFinished message = new LeaseReconnectFinished(uuid);
+    LeaseAcquirerCodec codec = new LeaseAcquirerCodec();
+    byte[] bytes = codec.encodeMessage(message);
+    LeaseReconnectFinished roundtrippedMessage = (LeaseReconnectFinished) codec.decodeMessage(bytes);
+    assertEquals(uuid, roundtrippedMessage.getUUID());
+  }
+
+  @Test
+  public void roundtripOldConnectionResponse() throws Exception {
+    LeaseRequestResult response = LeaseRequestResult.oldConnection();
+    LeaseAcquirerCodec codec = new LeaseAcquirerCodec();
+    byte[] bytes = codec.encodeResponse(response);
+    LeaseRequestResult roundtrippedResponse = (LeaseRequestResult) codec.decodeResponse(bytes);
+    assertFalse(roundtrippedResponse.isConnectionGood());
+    assertFalse(roundtrippedResponse.isLeaseGranted());
   }
 
   @Test
   public void roundtripNotGrantedResponse() throws Exception {
-    LeaseResponse response = LeaseResponse.leaseNotGranted();
+    LeaseRequestResult response = LeaseRequestResult.leaseNotGranted();
     LeaseAcquirerCodec codec = new LeaseAcquirerCodec();
     byte[] bytes = codec.encodeResponse(response);
-    LeaseResponse roundtrippedResponse = codec.decodeResponse(bytes);
+    LeaseRequestResult roundtrippedResponse = (LeaseRequestResult) codec.decodeResponse(bytes);
+    assertTrue(roundtrippedResponse.isConnectionGood());
     assertFalse(roundtrippedResponse.isLeaseGranted());
   }
 
   @Test
   public void roundtripGrantedResponse() throws Exception {
-    LeaseResponse response = LeaseResponse.leaseGranted(500L);
+    LeaseRequestResult response = LeaseRequestResult.leaseGranted(500L);
     LeaseAcquirerCodec codec = new LeaseAcquirerCodec();
     byte[] bytes = codec.encodeResponse(response);
-    LeaseResponse roundtrippedResponse = codec.decodeResponse(bytes);
+    LeaseRequestResult roundtrippedResponse = (LeaseRequestResult) codec.decodeResponse(bytes);
+    assertTrue(roundtrippedResponse.isConnectionGood());
     assertTrue(roundtrippedResponse.isLeaseGranted());
     assertEquals(500L, roundtrippedResponse.getLeaseLength());
+  }
+
+  @Test
+  public void roundtripLeaseAcquirerAvailable() throws Exception {
+    LeaseAcquirerAvailable response = new LeaseAcquirerAvailable();
+    LeaseAcquirerCodec codec = new LeaseAcquirerCodec();
+    byte[] bytes = codec.encodeResponse(response);
+    LeaseAcquirerAvailable roundtrippedResponse = (LeaseAcquirerAvailable) codec.decodeResponse(bytes);
+    assertNotNull(roundtrippedResponse);
+  }
+
+  @Test
+  public void roundtripIgnoredLeaseResponse() throws Exception {
+    IgnoredLeaseResponse response = new IgnoredLeaseResponse();
+    LeaseAcquirerCodec codec = new LeaseAcquirerCodec();
+    byte[] bytes = codec.encodeResponse(response);
+    IgnoredLeaseResponse roundtrippedResponse = (IgnoredLeaseResponse) codec.decodeResponse(bytes);
+    assertNotNull(roundtrippedResponse);
   }
 }

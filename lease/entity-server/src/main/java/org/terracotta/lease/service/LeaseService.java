@@ -24,7 +24,11 @@ import org.terracotta.entity.ClientDescriptor;
  */
 @CommonComponent
 public interface LeaseService {
+  LeaseResult acquireLease(ClientDescriptor clientDescriptor);
+
   void disconnected(ClientDescriptor clientDescriptor);
 
-  LeaseResult acquireLease(ClientDescriptor clientDescriptor);
+  void reconnecting(ClientDescriptor clientDescriptor);
+
+  void reconnected(ClientDescriptor clientDescriptor);
 }

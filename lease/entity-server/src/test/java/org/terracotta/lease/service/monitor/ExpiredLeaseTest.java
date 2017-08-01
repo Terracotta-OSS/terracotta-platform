@@ -17,6 +17,7 @@ package org.terracotta.lease.service.monitor;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ExpiredLeaseTest {
@@ -24,5 +25,11 @@ public class ExpiredLeaseTest {
   public void alwaysExpired() {
     ExpiredLease lease = new ExpiredLease();
     assertTrue(lease.isExpired(1L));
+  }
+
+  @Test
+  public void neverAllowRenewal() {
+    ExpiredLease lease = new ExpiredLease();
+    assertFalse(lease.allowRenewal());
   }
 }

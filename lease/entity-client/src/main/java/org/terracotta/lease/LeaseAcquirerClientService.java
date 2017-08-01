@@ -19,7 +19,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.MessageCodec;
 
-public class LeaseAcquirerClientService implements EntityClientService<LeaseAcquirer, Void, LeaseRequest, LeaseResponse, Void> {
+public class LeaseAcquirerClientService implements EntityClientService<LeaseAcquirer, Void, LeaseMessage, LeaseResponse, LeaseReconnectListener> {
   @Override
   public boolean handlesEntityType(Class<LeaseAcquirer> c) {
     return LeaseAcquirer.class.equals(c);
@@ -36,12 +36,12 @@ public class LeaseAcquirerClientService implements EntityClientService<LeaseAcqu
   }
 
   @Override
-  public LeaseAcquirer create(EntityClientEndpoint<LeaseRequest, LeaseResponse> endpoint, Void userData) {
-    return new LeaseAcquirerImpl(endpoint);
+  public LeaseAcquirer create(EntityClientEndpoint<LeaseMessage, LeaseResponse> endpoint, LeaseReconnectListener reconnectListener) {
+    return new LeaseAcquirerImpl(endpoint, reconnectListener);
   }
 
   @Override
-  public MessageCodec<LeaseRequest, LeaseResponse> getMessageCodec() {
+  public MessageCodec<LeaseMessage, LeaseResponse> getMessageCodec() {
     return new LeaseAcquirerCodec();
   }
 }

@@ -15,11 +15,27 @@
  */
 package org.terracotta.lease;
 
-import org.terracotta.entity.EntityResponse;
+import org.terracotta.runnel.StructBuilder;
+import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
 
-public interface LeaseResponse extends EntityResponse {
-  LeaseResponseType getType();
+/**
+ * A LeaseResponse that the ActiveLeaseAcquirer can return in response to a self message
+ */
+public class IgnoredLeaseResponse implements LeaseResponse {
+  @Override
+  public LeaseResponseType getType() {
+    return LeaseResponseType.IGNORED_LEASE_RESPONSE;
+  }
 
-  void encode(StructEncoder<Void> parentEncoder);
+  public static void addStruct(StructBuilder parentBuilder, int index) {
+  }
+
+  @Override
+  public void encode(StructEncoder<Void> parentEncoder) {
+  }
+
+  public static LeaseResponse decode(StructDecoder<Void> parentDecoder) {
+    return new IgnoredLeaseResponse();
+  }
 }

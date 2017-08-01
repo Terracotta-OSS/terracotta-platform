@@ -21,6 +21,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -150,6 +153,18 @@ public class LeaseMaintainerImplTest {
     assertFalse(lease2.isValidAndContiguous(lease2));
   }
 
+  @Test(expected = InterruptedException.class)
+  public void waitForLeaseWithoutALease() throws Exception {
+    ThreadInterrupter.interruptIn(300L);
+    leaseMaintainer.waitForLease();
+  }
+
+  @Test
+  public void waitForLeaseWithLease() throws Exception {
+    refreshLease(leaseMaintainer, 0L, 2000L);
+    leaseMaintainer.waitForLease();
+  }
+
   private void refreshLease(LeaseMaintainerImpl leaseMaintainer, long delay, long expectedWaitLength) throws Exception {
     delayedLeaseAcquirer.setDelay(delay);
     long waitLength = leaseMaintainer.refreshLease();
@@ -177,6 +192,32 @@ public class LeaseMaintainerImplTest {
     @Override
     public void close() {
       delegate.close();
+    }
+  }
+
+  private static class ThreadInterrupter extends Thread {
+    private final Thread thread;
+    private final long delay;
+
+    public static void interruptIn(long delay) {
+      new ThreadInterrupter(Thread.currentThread(), delay).start();
+    }
+
+    private ThreadInterrupter(Thread thread, long delay) {
+      super("ThreadInterrupter");
+      this.thread = thread;
+      this.delay = delay;
+    }
+
+    @Override
+    public void run() {
+      try {
+        Thread.sleep(delay);
+      } catch (InterruptedException e) {
+        // Never mind
+      }
+
+      thread.interrupt();
     }
   }
 }
