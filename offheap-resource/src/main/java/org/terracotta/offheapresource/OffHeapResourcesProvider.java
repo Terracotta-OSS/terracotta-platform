@@ -31,12 +31,14 @@ import org.terracotta.statistics.StatisticsManager;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A provider of {@link OffHeapResource} instances.
@@ -50,7 +52,8 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourcesProvider.class);
 
-  private final Map<OffHeapResourceIdentifier, OffHeapResource> resources = new HashMap<>();
+  private final Map<OffHeapResourceIdentifier, OffHeapResourceImpl> resources = new HashMap<>();
+  private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
 
   public OffHeapResourcesProvider(OffheapResourcesType configuration) {
     long totalSize = 0;
@@ -58,7 +61,15 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
       totalSize += size;
       OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
-      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size);
+      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size, (res, percent) -> {
+        for (EntityManagementRegistry registry : registries) {
+          Map<String, String> attrs = new HashMap<>();
+          attrs.put("percentOccupied", String.valueOf(percent));
+          attrs.put("capacity", String.valueOf(res.capacity()));
+          attrs.put("available", String.valueOf(res.available()));
+          registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
+        }
+      });
       resources.put(identifier, offHeapResource);
 
       Map<String, Object> properties = new HashMap<>();
@@ -82,7 +93,8 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     return Collections.unmodifiableSet(resources.keySet());
   }
 
-  public OffHeapResource getOffHeapResource(OffHeapResourceIdentifier identifier) {
+  @Override
+  public OffHeapResourceImpl getOffHeapResource(OffHeapResourceIdentifier identifier) {
     return resources.get(identifier);
   }
 
@@ -90,22 +102,26 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
   public void onManagementRegistryCreated(EntityManagementRegistry registry) {
     LOGGER.trace("[{}] onManagementRegistryCreated()", registry.getMonitoringService().getConsumerId());
 
+    registries.add(registry);
+
     registry.addManagementProvider(new OffHeapResourceSettingsManagementProvider());
     registry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
 
     for (OffHeapResourceIdentifier identifier : getAllIdentifiers()) {
       LOGGER.trace("[{}] onManagementRegistryCreated() - Exposing OffHeapResource:{}", registry.getMonitoringService().getConsumerId(), identifier.getName());
-      registry.register(new OffHeapResourceBinding(identifier.getName(), getOffHeapResource(identifier)));
+      OffHeapResourceBinding managementBinding = getOffHeapResource(identifier).getManagementBinding();
+      registry.register(managementBinding);
     }
   }
 
   @Override
   public void onManagementRegistryClose(EntityManagementRegistry registry) {
+    registries.remove(registry);
   }
 
   @Override
   public void addStateTo(StateDumpCollector dump) {
-    for (Map.Entry<OffHeapResourceIdentifier, OffHeapResource> entry : resources.entrySet()) {
+    for (Map.Entry<OffHeapResourceIdentifier, OffHeapResourceImpl> entry : resources.entrySet()) {
       OffHeapResourceIdentifier identifier = entry.getKey();
       OffHeapResource resource = entry.getValue();
       StateDumpCollector offHeapDump = dump.subStateDumpCollector(identifier.getName());

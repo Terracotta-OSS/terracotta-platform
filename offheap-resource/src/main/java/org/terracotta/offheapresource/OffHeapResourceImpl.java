@@ -17,11 +17,13 @@ package org.terracotta.offheapresource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.offheapresource.management.OffHeapResourceBinding;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 
 /**
  * An implementation of {@link OffHeapResource}.
@@ -61,6 +63,8 @@ class OffHeapResourceImpl implements OffHeapResource {
   private final AtomicLong remaining;
   private final long capacity;
   private final String identifier;
+  private final BiConsumer<OffHeapResourceImpl, Integer> onReservationThresholdReached;
+  private final OffHeapResourceBinding managementBinding;
 
   /**
    * Creates a resource of the given initial size.
@@ -70,7 +74,9 @@ class OffHeapResourceImpl implements OffHeapResource {
    * @param size size of the resource
    * @throws IllegalArgumentException if the size is negative
    */
-  OffHeapResourceImpl(String identifier, long size) throws IllegalArgumentException {
+  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, Integer> onReservationThresholdReached) throws IllegalArgumentException {
+    this.onReservationThresholdReached = onReservationThresholdReached;
+    this.managementBinding = new OffHeapResourceBinding(identifier, this);
     if (size < 0) {
       throw new IllegalArgumentException("Resource size cannot be negative");
     } else {
@@ -78,6 +84,14 @@ class OffHeapResourceImpl implements OffHeapResource {
       this.remaining = new AtomicLong(size);
       this.identifier = identifier;
     }
+  }
+
+  OffHeapResourceImpl(String identifier, long size) throws IllegalArgumentException {
+    this(identifier, size, (r, p) -> {});
+  }
+
+  public OffHeapResourceBinding getManagementBinding() {
+    return managementBinding;
   }
 
   /**
@@ -103,8 +117,10 @@ class OffHeapResourceImpl implements OffHeapResource {
     long percentOccupied = (capacity - remaining) * 100 / capacity;
     if (percentOccupied >= 90) {
       LOGGER.warn(MESSAGE_PROPERTIES.getProperty(OFFHEAP_WARN_KEY), identifier, percentOccupied);
+      onReservationThresholdReached.accept(this, 90);
     } else if (percentOccupied >= 75) {
       LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, percentOccupied);
+      onReservationThresholdReached.accept(this, 75);
     }
   }
 
