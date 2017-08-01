@@ -57,8 +57,8 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     for (ResourceType r : configuration.getResource()) {
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
       totalSize += size;
-      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(size);
       OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
+      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size);
       resources.put(identifier, offHeapResource);
 
       Map<String, Object> properties = new HashMap<>();
