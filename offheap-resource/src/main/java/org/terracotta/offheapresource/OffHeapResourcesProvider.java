@@ -53,31 +53,27 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
   private final Map<OffHeapResourceIdentifier, OffHeapResource> resources = new HashMap<>();
 
   public OffHeapResourcesProvider(OffheapResourcesType configuration) {
-    if (resources.isEmpty()) {
-      long totalSize = 0;
-      for (ResourceType r : configuration.getResource()) {
-        long size = longValueExact(convert(r.getValue(), r.getUnit()));
-        totalSize += size;
-        OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(size);
-        OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
-        resources.put(identifier, offHeapResource);
+    long totalSize = 0;
+    for (ResourceType r : configuration.getResource()) {
+      long size = longValueExact(convert(r.getValue(), r.getUnit()));
+      totalSize += size;
+      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(size);
+      OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
+      resources.put(identifier, offHeapResource);
 
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("discriminator", "OffHeapResource");
-        properties.put("offHeapResourceIdentifier", identifier.getName());
-        StatisticsManager.createPassThroughStatistic(
-            offHeapResource,
-            "allocatedMemory",
-            new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
-            properties,
-            (Callable<Number>) () -> offHeapResource.capacity() - offHeapResource.available());
-      }
-      Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
-      if (physicalMemory != null && totalSize > physicalMemory) {
-        LOGGER.warn("More offheap configured than there is physical memory [{} > {}]", totalSize, physicalMemory);
-      }
-    } else {
-      throw new IllegalStateException("Resources already initialized");
+      Map<String, Object> properties = new HashMap<>();
+      properties.put("discriminator", "OffHeapResource");
+      properties.put("offHeapResourceIdentifier", identifier.getName());
+      StatisticsManager.createPassThroughStatistic(
+          offHeapResource,
+          "allocatedMemory",
+          new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
+          properties,
+          (Callable<Number>) () -> offHeapResource.capacity() - offHeapResource.available());
+    }
+    Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
+    if (physicalMemory != null && totalSize > physicalMemory) {
+      LOGGER.warn("More offheap configured than there is physical memory [{} > {}]", totalSize, physicalMemory);
     }
   }
 
