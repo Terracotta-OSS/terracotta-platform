@@ -22,10 +22,12 @@ import org.junit.Test;
 
 public class OffHeapResourceTest {
 
+  private String identifier = "id";
+
   @Test
   public void testNegativeResourceSize() {
     try {
-      new OffHeapResourceImpl(-1);
+      new OffHeapResourceImpl(identifier, -1);
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       //expected;
@@ -34,14 +36,14 @@ public class OffHeapResourceTest {
 
   @Test
   public void testZeroSizeResourceIsUseless() {
-    OffHeapResource ohr = new OffHeapResourceImpl(0);
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 0);
     assertThat(ohr.reserve(1), is(false));
     assertThat(ohr.available(), is(0L));
   }
 
   @Test
   public void testAllocationReducesSize() {
-    OffHeapResource ohr = new OffHeapResourceImpl(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20);
     assertThat(ohr.capacity(), is(20L));
     assertThat(ohr.available(), is(20L));
     assertThat(ohr.reserve(10), is(true));
@@ -51,7 +53,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testNegativeAllocationFails() {
-    OffHeapResource ohr = new OffHeapResourceImpl(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20);
     try {
       ohr.reserve(-1);
       fail("Expected IllegalArgumentException");
@@ -62,7 +64,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testAllocationWhenExhaustedFails() {
-    OffHeapResource ohr = new OffHeapResourceImpl(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20);
     ohr.reserve(20);
     assertThat(ohr.reserve(1), is(false));
     assertThat(ohr.available(), is(0L));
@@ -70,7 +72,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testFreeIncreasesSize() {
-    OffHeapResource ohr = new OffHeapResourceImpl(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20);
     ohr.reserve(20);
     assertThat(ohr.available(), is(0L));
     ohr.release(10);
@@ -79,7 +81,7 @@ public class OffHeapResourceTest {
 
   @Test
   public void testNegativeFreeFails() {
-    OffHeapResource ohr = new OffHeapResourceImpl(20);
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20);
     ohr.reserve(10);
     try {
       ohr.release(-10);
@@ -87,5 +89,14 @@ public class OffHeapResourceTest {
     } catch (IllegalArgumentException e) {
       //expected
     }
+  }
+
+  @Test
+  public void testThresholds() {
+    OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier, 10);
+    // TODO move to manipulating the logger to be able to do real assertions.
+    offHeapResource.reserve(4); // Does not print a log statement
+    offHeapResource.reserve(4); // Does print an info log statement
+    offHeapResource.reserve(1); // Does print a warn log statement
   }
 }

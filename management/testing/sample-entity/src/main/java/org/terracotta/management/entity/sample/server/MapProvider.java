@@ -44,6 +44,8 @@ public class MapProvider implements ServiceProvider, Closeable {
 
   private final Map<String, Map<String, String>> caches = new ConcurrentHashMap<>();
 
+  private OffHeapResource heapResource;
+  
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
     return Arrays.asList(Map.class);
@@ -52,9 +54,7 @@ public class MapProvider implements ServiceProvider, Closeable {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     OffHeapResources offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class).iterator().next();
-    OffHeapResource heapResource = offHeapResources.getOffHeapResource(OffHeapResourceIdentifier.identifier("primary-server-resource"));
-    // just to mimic some allocation
-    heapResource.reserve(12 * 1024 * 1024);
+    heapResource = offHeapResources.getOffHeapResource(OffHeapResourceIdentifier.identifier("primary-server-resource"));
     return true;
   }
 
@@ -76,7 +76,11 @@ public class MapProvider implements ServiceProvider, Closeable {
       if (configuration instanceof MapConfiguration) {
         MapConfiguration mapConfiguration = (MapConfiguration) configuration;
         LOGGER.trace("getService({}, {})", consumerID, configuration);
-        return serviceType.cast(caches.computeIfAbsent(mapConfiguration.getName(), s -> new ConcurrentHashMap<>()));
+        return serviceType.cast(caches.computeIfAbsent(mapConfiguration.getName(), s -> {
+          // just to mimic some allocation
+          heapResource.reserve(12 * 1024 * 1024);
+          return new ConcurrentHashMap<>();
+        }));
       } else {
         throw new IllegalArgumentException("Missing configuration " + MapConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
