@@ -112,29 +112,25 @@ public final class Connection extends AbstractNode<Client> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    // we do not consider super because it would include the connection id in the hashcode, which is not "predictatable"
-    // and can be different whether we opened/closed several connections in our different tests
-    //if (!super.equals(o)) return false;
+    if (!super.equals(o)) return false;
 
     Connection that = (Connection) o;
 
     if (!serverEntityIds.equals(that.serverEntityIds)) return false;
     if (!clientEndpoint.equals(that.clientEndpoint)) return false;
-    if (stripeId != null ? !stripeId.equals(that.stripeId) : that.stripeId != null) return false;
-    return serverId != null ? serverId.equals(that.serverId) : that.serverId == null;
-
+    if (!stripeId.equals(that.stripeId)) return false;
+    if (!serverId.equals(that.serverId)) return false;
+    return logicalConnectionUid.equals(that.logicalConnectionUid);
   }
 
   @Override
   public int hashCode() {
-    // we do not consider super because it would include the connection id in the hashcode, which is not "predictatable"
-    // and can be different whether we opened/closed several connections in our different tests
-    //int result = super.hashCode();
-    int result = 0;
+    int result = super.hashCode();
     result = 31 * result + serverEntityIds.hashCode();
     result = 31 * result + clientEndpoint.hashCode();
-    result = 31 * result + (stripeId != null ? stripeId.hashCode() : 0);
-    result = 31 * result + (serverId != null ? serverId.hashCode() : 0);
+    result = 31 * result + stripeId.hashCode();
+    result = 31 * result + serverId.hashCode();
+    result = 31 * result + logicalConnectionUid.hashCode();
     return result;
   }
 

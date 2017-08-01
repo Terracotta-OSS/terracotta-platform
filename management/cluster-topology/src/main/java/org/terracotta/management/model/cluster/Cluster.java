@@ -18,6 +18,7 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -222,8 +223,8 @@ public final class Cluster implements Contextual {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
-    map.put("stripes", stripeStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(Stripe::toMap).collect(Collectors.toList()));
-    map.put("clients", clientStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(Client::toMap).collect(Collectors.toList()));
+    map.put("stripes", stripeStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Stripe::toMap).collect(Collectors.toList()));
+    map.put("clients", clientStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Client::toMap).collect(Collectors.toList()));
     return map;
   }
 

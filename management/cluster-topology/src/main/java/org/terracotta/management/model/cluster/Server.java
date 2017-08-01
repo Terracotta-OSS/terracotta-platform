@@ -167,7 +167,7 @@ public final class Server extends AbstractNode<Stripe> {
   }
 
   public Server setState(State state) {
-    this.state = state;
+    this.state = Objects.requireNonNull(state);
     return this;
   }
 
@@ -288,7 +288,7 @@ public final class Server extends AbstractNode<Stripe> {
     if (startTime != server.startTime) return false;
     if (activateTime != server.activateTime) return false;
     if (!serverEntities.equals(server.serverEntities)) return false;
-    if (serverName != null ? !serverName.equals(server.serverName) : server.serverName != null) return false;
+    if (!serverName.equals(server.serverName)) return false;
     if (hostName != null ? !hostName.equals(server.hostName) : server.hostName != null) return false;
     if (hostAddress != null ? !hostAddress.equals(server.hostAddress) : server.hostAddress != null) return false;
     if (bindAddress != null ? !bindAddress.equals(server.bindAddress) : server.bindAddress != null) return false;
@@ -302,7 +302,7 @@ public final class Server extends AbstractNode<Stripe> {
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + serverEntities.hashCode();
-    result = 31 * result + (serverName != null ? serverName.hashCode() : 0);
+    result = 31 * result + serverName.hashCode();
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
     result = 31 * result + (hostAddress != null ? hostAddress.hashCode() : 0);
     result = 31 * result + (bindAddress != null ? bindAddress.hashCode() : 0);
