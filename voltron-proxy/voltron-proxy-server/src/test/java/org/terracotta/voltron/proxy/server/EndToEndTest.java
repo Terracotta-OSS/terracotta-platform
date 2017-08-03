@@ -123,6 +123,11 @@ public class EndToEndTest {
         throw new UnsupportedOperationException("Implement me!");
       }
 
+      @Override
+      public Future<Void> release() {
+        throw new UnsupportedOperationException("TODO Implement me!");
+      }
+
       public void didCloseUnexpectedly() {
         throw new UnsupportedOperationException("Implement me!");
       }

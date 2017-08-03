@@ -23,13 +23,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.terracotta.management.entity.sample.client.CacheFactory;
-import org.terracotta.testing.rules.BasicExternalCluster;
 import org.terracotta.testing.rules.Cluster;
 
 import java.io.File;
 import java.net.URI;
 
-import static java.util.Collections.emptyList;
+import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
 public class SimpleGalvanIT {
 
@@ -44,7 +43,7 @@ public class SimpleGalvanIT {
 
   @ClassRule
   public static Cluster CLUSTER =
-      new BasicExternalCluster(new File("target/galvan"), 1, emptyList(), "", RESOURCE_CONFIG, "");
+      newCluster().in(new File("target/galvan")).withServiceFragment(RESOURCE_CONFIG).build();
 
   @BeforeClass
   public static void waitForActive() throws Exception {
