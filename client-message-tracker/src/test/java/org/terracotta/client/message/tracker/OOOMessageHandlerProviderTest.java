@@ -16,6 +16,8 @@
 package org.terracotta.client.message.tracker;
 
 import org.junit.Test;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ServiceConfiguration;
 
 import static org.hamcrest.Matchers.not;
@@ -28,11 +30,11 @@ public class OOOMessageHandlerProviderTest {
   @Test
   public void getService() throws Exception {
     OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
-    OOOMessageHandlerConfiguration config = new OOOMessageHandlerConfiguration("foo", mock(TrackerPolicy.class));
-    OOOMessageHandler messageHandler = provider.getService(1L, config);
+    OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config = new OOOMessageHandlerConfiguration<>("foo", mock(TrackerPolicy.class));
+    OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = provider.getService(1L, config);
     assertThat(provider.getService(2L, config), sameInstance(messageHandler));
 
-    config = new OOOMessageHandlerConfiguration("bar", mock(TrackerPolicy.class));
+    config = new OOOMessageHandlerConfiguration<>("bar", mock(TrackerPolicy.class));
     assertThat(provider.getService(2L, config), not(sameInstance(messageHandler)));
   }
 

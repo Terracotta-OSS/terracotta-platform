@@ -35,9 +35,9 @@ public class DemoActiveEntity implements ActiveServerEntity {
   private final OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 
   public DemoActiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
-    OOOMessageHandlerConfiguration OOOMessageHandlerConfiguration =
-        new OOOMessageHandlerConfiguration("foo", new DummyTrackerPolicy());
-    messageHandler = serviceRegistry.getService(OOOMessageHandlerConfiguration);
+    OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> messageHandlerConfiguration =
+        new OOOMessageHandlerConfiguration<>("foo", new DummyTrackerPolicy());
+    messageHandler = serviceRegistry.getService(messageHandlerConfiguration);
   }
 
   @Override
