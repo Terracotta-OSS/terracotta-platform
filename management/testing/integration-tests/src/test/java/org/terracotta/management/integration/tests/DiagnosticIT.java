@@ -57,15 +57,10 @@ public class DiagnosticIT extends AbstractSingleTest {
       // once https://github.com/Terracotta-OSS/terracotta-core/issues/613 and https://github.com/Terracotta-OSS/terracotta-core/pull/601 will be fixed 
       // and once the state dump format will be improved.
       String dump = diagnostics.getClusterState();
-      String cluster = nmsService.readTopology().toMap().toString();
-      assertThat(dump, containsString(cluster));
       
       // monitoring service provider
-      assertThat(dump, containsString("server="));
-      assertThat(dump, containsString("configurationCount="));
-      assertThat(dump, containsString("manageable=true"));
       assertThat(dump, containsString("cluster="));
-      
+
       // ActiveNmsServerEntity / PassiveNmsServerEntity
       assertThat(dump, containsString("consumerId="));
       assertThat(dump, containsString("stripeName="));

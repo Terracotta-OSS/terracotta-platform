@@ -108,11 +108,8 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
     // clients, by default for all active entities
     Collection<ClientDescriptor> clients = getClients();
     stateDumpCollector.addState("clientCount", String.valueOf(clients.size()));
-    StateDumpCollector clientsDumper = stateDumpCollector.subStateDumpCollector("clients");
-    int i = 0;
-    for (ClientDescriptor client : clients) {
-      clientsDumper.addState(String.valueOf(i++), client.toString());
-    }
+    stateDumpCollector.addState("clients",clients);
+
     // custom
     dumpState(stateDumpCollector);
   }

@@ -91,10 +91,6 @@ public class MapProvider implements ServiceProvider, Closeable {
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    StateDumpCollector caches = stateDumper.subStateDumpCollector("caches");
-    int c = 0;
-    for (String name : this.caches.keySet()) {
-      caches.addState(String.valueOf(c), name);
-    }
+    stateDumper.addState("caches",this.caches.keySet());
   }
 }
