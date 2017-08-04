@@ -97,30 +97,9 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   @Override
   public void addStateTo(StateDumpCollector dump) {
-    PlatformConfiguration platformConfiguration = this.platformConfiguration;
-    if (platformConfiguration != null) {
-      Collection<Object> configurations = platformConfiguration.getExtendedConfiguration(Object.class);
-      dump.addState("server", platformConfiguration.getServerName());
-      dump.addState("configurationCount", String.valueOf(configurations.size()));
-      Map<String, List<Object>> pluginsByType = configurations
-          .stream()
-          .collect(Collectors.groupingBy(o -> o.getClass().getName()));
-      for (Map.Entry<String, List<Object>> entry : pluginsByType.entrySet()) {
-        StateDumpCollector typeDump = dump.subStateDumpCollector(entry.getKey());
-        typeDump.addState("configurationCount", String.valueOf(entry.getValue().size()));
-        int plugin_idx = 0;
-        for (Object plugin : entry.getValue()) {
-          StateDumpCollector pluginDump = typeDump.subStateDumpCollector(String.valueOf(plugin_idx++));
-          pluginDump.addState("manageable", String.valueOf(plugin instanceof ManageableServerComponent));
-          if (plugin instanceof StateDumpable) {
-            ((StateDumpable) plugin).addStateTo(pluginDump);
-          }
-        }
-      }
-    }
     TopologyService topologyService = this.topologyService;
     if (topologyService != null) {
-      dump.addState("cluster", topologyService.getClusterCopy().toMap().toString());
+      dump.addState("cluster", topologyService.getClusterCopy().toMap());
     }
   }
 
