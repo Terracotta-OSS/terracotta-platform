@@ -18,11 +18,11 @@ package org.terracotta.management.integration.tests;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.terracotta.testing.rules.BasicExternalCluster;
+import org.terracotta.testing.rules.Cluster;
 
 import java.io.File;
 
-import static java.util.Collections.emptyList;
+import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
 /**
  * @author Mathieu Carbou
@@ -38,8 +38,8 @@ public abstract class AbstractSingleTest extends AbstractTest {
           "</config>\n";
 
   @Rule
-  public org.terracotta.testing.rules.Cluster voltron =
-      new BasicExternalCluster(new File("target/galvan"), 1, emptyList(), "", resourceConfig, "");
+  public Cluster voltron =
+      newCluster().in(new File("target/galvan")).withServiceFragment(resourceConfig).build();
 
   @Before
   public void setUp() throws Exception {
