@@ -15,31 +15,34 @@
  */
 package org.terracotta.client.message.tracker;
 
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ServiceConfiguration;
 
 import com.tc.classloader.CommonComponent;
 
 @CommonComponent
-public class OOOMessageHandlerConfiguration implements ServiceConfiguration<OOOMessageHandler> {
+public class OOOMessageHandlerConfiguration<M extends EntityMessage, R extends EntityResponse> implements ServiceConfiguration<OOOMessageHandler<M, R>> {
 
   private final String entityIdentifier;
-  private final TrackerPolicy TrackerPolicy;
+  private final TrackerPolicy<M> trackerPolicy;
 
-  public OOOMessageHandlerConfiguration(String entityIdentifier, TrackerPolicy TrackerPolicy) {
+  public OOOMessageHandlerConfiguration(String entityIdentifier, TrackerPolicy<M> trackerPolicy) {
     this.entityIdentifier = entityIdentifier;
-    this.TrackerPolicy = TrackerPolicy;
+    this.trackerPolicy = trackerPolicy;
   }
 
   public TrackerPolicy getTrackerPolicy() {
-    return TrackerPolicy;
+    return trackerPolicy;
   }
 
   public String getEntityIdentifier() {
     return entityIdentifier;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public Class<OOOMessageHandler> getServiceType() {
-    return OOOMessageHandler.class;
+  public Class<OOOMessageHandler<M, R>> getServiceType() {
+    return (Class) OOOMessageHandler.class;
   }
 }
