@@ -17,6 +17,8 @@ package org.terracotta.management.entity.sample.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.entity.ServiceException;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
@@ -32,15 +34,19 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity implements Cac
   private static final Logger LOGGER = LoggerFactory.getLogger(PassiveCacheServerEntity.class);
 
   private final Management management;
+  private final ServiceRegistry registry;
   private final ServerCache cache;
 
-  PassiveCacheServerEntity(ServerCache cache, Management management) {
+  PassiveCacheServerEntity(ServerCache cache, Management management, ServiceRegistry registry) {
     this.cache = cache;
     this.management = management;
+    this.registry = registry;
   }
 
   @Override
   public void createNew() {
+    super.createNew();
+    
     LOGGER.trace("[{}] createNew()", cache.getName());
     management.init();
     management.serverCacheCreated(cache);
@@ -51,6 +57,15 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity implements Cac
     LOGGER.trace("[{}] destroy()", cache.getName());
     management.serverCacheDestroyed(cache);
     management.close();
+
+    // this is just a hack to tell the service to release some offheap
+    try {
+      registry.getService(new MapRelease());
+    } catch (ServiceException e) {
+      e.printStackTrace();
+    }
+    
+    super.destroy();
   }
 
   @Override

@@ -22,6 +22,7 @@ import org.terracotta.offheapresource.management.OffHeapResourceBinding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
@@ -63,8 +64,9 @@ class OffHeapResourceImpl implements OffHeapResource {
   private final AtomicLong remaining;
   private final long capacity;
   private final String identifier;
-  private final BiConsumer<OffHeapResourceImpl, Integer> onReservationThresholdReached;
+  private final BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached;
   private final OffHeapResourceBinding managementBinding;
+  private final AtomicInteger threshold = new AtomicInteger();
 
   /**
    * Creates a resource of the given initial size.
@@ -74,7 +76,7 @@ class OffHeapResourceImpl implements OffHeapResource {
    * @param size size of the resource
    * @throws IllegalArgumentException if the size is negative
    */
-  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, Integer> onReservationThresholdReached) throws IllegalArgumentException {
+  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached) throws IllegalArgumentException {
     this.onReservationThresholdReached = onReservationThresholdReached;
     this.managementBinding = new OffHeapResourceBinding(identifier, this);
     if (size < 0) {
@@ -105,7 +107,7 @@ class OffHeapResourceImpl implements OffHeapResource {
     } else {
       for (long current = remaining.get(); current >= size; current = remaining.get()) {
         if (remaining.compareAndSet(current, current - size)) {
-          checkRemainingAndLogIfLow(current - size);
+          remainingUpdated(current - size);
           return true;
         }
       }
@@ -113,14 +115,32 @@ class OffHeapResourceImpl implements OffHeapResource {
     }
   }
 
-  private void checkRemainingAndLogIfLow(long remaining) {
+  private void remainingUpdated(long remaining) {
     long percentOccupied = (capacity - remaining) * 100 / capacity;
+    int newT, curT = threshold.get();
     if (percentOccupied >= 90) {
-      LOGGER.warn(MESSAGE_PROPERTIES.getProperty(OFFHEAP_WARN_KEY), identifier, percentOccupied);
-      onReservationThresholdReached.accept(this, 90);
+      newT = 90;
     } else if (percentOccupied >= 75) {
-      LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, percentOccupied);
-      onReservationThresholdReached.accept(this, 75);
+      newT = 75;
+    } else {
+      newT = 0;
+    }
+    if (threshold.compareAndSet(curT, newT)) {
+      if (newT > curT) {
+        // increase from 0->75 or 75->90
+        if (newT == 90) {
+          LOGGER.warn(MESSAGE_PROPERTIES.getProperty(OFFHEAP_WARN_KEY), identifier, percentOccupied);
+        } else {
+          LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, percentOccupied);
+        }
+        onReservationThresholdReached.accept(this, new ThresholdChange(curT, newT));
+      } else if (newT < curT) {
+        // decrease from 90->75 or 75->0
+        if (newT == 75) {
+          LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, percentOccupied);
+        }
+        onReservationThresholdReached.accept(this, new ThresholdChange(curT, newT));
+      }
     }
   }
 
@@ -133,7 +153,8 @@ class OffHeapResourceImpl implements OffHeapResource {
     if (size < 0) {
       throw new IllegalArgumentException("Released size cannot be negative");
     } else {
-      remaining.addAndGet(size);
+      long remaining = this.remaining.addAndGet(size);
+      remainingUpdated(remaining);
     }
   }
 
@@ -148,5 +169,15 @@ class OffHeapResourceImpl implements OffHeapResource {
   @Override
   public long capacity() {
     return capacity;
+  }
+  
+  static class ThresholdChange {
+    final int old;
+    final int now;
+
+    ThresholdChange(int old, int now) {
+      this.old = old;
+      this.now = now;
+    }
   }
 }

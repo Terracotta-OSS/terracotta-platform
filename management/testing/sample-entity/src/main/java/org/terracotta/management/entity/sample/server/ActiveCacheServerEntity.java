@@ -18,6 +18,8 @@ package org.terracotta.management.entity.sample.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ServiceException;
+import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.server.management.Management;
@@ -35,10 +37,12 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<CacheSync, Void,
 
   private final Management management;
   private final ServerCache cache;
+  private final ServiceRegistry registry;
   private final ServerCache.Listener listener = (key, value) -> fireMessage(Serializable[].class, new Serializable[]{"remove", key, value}, true);
 
-  ActiveCacheServerEntity(ServerCache cache, Management management) {
+  ActiveCacheServerEntity(ServerCache cache, Management management, ServiceRegistry registry) {
     this.cache = cache;
+    this.registry = registry;
 
     // callback clients on eviction
     cache.addListener(listener);
@@ -66,6 +70,14 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<CacheSync, Void,
     cache.removeListener(listener);
     management.serverCacheDestroyed(cache);
     management.close();
+
+    // this is just a hack to tell the service to release some offheap
+    try {
+      registry.getService(new MapRelease());
+    } catch (ServiceException e) {
+      e.printStackTrace();
+    }
+
     super.destroy();
   }
 
