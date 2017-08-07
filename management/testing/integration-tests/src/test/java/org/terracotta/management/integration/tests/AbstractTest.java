@@ -152,6 +152,11 @@ public abstract class AbstractTest {
     caches.put(name, webappNodes.stream().map(cacheFactory -> cacheFactory.getCache(name)).collect(Collectors.toList()));
   }
 
+  protected void destroyCaches(String name) {
+    caches.remove(name);
+    webappNodes.forEach(cacheFactory -> cacheFactory.destroyCache(name));
+  }
+
   protected void addWebappNode(URI uri) throws Exception {
     CacheFactory cacheFactory = new CacheFactory(uri);
     cacheFactory.init();

@@ -61,10 +61,11 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
       totalSize += size;
       OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
-      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size, (res, percent) -> {
+      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size, (res, update) -> {
         for (EntityManagementRegistry registry : registries) {
           Map<String, String> attrs = new HashMap<>();
-          attrs.put("percentOccupied", String.valueOf(percent));
+          attrs.put("oldThreshold", String.valueOf(update.old));
+          attrs.put("threshold", String.valueOf(update.now));
           attrs.put("capacity", String.valueOf(res.capacity()));
           attrs.put("available", String.valueOf(res.available()));
           registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);

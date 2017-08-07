@@ -41,10 +41,13 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
         .findFirst()
         .get()
         .getAttributes();
-    assertThat(attributes.keySet(), hasItem("percentOccupied"));
+    assertThat(attributes.keySet(), hasItem("oldThreshold"));
+    assertThat(attributes.keySet(), hasItem("threshold"));
     assertThat(attributes.keySet(), hasItem("capacity"));
     assertThat(attributes.keySet(), hasItem("available"));
-    assertThat(attributes.get("percentOccupied"), equalTo("75"));
+    
+    assertThat(attributes.get("oldThreshold"), equalTo("0"));
+    assertThat(attributes.get("threshold"), equalTo("75"));
 
     getCaches("another3");
 
@@ -54,10 +57,34 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
         .findFirst()
         .get()
         .getAttributes();
-    assertThat(attributes.keySet(), hasItem("percentOccupied"));
-    assertThat(attributes.keySet(), hasItem("capacity"));
-    assertThat(attributes.keySet(), hasItem("available"));
-    assertThat(attributes.get("percentOccupied"), equalTo("90"));
+    
+    assertThat(attributes.get("oldThreshold"), equalTo("75"));
+    assertThat(attributes.get("threshold"), equalTo("90"));
+
+    destroyCaches("another3");
+
+    notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
+    attributes = notifications.stream()
+        .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
+        .findFirst()
+        .get()
+        .getAttributes();
+    
+    assertThat(attributes.get("oldThreshold"), equalTo("90"));
+    assertThat(attributes.get("threshold"), equalTo("75"));
+
+    destroyCaches("another2");
+    destroyCaches("another1");
+
+    notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
+    attributes = notifications.stream()
+        .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
+        .findFirst()
+        .get()
+        .getAttributes();
+    
+    assertThat(attributes.get("oldThreshold"), equalTo("75"));
+    assertThat(attributes.get("threshold"), equalTo("0"));
   }
 
 }

@@ -51,7 +51,7 @@ public class CacheEntityServerService extends ProxyServerEntityService<String, C
       Map<String, String> data = registry.getService(new MapConfiguration(identifier));
       ServerCache cache = new ServerCache(identifier, data);
       Management management = new Management(cache.getName(), registry, true);
-      return new ActiveCacheServerEntity(cache, management);
+      return new ActiveCacheServerEntity(cache, management, registry);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
     }
@@ -65,7 +65,7 @@ public class CacheEntityServerService extends ProxyServerEntityService<String, C
       Map<String, String> data = registry.getService(new MapConfiguration(identifier));
       ServerCache cache = new ServerCache(identifier, data);
       Management management = new Management(cache.getName(), registry, false);
-      return new PassiveCacheServerEntity(cache, management);
+      return new PassiveCacheServerEntity(cache, management, registry);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
     }

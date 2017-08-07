@@ -45,7 +45,7 @@ public class MapProvider implements ServiceProvider, Closeable {
   private final Map<String, Map<String, String>> caches = new ConcurrentHashMap<>();
 
   private OffHeapResource heapResource;
-  
+
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
     return Arrays.asList(Map.class);
@@ -81,6 +81,11 @@ public class MapProvider implements ServiceProvider, Closeable {
           heapResource.reserve(12 * 1024 * 1024);
           return new ConcurrentHashMap<>();
         }));
+      
+      } else if (configuration instanceof MapRelease) {
+        heapResource.release(12 * 1024 * 1024);
+        return null;
+      
       } else {
         throw new IllegalArgumentException("Missing configuration " + MapConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
@@ -91,6 +96,6 @@ public class MapProvider implements ServiceProvider, Closeable {
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    stateDumper.addState("caches",this.caches.keySet());
+    stateDumper.addState("caches", this.caches.keySet());
   }
 }
