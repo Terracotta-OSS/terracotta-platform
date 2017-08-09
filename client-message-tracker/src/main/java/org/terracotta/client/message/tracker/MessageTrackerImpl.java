@@ -22,6 +22,7 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
 public class MessageTrackerImpl<M extends EntityMessage, R extends EntityResponse> implements MessageTracker<M, R> {
@@ -33,6 +34,10 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
   public MessageTrackerImpl(TrackerPolicy trackerPolicy) {
     this.trackerPolicy = trackerPolicy;
     this.trackedResponses = new ConcurrentHashMap<>();
+  }
+
+  long getLastReconciledMessageId() {
+    return lastReconciledMessageId;
   }
 
   @Override
@@ -49,9 +54,12 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
 
   @Override
   public void reconcile(long messageId) {
-    if (messageId > lastReconciledMessageId) {
-      LongStream.range(lastReconciledMessageId, messageId).forEach(id -> trackedResponses.remove(id));
-      lastReconciledMessageId = messageId;
+    long id = lastReconciledMessageId;
+    if (messageId > id) {
+      LongStream.range(id, messageId).forEach(i -> trackedResponses.remove(i));
+      while (messageId > lastReconciledMessageId) {
+        lastReconciledMessageId = messageId;
+      }
     }
   }
 
