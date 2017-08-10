@@ -25,9 +25,9 @@ import com.tc.classloader.CommonComponent;
 public class OOOMessageHandlerConfiguration<M extends EntityMessage, R extends EntityResponse> implements ServiceConfiguration<OOOMessageHandler<M, R>> {
 
   private final String entityIdentifier;
-  private final TrackerPolicy<M> trackerPolicy;
+  private final TrackerPolicy trackerPolicy;
 
-  public OOOMessageHandlerConfiguration(String entityIdentifier, TrackerPolicy<M> trackerPolicy) {
+  public OOOMessageHandlerConfiguration(String entityIdentifier, TrackerPolicy trackerPolicy) {
     this.entityIdentifier = entityIdentifier;
     this.trackerPolicy = trackerPolicy;
   }

@@ -21,11 +21,7 @@ import org.terracotta.entity.EntityMessage;
 public class DummyTrackerPolicy implements TrackerPolicy {
 
   @Override
-  public boolean trackable(EntityMessage message) {
-    if (message instanceof TrackableMessage) {
-      return true;
-    } else {
-      return false;
-    }
+  public boolean trackable(Object message) {
+    return message instanceof TrackableMessage;
   }
 }

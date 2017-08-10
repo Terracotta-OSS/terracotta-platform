@@ -15,22 +15,21 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.EntityMessage;
-
 import com.tc.classloader.CommonComponent;
 
 /**
- * A {@link TrackerPolicy} for an entity defines which one of its messages types need once and only once invocation guarantee.
- * This will be used by the {@link ClientMessageTracker} to track such messages with their response cached.
+ * A {@link TrackerPolicy} for an entity defines which objects need once and only once invocation guarantee.
+ * This will be used by the {@link ClientTracker} to track such messages with their response cached.
  */
 @CommonComponent
-public interface TrackerPolicy<M extends EntityMessage> {
+@FunctionalInterface
+public interface TrackerPolicy {
 
   /**
-   * Indicates whether the specified message need to be tracked by {@link ClientMessageTracker} or not.
+   * Indicates whether the specified object needs to be tracked by {@link ClientTracker} or not.
    *
-   * @param message an entity message
-   * @return true for trackable messages and false for non-trackable messages
+   * @param object an entity object
+   * @return true for objects requiring tracking, false otherwise
    */
-  boolean trackable(M message);
+  boolean trackable(Object object);
 }

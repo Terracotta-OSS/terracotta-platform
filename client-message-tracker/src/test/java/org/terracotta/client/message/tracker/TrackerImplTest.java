@@ -31,7 +31,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class MessageTrackerImplTest {
+public class TrackerImplTest {
 
   private TrackerPolicy trackerPolicy = mock(TrackerPolicy.class);
 
@@ -41,10 +41,10 @@ public class MessageTrackerImplTest {
     EntityResponse response = mock(EntityResponse.class);
     when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    MessageTracker tracker = new MessageTrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(trackerPolicy);
     tracker.track(1L, message, response);
 
-    assertThat(tracker.getTrackedResponse(1L), sameInstance(response));
+    assertThat(tracker.getTrackedValues(1L), sameInstance(response));
   }
 
   @Test
@@ -53,10 +53,10 @@ public class MessageTrackerImplTest {
     EntityResponse response = mock(EntityResponse.class);
     when(trackerPolicy.trackable(message)).thenReturn(false);
 
-    MessageTracker tracker = new MessageTrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(trackerPolicy);
     tracker.track(1L, message, response);
 
-    assertThat(tracker.getTrackedResponse(1L), nullValue());
+    assertThat(tracker.getTrackedValues(1L), nullValue());
   }
 
   @Test
@@ -65,10 +65,10 @@ public class MessageTrackerImplTest {
     EntityResponse response = mock(EntityResponse.class);
     when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    MessageTracker tracker = new MessageTrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(trackerPolicy);
     tracker.track(-1L, message, response);  // a message with non-positive message id
 
-    assertThat(tracker.getTrackedResponse(-1L), nullValue());
+    assertThat(tracker.getTrackedValues(-1L), nullValue());
   }
 
   @Test
@@ -77,32 +77,32 @@ public class MessageTrackerImplTest {
     EntityResponse response = mock(EntityResponse.class);
     when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    MessageTrackerImpl tracker = new MessageTrackerImpl(trackerPolicy);
+    TrackerImpl tracker = new TrackerImpl(trackerPolicy);
     tracker.track(1L, message, response);
     tracker.track(2L, message, response);
     tracker.track(3L, message, response);
 
-    assertThat(tracker.getTrackedResponse(1L), notNullValue());
-    assertThat(tracker.getTrackedResponse(2L), notNullValue());
-    assertThat(tracker.getTrackedResponse(3L), notNullValue());
+    assertThat(tracker.getTrackedValues(1L), notNullValue());
+    assertThat(tracker.getTrackedValues(2L), notNullValue());
+    assertThat(tracker.getTrackedValues(3L), notNullValue());
 
     tracker.reconcile(1L);
-    assertThat(tracker.getTrackedResponse(1L), notNullValue());
-    assertThat(tracker.getTrackedResponse(2L), notNullValue());
-    assertThat(tracker.getTrackedResponse(3L), notNullValue());
-    assertThat(tracker.getLastReconciledMessageId(), is(1L));
+    assertThat(tracker.getTrackedValues(1L), notNullValue());
+    assertThat(tracker.getTrackedValues(2L), notNullValue());
+    assertThat(tracker.getTrackedValues(3L), notNullValue());
+    assertThat(tracker.getLastReconciledId(), is(1L));
 
     tracker.reconcile(2L);
-    assertThat(tracker.getTrackedResponse(1L), nullValue());
-    assertThat(tracker.getTrackedResponse(2L), notNullValue());
-    assertThat(tracker.getTrackedResponse(3L), notNullValue());
-    assertThat(tracker.getLastReconciledMessageId(), is(2L));
+    assertThat(tracker.getTrackedValues(1L), nullValue());
+    assertThat(tracker.getTrackedValues(2L), notNullValue());
+    assertThat(tracker.getTrackedValues(3L), notNullValue());
+    assertThat(tracker.getLastReconciledId(), is(2L));
 
     tracker.reconcile(3L);
-    assertThat(tracker.getTrackedResponse(1L), nullValue());
-    assertThat(tracker.getTrackedResponse(2L), nullValue());
-    assertThat(tracker.getTrackedResponse(3L), notNullValue());
-    assertThat(tracker.getLastReconciledMessageId(), is(3L));
+    assertThat(tracker.getTrackedValues(1L), nullValue());
+    assertThat(tracker.getTrackedValues(2L), nullValue());
+    assertThat(tracker.getTrackedValues(3L), notNullValue());
+    assertThat(tracker.getLastReconciledId(), is(3L));
   }
 
   @Test
@@ -111,29 +111,29 @@ public class MessageTrackerImplTest {
     EntityResponse response = mock(EntityResponse.class);
     when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    MessageTracker tracker = new MessageTrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(trackerPolicy);
     tracker.track(1L, message, response);
     tracker.track(2L, message, response);
     tracker.track(3L, message, response);
 
     tracker.reconcile(2L);
-    assertThat(tracker.getTrackedResponse(1L), nullValue());
-    assertThat(tracker.getTrackedResponse(2L), notNullValue());
+    assertThat(tracker.getTrackedValues(1L), nullValue());
+    assertThat(tracker.getTrackedValues(2L), notNullValue());
 
     tracker.reconcile(2L);
-    assertThat(tracker.getTrackedResponse(1L), nullValue());
-    assertThat(tracker.getTrackedResponse(2L), notNullValue());
+    assertThat(tracker.getTrackedValues(1L), nullValue());
+    assertThat(tracker.getTrackedValues(2L), notNullValue());
 
   }
 
   @Test
   public void testLoadOnSync() throws Exception {
     when(trackerPolicy.trackable(any())).thenReturn(true);
-    MessageTrackerImpl tracker = new MessageTrackerImpl(trackerPolicy);
-    Map responses = Collections.singletonMap("key", "value");
+    TrackerImpl tracker = new TrackerImpl(trackerPolicy);
+    Map<Long, Object> responses = Collections.singletonMap(1L, "value");
     tracker.loadOnSync(responses);
-    Map actual = tracker.getTrackedResponses();
+    Map<Long, Object> actual = tracker.getTrackedValues();
     assertThat(actual.size(), is(1));
-    assertThat(actual.get("key"), is("value"));
+    assertThat(actual.get(1L), is("value"));
   }
 }

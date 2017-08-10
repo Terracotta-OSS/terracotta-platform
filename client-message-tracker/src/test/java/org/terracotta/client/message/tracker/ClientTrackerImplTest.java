@@ -16,7 +16,6 @@
 package org.terracotta.client.message.tracker;
 
 import org.junit.Test;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ClientSourceId;
 
 import static org.hamcrest.Matchers.not;
@@ -25,28 +24,28 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Mockito.mock;
 
-public class ClientMessageTrackerImplTest {
+public class ClientTrackerImplTest {
 
-  private ClientMessageTrackerImpl clientMessageTracker = new ClientMessageTrackerImpl(mock(TrackerPolicy.class));
+  private ClientTrackerImpl clientTracker = new ClientTrackerImpl(mock(TrackerPolicy.class));
 
   @Test
   public void getMessageTracker() throws Exception {
     ClientSourceId descriptor1 = new DummyClientSourceId(1);
-    MessageTracker messageTracker = this.clientMessageTracker.getMessageTracker(descriptor1);
+    Tracker messageTracker = this.clientTracker.getTracker(descriptor1);
     assertThat(messageTracker, notNullValue());
-    assertThat(clientMessageTracker.getMessageTracker(descriptor1), sameInstance(messageTracker));
+    assertThat(clientTracker.getTracker(descriptor1), sameInstance(messageTracker));
 
     ClientSourceId descriptor2 = new DummyClientSourceId(2);
-    assertThat(clientMessageTracker.getMessageTracker(descriptor2), not(sameInstance(messageTracker)));
+    assertThat(clientTracker.getTracker(descriptor2), not(sameInstance(messageTracker)));
   }
 
   @Test
   public void untrackClient() throws Exception {
     ClientSourceId descriptor = new DummyClientSourceId(1);
-    MessageTracker messageTracker = this.clientMessageTracker.getMessageTracker(descriptor);
+    Tracker messageTracker = this.clientTracker.getTracker(descriptor);
 
-    clientMessageTracker.untrackClient(descriptor);
-    assertThat(clientMessageTracker.getMessageTracker(descriptor), not(sameInstance(messageTracker)));
+    clientTracker.untrackClient(descriptor);
+    assertThat(clientTracker.getTracker(descriptor), not(sameInstance(messageTracker)));
   }
 
 }

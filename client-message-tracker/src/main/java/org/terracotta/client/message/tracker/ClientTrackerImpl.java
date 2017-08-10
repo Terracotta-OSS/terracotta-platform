@@ -23,33 +23,33 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ClientMessageTrackerImpl implements ClientMessageTracker {
+public class ClientTrackerImpl implements ClientTracker {
 
   private final TrackerPolicy trackerPolicy;
-  private final ConcurrentMap<ClientSourceId, MessageTracker> messageTrackers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<ClientSourceId, Tracker> objectTrackers = new ConcurrentHashMap<>();
 
-  public ClientMessageTrackerImpl(TrackerPolicy TrackerPolicy) {
-    this.trackerPolicy = TrackerPolicy;
+  public ClientTrackerImpl(TrackerPolicy trackerPolicy) {
+    this.trackerPolicy = trackerPolicy;
   }
 
   @Override
-  public MessageTracker getMessageTracker(ClientSourceId clientSourceId) {
-    return messageTrackers.computeIfAbsent(clientSourceId, d -> new MessageTrackerImpl(trackerPolicy));
+  public Tracker getTracker(ClientSourceId clientSourceId) {
+    return objectTrackers.computeIfAbsent(clientSourceId, d -> new TrackerImpl(trackerPolicy));
   }
 
   @Override
   public void untrackClient(ClientSourceId clientSourceId) {
-    messageTrackers.remove(clientSourceId);
+    objectTrackers.remove(clientSourceId);
   }
 
   @Override
   public Set<ClientSourceId> getTrackedClients() {
-    return messageTrackers.keySet();
+    return objectTrackers.keySet();
   }
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    for (Map.Entry<ClientSourceId, MessageTracker> entry : messageTrackers.entrySet()) {
+    for (Map.Entry<ClientSourceId, Tracker> entry : objectTrackers.entrySet()) {
       entry.getValue().addStateTo(stateDumper.subStateDumpCollector(entry.getKey().toString()));
     }
   }

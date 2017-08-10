@@ -38,6 +38,7 @@ public class OOOMessageHandlerProviderTest {
     assertThat(provider.getService(2L, config), not(sameInstance(messageHandler)));
   }
 
+  @SuppressWarnings("unchecked")
   @Test(expected = IllegalArgumentException.class)
   public void getServiceInvalidConfig() throws Exception {
     OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();

@@ -16,25 +16,23 @@
 package org.terracotta.client.message.tracker;
 
 import org.terracotta.entity.ClientSourceId;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.StateDumpable;
 
 import java.util.Set;
 
 /**
- * Keeps track of the message trackers for individual clients.
+ * Keeps track of the trackers for individual clients.
  */
-public interface ClientMessageTracker<M extends EntityMessage, R extends EntityResponse> extends StateDumpable {
+public interface ClientTracker extends StateDumpable {
 
   /**
-   * Retrieve the message tracker of the client with the specified {@code clientSourceId}
-   * If a tracker does not exist already create one and return.
+   * Retrieve the tracker of the client with the specified {@code clientSourceId}
+   * If a tracker does not exist already create one and return it.
    *
    * @param clientSourceId a client source id
-   * @return the message tracker associated with the specified {@code clientSourceId}
+   * @return the tracker associated with the specified {@code clientSourceId}
    */
-  MessageTracker<M, R> getMessageTracker(ClientSourceId clientSourceId);
+  Tracker getTracker(ClientSourceId clientSourceId);
 
   /**
    * Deregister a client from being tracked.
