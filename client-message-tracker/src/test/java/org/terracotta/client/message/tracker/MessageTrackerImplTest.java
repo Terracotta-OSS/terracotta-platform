@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -72,7 +73,7 @@ public class MessageTrackerImplTest {
     EntityResponse response = mock(EntityResponse.class);
     when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    MessageTracker tracker = new MessageTrackerImpl(trackerPolicy);
+    MessageTrackerImpl tracker = new MessageTrackerImpl(trackerPolicy);
     tracker.track(1L, message, response);
     tracker.track(2L, message, response);
     tracker.track(3L, message, response);
@@ -85,16 +86,19 @@ public class MessageTrackerImplTest {
     assertThat(tracker.getTrackedResponse(1L), notNullValue());
     assertThat(tracker.getTrackedResponse(2L), notNullValue());
     assertThat(tracker.getTrackedResponse(3L), notNullValue());
+    assertThat(tracker.getLastReconciledMessageId(), is(1L));
 
     tracker.reconcile(2L);
     assertThat(tracker.getTrackedResponse(1L), nullValue());
     assertThat(tracker.getTrackedResponse(2L), notNullValue());
     assertThat(tracker.getTrackedResponse(3L), notNullValue());
+    assertThat(tracker.getLastReconciledMessageId(), is(2L));
 
     tracker.reconcile(3L);
     assertThat(tracker.getTrackedResponse(1L), nullValue());
     assertThat(tracker.getTrackedResponse(2L), nullValue());
     assertThat(tracker.getTrackedResponse(3L), notNullValue());
+    assertThat(tracker.getLastReconciledMessageId(), is(3L));
   }
 
   @Test
