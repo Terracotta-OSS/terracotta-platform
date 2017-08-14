@@ -56,7 +56,7 @@ public class LeaseMaintainerFactory {
     leaseMaintenanceThread.start();
     leaseExpiryConnectionKillingThread.start();
 
-    return new ThreadCleaningLeaseMaintainer(leaseMaintainer, leaseMaintenanceThread, leaseExpiryConnectionKillingThread);
+    return new CleaningLeaseMaintainer(leaseMaintainer, connection, leaseMaintenanceThread, leaseExpiryConnectionKillingThread);
   }
 
   private static LeaseAcquirer getLeaseAcquirer(Connection connection, LeaseReconnectListener leaseReconnectListener) {

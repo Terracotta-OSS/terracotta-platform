@@ -15,21 +15,26 @@
  */
 package org.terracotta.lease;
 
+import org.terracotta.connection.Connection;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
+class CleaningLeaseMaintainer implements LeaseMaintainer {
   private final LeaseMaintainer delegate;
+  private final Connection connection;
   private final List<Thread> threads;
 
-  ThreadCleaningLeaseMaintainer(LeaseMaintainer delegate, Thread... threads) {
-    this(delegate, Arrays.asList(threads));
+
+  CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, Thread... threads) {
+    this(delegate, connection, Arrays.asList(threads));
   }
 
-  private ThreadCleaningLeaseMaintainer(LeaseMaintainer delegate, List<Thread> threads) {
+  private CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, List<Thread> threads) {
     this.delegate = delegate;
+    this.connection = connection;
     this.threads = threads;
   }
 
@@ -59,5 +64,14 @@ class ThreadCleaningLeaseMaintainer implements LeaseMaintainer {
     // and each is then waiting for the other to complete - deadlock.
 
     delegate.close();
+  }
+
+  @Override
+  public void destroy() throws IOException {
+    for (Thread thread : threads) {
+      thread.interrupt();
+    }
+
+    connection.close();
   }
 }
