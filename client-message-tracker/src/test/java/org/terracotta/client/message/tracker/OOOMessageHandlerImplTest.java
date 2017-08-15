@@ -75,6 +75,24 @@ public class OOOMessageHandlerImplTest {
   }
 
   @Test
+  public void testInvokeDoesNotCacheMessagesNotFromRealClients() throws Exception {
+    trackerPolicy = mock(TrackerPolicy.class);
+    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+
+    InvokeContext context = mock(InvokeContext.class);
+    when(context.isValidClientInformation()).thenReturn(false);
+    EntityMessage message = mock(EntityMessage.class);
+
+    EntityResponse response1 = mock(EntityResponse.class);
+    EntityResponse entityResponse1 = messageHandler.invoke(context, message, (ctxt, msg) -> response1);
+    assertThat(entityResponse1, is(response1));
+
+    EntityResponse response2 = mock(EntityResponse.class);
+    EntityResponse entityResponse2 = messageHandler.invoke(context, message, (ctxt, msg) -> response2);
+    assertThat(entityResponse2, is(response2));
+  }
+
+  @Test
   public void testResentMessageWithSameCurrentAndOldestTxnId() throws Exception {
     trackerPolicy = mock(TrackerPolicy.class);
     when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(true); //Messages are trackable
