@@ -16,6 +16,7 @@
 package org.terracotta.lease;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,4 +51,9 @@ public interface LeaseMaintainer extends Closeable {
    * @throws InterruptedException if the current thread is interrupted while waiting
    */
   boolean waitForLease(long timeout, TimeUnit timeUnit) throws InterruptedException;
+
+  /**
+   * Destroys this lease maintainer and closes all associated resources <em>without interacting with the server</em>
+   */
+  void destroy() throws IOException;
 }

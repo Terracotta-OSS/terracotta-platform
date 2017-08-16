@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.terracotta.connection.Connection;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,9 +30,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ThreadCleaningLeaseMaintainerTest {
+public class CleaningLeaseMaintainerTest {
   @Mock
   private LeaseMaintainer delegate;
+
+  @Mock
+  private Connection connection;
 
   @Mock
   private Thread thread1;
@@ -44,39 +48,49 @@ public class ThreadCleaningLeaseMaintainerTest {
 
   @After
   public void after() {
-    verifyNoMoreInteractions(delegate, thread1, thread2);
+    verifyNoMoreInteractions(delegate, connection, thread1, thread2);
   }
 
   @Test
   public void delegatesGetCurrentLease() {
     when(delegate.getCurrentLease()).thenReturn(lease);
-    ThreadCleaningLeaseMaintainer threadCleaner = new ThreadCleaningLeaseMaintainer(delegate, thread1, thread2);
-    assertEquals(lease, threadCleaner.getCurrentLease());
+    CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
+    assertEquals(lease, cleaner.getCurrentLease());
     verify(delegate).getCurrentLease();
   }
 
   @Test
   public void delegatesWaitForLease() throws Exception {
     when(delegate.getCurrentLease()).thenReturn(lease);
-    ThreadCleaningLeaseMaintainer threadCleaner = new ThreadCleaningLeaseMaintainer(delegate, thread1, thread2);
-    threadCleaner.waitForLease();
+    CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
+    cleaner.waitForLease();
     verify(delegate).waitForLease();
   }
 
   @Test
   public void delegatesWaitForLeaseTimeout() throws Exception {
     when(delegate.getCurrentLease()).thenReturn(lease);
-    ThreadCleaningLeaseMaintainer threadCleaner = new ThreadCleaningLeaseMaintainer(delegate, thread1, thread2);
-    threadCleaner.waitForLease(10, TimeUnit.SECONDS);
+    CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
+    cleaner.waitForLease(10, TimeUnit.SECONDS);
     verify(delegate).waitForLease(10, TimeUnit.SECONDS);
   }
 
   @Test
   public void closeClosesDelegateAndInterruptsThreads() throws Exception {
     when(delegate.getCurrentLease()).thenReturn(lease);
-    ThreadCleaningLeaseMaintainer threadCleaner = new ThreadCleaningLeaseMaintainer(delegate, thread1, thread2);
-    threadCleaner.close();
+    CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
+    cleaner.close();
     verify(delegate).close();
+    verify(thread1).interrupt();
+    verify(thread2).interrupt();
+  }
+
+  @Test
+  public void destroyClosesConnectionAndInterruptsThreads() throws Exception {
+    when(delegate.getCurrentLease()).thenReturn(lease);
+    CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
+    cleaner.destroy();
+    verify(connection).close();
     verify(thread1).interrupt();
     verify(thread2).interrupt();
   }

@@ -146,4 +146,9 @@ class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
       LOGGER.warn("A gap in leases occurred. nanoTime: " + timeSource.nanoTime());
     }
   }
+
+  @Override
+  public void destroy() throws IOException {
+    throw new UnsupportedOperationException();
+  }
 }
