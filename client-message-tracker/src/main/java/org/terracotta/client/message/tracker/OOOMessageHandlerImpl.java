@@ -36,16 +36,20 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
 
   @Override
   public R invoke(InvokeContext context, M message, BiFunction<InvokeContext, M, R> invokeFunction) throws EntityUserException {
-    MessageTracker<M, R> messageTracker = clientMessageTracker.getMessageTracker(context.getClientSource());
-    messageTracker.reconcile(context.getOldestTransactionId());
-    R response = messageTracker.getTrackedResponse(context.getCurrentTransactionId());
-    if (response != null) {
-      return response;
-    }
+    if (context.isValidClientInformation()) {
+      MessageTracker<M, R> messageTracker = clientMessageTracker.getMessageTracker(context.getClientSource());
+      messageTracker.reconcile(context.getOldestTransactionId());
+      R response = messageTracker.getTrackedResponse(context.getCurrentTransactionId());
+      if (response != null) {
+        return response;
+      }
 
-    response = invokeFunction.apply(context, message);
-    messageTracker.track(context.getCurrentTransactionId(), message, response);
-    return response;
+      response = invokeFunction.apply(context, message);
+      messageTracker.track(context.getCurrentTransactionId(), message, response);
+      return response;
+    } else {
+      return invokeFunction.apply(context, message);
+    }
   }
 
   @Override
