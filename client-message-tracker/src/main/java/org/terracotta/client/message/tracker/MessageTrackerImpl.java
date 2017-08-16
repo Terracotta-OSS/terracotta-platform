@@ -22,7 +22,6 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
 public class MessageTrackerImpl<M extends EntityMessage, R extends EntityResponse> implements MessageTracker<M, R> {
@@ -70,7 +69,7 @@ public class MessageTrackerImpl<M extends EntityMessage, R extends EntityRespons
 
   @Override
   public void loadOnSync(Map<Long, R> trackedResponses) {
-    trackedResponses.putAll(trackedResponses);
+    this.trackedResponses.putAll(trackedResponses);
   }
 
   @Override

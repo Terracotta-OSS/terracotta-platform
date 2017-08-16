@@ -19,11 +19,15 @@ import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
+import java.util.Collections;
+import java.util.Map;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -120,5 +124,16 @@ public class MessageTrackerImplTest {
     assertThat(tracker.getTrackedResponse(1L), nullValue());
     assertThat(tracker.getTrackedResponse(2L), notNullValue());
 
+  }
+
+  @Test
+  public void testLoadOnSync() throws Exception {
+    when(trackerPolicy.trackable(any())).thenReturn(true);
+    MessageTrackerImpl tracker = new MessageTrackerImpl(trackerPolicy);
+    Map responses = Collections.singletonMap("key", "value");
+    tracker.loadOnSync(responses);
+    Map actual = tracker.getTrackedResponses();
+    assertThat(actual.size(), is(1));
+    assertThat(actual.get("key"), is("value"));
   }
 }
