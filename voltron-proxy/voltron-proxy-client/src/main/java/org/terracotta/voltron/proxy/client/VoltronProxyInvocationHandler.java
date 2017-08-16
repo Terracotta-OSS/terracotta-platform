@@ -74,12 +74,11 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         listeners.put(aClass, new CopyOnWriteArrayList<MessageListener>());
       }
 
-      entityClientEndpoint.setDelegate(new EndpointDelegate() {
+      entityClientEndpoint.setDelegate(new EndpointDelegate<ProxyEntityResponse>() {
 
         @SuppressWarnings("unchecked")
         @Override
-        public void handleMessage(EntityResponse messageFromServer) {
-          ProxyEntityResponse response = (ProxyEntityResponse) messageFromServer;
+        public void handleMessage(ProxyEntityResponse response) {
           final Class<?> aClass = response.getResponseType();
           for (MessageListener messageListener : listeners.get(aClass)) {
             messageListener.onMessage(response.getResponse());

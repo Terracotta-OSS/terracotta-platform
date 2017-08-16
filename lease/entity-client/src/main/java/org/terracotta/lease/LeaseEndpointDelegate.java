@@ -18,7 +18,7 @@ package org.terracotta.lease;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityResponse;
 
-class LeaseEndpointDelegate implements EndpointDelegate {
+class LeaseEndpointDelegate implements EndpointDelegate<LeaseResponse> {
   private final LeaseReconnectListener reconnectListener;
   private final LeaseReconnectDataSupplier reconnectDataSupplier;
 
@@ -28,7 +28,7 @@ class LeaseEndpointDelegate implements EndpointDelegate {
   }
 
   @Override
-  public void handleMessage(EntityResponse entityResponse) {
+  public void handleMessage(LeaseResponse entityResponse) {
     if (!(entityResponse instanceof LeaseAcquirerAvailable)) {
       throw new AssertionError("Received unexpected message from server: " + entityResponse);
     }

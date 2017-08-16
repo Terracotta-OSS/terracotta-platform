@@ -103,9 +103,9 @@ public class HealthCheckerClient implements HealthCheck {
     return driver;
   }
 
-  class HealthCheckerDelegate implements EndpointDelegate {
+  class HealthCheckerDelegate implements EndpointDelegate<HealthCheckRsp> {
     @Override
-    public void handleMessage(EntityResponse messageFromServer) {
+    public void handleMessage(HealthCheckRsp messageFromServer) {
   // do nothing
     }
 
