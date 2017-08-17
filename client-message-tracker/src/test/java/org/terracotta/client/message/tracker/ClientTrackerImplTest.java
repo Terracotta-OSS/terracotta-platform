@@ -26,26 +26,23 @@ import static org.mockito.Mockito.mock;
 
 public class ClientTrackerImplTest {
 
-  private ClientTrackerImpl clientTracker = new ClientTrackerImpl(null);
+  private ClientTrackerImpl<Long> clientTracker = new ClientTrackerImpl<>(null);
 
   @Test
   public void getMessageTracker() throws Exception {
-    ClientSourceId descriptor1 = new DummyClientSourceId(1);
-    Tracker messageTracker = this.clientTracker.getTracker(descriptor1);
+    Tracker messageTracker = this.clientTracker.getTracker(1L);
     assertThat(messageTracker, notNullValue());
-    assertThat(clientTracker.getTracker(descriptor1), sameInstance(messageTracker));
+    assertThat(clientTracker.getTracker(1L), sameInstance(messageTracker));
 
-    ClientSourceId descriptor2 = new DummyClientSourceId(2);
-    assertThat(clientTracker.getTracker(descriptor2), not(sameInstance(messageTracker)));
+    assertThat(clientTracker.getTracker(2L), not(sameInstance(messageTracker)));
   }
 
   @Test
   public void untrackClient() throws Exception {
-    ClientSourceId descriptor = new DummyClientSourceId(1);
-    Tracker messageTracker = this.clientTracker.getTracker(descriptor);
+    Tracker messageTracker = this.clientTracker.getTracker(1L);
 
-    clientTracker.untrackClient(descriptor);
-    assertThat(clientTracker.getTracker(descriptor), not(sameInstance(messageTracker)));
+    clientTracker.untrackClient(1L);
+    assertThat(clientTracker.getTracker(1L), not(sameInstance(messageTracker)));
   }
 
 }

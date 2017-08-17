@@ -29,10 +29,10 @@ import java.util.function.Predicate;
 
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
 
-  private final ClientTracker clientMessageTracker;
+  private final ClientTracker<ClientSourceId> clientMessageTracker;
 
   public OOOMessageHandlerImpl(Predicate<M> policy) {
-    this.clientMessageTracker = new ClientTrackerImpl(policy);
+    this.clientMessageTracker = new ClientTrackerImpl<>(policy);
   }
 
   @Override
