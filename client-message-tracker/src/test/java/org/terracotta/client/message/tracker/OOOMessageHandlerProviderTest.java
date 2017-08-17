@@ -30,11 +30,11 @@ public class OOOMessageHandlerProviderTest {
   @Test
   public void getService() throws Exception {
     OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
-    OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config = new OOOMessageHandlerConfiguration<>("foo", mock(TrackerPolicy.class));
+    OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config = new OOOMessageHandlerConfiguration<>("foo", null);
     OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = provider.getService(1L, config);
     assertThat(provider.getService(2L, config), sameInstance(messageHandler));
 
-    config = new OOOMessageHandlerConfiguration<>("bar", mock(TrackerPolicy.class));
+    config = new OOOMessageHandlerConfiguration<>("bar", null);
     assertThat(provider.getService(2L, config), not(sameInstance(messageHandler)));
   }
 

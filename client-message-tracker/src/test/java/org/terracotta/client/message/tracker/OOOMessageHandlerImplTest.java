@@ -25,14 +25,12 @@ import org.terracotta.entity.InvokeContext;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class OOOMessageHandlerImplTest {
 
-  TrackerPolicy trackerPolicy;
-  OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
+  private OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 
   @Before
   public void setUp() throws Exception {
@@ -40,9 +38,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testInvokeCachesResponse() throws Exception {
-    trackerPolicy = mock(TrackerPolicy.class);
-    when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(true); //Messages are trackable
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> true);
 
     InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
@@ -58,9 +54,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testInvokeDoesNotCacheUntrackableResponse() throws Exception {
-    trackerPolicy = mock(TrackerPolicy.class);
-    when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(false);  //Messages are untrackable
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> false);
 
     InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
@@ -76,8 +70,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testInvokeDoesNotCacheMessagesNotFromRealClients() throws Exception {
-    trackerPolicy = mock(TrackerPolicy.class);
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+    messageHandler = new OOOMessageHandlerImpl<>(null);
 
     InvokeContext context = mock(InvokeContext.class);
     when(context.isValidClientInformation()).thenReturn(false);
@@ -94,9 +87,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testResentMessageWithSameCurrentAndOldestTxnId() throws Exception {
-    trackerPolicy = mock(TrackerPolicy.class);
-    when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(true); //Messages are trackable
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> true);
 
     InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 25);
     EntityMessage message = mock(EntityMessage.class);

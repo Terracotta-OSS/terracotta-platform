@@ -22,13 +22,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 public class ClientTrackerImpl implements ClientTracker {
 
-  private final TrackerPolicy trackerPolicy;
+  private final Predicate<?> trackerPolicy;
   private final ConcurrentMap<ClientSourceId, Tracker> objectTrackers = new ConcurrentHashMap<>();
 
-  public ClientTrackerImpl(TrackerPolicy trackerPolicy) {
+  public ClientTrackerImpl(Predicate<?> trackerPolicy) {
     this.trackerPolicy = trackerPolicy;
   }
 

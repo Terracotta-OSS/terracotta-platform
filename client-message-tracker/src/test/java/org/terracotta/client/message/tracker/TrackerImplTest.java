@@ -27,21 +27,16 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class TrackerImplTest {
-
-  private TrackerPolicy trackerPolicy = mock(TrackerPolicy.class);
 
   @Test
   public void trackTrackableMessage() throws Exception {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
-    when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    Tracker tracker = new TrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(o -> true);
     tracker.track(1L, message, response);
 
     assertThat(tracker.getTrackedValues(1L), sameInstance(response));
@@ -51,9 +46,8 @@ public class TrackerImplTest {
   public void trackUnTrackableMessage() throws Exception {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
-    when(trackerPolicy.trackable(message)).thenReturn(false);
 
-    Tracker tracker = new TrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(o -> false);
     tracker.track(1L, message, response);
 
     assertThat(tracker.getTrackedValues(1L), nullValue());
@@ -63,9 +57,8 @@ public class TrackerImplTest {
   public void trackInvalidMessage() throws Exception {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
-    when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    Tracker tracker = new TrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(o -> true);
     tracker.track(-1L, message, response);  // a message with non-positive message id
 
     assertThat(tracker.getTrackedValues(-1L), nullValue());
@@ -75,9 +68,8 @@ public class TrackerImplTest {
   public void reconcile() throws Exception {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
-    when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    TrackerImpl tracker = new TrackerImpl(trackerPolicy);
+    TrackerImpl tracker = new TrackerImpl(o -> true);
     tracker.track(1L, message, response);
     tracker.track(2L, message, response);
     tracker.track(3L, message, response);
@@ -109,9 +101,8 @@ public class TrackerImplTest {
   public void testDuplicateReconcile() throws Exception {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
-    when(trackerPolicy.trackable(message)).thenReturn(true);
 
-    Tracker tracker = new TrackerImpl(trackerPolicy);
+    Tracker tracker = new TrackerImpl(o -> true);
     tracker.track(1L, message, response);
     tracker.track(2L, message, response);
     tracker.track(3L, message, response);
@@ -128,8 +119,7 @@ public class TrackerImplTest {
 
   @Test
   public void testLoadOnSync() throws Exception {
-    when(trackerPolicy.trackable(any())).thenReturn(true);
-    TrackerImpl tracker = new TrackerImpl(trackerPolicy);
+    TrackerImpl tracker = new TrackerImpl(o -> true);
     Map<Long, Object> responses = Collections.singletonMap(1L, "value");
     tracker.loadOnSync(responses);
     Map<Long, Object> actual = tracker.getTrackedValues();

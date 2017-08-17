@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 
 public class ClientTrackerImplTest {
 
-  private ClientTrackerImpl clientTracker = new ClientTrackerImpl(mock(TrackerPolicy.class));
+  private ClientTrackerImpl clientTracker = new ClientTrackerImpl(null);
 
   @Test
   public void getMessageTracker() throws Exception {

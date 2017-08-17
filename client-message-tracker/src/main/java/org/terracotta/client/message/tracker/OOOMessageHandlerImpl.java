@@ -25,12 +25,13 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
 
   private final ClientTracker clientMessageTracker;
 
-  public OOOMessageHandlerImpl(TrackerPolicy policy) {
+  public OOOMessageHandlerImpl(Predicate<M> policy) {
     this.clientMessageTracker = new ClientTrackerImpl(policy);
   }
 

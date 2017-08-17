@@ -20,16 +20,18 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 import java.util.stream.LongStream;
 
 public class TrackerImpl implements Tracker {
 
-  private final TrackerPolicy trackerPolicy;
+  private final Predicate<Object> trackerPolicy;
   private final ConcurrentMap<Long, Object> trackedValues;
   private volatile long lastReconciledId = 0;
 
-  public TrackerImpl(TrackerPolicy trackerPolicy) {
-    this.trackerPolicy = trackerPolicy;
+  @SuppressWarnings("unchecked")
+  public TrackerImpl(Predicate<?> trackerPolicy) {
+    this.trackerPolicy = (Predicate<Object>) trackerPolicy;
     this.trackedValues = new ConcurrentHashMap<>();
   }
 
@@ -39,7 +41,7 @@ public class TrackerImpl implements Tracker {
 
   @Override
   public void track(long id, Object source, Object value) {
-    if (trackerPolicy.trackable(source) && id > 0) {
+    if (id > 0 && trackerPolicy.test(source)) {
       trackedValues.put(id, value);
     }
   }
