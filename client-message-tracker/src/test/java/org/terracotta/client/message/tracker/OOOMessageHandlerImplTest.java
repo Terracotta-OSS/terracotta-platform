@@ -20,7 +20,11 @@ import org.junit.Test;
 import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeContext;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
@@ -98,6 +102,32 @@ public class OOOMessageHandlerImplTest {
     assertThat(entityResponse2, sameInstance(entityResponse1));
   }
 
+  /**
+   * Test just making sure we got all the typing right. If it compiles, it means we do
+   *
+   * @throws EntityUserException
+   */
+  @Test
+  public void testTyping() throws EntityUserException {
+    OOOMessageHandler<DummyEntityMessage, DummyEntityResponse> messageHandler = new OOOMessageHandlerImpl<>(msg -> true);
+
+    DummyClientSourceId clientSourceId = new DummyClientSourceId(1);
+    InvokeContext context = new DummyContext(clientSourceId, 25, 25);
+    DummyEntityMessage message = new DummyEntityMessage();
+    DummyEntityResponse response = messageHandler.invoke(context, message, this::invokeActiveInternal);
+
+    Map<Long, DummyEntityResponse> messages = new HashMap<>();
+    messageHandler.loadOnSync(clientSourceId, messages);
+
+    Map<Long, DummyEntityResponse> responses = messageHandler.getTrackedResponses(clientSourceId);
+  }
+
+  private DummyEntityResponse invokeActiveInternal(InvokeContext context, DummyEntityMessage message) {
+    return new DummyEntityResponse();
+  }
+
+  private static class DummyEntityMessage implements EntityMessage {}
+  private static class DummyEntityResponse implements EntityResponse {}
   private static class DummyContext implements InvokeContext {
 
     private final ClientSourceId clientSourceId;

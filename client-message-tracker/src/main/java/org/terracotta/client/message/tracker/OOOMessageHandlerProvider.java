@@ -15,6 +15,8 @@
  */
 package org.terracotta.client.message.tracker;
 
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -33,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 @BuiltinService
 public class OOOMessageHandlerProvider implements ServiceProvider {
 
-  private ConcurrentMap<String, OOOMessageHandler> serviceMap = new ConcurrentHashMap<>();
+  private ConcurrentMap<String, OOOMessageHandler<EntityMessage, EntityResponse>> serviceMap = new ConcurrentHashMap<>();
 
   @Override
   public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration, PlatformConfiguration platformConfiguration) {
@@ -43,9 +45,11 @@ public class OOOMessageHandlerProvider implements ServiceProvider {
   @Override
   public <T> T getService(long l, ServiceConfiguration<T> serviceConfiguration) {
     if (serviceConfiguration instanceof OOOMessageHandlerConfiguration) {
-      OOOMessageHandlerConfiguration cmtServiceConfiguration = (OOOMessageHandlerConfiguration) serviceConfiguration;
-      OOOMessageHandler messageHandler = serviceMap.computeIfAbsent(cmtServiceConfiguration.getEntityIdentifier(),
-          id -> new OOOMessageHandlerImpl(cmtServiceConfiguration.getTrackerPolicy()));
+      @SuppressWarnings("unchecked")
+      OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> cmtServiceConfiguration =
+          (OOOMessageHandlerConfiguration<EntityMessage, EntityResponse>) serviceConfiguration;
+      OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = serviceMap.computeIfAbsent(cmtServiceConfiguration.getEntityIdentifier(),
+          id -> new OOOMessageHandlerImpl<>(cmtServiceConfiguration.getTrackerPolicy()));
       return serviceConfiguration.getServiceType().cast(messageHandler);
     }
     throw new IllegalArgumentException("Unexpected configuration type: " + serviceConfiguration);
@@ -63,7 +67,7 @@ public class OOOMessageHandlerProvider implements ServiceProvider {
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    for (Map.Entry<String, OOOMessageHandler> entry : serviceMap.entrySet()) {
+    for (Map.Entry<String, OOOMessageHandler<EntityMessage, EntityResponse>> entry : serviceMap.entrySet()) {
       entry.getValue().addStateTo(stateDumper.subStateDumpCollector(entry.getKey().toString()));
     }
   }
