@@ -19,11 +19,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.exception.ConnectionClosedException;
 
-class LeaseMaintenanceThread extends Thread {
+import java.io.Closeable;
+import java.io.IOException;
+
+class LeaseMaintenanceThread extends Thread implements Closeable {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseMaintenanceThread.class);
 
   private final LeaseMaintainerImpl leaseMaintainer;
   private final TimeSource timeSource;
+
+  private volatile boolean shutdown = false;
 
   LeaseMaintenanceThread(LeaseMaintainerImpl leaseMaintainer) {
     this.leaseMaintainer = leaseMaintainer;
@@ -33,7 +38,7 @@ class LeaseMaintenanceThread extends Thread {
   }
 
   public void run() {
-    while (!Thread.interrupted()) {
+    while (!shutdown) {
       try {
         long waitLength = leaseMaintainer.refreshLease();
 
@@ -47,11 +52,23 @@ class LeaseMaintenanceThread extends Thread {
       } catch (ConnectionClosedException e) {
         return;
       } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return;
+        //reloop and check
       } catch (LeaseException e) {
         LOGGER.error("Error obtaining lease", e);
+      } finally {
+        //force a clean shutdown by silencing exceptions received after being shutdown
+        // Java 8 would allow us to do that in a catch block, 6 does not
+        if (shutdown) {
+          return;
+        }
       }
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    // We need to shutdown and interrupt as we may be in a blocking call
+    shutdown = true;
+    this.interrupt();
   }
 }

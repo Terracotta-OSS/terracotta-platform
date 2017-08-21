@@ -19,14 +19,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-public class LeaseExpiryConnectionKillingThread extends Thread {
+public class LeaseExpiryConnectionKillingThread extends Thread implements Closeable {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseExpiryConnectionKillingThread.class);
 
   private final LeaseMaintainer leaseMaintainer;
   private final Connection connection;
   private final TimeSource timeSource;
+
+  private volatile boolean shutdown = false;
 
   LeaseExpiryConnectionKillingThread(LeaseMaintainer leaseMaintainer, Connection connection) {
     this.leaseMaintainer = leaseMaintainer;
@@ -37,7 +40,7 @@ public class LeaseExpiryConnectionKillingThread extends Thread {
   }
 
   public void run() {
-    while (!Thread.interrupted()) {
+    while (!shutdown) {
       try {
         Lease lease = leaseMaintainer.getCurrentLease();
 
@@ -46,6 +49,8 @@ public class LeaseExpiryConnectionKillingThread extends Thread {
           if (!validLease) {
             try {
               connection.close();
+            } catch (IOException e) {
+              LOGGER.error("Closing connection, due to lease expiry, caused an error", e);
             } catch (IllegalStateException e) {
               // Already closed.
             }
@@ -54,12 +59,22 @@ public class LeaseExpiryConnectionKillingThread extends Thread {
         }
 
         timeSource.sleep(200L);
-      } catch (IOException e) {
-        LOGGER.error("Closing connection, due to lease expiry, caused an error", e);
       } catch (InterruptedException e) {
-        Thread.interrupted();
-        return;
+        //reloop and check
+      } finally {
+        //force a clean shutdown by silencing exceptions received after being shutdown
+        // Java 8 would allow us to do that in a catch block, 6 does not
+        if (shutdown) {
+          return;
+        }
       }
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    // Only need to shutdown as there are no blocking calls
+    // and no interrupt as we do not want to interrupt the connection.close() call
+    shutdown = true;
   }
 }
