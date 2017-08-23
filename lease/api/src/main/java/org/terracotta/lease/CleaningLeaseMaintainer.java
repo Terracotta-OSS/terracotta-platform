@@ -15,27 +15,33 @@
  */
 package org.terracotta.lease;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 class CleaningLeaseMaintainer implements LeaseMaintainer {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(CleaningLeaseMaintainer.class);
+
   private final LeaseMaintainer delegate;
   private final Connection connection;
-  private final List<Thread> threads;
+  private final List<Closeable> resources;
 
 
-  CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, Thread... threads) {
-    this(delegate, connection, Arrays.asList(threads));
+  CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, Closeable... resources) {
+    this(delegate, connection, Arrays.asList(resources));
   }
 
-  private CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, List<Thread> threads) {
+  private CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, List<Closeable> resources) {
     this.delegate = delegate;
     this.connection = connection;
-    this.threads = threads;
+    this.resources = resources;
   }
 
   @Override
@@ -55,23 +61,23 @@ class CleaningLeaseMaintainer implements LeaseMaintainer {
 
   @Override
   public void close() throws IOException {
-    for (Thread thread : threads) {
-      thread.interrupt();
-    }
-
-    // We could join on these threads, but that's not a great idea because
-    // LeaseExpiryConnectionKillingThread may be calling connection.close() leading to this method being called
-    // and each is then waiting for the other to complete - deadlock.
-
+    closeResources();
     delegate.close();
   }
 
   @Override
   public void destroy() throws IOException {
-    for (Thread thread : threads) {
-      thread.interrupt();
-    }
-
+    closeResources();
     connection.close();
+  }
+
+  private void closeResources() {
+    for (Closeable resource : resources) {
+      try {
+        resource.close();
+      } catch (Throwable t) {
+        LOGGER.info("Exception closing resource: " + resource, t);
+      }
+    }
   }
 }

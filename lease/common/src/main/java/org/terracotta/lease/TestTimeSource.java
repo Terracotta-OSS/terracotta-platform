@@ -39,7 +39,7 @@ public class TestTimeSource implements TimeSource {
     long end = now + TimeUnit.NANOSECONDS.convert(milliseconds, TimeUnit.MILLISECONDS);
 
     while (time - end < 0) {
-      Thread.sleep(1);
+      Thread.sleep(10);
     }
   }
 }

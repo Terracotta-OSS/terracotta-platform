@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
 
+import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -38,10 +39,10 @@ public class CleaningLeaseMaintainerTest {
   private Connection connection;
 
   @Mock
-  private Thread thread1;
+  private Closeable thread1;
 
   @Mock
-  private Thread thread2;
+  private Closeable thread2;
 
   @Mock
   private Lease lease;
@@ -81,8 +82,8 @@ public class CleaningLeaseMaintainerTest {
     CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
     cleaner.close();
     verify(delegate).close();
-    verify(thread1).interrupt();
-    verify(thread2).interrupt();
+    verify(thread1).close();
+    verify(thread2).close();
   }
 
   @Test
@@ -91,7 +92,7 @@ public class CleaningLeaseMaintainerTest {
     CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
     cleaner.destroy();
     verify(connection).close();
-    verify(thread1).interrupt();
-    verify(thread2).interrupt();
+    verify(thread1).close();
+    verify(thread2).close();
   }
 }
