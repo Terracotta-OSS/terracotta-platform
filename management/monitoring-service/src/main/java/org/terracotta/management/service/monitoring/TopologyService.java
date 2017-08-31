@@ -91,7 +91,8 @@ class TopologyService implements PlatformListener {
   TopologyService(FiringService firingService, PlatformConfiguration platformConfiguration) {
     this.firingService = Objects.requireNonNull(firingService);
     this.platformConfiguration = platformConfiguration;
-    this.cluster = Cluster.create().addStripe(stripe = Stripe.create("SINGLE"));
+    this.cluster = Cluster.create();
+    this.cluster.addStripe(stripe = Stripe.create("SINGLE"));
   }
 
   // ================================================
@@ -114,16 +115,16 @@ class TopologyService implements PlatformListener {
         .setVersion(self.getVersion())
         .computeUpTime();
 
-    stripe.addServer(server);
+    if(stripe.addServer(server)) {
+      currentActive = stripe.getServerByName(self.getServerName()).get();
 
-    currentActive = stripe.getServerByName(self.getServerName()).get();
+      topologyEventListeners.forEach(TopologyEventListener::onBecomeActive);
 
-    topologyEventListeners.forEach(TopologyEventListener::onBecomeActive);
+      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
 
-    firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
-
-    // we assume server.getStartTime() == activate time, but this will be fixed after into serverStateChanged() call by platform
-    serverStateChanged(self, new ServerState("ACTIVE", server.getStartTime(), server.getStartTime()));
+      // we assume server.getStartTime() == activate time, but this will be fixed after into serverStateChanged() call by platform
+      serverStateChanged(self, new ServerState("ACTIVE", server.getStartTime(), server.getStartTime())); 
+    }
   }
 
   @Override
@@ -141,24 +142,23 @@ class TopologyService implements PlatformListener {
         .setVersion(platformServer.getVersion())
         .computeUpTime();
 
-    stripe.addServer(server);
-
-    firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
+    if(stripe.addServer(server)) {
+      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));      
+    }
   }
 
   @Override
   public synchronized void serverDidLeaveStripe(PlatformServer platformServer) {
     LOGGER.trace("[0] serverDidLeaveStripe({})", platformServer.getServerName());
 
-    Server server = stripe.getServerByName(platformServer.getServerName())
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + platformServer.getServerName()));
+    stripe.getServerByName(platformServer.getServerName()).ifPresent(server -> {
+      Context context = server.getContext();
+      server.remove();
 
-    Context context = server.getContext();
-    server.remove();
+      serverEntities.remove(platformServer.getServerName());
 
-    serverEntities.remove(platformServer.getServerName());
-
-    firingService.fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
+      firingService.fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
+    });
   }
 
   @Override
@@ -166,42 +166,41 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityCreated({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender.getServerName() + " is not current active server but it created an active entity " + platformEntity);
+      LOGGER.warn("[0] serverEntityCreated({}, {}): Server is not current active server but it created an active entity", sender.getServerName(), platformEntity);
+      return;
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender.getServerName() + " is the current active server but it created a passive entity " + platformEntity);
+      LOGGER.warn("[0] serverEntityCreated({}, {}): Server is the current active server but it created a passive entity", sender.getServerName(), platformEntity);
+      return;
     }
 
-    Server server = stripe.getServerByName(sender.getServerName())
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
-    ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
-    ServerEntity entity = ServerEntity.create(identifier)
-        .setConsumerId(platformEntity.consumerID);
+    stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
+      ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
+      ServerEntity entity = ServerEntity.create(identifier)
+          .setConsumerId(platformEntity.consumerID);
 
-    server.addServerEntity(entity);
+      if(server.addServerEntity(entity)) {
+        firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
 
-    firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
+        whenServerEntity(platformEntity.consumerID, sender.getServerName()).complete(entity);
 
-    whenServerEntity(platformEntity.consumerID, sender.getServerName()).complete(entity);
-
-    if (sender.getServerName().equals(platformConfiguration.getServerName())) {
-      topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
-    }
+        if (sender.getServerName().equals(platformConfiguration.getServerName())) {
+          topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
+        }  
+      }
+    });
   }
 
   @Override
   public void serverEntityReconfigured(PlatformServer sender, PlatformEntity platformEntity) {
     LOGGER.trace("[0] serverEntityReconfigured({}, {})", sender.getServerName(), platformEntity);
 
-    Server server = stripe.getServerByName(sender.getServerName())
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
-    ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
-
-    ServerEntity entity = server.getServerEntity(identifier)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server entity " + identifier + " on server " + sender.getServerName()));
-
-    firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_RECONFIGURED.name()));
+    stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
+      ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
+      server.getServerEntity(identifier)
+          .ifPresent(entity -> firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_RECONFIGURED.name())));
+    });
   }
 
   @Override
@@ -209,69 +208,72 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityDestroyed({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender.getServerName() + " is not current active server but it destroyed an active entity " + platformEntity);
+      LOGGER.warn("[0] serverEntityDestroyed({}, {}): Server is not current active server but it destroyed an active entity", sender.getServerName(), platformEntity);
+      return;
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      throw newIllegalTopologyState("Server " + sender.getServerName() + " is the current active server but it destroyed a passive entity " + platformEntity);
+      LOGGER.warn("[0] serverEntityDestroyed({}, {}): Server is the current active server but it destroyed a passive entity", sender.getServerName(), platformEntity);
+      return;
     }
 
-    Server server = stripe.getServerByName(sender.getServerName())
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
+    stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
+      server.getServerEntity(platformEntity.name, platformEntity.typeName).ifPresent(entity -> {
+        Context context = entity.getContext();
+        entity.remove();
 
-    ServerEntity entity = server.getServerEntity(platformEntity.name, platformEntity.typeName)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: " + platformEntity + " on server " + sender.getServerName()));
+        serverEntities.get(sender.getServerName()).remove(platformEntity.consumerID);
 
-    Context context = entity.getContext();
-    entity.remove();
+        if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
+          entityFetches.remove(platformEntity.consumerID);
+        }
 
-    serverEntities.get(sender.getServerName()).remove(platformEntity.consumerID);
+        if (sender.getServerName().equals(platformConfiguration.getServerName())) {
+          topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
+        }
 
-    if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
-      entityFetches.remove(platformEntity.consumerID);
-    }
-
-    if (sender.getServerName().equals(platformConfiguration.getServerName())) {
-      topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
-    }
-
-    firingService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
+        firingService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
+      });
+    });
   }
 
   @Override
   public synchronized void clientConnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientConnected({})", platformConnectedClient);
 
-    Server server = stripe.getServerByName(currentActive.getServerName())
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing active server: " + currentActive.getServerName()));
-
+     stripe.getServerByName(currentActive.getServerName())
+        .ifPresent( server-> {
+    
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-    Client client = Client.create(clientIdentifier)
-        .setHostName(platformConnectedClient.remoteAddress.getHostName());
-    cluster.addClient(client);
+      Client client = Client.create(clientIdentifier)
+          .setHostName(platformConnectedClient.remoteAddress.getHostName());
 
-    client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint));
+      cluster.addClient(client);
 
-    firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
+      if(client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint))) {
+        firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
+      }
+    });
   }
 
   @Override
   public synchronized void clientDisconnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientDisconnected({})", platformConnectedClient);
 
-    Server server = stripe.getServerByName(currentActive.getServerName())
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing active server: " + currentActive.getServerName()));
-
+     stripe.getServerByName(currentActive.getServerName())
+        .ifPresent( server-> {
+    
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-    Client client = cluster.getClient(clientIdentifier)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
+     cluster.getClient(clientIdentifier)
+        .ifPresent( client-> {
     Context clientContext = client.getContext();
 
     client.remove();
 
-    firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_DISCONNECTED.name(), clientContext));
+    firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_DISCONNECTED.name(), clientContext));});
+    });
   }
 
   @Override
@@ -282,21 +284,16 @@ class TopologyService implements PlatformListener {
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-    Client client = cluster.getClient(clientIdentifier)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
-
-    Connection connection = client.getConnection(currentActive, endpoint)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing connection between server " + currentActive + " and client " + clientIdentifier));
-    ServerEntity entity = currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
-
-    connection.fetchServerEntity(platformEntity.name, platformEntity.typeName);
-
-    firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
-
-    whenFetchClient(platformEntity.consumerID, clientDescriptor).complete(client);
-
-    topologyEventListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
+    cluster.getClient(clientIdentifier).ifPresent(client -> {
+      client.getConnection(currentActive, endpoint).ifPresent(connection -> {
+        currentActive.getServerEntity(platformEntity.name, platformEntity.typeName).ifPresent(entity -> {
+          connection.fetchServerEntity(platformEntity.name, platformEntity.typeName);
+          firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
+          whenFetchClient(platformEntity.consumerID, clientDescriptor).complete(client);
+          topologyEventListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
+        });
+      });
+    });
   }
 
   @Override
@@ -307,50 +304,45 @@ class TopologyService implements PlatformListener {
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-    ServerEntity entity = currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing entity: name=" + platformEntity.name + ", type=" + platformEntity.typeName));
-
-    Client client = cluster.getClient(clientIdentifier)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
-    Connection connection = client.getConnection(currentActive, endpoint)
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing connection: " + endpoint + " to server " + currentActive.getServerName() + " from client " + clientIdentifier));
-
-    entityFetches.get(platformEntity.consumerID).remove(clientDescriptor);
-
-    if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
-      firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
-    }
-
-    topologyEventListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
+    currentActive.getServerEntity(platformEntity.name, platformEntity.typeName).ifPresent(entity -> {
+      cluster.getClient(clientIdentifier).ifPresent(client -> {
+        client.getConnection(currentActive, endpoint).ifPresent(connection -> {
+          entityFetches.get(platformEntity.consumerID).remove(clientDescriptor);
+          if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
+            firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
+          }
+          topologyEventListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
+        });
+      });
+    });
   }
 
   @Override
   public synchronized void serverStateChanged(PlatformServer sender, ServerState serverState) {
     LOGGER.trace("[0] serverStateChanged({}, {})", sender.getServerName(), serverState.getState());
 
-    Server server = stripe.getServerByName(sender.getServerName())
-        .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing server: " + sender.getServerName()));
+    stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
+      Server.State oldState = server.getState();
 
-    Server.State oldState = server.getState();
+      if (oldState == Server.State.ACTIVE && currentActive != null && currentActive.getServerName().equals(server.getServerName())) {
+        // in case of a failover, the server state changed is replayed. So the server is active but will become passive and will become active again
+        // we filter this out
+        return;
+      }
 
-    if (oldState == Server.State.ACTIVE && currentActive != null && currentActive.getServerName().equals(server.getServerName())) {
-      // in case of a failover, the server state changed is replayed. So the server is active but will become passive and will become active again
-      // we filter this out
-      return;
-    }
+      server.setState(Server.State.parse(serverState.getState()));
+      server.setActivateTime(serverState.getActivate());
 
-    server.setState(Server.State.parse(serverState.getState()));
-    server.setActivateTime(serverState.getActivate());
+      if (oldState != server.getState()) {
+        // avoid sending another event to report the same state as before, to avoid duplicates
 
-    if (oldState != server.getState()) {
-      // avoid sending another event to report the same state as before, to avoid duplicates
+        Map<String, String> attrs = new HashMap<>();
+        attrs.put("state", serverState.getState());
+        attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
 
-      Map<String, String> attrs = new HashMap<>();
-      attrs.put("state", serverState.getState());
-      attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
-
-      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
-    }
+        firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
+      }
+    });
   }
 
   // ======================================================================
@@ -528,10 +520,7 @@ class TopologyService implements PlatformListener {
   }
 
   Server getActiveServer() {
-    if (currentActive == null) {
-      throw newIllegalTopologyState("No active server defined!");
-    }
-    return currentActive;
+    return Objects.requireNonNull(currentActive);
   }
 
   private ExecutionChain<Client> whenFetchClient(long consumerId, ClientDescriptor clientDescriptor) {
@@ -542,10 +531,6 @@ class TopologyService implements PlatformListener {
   private ExecutionChain<ServerEntity> whenServerEntity(long consumerId, String serverName) {
     ConcurrentMap<Long, ExecutionChain<ServerEntity>> entities = serverEntities.computeIfAbsent(serverName, name -> new ConcurrentHashMap<>());
     return entities.computeIfAbsent(consumerId, key -> new ExecutionChain<>());
-  }
-
-  private IllegalStateException newIllegalTopologyState(String message) {
-    return new IllegalStateException("Illegal monitoring topology state: " + message + "\n- currentActive: " + currentActive + "\n- cluster:" + cluster);
   }
 
   private static ClientIdentifier toClientIdentifier(PlatformConnectedClient connection) {

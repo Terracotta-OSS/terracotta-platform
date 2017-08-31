@@ -87,12 +87,12 @@ public class NmsAgentService implements Closeable {
         try {
           setCapabilities(registry.getContextContainer(), registry.getCapabilities());
         } catch (InterruptedException e) {
-          LOGGER.error("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
+          LOGGER.warn("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
           Thread.currentThread().interrupt();
         } catch (ConnectionClosedException e) {
           NmsAgentService.this.close();
         } catch (Exception e) {
-          LOGGER.error("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
+          LOGGER.warn("Failed to register managed object of type " + managedObject.getClass().getName() + ": " + e.getMessage(), e);
         }
       }
     }

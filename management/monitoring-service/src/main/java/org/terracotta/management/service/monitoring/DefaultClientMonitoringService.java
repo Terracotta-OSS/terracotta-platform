@@ -122,13 +122,12 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
         for (Map.Entry<ClientDescriptor, Context> entry : manageableClients.entrySet()) {
           if (context.contains(entry.getValue())) {
             send(entry.getKey(), message);
-            break;
           }
         }
         break;
 
       default:
-        throw new UnsupportedOperationException(message.getType());
+        LOGGER.warn("[{}] fireMessage({}): message type unsupported", this.consumerId, message.getType());
     }
   }
 
@@ -137,7 +136,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
     try {
       clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(Message.class, message));
     } catch (Exception e) {
-      LOGGER.error("Unable to send message " + message + " to client " + client);
+      LOGGER.warn("Unable to send message " + message + " to client " + client);
     }
   }
 

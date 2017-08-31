@@ -59,32 +59,36 @@ public abstract class AbstractTest {
       return c;
     };
 
-    cluster1 = Cluster.create()
-        .addStripe(Stripe.create("stripe-1")
-            .addServer(Server.create("server-1")
-                .setHostName("hostname-1")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.ACTIVE)
-                .addServerEntity(ehcache_server_entity = serverEntitySupplier.get()))
-            .addServer(Server.create("server-2")
-                .setHostName("hostname-2")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.PASSIVE)))
-        .addStripe(Stripe.create("stripe-2")
-            .addServer(Server.create("server-1")
-                .setHostName("hostname-3")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.ACTIVE)
-                .addServerEntity(serverEntitySupplier.get()))
-            .addServer(Server.create("server-2")
-                .setHostName("hostname-4")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.PASSIVE)))
-        .addClient(client = clientSupplier.get());
+    cluster1 = Cluster.create();
+    Stripe stripe11 = Stripe.create("stripe-1");
+    cluster1.addStripe(stripe11);
+    Server server111 = Server.create("server-1")
+        .setHostName("hostname-1")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.ACTIVE);
+    stripe11.addServer(server111);
+    server111.addServerEntity(ehcache_server_entity = serverEntitySupplier.get());
+    stripe11.addServer(Server.create("server-2")
+        .setHostName("hostname-2")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.PASSIVE));
+    Stripe stripe12 = Stripe.create("stripe-2");
+    cluster1.addStripe(stripe12);
+    Server server121 = Server.create("server-1")
+        .setHostName("hostname-3")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.ACTIVE);
+    stripe12.addServer(server121);
+    server121.addServerEntity(serverEntitySupplier.get());
+    stripe12.addServer(Server.create("server-2")
+        .setHostName("hostname-4")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.PASSIVE));
+    cluster1.addClient(client = clientSupplier.get());
 
     client.addConnection(Connection.create(
         "uid",
@@ -96,32 +100,36 @@ public abstract class AbstractTest {
         cluster1.getStripe("stripe-2").get().getServerByName("server-1").get(),
         Endpoint.create("10.10.10.10", 3457)));
 
-    cluster2 = Cluster.create()
-        .addStripe(Stripe.create("stripe-1")
-            .addServer(Server.create("server-1")
-                .setHostName("hostname-1")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.ACTIVE)
-                .addServerEntity(serverEntitySupplier.get()))
-            .addServer(Server.create("server-2")
-                .setHostName("hostname-2")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.PASSIVE)))
-        .addStripe(Stripe.create("stripe-2")
-            .addServer(Server.create("server-1")
-                .setHostName("hostname-3")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.ACTIVE)
-                .addServerEntity(serverEntitySupplier.get()))
-            .addServer(Server.create("server-2")
-                .setHostName("hostname-4")
-                .setBindAddress("0.0.0.0")
-                .setBindPort(8881)
-                .setState(Server.State.PASSIVE)))
-        .addClient(clientSupplier.get());
+    cluster2 = Cluster.create();
+    Stripe stripe21 = Stripe.create("stripe-1");
+    cluster2.addStripe(stripe21);
+    Server server211 = Server.create("server-1")
+        .setHostName("hostname-1")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.ACTIVE);
+    stripe21.addServer(server211);
+    server211.addServerEntity(serverEntitySupplier.get());
+    stripe21.addServer(Server.create("server-2")
+        .setHostName("hostname-2")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.PASSIVE));
+    Stripe stripe22 = Stripe.create("stripe-2");
+    cluster2.addStripe(stripe22);
+    Server server221 = Server.create("server-1")
+        .setHostName("hostname-3")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.ACTIVE);
+    stripe22.addServer(server221);
+    server221.addServerEntity(serverEntitySupplier.get());
+    stripe22.addServer(Server.create("server-2")
+        .setHostName("hostname-4")
+        .setBindAddress("0.0.0.0")
+        .setBindPort(8881)
+        .setState(Server.State.PASSIVE));
+    cluster2.addClient(clientSupplier.get());
 
     Client client2 = cluster2.getClient("12345@127.0.0.1:ehcache:uid").get();
 

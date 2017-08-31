@@ -83,7 +83,7 @@ class DefaultDataListener implements DataListener {
       }
 
       default: {
-        throw new IllegalArgumentException(name);
+        LOGGER.warn("[{}] pushBestEffortsData({}, {}, {}): topic name unsupported", this.consumerId, consumerId, sender.getServerName(), name);
       }
     }
 

@@ -17,7 +17,6 @@ package org.terracotta.management.entity.nms.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.management.model.Objects;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
@@ -28,6 +27,7 @@ import org.terracotta.management.model.message.Message;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
