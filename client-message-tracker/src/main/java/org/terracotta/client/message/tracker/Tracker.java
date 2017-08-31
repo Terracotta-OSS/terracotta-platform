@@ -18,6 +18,7 @@ package org.terracotta.client.message.tracker;
 import org.terracotta.entity.StateDumpable;
 
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Keeps track of an entity's objects with their ids and their corresponding values.
@@ -26,6 +27,16 @@ import java.util.Map;
  * @param <R> type of the value
  */
 public interface Tracker<R> extends StateDumpable {
+
+  /**
+   * A tracker policy that will track all messages
+   */
+  Predicate<Object> TRACK_ALL = obj -> true;
+
+  /**
+   * A tracker policy that will track no messages
+   */
+  Predicate<Object> TRACK_NONE = obj -> false;
 
   /**
    * Tracks the provided value associated with the given id.
@@ -64,7 +75,7 @@ public interface Tracker<R> extends StateDumpable {
    * Bulk load a set of ids, value mappings.
    * To be used by a passive entity when the active syncs its message tracker data.
    *
-   * @param trackedvalues a map of id, value mappings
+   * @param trackedValues a map of id, value mappings
    */
   void loadOnSync(Map<Long, R> trackedValues);
 }

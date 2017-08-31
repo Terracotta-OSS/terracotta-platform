@@ -17,7 +17,6 @@ package org.terracotta.client.message.tracker.demo;
 
 import org.terracotta.client.message.tracker.OOOMessageHandler;
 import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
@@ -34,7 +33,7 @@ public class DemoPassiveEntity implements PassiveServerEntity {
 
   public DemoPassiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
     OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> messageHandlerConfiguration =
-        new OOOMessageHandlerConfiguration<>("foo", msg -> msg instanceof TrackableMessage);
+        new OOOMessageHandlerConfiguration<>("foo", msg -> msg instanceof TrackableMessage, 1, m -> 0);
     messageHandler = serviceRegistry.getService(messageHandlerConfiguration);
   }
 
@@ -78,6 +77,14 @@ public class DemoPassiveEntity implements PassiveServerEntity {
   }
 
   private EntityResponse processMessage(InvokeContext context, EntityMessage message) {
+    if (message instanceof MessageTrackerSyncMessage) {
+      MessageTrackerSyncMessage trackerSyncMessage = (MessageTrackerSyncMessage) message;
+      messageHandler.loadTrackedResponsesForSegment(trackerSyncMessage.getSegmentIndex(), trackerSyncMessage.getClientSourceId(),
+          trackerSyncMessage.getTrackedResponses());
+    } else {
+      // entity message handling logic
+    }
+
     return null;
   }
 

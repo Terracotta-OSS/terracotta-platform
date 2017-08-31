@@ -30,11 +30,12 @@ public class OOOMessageHandlerProviderTest {
   @Test
   public void getService() throws Exception {
     OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
-    OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config = new OOOMessageHandlerConfiguration<>("foo", null);
+    OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config =
+        new OOOMessageHandlerConfiguration<>("foo", null, 1, m -> 0);
     OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = provider.getService(1L, config);
     assertThat(provider.getService(2L, config), sameInstance(messageHandler));
 
-    config = new OOOMessageHandlerConfiguration<>("bar", null);
+    config = new OOOMessageHandlerConfiguration<>("bar", null, 1, m -> 0);
     assertThat(provider.getService(2L, config), not(sameInstance(messageHandler)));
   }
 

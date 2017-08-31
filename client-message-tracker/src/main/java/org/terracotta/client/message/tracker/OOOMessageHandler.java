@@ -25,8 +25,8 @@ import org.terracotta.entity.StateDumpable;
 import com.tc.classloader.CommonComponent;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 /**
  * Entities that want once and only once message invocation guarantees can delegate their invokes to this service.
@@ -56,24 +56,26 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
   /**
    * Return ids of all the client sources tracked by this handler.
    *
-   * @return set of tracked client sources
+   * @return a stream of tracked client sources
    */
-  Set<ClientSourceId> getTrackedClients();
+  Stream<ClientSourceId> getTrackedClients();
 
   /**
-   * Get all message id - response mappings for the given {@code clientSourceId}
+   * Get all message id - response mappings for the given {@code clientSourceId} in the given segment
    *
+   * @param index the segment index
    * @param clientSourceId a client descriptor
    * @return a map with message id - response mappings
    */
-  Map<Long, R> getTrackedResponses(ClientSourceId clientSourceId);
+  Map<Long, R> getTrackedResponsesForSegment(int index, ClientSourceId clientSourceId);
 
   /**
    * Bulk load a set of message ids, response mappings for the given client descriptor.
    * To be used by a passive entity when the active syncs its message tracker data.
    *
+   * @param index a concurrency key
    * @param clientSourceId a client descriptor
    * @param trackedResponses a map of message id, response mappings
    */
-  void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
+  void loadTrackedResponsesForSegment(int index, ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
 }
