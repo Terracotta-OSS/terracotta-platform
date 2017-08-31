@@ -63,13 +63,13 @@ public final class Stripe extends AbstractNode<Cluster> {
     return servers.size();
   }
 
-  public Stripe addServer(Server server) {
+  public boolean addServer(Server server) {
     if (servers.putIfAbsent(server.getId(), server) != null) {
-      throw new IllegalArgumentException("Duplicate server: " + server.getId());
+      return false;
     } else {
       server.setParent(this);
+      return true;
     }
-    return this;
   }
 
   public Optional<Server> getServer(Context context) {

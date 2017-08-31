@@ -46,10 +46,10 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
 
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
-    LOGGER.trace("[{}] addNode({}, {}, {})", consumerId, sender.getServerName(), Arrays.toString(parents), name);
     if (parents == null) {
       parents = new String[0];
     }
+    LOGGER.trace("[{}] addNode({}, {}, {})", consumerId, sender.getServerName(), String.join("/", parents), name);
     String[] path = Arrays.copyOf(parents, parents.length + 1);
     path[parents.length] = name;
     delegate.setState(consumerId, sender, path, value);
@@ -58,10 +58,10 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
 
   @Override
   public boolean removeNode(PlatformServer sender, String[] parents, String name) {
-    LOGGER.trace("[{}] removeNode({}, {})", consumerId, sender.getServerName(), Arrays.toString(parents));
     if (parents == null) {
       parents = new String[0];
     }
+    LOGGER.trace("[{}] removeNode({}, {})", consumerId, sender.getServerName(), String.join("/", parents));
     String[] path = Arrays.copyOf(parents, parents.length + 1);
     path[parents.length] = name;
     delegate.setState(consumerId, sender, path, null);

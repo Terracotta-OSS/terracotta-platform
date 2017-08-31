@@ -89,16 +89,11 @@ public class ClusterTest extends AbstractTest {
   public void test_add_remove_client() {
     assertEquals(1, cluster1.getClients().size());
 
-    try {
-      cluster1.addClient(Client.create("12345@127.0.0.1:ehcache:uid"));
-      fail();
-    } catch (Exception e) {
-      assertEquals(IllegalArgumentException.class, e.getClass());
-    }
+    assertFalse(cluster1.addClient(Client.create("12345@127.0.0.1:ehcache:uid")));
 
     assertEquals(1, cluster1.getClients().size());
 
-    cluster1.addClient(Client.create("123@127.0.0.1:cluster-client-2:uid"));
+    assertTrue(cluster1.addClient(Client.create("123@127.0.0.1:cluster-client-2:uid")));
 
     assertEquals(2, cluster1.getClients().size());
 
@@ -111,12 +106,7 @@ public class ClusterTest extends AbstractTest {
   public void test_add_remove_stripes() {
     assertEquals(2, cluster1.getStripes().size());
 
-    try {
-      cluster1.addStripe(Stripe.create("stripe-1"));
-      fail();
-    } catch (Exception e) {
-      assertEquals(IllegalArgumentException.class, e.getClass());
-    }
+    assertFalse(cluster1.addStripe(Stripe.create("stripe-1")));
 
     assertEquals(2, cluster1.getStripes().size());
 
@@ -135,12 +125,7 @@ public class ClusterTest extends AbstractTest {
 
     assertEquals(2, stripe.getServers().size());
 
-    try {
-      stripe.addServer(Server.create("server-1"));
-      fail();
-    } catch (Exception e) {
-      assertEquals(IllegalArgumentException.class, e.getClass());
-    }
+    assertFalse(stripe.addServer(Server.create("server-1")));
 
     assertEquals(2, stripe.getServers().size());
 
@@ -159,13 +144,7 @@ public class ClusterTest extends AbstractTest {
 
     assertEquals(2, client.getConnections().size());
 
-    try {
-      client.addConnection(Connection.create("uid", cluster1.getStripe("stripe-1").get().getServerByName("server-1").get(), Endpoint.create("10.10.10.10", 3456)));
-      fail();
-    } catch (Exception e) {
-      assertEquals(IllegalArgumentException.class, e.getClass());
-    }
-
+    assertFalse(client.addConnection(Connection.create("uid", cluster1.getStripe("stripe-1").get().getServerByName("server-1").get(), Endpoint.create("10.10.10.10", 3456))));
     assertEquals(2, client.getConnections().size());
 
     client.addConnection(Connection.create("uid", cluster1.getStripe("stripe-1").get().getServerByName("server-1").get(), Endpoint.create("10.10.10.10", 3458)));
@@ -185,17 +164,12 @@ public class ClusterTest extends AbstractTest {
 
     assertEquals(1, server.getServerEntityCount());
 
-    try {
-      server.addServerEntity(ServerEntity.create(serverContextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
-      fail();
-    } catch (Exception e) {
-      assertEquals(IllegalArgumentException.class, e.getClass());
-    }
+    assertFalse(server.addServerEntity(ServerEntity.create(serverContextContainer.getValue(), "org.ehcache.clustered.client.internal.EhcacheClientEntity")));
 
     assertEquals(1, server.getServerEntityCount());
 
-    server.addServerEntity(ServerEntity.create("other-cm-4", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
-    server.addServerEntity(ServerEntity.create("name", "OTHER_TYPE"));
+    assertTrue(server.addServerEntity(ServerEntity.create("other-cm-4", "org.ehcache.clustered.client.internal.EhcacheClientEntity")));
+    assertTrue(server.addServerEntity(ServerEntity.create("name", "OTHER_TYPE")));
 
     assertEquals(3, server.getServerEntityCount());
 
