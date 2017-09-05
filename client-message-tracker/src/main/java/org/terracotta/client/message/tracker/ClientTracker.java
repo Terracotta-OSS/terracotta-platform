@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * Keeps track of the trackers for individual clients.
  */
-public interface ClientTracker<K> extends StateDumpable {
+public interface ClientTracker<K, R> extends StateDumpable {
 
   /**
    * Retrieve the tracker of the client with the specified {@code clientId}
@@ -31,7 +31,7 @@ public interface ClientTracker<K> extends StateDumpable {
    * @param clientId a client id
    * @return the tracker associated with the specified {@code clientId}
    */
-  Tracker getTracker(K clientId);
+  Tracker<R> getTracker(K clientId);
 
   /**
    * Deregister a client from being tracked.

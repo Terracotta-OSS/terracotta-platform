@@ -23,18 +23,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
-public class ClientTrackerImpl<K> implements ClientTracker<K> {
+public class ClientTrackerImpl<K, R> implements ClientTracker<K, R> {
 
   private final Predicate<?> trackerPolicy;
-  private final ConcurrentMap<K, Tracker> objectTrackers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<K, Tracker<R>> objectTrackers = new ConcurrentHashMap<>();
 
   public ClientTrackerImpl(Predicate<?> trackerPolicy) {
     this.trackerPolicy = trackerPolicy;
   }
 
   @Override
-  public Tracker getTracker(K clientId) {
-    return objectTrackers.computeIfAbsent(clientId, d -> new TrackerImpl(trackerPolicy));
+  public Tracker<R> getTracker(K clientId) {
+    return objectTrackers.computeIfAbsent(clientId, d -> new TrackerImpl<>(trackerPolicy));
   }
 
   @Override
@@ -49,7 +49,7 @@ public class ClientTrackerImpl<K> implements ClientTracker<K> {
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    for (Map.Entry<K, Tracker> entry : objectTrackers.entrySet()) {
+    for (Map.Entry<K, Tracker<R>> entry : objectTrackers.entrySet()) {
       entry.getValue().addStateTo(stateDumper.subStateDumpCollector(entry.getKey().toString()));
     }
   }

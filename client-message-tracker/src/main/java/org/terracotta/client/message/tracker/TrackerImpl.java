@@ -23,12 +23,18 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.stream.LongStream;
 
-public class TrackerImpl implements Tracker {
+public class TrackerImpl<R> implements Tracker<R> {
 
   private final Predicate<Object> trackerPolicy;
-  private final ConcurrentMap<Long, Object> trackedValues;
+  private final ConcurrentMap<Long, R> trackedValues;
   private volatile long lastReconciledId = 0;
 
+  /**
+   * Constructor taking a predicate to define the tracking policy. If the predicate returns true, the source will
+   * be tracked.
+   *
+   * @param trackerPolicy defines if a source is tracked or not
+   */
   @SuppressWarnings("unchecked")
   public TrackerImpl(Predicate<?> trackerPolicy) {
     this.trackerPolicy = (Predicate<Object>) trackerPolicy;
@@ -40,16 +46,15 @@ public class TrackerImpl implements Tracker {
   }
 
   @Override
-  public void track(long id, Object source, Object value) {
+  public void track(long id, Object source, R value) {
     if (id > 0 && trackerPolicy.test(source)) {
       trackedValues.put(id, value);
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T> T getTrackedValues(long id) {
-    return (T) trackedValues.get(id);
+  public R getTrackedValue(long id) {
+    return trackedValues.get(id);
   }
 
   @Override
@@ -64,12 +69,12 @@ public class TrackerImpl implements Tracker {
   }
 
   @Override
-  public Map<Long, Object> getTrackedValues() {
+  public Map<Long, R> getTrackedValues() {
     return trackedValues;
   }
 
   @Override
-  public void loadOnSync(Map<Long, Object> trackedValues) {
+  public void loadOnSync(Map<Long, R> trackedValues) {
     this.trackedValues.putAll(trackedValues);
   }
 

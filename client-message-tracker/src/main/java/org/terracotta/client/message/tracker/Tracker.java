@@ -20,49 +20,51 @@ import org.terracotta.entity.StateDumpable;
 import java.util.Map;
 
 /**
- * Keeps track of an entity's objects with their ids and their corresponding responses.
- * The decision on whether or not to track an object is taken using the {@link TrackerPolicy} of the entity
+ * Keeps track of an entity's objects with their ids and their corresponding values.
+ * The decision on whether or not to track an object is taken using the tracker policy of the implementation
+ *
+ * @param <R> type of the value
  */
-public interface Tracker extends StateDumpable {
+public interface Tracker<R> extends StateDumpable {
 
   /**
-   * Tracks the provided response associated with the given id.
-   * The response is tracked if and only if the provided {@code object} is trackable,
-   * which is determined using the tracker policy of the entity.
+   * Tracks the provided value associated with the given id.
+   * The value is tracked if and only if the provided {@code object} is trackable,
+   * which is determined using the tracker policy of the implementation.
    *
    * @param id Incoming entity object ID
    * @param object Incoming entity object
-   * @param response Outgoing entity response
+   * @param value Outgoing entity value
    */
-  void track(long id, Object object, Object response);
+  void track(long id, Object object, R value);
 
   /**
-   * Returns the tracked response associated with the given ID, null otherwise.
+   * Returns the tracked value associated with the given ID, null otherwise.
    *
    * @param id Tracked entity ID
-   * @return Tracked entity response
+   * @return Tracked entity value
    */
-  <R> R getTrackedValues(long id);
+  R getTrackedValue(long id);
 
   /**
-   * Clears id-response mappings for all ids less than the provided id.
+   * Clears id-value mappings for all ids less than the provided id.
    *
    * @param id Incoming entity ID
    */
   void reconcile(long id);
 
   /**
-   * Get all id - response mappings.
+   * Get all id - value mappings.
 
-   * @return all tracked responses
+   * @return all tracked values
    */
-  Map<Long, Object> getTrackedValues();
+  Map<Long, R> getTrackedValues();
 
   /**
-   * Bulk load a set of ids, response mappings.
+   * Bulk load a set of ids, value mappings.
    * To be used by a passive entity when the active syncs its message tracker data.
    *
-   * @param trackedResponses a map of id, response mappings
+   * @param trackedvalues a map of id, value mappings
    */
-  void loadOnSync(Map<Long, Object> trackedResponses);
+  void loadOnSync(Map<Long, R> trackedValues);
 }

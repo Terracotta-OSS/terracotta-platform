@@ -26,11 +26,11 @@ import static org.mockito.Mockito.mock;
 
 public class ClientTrackerImplTest {
 
-  private ClientTrackerImpl<Long> clientTracker = new ClientTrackerImpl<>(null);
+  private ClientTrackerImpl<Long, Object> clientTracker = new ClientTrackerImpl<>(null);
 
   @Test
   public void getMessageTracker() throws Exception {
-    Tracker messageTracker = this.clientTracker.getTracker(1L);
+    Tracker<Object> messageTracker = this.clientTracker.getTracker(1L);
     assertThat(messageTracker, notNullValue());
     assertThat(clientTracker.getTracker(1L), sameInstance(messageTracker));
 
@@ -39,7 +39,7 @@ public class ClientTrackerImplTest {
 
   @Test
   public void untrackClient() throws Exception {
-    Tracker messageTracker = this.clientTracker.getTracker(1L);
+    Tracker<Object> messageTracker = this.clientTracker.getTracker(1L);
 
     clientTracker.untrackClient(1L);
     assertThat(clientTracker.getTracker(1L), not(sameInstance(messageTracker)));

@@ -36,10 +36,10 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker tracker = new TrackerImpl(o -> true);
+    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> true);
     tracker.track(1L, message, response);
 
-    assertThat(tracker.getTrackedValues(1L), sameInstance(response));
+    assertThat(tracker.getTrackedValue(1L), sameInstance(response));
   }
 
   @Test
@@ -47,10 +47,10 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker tracker = new TrackerImpl(o -> false);
+    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> false);
     tracker.track(1L, message, response);
 
-    assertThat(tracker.getTrackedValues(1L), nullValue());
+    assertThat(tracker.getTrackedValue(1L), nullValue());
   }
 
   @Test
@@ -58,10 +58,10 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker tracker = new TrackerImpl(o -> true);
+    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> true);
     tracker.track(-1L, message, response);  // a message with non-positive message id
 
-    assertThat(tracker.getTrackedValues(-1L), nullValue());
+    assertThat(tracker.getTrackedValue(-1L), nullValue());
   }
 
   @Test
@@ -69,31 +69,31 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    TrackerImpl tracker = new TrackerImpl(o -> true);
+    TrackerImpl<EntityResponse> tracker = new TrackerImpl<>(o -> true);
     tracker.track(1L, message, response);
     tracker.track(2L, message, response);
     tracker.track(3L, message, response);
 
-    assertThat(tracker.getTrackedValues(1L), notNullValue());
-    assertThat(tracker.getTrackedValues(2L), notNullValue());
-    assertThat(tracker.getTrackedValues(3L), notNullValue());
+    assertThat(tracker.getTrackedValue(1L), notNullValue());
+    assertThat(tracker.getTrackedValue(2L), notNullValue());
+    assertThat(tracker.getTrackedValue(3L), notNullValue());
 
     tracker.reconcile(1L);
-    assertThat(tracker.getTrackedValues(1L), notNullValue());
-    assertThat(tracker.getTrackedValues(2L), notNullValue());
-    assertThat(tracker.getTrackedValues(3L), notNullValue());
+    assertThat(tracker.getTrackedValue(1L), notNullValue());
+    assertThat(tracker.getTrackedValue(2L), notNullValue());
+    assertThat(tracker.getTrackedValue(3L), notNullValue());
     assertThat(tracker.getLastReconciledId(), is(1L));
 
     tracker.reconcile(2L);
-    assertThat(tracker.getTrackedValues(1L), nullValue());
-    assertThat(tracker.getTrackedValues(2L), notNullValue());
-    assertThat(tracker.getTrackedValues(3L), notNullValue());
+    assertThat(tracker.getTrackedValue(1L), nullValue());
+    assertThat(tracker.getTrackedValue(2L), notNullValue());
+    assertThat(tracker.getTrackedValue(3L), notNullValue());
     assertThat(tracker.getLastReconciledId(), is(2L));
 
     tracker.reconcile(3L);
-    assertThat(tracker.getTrackedValues(1L), nullValue());
-    assertThat(tracker.getTrackedValues(2L), nullValue());
-    assertThat(tracker.getTrackedValues(3L), notNullValue());
+    assertThat(tracker.getTrackedValue(1L), nullValue());
+    assertThat(tracker.getTrackedValue(2L), nullValue());
+    assertThat(tracker.getTrackedValue(3L), notNullValue());
     assertThat(tracker.getLastReconciledId(), is(3L));
   }
 
@@ -102,24 +102,24 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker tracker = new TrackerImpl(o -> true);
+    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> true);
     tracker.track(1L, message, response);
     tracker.track(2L, message, response);
     tracker.track(3L, message, response);
 
     tracker.reconcile(2L);
-    assertThat(tracker.getTrackedValues(1L), nullValue());
-    assertThat(tracker.getTrackedValues(2L), notNullValue());
+    assertThat(tracker.getTrackedValue(1L), nullValue());
+    assertThat(tracker.getTrackedValue(2L), notNullValue());
 
     tracker.reconcile(2L);
-    assertThat(tracker.getTrackedValues(1L), nullValue());
-    assertThat(tracker.getTrackedValues(2L), notNullValue());
+    assertThat(tracker.getTrackedValue(1L), nullValue());
+    assertThat(tracker.getTrackedValue(2L), notNullValue());
 
   }
 
   @Test
   public void testLoadOnSync() throws Exception {
-    TrackerImpl tracker = new TrackerImpl(o -> true);
+    TrackerImpl<Object> tracker = new TrackerImpl<>(o -> true);
     Map<Long, Object> responses = Collections.singletonMap(1L, "value");
     tracker.loadOnSync(responses);
     Map<Long, Object> actual = tracker.getTrackedValues();

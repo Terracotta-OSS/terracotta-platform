@@ -29,7 +29,7 @@ import java.util.function.Predicate;
 
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
 
-  private final ClientTracker<ClientSourceId> clientMessageTracker;
+  private final ClientTracker<ClientSourceId, R> clientMessageTracker;
 
   public OOOMessageHandlerImpl(Predicate<M> policy) {
     this.clientMessageTracker = new ClientTrackerImpl<>(policy);
@@ -38,9 +38,9 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   @Override
   public R invoke(InvokeContext context, M message, BiFunction<InvokeContext, M, R> invokeFunction) throws EntityUserException {
     if (context.isValidClientInformation()) {
-      Tracker messageTracker = clientMessageTracker.getTracker(context.getClientSource());
+      Tracker<R> messageTracker = clientMessageTracker.getTracker(context.getClientSource());
       messageTracker.reconcile(context.getOldestTransactionId());
-      R response = messageTracker.getTrackedValues(context.getCurrentTransactionId());
+      R response = messageTracker.getTrackedValue(context.getCurrentTransactionId());
       if (response != null) {
         return response;
       }
