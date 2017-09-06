@@ -16,7 +16,6 @@
 package org.terracotta.client.message.tracker;
 
 import org.junit.Test;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ClientSourceId;
 
 import static org.hamcrest.Matchers.not;
@@ -25,28 +24,25 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Mockito.mock;
 
-public class ClientMessageTrackerImplTest {
+public class ClientTrackerImplTest {
 
-  private ClientMessageTrackerImpl clientMessageTracker = new ClientMessageTrackerImpl(mock(TrackerPolicy.class));
+  private ClientTrackerImpl<Long, Object> clientTracker = new ClientTrackerImpl<>(null);
 
   @Test
   public void getMessageTracker() throws Exception {
-    ClientSourceId descriptor1 = new DummyClientSourceId(1);
-    MessageTracker messageTracker = this.clientMessageTracker.getMessageTracker(descriptor1);
+    Tracker<Object> messageTracker = this.clientTracker.getTracker(1L);
     assertThat(messageTracker, notNullValue());
-    assertThat(clientMessageTracker.getMessageTracker(descriptor1), sameInstance(messageTracker));
+    assertThat(clientTracker.getTracker(1L), sameInstance(messageTracker));
 
-    ClientSourceId descriptor2 = new DummyClientSourceId(2);
-    assertThat(clientMessageTracker.getMessageTracker(descriptor2), not(sameInstance(messageTracker)));
+    assertThat(clientTracker.getTracker(2L), not(sameInstance(messageTracker)));
   }
 
   @Test
   public void untrackClient() throws Exception {
-    ClientSourceId descriptor = new DummyClientSourceId(1);
-    MessageTracker messageTracker = this.clientMessageTracker.getMessageTracker(descriptor);
+    Tracker<Object> messageTracker = this.clientTracker.getTracker(1L);
 
-    clientMessageTracker.untrackClient(descriptor);
-    assertThat(clientMessageTracker.getMessageTracker(descriptor), not(sameInstance(messageTracker)));
+    clientTracker.untrackClient(1L);
+    assertThat(clientTracker.getTracker(1L), not(sameInstance(messageTracker)));
   }
 
 }

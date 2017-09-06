@@ -34,7 +34,7 @@ public class DemoPassiveEntity implements PassiveServerEntity {
 
   public DemoPassiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
     OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> messageHandlerConfiguration =
-        new OOOMessageHandlerConfiguration<>("foo", new DummyTrackerPolicy());
+        new OOOMessageHandlerConfiguration<>("foo", msg -> msg instanceof TrackableMessage);
     messageHandler = serviceRegistry.getService(messageHandlerConfiguration);
   }
 

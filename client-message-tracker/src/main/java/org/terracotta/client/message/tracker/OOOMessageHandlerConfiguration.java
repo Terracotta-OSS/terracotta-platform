@@ -21,18 +21,20 @@ import org.terracotta.entity.ServiceConfiguration;
 
 import com.tc.classloader.CommonComponent;
 
+import java.util.function.Predicate;
+
 @CommonComponent
 public class OOOMessageHandlerConfiguration<M extends EntityMessage, R extends EntityResponse> implements ServiceConfiguration<OOOMessageHandler<M, R>> {
 
   private final String entityIdentifier;
-  private final TrackerPolicy<M> trackerPolicy;
+  private final Predicate<M> trackerPolicy;
 
-  public OOOMessageHandlerConfiguration(String entityIdentifier, TrackerPolicy<M> trackerPolicy) {
+  public OOOMessageHandlerConfiguration(String entityIdentifier, Predicate<M> trackerPolicy) {
     this.entityIdentifier = entityIdentifier;
     this.trackerPolicy = trackerPolicy;
   }
 
-  public TrackerPolicy getTrackerPolicy() {
+  public Predicate<M> getTrackerPolicy() {
     return trackerPolicy;
   }
 

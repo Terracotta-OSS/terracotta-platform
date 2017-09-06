@@ -25,21 +25,22 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
 
-  private final ClientMessageTracker<M, R> clientMessageTracker;
+  private final ClientTracker<ClientSourceId, R> clientMessageTracker;
 
-  public OOOMessageHandlerImpl(TrackerPolicy policy) {
-    this.clientMessageTracker = new ClientMessageTrackerImpl(policy);
+  public OOOMessageHandlerImpl(Predicate<M> policy) {
+    this.clientMessageTracker = new ClientTrackerImpl<>(policy);
   }
 
   @Override
   public R invoke(InvokeContext context, M message, BiFunction<InvokeContext, M, R> invokeFunction) throws EntityUserException {
     if (context.isValidClientInformation()) {
-      MessageTracker<M, R> messageTracker = clientMessageTracker.getMessageTracker(context.getClientSource());
+      Tracker<R> messageTracker = clientMessageTracker.getTracker(context.getClientSource());
       messageTracker.reconcile(context.getOldestTransactionId());
-      R response = messageTracker.getTrackedResponse(context.getCurrentTransactionId());
+      R response = messageTracker.getTrackedValue(context.getCurrentTransactionId());
       if (response != null) {
         return response;
       }
@@ -62,14 +63,16 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
     return clientMessageTracker.getTrackedClients();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Map<Long, R> getTrackedResponses(ClientSourceId clientSourceId) {
-    return this.clientMessageTracker.getMessageTracker(clientSourceId).getTrackedResponses();
+    return (Map) this.clientMessageTracker.getTracker(clientSourceId).getTrackedValues();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses) {
-    this.clientMessageTracker.getMessageTracker(clientSourceId).loadOnSync(trackedResponses);
+    this.clientMessageTracker.getTracker(clientSourceId).loadOnSync((Map) trackedResponses);
   }
 
   @Override

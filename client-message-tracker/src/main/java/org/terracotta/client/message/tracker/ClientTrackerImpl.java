@@ -15,41 +15,41 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
-public class ClientMessageTrackerImpl implements ClientMessageTracker {
+public class ClientTrackerImpl<K, R> implements ClientTracker<K, R> {
 
-  private final TrackerPolicy trackerPolicy;
-  private final ConcurrentMap<ClientSourceId, MessageTracker> messageTrackers = new ConcurrentHashMap<>();
+  private final Predicate<?> trackerPolicy;
+  private final ConcurrentMap<K, Tracker<R>> objectTrackers = new ConcurrentHashMap<>();
 
-  public ClientMessageTrackerImpl(TrackerPolicy TrackerPolicy) {
-    this.trackerPolicy = TrackerPolicy;
+  public ClientTrackerImpl(Predicate<?> trackerPolicy) {
+    this.trackerPolicy = trackerPolicy;
   }
 
   @Override
-  public MessageTracker getMessageTracker(ClientSourceId clientSourceId) {
-    return messageTrackers.computeIfAbsent(clientSourceId, d -> new MessageTrackerImpl(trackerPolicy));
+  public Tracker<R> getTracker(K clientId) {
+    return objectTrackers.computeIfAbsent(clientId, d -> new TrackerImpl<>(trackerPolicy));
   }
 
   @Override
-  public void untrackClient(ClientSourceId clientSourceId) {
-    messageTrackers.remove(clientSourceId);
+  public void untrackClient(K clientId) {
+    objectTrackers.remove(clientId);
   }
 
   @Override
-  public Set<ClientSourceId> getTrackedClients() {
-    return messageTrackers.keySet();
+  public Set<K> getTrackedClients() {
+    return objectTrackers.keySet();
   }
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    for (Map.Entry<ClientSourceId, MessageTracker> entry : messageTrackers.entrySet()) {
+    for (Map.Entry<K, Tracker<R>> entry : objectTrackers.entrySet()) {
       entry.getValue().addStateTo(stateDumper.subStateDumpCollector(entry.getKey().toString()));
     }
   }
