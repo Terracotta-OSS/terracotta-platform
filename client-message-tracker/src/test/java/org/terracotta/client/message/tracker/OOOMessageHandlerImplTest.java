@@ -196,6 +196,40 @@ public class OOOMessageHandlerImplTest {
   }
 
   @Test
+  public void testLoadOnSyncWithOldServer() throws Exception {
+    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0);
+
+    long txnId1 = 25;
+    long txnId2 = 26;
+    EntityResponse response1 = mock(EntityResponse.class);
+    EntityResponse response2 = mock(EntityResponse.class);
+
+    Map<Long, EntityResponse> trackedResponsesForSharedTracker = new HashMap<>();
+    trackedResponsesForSharedTracker.put(txnId1, response1);
+    trackedResponsesForSharedTracker.put(txnId2, response2);
+
+    DummyClientSourceId clientSourceId = new DummyClientSourceId(1);
+    messageHandler.loadOnSync(clientSourceId, trackedResponsesForSharedTracker);
+
+    assertThat(messageHandler.getTrackedResponsesForSegment(0, clientSourceId).size(), is(0));
+    assertThat(messageHandler.getTrackedResponsesForSegment(1, clientSourceId).size(), is(0));
+
+    InvokeContext context1 = new DummyContext(clientSourceId, txnId1, 18);
+    InvokeContext context2 = new DummyContext(clientSourceId, txnId2, txnId2);
+    EntityMessage message1 = mock(EntityMessage.class);
+    EntityMessage message2 = mock(EntityMessage.class);
+
+    EntityResponse entityResponse = messageHandler.invoke(context1, message1, null);
+    assertThat(entityResponse, is(response1));
+    entityResponse = messageHandler.invoke(context2, message2, null);
+    assertThat(entityResponse, is(response2));
+
+    EntityResponse response3 = mock(EntityResponse.class);
+    entityResponse = messageHandler.invoke(context1, message1, (ctxt, msg) -> response3); //Previous invoke should have reconciled the cached response1 for context1
+    assertThat(entityResponse, is(response3));
+  }
+
+  @Test
   public void testGetTrackedClients() throws Exception {
     EntityMessage message1 = mock(EntityMessage.class);
     EntityMessage message2 = mock(EntityMessage.class);

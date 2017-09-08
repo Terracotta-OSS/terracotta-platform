@@ -70,12 +70,24 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
   Map<Long, R> getTrackedResponsesForSegment(int index, ClientSourceId clientSourceId);
 
   /**
-   * Bulk load a set of message ids, response mappings for the given client descriptor.
+   * Bulk load a set of message ids, response mappings for the given client descriptor  in the given segment.
    * To be used by a passive entity when the active syncs its message tracker data.
    *
-   * @param index a concurrency key
+   * @param index a segment index
    * @param clientSourceId a client descriptor
    * @param trackedResponses a map of message id, response mappings
    */
   void loadTrackedResponsesForSegment(int index, ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
+
+  /**
+   * Bulk load a set of message ids, response mappings for the given client descriptor.
+   * To be used by a passive entity when the active syncs its message tracker data.
+   * The mappings loaded by this message will go to any of the segments but goes to a
+   * special tracker that is common between all segments.
+   *
+   * @param clientSourceId a client descriptor
+   * @param trackedResponses a map of message id, response mappings
+   */
+  @Deprecated
+  void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
 }

@@ -38,6 +38,8 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   private final Predicate<M> trackerPolicy;
   private final ToIntFunction<M> segmentationStrategy;
 
+  private final ClientTracker<ClientSourceId, R> sharedMessageTracker;
+
   public OOOMessageHandlerImpl(Predicate<M> trackerPolicy, int segments, ToIntFunction<M> segmentationStrategy) {
     this.trackerPolicy = trackerPolicy;
     this.segmentationStrategy = segmentationStrategy;
@@ -46,6 +48,7 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
       //Passing the TRACK_ALL tracker policy here to avoid the redundant trackability test in Tracker as the real policy is used in the invoke
       clientMessageTrackers.add(new ClientTrackerImpl(TRACK_ALL));
     }
+    sharedMessageTracker = new ClientTrackerImpl(TRACK_ALL);
   }
 
   @Override
@@ -56,6 +59,13 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
       Tracker<R> messageTracker = clientMessageTrackers.get(index).getTracker(clientId);
       messageTracker.reconcile(context.getOldestTransactionId());
       R response = messageTracker.getTrackedValue(context.getCurrentTransactionId());
+
+      if (response == null && sharedMessageTracker.getTrackedClients().contains(clientId)) {
+        Tracker<R> sharedTracker = sharedMessageTracker.getTracker(clientId);
+        sharedTracker.reconcile(context.getOldestTransactionId());
+        response = sharedTracker.getTrackedValue(context.getCurrentTransactionId());
+      }
+
       if (response != null) {
         return response;
       }
@@ -71,6 +81,7 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   @Override
   public void untrackClient(ClientSourceId clientSourceId) {
     clientMessageTrackers.stream().forEach(tracker -> tracker.untrackClient(clientSourceId));
+    sharedMessageTracker.untrackClient(clientSourceId);
   }
 
   @Override
@@ -80,16 +91,20 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
         .distinct();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Map<Long, R> getTrackedResponsesForSegment(int index, ClientSourceId clientSourceId) {
     return this.clientMessageTrackers.get(index).getTracker(clientSourceId).getTrackedValues();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void loadTrackedResponsesForSegment(int index, ClientSourceId clientSourceId, Map<Long, R> trackedResponses) {
     this.clientMessageTrackers.get(index).getTracker(clientSourceId).loadOnSync(trackedResponses);
+  }
+
+  @Deprecated
+  @Override
+  public void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses) {
+    this.sharedMessageTracker.getTracker(clientSourceId).loadOnSync(trackedResponses);
   }
 
   @Override
@@ -97,5 +112,7 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
     for (int i = 0; i < clientMessageTrackers.size(); i++) {
       clientMessageTrackers.get(i).addStateTo(stateDumper.subStateDumpCollector("segment-" + i));
     }
+
+    sharedMessageTracker.addStateTo(stateDumper.subStateDumpCollector("shared"));
   }
 }
