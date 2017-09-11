@@ -339,5 +339,10 @@ public class OOOMessageHandlerImplTest {
     public ClientSourceId makeClientSourceId(long l) {
       return new DummyClientSourceId(l);
     }
+
+    @Override
+    public int getConcurrencyKey() {
+      return 0;
+    }
   }
 }

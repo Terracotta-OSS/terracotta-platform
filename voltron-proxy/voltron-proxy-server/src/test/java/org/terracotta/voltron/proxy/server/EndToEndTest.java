@@ -310,6 +310,11 @@ public class EndToEndTest {
             public ClientSourceId makeClientSourceId(long l) {
               return null;
             }
+
+            @Override
+            public int getConcurrencyKey() {
+              return 0;
+            }
           }, message);
         }
       });

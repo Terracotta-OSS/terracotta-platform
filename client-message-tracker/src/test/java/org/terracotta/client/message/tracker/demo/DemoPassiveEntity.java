@@ -68,6 +68,11 @@ public class DemoPassiveEntity implements PassiveServerEntity {
         public ClientSourceId makeClientSourceId(long l) {
           return null;
         }
+
+        @Override
+        public int getConcurrencyKey() {
+          return 0;
+        }
       };
     } else {
       realContext = context;
