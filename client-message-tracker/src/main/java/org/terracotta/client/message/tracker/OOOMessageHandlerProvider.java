@@ -49,7 +49,8 @@ public class OOOMessageHandlerProvider implements ServiceProvider {
       OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> cmtServiceConfiguration =
           (OOOMessageHandlerConfiguration<EntityMessage, EntityResponse>) serviceConfiguration;
       OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = serviceMap.computeIfAbsent(cmtServiceConfiguration.getEntityIdentifier(),
-          id -> new OOOMessageHandlerImpl<>(cmtServiceConfiguration.getTrackerPolicy()));
+          id -> new OOOMessageHandlerImpl<>(cmtServiceConfiguration.getTrackerPolicy(), cmtServiceConfiguration.getSegments(),
+              cmtServiceConfiguration.getSegmentationStrategy()));
       return serviceConfiguration.getServiceType().cast(messageHandler);
     }
     throw new IllegalArgumentException("Unexpected configuration type: " + serviceConfiguration);

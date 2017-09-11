@@ -30,13 +30,15 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 
+import java.util.Map;
+
 public class DemoActiveEntity implements ActiveServerEntity {
 
   private final OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 
   public DemoActiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
     OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> messageHandlerConfiguration =
-        new OOOMessageHandlerConfiguration<>("foo", msg -> msg instanceof TrackableMessage);
+        new OOOMessageHandlerConfiguration<>("foo", msg -> msg instanceof TrackableMessage, 1, m -> 0);
     messageHandler = serviceRegistry.getService(messageHandlerConfiguration);
   }
 
@@ -78,8 +80,22 @@ public class DemoActiveEntity implements ActiveServerEntity {
   }
 
   @Override
-  public void synchronizeKeyToPassive(PassiveSynchronizationChannel passiveSynchronizationChannel, int i) {
-    //no-op
+  public void synchronizeKeyToPassive(PassiveSynchronizationChannel passiveSynchronizationChannel, int concurrencyKey) {
+    // Sync entity data for the given concurrency key
+    EntityMessage entityDataSyncMessage = null;
+    passiveSynchronizationChannel.synchronizeToPassive(entityDataSyncMessage);
+
+    // Sync client message tracker state
+    int segmentIndex = concurrencyKeyToSegmentIndex(concurrencyKey);
+    messageHandler.getTrackedClients().forEach(clientSourceId -> {
+      Map<Long, EntityResponse> trackedResponsesForSegment = messageHandler.getTrackedResponsesForSegment(segmentIndex, clientSourceId);
+      EntityMessage clientMessageTrackerSegmentData = new MessageTrackerSyncMessage(segmentIndex, clientSourceId, trackedResponsesForSegment);
+      passiveSynchronizationChannel.synchronizeToPassive(clientMessageTrackerSegmentData);
+    });
+  }
+
+  private int concurrencyKeyToSegmentIndex(int concurrencyKey) {
+    return -1;  //Do the proper transformation
   }
 
   @Override
