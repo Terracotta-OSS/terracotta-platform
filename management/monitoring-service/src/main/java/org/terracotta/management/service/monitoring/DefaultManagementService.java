@@ -98,6 +98,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     }
 
     if (fullContext == null) {
+      // this method is called from an entity invoke, so throwing is OK
       throw new IllegalArgumentException(context.toString());
     }
 
@@ -154,7 +155,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
         break;
 
       default:
-        throw new UnsupportedOperationException(message.getType());
+        LOGGER.warn("[{}] onMessageToSend({}): message type unsupported", this.consumerId, message.getType());
     }
   }
 

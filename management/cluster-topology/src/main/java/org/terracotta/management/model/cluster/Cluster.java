@@ -78,18 +78,18 @@ public final class Cluster implements Contextual {
     return stripeStream().findFirst().get();
   }
 
-  public Cluster addClient(Client client) {
+  public boolean addClient(Client client) {
     for (Client c : clients.values()) {
       if (c.getClientIdentifier().equals(client.getClientIdentifier())) {
-        throw new IllegalArgumentException("Duplicate client: " + client.getClientIdentifier());
+        return false;
       }
     }
     if (clients.putIfAbsent(client.getId(), client) != null) {
-      throw new IllegalArgumentException("Duplicate client: " + client.getId());
+      return false;
     } else {
       client.setParent(this);
+      return true;
     }
-    return this;
   }
 
   public Optional<Client> getClient(Context context) {
@@ -114,13 +114,13 @@ public final class Cluster implements Contextual {
     return client;
   }
 
-  public Cluster addStripe(Stripe stripe) {
+  public boolean addStripe(Stripe stripe) {
     if (stripes.putIfAbsent(stripe.getId(), stripe) != null) {
-      throw new IllegalArgumentException("Duplicate stripe: " + stripe.getId());
+      return false;
     } else {
       stripe.setParent(this);
+      return true;
     }
-    return this;
   }
 
   public Optional<Stripe> getStripe(Context context) {

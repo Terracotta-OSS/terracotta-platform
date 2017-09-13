@@ -25,13 +25,10 @@ import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Adapts the API-wanted {@link PlatformListener} into the current existing ({@link org.terracotta.monitoring.IStripeMonitoring}),
@@ -80,10 +77,10 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
-    LOGGER.trace("[0] addNode({}, {}, {})", sender.getServerName(), Arrays.toString(parents), name);
     if (parents == null || parents.length == 0) {
       return true;
     }
+    LOGGER.trace("[0] addNode({}, {}, {})", sender.getServerName(), String.join("/", parents), name);
 
     if ("platform".equals(parents[0])) {
       // handle platform/state compared to platform/[clients|entities|fetched]/<id>
@@ -93,8 +90,12 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
         case "entities": {
           PlatformEntity platformEntity = (PlatformEntity) value;
-          PlatformEntity previous = requireNonNull(entities.get(sender.getServerName()), "Inconsistent monitoring tree: server did not joined stripe first: " + sender.getServerName())
-              .put(name, platformEntity);
+          Map<String, PlatformEntity> serverEntities = entities.get(sender.getServerName());
+          if (serverEntities == null) {
+            LOGGER.warn("[0] addNode({}, {}, {}): unable to add entity: server did not joined stripe first", sender.getServerName(), String.join("/", parents), name);
+            return false;
+          }
+          PlatformEntity previous = serverEntities.put(name, platformEntity);
           if (platformEntity.isActive || !sender.getServerName().equals(currentActive.getServerName())) {
             if (previous == null) {
               delegate.serverEntityCreated(sender, platformEntity);
@@ -107,7 +108,8 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
         case "clients": {
           if (currentActive == null) {
-            throw new IllegalStateException("No " + PlatformServer.class.getSimpleName() + " had become active");
+            LOGGER.warn("[0] addNode({}, {}, {}): unable to add client: not an active server", sender.getServerName(), String.join("/", parents), name);
+            return false;
           }
           clients.put(name, (PlatformConnectedClient) value);
           delegate.clientConnected(currentActive, (PlatformConnectedClient) value);
@@ -121,13 +123,21 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
         case "fetched": {
           PlatformClientFetchedEntity fetch = (PlatformClientFetchedEntity) value;
+          Map<String, PlatformEntity> serverEntities = entities.get(sender.getServerName());
+          if (serverEntities == null) {
+            LOGGER.warn("[0] addNode({}, {}, {}): unable to add fetch for entity {} from client {}: server did not joined stripe first", sender.getServerName(), String.join("/", parents), name, fetch.entityIdentifier, fetch.clientIdentifier);
+            return false;
+          }
+          PlatformEntity entity = serverEntities.get(fetch.entityIdentifier);
+          if (entity == null) {
+            LOGGER.warn("[0] addNode({}, {}, {}): unable to add fetch for entity {} from client {}: entity not found", sender.getServerName(), String.join("/", parents), name, fetch.entityIdentifier, fetch.clientIdentifier);
+            return false;
+          }
           PlatformConnectedClient client = clients.get(fetch.clientIdentifier);
           if (client == null) {
-            throw new IllegalStateException("No " + PlatformConnectedClient.class.getSimpleName() + " has been added before with identifier " + fetch.clientIdentifier);
+            LOGGER.warn("[0] addNode({}, {}, {}): unable to add fetch for entity {} from client {}: client not found", sender.getServerName(), String.join("/", parents), name, fetch.entityIdentifier, fetch.clientIdentifier);
+            return false;
           }
-          PlatformEntity entity = requireNonNull(entities.get(sender.getServerName()), "Inconsistent monitoring tree: server did not joined stripe first: " + sender.getServerName())
-              .get(fetch.entityIdentifier);
-          requireNonNull(entity, "Inconsistent monitoring tree: entity " + fetch.entityIdentifier + " is not on server " + sender.getServerName());
           fetches.put(name, (PlatformClientFetchedEntity) value);
           delegate.clientFetch(client, entity, fetch.clientDescriptor);
           return true;
@@ -148,10 +158,11 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
   @Override
   public boolean removeNode(PlatformServer sender, String[] parents, String name) {
-    LOGGER.trace("[0] removeNode({}, {}, {})", sender.getServerName(), Arrays.toString(parents), name);
     if (parents == null || parents.length == 0) {
       return true;
     }
+    LOGGER.trace("[0] removeNode({}, {}, {})", sender.getServerName(), String.join("/", parents), name);
+
     switch (parents[parents.length - 1]) {
 
       case "entities": {
@@ -166,28 +177,43 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
       case "clients": {
         if (currentActive == null) {
-          throw new IllegalStateException("No " + PlatformServer.class.getSimpleName() + " had become active");
+          LOGGER.warn("[0] removeNode({}, {}, {}): unable to remove client: not an active server", sender.getServerName(), String.join("/", parents), name);
+          return false;
         }
         PlatformConnectedClient client = clients.remove(name);
         if (client != null) {
           delegate.clientDisconnected(currentActive, client);
           return true;
+        } else {
+          LOGGER.warn("[0] removeNode({}, {}, {}): unable to remove client: not in current topology", sender.getServerName(), String.join("/", parents), name);
+          return false;
         }
-        return false;
       }
 
       case "fetched": {
         PlatformClientFetchedEntity fetch = fetches.remove(name);
         if (fetch != null) {
           Map<String, PlatformEntity> serverEntities = entities.get(sender.getServerName());
-          PlatformConnectedClient client = clients.get(fetch.clientIdentifier);
-          PlatformEntity entity = serverEntities.get(fetch.entityIdentifier);
-          if (entity != null && client != null) {
-            delegate.clientUnfetch(client, entity, fetch.clientDescriptor);
-            return true;
+          if (serverEntities == null) {
+            LOGGER.warn("[0] removeNode({}, {}, {}): unable to remove fetch for entity {} from client {}: server did not joined stripe first", sender.getServerName(), String.join("/", parents), name, fetch.entityIdentifier, fetch.clientIdentifier);
+            return false;
           }
+          PlatformEntity entity = serverEntities.get(fetch.entityIdentifier);
+          if (entity == null) {
+            LOGGER.warn("[0] removeNode({}, {}, {}): unable to remove fetch for entity {} from client {}: entity not found", sender.getServerName(), String.join("/", parents), name, fetch.entityIdentifier, fetch.clientIdentifier);
+            return false;
+          }
+          PlatformConnectedClient client = clients.get(fetch.clientIdentifier);
+          if (client == null) {
+            LOGGER.warn("[0] removeNode({}, {}, {}): unable to remove fetch for entity {} from client {}: client not found", sender.getServerName(), String.join("/", parents), name, fetch.entityIdentifier, fetch.clientIdentifier);
+            return false;
+          }
+          delegate.clientUnfetch(client, entity, fetch.clientDescriptor);
+          return true;
+        } else {
+          LOGGER.warn("[0] removeNode({}, {}, {}): unable to remove fetch: not in current topology", sender.getServerName(), String.join("/", parents), name);
+          return false;
         }
-        return false;
       }
 
       default: {

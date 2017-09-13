@@ -90,7 +90,13 @@ public class CacheEntityFeaturesTest extends AbstractTest {
 
     remove(1, "clients", "client1");
 
-    assertThat(size(0, "clients"), equalTo(0));
+    // async events (client communicator)
+    int size = size(0, "clients");
+    while (size != 0 && !Thread.currentThread().isInterrupted()) {
+      size = size(0, "clients");
+    }
+    assertThat(size, equalTo(0));
+
     assertThat(size(1, "clients"), equalTo(0));
 
     assertThat(get(0, "clients", "client1"), is(nullValue()));

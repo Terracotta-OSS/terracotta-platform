@@ -118,21 +118,21 @@ public final class Client extends AbstractManageableNode<Cluster> {
     return connections.size();
   }
 
-  public Client addConnection(Connection connection) {
+  public boolean addConnection(Connection connection) {
     for (Connection c : connections.values()) {
       if (c.getClientEndpoint().equals(connection.getClientEndpoint())) {
-        throw new IllegalArgumentException("Duplicate connection: " + connection.getId() + ": same endpoint: " + c.getClientEndpoint());
+        return false;
       }
       if (!getLogicalConnectionUid().equals(connection.getLogicalConnectionUid())) {
-        throw new IllegalArgumentException("Connection " + connection + " does not belong to client " + this);
+        return false;
       }
     }
     if (connections.putIfAbsent(connection.getId(), connection) != null) {
-      throw new IllegalArgumentException("Duplicate connection: " + connection.getId());
+      return false;
     } else {
       connection.setParent(this);
+      return true;
     }
-    return this;
   }
 
   public Optional<Connection> getConnection(Context context) {
