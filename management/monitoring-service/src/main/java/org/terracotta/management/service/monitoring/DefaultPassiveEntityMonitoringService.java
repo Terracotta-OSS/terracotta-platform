@@ -26,7 +26,10 @@ import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.monitoring.IMonitoringProducer;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_NOTIFICATION;
 import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_STATISTICS;
@@ -46,7 +49,10 @@ class DefaultPassiveEntityMonitoringService extends AbstractEntityMonitoringServ
 
   @Override
   public void exposeManagementRegistry(ContextContainer contextContainer, Capability... capabilities) {
-    logger.trace("[{}] exposeManagementRegistry({})", getConsumerId(), contextContainer);
+    if(logger.isTraceEnabled()) {
+      List<String> names = Stream.of(capabilities).map(Capability::getName).collect(Collectors.toList());
+      logger.trace("[{}] exposeManagementRegistry({})", getConsumerId(), names);
+    }
     ManagementRegistry registry = ManagementRegistry.create(contextContainer);
     registry.addCapabilities(capabilities);
     monitoringProducer.addNode(new String[0], "registry", registry);

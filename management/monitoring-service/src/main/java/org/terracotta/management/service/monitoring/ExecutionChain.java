@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
@@ -24,16 +25,35 @@ import java.util.function.Consumer;
  */
 class ExecutionChain<T> {
 
-  private final Queue<Consumer<T>> chain = new ConcurrentLinkedQueue<>();
+  private final Queue<TaggedConsumer<T>> chain = new ConcurrentLinkedQueue<>();
 
   private volatile boolean done;
   private volatile T value;
 
-  void execute(Consumer<T> consumer) {
+  // execute if possible or discard the execution
+  void executeOrDiscard(Consumer<T> consumer) {
+    if (done) {
+      consumer.accept(value);
+    }
+  }
+
+  // enqueue future executions
+  void executeOrDelay(Consumer<T> consumer) {
     if (done) {
       consumer.accept(value);
     } else {
-      chain.offer(consumer);
+      chain.offer(new TaggedConsumer<>(consumer));
+    }
+  }
+
+  // enqueue future execution but remove those with the same tag that were there before
+  void executeOrDelay(String tag, Consumer<T> consumer) {
+    if (done) {
+      consumer.accept(value);
+    } else {
+      TaggedConsumer<T> tc = new TaggedConsumer<>(tag, consumer);
+      chain.removeIf(taggedConsumer -> tag.equals(taggedConsumer.tag));
+      chain.offer(tc);
     }
   }
 
@@ -41,8 +61,22 @@ class ExecutionChain<T> {
     value = t; // we allow the value to be reset
     done = true;
     while (!chain.isEmpty()) {
-      chain.poll().accept(t);
+      chain.poll().consumer.accept(t);
     }
   }
 
+  private static final class TaggedConsumer<T> {
+    final String tag;
+    final Consumer<T> consumer;
+
+    TaggedConsumer(Consumer<T> consumer) {
+      this.tag = null;
+      this.consumer = Objects.requireNonNull(consumer);
+    }
+
+    TaggedConsumer(String tag, Consumer<T> consumer) {
+      this.tag = Objects.requireNonNull(tag);
+      this.consumer = Objects.requireNonNull(consumer);
+    }
+  }
 }

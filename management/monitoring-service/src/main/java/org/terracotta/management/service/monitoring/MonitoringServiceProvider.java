@@ -24,7 +24,6 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
-import org.terracotta.entity.StateDumpable;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -40,9 +39,6 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou
@@ -174,6 +170,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           // add a collector service, not started by default, but that can be started through a remote management call
           StatisticCollector statisticCollector = statisticService.createStatisticCollector(statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
           registry.register(statisticCollector);
+          registry.refresh();
         }
 
         @Override

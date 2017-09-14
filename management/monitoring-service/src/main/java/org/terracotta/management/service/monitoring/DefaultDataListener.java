@@ -57,6 +57,11 @@ class DefaultDataListener implements DataListener {
   public void pushBestEffortsData(long consumerId, PlatformServer sender, String name, Serializable data) {
     LOGGER.trace("[{}] pushBestEffortsData({}, {}, {})", this.consumerId, consumerId, sender.getServerName(), name);
 
+    if (senderIsCurrentActive(sender)) {
+      LOGGER.warn("[{}] pushBestEffortsData({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), name);
+      return;
+    }
+
     switch (name) {
 
       case TOPIC_SERVER_ENTITY_NOTIFICATION: {
@@ -88,6 +93,11 @@ class DefaultDataListener implements DataListener {
   public synchronized void setState(long consumerId, PlatformServer sender, String[] path, Serializable data) {
     LOGGER.trace("[{}] setState({}, {}, {})", this.consumerId, consumerId, sender.getServerName(), Arrays.toString(path));
 
+    if (senderIsCurrentActive(sender)) {
+      LOGGER.warn("[{}] setState({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), Arrays.toString(path));
+      return;
+    }
+
     if (path.length == 1 && "registry".equals(path[0])) {
       // handles data coming from DefaultMonitoringService.exposeServerEntityManagementRegistry()
       ManagementRegistry newRegistry = (ManagementRegistry) data;
@@ -99,6 +109,10 @@ class DefaultDataListener implements DataListener {
       ContextualReturn<?> answer = (ContextualReturn<?>) data;
       firingService.fireManagementCallAnswer(managementCallIdentifier, answer);
     }
+  }
+
+  private boolean senderIsCurrentActive(PlatformServer sender) {
+    return topologyService.isCurrentServerActive() && sender.getServerName().equals(topologyService.getActiveServer().getServerName());
   }
 
 }
