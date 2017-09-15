@@ -108,15 +108,20 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     registry.addManagementProvider(new OffHeapResourceSettingsManagementProvider());
     registry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
 
-    for (OffHeapResourceIdentifier identifier : getAllIdentifiers()) {
-      LOGGER.trace("[{}] onManagementRegistryCreated() - Exposing OffHeapResource:{}", registry.getMonitoringService().getConsumerId(), identifier.getName());
-      OffHeapResourceBinding managementBinding = getOffHeapResource(identifier).getManagementBinding();
-      registry.register(managementBinding);
+    Set<OffHeapResourceIdentifier> identifiers = getAllIdentifiers();
+    if(!identifiers.isEmpty()) {
+      for (OffHeapResourceIdentifier identifier : identifiers) {
+        LOGGER.trace("[{}] onManagementRegistryCreated() - Exposing OffHeapResource:{}", registry.getMonitoringService().getConsumerId(), identifier.getName());
+        OffHeapResourceBinding managementBinding = getOffHeapResource(identifier).getManagementBinding();
+        registry.register(managementBinding);
+      }
+      registry.refresh(); 
     }
   }
 
   @Override
   public void onManagementRegistryClose(EntityManagementRegistry registry) {
+    LOGGER.trace("[{}] onManagementRegistryClose()", registry.getMonitoringService().getConsumerId());
     registries.remove(registry);
   }
 

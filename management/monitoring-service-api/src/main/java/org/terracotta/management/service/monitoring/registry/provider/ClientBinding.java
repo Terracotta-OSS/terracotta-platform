@@ -29,9 +29,13 @@ public class ClientBinding {
 
   volatile ClientIdentifier resolvedClientIdentifier;
 
+  public ClientBinding(ClientDescriptor clientDescriptor) {
+    this(clientDescriptor, null);
+  }
+  
   public ClientBinding(ClientDescriptor clientDescriptor, Object value) {
     this.clientDescriptor = Objects.requireNonNull(clientDescriptor);
-    this.value = Objects.requireNonNull(value);
+    this.value = value;
   }
 
   public ClientDescriptor getClientDescriptor() {

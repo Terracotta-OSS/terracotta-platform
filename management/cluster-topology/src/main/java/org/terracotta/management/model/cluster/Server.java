@@ -201,18 +201,19 @@ public final class Server extends AbstractNode<Stripe> {
     return serverEntities.values().stream();
   }
 
-  public final Server addServerEntity(ServerEntity serverEntity) {
+  public final boolean addServerEntity(ServerEntity serverEntity) {
     // ServerEntityId are unique per their ID but also per their combination of (type + name)
     for (ServerEntity m : serverEntities.values()) {
       if (m.is(serverEntity.getType(), serverEntity.getName())) {
-        throw new IllegalArgumentException("Duplicate serverEntity: type=" + serverEntity.getType() + ", name=" + serverEntity.getName());
+        return false;
       }
     }
     if (serverEntities.putIfAbsent(serverEntity.getId(), serverEntity) != null) {
-      throw new IllegalArgumentException("Duplicate serverEntity: " + serverEntity.getId());
+      return false;
+    } else {
+      serverEntity.setParent(this);
+      return true; 
     }
-    serverEntity.setParent(this);
-    return this;
   }
 
   public final Optional<ServerEntity> getServerEntity(Context context) {
