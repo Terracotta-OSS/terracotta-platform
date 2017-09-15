@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
+import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.Cluster;
@@ -243,7 +244,7 @@ class TopologyService implements PlatformListener {
 
     Server server = stripe.getServerByName(currentActive.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing active server: " + currentActive.getServerName()));
-    
+
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
@@ -262,7 +263,7 @@ class TopologyService implements PlatformListener {
 
     Server server = stripe.getServerByName(currentActive.getServerName())
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing active server: " + currentActive.getServerName()));
-    
+
     ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
     Client client = cluster.getClient(clientIdentifier)
         .<IllegalStateException>orElseThrow(() -> newIllegalTopologyState("Missing client: " + clientIdentifier));
@@ -360,7 +361,7 @@ class TopologyService implements PlatformListener {
    * Records stats that needs to be sent in future (or now) when the client fetch info will have arrived
    */
   void willPushClientStatistics(long consumerId, ClientDescriptor from, ContextualStatistics... statistics) {
-    whenFetchClient(consumerId, from).execute(client -> {
+    whenFetchClient(consumerId, from).executeOrDiscard(client -> {
       Context context = client.getContext();
       for (ContextualStatistics statistic : statistics) {
         statistic.setContext(statistic.getContext().with(context));
@@ -374,7 +375,7 @@ class TopologyService implements PlatformListener {
    * Records notification that needs to be sent in future (or now) when the client fetch info will have arrived
    */
   void willPushClientNotification(long consumerId, ClientDescriptor from, ContextualNotification notification) {
-    whenFetchClient(consumerId, from).execute(client -> {
+    whenFetchClient(consumerId, from).executeOrDelay(client -> {
       Context context = client.getContext();
       notification.setContext(notification.getContext().with(context));
       LOGGER.trace("[{}] willPushClientNotification({}, {})", consumerId, from, notification);
@@ -387,7 +388,7 @@ class TopologyService implements PlatformListener {
    */
   CompletableFuture<Context> willSetClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
     CompletableFuture<Context> futureContext = new CompletableFuture<>();
-    whenFetchClient(consumerId, clientDescriptor).execute(client -> {
+    whenFetchClient(consumerId, clientDescriptor).executeOrDelay("client-registry", client -> {
       boolean hadRegistry = client.getManagementRegistry().isPresent();
       LOGGER.trace("[{}] willSetClientManagementRegistry({}, {})", consumerId, clientDescriptor, newRegistry);
       client.setManagementRegistry(newRegistry);
@@ -403,7 +404,7 @@ class TopologyService implements PlatformListener {
    * Records tags that needs to be sent in future (or now) when the client info will have arrived
    */
   void willSetClientTags(long consumerId, ClientDescriptor clientDescriptor, String[] tags) {
-    whenFetchClient(consumerId, clientDescriptor).execute(client -> {
+    whenFetchClient(consumerId, clientDescriptor).executeOrDelay("client-tags", client -> {
       Set<String> currtags = new HashSet<>(client.getTags());
       Set<String> newTags = new HashSet<>(Arrays.asList(tags));
       if (!currtags.equals(newTags)) {
@@ -423,7 +424,7 @@ class TopologyService implements PlatformListener {
     // context that is hold in the stat results
     Stream.of(statistics)
         .collect(Collectors.groupingBy(o -> Long.parseLong(o.getContext().getOrDefault(ServerEntity.CONSUMER_ID, String.valueOf(consumerId)))))
-        .forEach((cid, cid_stats) -> whenServerEntity(cid, serverName).execute(serverEntity -> {
+        .forEach((cid, cid_stats) -> whenServerEntity(cid, serverName).executeOrDiscard(serverEntity -> {
           Context context = serverEntity.getContext();
           for (ContextualStatistics statistic : cid_stats) {
             statistic.setContext(statistic.getContext().with(context));
@@ -439,7 +440,7 @@ class TopologyService implements PlatformListener {
   void willPushEntityNotification(long consumerId, String serverName, ContextualNotification notification) {
     // notifications contains a context, but if this context contains an origin consumer id, do not override it
     long cid = Long.parseLong(notification.getContext().getOrDefault(ServerEntity.CONSUMER_ID, String.valueOf(consumerId)));
-    whenServerEntity(cid, serverName).execute(serverEntity -> {
+    whenServerEntity(cid, serverName).executeOrDelay(serverEntity -> {
       Context context = serverEntity.getContext();
       notification.setContext(notification.getContext().with(context));
       LOGGER.trace("[{}] willPushEntityNotification({}, {})", cid, serverName, notification);
@@ -451,9 +452,16 @@ class TopologyService implements PlatformListener {
    * Records registry that needs to be sent in future (or now) when the entity will have arrived
    */
   void willSetEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {
-    whenServerEntity(consumerId, serverName).execute(serverEntity -> {
+    if(LOGGER.isTraceEnabled()) {
+      List<String> names = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
+      LOGGER.trace("[{}] willSetEntityManagementRegistry({}, {})", consumerId, serverName, names);  
+    }
+    whenServerEntity(consumerId, serverName).executeOrDelay("entity-registry", serverEntity -> {
+      if(LOGGER.isTraceEnabled()) {
+        List<String> names = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
+        LOGGER.trace("[{}] setManagementRegistry({}, {})", consumerId, serverName, names);
+      }
       boolean hadRegistry = serverEntity.getManagementRegistry().isPresent();
-      LOGGER.trace("[{}] willSetEntityManagementRegistry({}, {})", consumerId, serverName, newRegistry.getCapabilities());
       serverEntity.setManagementRegistry(newRegistry);
       if (!hadRegistry) {
         firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), Notification.ENTITY_REGISTRY_AVAILABLE.name()));
@@ -467,7 +475,7 @@ class TopologyService implements PlatformListener {
 
   CompletableFuture<ClientIdentifier> getClientIdentifier(long consumerId, ClientDescriptor clientDescriptor) {
     CompletableFuture<ClientIdentifier> clientIdentifier = new CompletableFuture<>();
-    whenFetchClient(consumerId, clientDescriptor).execute(client -> clientIdentifier.complete(client.getClientIdentifier()));
+    whenFetchClient(consumerId, clientDescriptor).executeOrDelay(client -> clientIdentifier.complete(client.getClientIdentifier()));
     return clientIdentifier;
   }
 
@@ -515,11 +523,11 @@ class TopologyService implements PlatformListener {
     }
   }
 
-  private boolean isCurrentServerActive() {
+  boolean isCurrentServerActive() {
     return currentActive != null && currentActive.getServerName().equals(platformConfiguration.getServerName());
   }
 
-  private Server getActiveServer() {
+  Server getActiveServer() {
     if (currentActive == null) {
       throw newIllegalTopologyState("No active server defined!");
     }

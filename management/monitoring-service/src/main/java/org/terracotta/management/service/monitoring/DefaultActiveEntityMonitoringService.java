@@ -25,8 +25,11 @@ import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
@@ -46,7 +49,10 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
 
   @Override
   public void exposeManagementRegistry(ContextContainer contextContainer, Capability... capabilities) {
-    logger.trace("[{}] exposeManagementRegistry({})", getConsumerId(), contextContainer);
+    if(logger.isTraceEnabled()) {
+      List<String> names = Stream.of(capabilities).map(Capability::getName).collect(Collectors.toList());
+      logger.trace("[{}] exposeManagementRegistry({})", getConsumerId(), names);
+    }
     ManagementRegistry registry = ManagementRegistry.create(contextContainer);
     registry.addCapabilities(capabilities);
     topologyService.willSetEntityManagementRegistry(getConsumerId(), serverName, registry);

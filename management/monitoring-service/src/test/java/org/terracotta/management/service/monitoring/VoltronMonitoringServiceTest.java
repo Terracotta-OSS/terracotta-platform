@@ -330,7 +330,7 @@ public class VoltronMonitoringServiceTest {
     };
     EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
       @Override
-      public  IMonitoringProducer getMonitoringProducer() {
+      public IMonitoringProducer getMonitoringProducer() {
         return monitoringProducer;
       }
     });
@@ -371,11 +371,16 @@ public class VoltronMonitoringServiceTest {
   public void test_notifs_and_stats() throws Exception {
     test_fetch_entity();
 
+    activePlatformListener.serverDidJoinStripe(passive);
+    activePlatformListener.addNode(passive, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, false));
+
+    messages();
+    
     clientMonitoringService.pushNotification(new FakeDesc("1-1"), new ContextualNotification(Context.empty(), "TYPE-1"));
     clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty(), Collections.emptyMap()));
 
-    activeDataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
-    activeDataListener.pushBestEffortsData(active, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty(), Collections.emptyMap())});
+    activeDataListener.pushBestEffortsData(passive, TOPIC_SERVER_ENTITY_NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
+    activeDataListener.pushBestEffortsData(passive, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty(), Collections.emptyMap())});
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION", "STATISTICS", "NOTIFICATION", "STATISTICS")));
@@ -384,7 +389,7 @@ public class VoltronMonitoringServiceTest {
         notificationContexts(messages),
         equalTo(Arrays.asList(
             Context.create(Client.KEY, "111@127.0.0.1:name:uuid-1"),
-            managementService.readTopology().getSingleStripe().getActiveServerEntity("entityName-1", "entityType").get().getContext())));
+            managementService.readTopology().getSingleStripe().getServer("server-2").get().getServerEntity("entityName-1", "entityType").get().getContext())));
   }
 
   @Test

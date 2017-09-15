@@ -22,8 +22,8 @@ import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
-import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ExposedObject;
+import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractEntityManagementProvider;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 
@@ -64,6 +64,13 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
     topologyService.addTopologyEventListener(this);
     sharedManagementRegistry.addManagementService(this);
+  }
+
+  @Override
+  public void onBecomeActive() {
+    if (monitoringService instanceof DefaultPassiveEntityMonitoringService) {
+      close();
+    }
   }
 
   @Override

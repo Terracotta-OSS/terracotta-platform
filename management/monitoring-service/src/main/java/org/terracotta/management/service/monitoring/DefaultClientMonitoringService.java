@@ -31,9 +31,12 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
@@ -80,7 +83,10 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
 
   @Override
   public void exposeManagementRegistry(ClientDescriptor from, ContextContainer contextContainer, Capability... capabilities) {
-    LOGGER.trace("[{}] exposeManagementRegistry({}, {})", consumerId, from, contextContainer);
+    if(LOGGER.isTraceEnabled()) {
+      List<String> names = Stream.of(capabilities).map(Capability::getName).collect(Collectors.toList());
+      LOGGER.trace("[{}] exposeManagementRegistry({}, {})", consumerId, from, names);
+    }
     ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
     newRegistry.addCapabilities(capabilities);
     topologyService.willSetClientManagementRegistry(consumerId, from, newRegistry)
