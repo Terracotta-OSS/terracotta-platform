@@ -22,5 +22,5 @@ import org.terracotta.management.registry.collect.StatisticCollector;
  * {@link org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware} when they are added into a {@link EntityManagementRegistry}
  */
 interface StatisticService {
-  StatisticCollector createStatisticCollector(StatisticCollector.Collector collector);
+  StatisticCollector createStatisticCollector(EntityManagementRegistry statCollectorRegistry, StatisticCollector.Collector collector);
 }

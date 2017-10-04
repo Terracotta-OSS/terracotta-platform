@@ -58,6 +58,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   );
 
   private final TimeSource timeSource = TimeSource.BEST;
+  // only contains registries of standard entities, not management ones
   private final DefaultSharedEntityManagementRegistry sharedManagementRegistry = new DefaultSharedEntityManagementRegistry();
   private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
   private final DefaultStatisticService statisticService = new DefaultStatisticService(sharedManagementRegistry);
@@ -156,7 +157,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       return serviceType.cast(new ManageableServerComponent() {
         @Override
         public void onManagementRegistryCreated(EntityManagementRegistry registry) {
-          LOGGER.trace("[{}] onManagementRegistryCreated({})", registry.getMonitoringService().getConsumerId());
+          LOGGER.trace("[{}] onManagementRegistryCreated()", registry.getMonitoringService().getConsumerId());
 
           // The context for the collector is created from the the registry of the entity wanting server-side providers.
           // We create a provider that will receive management calls to control the global voltron's statistic collector.
@@ -168,7 +169,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
           EntityMonitoringService monitoringService = registry.getMonitoringService();
           // add a collector service, not started by default, but that can be started through a remote management call
-          StatisticCollector statisticCollector = statisticService.createStatisticCollector(statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
+          StatisticCollector statisticCollector = statisticService.createStatisticCollector(registry, statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
           registry.register(statisticCollector);
           registry.refresh();
         }
@@ -198,8 +199,10 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
           manageableServerComponents.addAll(manageablePlugins);
         }
 
-        LOGGER.trace("[{}] getService({})", consumerID, EntityManagementRegistry.class.getSimpleName());
-        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService, sharedManagementRegistry, topologyService, manageableServerComponents);
+        LOGGER.trace("[{}] getService({}) isActive={}, wantsServerLevelCapabilities={}",
+            consumerID, EntityManagementRegistry.class.getSimpleName(),
+            managementRegistryConfiguration.isActive(), managementRegistryConfiguration.wantsServerLevelCapabilities());
+        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService, sharedManagementRegistry, topologyService, manageableServerComponents, managementRegistryConfiguration.wantsServerLevelCapabilities());
         manageableServerComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryCreated(managementRegistry));
         return serviceType.cast(managementRegistry);
       } else {

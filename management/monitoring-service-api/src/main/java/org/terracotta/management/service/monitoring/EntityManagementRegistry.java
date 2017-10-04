@@ -104,4 +104,12 @@ public interface EntityManagementRegistry extends CapabilityManagementSupport, C
    */
   @Override
   void close();
+
+  /**
+   * Must be called in ServerEntity.loadExisting() method to clear the previous
+   * management registry created by the passive entity once the promotion to active
+   * is completed
+   */
+  void cleanupPreviousPassiveStates();
+
 }

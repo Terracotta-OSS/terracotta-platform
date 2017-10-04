@@ -238,10 +238,14 @@ public abstract class AbstractTest {
   }
 
   protected void triggerServerStatComputation(long interval, TimeUnit unit) throws Exception {
+    triggerServerStatComputation(nmsService, getClass().getSimpleName(), interval, unit);
+  }
+
+  protected void triggerServerStatComputation(NmsService nmsService, String entityName, long interval, TimeUnit unit) throws Exception {
     // trigger stats computation and wait for all stats to have been computed at least once
     CompletableFuture.allOf(nmsService.readTopology()
         .serverEntityStream()
-        .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE))
+        .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE) && e.getName().equals(entityName))
         .map(ServerEntity::getContext)
         .map(context -> {
           try {

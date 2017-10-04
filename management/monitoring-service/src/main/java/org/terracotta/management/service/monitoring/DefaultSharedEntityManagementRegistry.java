@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagement;
@@ -24,6 +26,7 @@ import org.terracotta.management.registry.ManagementProvider;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -33,6 +36,7 @@ import java.util.stream.Collectors;
  */
 class DefaultSharedEntityManagementRegistry implements SharedEntityManagementRegistry {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSharedEntityManagementRegistry.class);
   private static final Comparator<Capability> CAPABILITY_COMPARATOR = Comparator.comparing(Capability::getName);
 
   private final List<DefaultEntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
@@ -71,11 +75,38 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
         .collect(Collectors.toCollection(TreeSet::new));
   }
 
-  void addManagementService(DefaultEntityManagementRegistry managementRegistry) {
+  /**
+   * Returns the existing registry having the SAME consumerId that is not the added one
+   */
+  Optional<DefaultEntityManagementRegistry> findAndAdd(DefaultEntityManagementRegistry managementRegistry) {
+    long consumerId = managementRegistry.getMonitoringService().getConsumerId();
+    boolean active = managementRegistry.getMonitoringService() instanceof DefaultActiveEntityMonitoringService;
+    LOGGER.trace("[{}] findAndAdd() active={}", consumerId, active);
     registries.add(managementRegistry);
+    return registries.stream()
+        .filter(existing -> existing != managementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
+        .findFirst();
   }
 
-  void removeManagementService(DefaultEntityManagementRegistry managementRegistry) {
-    registries.remove(managementRegistry);
+  Optional<DefaultEntityManagementRegistry> find(long consumerId) {
+    LOGGER.trace("[{}] find()", consumerId);
+    return registries.stream()
+        .filter(existing -> existing.getMonitoringService().getConsumerId() == consumerId)
+        .findFirst();
+  }
+
+  void remove(DefaultEntityManagementRegistry managementRegistry) {
+    long consumerId = managementRegistry.getMonitoringService().getConsumerId();
+    boolean active = managementRegistry.getMonitoringService() instanceof DefaultActiveEntityMonitoringService;
+    LOGGER.trace("[{}] remove() active={}", consumerId, active);
+    registries.remove(consumerId);
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("DefaultSharedEntityManagementRegistry{");
+    sb.append("registries=").append(registries);
+    sb.append('}');
+    return sb.toString();
   }
 }
