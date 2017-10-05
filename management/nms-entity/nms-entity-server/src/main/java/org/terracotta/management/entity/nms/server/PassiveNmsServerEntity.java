@@ -26,6 +26,8 @@ import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.registry.CapabilityManagementSupport;
+import org.terracotta.management.registry.CombiningCapabilityManagementSupport;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.SharedEntityManagementRegistry;
 import org.terracotta.voltron.proxy.ClientId;
@@ -42,11 +44,11 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
   private static final Logger LOGGER = LoggerFactory.getLogger(PassiveNmsServerEntity.class);
 
   private final EntityManagementRegistry entityManagementRegistry;
-  private final SharedEntityManagementRegistry sharedEntityManagementRegistry;
+  private final CapabilityManagementSupport capabilityManagementSupport;
 
   PassiveNmsServerEntity(EntityManagementRegistry entityManagementRegistry, SharedEntityManagementRegistry sharedEntityManagementRegistry) {
     this.entityManagementRegistry = Objects.requireNonNull(entityManagementRegistry);
-    this.sharedEntityManagementRegistry = Objects.requireNonNull(sharedEntityManagementRegistry);
+    this.capabilityManagementSupport = new CombiningCapabilityManagementSupport(sharedEntityManagementRegistry, entityManagementRegistry);
   }
 
   // PassiveProxiedServerEntity
@@ -79,13 +81,15 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
     }
     if (entityManagementRegistry.getMonitoringService().getServerName().equals(serverName)) {
       LOGGER.trace("[{}] entityCallbackToExecuteManagementCall({}, {}, {}, {})", entityManagementRegistry.getMonitoringService().getConsumerId(), managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
-      ContextualReturn<?> contextualReturn = sharedEntityManagementRegistry.withCapability(call.getCapability())
+      ContextualReturn<?> contextualReturn = capabilityManagementSupport.withCapability(call.getCapability())
           .call(call.getMethodName(), call.getReturnType(), call.getParameters())
           .on(call.getContext())
           .build()
           .execute()
           .getSingleResult();
-      entityManagementRegistry.getMonitoringService().answerManagementCall(managementCallIdentifier, contextualReturn);
+      if(contextualReturn.hasExecuted()) {
+        entityManagementRegistry.getMonitoringService().answerManagementCall(managementCallIdentifier, contextualReturn);  
+      }
     }
   }
 

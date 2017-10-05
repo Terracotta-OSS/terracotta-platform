@@ -53,24 +53,29 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   private final Collection<ManageableServerComponent> manageableServerComponents;
   private final ContextContainer contextContainer;
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
+  private final boolean active;
+  private DefaultEntityManagementRegistry previous;
 
-  DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService, DefaultSharedEntityManagementRegistry sharedManagementRegistry, TopologyService topologyService, Collection<ManageableServerComponent> manageableServerComponents) {
+  DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService, DefaultSharedEntityManagementRegistry sharedManagementRegistry, TopologyService topologyService, Collection<ManageableServerComponent> manageableServerComponents, boolean associatedToStatisticService) {
     this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
     this.consumerId = consumerId;
     this.monitoringService = Objects.requireNonNull(monitoringService);
     this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);
     this.topologyService = Objects.requireNonNull(topologyService);
     this.manageableServerComponents = Objects.requireNonNull(manageableServerComponents);
+    this.active = monitoringService instanceof DefaultActiveEntityMonitoringService;
 
     topologyService.addTopologyEventListener(this);
-    sharedManagementRegistry.addManagementService(this);
-  }
 
-  @Override
-  public void onBecomeActive() {
-    if (monitoringService instanceof DefaultPassiveEntityMonitoringService) {
-      close();
-    }
+    // The sharedManagementRegistry only contains management registries of normal entities.
+    // The management registry of NMS entities (which contains the statistics collector), 
+    // is not included inside the sharedManagementRegistry.
+    // This way, the statistic collector only collect statistics from the sharedManagementRegistry
+    // plus its parent registry from NMS entity, and will not collect inside any other registry
+    // created by other NMS entity
+    previous = (associatedToStatisticService ?
+        sharedManagementRegistry.find(consumerId) :
+        sharedManagementRegistry.findAndAdd(this)).orElse(null);
   }
 
   @Override
@@ -85,7 +90,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public boolean addManagementProvider(ManagementProvider<?> provider) {
-    LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass().getSimpleName());
+    LOGGER.trace("[{}] addManagementProvider({}) active={}", consumerId, provider.getClass().getSimpleName(), active);
     String name = provider.getCapabilityName();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       if (managementProvider.getCapabilityName().equals(name)) {
@@ -144,7 +149,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   @SuppressWarnings("unchecked")
   @Override
   public CompletableFuture<Void> register(Object managedObject) {
-    LOGGER.trace("[{}] register()", consumerId, managedObject);
+    LOGGER.trace("[{}] register() active={}", consumerId, active);
     List<CompletableFuture<Void>> futures = new ArrayList<>(managementProviders.size());
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
@@ -173,7 +178,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void refresh() {
-    LOGGER.trace("[{}] refresh()", consumerId);
+    LOGGER.trace("[{}] refresh() active={}", consumerId, active);
     Collection<? extends Capability> capabilities = getCapabilities();
     Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
     // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
@@ -196,19 +201,31 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
     return false;
   }
 
-  void clear() {
-    LOGGER.trace("[{}] clear()", consumerId);
+  @Override
+  public void close() {
+    LOGGER.trace("[{}] close() active={}", consumerId, active);
+    manageableServerComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryClose(this));
     managementProviders.forEach(ManagementProvider::close);
     managementProviders.clear();
+    topologyService.removeTopologyEventListener(this);
+    sharedManagementRegistry.remove(this);
   }
 
   @Override
-  public void close() {
-    LOGGER.trace("[{}] close()", consumerId);
-    manageableServerComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryClose(this));
-    clear();
-    topologyService.removeTopologyEventListener(this);
-    sharedManagementRegistry.removeManagementService(this);
+  public void cleanupPreviousPassiveStates() {
+    if (previous != null) {
+      LOGGER.trace("[{}] cleanupPreviousPassiveStates() active={}", consumerId, active);
+      previous.close();
+      previous = null;
+    }
   }
 
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("DefaultEntityManagementRegistry{");
+    sb.append("consumerId=").append(consumerId);
+    sb.append(", active=").append(active);
+    sb.append('}');
+    return sb.toString();
+  }
 }

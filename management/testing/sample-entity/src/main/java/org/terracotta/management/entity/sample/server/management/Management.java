@@ -65,6 +65,14 @@ public class Management implements Closeable {
     }
   }
 
+  public void reload() {
+    if (managementRegistry != null) {
+      LOGGER.trace("[{}] reload()", cacheName);
+      managementRegistry.cleanupPreviousPassiveStates();
+      init();
+    }
+  }
+
   public void serverCacheCreated(ServerCache cache) {
     if (managementRegistry != null) {
       LOGGER.trace("[{}] serverCacheCreated()", cacheName);

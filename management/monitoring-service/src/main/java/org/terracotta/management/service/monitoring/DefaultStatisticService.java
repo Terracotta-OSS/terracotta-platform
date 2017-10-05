@@ -17,7 +17,7 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.management.registry.CapabilityManagementSupport;
+import org.terracotta.management.registry.CombiningCapabilityManagementSupport;
 import org.terracotta.management.registry.collect.DefaultStatisticCollector;
 import org.terracotta.management.registry.collect.StatisticCollector;
 
@@ -52,19 +52,26 @@ class DefaultStatisticService implements StatisticService, Closeable {
       new ThreadPoolExecutor.AbortPolicy()
   ));
 
-  private final CapabilityManagementSupport capabilityManagementSupport;
+  private final SharedEntityManagementRegistry sharedEntityManagementRegistry;
 
-  DefaultStatisticService(CapabilityManagementSupport capabilityManagementSupport) {
-    this.capabilityManagementSupport = Objects.requireNonNull(capabilityManagementSupport);
+  DefaultStatisticService(SharedEntityManagementRegistry sharedEntityManagementRegistry) {
+    this.sharedEntityManagementRegistry = Objects.requireNonNull(sharedEntityManagementRegistry);
   }
 
   @Override
-  public StatisticCollector createStatisticCollector(StatisticCollector.Collector collector) {
-    LOGGER.trace("[0] createStatisticCollector()");
+  public StatisticCollector createStatisticCollector(EntityManagementRegistry statCollectorRegistry, StatisticCollector.Collector collector) {
+    long consumerId = statCollectorRegistry.getMonitoringService().getConsumerId();
+    LOGGER.trace("[{}] createStatisticCollector()", consumerId);
     return new DefaultStatisticCollector(
-        capabilityManagementSupport,
+        // Create a statistics collector which can collect stats over all management registries and only the registry combined.
+        // This will avoid collecting stats on a registry from another NMS entity that already has its own stat collector.
+        new CombiningCapabilityManagementSupport(sharedEntityManagementRegistry, statCollectorRegistry),
         managementScheduler,
-        collector
+        list -> {
+          // Add a marker on the statistics to know which statistics collector has collected them (from which NMS entity)
+          list.forEach(stats -> stats.setContext(stats.getContext().with("collectorId", "" + consumerId)));
+          collector.onStatistics(list);
+        }
     );
   }
 

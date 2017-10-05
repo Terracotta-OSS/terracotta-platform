@@ -26,6 +26,7 @@ import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
 
@@ -128,9 +129,24 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     switch (message.getType()) {
 
       case "NOTIFICATION":
-      case "STATISTICS":
         if (managementExecutor != null) {
           managementExecutor.sendMessageToClients(message);
+        }
+        break;
+
+      case "STATISTICS":
+        if (managementExecutor != null) {
+          String cid = "" + consumerId;
+          // The statistic collector collects all statistics from the shared management registry (entities)
+          // plus 1 management entity (which contains this collector).
+          // Here, we only accept groups of stats that are collected by the collector that have the same 
+          // consumerId (same NMS entity)
+          boolean accepted = message.unwrap(Contextual.class).stream()
+              .map(Contextual::getContext)
+              .anyMatch(context -> context.contains(Client.KEY) || context.contains("collectorId", cid));
+          if (accepted) {
+            managementExecutor.sendMessageToClients(message);
+          }
         }
         break;
 
@@ -194,4 +210,13 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     topologyService.removeTopologyEventListener(this);
     firingService.removeManagementService(this);
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("DefaultManagementService{");
+    sb.append("consumerId=").append(consumerId);
+    sb.append('}');
+    return sb.toString();
+  }
+
 }

@@ -377,10 +377,10 @@ public class VoltronMonitoringServiceTest {
     messages();
     
     clientMonitoringService.pushNotification(new FakeDesc("1-1"), new ContextualNotification(Context.empty(), "TYPE-1"));
-    clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty(), Collections.emptyMap()));
+    clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap()));
 
     activeDataListener.pushBestEffortsData(passive, TOPIC_SERVER_ENTITY_NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
-    activeDataListener.pushBestEffortsData(passive, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty(), Collections.emptyMap())});
+    activeDataListener.pushBestEffortsData(passive, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap())});
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION", "STATISTICS", "NOTIFICATION", "STATISTICS")));
