@@ -54,6 +54,7 @@ public interface LeaseMaintainer extends Closeable {
 
   /**
    * Destroys this lease maintainer and closes all associated resources <em>without interacting with the server</em>
+   * @throws IOException if an I/O error occurs
    */
   void destroy() throws IOException;
 }

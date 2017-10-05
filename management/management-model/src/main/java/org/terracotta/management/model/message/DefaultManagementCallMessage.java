@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.model.message;
 
-import org.terracotta.management.model.Objects;
+import java.util.Objects;
 import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 

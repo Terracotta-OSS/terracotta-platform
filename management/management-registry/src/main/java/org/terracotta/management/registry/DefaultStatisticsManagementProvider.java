@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 @StatisticProvider
@@ -36,7 +37,7 @@ public class DefaultStatisticsManagementProvider<T> extends AbstractManagementPr
   @SuppressWarnings("unchecked")
   public DefaultStatisticsManagementProvider(Class<T> type, Context parentContext) {
     super(type);
-    this.parentContext = org.terracotta.management.model.Objects.requireNonNull(parentContext);
+    this.parentContext = Objects.requireNonNull(parentContext);
   }
 
   @SuppressWarnings("unchecked")

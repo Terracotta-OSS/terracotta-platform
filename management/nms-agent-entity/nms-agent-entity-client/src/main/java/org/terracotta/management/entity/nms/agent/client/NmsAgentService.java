@@ -21,7 +21,7 @@ import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.management.entity.nms.agent.ReconnectData;
 import org.terracotta.management.entity.nms.agent.client.diag.DiagnosticProvider;
 import org.terracotta.management.entity.nms.agent.client.diag.DiagnosticUtility;
-import org.terracotta.management.model.Objects;
+import java.util.Objects;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;

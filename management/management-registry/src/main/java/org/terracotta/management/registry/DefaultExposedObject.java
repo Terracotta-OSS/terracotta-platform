@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import org.terracotta.management.model.Objects;
+import java.util.Objects;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
 

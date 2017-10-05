@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
-import org.terracotta.management.model.Objects;
+import java.util.Objects;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayOutputStream;

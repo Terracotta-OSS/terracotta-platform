@@ -28,6 +28,7 @@ import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.MessageListener;
@@ -273,6 +274,11 @@ public class EndToEndTest {
     @Override
     public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> blockGetOnRetire(boolean shouldBlock) {
       return this;
+    }
+
+    @Override
+    public InvokeFuture<ProxyEntityResponse> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
+      return null;
     }
 
     @Override
