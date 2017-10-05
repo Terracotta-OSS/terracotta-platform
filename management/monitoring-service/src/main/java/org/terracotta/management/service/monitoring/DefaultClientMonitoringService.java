@@ -21,6 +21,8 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.cluster.Client;
+import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
@@ -49,7 +51,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   private final DefaultFiringService firingService;
   private final ClientCommunicator clientCommunicator;
   private final TopologyService topologyService;
-  private final Map<ClientDescriptor, Context> manageableClients = new ConcurrentHashMap<>();
+  private final Map<ClientIdentifier, ClientDescriptor> manageableClients = new ConcurrentHashMap<>();
 
   DefaultClientMonitoringService(long consumerId, TopologyService topologyService, DefaultFiringService firingService, ClientCommunicator clientCommunicator) {
     this.consumerId = consumerId;
@@ -83,14 +85,16 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
 
   @Override
   public void exposeManagementRegistry(ClientDescriptor from, ContextContainer contextContainer, Capability... capabilities) {
-    if(LOGGER.isTraceEnabled()) {
+    if (LOGGER.isTraceEnabled()) {
       List<String> names = Stream.of(capabilities).map(Capability::getName).collect(Collectors.toList());
       LOGGER.trace("[{}] exposeManagementRegistry({}, {})", consumerId, from, names);
     }
     ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
     newRegistry.addCapabilities(capabilities);
-    topologyService.willSetClientManagementRegistry(consumerId, from, newRegistry)
-        .thenAccept(context -> manageableClients.put(from, context));
+    topologyService.willSetClientManagementRegistry(consumerId, from, newRegistry);
+    topologyService.getClientIdentifier(consumerId, from)
+        .thenAccept(clientIdentifier -> manageableClients.put(clientIdentifier, from));
+
   }
 
   @Override
@@ -108,7 +112,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   @Override
   public void onUnfetch(long consumerId, ClientDescriptor clientDescriptor) {
     if (consumerId == this.consumerId) {
-      if (manageableClients.remove(clientDescriptor) != null) {
+      if (manageableClients.entrySet().removeIf(e -> e.getValue().equals(clientDescriptor))) {
         LOGGER.trace("[{}] onUnfetch({})", this.consumerId, clientDescriptor);
       }
     }
@@ -119,9 +123,12 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
 
       case "MANAGEMENT_CALL":
         Context context = message.unwrap(Contextual.class).get(0).getContext();
-        for (Map.Entry<ClientDescriptor, Context> entry : manageableClients.entrySet()) {
-          if (context.contains(entry.getValue())) {
-            send(entry.getKey(), message);
+        String clientId = context.get(Client.KEY);
+        if (clientId != null) {
+          ClientIdentifier clientIdentifier = ClientIdentifier.valueOf(clientId);
+          ClientDescriptor clientDescriptor = manageableClients.get(clientIdentifier);
+          if (clientDescriptor != null) {
+            send(clientDescriptor, message);
           }
         }
         break;
