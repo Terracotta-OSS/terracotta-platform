@@ -17,7 +17,7 @@ package org.terracotta.management.registry.collect;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.management.model.Objects;
+import java.util.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.CapabilityManagement;

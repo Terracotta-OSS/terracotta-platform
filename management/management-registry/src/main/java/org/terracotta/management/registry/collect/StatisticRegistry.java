@@ -21,7 +21,7 @@ import org.terracotta.context.extended.OperationStatisticDescriptor;
 import org.terracotta.context.extended.ValueStatisticDescriptor;
 import org.terracotta.context.query.Matcher;
 import org.terracotta.context.query.Matchers;
-import org.terracotta.management.model.Objects;
+import java.util.Objects;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.statistics.OperationStatistic;
 import org.terracotta.statistics.ValueStatistic;

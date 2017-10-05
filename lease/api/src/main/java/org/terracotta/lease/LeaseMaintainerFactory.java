@@ -39,8 +39,6 @@ public class LeaseMaintainerFactory {
    *
    * @param connection the connection on which leases should be maintained
    * @return the LeaseMaintainer that will maintain leases on the connection
-   * @throws LeaseException if the LeaseMaintainer could not be created - probably because the LeaseAcquirer entity is
-   * not correctly installed.
    */
   public static LeaseMaintainer createLeaseMaintainer(Connection connection) {
     LOGGER.info("Creating LeaseMaintainer for connection: " + connection);

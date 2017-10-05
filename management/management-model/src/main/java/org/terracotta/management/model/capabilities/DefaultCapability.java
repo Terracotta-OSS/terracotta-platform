@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.model.capabilities;
 
-import org.terracotta.management.model.Objects;
+import java.util.Objects;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 
