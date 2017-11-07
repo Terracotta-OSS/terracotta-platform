@@ -1,46 +1,5 @@
 [
   {
-    "attributes": {},
-    "context": {
-      "stripeId": "SINGLE",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
-      "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
-      "entityName": "TopologyIT",
-      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
-      "consumerId": "2"
-    },
-    "type": "SERVER_ENTITY_CREATED"
-  },
-  {
-    "attributes": {},
-    "context": {
-      "stripeId": "SINGLE",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
-      "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
-      "entityName": "TopologyIT",
-      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
-      "consumerId": "2"
-    },
-    "type": "ENTITY_REGISTRY_AVAILABLE"
-  },
-  {
-    "attributes": {
-      "clientId": "0@127.0.0.1:TopologyIT:<uuid>"
-    },
-    "context": {
-      "stripeId": "SINGLE",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
-      "entityId": "TopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
-      "entityName": "TopologyIT",
-      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
-      "consumerId": "2"
-    },
-    "type": "SERVER_ENTITY_FETCHED"
-  },
-  {
     "attributes": {
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
     },

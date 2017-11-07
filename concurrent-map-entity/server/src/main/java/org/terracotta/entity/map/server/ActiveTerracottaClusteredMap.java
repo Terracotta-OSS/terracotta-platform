@@ -15,6 +15,7 @@
  */
 package org.terracotta.entity.map.server;
 
+import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -62,8 +63,10 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
   }
 
   @Override
-  public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
+  public ActiveServerEntity.ReconnectHandler startReconnect() {
+    return (ClientDescriptor clientDescriptor, byte[] extendedReconnectData)->{
     // Do nothing.
+    };
   }
 
   @Override
@@ -71,7 +74,7 @@ public class ActiveTerracottaClusteredMap implements ActiveServerEntity<MapOpera
   }
 
   @Override
-  public MapResponse invoke(ClientDescriptor clientDescriptor, MapOperation input) {
+  public MapResponse invokeActive(ActiveInvokeContext<MapResponse> context, MapOperation input) {
     MapResponse response;
     
     switch (input.operationType()) {

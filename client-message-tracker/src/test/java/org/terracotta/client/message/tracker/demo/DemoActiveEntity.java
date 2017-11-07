@@ -75,8 +75,10 @@ public class DemoActiveEntity implements ActiveServerEntity {
   }
 
   @Override
-  public void handleReconnect(ClientDescriptor clientDescriptor, byte[] bytes) {
+  public ActiveServerEntity.ReconnectHandler startReconnect() {
+    return (ClientDescriptor clientDescriptor, byte[] bytes)->{
     //no-op
+    };
   }
 
   @Override

@@ -64,7 +64,6 @@ public class DiagnosticIT extends AbstractSingleTest {
       // ActiveNmsServerEntity / PassiveNmsServerEntity
       assertThat(dump, containsString("consumerId="));
       assertThat(dump, containsString("stripeName="));
-      assertThat(dump, containsString("messageQueueSize="));
       
       // OffHeapResourcesProvider
       assertThat(dump, containsString("capacity="));

@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
@@ -33,6 +35,7 @@ import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
+import org.terracotta.management.model.cluster.AbstractManageableNode;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -62,6 +65,8 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class AbstractTest {
 
+  protected Logger logger = LoggerFactory.getLogger(getClass());
+  
   private final ObjectMapper mapper = new ObjectMapper().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 
   private Connection managementConnection;
@@ -186,7 +191,7 @@ public abstract class AbstractTest {
     this.nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
   }
 
-  protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws Exception {
+  protected void queryAllRemoteStatsUntil(Predicate<List<? extends ContextualStatistics>> test) throws InterruptedException {
     List<? extends ContextualStatistics> statistics;
     do {
       statistics = nmsService.readMessages()
@@ -242,10 +247,14 @@ public abstract class AbstractTest {
   }
 
   protected void triggerServerStatComputation(NmsService nmsService, String entityName, long interval, TimeUnit unit) throws Exception {
+    logger.info("triggerServerStatComputation({}, {}, {})", entityName, interval, unit);
     // trigger stats computation and wait for all stats to have been computed at least once
-    CompletableFuture.allOf(nmsService.readTopology()
+    org.terracotta.management.model.cluster.Cluster topology = nmsService.readTopology();
+    logger.trace("topology:\n{}", toJson(topology.toMap()));
+    CompletableFuture.allOf(topology
         .serverEntityStream()
         .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE) && e.getName().equals(entityName))
+        .filter(AbstractManageableNode::isManageable)
         .map(ServerEntity::getContext)
         .map(context -> {
           try {
@@ -263,10 +272,14 @@ public abstract class AbstractTest {
   }
 
   protected void triggerClientStatComputation(long interval, TimeUnit unit) throws Exception {
+    logger.info("triggerClientStatComputation({}, {})", interval, unit);
     // trigger stats computation and wait for all stats to have been computed at least once
-    CompletableFuture.allOf(nmsService.readTopology()
+    org.terracotta.management.model.cluster.Cluster topology = nmsService.readTopology();
+    logger.trace("topology:\n{}", toJson(topology.toMap()));
+    CompletableFuture.allOf(topology
         .clientStream()
         .filter(client -> client.getName().equals("pet-clinic"))
+        .filter(AbstractManageableNode::isManageable)
         .map(client -> client.getContext().with("appName", "pet-clinic"))
         .map(context -> {
           try {
@@ -281,16 +294,21 @@ public abstract class AbstractTest {
 
   protected List<ContextualNotification> waitForAllNotifications(String... notificationTypes) throws InterruptedException {
     List<String> waitingFor = new ArrayList<>(Arrays.asList(notificationTypes));
-    return nmsService.waitForMessage(message -> {
-      if (message.getType().equals("NOTIFICATION")) {
-        for (ContextualNotification notification : message.unwrap(ContextualNotification.class)) {
-          waitingFor.remove(notification.getType());
+    try {
+      return nmsService.waitForMessage(message -> {
+        if (message.getType().equals("NOTIFICATION")) {
+          for (ContextualNotification notification : message.unwrap(ContextualNotification.class)) {
+            waitingFor.remove(notification.getType());
+          }
         }
-      }
-      return waitingFor.isEmpty();
-    }).stream()
-        .filter(message -> message.getType().equals("NOTIFICATION"))
-        .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-        .collect(Collectors.toList());
+        return waitingFor.isEmpty();
+      }).stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .collect(Collectors.toList());
+    } catch (InterruptedException e) {
+      System.err.println("STILL WAITING FOR: " + waitingFor);
+      throw e;
+    }
   }
 }

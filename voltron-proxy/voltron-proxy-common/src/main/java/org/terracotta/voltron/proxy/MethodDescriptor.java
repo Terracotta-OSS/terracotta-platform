@@ -26,7 +26,6 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mathieu Carbou
@@ -39,9 +38,7 @@ public final class MethodDescriptor {
   private final Async.Ack ack;
   private final ExecutionStrategy.Location location;
   private final int concurrencyKey;
-  private final long delayMs;
-  private final long frequencyMs;
-
+  
   private MethodDescriptor(Method method) {
     this.method = method;
 
@@ -70,20 +67,6 @@ public final class MethodDescriptor {
     // @ConcurrencyStrategy
     ConcurrencyStrategy concurrencyStrategy = method.getAnnotation(ConcurrencyStrategy.class);
     concurrencyKey = concurrencyStrategy == null ? ConcurrencyStrategy.MANAGEMENT_KEY : concurrencyStrategy.key();
-
-    EntityMessenger.Delayed delayed = method.getAnnotation(EntityMessenger.Delayed.class);
-    delayMs = delayed == null ? -1 : delayed.value() > 0 ? TimeUnit.MILLISECONDS.convert(delayed.value(), delayed.unit()) : -1;
-
-    EntityMessenger.Frequency frequency = method.getAnnotation(EntityMessenger.Frequency.class);
-    frequencyMs = frequency == null ? -1 : frequency.value() > 0 ? TimeUnit.MILLISECONDS.convert(frequency.value(), frequency.unit()) : -1;
-  }
-
-  public long getDelayMs() {
-    return delayMs;
-  }
-
-  public long getFrequencyMs() {
-    return frequencyMs;
   }
 
   public int getConcurrencyKey() {

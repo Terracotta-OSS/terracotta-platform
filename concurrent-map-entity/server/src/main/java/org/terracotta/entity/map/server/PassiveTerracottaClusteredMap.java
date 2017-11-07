@@ -16,6 +16,7 @@
 package org.terracotta.entity.map.server;
 
 import org.omg.CORBA.Object;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.map.common.MapOperation;
 import org.terracotta.entity.map.common.MapResponse;
@@ -31,7 +32,7 @@ class PassiveTerracottaClusteredMap implements PassiveServerEntity<MapOperation,
   private final ConcurrentMap<Object, Object> map = new ConcurrentHashMap<Object, Object>();
 
   @Override
-  public void invoke(MapOperation message) {
+  public void invokePassive(InvokeContext context, MapOperation message) {
     // do assign received map to instance map
     // or append content if message is an operation
   }

@@ -17,7 +17,6 @@ package org.terracotta.management.entity.nms.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.nms.Nms;
 import org.terracotta.management.model.call.ContextualCall;
@@ -74,13 +73,10 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
   // NmsCallback
   
   @Override
-  public void entityCallbackToExecuteManagementCall(String managementCallIdentifier, ContextualCall<?> call) {
+  public void executeManagementCallOnPassive(String managementCallIdentifier, ContextualCall<?> call) {
     String serverName = call.getContext().get(Server.NAME_KEY);
-    if (serverName == null) {
-      throw new IllegalArgumentException("Bad context: " + call.getContext());
-    }
     if (entityManagementRegistry.getMonitoringService().getServerName().equals(serverName)) {
-      LOGGER.trace("[{}] entityCallbackToExecuteManagementCall({}, {}, {}, {})", entityManagementRegistry.getMonitoringService().getConsumerId(), managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
+      LOGGER.trace("[{}] executeManagementCallOnPassive({}, {}, {}, {})", entityManagementRegistry.getMonitoringService().getConsumerId(), managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
       ContextualReturn<?> contextualReturn = capabilityManagementSupport.withCapability(call.getCapability())
           .call(call.getMethodName(), call.getReturnType(), call.getParameters())
           .on(call.getContext())
@@ -91,16 +87,6 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
         entityManagementRegistry.getMonitoringService().answerManagementCall(managementCallIdentifier, contextualReturn);  
       }
     }
-  }
-
-  @Override
-  public void unSchedule() {
-    throw new UnsupportedOperationException("Cannot be called on a passive server");
-  }
-
-  @Override
-  public IEntityMessenger.ScheduledToken entityCallbackToSendMessagesToClients() {
-    throw new UnsupportedOperationException("Cannot be called on a passive server");
   }
 
   // Nms

@@ -86,16 +86,13 @@ public class FailoverIT extends AbstractHATest {
   @Test
   public void notifications_after_failover() throws Exception {
     // read messages
-    List<ContextualNotification> collected = waitForAllNotifications("SERVER_JOINED", "SERVER_STATE_CHANGED",
-        "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE",
-        "CLIENT_CONNECTED",
+    List<ContextualNotification> collected = waitForAllNotifications(
         "SERVER_ENTITY_FETCHED",
         "CLIENT_TAGS_UPDATED", "CLIENT_REGISTRY_AVAILABLE", "CLIENT_RECONNECTED",
         "CLIENT_ATTACHED");
-    
-    ContextualNotification stateChanged = collected.stream().filter(contextualNotification -> contextualNotification.getType().equals("SERVER_STATE_CHANGED")).findFirst().get();
-    assertThat(stateChanged.getAttributes().get("state"), equalTo("ACTIVE"));
-    assertThat(stateChanged.getContext().get(Server.NAME_KEY), equalTo(oldPassive.getServerName()));
+
+    String newActiveName = nmsService.readTopology().getSingleStripe().getActiveServer().get().getServerName();
+    assertThat(newActiveName, equalTo(oldPassive.getServerName()));
   }
 
   @Test

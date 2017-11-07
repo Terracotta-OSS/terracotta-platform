@@ -37,6 +37,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.ReconnectRejectedException;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ActiveLeaseAcquirerTest {
@@ -108,7 +109,11 @@ public class ActiveLeaseAcquirerTest {
   public void tellsServiceAboutReconnectionStarting() {
     ActiveLeaseAcquirer leaseAcquirer = new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
     leaseAcquirer.connected(clientDescriptor);
-    leaseAcquirer.handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+    try {
+      leaseAcquirer.startReconnect().handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+    } catch (ReconnectRejectedException reject) {
+      
+    }
 
     verify(leaseService).reconnecting(clientDescriptor);
     verifyNoMoreInteractions(leaseService);
@@ -120,7 +125,11 @@ public class ActiveLeaseAcquirerTest {
   public void tellsServiceAboutReconnectionFinishing() throws Exception {
     ActiveLeaseAcquirer leaseAcquirer = new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
     leaseAcquirer.connected(clientDescriptor);
-    leaseAcquirer.handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+    try {
+      leaseAcquirer.startReconnect().handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+    } catch (ReconnectRejectedException reject) {
+      
+    }
     verify(leaseService).reconnecting(clientDescriptor);
 
     LeaseMessage selfMessage = selfMessageCaptor.getValue();
@@ -135,7 +144,11 @@ public class ActiveLeaseAcquirerTest {
   @Test
   public void rejectsLeaseRequestsSentOnOldConnections() throws Exception {
     ActiveLeaseAcquirer leaseAcquirer = new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
-    leaseAcquirer.handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+    try {
+      leaseAcquirer.startReconnect().handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+    } catch (ReconnectRejectedException reject) {
+      
+    }
     LeaseRequestResult response = (LeaseRequestResult) leaseAcquirer.invokeActive(context, new LeaseRequest(0));
 
     assertFalse(response.isConnectionGood());
