@@ -15,8 +15,8 @@
   <servers>
 <#list servers as server>
     <server host="${server.host}" name="${server.name}">
-      <tsa-port>${server.tsaPort}</tsa-port>
-      <tsa-group-port>${server.tsaGroupPort}</tsa-group-port>
+      <tsa-port>${server.port}</tsa-port>
+      <tsa-group-port>${server.groupPort}</tsa-group-port>
     </server>
 </#list>
     <client-reconnect-window>${clientReconnectWindow}</client-reconnect-window>

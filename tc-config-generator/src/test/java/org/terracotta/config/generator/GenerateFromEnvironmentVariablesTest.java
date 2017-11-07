@@ -52,39 +52,39 @@ public class GenerateFromEnvironmentVariablesTest {
   public void createModelFromMapVariables_all_good() throws Exception {
 
     Map<String, String> map =  new HashMap<>();
-    map.put("TC_CONFIG_SERVERS0_NAME", "server11");
-    map.put("TC_CONFIG_SERVERS0_HOST", "server11");
-    map.put("TC_CONFIG_SERVERS0_TSA_PORT", "9410");
-    map.put("TC_CONFIG_SERVERS0_TSA_GROUP_PORT", "9430");
-    map.put("TC_CONFIG_SERVERS1_NAME", "server12");
-    map.put("TC_CONFIG_SERVERS1_HOST", "server12");
-    map.put("TC_CONFIG_SERVERS1_TSA_PORT", "9410");
-    map.put("TC_CONFIG_SERVERS1_TSA_GROUP_PORT", "9430");
-    map.put("TC_CONFIG_OFFHEAPS0_NAME", "offheap1");
-    map.put("TC_CONFIG_OFFHEAPS0_UNIT", "MB");
-    map.put("TC_CONFIG_OFFHEAPS0_VALUE", "512");
-    map.put("TC_CONFIG_OFFHEAPS1_NAME", "offheap2");
-    map.put("TC_CONFIG_OFFHEAPS1_UNIT", "GB");
-    map.put("TC_CONFIG_OFFHEAPS1_VALUE", "10");
-    map.put("TC_CONFIG_CLIENT_RECONNECT_WINDOW", "150");
+    map.put("TCCONFIG_SERVERS0_NAME", "server11");
+    map.put("TCCONFIG_SERVERS0_HOST", "server11");
+    map.put("TCCONFIG_SERVERS0_PORT", "9410");
+    map.put("TCCONFIG_SERVERS0_GROUP_PORT", "9430");
+    map.put("TCCONFIG_SERVERS1_NAME", "server12");
+    map.put("TCCONFIG_SERVERS1_HOST", "server12");
+    map.put("TCCONFIG_SERVERS1_PORT", "9410");
+    map.put("TCCONFIG_SERVERS1_GROUP_PORT", "9430");
+    map.put("TCCONFIG_OFFHEAPS0_NAME", "offheap1");
+    map.put("TCCONFIG_OFFHEAPS0_UNIT", "MB");
+    map.put("TCCONFIG_OFFHEAPS0_VALUE", "512");
+    map.put("TCCONFIG_OFFHEAPS1_NAME", "offheap2");
+    map.put("TCCONFIG_OFFHEAPS1_UNIT", "GB");
+    map.put("TCCONFIG_OFFHEAPS1_VALUE", "10");
+    map.put("TCCONFIG_CLIENT_RECONNECT_WINDOW", "150");
 
     Configuration configuration = createTemplateConfiguration();
     GenerateFromEnvironmentVariables generateFromEnvironmentVariables = new GenerateFromEnvironmentVariables(configuration);
-    Map<String, Object> root = generateFromEnvironmentVariables.retrieveNamesWithPrefix(map, GenerateFromEnvironmentVariables.TC_CONFIG_);
+    Map<String, Object> root = generateFromEnvironmentVariables.retrieveNamesWithPrefix(map, GenerateFromEnvironmentVariables.TCCONFIG_);
 
     Map expected = new TreeMap();
     expected.put("servers", new ArrayList(){{
       add(new TreeMap() {{
         put("name", "server11");
         put("host", "server11");
-        put("tsaPort", "9410");
-        put("tsaGroupPort", "9430");
+        put("port", "9410");
+        put("groupPort", "9430");
       }});
       add(new TreeMap() {{
         put("name", "server12");
         put("host", "server12");
-        put("tsaPort", "9410");
-        put("tsaGroupPort", "9430");
+        put("port", "9410");
+        put("groupPort", "9430");
       }});
     }});
     expected.put("offheaps", new ArrayList(){{
@@ -111,14 +111,14 @@ public class GenerateFromEnvironmentVariablesTest {
       add(new TreeMap() {{
         put("name", "server11");
         put("host", "server11");
-        put("tsaPort", "9410");
-        put("tsaGroupPort", "9430");
+        put("port", "9410");
+        put("groupPort", "9430");
       }});
       add(new TreeMap() {{
         put("name", "server12");
         put("host", "server12");
-        put("tsaPort", "9410");
-        put("tsaGroupPort", "9430");
+        put("port", "9410");
+        put("groupPort", "9430");
       }});
     }});
     root.put("offheaps", new ArrayList(){{

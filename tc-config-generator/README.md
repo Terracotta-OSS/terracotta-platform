@@ -5,18 +5,18 @@ This module can generate a tc-config file from a bunch of environment variables.
 ## Example
 For example, given the following environment variables :
 ```
-export TC_CONFIG_SERVERS0_NAME=server11
-export TC_CONFIG_SERVERS0_HOST=server11
-export TC_CONFIG_SERVERS0_TSA_PORT=9410
-export TC_CONFIG_SERVERS0_TSA_GROUP_PORT=9430
-export TC_CONFIG_SERVERS1_NAME=server12
-export TC_CONFIG_SERVERS1_HOST=server12
-export TC_CONFIG_SERVERS1_TSA_PORT=9410
-export TC_CONFIG_SERVERS1_TSA_GROUP_PORT=9430
-export TC_CONFIG_OFFHEAPS0_NAME=offheap1
-export TC_CONFIG_OFFHEAPS0_UNIT=MB
-export TC_CONFIG_OFFHEAPS0_VALUE=512
-export TC_CONFIG_CLIENT_RECONNECT_WINDOW=150
+export TCCONFIG_SERVERS0_NAME=server11
+export TCCONFIG_SERVERS0_HOST=server11
+export TCCONFIG_SERVERS0_PORT=9410
+export TCCONFIG_SERVERS0_GROUP_PORT=9430
+export TCCONFIG_SERVERS1_NAME=server12
+export TCCONFIG_SERVERS1_HOST=server12
+export TCCONFIG_SERVERS1_PORT=9410
+export TCCONFIG_SERVERS1_GROUP_PORT=9430
+export TCCONFIG_OFFHEAPS0_NAME=offheap1
+export TCCONFIG_OFFHEAPS0_UNIT=MB
+export TCCONFIG_OFFHEAPS0_VALUE=512
+export TCCONFIG_CLIENT_RECONNECT_WINDOW=150
 ```
 
 and template :
@@ -84,7 +84,7 @@ and end up with a tc-config-generated.xml file, with the following content :
 
 The tc-config-generator is based on a template engine (Apache Freemarker); it then allows you to provide any Freemarker based template.
 
-When you start it, it will parse environment variables (using the TC_CONFIG_ prefix) and convert them into camel-case variables before feeding the template engine.
-In the previous example, TC_CONFIG_CLIENT_RECONNECT_WINDOW was fed into the template engine as clientReconnectWindow.
+When you start it, it will parse environment variables (using the TCCONFIG_ prefix) and convert them into camel-case variables before feeding the template engine.
+In the previous example, TCCONFIG_CLIENT_RECONNECT_WINDOW was fed into the template engine as clientReconnectWindow.
 
-Also, lists are supported as well, using indexed environment variables : TC_CONFIG_SERVERS0_HOST indicates that a list named "servers" with a map containing a key named "host" shall be fed to the template engine.
+Also, lists are supported as well, using indexed environment variables : TCCONFIG_SERVERS0_HOST indicates that a list named "servers" with a map containing a key named "host" shall be fed to the template engine.

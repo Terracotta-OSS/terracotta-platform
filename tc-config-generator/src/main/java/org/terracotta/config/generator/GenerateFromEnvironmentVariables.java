@@ -28,7 +28,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -38,7 +37,7 @@ import java.util.regex.Pattern;
 public class GenerateFromEnvironmentVariables {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GenerateFromEnvironmentVariables.class);
-  static final String TC_CONFIG_ = "TC_CONFIG_";
+  static final String TCCONFIG_ = "TCCONFIG_";
   private static final String GENERIC_ERROR_MESSAGE = "You should call the tc-config-generator with exactly four arguments.\n" +
       "Examples : \n" +
       "java -jar tc-config-generator -i /Users/anthony/tc-template.ftlh -o /Users/anthony/tc-config.xml";
@@ -74,20 +73,22 @@ public class GenerateFromEnvironmentVariables {
     }
     File outputFile = new File(args[3]);
 
+    String tcConfigGeneratorPrefix = System.getProperty("tcConfigGeneratorPrefix", TCCONFIG_);
+
     Map<String, String> envMap = System.getenv();
-    if (envMap.keySet().stream().anyMatch(s -> s.startsWith(TC_CONFIG_))) {
+    if (envMap.keySet().stream().anyMatch(s -> s.startsWith(tcConfigGeneratorPrefix))) {
       LOGGER.info("We found the following relevant environment variables : ");
-      envMap.keySet().stream().filter(s -> s.startsWith(TC_CONFIG_)).forEach(key -> {
+      envMap.keySet().stream().filter(s -> s.startsWith(tcConfigGeneratorPrefix)).forEach(key -> {
         LOGGER.info(key);
       });
     }
     else {
-      LOGGER.warn("Please make sure you provided environment variables starting with " + TC_CONFIG_);
+      LOGGER.warn("Please make sure you provided environment variables starting with " + tcConfigGeneratorPrefix);
     }
 
     Configuration templateConfiguration = createTemplateConfiguration(inputFile.getParentFile());
     GenerateFromEnvironmentVariables generateFromEnvironmentVariables = new GenerateFromEnvironmentVariables(templateConfiguration);
-    Map<String, Object> root = generateFromEnvironmentVariables.retrieveNamesWithPrefix(envMap, TC_CONFIG_);
+    Map<String, Object> root = generateFromEnvironmentVariables.retrieveNamesWithPrefix(envMap, tcConfigGeneratorPrefix);
     generateFromEnvironmentVariables.generateXmlFile(root, inputFile.getName(), new FileWriter(outputFile));
     LOGGER.info("Successfully generated " + args[3]);
   }
