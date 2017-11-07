@@ -15,310 +15,143 @@
  */
 package org.terracotta.config.generator;
 
+import freemarker.cache.FileTemplateLoader;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.service.ExtendedConfigParser;
-import org.terracotta.config.service.ServiceConfigParser;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.util.AbstractMap;
+import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
-
 
 public class GenerateFromEnvironmentVariables {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GenerateFromEnvironmentVariables.class);
+  static final String TC_CONFIG_ = "TC_CONFIG_";
+  private static final String GENERIC_ERROR_MESSAGE = "You should call the tc-config-generator with exactly four arguments.\n" +
+      "Examples : \n" +
+      "java -jar tc-config-generator -i /Users/anthony/tc-template.ftlh -o /Users/anthony/tc-config.xml";
 
-  public static final String CLIENT_RECONNECT_WINDOW = "CLIENT_RECONNECT_WINDOW";
-  public static final String PLATFORM_PERSISTENCE = "PLATFORM_PERSISTENCE";
-  public static final String OFFHEAP_UNIT = "OFFHEAP_UNIT";
-  public static final String LEASE_LENGTH = "LEASE_LENGTH";
-  public static final String TC_SERVER = "TC_SERVER";
-  public static final String DATA_DIRECTORY = "DATA_DIRECTORY";
+  private Configuration configuration;
 
-  public static final String OFFHEAP_NAMESPACE = "http://www.terracotta.org/config/offheap-resource";
-  public static final String LEASE_NAMESPACE = "http://www.terracotta.org/service/lease";
-  public static final String BACKUP_NAMESPACE = "http://www.terracottatech.com/config/backup-restore";
-  public static final String DATAROOTS_NAMESPACE = "http://www.terracottatech.com/config/data-roots";
-
-  private List<String> supportedNamespacesPaths = new ArrayList<>();
-
-  public GenerateFromEnvironmentVariables(List<String> supportedConfigurations) {
-    this.supportedNamespacesPaths = supportedConfigurations;
+  public GenerateFromEnvironmentVariables(Configuration configuration) {
+    this.configuration = configuration;
   }
 
-  public static void main(String[] args) {
+  private static Configuration createTemplateConfiguration(File baseDir) throws IOException {
+    Configuration configuration = new Configuration(Configuration.VERSION_2_3_26);
+    configuration.setTemplateLoader(new FileTemplateLoader(baseDir));
+    configuration.setDefaultEncoding("UTF-8");
+    configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+    configuration.setLogTemplateExceptions(false);
+    return configuration;
+  }
 
-    List<String> supportedConfigurations = detectSupportedConfigurations();
-    LOGGER.info("This Terracotta Server distribution supports those optional configuration namespaces : \n{}", supportedConfigurations);
+  public static void main(String[] args) throws IOException, TemplateException {
+    if (args.length != 4) {
+      LOGGER.error("Wrong number of arguments : \n" + GENERIC_ERROR_MESSAGE);
+      System.exit(40);
+    }
+    if (!args[0].equals("-i") || !args[2].equals("-o")) {
+      LOGGER.error("Wrong arguments : \n" + GENERIC_ERROR_MESSAGE);
+      System.exit(40);
+    }
+    File inputFile = new File(args[1]);
+    if (!inputFile.exists() || !inputFile.isFile()) {
+      LOGGER.error("Please check your input file path\n" + GENERIC_ERROR_MESSAGE);
+      System.exit(40);
+    }
+    File outputFile = new File(args[3]);
 
     Map<String, String> envMap = System.getenv();
-    GenerateFromEnvironmentVariables generateFromEnvironmentVariables = new GenerateFromEnvironmentVariables(supportedConfigurations);
-    ConfigurationModel configurationModel = generateFromEnvironmentVariables.createModelFromMapVariables(envMap);
-    generateFromEnvironmentVariables.generateXml(configurationModel, "./");
+    if (envMap.keySet().stream().anyMatch(s -> s.startsWith(TC_CONFIG_))) {
+      LOGGER.info("We found the following relevant environment variables : ");
+      envMap.keySet().stream().filter(s -> s.startsWith(TC_CONFIG_)).forEach(key -> {
+        LOGGER.info(key);
+      });
+    }
+    else {
+      LOGGER.warn("Please make sure you provided environment variables starting with " + TC_CONFIG_);
+    }
+
+    Configuration templateConfiguration = createTemplateConfiguration(inputFile.getParentFile());
+    GenerateFromEnvironmentVariables generateFromEnvironmentVariables = new GenerateFromEnvironmentVariables(templateConfiguration);
+    Map<String, Object> root = generateFromEnvironmentVariables.retrieveNamesWithPrefix(envMap, TC_CONFIG_);
+    generateFromEnvironmentVariables.generateXmlFile(root, inputFile.getName(), new FileWriter(outputFile));
+    LOGGER.info("Successfully generated " + args[3]);
   }
 
-  static List<String> detectSupportedConfigurations() {
-    List<String> supportedNamespacesPaths = new ArrayList<>();
-    ClassLoader loader = Thread.currentThread().getContextClassLoader();
-    for (ServiceConfigParser parser : loadServiceConfigurationParserClasses(loader)) {
-      supportedNamespacesPaths.add(parser.getNamespace().toString());
-    }
-    for (ExtendedConfigParser parser : loadConfigurationParserClasses(loader)) {
-      supportedNamespacesPaths.add(parser.getNamespace().toString());
-    }
-    return supportedNamespacesPaths;
+  void generateXmlFile(Map<String, Object> root, String inputFileName, Writer output) throws IOException, TemplateException {
+    Template template = configuration.getTemplate(inputFileName);
+    template.process(root, output);
   }
 
-  ConfigurationModel createModelFromMapVariables(Map<String, String> envMap) throws IllegalArgumentException {
-    ConfigurationModel configurationModel = new ConfigurationModel();
-
-    if(supportedNamespacesPaths.contains(DATAROOTS_NAMESPACE)) {
-      retrieveAndSetPlatformPersistence(configurationModel, envMap);
-      configurationModel.getDataDirectories().addAll(retrieveNamesWithPrefix(envMap, DATA_DIRECTORY));
-    }
-    if(supportedNamespacesPaths.contains(BACKUP_NAMESPACE)) {
-      configurationModel.setBackups(true);
-    }
-    if(supportedNamespacesPaths.contains(LEASE_NAMESPACE)) {
-      retrieveAndSetLeaseLength(configurationModel, envMap);
-    }
-    if(supportedNamespacesPaths.contains(OFFHEAP_NAMESPACE)) {
-      retrieveAndSetOffheapUnit(configurationModel, envMap);
-      retrieveAndSetOffHeapResources(configurationModel, envMap);
-    }
-
-    retrieveAndSetClientReconnectWindow(configurationModel, envMap);
-    configurationModel.getServerNames().addAll(retrieveNamesWithPrefix(envMap, TC_SERVER));
-    return configurationModel;
-
-  }
-
-  private List<String> retrieveNamesWithPrefix(Map<String, String> envMap, String envVariablePrefix) {
-    Map<Integer, String> integerStringMap = new TreeMap<>();
-    envMap.entrySet().forEach(envEntry -> {
+  Map<String, Object> retrieveNamesWithPrefix(Map<String, String> envMap, String envVariablePrefix) {
+    // make sure keys are sorted
+    Map<String, String> sortedMap = new TreeMap(envMap);
+    Map<String, Object> resultMap = new TreeMap<>();
+    sortedMap.entrySet().forEach(envEntry -> {
       if (envEntry.getKey().startsWith(envVariablePrefix)) {
-        String regexp = "(" + envVariablePrefix + ")(\\d+)";
+        // single entry
+        String regexp = envVariablePrefix + "([a-zA-Z_]*)";
         Pattern pattern = Pattern.compile(regexp);
         Matcher matcher = pattern.matcher(envEntry.getKey());
-        if (matcher.matches()) {
-          int key = Integer.parseInt(matcher.group(2));
-          String serverName = envEntry.getValue();
-          integerStringMap.put(key, serverName);
+        if (matcher.matches() && !matcher.group(1).contains("[")) {
+          resultMap.put(toCamelCase(matcher.group(1)), envEntry.getValue());
         }
-      }
-    });
-
-    if (!Arrays.equals(
-        integerStringMap.keySet().toArray(new Integer[]{}),
-        IntStream.rangeClosed(1, integerStringMap.keySet().size()).boxed().toArray())
-        ) {
-      throw new IllegalArgumentException(envVariablePrefix + " environment variables are not numbered with the following pattern : " + envVariablePrefix + "1, " + envVariablePrefix + "2, etc.");
-    }
-    return new ArrayList<>(integerStringMap.values());
-  }
-
-  private void retrieveAndSetOffHeapResources(ConfigurationModel ConfigurationModel, Map<String, String> envMap) {
-    Map<Integer, Map.Entry<String, Integer>> integerStringMap = new TreeMap<>();
-    envMap.entrySet().forEach(envEntry -> {
-      if (envEntry.getKey().startsWith("OFFHEAP_RESOURCE_NAME")) {
-        String regexp = "(OFFHEAP_RESOURCE_NAME)(\\d+)";
-        Pattern pattern = Pattern.compile(regexp);
-        Matcher matcher = pattern.matcher(envEntry.getKey());
+        // array entry
+        regexp = envVariablePrefix + "([a-zA-Z_]*)([\\d]+)_([a-zA-Z_]+)";
+        pattern = Pattern.compile(regexp);
+        matcher = pattern.matcher(envEntry.getKey());
         if (matcher.matches()) {
-          int key = Integer.parseInt(matcher.group(2));
-          String offHeapResourceName = envEntry.getValue();
-          try {
-            Integer offHeapResourceSize = Integer.parseInt(envMap.get("OFFHEAP_RESOURCE_SIZE" + key));
-            if (offHeapResourceSize > 0) {
-              Map.Entry<String, Integer> integerEntry = new AbstractMap.SimpleEntry<>(offHeapResourceName, offHeapResourceSize);
-              integerStringMap.put(key, integerEntry);
-            } else {
-              throw new IllegalArgumentException("Value for : " + "OFFHEAP_RESOURCE_SIZE" + key + " should be > 0");
-
-            }
-          } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Value for : " + "OFFHEAP_RESOURCE_SIZE" + key + " should be an integer");
+          List list;
+          String listName = toCamelCase(matcher.group(1));
+          int index = Integer.parseInt(matcher.group(2));
+          String variableName = toCamelCase(matcher.group(3));
+          if (!resultMap.containsKey(listName)) {
+            list = new ArrayList();
+            resultMap.put(listName, list);
+          } else {
+            list = (List) resultMap.get(listName);
           }
+          Map<String, String> complexVariable;
+          if (list.size() > index) {
+            complexVariable = (Map<String, String>) list.get(index);
+          } else {
+            complexVariable = new TreeMap<>();
+            list.add(complexVariable);
+          }
+          complexVariable.put(variableName, envEntry.getValue());
         }
       }
     });
-
-    if (!Arrays.equals(
-        integerStringMap.keySet().toArray(new Integer[]{}),
-        IntStream.rangeClosed(1, integerStringMap.keySet().size()).boxed().toArray())
-        ) {
-      throw new IllegalArgumentException("OFFHEAP_RESOURCE_NAME environment variables are not numbered with the following pattern : OFFHEAP_RESOURCE_NAME1, OFFHEAP_RESOURCE_NAME2, etc.");
-    }
-    ConfigurationModel.getOffheapResources().addAll(new ArrayList<>(integerStringMap.values()));
+    return resultMap;
   }
 
-  private void retrieveAndSetOffheapUnit(ConfigurationModel ConfigurationModel, Map<String, String> envMap) {
-    String offHeapUnit = envMap.get(OFFHEAP_UNIT);
-    if (offHeapUnit != null && !offHeapUnit.trim().equals("")) {
-      ConfigurationModel.setOffheapUnit(offHeapUnit);
-    } else {
-      throw new IllegalArgumentException(OFFHEAP_UNIT + " was not set but is a mandatory variable");
+  //https://stackoverflow.com/a/1143979/24069
+  static String toCamelCase(String s) {
+    String[] parts = s.split("_");
+    String camelCaseString = "";
+    for (String part : parts) {
+      camelCaseString = camelCaseString + toProperCase(part);
     }
+    return camelCaseString.substring(0, 1).toLowerCase() + camelCaseString.substring(1);
   }
 
-
-  private void retrieveAndSetLeaseLength(ConfigurationModel ConfigurationModel, Map<String, String> envMap) {
-    String leaseLength = envMap.get(LEASE_LENGTH);
-    try {
-      ConfigurationModel.setLeaseLength(Integer.parseInt(leaseLength));
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Value for : " + LEASE_LENGTH + " should be an integer");
-    }
-  }
-
-  private void retrieveAndSetClientReconnectWindow(ConfigurationModel ConfigurationModel, Map<String, String> envMap) {
-    String clientReconnectWindow = envMap.get(CLIENT_RECONNECT_WINDOW);
-    if (clientReconnectWindow == null) {
-      throw new IllegalArgumentException("Missing value for : " + CLIENT_RECONNECT_WINDOW);
-    }
-    try {
-      ConfigurationModel.setClientReconnectWindow(Integer.parseInt(clientReconnectWindow));
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Value for : " + CLIENT_RECONNECT_WINDOW + " should be an integer");
-    }
-  }
-
-  private void retrieveAndSetPlatformPersistence(ConfigurationModel ConfigurationModel, Map<String, String> envMap) {
-    boolean platformPersistence = Boolean.parseBoolean(envMap.get(PLATFORM_PERSISTENCE));
-    ConfigurationModel.setPlatformPersistence(platformPersistence);
-  }
-
-  File generateXml(ConfigurationModel configurationModel, String directoryPath) {
-    // starts xml
-    StringBuilder sb = new StringBuilder(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "\n" +
-            "<tc-config xmlns=\"http://www.terracotta.org/config\">\n");
-    // plugins
-    sb.append(
-        "  <plugins>\n" +
-            "\n");
-
-    // connection leasing
-    if (configurationModel.getLeaseLength() > -1) {
-      sb.append(
-          "    <service>\n" +
-              "      <lease:connection-leasing xmlns:lease=\"http://www.terracotta.org/service/lease\">\n" +
-              "        <lease:lease-length unit=\"seconds\">" + configurationModel.getLeaseLength() + "</lease:lease-length>\n" +
-              "      </lease:connection-leasing>\n" +
-              "    </service>\n\n");
-    }
-
-    // offheaps
-    if (configurationModel.getOffheapResources().size() > 0) {
-      sb.append("" +
-          "    <config>\n" +
-          "      <ohr:offheap-resources xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n");
-      for (int r = 0; r < configurationModel.getOffheapResources().size(); r++) {
-        String name = configurationModel.getOffheapResources().get(r).getKey();
-        Integer size = configurationModel.getOffheapResources().get(r).getValue();
-        sb.append(
-            "        <ohr:resource name=\"" + name + "\" unit=\"" + configurationModel.getOffheapUnit() + "\">" + size + "</ohr:resource>\n");
-      }
-      sb.append("" +
-          "      </ohr:offheap-resources>\n" +
-          "    </config>\n" +
-          "\n");
-    }
-
-    if (configurationModel.isPlatformPersistence() || configurationModel.getDataDirectories().size() > 0) {
-      // dataroots
-      sb.append(
-          "    <config>\n" +
-              "      <data:data-directories xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n");
-      // platform persistence
-      if (configurationModel.isPlatformPersistence()) {
-        sb.append("        <data:directory name=\"platform\" use-for-platform=\"true\">/data/data-directories/platform</data:directory>\n");
-      }
-
-
-      for (int i = 0; i < configurationModel.getDataDirectories().size(); i++) {
-        sb.append("        <data:directory name=\"" + configurationModel.getDataDirectories().get(i) + "\" use-for-platform=\"false\">/data/data-directories/" + configurationModel.getDataDirectories().get(i) + "</data:directory>\n");
-      }
-
-      // end data roots
-      sb.append(
-          "      </data:data-directories>\n" +
-              "    </config>\n" +
-              "\n");
-
-      // backup
-      if (configurationModel.isBackups())
-        sb.append(
-            "    <service>\n" +
-                "      <backup:backup-restore xmlns:backup=\"http://www.terracottatech.com/config/backup-restore\">\n" +
-                "        <backup:backup-location path=\"/data/backups/\"/>\n" +
-                "      </backup:backup-restore>\n" +
-                "    </service>\n" +
-                "\n");
-    }
-
-    // end plugins
-    sb.append(
-        "  </plugins>\n");
-
-    // servers
-    sb.append(
-        "\n" +
-            "  <servers>\n" +
-            "\n");
-
-    for (String hostname : configurationModel.getServerNames()) {
-      sb.append("" +
-          "    <server host=\"" + hostname + "\" name=\"" + hostname + "\">\n" +
-          "      <tsa-port>9410</tsa-port>\n" +
-          "      <tsa-group-port>9430</tsa-group-port>\n" +
-          "    </server>\n\n");
-    }
-
-    // reconnect window
-    if(configurationModel.getClientReconnectWindow() > -1) {
-      sb.append(
-          "    <client-reconnect-window>" + configurationModel.getClientReconnectWindow() + "</client-reconnect-window>\n\n");
-    }
-    // ends servers
-    sb.append(
-        "  </servers>\n\n");
-    sb.append(
-        "</tc-config>");
-
-    String xml = sb.toString();
-
-
-    String filename = "tc-config-generated.xml";
-    File location = new File(directoryPath, filename);
-    try {
-      Files.write(location.toPath(), xml.getBytes("UTF-8"));
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-    return location;
-
-  }
-
-  private static ServiceLoader<ServiceConfigParser> loadServiceConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ServiceConfigParser.class, loader);
-  }
-
-  private static ServiceLoader<ExtendedConfigParser> loadConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ExtendedConfigParser.class, loader);
+  static String toProperCase(String s) {
+    return s.substring(0, 1).toUpperCase() +
+        s.substring(1).toLowerCase();
   }
 
 }

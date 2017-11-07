@@ -2,50 +2,22 @@
 
 <tc-config xmlns="http://www.terracotta.org/config">
   <plugins>
-
-    <service>
-      <lease:connection-leasing xmlns:lease="http://www.terracotta.org/service/lease">
-        <lease:lease-length unit="seconds">24</lease:lease-length>
-      </lease:connection-leasing>
-    </service>
-
     <config>
       <ohr:offheap-resources xmlns:ohr="http://www.terracotta.org/config/offheap-resource">
-        <ohr:resource name="offheap1" unit="MB">200</ohr:resource>
-        <ohr:resource name="offheap2" unit="MB">4096</ohr:resource>
+        <ohr:resource name="offheap1" unit="MB">512</ohr:resource>
+        <ohr:resource name="offheap2" unit="GB">10</ohr:resource>
       </ohr:offheap-resources>
     </config>
-
-    <config>
-      <data:data-directories xmlns:data="http://www.terracottatech.com/config/data-roots">
-        <data:directory name="platform" use-for-platform="true">/data/data-directories/platform</data:directory>
-        <data:directory name="data1" use-for-platform="false">/data/data-directories/data1</data:directory>
-        <data:directory name="data2" use-for-platform="false">/data/data-directories/data2</data:directory>
-      </data:data-directories>
-    </config>
-
-    <service>
-      <backup:backup-restore xmlns:backup="http://www.terracottatech.com/config/backup-restore">
-        <backup:backup-location path="/data/backups/"/>
-      </backup:backup-restore>
-    </service>
-
   </plugins>
-
   <servers>
-
     <server host="server11" name="server11">
       <tsa-port>9410</tsa-port>
       <tsa-group-port>9430</tsa-group-port>
     </server>
-
     <server host="server12" name="server12">
       <tsa-port>9410</tsa-port>
       <tsa-group-port>9430</tsa-group-port>
     </server>
-
     <client-reconnect-window>150</client-reconnect-window>
-
   </servers>
-
 </tc-config>
