@@ -120,7 +120,7 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
 
     if (messengerType != null) {
       try {
-        IEntityMessenger entityMessenger = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
+        IEntityMessenger<ProxyEntityMessage, ?> entityMessenger = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
         activeEntity.setMessenger(MessengerProxyFactory.createProxy(messengerType, entityMessenger));
       } catch (ServiceException e) {
         throw new ConfigurationException("Unable to retrieve IEntityMessenger: " + e.getMessage());

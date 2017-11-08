@@ -100,24 +100,27 @@ class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, LeaseRespo
     return messageConnectionSequenceNumber == latestConnectionSequenceNumber;
   }
 
+  
   @Override
-  public void handleReconnect(ClientDescriptor clientDescriptor, byte[] bytes) {
-    LeaseReconnectData reconnectData = LeaseReconnectData.decode(bytes);
+  public ActiveServerEntity.ReconnectHandler startReconnect() {
+    return (ClientDescriptor clientDescriptor, byte[] bytes)->{
+      LeaseReconnectData reconnectData = LeaseReconnectData.decode(bytes);
 
-    long connectionSequenceNumber = reconnectData.getConnectionSequenceNumber();
-    connectionSequenceNumbers.put(clientDescriptor, connectionSequenceNumber);
+      long connectionSequenceNumber = reconnectData.getConnectionSequenceNumber();
+      connectionSequenceNumbers.put(clientDescriptor, connectionSequenceNumber);
 
-    leaseService.reconnecting(clientDescriptor);
+      leaseService.reconnecting(clientDescriptor);
 
-    // There's no way to encode a ClientDescriptor so use this UUID map
-    UUID uuid = UUID.randomUUID();
-    clientDescriptors.put(uuid, clientDescriptor);
+      // There's no way to encode a ClientDescriptor so use this UUID map
+      UUID uuid = UUID.randomUUID();
+      clientDescriptors.put(uuid, clientDescriptor);
 
-    try {
-      entityMessenger.messageSelf(new LeaseReconnectFinished(uuid));
-    } catch (MessageCodecException e) {
-      throw new RuntimeException("Failed to encode self message to indicate reconnect completion", e);
-    }
+      try {
+        entityMessenger.messageSelf(new LeaseReconnectFinished(uuid));
+      } catch (MessageCodecException e) {
+        throw new RuntimeException("Failed to encode self message to indicate reconnect completion", e);
+      }
+    };
   }
 
   private LeaseResponse handleReconnectFinished(LeaseReconnectFinished reconnectFinished) {

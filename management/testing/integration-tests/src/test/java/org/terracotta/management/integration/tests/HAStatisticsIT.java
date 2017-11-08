@@ -29,10 +29,10 @@ public class HAStatisticsIT extends AbstractHATest {
 
   @Test
   public void can_do_remote_management_calls_on_servers() throws Exception {
+    Set<String> servers = new HashSet<>();
+    
     try {
       triggerServerStatComputation();
-
-      Set<String> servers = new HashSet<>();
 
       queryAllRemoteStatsUntil(stats -> {
 
@@ -44,21 +44,21 @@ public class HAStatisticsIT extends AbstractHATest {
         // counters are ok, we ensure we got them from both servers
         return servers.size() == 2;
       });
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (InterruptedException e) {
+      System.err.println("SERVERS: " + servers);
       throw e;
     }
   }
 
   @Test
   public void test_passive_stats() throws Exception {
+    Set<String> servers = new HashSet<>();
+    
     try {
       triggerServerStatComputation();
 
       //System.out.println("put(pet1=Cubitus)");
       put(0, "pets", "pet1", "Cubitus"); // put on both active and passive
-
-      Set<String> servers = new HashSet<>();
 
       queryAllRemoteStatsUntil(stats -> {
 
@@ -88,8 +88,8 @@ public class HAStatisticsIT extends AbstractHATest {
         // counters are ok, we ensure we got them from both servers
         return servers.size() == 2;
       });
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (InterruptedException e) {
+      System.err.println("SERVERS: " + servers);
       throw e;
     }
   }

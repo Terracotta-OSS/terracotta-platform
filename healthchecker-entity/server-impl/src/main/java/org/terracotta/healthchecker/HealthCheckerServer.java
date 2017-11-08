@@ -15,8 +15,10 @@
  */
 package org.terracotta.healthchecker;
 
+import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 
@@ -36,13 +38,14 @@ public class HealthCheckerServer implements ActiveServerEntity<HealthCheckReq, H
   }
 
   @Override
-  public HealthCheckRsp invoke(ClientDescriptor clientDescriptor, HealthCheckReq message) {
+  public HealthCheckRsp invokeActive(ActiveInvokeContext<HealthCheckRsp> context, HealthCheckReq message) {
     return new HealthCheckRsp(message.toString());
   }
 
-  @Override
-  public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
+  public ActiveServerEntity.ReconnectHandler startReconnect() {
+    return (ClientDescriptor clientDescriptor, byte[] extendedReconnectData)->{
 
+    };
   }
 
   @Override
@@ -66,7 +69,7 @@ public class HealthCheckerServer implements ActiveServerEntity<HealthCheckReq, H
   }  
 
   @Override
-  public void invoke(HealthCheckReq message) {
+  public void invokePassive(InvokeContext context, HealthCheckReq message) {
 
   }
 

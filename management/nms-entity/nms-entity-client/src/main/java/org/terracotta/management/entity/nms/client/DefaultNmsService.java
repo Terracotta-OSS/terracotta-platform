@@ -29,16 +29,15 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
@@ -48,19 +47,12 @@ public class DefaultNmsService implements NmsService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsService.class);
 
-  private final Queue<VoltronManagementCall<?>> managementCalls = new ConcurrentLinkedQueue<>();
   private final NmsEntity entity;
   private final BlockingQueue<Optional<Message>> incomingMessageQueue;
-
-  // this RW lock is to prevent any message listener callback to iterate over the list of managementCalls
-  // before this list gets updated in the call() method.
-  // I.e. it could be possible that the entity.call() is executed fast and the callback to get the
-  // MANAGEMENT_CALL_RETURN message is called before the VoltronManagementCall object is put in the
-  // managementCalls list
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final ConcurrentMap<String, CompletableFuture<ContextualReturn<?>>> managementCallAnswers = new ConcurrentHashMap<>();
 
   private long timeout = 5000;
-  
+
   public DefaultNmsService(final NmsEntity entity) {
     this(entity, new LinkedBlockingQueue<>());
   }
@@ -74,16 +66,9 @@ public class DefaultNmsService implements NmsService {
       switch (message.getType()) {
 
         case "MANAGEMENT_CALL_RETURN":
-          lock.readLock().lock();
-          try {
-            managementCalls
-                .stream()
-                .filter(managementCall -> managementCall.getId().equals(((ManagementCallMessage) message).getManagementCallIdentifier()))
-                .findFirst()
-                .ifPresent(managementCall -> complete(managementCall, message.unwrap(ContextualReturn.class).get(0)));
-          } finally {
-            lock.readLock().unlock();
-          }
+          String managementCallIdentifier = ((ManagementCallMessage) message).getManagementCallIdentifier();
+          ContextualReturn<?> contextualReturn = message.unwrap(ContextualReturn.class).get(0);
+          getManagementAnswerFor(managementCallIdentifier).complete(contextualReturn);
           break;
 
         case "NOTIFICATION":
@@ -147,24 +132,40 @@ public class DefaultNmsService implements NmsService {
   @Override
   public <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException {
     LOGGER.trace("call({}, {}, {})", context, capabilityName, methodName);
-    lock.writeLock().lock();
-    try {
-      String managementCallId = get(entity.call(null, context, capabilityName, methodName, returnType, parameters));
-      VoltronManagementCall<T> managementCall = new VoltronManagementCall<>(managementCallId, context, returnType, timeout, managementCalls::remove);
-      managementCalls.offer(managementCall);
-      return managementCall;
-    } finally {
-      lock.writeLock().unlock();
-    }
+
+    // trigger the management call on the server
+    String managementCallId = get(entity.call(null, context, capabilityName, methodName, returnType, parameters));
+
+    // create a future response for client
+    VoltronManagementCall<T> managementCall = new VoltronManagementCall<>(managementCallId, context, returnType, timeout, that -> managementCallAnswers.remove(managementCallId));
+
+    // add handler to complete the call when response will be (or already is) received
+    getManagementAnswerFor(managementCallId).whenComplete((aReturn, stopper) -> {
+      if (stopper != null) {
+        // in case we interrupt the management calls with the #cancelAllManagementCalls() method 
+        managementCall.completeExceptionally(stopper);
+      } else {
+        try {
+          // we have a value returned
+          managementCall.complete((T) aReturn.getValue());
+        } catch (ExecutionException e) {
+          // an exception occurred while calling the target method
+          managementCall.completeExceptionally(e.getCause());
+        } catch (NoSuchElementException e) {
+          // no target found for this management call
+          managementCall.completeExceptionally(new IllegalManagementCallException(aReturn.getContext(), aReturn.getCapability(), aReturn.getMethodName()));
+        }
+      }
+    });
+
+    return managementCall;
   }
 
   @Override
   public void cancelAllManagementCalls() {
-    while (!managementCalls.isEmpty()) {
-      VoltronManagementCall<?> call = managementCalls.poll();
-      if (call != null) { // can happen if list is cleared while iterating
-        call.cancel();
-      }
+    InterruptedException stopper = new InterruptedException();
+    while (!managementCallAnswers.isEmpty()) {
+      managementCallAnswers.values().forEach(f -> f.completeExceptionally(stopper));
     }
   }
 
@@ -172,18 +173,8 @@ public class DefaultNmsService implements NmsService {
     return future.get(timeout, TimeUnit.MILLISECONDS);
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> void complete(VoltronManagementCall<T> managementCall, ContextualReturn<?> aReturn) {
-    try {
-      // we have a value returned
-      managementCall.complete((T) aReturn.getValue());
-    } catch (ExecutionException e) {
-      // an exception occurred while calling the target method
-      managementCall.completeExceptionally(e.getCause());
-    } catch (NoSuchElementException e) {
-      // no target found for this management call
-      managementCall.completeExceptionally(new IllegalManagementCallException(aReturn.getContext(), aReturn.getCapability(), aReturn.getMethodName()));
-    }
+  private CompletableFuture<ContextualReturn<?>> getManagementAnswerFor(String managementCallIdentifier) {
+    return managementCallAnswers.computeIfAbsent(managementCallIdentifier, s -> new CompletableFuture<>());
   }
 
 }

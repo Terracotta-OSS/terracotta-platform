@@ -18,7 +18,6 @@ package org.terracotta.management.entity.nms.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.nms.Nms;
 import org.terracotta.management.entity.nms.NmsConfig;
@@ -43,21 +42,15 @@ import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author Mathieu Carbou
  */
-class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCallback> implements Nms, NmsCallback, ManagementExecutor {
-
-  private static final Comparator<ToSend> MESSAGE_COMPARATOR = Comparator.comparing(toSend -> toSend.message.getSequence());
+class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCallback> implements Nms, ManagementExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveNmsServerEntity.class);
 
@@ -66,9 +59,6 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
   private final EntityManagementRegistry entityManagementRegistry;
   private final CapabilityManagementSupport capabilityManagementSupport;
   private final long consumerId;
-  // NmsCallback.entityCallbackToSendMessagesToClients() is scheduled to be executed periodically after 500ms.
-  //TODO: load test to verify if this queue can leak, otherwise replace by a ring buffer (see git revision fa80424cc4b56826fa0ff184beb605bf1c39ffa4 to have one) 
-  private final BlockingQueue<ToSend> messagesToBeSent = new LinkedBlockingQueue<>();
 
   ActiveNmsServerEntity(NmsConfig config, ManagementService managementService, EntityManagementRegistry entityManagementRegistry, SharedEntityManagementRegistry sharedEntityManagementRegistry) {
     this.entityManagementRegistry = Objects.requireNonNull(entityManagementRegistry);
@@ -93,8 +83,6 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
     super.createNew();
     LOGGER.trace("[{}] createNew()", consumerId);
     entityManagementRegistry.refresh();
-    // start scheduling of this call
-    getMessenger().entityCallbackToSendMessagesToClients();
   }
 
   @Override
@@ -103,72 +91,12 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
     LOGGER.trace("[{}] loadExisting()", consumerId);
     entityManagementRegistry.cleanupPreviousPassiveStates();
     entityManagementRegistry.refresh();
-    // start scheduling of this call
-    getMessenger().entityCallbackToSendMessagesToClients();
   }
 
   @Override
   protected void dumpState(StateDumpCollector dump) {
     dump.addState("consumerId", String.valueOf(consumerId));
     dump.addState("stripeName", String.valueOf(stripeName));
-    dump.addState("messageQueueSize", String.valueOf(messagesToBeSent.size()));
-  }
-
-  // NmsCallback
-
-  @Override
-  public void entityCallbackToExecuteManagementCall(String managementCallIdentifier, ContextualCall<?> call) {
-    String serverName = call.getContext().get(Server.NAME_KEY);
-    if (serverName == null) {
-      throw new IllegalArgumentException("Bad context: " + call.getContext());
-    }
-    if (entityManagementRegistry.getMonitoringService().getServerName().equals(serverName)) {
-      LOGGER.trace("[{}] entityCallbackToExecuteManagementCall({}, {}, {}, {})", consumerId, managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
-      ContextualReturn<?> contextualReturn = capabilityManagementSupport.withCapability(call.getCapability())
-          .call(call.getMethodName(), call.getReturnType(), call.getParameters())
-          .on(call.getContext())
-          .build()
-          .execute()
-          .getSingleResult();
-      if (contextualReturn.hasExecuted()) {
-        entityManagementRegistry.getMonitoringService().answerManagementCall(managementCallIdentifier, contextualReturn);
-      }
-    }
-  }
-
-  @Override
-  public IEntityMessenger.ScheduledToken entityCallbackToSendMessagesToClients() {
-    List<ToSend> toSends = new ArrayList<>(messagesToBeSent.size());
-    messagesToBeSent.drainTo(toSends);
-    int size = toSends.size();
-    if (size > 0) {
-      LOGGER.trace("[{}] entityCallbackToSendMessagesToClients({})", consumerId, size);
-      if (size > 1) {
-        toSends.sort(MESSAGE_COMPARATOR);
-      }
-      Collection<ClientDescriptor> clients = getClients();
-      for (ToSend toSend : toSends) {
-        toSend.message.unwrap(Contextual.class)
-            .stream()
-            .filter(contextual -> !contextual.getContext().contains(Client.KEY))
-            .forEach(contextual -> contextual.setContext(contextual.getContext().with(Stripe.KEY, stripeName)));
-        try {
-          if (toSend.to == null) {
-            fireMessage(Message.class, toSend.message, false);
-          } else if (clients.contains(toSend.to)) {
-            fireMessage(Message.class, toSend.message, toSend.to);
-          }
-        } catch (Exception e) {
-          LOGGER.warn("Unable to send message " + toSend.message + " : " + e.getMessage(), e);
-        }
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public void unSchedule() {
-    throw new UnsupportedOperationException();
   }
 
   // Nms
@@ -229,35 +157,53 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
 
   @Override
   public void executeManagementCallOnServer(String managementCallIdentifier, ContextualCall<?> call) {
-    LOGGER.trace("[{}] executeManagementCallOnServer({}, {})", consumerId, managementCallIdentifier, call);
-    getMessenger().entityCallbackToExecuteManagementCall(managementCallIdentifier, call);
+    String serverName = call.getContext().get(Server.NAME_KEY);
+    if (serverName == null) {
+      throw new IllegalArgumentException("Bad context: " + call.getContext());
+    }
+
+    if (entityManagementRegistry.getMonitoringService().getServerName().equals(serverName)) {
+      LOGGER.trace("[{}] executeManagementCallOnServer({}, {}, {}, {})", consumerId, managementCallIdentifier, call.getContext(), call.getCapability(), call.getMethodName());
+      ContextualReturn<?> contextualReturn = capabilityManagementSupport.withCapability(call.getCapability())
+          .call(call.getMethodName(), call.getReturnType(), call.getParameters())
+          .on(call.getContext())
+          .build()
+          .execute()
+          .getSingleResult();
+      if (contextualReturn.hasExecuted()) {
+        entityManagementRegistry.getMonitoringService().answerManagementCall(managementCallIdentifier, contextualReturn);
+      }
+
+    } else {
+      getMessenger().executeManagementCallOnPassive(managementCallIdentifier, call);
+    }
   }
 
   @Override
   public void sendMessageToClients(Message message) {
     LOGGER.trace("[{}] sendMessageToClients({}, {})", consumerId, message);
-    messagesToBeSent.offer(new ToSend(message));
+    // add stripe info to the message
+    addStripeName(message);
+    // send message
+    fireMessage(Message.class, message, false);
   }
 
   @Override
   public void sendMessageToClient(Message message, ClientDescriptor to) {
     if (getClients().contains(to)) {
       LOGGER.trace("[{}] sendMessageToClient({}, {})", consumerId, message, to);
-      messagesToBeSent.offer(new ToSend(message, to));
+      // add stripe info to the message
+      addStripeName(message);
+      // send message
+      fireMessage(Message.class, message, to);
     }
   }
 
-  static private class ToSend {
-    final Message message;
-    final ClientDescriptor to;
-
-    ToSend(Message message) {
-      this(message, null);
-    }
-
-    ToSend(Message message, ClientDescriptor to) {
-      this.message = message;
-      this.to = to;
-    }
+  private void addStripeName(Message message) {
+    message.unwrap(Contextual.class)
+        .stream()
+        .filter(contextual -> !contextual.getContext().contains(Client.KEY))
+        .forEach(contextual -> contextual.setContext(contextual.getContext().with(Stripe.KEY, stripeName)));
   }
+
 }

@@ -25,7 +25,6 @@ import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
@@ -42,6 +41,7 @@ import org.terracotta.voltron.proxy.client.ServerMessageAware;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +56,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.ActiveInvokeChannel;
+import org.terracotta.entity.InvokeMonitor;
 
 /**
  * @author Alex Snaps
@@ -261,6 +263,21 @@ public class EndToEndTest {
     }
 
     @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> monitor(InvokeMonitor<ProxyEntityResponse> im) {
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> withExecutor(Executor exctr) {
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> asDeferredResponse() {
+      return this;
+    }
+
+    @Override
     public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> replicate(final boolean b) {
       return this;
     }
@@ -290,6 +307,11 @@ public class EndToEndTest {
             @Override
             public ClientDescriptor getClientDescriptor() {
               return clientDescriptor;
+            }
+
+            @Override
+            public ActiveInvokeChannel openInvokeChannel() {
+              throw new UnsupportedOperationException("Not supported yet.");
             }
 
             @Override

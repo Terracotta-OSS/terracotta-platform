@@ -28,5 +28,4 @@ package org.terracotta.voltron.proxy.server;
  * @author Mathieu Carbou
  */
 public interface Messenger {
-  void unSchedule();
 }

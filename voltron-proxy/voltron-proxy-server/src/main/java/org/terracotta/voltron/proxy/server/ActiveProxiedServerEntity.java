@@ -19,7 +19,6 @@ import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.voltron.proxy.Codec;
@@ -62,14 +61,27 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
   }
 
   @Override
-  public final void handleReconnect(final ClientDescriptor clientDescriptor, final byte[] extendedReconnectData) {
-    if (reconnectDataType != null && codec != null) {
-      R state = null;
-      if (extendedReconnectData != null && extendedReconnectData.length > 0) {
-        state = codec.decode(reconnectDataType, extendedReconnectData);
-
+  public ReconnectHandler startReconnect() {
+    return (clientDescriptor, extendedReconnectData) -> {
+      if (reconnectDataType != null && codec != null) {
+        R state = null;
+        if (extendedReconnectData != null && extendedReconnectData.length > 0) {
+          state = codec.decode(reconnectDataType, extendedReconnectData);
+        }
+        onReconnect(clientDescriptor, state);
       }
-      onReconnect(clientDescriptor, state);
+    };
+  }
+
+  @Override
+  public void prepareKeyForSynchronizeOnPassive(PassiveSynchronizationChannel<ProxyEntityMessage> syncChannel, int concurrencyKey) {
+    if (synchronizer != null) {
+      SyncProxyFactory.setCurrentChannel(syncChannel);
+      try {
+        prepareKeySynchronizationToPassive(concurrencyKey);
+      } finally {
+        SyncProxyFactory.removeCurrentChannel();
+      }
     }
   }
 
@@ -97,9 +109,6 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
 
   @Override
   public void destroy() {
-    if (messenger != null) {
-      messenger.unSchedule();
-    }
   }
 
   @Override
@@ -108,13 +117,16 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
     // clients, by default for all active entities
     Collection<ClientDescriptor> clients = getClients();
     stateDumpCollector.addState("clientCount", String.valueOf(clients.size()));
-    stateDumpCollector.addState("clients",clients);
+    stateDumpCollector.addState("clients", clients);
 
     // custom
     dumpState(stateDumpCollector);
   }
 
   protected void dumpState(StateDumpCollector dump) {
+  }
+
+  protected void prepareKeySynchronizationToPassive(int concurrencyKey) {
   }
 
   protected void synchronizeKeyToPassive(int concurrencyKey) {
