@@ -17,14 +17,11 @@ package org.terracotta.management.integration.tests;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.management.model.cluster.AbstractManageableNode;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
-import org.terracotta.management.model.notification.ContextualNotification;
-
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -64,13 +61,11 @@ public class FailoverIT extends AbstractHATest {
 
   @Test
   public void all_registries_reexposed_after_failover() throws Exception {
-    int clientReconnected = 0;
+    long clientReconnected;
     do {
-      clientReconnected += nmsService.readMessages()
-          .stream()
-          .filter(message -> message.getType().equals("NOTIFICATION"))
-          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
-          .filter(contextualNotification -> contextualNotification.getType().equals("CLIENT_RECONNECTED"))
+      clientReconnected = nmsService.readTopology()
+          .clientStream()
+          .filter(AbstractManageableNode::isManageable)
           .count();
     } while (clientReconnected < 2);
 
@@ -81,18 +76,6 @@ public class FailoverIT extends AbstractHATest {
     String actual = removeRandomValues(currentTopo);
 
     assertEquals(readJson("topology-after-failover.json"), readJsonStr(actual));
-  }
-
-  @Test
-  public void notifications_after_failover() throws Exception {
-    // read messages
-    List<ContextualNotification> collected = waitForAllNotifications(
-        "SERVER_ENTITY_FETCHED",
-        "CLIENT_TAGS_UPDATED", "CLIENT_REGISTRY_AVAILABLE", "CLIENT_RECONNECTED",
-        "CLIENT_ATTACHED");
-
-    String newActiveName = nmsService.readTopology().getSingleStripe().getActiveServer().get().getServerName();
-    assertThat(newActiveName, equalTo(oldPassive.getServerName()));
   }
 
   @Test
