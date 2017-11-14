@@ -378,8 +378,7 @@ class TopologyService implements PlatformListener {
   /**
    * Records registry that needs to be sent in future (or now) when the client will have arrived
    */
-  CompletableFuture<Context> willSetClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
-    CompletableFuture<Context> futureContext = new CompletableFuture<>();
+  void willSetClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
     whenFetchClient(consumerId, clientDescriptor).executeOrDelay("client-registry", client -> {
       boolean hadRegistry = client.getManagementRegistry().isPresent();
       LOGGER.trace("[{}] willSetClientManagementRegistry({}, {})", consumerId, clientDescriptor, newRegistry);
@@ -387,9 +386,7 @@ class TopologyService implements PlatformListener {
       if (!hadRegistry) {
         firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_REGISTRY_AVAILABLE.name()));
       }
-      futureContext.complete(client.getContext());
     });
-    return futureContext;
   }
 
   /**
