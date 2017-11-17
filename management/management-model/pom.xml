@@ -38,12 +38,15 @@
   </licenses>
 
   <dependencies>
-    <!-- this module can OPTIONALLY be used with management model to help sequencing messages -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>statistics</artifactId>
+      <version>${statistics.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>sequence-generator</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>

@@ -94,7 +94,7 @@
       },
       {
         "name": "ClientCache:Size",
-        "type": "SIZE"
+        "type": "GAUGE"
       }
     ],
     "capabilityContext": {

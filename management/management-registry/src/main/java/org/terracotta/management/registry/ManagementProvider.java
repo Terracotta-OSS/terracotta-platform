@@ -20,7 +20,9 @@ import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.statistics.registry.Statistic;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -80,13 +82,13 @@ public interface ManagementProvider<T> {
   String getCapabilityName();
 
   /**
-   * Collect statistics, if the provider supports this.
+   * Collect new statistic samples, if the provider supports this.
    *
    * @param context        the context.
    * @param statisticNames the statistic names to collect. If empty, collect ALL statistics
    * @return the statistic map, the key being the statistic names.
    */
-  Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames);
+  Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames);
 
   /**
    * Call an action, if the provider supports this.

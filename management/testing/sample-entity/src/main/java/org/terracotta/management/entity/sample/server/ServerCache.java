@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.CacheOperationOutcomes;
 import org.terracotta.statistics.StatisticsManager;
+import org.terracotta.statistics.StatisticType;
 import org.terracotta.statistics.observer.OperationObserver;
 
 import java.util.Arrays;
@@ -61,6 +62,7 @@ public class ServerCache implements Cache {
         "size",
         new HashSet<>(Arrays.asList("ServerCache", "cluster")),
         properties,
+        StatisticType.GAUGE,
         this::size);
   }
 
@@ -164,7 +166,7 @@ public class ServerCache implements Cache {
     }
   }
 
-  Map<String, String> getData() {
+  public Map<String, String> getData() {
     return new HashMap<>(data);
   }
 

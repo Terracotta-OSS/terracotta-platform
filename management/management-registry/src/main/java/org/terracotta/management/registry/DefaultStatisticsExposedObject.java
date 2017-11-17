@@ -18,9 +18,13 @@ package org.terracotta.management.registry;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.collect.StatisticRegistry;
+import org.terracotta.statistics.registry.Statistic;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * @author Mathieu Carbou
@@ -29,25 +33,25 @@ public class DefaultStatisticsExposedObject<T> extends DefaultExposedObject<T> {
 
   protected final StatisticRegistry statisticRegistry;
   
-  public DefaultStatisticsExposedObject(T o, Context context) {
+  public DefaultStatisticsExposedObject(T o, Supplier<Long> timeSource, Context context) {
     super(o, context);
-    statisticRegistry = new StatisticRegistry(o);
+    statisticRegistry = new StatisticRegistry(o, timeSource);
   }
 
-  public DefaultStatisticsExposedObject(T o) {
+  public DefaultStatisticsExposedObject(T o, Supplier<Long> timeSource) {
     super(o);
-    statisticRegistry = new StatisticRegistry(o);
+    statisticRegistry = new StatisticRegistry(o, timeSource);
   }
 
   public StatisticRegistry getStatisticRegistry() {
     return statisticRegistry;
   }
 
-  public Number queryStatistic(String fullStatisticName) {
+  public <T extends Serializable> Optional<Statistic<T>> queryStatistic(String fullStatisticName) {
     return statisticRegistry.queryStatistic(fullStatisticName);
   }
 
-  public Map<String, Number> queryStatistics() {
+  public Map<String, Statistic<? extends Serializable>> queryStatistics() {
     return statisticRegistry.queryStatistics();
   }
 

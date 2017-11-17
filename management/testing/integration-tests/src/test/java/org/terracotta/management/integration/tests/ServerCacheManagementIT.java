@@ -22,8 +22,10 @@ import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.statistics.Table;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -118,9 +120,9 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
 
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
-        .filter(o -> o.hasStatistic("Cluster:HitCount"))
-        .map(o -> o.getStatistic("Cluster:HitCount"))
-        .anyMatch(counter -> counter.longValue() == 1L));
+        .filter(o -> o.hasStatistic("Cluster:HitCount") && o.hasStatistic("Cluster:CacheEntryLength"))
+        .map(o -> o.<Long>getLatestSample("Cluster:HitCount"))
+        .anyMatch(counter -> counter.get() == 1L));
 
     queryAllRemoteStatsUntil(stats -> {
       String currentJson = toJson(stats).toString();
@@ -138,18 +140,32 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
       test &= stats
           .stream()
           .filter(o -> o.hasStatistic("Cluster:MissCount"))
-          .map(o -> o.getStatistic("Cluster:MissCount"))
-          .anyMatch(counter -> counter.longValue() == 1L); // 1 miss
+          .map(o -> o.<Long>getLatestSample("Cluster:MissCount"))
+          .anyMatch(counter -> counter.get() == 1L); // 1 miss
 
       test &= stats
           .stream()
           .filter(o -> o.hasStatistic("ServerCache:Size"))
-          .map(o -> o.getStatistic("ServerCache:Size"))
-          .anyMatch(size -> size.longValue() == 1L); // // size 1 on heap of entity
+          .map(o -> o.<Integer>getLatestSample("ServerCache:Size"))
+          .anyMatch(size -> size.get() == 1); // // size 1 on heap of entity
 
       return test;
     });
 
+  }
+
+  @Test
+  public void can_receive_server_table_statistics() throws Exception {
+    triggerServerStatComputation();
+
+    put(0, "pets", "pet1", "Cubitus");
+    put(1, "pets", "pet2", "Radius");
+
+    queryAllRemoteStatsUntil(stats -> stats
+        .stream()
+        .filter(o -> o.hasStatistic("Cluster:CacheEntryLength"))
+        .map(o -> o.<Table>getLatestSample("Cluster:CacheEntryLength"))
+        .anyMatch(table -> table.get().getRowCount() == 2 && table.get().getRowLabels().containsAll(Arrays.asList("pet1", "pet2"))));
   }
 
 }

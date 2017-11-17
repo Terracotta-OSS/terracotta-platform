@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.statistics.StatisticsManager;
+import org.terracotta.statistics.StatisticType;
 import org.terracotta.statistics.observer.OperationObserver;
 
 import java.io.Closeable;
@@ -69,6 +70,7 @@ public class ClientCache implements Cache, Closeable {
         "size",
         new HashSet<>(Arrays.asList("ClientCache", "cache")),
         properties,
+        StatisticType.GAUGE,
         this::size);
   }
 

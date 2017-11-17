@@ -13,9 +13,16 @@
       "entityName": "ServerCacheManagementIT",
       "entityType": "org.terracotta.management.entity.nms.client.NmsEntity"
     },
-    "empty": false,
     "statistics": {
-      "OffHeapResource:AllocatedMemory": 0
+      "OffHeapResource:AllocatedMemory": {
+        "samples": [
+          {
+            "sample": 25165824,
+            "timestamp": 0
+          }
+        ],
+        "type": "GAUGE"
+      }
     }
   },
   {
@@ -32,13 +39,83 @@
       "entityName": "pet-clinic/pets",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
     },
-    "empty": false,
     "statistics": {
-      "Cluster:HitCount": 1,
-      "Cluster:PutCount": 1,
-      "Cluster:MissCount": 0,
-      "Cluster:ClearCount": 0,
-      "ServerCache:Size": 1
+      "Cluster:HitCount": {
+        "samples": [
+          {
+            "sample": 1,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:PutCount": {
+        "samples": [
+          {
+            "sample": 1,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:MissCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:ClearCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:CacheEntryLength": {
+        "samples": [
+          {
+            "sample": {
+              "rowCount": 1,
+              "rowLabels": [
+                "pet1"
+              ],
+              "statisticCount": 2,
+              "statisticNames": [
+                "KeyLength",
+                "ValueLength"
+              ],
+              "statistics": {
+                "pet1": [
+                  {
+                    "type": "GAUGE",
+                    "value": 4
+                  },
+                  {
+                    "type": "COUNTER",
+                    "value": 7
+                  }
+                ]
+              }
+            },
+            "timestamp": 0
+          }
+        ],
+        "type": "TABLE"
+      },
+      "ServerCache:Size": {
+        "samples": [
+          {
+            "sample": 1,
+            "timestamp": 0
+          }
+        ],
+        "type": "GAUGE"
+      }
     }
   },
   {
@@ -55,13 +132,70 @@
       "entityName": "pet-clinic/clients",
       "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
     },
-    "empty": false,
     "statistics": {
-      "Cluster:HitCount": 0,
-      "Cluster:PutCount": 0,
-      "Cluster:MissCount": 0,
-      "Cluster:ClearCount": 0,
-      "ServerCache:Size": 0
+      "Cluster:HitCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:PutCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:MissCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:ClearCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:CacheEntryLength": {
+        "samples": [
+          {
+            "sample": {
+              "rowCount": 0,
+              "rowLabels": [],
+              "statisticCount": 2,
+              "statisticNames": [
+                "KeyLength",
+                "ValueLength"
+              ],
+              "statistics": {}
+            },
+            "timestamp": 0
+          }
+        ],
+        "type": "TABLE"
+      },
+      "ServerCache:Size": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "GAUGE"
+      }
     }
   }
 ]

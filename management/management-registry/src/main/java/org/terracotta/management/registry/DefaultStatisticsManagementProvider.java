@@ -19,68 +19,85 @@ import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.collect.StatisticProvider;
+import org.terracotta.management.registry.collect.StatisticRegistry;
+import org.terracotta.statistics.registry.Statistic;
 
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.function.BinaryOperator;
+import java.util.function.Supplier;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 @StatisticProvider
 public class DefaultStatisticsManagementProvider<T> extends AbstractManagementProvider<T> {
 
+  protected final Supplier<Long> timeSource;
   protected final Context parentContext;
 
   @SuppressWarnings("unchecked")
-  public DefaultStatisticsManagementProvider(Class<T> type, Context parentContext) {
+  public DefaultStatisticsManagementProvider(Class<T> type, Supplier<Long> timeSource, Context parentContext) {
     super(type);
+    this.timeSource = timeSource;
     this.parentContext = Objects.requireNonNull(parentContext);
   }
 
   @SuppressWarnings("unchecked")
-  public DefaultStatisticsManagementProvider(Class<T> type) {
-    this(type, Context.empty());
+  public DefaultStatisticsManagementProvider(Class<T> type, Supplier<Long> timeSource) {
+    this(type, timeSource, Context.empty());
   }
 
   @Override
   protected DefaultStatisticsExposedObject<T> wrap(T o) {
-    return new DefaultStatisticsExposedObject<T>(o, parentContext);
+    return new DefaultStatisticsExposedObject<T>(o, timeSource, parentContext);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public final Collection<? extends Descriptor> getDescriptors() {
-    Collection<StatisticDescriptor> capabilities = new HashSet<StatisticDescriptor>();
-    for (ExposedObject o : getExposedObjects()) {
-      capabilities.addAll(((DefaultStatisticsExposedObject<T>) o).getDescriptors());
-    }
-    List<StatisticDescriptor> list = new ArrayList<StatisticDescriptor>(capabilities);
-    Collections.sort(list, STATISTIC_DESCRIPTOR_COMPARATOR);
-    return list;
+    // To keep ordering because these objects end up in an immutable
+    // topology so this is easier for testing to compare with json payloads
+    return super.getDescriptors()
+        .stream()
+        .map(d -> (StatisticDescriptor) d)
+        .sorted(STATISTIC_DESCRIPTOR_COMPARATOR)
+        .collect(toList());
   }
 
   @Override
-  public Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames) {
+  public Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames) {
     DefaultStatisticsExposedObject<T> exposedObject = (DefaultStatisticsExposedObject<T>) findExposedObject(context);
-    if (exposedObject != null) {
-      if (statisticNames == null || statisticNames.isEmpty()) {
-        return exposedObject.queryStatistics();
-      } else {
-        Map<String, Number> statistics = new TreeMap<String, Number>();
-        for (String statisticName : statisticNames) {
-          try {
-            statistics.put(statisticName, exposedObject.queryStatistic(statisticName));
-          } catch (IllegalArgumentException ignored) {
-            // ignore when statisticName does not exist and throws an exception
-          }
-        }
-        return statistics;
-      }
+    if (exposedObject == null) {
+      return Collections.emptyMap();
     }
-    return Collections.emptyMap();
+    return DefaultStatisticsManagementProvider.collect(exposedObject.getStatisticRegistry(), statisticNames);
+  }
+
+  public static Map<String, Statistic<? extends Serializable>> collect(StatisticRegistry registry, Collection<String> statisticNames) {
+    if (statisticNames == null || statisticNames.isEmpty()) {
+      return registry.queryStatistics()
+          .entrySet()
+          .stream()
+          .filter(e -> !e.getValue().isEmpty())
+          .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, throwingMerger(), TreeMap::new));
+    } else {
+      return statisticNames.stream()
+          .map(name -> new AbstractMap.SimpleEntry<>(name, registry.queryStatistic(name)))
+          .filter(e -> e.getValue().isPresent() && !e.getValue().get().isEmpty())
+          .collect(toMap(Map.Entry::getKey, e -> e.getValue().get(), throwingMerger(), TreeMap::new));
+    }
+  }
+
+  private static <T> BinaryOperator<T> throwingMerger() {
+    return (u, v) -> {
+      throw new IllegalStateException(String.format("Duplicate key %s", u));
+    };
   }
 
 }

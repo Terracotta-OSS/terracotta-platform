@@ -24,6 +24,7 @@ import org.terracotta.management.registry.CapabilityManagement;
 import org.terracotta.management.registry.DefaultCapabilityManagement;
 import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.ManagementProvider;
+import org.terracotta.management.sequence.TimeSource;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractEntityManagementProvider;
 import org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware;
 
@@ -48,15 +49,17 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   private final long consumerId;
   private final EntityMonitoringService monitoringService;
+  private final TimeSource timeSource;
   private final ContextContainer contextContainer;
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
   private final CompletableFuture<?> onEntityPromotionCompleted = new CompletableFuture<>();
   private final CompletableFuture<?> onClose = new CompletableFuture<>();
 
-  DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService) {
+  DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService, TimeSource timeSource) {
     this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
     this.consumerId = consumerId;
     this.monitoringService = Objects.requireNonNull(monitoringService);
+    this.timeSource = Objects.requireNonNull(timeSource);
   }
 
   void onEntityPromotionCompleted(Runnable r) {
@@ -90,6 +93,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
     if (added) {
       if (provider instanceof MonitoringServiceAware) {
         ((MonitoringServiceAware) provider).setMonitoringService(monitoringService);
+        ((MonitoringServiceAware) provider).setTimeSource(timeSource);
       }
     }
     return added;

@@ -18,8 +18,9 @@ package org.terracotta.management.service.monitoring.registry.provider;
 import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.AbstractManagementProvider;
-import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ExposedObject;
+import org.terracotta.management.registry.ManagementProvider;
+import org.terracotta.management.sequence.TimeSource;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
 
 import java.util.Objects;
@@ -33,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 public abstract class AbstractEntityManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware {
 
   private EntityMonitoringService monitoringService;
+  private TimeSource timeSource;
 
   public AbstractEntityManagementProvider(Class<? extends T> managedType) {
     super(managedType);
@@ -44,7 +46,16 @@ public abstract class AbstractEntityManagementProvider<T> extends AbstractManage
   }
 
   protected EntityMonitoringService getMonitoringService() {
-    return Objects.requireNonNull(monitoringService);
+    return monitoringService;
+  }
+
+  @Override
+  public void setTimeSource(TimeSource timeSource) {
+    this.timeSource = Objects.requireNonNull(timeSource);
+  }
+
+  protected TimeSource getTimeSource() {
+    return timeSource;
   }
 
   @Override

@@ -133,6 +133,10 @@
     },
     "descriptors": [
       {
+        "name": "Cluster:CacheEntryLength",
+        "type": "TABLE"
+      },
+      {
         "name": "Cluster:ClearCount",
         "type": "COUNTER"
       },
@@ -150,7 +154,7 @@
       },
       {
         "name": "ServerCache:Size",
-        "type": "SIZE"
+        "type": "GAUGE"
       }
     ],
     "name": "ServerCacheStatistics"

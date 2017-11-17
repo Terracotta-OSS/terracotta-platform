@@ -52,7 +52,7 @@ public class OffHeapResourcesProviderTest {
     assertThat(offHeapResource.available(), equalTo(2L * 1024 * 1024));
 
     assertThat(StatisticsManager.nodeFor(offHeapResource).getChildren().size(), equalTo(1));
-    ValueStatistic valueStatistic = (ValueStatistic) StatisticsManager.nodeFor(offHeapResource).getChildren().iterator().next().getContext().attributes().get("this");
+    ValueStatistic<Long> valueStatistic = (ValueStatistic<Long>) StatisticsManager.nodeFor(offHeapResource).getChildren().iterator().next().getContext().attributes().get("this");
     assertThat(valueStatistic.value(), equalTo(0L));
   }
 

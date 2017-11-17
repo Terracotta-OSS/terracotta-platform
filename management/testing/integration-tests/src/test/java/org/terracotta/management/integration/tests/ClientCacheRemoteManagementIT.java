@@ -21,9 +21,10 @@ import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.context.Context;
 
-import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -113,8 +114,8 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
-        .map(o -> o.getStatistic("Cache:HitCount"))
-        .anyMatch(counter -> counter.longValue() == 1L)); // 1 hit
+        .map(o -> o.<Long>getLatestSample("Cache:HitCount"))
+        .anyMatch(counter -> counter.get() == 1L)); // 1 hit
 
     get(0, "pets", "pet2"); // miss on client 0
     get(1, "pets", "pet2"); // miss on client 0
@@ -124,13 +125,13 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic("Cache:MissCount"))
-          .anyMatch(counter -> counter.longValue() == 1L); // 1 miss
+          .map(o -> o.<Long>getLatestSample("Cache:MissCount"))
+          .anyMatch(counter -> counter.get() == 1L); // 1 miss
 
       test &= stats
           .stream()
-          .map(o -> o.getStatistic("ClientCache:Size"))
-          .anyMatch(counter -> counter.longValue() == 1L); // size 1 on heap of entity
+          .map(o -> o.<Integer>getLatestSample("ClientCache:Size"))
+          .anyMatch(counter -> counter.get() == 1); // size 1 on heap of entity
 
       return test;
     });

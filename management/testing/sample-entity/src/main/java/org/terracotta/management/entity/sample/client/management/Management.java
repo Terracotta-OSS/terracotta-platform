@@ -57,7 +57,7 @@ public class Management {
     // create a client-side management registry and add some providers for stats, calls and settings
     this.managementRegistry = new DefaultManagementRegistry(contextContainer);
     managementRegistry.addManagementProvider(new CacheSettingsManagementProvider(parentContext));
-    managementRegistry.addManagementProvider(new CacheStatisticsManagementProvider(parentContext));
+    managementRegistry.addManagementProvider(new CacheStatisticsManagementProvider(parentContext, System::currentTimeMillis));
     managementRegistry.addManagementProvider(new CacheCallManagementProvider(parentContext));
     managementRegistry.addManagementProvider(new CacheStatisticCollectorManagementProvider(parentContext));
 

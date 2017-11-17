@@ -19,17 +19,19 @@ import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.registry.DefaultStatisticsManagementProvider;
+import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
-import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.collect.StatisticRegistry;
+import org.terracotta.statistics.registry.Statistic;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 @RequiredContext({@Named("consumerId")})
 @CommonComponent
@@ -55,24 +57,12 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
   }
 
   @Override
-  public Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames) {
-    // To keep ordering because these objects end up in an immutable
-    // topology so this is easier for testing to compare with json payloads
-    Map<String, Number> statistics = new TreeMap<>();
+  public Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames) {
     AbstractExposedStatistics<T> exposedObject = (AbstractExposedStatistics<T>) findExposedObject(context);
-    if (exposedObject != null) {
-      if (statisticNames == null || statisticNames.isEmpty()) {
-        statistics.putAll(exposedObject.queryStatistics());
-      } else {
-        for (String statisticName : statisticNames) {
-          Number statistic = exposedObject.queryStatistic(statisticName);
-          if (statistic != null) {
-            statistics.put(statisticName, statistic);
-          }
-        }
-      }
+    if (exposedObject == null) {
+      return Collections.emptyMap();
     }
-    return statistics;
+    return DefaultStatisticsManagementProvider.collect(exposedObject.getStatisticRegistry(), statisticNames);
   }
 
   @Override
@@ -85,7 +75,7 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
   }
 
   protected StatisticRegistry getStatisticRegistry(T managedObject) {
-    return new StatisticRegistry(managedObject.getValue());
+    return new StatisticRegistry(managedObject.getValue(), getTimeSource()::getTimestamp);
   }
 
   @Override

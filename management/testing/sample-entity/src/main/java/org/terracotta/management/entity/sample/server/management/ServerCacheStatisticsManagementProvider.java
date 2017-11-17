@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.entity.sample.server.management;
 
-import org.terracotta.context.extended.OperationStatisticDescriptor;
+import org.terracotta.statistics.registry.OperationStatisticDescriptor;
 import org.terracotta.management.entity.sample.CacheOperationOutcomes;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.Named;
@@ -24,11 +24,15 @@ import org.terracotta.management.registry.collect.StatisticProvider;
 import org.terracotta.management.registry.collect.StatisticRegistry;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractExposedStatistics;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractStatisticsManagementProvider;
+import org.terracotta.statistics.Table;
+import org.terracotta.statistics.StatisticType;
+
+import java.util.Map;
 
 import static java.util.Collections.singleton;
 import static java.util.EnumSet.allOf;
 import static java.util.EnumSet.of;
-import static org.terracotta.context.extended.ValueStatisticDescriptor.descriptor;
+import static org.terracotta.statistics.registry.ValueStatisticDescriptor.descriptor;
 
 @Named("ServerCacheStatistics")
 @RequiredContext({@Named("consumerId"), @Named("type"), @Named("alias")})
@@ -53,12 +57,21 @@ class ServerCacheStatisticsManagementProvider extends AbstractStatisticsManageme
       OperationStatisticDescriptor<CacheOperationOutcomes.PutOutcome> put = OperationStatisticDescriptor.descriptor("put", singleton("cluster"), CacheOperationOutcomes.PutOutcome.class);
       OperationStatisticDescriptor<CacheOperationOutcomes.ClearOutcome> clear = OperationStatisticDescriptor.descriptor("clear", singleton("cluster"), CacheOperationOutcomes.ClearOutcome.class);
 
-      getRegistry().registerCounter("Cluster:HitCount", get, of(CacheOperationOutcomes.GetOutcome.HIT));
-      getRegistry().registerCounter("Cluster:MissCount", get, of(CacheOperationOutcomes.GetOutcome.MISS));
-      getRegistry().registerCounter("Cluster:PutCount", put, of(CacheOperationOutcomes.PutOutcome.SUCCESS));
-      getRegistry().registerCounter("Cluster:ClearCount", clear, allOf(CacheOperationOutcomes.ClearOutcome.class));
+      getStatisticRegistry().registerStatistic("Cluster:HitCount", get, of(CacheOperationOutcomes.GetOutcome.HIT));
+      getStatisticRegistry().registerStatistic("Cluster:MissCount", get, of(CacheOperationOutcomes.GetOutcome.MISS));
+      getStatisticRegistry().registerStatistic("Cluster:PutCount", put, of(CacheOperationOutcomes.PutOutcome.SUCCESS));
+      getStatisticRegistry().registerStatistic("Cluster:ClearCount", clear, allOf(CacheOperationOutcomes.ClearOutcome.class));
 
-      getRegistry().registerSize("Size", descriptor("size", singleton("cluster")));
+      getStatisticRegistry().registerStatistic("Size", descriptor("size", singleton("cluster")));
+
+      getStatisticRegistry().registerTable("Cluster:CacheEntryLength", () -> {
+        Map<String, String> snapshot = binding.getValue().getData();
+        return Table.newBuilder("KeyLength", "ValueLength")
+            .withRows(snapshot.keySet(), (key, rowBuilder) -> rowBuilder
+                .setStatistic("KeyLength", StatisticType.GAUGE, key.length())
+                .setStatistic("ValueLength", StatisticType.COUNTER, snapshot.get(key).length()))
+            .build();
+      });
     }
   }
 
