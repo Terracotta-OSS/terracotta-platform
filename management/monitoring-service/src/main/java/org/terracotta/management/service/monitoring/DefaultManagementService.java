@@ -113,7 +113,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   @Override
   public void onBecomeActive() {
     LOGGER.trace("[{}] onBecomeActive()", this.consumerId);
-    clear();
+    managementCallRequests.clear();
   }
 
   @Override
@@ -199,14 +199,10 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     return false;
   }
 
-  private void clear() {
-    managementCallRequests.clear();
-  }
-
   @Override
   public void close() {
     LOGGER.trace("[{}] close()", this.consumerId);
-    clear();
+    managementCallRequests.clear();
     topologyService.removeTopologyEventListener(this);
     firingService.removeManagementService(this);
   }

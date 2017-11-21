@@ -155,7 +155,7 @@ public class VoltronMonitoringServiceTest {
       }
     });
 
-    EntityManagementRegistry activeRegistry = activeServiceProvider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
+    EntityManagementRegistry activeRegistry = activeServiceProvider.getService(1, new EntityManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
     activeEntityMonitoringService = activeRegistry.getMonitoringService();
   }
 
@@ -328,7 +328,7 @@ public class VoltronMonitoringServiceTest {
         activeDataListener.pushBestEffortsData(passive, name, data);
       }
     };
-    EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
+    EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new EntityManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
       @Override
       public IMonitoringProducer getMonitoringProducer() {
         return monitoringProducer;

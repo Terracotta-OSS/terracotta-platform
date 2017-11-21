@@ -17,9 +17,13 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.context.ContextContainer;
+import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.CombiningCapabilityManagementSupport;
 import org.terracotta.management.registry.collect.DefaultStatisticCollector;
 import org.terracotta.management.registry.collect.StatisticCollector;
+import org.terracotta.management.service.monitoring.registry.provider.StatisticCollectorManagementProvider;
 
 import java.io.Closeable;
 import java.util.Objects;
@@ -59,20 +63,36 @@ class DefaultStatisticService implements StatisticService, Closeable {
   }
 
   @Override
-  public StatisticCollector createStatisticCollector(EntityManagementRegistry statCollectorRegistry, StatisticCollector.Collector collector) {
-    long consumerId = statCollectorRegistry.getMonitoringService().getConsumerId();
-    LOGGER.trace("[{}] createStatisticCollector()", consumerId);
-    return new DefaultStatisticCollector(
+  public void addStatisticCollector(EntityManagementRegistry registry) {
+    long consumerId = registry.getMonitoringService().getConsumerId();
+    LOGGER.trace("[{}] addStatisticCollector()", consumerId);
+
+    // The context for the collector is created from the the registry of the entity wanting server-side providers.
+    // We create a provider that will receive management calls to control the global voltron's statistic collector.
+    // This provider will thus be on top of the entity wanting to collect server-side stats
+    ContextContainer contextContainer = registry.getContextContainer();
+    Context context = Context.create(contextContainer.getName(), contextContainer.getValue());
+    StatisticCollectorManagementProvider collectorManagementProvider = new StatisticCollectorManagementProvider(context);
+    registry.addManagementProvider(collectorManagementProvider);
+
+    EntityMonitoringService monitoringService = registry.getMonitoringService();
+
+    StatisticCollector statisticCollector = new DefaultStatisticCollector(
         // Create a statistics collector which can collect stats over all management registries and only the registry combined.
         // This will avoid collecting stats on a registry from another NMS entity that already has its own stat collector.
-        new CombiningCapabilityManagementSupport(sharedEntityManagementRegistry, statCollectorRegistry),
+        new CombiningCapabilityManagementSupport(sharedEntityManagementRegistry, registry),
         managementScheduler,
         list -> {
           // Add a marker on the statistics to know which statistics collector has collected them (from which NMS entity)
           list.forEach(stats -> stats.setContext(stats.getContext().with("collectorId", "" + consumerId)));
-          collector.onStatistics(list);
+          monitoringService.pushStatistics(list.toArray(new ContextualStatistics[list.size()]));
         }
     );
+
+    // add a collector service, not started by default, but that can be started through a remote management call
+    registry.register(statisticCollector);
+
+    registry.refresh();
   }
 
   @Override

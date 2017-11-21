@@ -30,10 +30,12 @@ abstract class AbstractEntityMonitoringService implements EntityMonitoringServic
 
   private final long consumerId;
   private final PlatformConfiguration platformConfiguration;
+  private final boolean active;
 
-  AbstractEntityMonitoringService(long consumerId, PlatformConfiguration platformConfiguration) {
+  AbstractEntityMonitoringService(long consumerId, PlatformConfiguration platformConfiguration, boolean active) {
     this.consumerId = consumerId;
     this.platformConfiguration = Objects.requireNonNull(platformConfiguration);
+    this.active = active;
   }
 
   @Override
@@ -44,6 +46,11 @@ abstract class AbstractEntityMonitoringService implements EntityMonitoringServic
   @Override
   public String getServerName() {
     return platformConfiguration.getServerName();
+  }
+
+  @Override
+  public boolean isActiveEntityService() {
+    return active;
   }
 
 }
