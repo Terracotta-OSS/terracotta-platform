@@ -107,7 +107,7 @@ public class ManagementRegistryServiceTest {
     managementService.setManagementExecutor(managementExecutor);
 
     // a consumer asks for a service
-    EntityManagementRegistry registry = provider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
+    EntityManagementRegistry registry = provider.getService(1, new EntityManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
     registry.addManagementProvider(new MyManagementProvider());
 
     // then register some objects

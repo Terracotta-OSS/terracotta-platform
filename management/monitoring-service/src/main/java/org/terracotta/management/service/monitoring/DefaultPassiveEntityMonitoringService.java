@@ -42,7 +42,7 @@ class DefaultPassiveEntityMonitoringService extends AbstractEntityMonitoringServ
   private final IMonitoringProducer monitoringProducer;
 
   DefaultPassiveEntityMonitoringService(long consumerId, IMonitoringProducer monitoringProducer, PlatformConfiguration platformConfiguration) {
-    super(consumerId, platformConfiguration);
+    super(consumerId, platformConfiguration, false);
     this.monitoringProducer = monitoringProducer;
     monitoringProducer.addNode(new String[0], "management-answer", null);
   }

@@ -32,6 +32,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
+ * Only contains registries of standard entities, not management ones
+ *
  * @author Mathieu Carbou
  */
 class DefaultSharedEntityManagementRegistry implements SharedEntityManagementRegistry {
@@ -39,18 +41,19 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSharedEntityManagementRegistry.class);
   private static final Comparator<Capability> CAPABILITY_COMPARATOR = Comparator.comparing(Capability::getName);
 
-  private final List<DefaultEntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
+  private final List<EntityManagementRegistry> serverRegistries = new CopyOnWriteArrayList<>();
+  private final List<EntityManagementRegistry> entityRegistries = new CopyOnWriteArrayList<>();
 
   @Override
   public Collection<ContextContainer> getContextContainers() {
-    return registries.stream()
+    return entityRegistries.stream()
         .map(EntityManagementRegistry::getContextContainer)
         .collect(Collectors.toList());
   }
 
   @Override
   public Collection<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
-    return registries.stream()
+    return entityRegistries.stream()
         .flatMap(registry -> registry.getManagementProvidersByCapability(capabilityName).stream())
         .collect(Collectors.toList());
   }
@@ -62,7 +65,7 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
 
   @Override
   public Collection<? extends Capability> getCapabilities() {
-    return registries.stream()
+    return entityRegistries.stream()
         .flatMap(r -> r.getCapabilities().stream())
         .sorted(CAPABILITY_COMPARATOR)
         .collect(Collectors.toList());
@@ -70,7 +73,7 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
 
   @Override
   public Collection<String> getCapabilityNames() {
-    return registries.stream()
+    return entityRegistries.stream()
         .flatMap(r -> r.getCapabilityNames().stream())
         .collect(Collectors.toCollection(TreeSet::new));
   }
@@ -78,35 +81,46 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
   /**
    * Returns the existing registry having the SAME consumerId that is not the added one
    */
-  Optional<DefaultEntityManagementRegistry> findAndAdd(DefaultEntityManagementRegistry managementRegistry) {
-    long consumerId = managementRegistry.getMonitoringService().getConsumerId();
-    boolean active = managementRegistry.getMonitoringService() instanceof DefaultActiveEntityMonitoringService;
-    LOGGER.trace("[{}] findAndAdd() active={}", consumerId, active);
-    registries.add(managementRegistry);
-    return registries.stream()
-        .filter(existing -> existing != managementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
+  Optional<EntityManagementRegistry> addEntityManagementRegistry(EntityManagementRegistry entityManagementRegistry) {
+    long consumerId = entityManagementRegistry.getMonitoringService().getConsumerId();
+    boolean active = entityManagementRegistry.getMonitoringService().isActiveEntityService();
+    LOGGER.trace("[{}] addEntityManagementRegistry() active={}", consumerId, active);
+    entityRegistries.add(entityManagementRegistry);
+    return entityRegistries.stream()
+        .filter(existing -> existing != entityManagementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
         .findFirst();
   }
 
-  Optional<DefaultEntityManagementRegistry> find(long consumerId) {
-    LOGGER.trace("[{}] find()", consumerId);
-    return registries.stream()
-        .filter(existing -> existing.getMonitoringService().getConsumerId() == consumerId)
+  void removeEntityManagementRegistry(EntityManagementRegistry managementRegistry) {
+    long consumerId = managementRegistry.getMonitoringService().getConsumerId();
+    boolean active = managementRegistry.getMonitoringService().isActiveEntityService();
+    LOGGER.trace("[{}] removeEntityManagementRegistry() active={}", consumerId, active);
+    entityRegistries.remove(managementRegistry);
+  }
+
+  Optional<EntityManagementRegistry> addServerManagementRegistry(EntityManagementRegistry serverManagementRegistry) {
+    long consumerId = serverManagementRegistry.getMonitoringService().getConsumerId();
+    boolean active = serverManagementRegistry.getMonitoringService().isActiveEntityService();
+    LOGGER.trace("[{}] addServerManagementRegistry() active={}", consumerId, active);
+    serverRegistries.add(serverManagementRegistry);
+    return serverRegistries.stream()
+        .filter(existing -> existing != serverManagementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
         .findFirst();
   }
 
-  void remove(DefaultEntityManagementRegistry managementRegistry) {
+  void removeServerManagementRegistry(EntityManagementRegistry managementRegistry) {
     long consumerId = managementRegistry.getMonitoringService().getConsumerId();
-    boolean active = managementRegistry.getMonitoringService() instanceof DefaultActiveEntityMonitoringService;
-    LOGGER.trace("[{}] remove() active={}", consumerId, active);
-    registries.remove(consumerId);
+    boolean active = managementRegistry.getMonitoringService().isActiveEntityService();
+    LOGGER.trace("[{}] removeServerManagementRegistry() active={}", consumerId, active);
+    serverRegistries.remove(managementRegistry);
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("DefaultSharedEntityManagementRegistry{");
-    sb.append("registries=").append(registries);
+    sb.append("registries=").append(entityRegistries);
     sb.append('}');
     return sb.toString();
   }
+
 }

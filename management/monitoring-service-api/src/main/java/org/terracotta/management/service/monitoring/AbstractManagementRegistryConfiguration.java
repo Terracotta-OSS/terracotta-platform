@@ -22,35 +22,24 @@ import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 
-import java.util.Collection;
 import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
 @CommonComponent
-public class ManagementRegistryConfiguration implements ServiceConfiguration<EntityManagementRegistry> {
+public abstract class AbstractManagementRegistryConfiguration implements ServiceConfiguration<EntityManagementRegistry> {
 
-  private final ServiceRegistry registry;
+  protected final ServiceRegistry registry;
   private final boolean active;
-  private final boolean addServerLevelCapabilities;
 
-  public ManagementRegistryConfiguration(ServiceRegistry registry, boolean active) {
-    this(registry, active, false);
-  }
-
-  public ManagementRegistryConfiguration(ServiceRegistry registry, boolean active, boolean addServerLevelCapabilities) {
+  public AbstractManagementRegistryConfiguration(ServiceRegistry registry, boolean active) {
     this.registry = Objects.requireNonNull(registry);
     this.active = active;
-    this.addServerLevelCapabilities = addServerLevelCapabilities;
   }
 
   public boolean isActive() {
     return active;
-  }
-
-  public boolean wantsServerLevelCapabilities() {
-    return addServerLevelCapabilities;
   }
 
   public Class<EntityManagementRegistry> getServiceType() {
@@ -66,7 +55,4 @@ public class ManagementRegistryConfiguration implements ServiceConfiguration<Ent
     }
   }
 
-  public Collection<ManageableServerComponent> getManageableVoltronComponents() {
-    return registry.getServices(new BasicServiceConfiguration<>(ManageableServerComponent.class));
-  }
 }

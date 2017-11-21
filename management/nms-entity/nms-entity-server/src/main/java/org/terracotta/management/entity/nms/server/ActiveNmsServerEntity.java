@@ -89,7 +89,7 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
   public void loadExisting() {
     super.loadExisting();
     LOGGER.trace("[{}] loadExisting()", consumerId);
-    entityManagementRegistry.cleanupPreviousPassiveStates();
+    entityManagementRegistry.entityPromotionCompleted();
     entityManagementRegistry.refresh();
   }
 
