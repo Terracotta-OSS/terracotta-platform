@@ -43,6 +43,7 @@ public abstract class AbstractHATest extends AbstractTest {
       .in(new File("target/galvan"))
       .withServiceFragment(resourceConfig)
       .withSystemProperty("terracotta.management.assert", "true")
+      .withTcProperty("terracotta.management.assert", "true")
       .build();
 
   @Rule
