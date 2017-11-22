@@ -171,7 +171,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
         break;
 
       default:
-        LOGGER.warn("[{}] onMessageToSend({}): message type unsupported", this.consumerId, message.getType());
+        Utils.warnOrAssert(LOGGER, "[{}] onMessageToSend({}): message type unsupported", this.consumerId, message.getType());
     }
   }
 
