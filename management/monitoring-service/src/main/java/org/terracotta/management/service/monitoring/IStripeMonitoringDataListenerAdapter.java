@@ -53,7 +53,7 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
     String[] path = Arrays.copyOf(parents, parents.length + 1);
     path[parents.length] = name;
     delegate.setState(consumerId, sender, path, value);
-    return true;
+    return false; // false to avoid replay of the cached data when a passive server becomes active
   }
 
   @Override
