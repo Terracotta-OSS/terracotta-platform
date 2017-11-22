@@ -166,12 +166,12 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityCreated({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityCreated({}, {}): Server is not current active server but it created an active entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityCreated({}, {}): Server is not current active server but it created an active entity", sender.getServerName(), platformEntity);
       return;
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityCreated({}, {}): Server is the current active server but it created a passive entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityCreated({}, {}): Server is the current active server but it created a passive entity", sender.getServerName(), platformEntity);
       return;
     }
 
@@ -208,12 +208,12 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityDestroyed({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityDestroyed({}, {}): Server is not current active server but it destroyed an active entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityDestroyed({}, {}): Server is not current active server but it destroyed an active entity", sender.getServerName(), platformEntity);
       return;
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityDestroyed({}, {}): Server is the current active server but it destroyed a passive entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityDestroyed({}, {}): Server is the current active server but it destroyed a passive entity", sender.getServerName(), platformEntity);
       return;
     }
 

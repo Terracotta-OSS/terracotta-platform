@@ -58,7 +58,7 @@ class DefaultDataListener implements DataListener {
     LOGGER.trace("[{}] pushBestEffortsData({}, {}, {})", this.consumerId, consumerId, sender.getServerName(), name);
 
     if (senderIsCurrentActive(sender)) {
-      LOGGER.warn("[{}] pushBestEffortsData({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), name);
+      Utils.warnOrAssert(LOGGER, "[{}] pushBestEffortsData({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), name);
       return;
     }
 
@@ -83,7 +83,7 @@ class DefaultDataListener implements DataListener {
       }
 
       default: {
-        LOGGER.warn("[{}] pushBestEffortsData({}, {}, {}): topic name unsupported", this.consumerId, consumerId, sender.getServerName(), name);
+        Utils.warnOrAssert(LOGGER, "[{}] pushBestEffortsData({}, {}, {}): topic name unsupported", this.consumerId, consumerId, sender.getServerName(), name);
       }
     }
 
@@ -94,7 +94,7 @@ class DefaultDataListener implements DataListener {
     LOGGER.trace("[{}] setState({}, {}, {})", this.consumerId, consumerId, sender.getServerName(), Arrays.toString(path));
 
     if (senderIsCurrentActive(sender)) {
-      LOGGER.warn("[{}] setState({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), Arrays.toString(path));
+      Utils.warnOrAssert(LOGGER, "[{}] setState({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), Arrays.toString(path));
       return;
     }
 
