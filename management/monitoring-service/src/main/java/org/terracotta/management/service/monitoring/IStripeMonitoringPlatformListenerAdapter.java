@@ -118,7 +118,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
         case "state": {
           delegate.serverStateChanged(sender, (ServerState) value);
-          return true;
+          return false; // false to avoid replay of the cached data when a passive server becomes active 
         }
 
         case "fetched": {
