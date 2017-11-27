@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import java.util.Arrays;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -24,26 +25,29 @@ import org.terracotta.management.model.cluster.ManagementRegistry;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_NOTIFICATION;
 import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_STATISTICS;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 /**
  * @author Mathieu Carbou
  */
-class DefaultPassiveEntityMonitoringService extends AbstractEntityMonitoringService {
+public class DefaultEntityMonitoringService extends AbstractEntityMonitoringService {
 
+  private final TopologyService topology;
   private final IMonitoringProducer monitoringProducer;
+  private final String[] callbackPath;
 
-  DefaultPassiveEntityMonitoringService(long consumerId, IMonitoringProducer monitoringProducer, PlatformConfiguration platformConfiguration) {
+  DefaultEntityMonitoringService(long consumerId, TopologyService topology, IMonitoringProducer monitoringProducer, PlatformConfiguration platformConfiguration) {
     super(consumerId, platformConfiguration);
+    this.topology = topology;
     this.monitoringProducer = monitoringProducer;
+    this.callbackPath = new String[] {"management-answer"};
     monitoringProducer.addNode(new String[0], "management-answer", null);
   }
 
@@ -75,14 +79,12 @@ class DefaultPassiveEntityMonitoringService extends AbstractEntityMonitoringServ
   @Override
   public void answerManagementCall(String managementCallIdentifier, ContextualReturn<?> contextualReturn) {
     logger.trace("[{}] answerManagementCall({}, {})", getConsumerId(), managementCallIdentifier, contextualReturn);
-    monitoringProducer.addNode(new String[]{"management-answer"}, managementCallIdentifier, contextualReturn);
+    monitoringProducer.addNode(this.callbackPath, managementCallIdentifier, contextualReturn);
   }
 
   @Override
   public CompletableFuture<ClientIdentifier> getClientIdentifier(ClientDescriptor clientDescriptor) {
-    CompletableFuture<ClientIdentifier> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("getClientIdentifier() cannot be called from a passive entity (consumerId=" + getConsumerId() + ")"));
-    return future;
+    logger.trace("[{}] getClientIdentifier({})", getConsumerId(), clientDescriptor);
+    return topology.getClientIdentifier(getConsumerId(), clientDescriptor);
   }
-
 }

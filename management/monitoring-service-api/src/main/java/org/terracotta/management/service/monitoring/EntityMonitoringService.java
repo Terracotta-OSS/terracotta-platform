@@ -82,9 +82,4 @@ public interface EntityMonitoringService {
    * as soon as monitoring service is made aware of the fetch
    */
   CompletableFuture<ClientIdentifier> getClientIdentifier(ClientDescriptor clientDescriptor);
-
-  /**
-   * @return True if this monitoring service has been constructed for an active entity
-   */
-  boolean isActiveEntityService();
 }

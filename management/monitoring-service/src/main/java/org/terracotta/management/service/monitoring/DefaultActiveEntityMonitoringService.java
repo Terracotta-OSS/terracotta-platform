@@ -41,7 +41,7 @@ public class DefaultActiveEntityMonitoringService extends AbstractEntityMonitori
   private final String serverName;
 
   DefaultActiveEntityMonitoringService(long consumerId, TopologyService topologyService, FiringService firingService, PlatformConfiguration platformConfiguration) {
-    super(consumerId, platformConfiguration, true);
+    super(consumerId, platformConfiguration);
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
     this.serverName = platformConfiguration.getServerName();

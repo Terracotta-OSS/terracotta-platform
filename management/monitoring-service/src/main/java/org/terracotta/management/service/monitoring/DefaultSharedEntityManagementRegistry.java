@@ -83,8 +83,7 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
    */
   Optional<EntityManagementRegistry> addEntityManagementRegistry(EntityManagementRegistry entityManagementRegistry) {
     long consumerId = entityManagementRegistry.getMonitoringService().getConsumerId();
-    boolean active = entityManagementRegistry.getMonitoringService().isActiveEntityService();
-    LOGGER.trace("[{}] addEntityManagementRegistry() active={}", consumerId, active);
+    LOGGER.trace("[{}] addEntityManagementRegistry()", consumerId);
     entityRegistries.add(entityManagementRegistry);
     return entityRegistries.stream()
         .filter(existing -> existing != entityManagementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
@@ -93,15 +92,13 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
 
   void removeEntityManagementRegistry(EntityManagementRegistry managementRegistry) {
     long consumerId = managementRegistry.getMonitoringService().getConsumerId();
-    boolean active = managementRegistry.getMonitoringService().isActiveEntityService();
-    LOGGER.trace("[{}] removeEntityManagementRegistry() active={}", consumerId, active);
+    LOGGER.trace("[{}] removeEntityManagementRegistry()", consumerId);
     entityRegistries.remove(managementRegistry);
   }
 
   Optional<EntityManagementRegistry> addServerManagementRegistry(EntityManagementRegistry serverManagementRegistry) {
     long consumerId = serverManagementRegistry.getMonitoringService().getConsumerId();
-    boolean active = serverManagementRegistry.getMonitoringService().isActiveEntityService();
-    LOGGER.trace("[{}] addServerManagementRegistry() active={}", consumerId, active);
+    LOGGER.trace("[{}] addServerManagementRegistry()", consumerId);
     serverRegistries.add(serverManagementRegistry);
     return serverRegistries.stream()
         .filter(existing -> existing != serverManagementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
@@ -110,8 +107,7 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
 
   void removeServerManagementRegistry(EntityManagementRegistry managementRegistry) {
     long consumerId = managementRegistry.getMonitoringService().getConsumerId();
-    boolean active = managementRegistry.getMonitoringService().isActiveEntityService();
-    LOGGER.trace("[{}] removeServerManagementRegistry() active={}", consumerId, active);
+    LOGGER.trace("[{}] removeServerManagementRegistry()", consumerId);
     serverRegistries.remove(managementRegistry);
   }
 

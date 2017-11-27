@@ -50,15 +50,13 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   private final EntityMonitoringService monitoringService;
   private final ContextContainer contextContainer;
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
-  private final boolean active;
   private final CompletableFuture<?> onEntityPromotionCompleted = new CompletableFuture<>();
   private final CompletableFuture<?> onClose = new CompletableFuture<>();
 
-  DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService, boolean active) {
+  DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService) {
     this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
     this.consumerId = consumerId;
     this.monitoringService = Objects.requireNonNull(monitoringService);
-    this.active = active;
   }
 
   void onEntityPromotionCompleted(Runnable r) {
@@ -81,7 +79,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public boolean addManagementProvider(ManagementProvider<?> provider) {
-    LOGGER.trace("[{}] addManagementProvider({}) active={}", consumerId, provider.getClass().getSimpleName(), active);
+    LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass().getSimpleName());
     String name = provider.getCapabilityName();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       if (managementProvider.getCapabilityName().equals(name)) {
@@ -140,7 +138,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   @SuppressWarnings("unchecked")
   @Override
   public CompletableFuture<Void> register(Object managedObject) {
-    LOGGER.trace("[{}] register() active={}", consumerId, active);
+    LOGGER.trace("[{}] register()", consumerId);
     List<CompletableFuture<Void>> futures = new ArrayList<>(managementProviders.size());
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
@@ -169,7 +167,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void refresh() {
-    LOGGER.trace("[{}] refresh() active={}", consumerId, active);
+    LOGGER.trace("[{}] refresh()", consumerId);
     Collection<? extends Capability> capabilities = getCapabilities();
     Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
     // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
@@ -194,7 +192,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void close() {
-    LOGGER.trace("[{}] close() active={}", consumerId, active);
+    LOGGER.trace("[{}] close()", consumerId);
     managementProviders.forEach(ManagementProvider::close);
     managementProviders.clear();
     onClose.complete(null);
@@ -202,7 +200,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void entityPromotionCompleted() {
-    LOGGER.trace("[{}] entityPromotionCompleted() active={}", consumerId, active);
+    LOGGER.trace("[{}] entityPromotionCompleted()", consumerId);
     onEntityPromotionCompleted.complete(null);
   }
 
@@ -210,7 +208,6 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   public String toString() {
     final StringBuilder sb = new StringBuilder("DefaultEntityManagementRegistry{");
     sb.append("consumerId=").append(consumerId);
-    sb.append(", active=").append(active);
     sb.append('}');
     return sb.toString();
   }

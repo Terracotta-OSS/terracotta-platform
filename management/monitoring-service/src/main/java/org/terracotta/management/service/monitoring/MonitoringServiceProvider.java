@@ -62,6 +62,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   private PlatformConfiguration platformConfiguration;
   private TopologyService topologyService;
+  private DataListener listener;
   private IStripeMonitoring platformListenerAdapter;
   private Collection<ManageableServerComponent> manageablePlugins;
 
@@ -85,6 +86,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     this.manageablePlugins = platformConfiguration.getExtendedConfiguration(ManageableServerComponent.class);
     this.topologyService = new TopologyService(firingService, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
+    this.listener = new DefaultDataListener(topologyService, firingService);
     return true;
   }
 
@@ -100,10 +102,11 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   public void close() {
     this.statisticService.close();
   }
-
+//  possible deadlock if synchronized since managementRegistryConfiguration.getMonitoringProducer()
+//  will loopback and ask for a service from the same provider
   @SuppressWarnings("unchecked")
   @Override
-  public synchronized <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
     // for platform, which requests either a IStripeMonitoring to send platform events or a IStripeMonitoring to send callbacks from passive entities
@@ -111,8 +114,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       if (consumerID == PLATFORM_CONSUMER_ID) {
         return serviceType.cast(platformListenerAdapter);
       } else {
-        DataListener dataListener = new DefaultDataListener(consumerID, topologyService, firingService);
-        return serviceType.cast(new IStripeMonitoringDataListenerAdapter(consumerID, dataListener));
+        return serviceType.cast(new IStripeMonitoringDataListenerAdapter(consumerID, listener));
       }
     }
 
@@ -153,21 +155,15 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     if (EntityManagementRegistry.class == serviceType) {
       if (configuration instanceof AbstractManagementRegistryConfiguration) {
         AbstractManagementRegistryConfiguration managementRegistryConfiguration = (AbstractManagementRegistryConfiguration) configuration;
-        boolean active = managementRegistryConfiguration.isActive();
 
         LOGGER.trace("[{}] getService({}) isActive={}, config={}", consumerID, EntityManagementRegistry.class.getSimpleName(), configuration.getClass().getSimpleName());
 
         // create an active or passive monitoring service
-        EntityMonitoringService entityMonitoringService;
-        if (active) {
-          entityMonitoringService = new DefaultActiveEntityMonitoringService(consumerID, topologyService, firingService, platformConfiguration);
-        } else {
-          IMonitoringProducer monitoringProducer = managementRegistryConfiguration.getMonitoringProducer();
-          entityMonitoringService = new DefaultPassiveEntityMonitoringService(consumerID, monitoringProducer, platformConfiguration);
-        }
+        IMonitoringProducer monitoringProducer = managementRegistryConfiguration.getMonitoringProducer();
+        EntityMonitoringService entityMonitoringService = new DefaultEntityMonitoringService(consumerID, topologyService, monitoringProducer, platformConfiguration);
 
         // create a registry for the entity
-        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService, active);
+        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService);
 
         // make the registry listen for topology events
         topologyService.addTopologyEventListener(managementRegistry);

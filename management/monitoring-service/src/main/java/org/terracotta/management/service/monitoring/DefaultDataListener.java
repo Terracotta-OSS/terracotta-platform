@@ -39,12 +39,10 @@ class DefaultDataListener implements DataListener {
   static final String TOPIC_SERVER_ENTITY_NOTIFICATION = "server-entity-notification";
   static final String TOPIC_SERVER_ENTITY_STATISTICS = "server-entity-statistics";
 
-  private final long consumerId;
   private final TopologyService topologyService;
   private final FiringService firingService;
-
-  DefaultDataListener(long consumerId, TopologyService topologyService, FiringService firingService) {
-    this.consumerId = consumerId;
+    
+  DefaultDataListener(TopologyService topologyService, FiringService firingService) {
     this.topologyService = Objects.requireNonNull(topologyService);
     this.firingService = Objects.requireNonNull(firingService);
   }
@@ -55,13 +53,8 @@ class DefaultDataListener implements DataListener {
 
   @Override
   public void pushBestEffortsData(long consumerId, PlatformServer sender, String name, Serializable data) {
-    LOGGER.trace("[{}] pushBestEffortsData({}, {}, {})", this.consumerId, consumerId, sender.getServerName(), name);
-
-    if (senderIsCurrentActive(sender)) {
-      Utils.warnOrAssert(LOGGER, "[{}] pushBestEffortsData({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), name);
-      return;
-    }
-
+    LOGGER.trace("[{}] pushBestEffortsData({}, {})", consumerId, sender.getServerName(), name);
+    
     switch (name) {
 
       case TOPIC_SERVER_ENTITY_NOTIFICATION: {
@@ -83,7 +76,7 @@ class DefaultDataListener implements DataListener {
       }
 
       default: {
-        Utils.warnOrAssert(LOGGER, "[{}] pushBestEffortsData({}, {}, {}): topic name unsupported", this.consumerId, consumerId, sender.getServerName(), name);
+        Utils.warnOrAssert(LOGGER, "[{}] pushBestEffortsData({}, {}): topic name unsupported", consumerId, sender.getServerName(), name);
       }
     }
 
@@ -91,28 +84,26 @@ class DefaultDataListener implements DataListener {
 
   @Override
   public synchronized void setState(long consumerId, PlatformServer sender, String[] path, Serializable data) {
-    LOGGER.trace("[{}] setState({}, {}, {})", this.consumerId, consumerId, sender.getServerName(), Arrays.toString(path));
+    LOGGER.trace("[{}] setState({}, {})", consumerId, sender.getServerName(), Arrays.toString(path));
 
-    if (senderIsCurrentActive(sender)) {
-      Utils.warnOrAssert(LOGGER, "[{}] setState({}, {}, {}) IGNORED: sender is the current active server", this.consumerId, consumerId, sender.getServerName(), Arrays.toString(path));
-      return;
-    }
-
-    if (path.length == 1 && "registry".equals(path[0])) {
+    if ("registry".equals(path[0])) {
+      if (path.length != 1) {
+        throw new AssertionError("unknown state");
+      }
       // handles data coming from DefaultMonitoringService.exposeServerEntityManagementRegistry()
       ManagementRegistry newRegistry = (ManagementRegistry) data;
       topologyService.willSetEntityManagementRegistry(consumerId, sender.getServerName(), newRegistry);
-
-    } else if (path.length == 2 && "management-answer".equals(path[0])) {
+    } else if ("management-answer".equals(path[0])) {
       // handles data coming from DefaultMonitoringService.answerManagementCall()
-      String managementCallIdentifier = path[1];
-      ContextualReturn<?> answer = (ContextualReturn<?>) data;
-      firingService.fireManagementCallAnswer(managementCallIdentifier, answer);
+      if (path.length == 2) {
+        String managementCallIdentifier = path[1];
+        ContextualReturn<?> answer = (ContextualReturn<?>) data;
+        firingService.fireManagementCallAnswer(managementCallIdentifier, answer);
+      } else {
+        // setup call
+      }
+    } else {
+      throw new AssertionError("unhandled " + Arrays.toString(path));
     }
   }
-
-  private boolean senderIsCurrentActive(PlatformServer sender) {
-    return topologyService.isCurrentServerActive() && sender.getServerName().equals(topologyService.getActiveServer().getServerName());
-  }
-
 }
