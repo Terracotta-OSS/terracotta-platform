@@ -53,7 +53,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   private final Collection<ManageableServerComponent> manageableServerComponents;
   private final ContextContainer contextContainer;
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
-  private final boolean active;
+
   private DefaultEntityManagementRegistry previous;
 
   DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService, DefaultSharedEntityManagementRegistry sharedManagementRegistry, TopologyService topologyService, Collection<ManageableServerComponent> manageableServerComponents, boolean associatedToStatisticService) {
@@ -63,7 +63,6 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
     this.sharedManagementRegistry = Objects.requireNonNull(sharedManagementRegistry);
     this.topologyService = Objects.requireNonNull(topologyService);
     this.manageableServerComponents = Objects.requireNonNull(manageableServerComponents);
-    this.active = monitoringService instanceof DefaultActiveEntityMonitoringService;
 
     topologyService.addTopologyEventListener(this);
 
@@ -90,7 +89,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public boolean addManagementProvider(ManagementProvider<?> provider) {
-    LOGGER.trace("[{}] addManagementProvider({}) active={}", consumerId, provider.getClass().getSimpleName(), active);
+    LOGGER.trace("[{}] addManagementProvider({})", consumerId, provider.getClass().getSimpleName());
     String name = provider.getCapabilityName();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       if (managementProvider.getCapabilityName().equals(name)) {
@@ -149,7 +148,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   @SuppressWarnings("unchecked")
   @Override
   public CompletableFuture<Void> register(Object managedObject) {
-    LOGGER.trace("[{}] register() active={}", consumerId, active);
+    LOGGER.trace("[{}] register()", consumerId);
     List<CompletableFuture<Void>> futures = new ArrayList<>(managementProviders.size());
     for (ManagementProvider managementProvider : managementProviders) {
       if (managementProvider.getManagedType().isInstance(managedObject)) {
@@ -178,7 +177,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void refresh() {
-    LOGGER.trace("[{}] refresh() active={}", consumerId, active);
+    LOGGER.trace("[{}] refresh()", consumerId);
     Collection<? extends Capability> capabilities = getCapabilities();
     Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
     // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
@@ -203,8 +202,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void close() {
-    LOGGER.trace("[{}] close() active={}", consumerId, active);
-    manageableServerComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryClose(this));
+    LOGGER.trace("[{}] close()", consumerId);
     managementProviders.forEach(ManagementProvider::close);
     managementProviders.clear();
     topologyService.removeTopologyEventListener(this);
@@ -214,7 +212,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   @Override
   public void cleanupPreviousPassiveStates() {
     if (previous != null) {
-      LOGGER.trace("[{}] cleanupPreviousPassiveStates() active={}", consumerId, active);
+      LOGGER.trace("[{}] cleanupPreviousPassiveStates()", consumerId);
       previous.close();
       previous = null;
     }
@@ -224,7 +222,6 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   public String toString() {
     final StringBuilder sb = new StringBuilder("DefaultEntityManagementRegistry{");
     sb.append("consumerId=").append(consumerId);
-    sb.append(", active=").append(active);
     sb.append('}');
     return sb.toString();
   }
