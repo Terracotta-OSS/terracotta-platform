@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class StartSampleEntity {
   public static void main(String[] args) throws ConnectionException, ExecutionException, TimeoutException, InterruptedException {
-    CacheFactory cacheFactory = new CacheFactory(URI.create("terracotta://localhost:9510/pet-clinic"));
+    CacheFactory cacheFactory = new CacheFactory(URI.create("terracotta://localhost:9510"), "pet-clinic");
 
     cacheFactory.init();
 

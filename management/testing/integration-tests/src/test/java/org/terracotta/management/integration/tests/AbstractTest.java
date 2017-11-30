@@ -87,8 +87,8 @@ public abstract class AbstractTest {
 
     connectManagementClient(cluster.getConnectionURI());
 
-    addWebappNode(cluster.getConnectionURI().resolve("/pet-clinic"));
-    addWebappNode(cluster.getConnectionURI().resolve("/pet-clinic"));
+    addWebappNode(cluster.getConnectionURI(), "pet-clinic");
+    addWebappNode(cluster.getConnectionURI(), "pet-clinic");
 
     getCaches("pets");
     getCaches("clients");
@@ -162,8 +162,8 @@ public abstract class AbstractTest {
     webappNodes.forEach(cacheFactory -> cacheFactory.destroyCache(name));
   }
 
-  protected void addWebappNode(URI uri) throws Exception {
-    CacheFactory cacheFactory = new CacheFactory(uri);
+  protected void addWebappNode(URI uri, String path) throws Exception {
+    CacheFactory cacheFactory = new CacheFactory(uri, path);
     cacheFactory.init();
     webappNodes.add(cacheFactory);
   }

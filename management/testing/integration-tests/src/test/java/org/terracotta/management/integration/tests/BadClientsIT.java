@@ -33,10 +33,10 @@ public class BadClientsIT extends AbstractSingleTest {
 
   @Test
   public void two_clients_with_same_identifiers_do_not_crash_the_server() throws Exception {
-    URI uri = cluster.getConnectionURI().resolve("/bad-client");
+    URI uri = cluster.getConnectionURI();
     String uuid = UUID.randomUUID().toString();
 
-    CacheFactory cacheFactory1 = new CacheFactory(uri);
+    CacheFactory cacheFactory1 = new CacheFactory(uri, "bad-client");
     cacheFactory1.init(uuid);
     Cache foo1 = cacheFactory1.getCache("foo");
 
@@ -46,7 +46,7 @@ public class BadClientsIT extends AbstractSingleTest {
     assertThat(count, equalTo(1L));
 
     // create another client that will have the same client identifier
-    CacheFactory cacheFactory2 = new CacheFactory(uri);
+    CacheFactory cacheFactory2 = new CacheFactory(uri, "bad-client");
     cacheFactory2.init(uuid);
     ClientCache foo2 = (ClientCache) cacheFactory1.getCache("foo");
 

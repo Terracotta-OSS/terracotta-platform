@@ -32,13 +32,13 @@ public class CacheEntityFeaturesTest extends AbstractTest {
 
   @Test
   public void cache_remains_active_on_server_on_client_close() throws Exception {
-    CacheFactory cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510/cat-clinic"));
+    CacheFactory cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510"), "cat-clinic");
     cacheFactory.init();
     Cache cache = cacheFactory.getCache("cache");
     cache.put("client1", "Mat");
     cacheFactory.close();
 
-    cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510/cat-clinic"));
+    cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510"), "cat-clinic");
     cacheFactory.init();
     cache = cacheFactory.getCache("cache");
     try {
