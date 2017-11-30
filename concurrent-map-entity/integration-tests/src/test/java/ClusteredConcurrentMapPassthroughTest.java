@@ -44,7 +44,7 @@ public class ClusteredConcurrentMapPassthroughTest {
 
   private static final String MAP_NAME = "my-map";
   private static final String SERVER_NAME = "testServer";
-  private static final String CLUSTER_URI = "passthrough://" + SERVER_NAME + "/" + MAP_NAME;
+  private static final String CLUSTER_URI = "passthrough://" + SERVER_NAME;
 
   private ConcurrentClusteredMap<Long, String> clusteredMap;
   private PassthroughClusterControl clusterControl;

@@ -44,18 +44,17 @@ import java.util.concurrent.TimeoutException;
 public class CacheFactory implements Closeable {
 
   private final URI uri;
+  private final String path;
   private final ConcurrentMap<String, ClientCache> caches = new ConcurrentHashMap<>();
   private final Management management;
 
   private Connection connection;
   private CacheEntityFactory cacheEntityFactory;
 
-  public CacheFactory(URI u) {
-    if (u.getPath() == null || u.getPath().isEmpty()) {
-      throw new IllegalArgumentException(u.toString());
-    }
+  public CacheFactory(URI u, String path) {
     this.uri = u;
-    this.management = new Management(new ContextContainer("appName", u.getPath().substring(1)));
+    this.path = path;
+    this.management = new Management(new ContextContainer("appName", path));
   }
 
   public CapabilityManagementSupport getManagementRegistry() {
@@ -69,7 +68,7 @@ public class CacheFactory implements Closeable {
   public void init(String uuid) throws ConnectionException, ExecutionException, InterruptedException, TimeoutException {
     // connects to server
     Properties properties = new Properties();
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, uri.getPath().substring(1));
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, path);
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     if(uuid != null) {
       properties.setProperty(ConnectionPropertyNames.CONNECTION_UUID, uuid);
@@ -81,7 +80,7 @@ public class CacheFactory implements Closeable {
 
   public Cache getCache(String name) {
     return caches.computeIfAbsent(name, s -> {
-      String entityName = uri.getPath().substring(1) + "/" + name;
+      String entityName = path + "/" + name;
       CacheEntity cacheEntity = cacheEntityFactory.retrieveOrCreate(entityName, entityName);
       ClientCache clientCache = new ClientCache(name, cacheEntity);
 
@@ -98,7 +97,7 @@ public class CacheFactory implements Closeable {
       clientCache.close();
     }
     try {
-      EntityRef<CacheEntity, String, Object> ref = connection.getEntityRef(CacheEntity.class, 1, uri.getPath().substring(1) + "/" + name);
+      EntityRef<CacheEntity, String, Object> ref = connection.getEntityRef(CacheEntity.class, 1, path + "/" + name);
       ref.destroy();
     } catch (EntityNotProvidedException | PermanentEntityException | EntityNotFoundException e) {
       throw new RuntimeException(e);
