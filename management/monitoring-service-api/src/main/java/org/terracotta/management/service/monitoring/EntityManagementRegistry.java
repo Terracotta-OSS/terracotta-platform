@@ -110,6 +110,6 @@ public interface EntityManagementRegistry extends CapabilityManagementSupport, C
    * management registry created by the passive entity once the promotion to active
    * is completed
    */
-  void cleanupPreviousPassiveStates();
+  void entityPromotionCompleted();
 
 }

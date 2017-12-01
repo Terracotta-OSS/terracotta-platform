@@ -39,6 +39,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.PLATFORM_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_NAME;
@@ -71,7 +72,7 @@ public class ManagementRegistryServiceTest {
   }
 
   @Test
-  public void test_management_info_pushed() {
+  public void test_management_info_pushed() throws Exception {
 
     // dataListener => per entity
 
@@ -105,9 +106,29 @@ public class ManagementRegistryServiceTest {
     dataListener = provider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
     managementService = provider.getService(1, new ManagementServiceConfiguration());
     managementService.setManagementExecutor(managementExecutor);
+    
+    ServiceRegistry svcreg = mock(ServiceRegistry.class);
+    when(svcreg.getService(any())).then(inv->{
+      IStripeMonitoring shim = provider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+      return new IMonitoringProducer() {
+        @Override
+        public boolean addNode(String[] strings, String string, Serializable srlzbl) {
+          return shim.addNode(server, strings, string, srlzbl);
+        }
 
+        @Override
+        public boolean removeNode(String[] strings, String string) {
+          return shim.removeNode(server, strings, string);
+        }
+
+        @Override
+        public void pushBestEffortsData(String string, Serializable srlzbl) {
+          shim.pushBestEffortsData(server, string, srlzbl);
+        }
+      };
+    });
     // a consumer asks for a service
-    EntityManagementRegistry registry = provider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
+    EntityManagementRegistry registry = provider.getService(1, new EntityManagementRegistryConfiguration(svcreg, true));
     registry.addManagementProvider(new MyManagementProvider());
 
     // then register some objects

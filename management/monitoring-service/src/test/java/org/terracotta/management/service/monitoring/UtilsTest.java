@@ -13,12 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.terracotta.management.service.monitoring;
 
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * This statistic service is injected into {@link org.terracotta.management.registry.ManagementProvider} objects implementing
- * {@link org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware} when they are added into a {@link EntityManagementRegistry}
+ * @author Mathieu Carbou
  */
-interface StatisticService {
-  void addStatisticCollector(EntityManagementRegistry statCollectorRegistry);
+@Ignore
+public class UtilsTest {
+  static {
+    System.setProperty("terracotta.management.assert", "true");
+  }
+
+  @Test(expected = AssertionError.class)
+  public void warnOrAssert() throws Exception {
+    Logger logger = LoggerFactory.getLogger("toto");
+    Utils.warnOrAssert(logger, "Hello {} and {}", "men", "women", new RuntimeException());
+  }
 }

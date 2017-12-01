@@ -69,6 +69,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import org.terracotta.entity.ServiceConfiguration;
 import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_NOTIFICATION;
 import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_STATISTICS;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_PATH;
@@ -154,8 +156,29 @@ public class VoltronMonitoringServiceTest {
         return clientCommunicator;
       }
     });
+    
+    ServiceRegistry registry = mock(ServiceRegistry.class);
+    when(registry.getService(any())).then(inv->{
+      IStripeMonitoring shim = activeServiceProvider.getService(1, new BasicServiceConfiguration<>(IStripeMonitoring.class));
+      return new IMonitoringProducer() {
+        @Override
+        public boolean addNode(String[] strings, String string, Serializable srlzbl) {
+          return shim.addNode(active, strings, string, srlzbl);
+        }
 
-    EntityManagementRegistry activeRegistry = activeServiceProvider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
+        @Override
+        public boolean removeNode(String[] strings, String string) {
+          return shim.removeNode(active, strings, string);
+        }
+
+        @Override
+        public void pushBestEffortsData(String string, Serializable srlzbl) {
+          shim.pushBestEffortsData(active, string, srlzbl);
+        }
+      };
+    });
+
+    EntityManagementRegistry activeRegistry = activeServiceProvider.getService(1, new EntityManagementRegistryConfiguration(registry, true));
     activeEntityMonitoringService = activeRegistry.getMonitoringService();
   }
 
@@ -328,7 +351,7 @@ public class VoltronMonitoringServiceTest {
         activeDataListener.pushBestEffortsData(passive, name, data);
       }
     };
-    EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
+    EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new EntityManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
       @Override
       public IMonitoringProducer getMonitoringProducer() {
         return monitoringProducer;
@@ -429,7 +452,7 @@ public class VoltronMonitoringServiceTest {
     cluster.serverStream().forEach(server -> {
       server.setUpTimeSec(0);
     });
-    assertEquals(new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8"), mapper.writeValueAsString(cluster.toMap()));
+    assertEquals(mapper.writeValueAsString(cluster.toMap()), new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8"), mapper.writeValueAsString(cluster.toMap()));
   }
 
   private List<Message> messages() {

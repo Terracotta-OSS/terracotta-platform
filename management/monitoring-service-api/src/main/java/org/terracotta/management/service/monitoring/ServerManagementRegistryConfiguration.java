@@ -15,10 +15,23 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceRegistry;
+
+import java.util.Collection;
+
 /**
- * This statistic service is injected into {@link org.terracotta.management.registry.ManagementProvider} objects implementing
- * {@link org.terracotta.management.service.monitoring.registry.provider.MonitoringServiceAware} when they are added into a {@link EntityManagementRegistry}
+ * @author Mathieu Carbou
  */
-interface StatisticService {
-  void addStatisticCollector(EntityManagementRegistry statCollectorRegistry);
+@CommonComponent
+public class ServerManagementRegistryConfiguration extends AbstractManagementRegistryConfiguration {
+
+  public ServerManagementRegistryConfiguration(ServiceRegistry registry, boolean active) {
+    super(registry, active);
+  }
+
+  public Collection<ManageableServerComponent> getManageableVoltronComponents() {
+    return registry.getServices(new BasicServiceConfiguration<>(ManageableServerComponent.class));
+  }
 }

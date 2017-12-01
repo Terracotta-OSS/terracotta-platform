@@ -23,7 +23,7 @@ import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.entity.sample.server.ServerCache;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
-import org.terracotta.management.service.monitoring.ManagementRegistryConfiguration;
+import org.terracotta.management.service.monitoring.EntityManagementRegistryConfiguration;
 
 import java.io.Closeable;
 import java.util.Objects;
@@ -41,7 +41,7 @@ public class Management implements Closeable {
   public Management(String cacheName, ServiceRegistry serviceRegistry, boolean active) throws ConfigurationException {
     this.cacheName = cacheName;
     try {
-      managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new ManagementRegistryConfiguration(serviceRegistry, active)));
+      managementRegistry = Objects.requireNonNull(serviceRegistry.getService(new EntityManagementRegistryConfiguration(serviceRegistry, active)));
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
     }
@@ -68,7 +68,7 @@ public class Management implements Closeable {
   public void reload() {
     if (managementRegistry != null) {
       LOGGER.trace("[{}] reload()", cacheName);
-      managementRegistry.cleanupPreviousPassiveStates();
+      managementRegistry.entityPromotionCompleted();
       init();
     }
   }

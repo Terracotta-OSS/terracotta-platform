@@ -39,8 +39,12 @@ public abstract class AbstractHATest extends AbstractTest {
           "</config>\n";
 
   @Rule
-  public Cluster voltron =
-      newCluster(2).in(new File("target/galvan")).withServiceFragment(resourceConfig).build();
+  public Cluster voltron = newCluster(2)
+      .in(new File("target/galvan"))
+      .withServiceFragment(resourceConfig)
+      .withSystemProperty("terracotta.management.assert", "true")
+      .withTcProperty("terracotta.management.assert", "true")
+      .build();
 
   @Rule
   public TestName testName = new TestName();

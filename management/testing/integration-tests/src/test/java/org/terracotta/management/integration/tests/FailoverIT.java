@@ -21,6 +21,9 @@ import org.terracotta.management.model.cluster.AbstractManageableNode;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -53,6 +56,9 @@ public class FailoverIT extends AbstractHATest {
 
     // add some data from client 0
     put(0, "clients", "client1", "Mathieu");
+
+    // start collecting statistics
+    triggerServerStatComputation();
 
     // kill active - passive should take the active role
     voltron.getClusterControl().terminateActive();
@@ -98,8 +104,16 @@ public class FailoverIT extends AbstractHATest {
 
     get(1, "pets", "pet2"); // miss
 
+    Set<String> serverNames = new HashSet<>();
+
     queryAllRemoteStatsUntil(stats -> {
       boolean test = true;
+
+      // collect server names
+      stats.stream()
+          .filter(o -> o.getContext().contains(Server.NAME_KEY))
+          .map(o -> o.getContext().get(Server.NAME_KEY))
+          .forEach(serverNames::add);
 
       test &= stats
           .stream()
@@ -115,6 +129,22 @@ public class FailoverIT extends AbstractHATest {
 
       return test;
     });
+
+    assertThat(serverNames.size(), equalTo(1));
+    
+    /*
+    
+    If you set logback-ext.xml in trace mode, now you shouldn't see these kind of logs on the server:
+    
+[ManagementScheduler-1] TRACE org.terracotta.management.service.monitoring.DefaultPassiveEntityMonitoringService - [2] pushStatistics(3)
+[ManagementScheduler-1] TRACE org.terracotta.management.service.monitoring.DefaultDataListener - [2] pushBestEffortsData(2, testServer1, server-entity-statistics)
+[ManagementScheduler-1] WARN org.terracotta.management.service.monitoring.DefaultDataListener - [2] pushBestEffortsData(2, testServer1, server-entity-statistics) IGNORED: sender is the current active server
+    
+    The management registry created by the passive Nms Entity was not closed after a promotion to active, and thus the statistic collector
+    was still running in background, and sending data through the voltron callback mechanism. Hopefully there was a check that dropped the
+    bad incoming data to avoid sending it to the client. But the statistic collector was still consuming CPU resources. 
+    
+    */
   }
 
 }
