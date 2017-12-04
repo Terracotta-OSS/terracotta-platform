@@ -19,6 +19,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.terracotta.management.model.cluster.AbstractManageableNode;
+import org.terracotta.management.model.cluster.Server;
 import org.terracotta.testing.rules.Cluster;
 
 import java.io.File;
@@ -56,6 +58,16 @@ public abstract class AbstractHATest extends AbstractTest {
     voltron.getClusterControl().waitForRunningPassivesInStandby();
     commonSetUp(voltron);
     nmsService.readMessages();
+
+    // this is to wait for all passives to have exposed their management registry through the non-reliable communication channel (passive -> active)
+    while (nmsService.readTopology()
+        .serverStream()
+        .filter(server -> !server.isActive())
+        .flatMap(Server::serverEntityStream)
+        .filter(AbstractManageableNode::isManageable)
+        .count() != 3) {
+      Thread.sleep(1_000);
+    }
   }
 
   @After

@@ -84,7 +84,9 @@ public interface EntityMonitoringService {
   CompletableFuture<ClientIdentifier> getClientIdentifier(ClientDescriptor clientDescriptor);
 
   /**
-   * @return True if this monitoring service has been constructed for an active entity
+   * @return True if this monitoring service has been constructed for an active entity,
+   * and if monitoring messages coming from this service will then be flagged as coming
+   * from an active entity
    */
   boolean isActiveEntityService();
 }

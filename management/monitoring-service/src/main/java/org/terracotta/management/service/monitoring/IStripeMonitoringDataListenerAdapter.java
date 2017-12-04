@@ -17,16 +17,19 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.management.model.call.ContextualReturn;
+import org.terracotta.management.model.cluster.ManagementRegistry;
+import org.terracotta.management.model.notification.ContextualNotification;
+import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Adapts the API-wanted {@link DataListener} into the current existing one ({@link org.terracotta.monitoring.IStripeMonitoring}),
- * that is still currently using addNode / removeNode methods linked to a tree structure and pushBestEffortsData
+ * Adapts the API-wanted {@link ManagementDataListener} into the current existing one ({@link org.terracotta.monitoring.IStripeMonitoring}),
+ * that is still currently using addNode / removeNode methods linked to a tree structure and onManagementMessage
  * <p>
  * This class's goal is to receive states and data from any consumer, even from passive servers
  *
@@ -36,56 +39,77 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(IStripeMonitoringDataListenerAdapter.class);
 
-  private final DataListener delegate;
   private final long consumerId;
+  private final ManagementDataListener delegate;
 
-  IStripeMonitoringDataListenerAdapter(long consumerId, DataListener delegate) {
-    this.delegate = Objects.requireNonNull(delegate);
+  IStripeMonitoringDataListenerAdapter(long consumerId, ManagementDataListener delegate) {
     this.consumerId = consumerId;
+    this.delegate = Objects.requireNonNull(delegate);
   }
 
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
-    if (parents == null) {
-      parents = new String[0];
+    LOGGER.trace("[{}] addNode({}, {})", consumerId, name, String.valueOf(value));
+    if ("management".equals(name)) {
+      if (value instanceof ManagementMessage) {
+        fire((ManagementMessage) value);
+      } else if (value != null) {
+        Utils.warnOrAssert(LOGGER, "[0] addNode(from={}) IGNORED: wrong value type: {}", value.getClass().getSimpleName());
+      }
     }
-    LOGGER.trace("[{}] addNode({}, {}, {})", consumerId, sender.getServerName(), String.join("/", parents), name);
-    String[] path = Arrays.copyOf(parents, parents.length + 1);
-    path[parents.length] = name;
-    delegate.setState(consumerId, sender, path, value);
     return false; // false to avoid replay of the cached data when a passive server becomes active
   }
 
   @Override
   public boolean removeNode(PlatformServer sender, String[] parents, String name) {
-    if (parents == null) {
-      parents = new String[0];
-    }
-    LOGGER.trace("[{}] removeNode({}, {})", consumerId, sender.getServerName(), String.join("/", parents));
-    String[] path = Arrays.copyOf(parents, parents.length + 1);
-    path[parents.length] = name;
-    delegate.setState(consumerId, sender, path, null);
     return true;
   }
 
   @Override
   public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
-    delegate.pushBestEffortsData(consumerId, sender, name, data);
+    if ("management/statistics".equals(name) && data instanceof ManagementMessage) {
+      fire((ManagementMessage) data);
+    }
   }
 
   @Override
   public void serverDidBecomeActive(PlatformServer self) {
-    throw new UnsupportedOperationException(String.valueOf(consumerId));
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void serverDidJoinStripe(PlatformServer server) {
-    throw new UnsupportedOperationException(String.valueOf(consumerId));
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void serverDidLeaveStripe(PlatformServer server) {
-    throw new UnsupportedOperationException(String.valueOf(consumerId));
+    throw new UnsupportedOperationException();
+  }
+
+  private void fire(ManagementMessage managementMessage) {
+    switch (managementMessage.getType()) {
+      case MANAGEMENT_ANSWER: {
+        Object[] oo = (Object[]) managementMessage.getData();
+        delegate.onCallAnswer(managementMessage.getMessageSource(), (String) oo[0], (ContextualReturn<?>) oo[1]);
+        break;
+      }
+      case REGISTRY: {
+        delegate.onRegistry(managementMessage.getMessageSource(), (ManagementRegistry) managementMessage.getData());
+        break;
+      }
+      case STATISTICS: {
+        delegate.onStatistics(managementMessage.getMessageSource(), (ContextualStatistics[]) managementMessage.getData());
+        break;
+      }
+      case NOTIFICATION: {
+        delegate.onNotification(managementMessage.getMessageSource(), (ContextualNotification) managementMessage.getData());
+        break;
+      }
+      default: {
+        throw new AssertionError(managementMessage.getType());
+      }
+    }
   }
 
 }

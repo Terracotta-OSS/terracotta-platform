@@ -111,7 +111,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   }
 
   @Override
-  public void onBecomeActive() {
+  public void onBecomeActive(String serverName) {
     LOGGER.trace("[{}] onBecomeActive()", this.consumerId);
     managementCallRequests.clear();
   }

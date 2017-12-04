@@ -23,7 +23,7 @@ import org.terracotta.entity.ServiceRegistry;
  */
 @CommonComponent
 public class EntityManagementRegistryConfiguration extends AbstractManagementRegistryConfiguration {
-  public EntityManagementRegistryConfiguration(ServiceRegistry registry, boolean active) {
-    super(registry, active);
+  public EntityManagementRegistryConfiguration(ServiceRegistry registry, boolean activeEntity) {
+    super(registry, activeEntity);
   }
 }
