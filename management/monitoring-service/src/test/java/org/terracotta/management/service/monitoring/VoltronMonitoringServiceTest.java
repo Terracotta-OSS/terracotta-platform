@@ -69,8 +69,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_NOTIFICATION;
-import static org.terracotta.management.service.monitoring.DefaultDataListener.TOPIC_SERVER_ENTITY_STATISTICS;
+import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.RELIABLE_CHANNEL_KEY;
+import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.UNRELIABLE_CHANNEL_KEY;
+import static org.terracotta.management.service.monitoring.ManagementMessage.Type.NOTIFICATION;
+import static org.terracotta.management.service.monitoring.ManagementMessage.Type.STATISTICS;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_ROOT_NAME;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_PATH;
@@ -155,7 +157,12 @@ public class VoltronMonitoringServiceTest {
       }
     });
 
-    EntityManagementRegistry activeRegistry = activeServiceProvider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
+    EntityManagementRegistry activeRegistry = activeServiceProvider.getService(1, new EntityManagementRegistryConfiguration(mock(ServiceRegistry.class), true) {
+      @Override
+      public IMonitoringProducer getMonitoringProducer() {
+        return new Bridge(active, activeDataListener);
+      }
+    });
     activeEntityMonitoringService = activeRegistry.getMonitoringService();
   }
 
@@ -312,26 +319,10 @@ public class VoltronMonitoringServiceTest {
 
     // simulate the IMonitoringProducer's voltron implementation for consumer id 3
     activeDataListener = activeServiceProvider.getService(3, new BasicServiceConfiguration<>(IStripeMonitoring.class));
-    IMonitoringProducer monitoringProducer = new IMonitoringProducer() {
-      @Override
-      public boolean addNode(String[] parents, String name, Serializable value) {
-        return activeDataListener.addNode(passive, parents, name, value);
-      }
-
-      @Override
-      public boolean removeNode(String[] parents, String name) {
-        return activeDataListener.removeNode(passive, parents, name);
-      }
-
-      @Override
-      public void pushBestEffortsData(String name, Serializable data) {
-        activeDataListener.pushBestEffortsData(passive, name, data);
-      }
-    };
-    EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
+    EntityManagementRegistry passiveRegistry = passiveServiceProvider.getService(3, new EntityManagementRegistryConfiguration(mock(ServiceRegistry.class), false) {
       @Override
       public IMonitoringProducer getMonitoringProducer() {
-        return monitoringProducer;
+        return new Bridge(passive, activeDataListener);
       }
     });
     passiveEntityMonitoringService = passiveRegistry.getMonitoringService();
@@ -375,12 +366,14 @@ public class VoltronMonitoringServiceTest {
     activePlatformListener.addNode(passive, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, false));
 
     messages();
-    
+
     clientMonitoringService.pushNotification(new FakeDesc("1-1"), new ContextualNotification(Context.empty(), "TYPE-1"));
     clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap()));
 
-    activeDataListener.pushBestEffortsData(passive, TOPIC_SERVER_ENTITY_NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
-    activeDataListener.pushBestEffortsData(passive, TOPIC_SERVER_ENTITY_STATISTICS, new ContextualStatistics[]{new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap())});
+    ManagementMessage notif = new ManagementMessage("server-2", 1, false, NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
+    activeDataListener.addNode(passive, new String[0], RELIABLE_CHANNEL_KEY, notif);
+    ContextualStatistics[] data = {new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap())};
+    activeDataListener.pushBestEffortsData(passive, UNRELIABLE_CHANNEL_KEY, new ManagementMessage("server-2", 1, false, STATISTICS, data));
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION", "STATISTICS", "NOTIFICATION", "STATISTICS")));
@@ -491,4 +484,23 @@ public class VoltronMonitoringServiceTest {
     }
   }
 
+  private static final class Bridge implements IMonitoringProducer {
+
+    private final PlatformServer from;
+    private final IStripeMonitoring activeDestination;
+
+    public Bridge(PlatformServer from, IStripeMonitoring activeDestination) {
+      this.from = from;
+      this.activeDestination = activeDestination;
+    }
+
+    @Override
+    public boolean addNode(String[] parents, String name, Serializable value) {return activeDestination.addNode(from, parents, name, value);}
+
+    @Override
+    public boolean removeNode(String[] parents, String name) {return activeDestination.removeNode(from, parents, name);}
+
+    @Override
+    public void pushBestEffortsData(String name, Serializable data) {activeDestination.pushBestEffortsData(from, name, data);}
+  }
 }

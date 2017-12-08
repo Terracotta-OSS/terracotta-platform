@@ -25,7 +25,7 @@ interface TopologyEventListener {
   /**
    * Callback called when platform told the monitoring service that a service became active
    */
-  default void onBecomeActive() {}
+  default void onBecomeActive(String serverName) {}
 
   /**
    * Callback called when platform told the monitoring service that a fetch happened

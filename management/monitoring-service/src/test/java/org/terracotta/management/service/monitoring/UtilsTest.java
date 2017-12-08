@@ -13,37 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.terracotta.management.service.monitoring;
 
+import org.junit.Ignore;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.PlatformConfiguration;
-
-import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
-abstract class AbstractEntityMonitoringService implements EntityMonitoringService {
-
-  protected final Logger logger = LoggerFactory.getLogger(getClass());
-
-  private final long consumerId;
-  private final PlatformConfiguration platformConfiguration;
-
-  AbstractEntityMonitoringService(long consumerId, PlatformConfiguration platformConfiguration) {
-    this.consumerId = consumerId;
-    this.platformConfiguration = Objects.requireNonNull(platformConfiguration);
+@Ignore
+public class UtilsTest {
+  static {
+    System.setProperty("terracotta.management.assert", "true");
   }
 
-  @Override
-  public long getConsumerId() {
-    return consumerId;
+  @Test(expected = AssertionError.class)
+  public void warnOrAssert() throws Exception {
+    Logger logger = LoggerFactory.getLogger("toto");
+    Utils.warnOrAssert(logger, "Hello {} and {}", "men", "women", new RuntimeException());
   }
-
-  @Override
-  public String getServerName() {
-    return platformConfiguration.getServerName();
-  }
-
 }

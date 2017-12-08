@@ -111,9 +111,9 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
   }
 
   @Override
-  public void onBecomeActive() {
+  public void onBecomeActive(String serverName) {
     LOGGER.trace("[{}] onBecomeActive()", this.consumerId);
-    clear();
+    managementCallRequests.clear();
   }
 
   @Override
@@ -171,7 +171,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
         break;
 
       default:
-        LOGGER.warn("[{}] onMessageToSend({}): message type unsupported", this.consumerId, message.getType());
+        Utils.warnOrAssert(LOGGER, "[{}] onMessageToSend({}): message type unsupported", this.consumerId, message.getType());
     }
   }
 
@@ -199,14 +199,10 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
     return false;
   }
 
-  private void clear() {
-    managementCallRequests.clear();
-  }
-
   @Override
   public void close() {
     LOGGER.trace("[{}] close()", this.consumerId);
-    clear();
+    managementCallRequests.clear();
     topologyService.removeTopologyEventListener(this);
     firingService.removeManagementService(this);
   }

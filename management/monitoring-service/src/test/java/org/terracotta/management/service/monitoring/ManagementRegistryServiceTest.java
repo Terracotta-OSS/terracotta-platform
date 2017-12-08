@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -39,6 +40,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.ENTITIES_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.PLATFORM_PATH;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_NAME;
@@ -71,7 +73,7 @@ public class ManagementRegistryServiceTest {
   }
 
   @Test
-  public void test_management_info_pushed() {
+  public void test_management_info_pushed() throws ServiceException {
 
     // dataListener => per entity
 
@@ -107,7 +109,9 @@ public class ManagementRegistryServiceTest {
     managementService.setManagementExecutor(managementExecutor);
 
     // a consumer asks for a service
-    EntityManagementRegistry registry = provider.getService(1, new ManagementRegistryConfiguration(mock(ServiceRegistry.class), true));
+    ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
+    when(serviceRegistry.getService(any(BasicServiceConfiguration.class))).thenReturn(monitoringProducer);
+    EntityManagementRegistry registry = provider.getService(1, new EntityManagementRegistryConfiguration(serviceRegistry, true));
     registry.addManagementProvider(new MyManagementProvider());
 
     // then register some objects

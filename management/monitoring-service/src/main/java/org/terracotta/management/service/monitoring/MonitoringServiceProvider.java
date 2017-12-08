@@ -24,14 +24,9 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
-import org.terracotta.management.model.context.Context;
-import org.terracotta.management.model.context.ContextContainer;
-import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.management.registry.collect.StatisticCollector;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
 import org.terracotta.management.sequence.NodeIdSource;
 import org.terracotta.management.sequence.TimeSource;
-import org.terracotta.management.service.monitoring.registry.provider.StatisticCollectorManagementProvider;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 
@@ -39,6 +34,8 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
@@ -53,20 +50,19 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       SharedEntityManagementRegistry.class, // access all registries
       EntityManagementRegistry.class, // registry for an entity
       ClientMonitoringService.class, // for NMS Agent Entity
-      ManagementService.class, // for NMS Entity
-      ManageableServerComponent.class // provides server-level capabilities
+      ManagementService.class // for NMS Entity
   );
 
   private final TimeSource timeSource = TimeSource.BEST;
-  // only contains registries of standard entities, not management ones
+
   private final DefaultSharedEntityManagementRegistry sharedManagementRegistry = new DefaultSharedEntityManagementRegistry();
   private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
   private final DefaultStatisticService statisticService = new DefaultStatisticService(sharedManagementRegistry);
   private final DefaultFiringService firingService = new DefaultFiringService(sequenceGenerator);
 
-  private PlatformConfiguration platformConfiguration;
   private TopologyService topologyService;
   private IStripeMonitoring platformListenerAdapter;
+  private DefaultManagementDataListener managementDataListener;
   private Collection<ManageableServerComponent> manageablePlugins;
 
   public MonitoringServiceProvider() {
@@ -85,10 +81,11 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
-    this.platformConfiguration = platformConfiguration;
     this.manageablePlugins = platformConfiguration.getExtendedConfiguration(ManageableServerComponent.class);
     this.topologyService = new TopologyService(firingService, platformConfiguration);
     this.platformListenerAdapter = new IStripeMonitoringPlatformListenerAdapter(topologyService);
+    this.managementDataListener = new DefaultManagementDataListener(topologyService, firingService);
+    this.topologyService.addTopologyEventListener(managementDataListener);
     return true;
   }
 
@@ -107,7 +104,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   @SuppressWarnings("unchecked")
   @Override
-  public synchronized <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+  public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
 
     // for platform, which requests either a IStripeMonitoring to send platform events or a IStripeMonitoring to send callbacks from passive entities
@@ -115,8 +112,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       if (consumerID == PLATFORM_CONSUMER_ID) {
         return serviceType.cast(platformListenerAdapter);
       } else {
-        DataListener dataListener = new DefaultDataListener(consumerID, topologyService, firingService);
-        return serviceType.cast(new IStripeMonitoringDataListenerAdapter(consumerID, dataListener));
+        return serviceType.cast(new IStripeMonitoringDataListenerAdapter(consumerID, managementDataListener));
       }
     }
 
@@ -153,60 +149,60 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
       }
     }
 
-    if (ManageableServerComponent.class == serviceType) {
-      return serviceType.cast(new ManageableServerComponent() {
-        @Override
-        public void onManagementRegistryCreated(EntityManagementRegistry registry) {
-          LOGGER.trace("[{}] onManagementRegistryCreated()", registry.getMonitoringService().getConsumerId());
-
-          // The context for the collector is created from the the registry of the entity wanting server-side providers.
-          // We create a provider that will receive management calls to control the global voltron's statistic collector.
-          // This provider will thus be on top of the entity wanting to collect server-side stats
-          ContextContainer contextContainer = registry.getContextContainer();
-          Context context = Context.create(contextContainer.getName(), contextContainer.getValue());
-          StatisticCollectorManagementProvider collectorManagementProvider = new StatisticCollectorManagementProvider(context);
-          registry.addManagementProvider(collectorManagementProvider);
-
-          EntityMonitoringService monitoringService = registry.getMonitoringService();
-          // add a collector service, not started by default, but that can be started through a remote management call
-          StatisticCollector statisticCollector = statisticService.createStatisticCollector(registry, statistics -> monitoringService.pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()])));
-          registry.register(statisticCollector);
-          registry.refresh();
-        }
-
-        @Override
-        public void onManagementRegistryClose(EntityManagementRegistry registry) {
-        }
-      });
-    }
-
     // get or creates a registry specific to this entity to handle stats and management calls
     if (EntityManagementRegistry.class == serviceType) {
-      if (configuration instanceof ManagementRegistryConfiguration) {
-        ManagementRegistryConfiguration managementRegistryConfiguration = (ManagementRegistryConfiguration) configuration;
+      if (configuration instanceof AbstractManagementRegistryConfiguration) {
+        AbstractManagementRegistryConfiguration managementRegistryConfiguration = (AbstractManagementRegistryConfiguration) configuration;
+        boolean activeEntity = managementRegistryConfiguration.isActive();
 
-        EntityMonitoringService entityMonitoringService;
-        if (managementRegistryConfiguration.isActive()) {
-          entityMonitoringService = new DefaultActiveEntityMonitoringService(consumerID, topologyService, firingService, platformConfiguration);
-        } else {
-          IMonitoringProducer monitoringProducer = managementRegistryConfiguration.getMonitoringProducer();
-          entityMonitoringService = new DefaultPassiveEntityMonitoringService(consumerID, monitoringProducer, platformConfiguration);
+        LOGGER.trace("[{}] getService({}) isActive={}, config={}", consumerID, EntityManagementRegistry.class.getSimpleName(), activeEntity, configuration.getClass().getSimpleName());
+
+        // create an active or passive monitoring service
+        IMonitoringProducer monitoringProducer = managementRegistryConfiguration.getMonitoringProducer();
+        EntityMonitoringService entityMonitoringService = new DefaultEntityMonitoringService(consumerID, monitoringProducer, topologyService, activeEntity);
+
+        // create a registry for the entity
+        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService);
+
+        // make the registry listen for topology events
+        topologyService.addTopologyEventListener(managementRegistry);
+        managementRegistry.onClose(() -> topologyService.removeTopologyEventListener(managementRegistry));
+
+        // previous entity registry that might have been created by the passive entity, in case it gets promoted to active
+        Optional<EntityManagementRegistry> previous = Optional.empty();
+
+        if (configuration instanceof EntityManagementRegistryConfiguration) {
+          // here, this is the case of a normal entity that wants to expose management stuff
+          previous = sharedManagementRegistry.addEntityManagementRegistry(managementRegistry);
+          managementRegistry.onClose(() -> sharedManagementRegistry.removeEntityManagementRegistry(managementRegistry));
+
+        } else if (configuration instanceof ServerManagementRegistryConfiguration) {
+          // here, this is the case of an entity that wants to both expose management stuff, plus contains server-side management 
+          // information, plus a statistics collector
+          previous = sharedManagementRegistry.addServerManagementRegistry(managementRegistry);
+          managementRegistry.onClose(() -> sharedManagementRegistry.removeServerManagementRegistry(managementRegistry));
+
+          // add additional management providers from server plugins and services
+          List<ManageableServerComponent> manageableVoltronComponents = new ArrayList<>();
+          ServerManagementRegistryConfiguration serverManagementRegistryConfiguration = (ServerManagementRegistryConfiguration) configuration;
+          manageableVoltronComponents.addAll(serverManagementRegistryConfiguration.getManageableVoltronComponents());
+          manageableVoltronComponents.addAll(manageablePlugins);
+          manageableVoltronComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryCreated(managementRegistry));
+          managementRegistry.onClose(() -> manageableVoltronComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryClose(managementRegistry)));
+
+          // add a statistics collector
+          statisticService.addStatisticCollector(managementRegistry);
         }
 
-        Collection<ManageableServerComponent> manageableServerComponents = new ArrayList<>();
-        if (managementRegistryConfiguration.wantsServerLevelCapabilities()) {
-          manageableServerComponents.addAll(managementRegistryConfiguration.getManageableVoltronComponents());
-          manageableServerComponents.addAll(manageablePlugins);
-        }
+        // if we found a previously existing registry, it means that the current passive entity that was existing is being promoting
+        // as an active entity. So when this will be completed, we will close the passive entity registry, which will remove it from
+        // the shared management registry where statistics are collected, and will also close any running statistics collector on this
+        // registry if it is a server management registry.
+        previous.ifPresent(passiveRegistry -> managementRegistry.onEntityPromotionCompleted(passiveRegistry::close));
 
-        LOGGER.trace("[{}] getService({}) isActive={}, wantsServerLevelCapabilities={}",
-            consumerID, EntityManagementRegistry.class.getSimpleName(),
-            managementRegistryConfiguration.isActive(), managementRegistryConfiguration.wantsServerLevelCapabilities());
-        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService, sharedManagementRegistry, topologyService, manageableServerComponents, managementRegistryConfiguration.wantsServerLevelCapabilities());
-        manageableServerComponents.forEach(manageableServerComponent -> manageableServerComponent.onManagementRegistryCreated(managementRegistry));
         return serviceType.cast(managementRegistry);
       } else {
-        throw new IllegalArgumentException("Missing configuration " + ManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
+        throw new IllegalArgumentException("Missing configuration of type " + AbstractManagementRegistryConfiguration.class.getSimpleName() + " when requesting service " + serviceType.getName());
       }
     }
 

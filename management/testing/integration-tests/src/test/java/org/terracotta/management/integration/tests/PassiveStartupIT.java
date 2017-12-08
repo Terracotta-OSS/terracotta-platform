@@ -18,6 +18,7 @@ package org.terracotta.management.integration.tests;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.management.model.cluster.Server;
+import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
@@ -76,7 +77,11 @@ public class PassiveStartupIT extends AbstractHATest {
     Predicate<ContextualNotification> gotPassive = n -> n.getType().equals("SERVER_STATE_CHANGED") && "PASSIVE".equals(n.getAttributes().get("state"));
     boolean gotPassiveNotif = collected.stream().anyMatch(gotPassive);
     if (!gotPassiveNotif) {
-      nmsService.waitForMessage(message -> message.getType().equals("NOTIFICATION") && message.unwrap(ContextualNotification.class).stream().anyMatch(gotPassive));
+      List<Message> messages = nmsService.waitForMessage(message -> message.getType().equals("NOTIFICATION") && message.unwrap(ContextualNotification.class).stream().anyMatch(gotPassive));
+      messages.stream()
+          .filter(message -> message.getType().equals("NOTIFICATION"))
+          .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
+          .forEach(collected::add);
     }
 
     Set<String> states = collected.stream()

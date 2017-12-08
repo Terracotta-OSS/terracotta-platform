@@ -115,15 +115,15 @@ class TopologyService implements PlatformListener {
         .setVersion(self.getVersion())
         .computeUpTime();
 
-    if(stripe.addServer(server)) {
+    if (stripe.addServer(server)) {
       currentActive = stripe.getServerByName(self.getServerName()).get();
 
-      topologyEventListeners.forEach(TopologyEventListener::onBecomeActive);
+      topologyEventListeners.forEach(listener -> listener.onBecomeActive(platformConfiguration.getServerName()));
 
       firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
 
       // we assume server.getStartTime() == activate time, but this will be fixed after into serverStateChanged() call by platform
-      serverStateChanged(self, new ServerState("ACTIVE", server.getStartTime(), server.getStartTime())); 
+      serverStateChanged(self, new ServerState("ACTIVE", server.getStartTime(), server.getStartTime()));
     }
   }
 
@@ -142,8 +142,8 @@ class TopologyService implements PlatformListener {
         .setVersion(platformServer.getVersion())
         .computeUpTime();
 
-    if(stripe.addServer(server)) {
-      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));      
+    if (stripe.addServer(server)) {
+      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
     }
   }
 
@@ -166,12 +166,12 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityCreated({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityCreated({}, {}): Server is not current active server but it created an active entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityCreated({}, {}): Server is not current active server but it created an active entity", sender.getServerName(), platformEntity);
       return;
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityCreated({}, {}): Server is the current active server but it created a passive entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityCreated({}, {}): Server is the current active server but it created a passive entity", sender.getServerName(), platformEntity);
       return;
     }
 
@@ -180,14 +180,14 @@ class TopologyService implements PlatformListener {
       ServerEntity entity = ServerEntity.create(identifier)
           .setConsumerId(platformEntity.consumerID);
 
-      if(server.addServerEntity(entity)) {
+      if (server.addServerEntity(entity)) {
         firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
 
         whenServerEntity(platformEntity.consumerID, sender.getServerName()).complete(entity);
 
-        if (sender.getServerName().equals(platformConfiguration.getServerName())) {
+        if (sender.getServerName().equals(getServerName())) {
           topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
-        }  
+        }
       }
     });
   }
@@ -208,12 +208,12 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[0] serverEntityDestroyed({}, {})", sender.getServerName(), platformEntity);
 
     if (platformEntity.isActive && !sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityDestroyed({}, {}): Server is not current active server but it destroyed an active entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityDestroyed({}, {}): Server is not current active server but it destroyed an active entity", sender.getServerName(), platformEntity);
       return;
     }
 
     if (!platformEntity.isActive && sender.getServerName().equals(getActiveServer().getServerName())) {
-      LOGGER.warn("[0] serverEntityDestroyed({}, {}): Server is the current active server but it destroyed a passive entity", sender.getServerName(), platformEntity);
+      Utils.warnOrAssert(LOGGER, "[0] serverEntityDestroyed({}, {}): Server is the current active server but it destroyed a passive entity", sender.getServerName(), platformEntity);
       return;
     }
 
@@ -228,7 +228,7 @@ class TopologyService implements PlatformListener {
           entityFetches.remove(platformEntity.consumerID);
         }
 
-        if (sender.getServerName().equals(platformConfiguration.getServerName())) {
+        if (sender.getServerName().equals(getServerName())) {
           topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
         }
 
@@ -241,39 +241,40 @@ class TopologyService implements PlatformListener {
   public synchronized void clientConnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientConnected({})", platformConnectedClient);
 
-     stripe.getServerByName(currentActive.getServerName())
-        .ifPresent( server-> {
-    
-    ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-    Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
+    stripe.getServerByName(currentActive.getServerName())
+        .ifPresent(server -> {
 
-      Client client = Client.create(clientIdentifier)
-          .setHostName(platformConnectedClient.remoteAddress.getHostName());
+          ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+          Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-      cluster.addClient(client);
+          Client client = Client.create(clientIdentifier)
+              .setHostName(platformConnectedClient.remoteAddress.getHostName());
 
-      if(client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint))) {
-        firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
-      }
-    });
+          cluster.addClient(client);
+
+          if (client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint))) {
+            firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
+          }
+        });
   }
 
   @Override
   public synchronized void clientDisconnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientDisconnected({})", platformConnectedClient);
 
-     stripe.getServerByName(currentActive.getServerName())
-        .ifPresent( server-> {
-    
-    ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-     cluster.getClient(clientIdentifier)
-        .ifPresent( client-> {
-    Context clientContext = client.getContext();
+    stripe.getServerByName(currentActive.getServerName())
+        .ifPresent(server -> {
 
-    client.remove();
+          ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+          cluster.getClient(clientIdentifier)
+              .ifPresent(client -> {
+                Context clientContext = client.getContext();
 
-    firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_DISCONNECTED.name(), clientContext));});
-    });
+                client.remove();
+
+                firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_DISCONNECTED.name(), clientContext));
+              });
+        });
   }
 
   @Override
@@ -324,7 +325,7 @@ class TopologyService implements PlatformListener {
     stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
       Server.State oldState = server.getState();
 
-      if (oldState == Server.State.ACTIVE && currentActive != null && currentActive.getServerName().equals(server.getServerName())) {
+      if (oldState == Server.State.ACTIVE && isServerActive(server.getServerName())) {
         // in case of a failover, the server state changed is replayed. So the server is active but will become passive and will become active again
         // we filter this out
         return;
@@ -441,12 +442,12 @@ class TopologyService implements PlatformListener {
    * Records registry that needs to be sent in future (or now) when the entity will have arrived
    */
   void willSetEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {
-    if(LOGGER.isTraceEnabled()) {
+    if (LOGGER.isTraceEnabled()) {
       List<String> names = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
-      LOGGER.trace("[{}] willSetEntityManagementRegistry({}, {})", consumerId, serverName, names);  
+      LOGGER.trace("[{}] willSetEntityManagementRegistry({}, {})", consumerId, serverName, names);
     }
     whenServerEntity(consumerId, serverName).executeOrDelay("entity-registry", serverEntity -> {
-      if(LOGGER.isTraceEnabled()) {
+      if (LOGGER.isTraceEnabled()) {
         List<String> names = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
         LOGGER.trace("[{}] setManagementRegistry({}, {})", consumerId, serverName, names);
       }
@@ -512,12 +513,20 @@ class TopologyService implements PlatformListener {
     }
   }
 
-  boolean isCurrentServerActive() {
-    return currentActive != null && currentActive.getServerName().equals(platformConfiguration.getServerName());
+  String getServerName() {
+    return platformConfiguration.getServerName();
+  }
+
+  boolean isServerActive(String serverName) {
+    return currentActive != null && currentActive.getServerName().equals(serverName);
   }
 
   Server getActiveServer() {
     return Objects.requireNonNull(currentActive);
+  }
+
+  private boolean isCurrentServerActive() {
+    return isServerActive(getServerName());
   }
 
   private ExecutionChain<Client> whenFetchClient(long consumerId, ClientDescriptor clientDescriptor) {

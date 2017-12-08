@@ -104,7 +104,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   }
 
   @Override
-  public void onBecomeActive() {
+  public void onBecomeActive(String serverName) {
     LOGGER.trace("[{}] onBecomeActive()", this.consumerId);
     clear();
   }
@@ -134,7 +134,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
         break;
 
       default:
-        LOGGER.warn("[{}] fireMessage({}): message type unsupported", this.consumerId, message.getType());
+        Utils.warnOrAssert(LOGGER, "[{}] fireMessage({}): message type unsupported", this.consumerId, message.getType());
     }
   }
 

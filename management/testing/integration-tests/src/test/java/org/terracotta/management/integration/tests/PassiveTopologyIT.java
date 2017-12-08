@@ -52,10 +52,8 @@ public class PassiveTopologyIT extends AbstractHATest {
     Cache cache = cacheFactory.getCache("my-cache");
     cache.put("key", "val");
 
-    cacheFactory.destroyCache("my-cache");
-    cacheFactory.close();
-
-    waitForAllNotifications("CLIENT_CONNECTED",
+    waitForAllNotifications(
+        "CLIENT_CONNECTED",
         "SERVER_ENTITY_FETCHED",
         "CLIENT_REGISTRY_AVAILABLE",
         "CLIENT_TAGS_UPDATED",
@@ -67,12 +65,17 @@ public class PassiveTopologyIT extends AbstractHATest {
         "ENTITY_REGISTRY_AVAILABLE",
         "SERVER_ENTITY_FETCHED",
         "CLIENT_CACHE_CREATED",
+        "CLIENT_ATTACHED");
+
+    cacheFactory.destroyCache("my-cache");
+    cacheFactory.close();
+
+    waitForAllNotifications(
         "SERVER_ENTITY_UNFETCHED",
         "SERVER_CACHE_DESTROYED",
         "SERVER_ENTITY_DESTROYED",
         "SERVER_ENTITY_DESTROYED",
         "CLIENT_CLOSE",
-        "CLIENT_ATTACHED",
         "CLIENT_DETACHED");
   }
 

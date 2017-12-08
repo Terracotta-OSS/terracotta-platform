@@ -15,18 +15,23 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import org.terracotta.monitoring.PlatformServer;
+import com.tc.classloader.CommonComponent;
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceRegistry;
 
-import java.io.Serializable;
+import java.util.Collection;
 
 /**
- * Class returned to the platform so that we can be called back with the data coming from a passive entity (from a DefaultPassiveEntityMonitoringService)
- *
  * @author Mathieu Carbou
  */
-interface DataListener {
+@CommonComponent
+public class ServerManagementRegistryConfiguration extends AbstractManagementRegistryConfiguration {
 
-  void pushBestEffortsData(long consumerId, PlatformServer sender, String name, Serializable data);
+  public ServerManagementRegistryConfiguration(ServiceRegistry registry, boolean active) {
+    super(registry, active);
+  }
 
-  void setState(long consumerId, PlatformServer sender, String[] path, Serializable data);
+  public Collection<ManageableServerComponent> getManageableVoltronComponents() {
+    return registry.getServices(new BasicServiceConfiguration<>(ManageableServerComponent.class));
+  }
 }
