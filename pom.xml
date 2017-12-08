@@ -52,6 +52,7 @@
     <module>runnel</module>
     <module>management</module>
     <module>client-message-tracker</module>
+    <module>state-format</module>
   </modules>
 
   <dependencyManagement>
