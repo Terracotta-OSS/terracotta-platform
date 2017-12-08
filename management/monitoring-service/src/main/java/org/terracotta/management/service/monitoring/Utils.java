@@ -31,12 +31,12 @@ import static java.lang.invoke.MethodType.methodType;
 class Utils {
 
   private static final boolean ASSERT = Boolean.getBoolean("terracotta.management.assert");
-  private static final MethodHandle LOGGER;
+  private static final MethodHandle WARN;
 
   static {
     MethodHandles.Lookup lookup = MethodHandles.lookup();
     try {
-      LOGGER = lookup.findVirtual(Logger.class, "warn", methodType(void.class, String.class, Object[].class));
+      WARN = lookup.findVirtual(Logger.class, "warn", methodType(void.class, String.class, Object[].class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new AssertionError();
     }
@@ -51,7 +51,7 @@ class Utils {
           new AssertionError(detailMessage.getMessage(), throwable);
     } else {
       try {
-        LOGGER.invokeExact(logger, message, args);
+        WARN.invokeExact(logger, message, args);
       } catch (Throwable throwable) {
         throw new AssertionError();
       }

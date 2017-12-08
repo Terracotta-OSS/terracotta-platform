@@ -44,6 +44,9 @@ import static org.terracotta.management.service.monitoring.ManagementMessage.Typ
  */
 class DefaultEntityMonitoringService implements EntityMonitoringService {
 
+  static final String RELIABLE_CHANNEL_KEY = "management";
+  static final String UNRELIABLE_CHANNEL_KEY = "management/statistics";
+  
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultEntityMonitoringService.class);
 
   private final IMonitoringProducer monitoringProducer;
@@ -94,7 +97,7 @@ class DefaultEntityMonitoringService implements EntityMonitoringService {
   public void pushStatistics(ContextualStatistics... statistics) {
     if (statistics.length > 0) {
       LOGGER.trace("[{}] pushStatistics({})", getConsumerId(), statistics.length);
-      monitoringProducer.pushBestEffortsData("management/statistics", new ManagementMessage(getServerName(), getConsumerId(), isActiveEntityService(), STATISTICS, statistics));
+      monitoringProducer.pushBestEffortsData(UNRELIABLE_CHANNEL_KEY, new ManagementMessage(getServerName(), getConsumerId(), isActiveEntityService(), STATISTICS, statistics));
     }
   }
 
@@ -117,7 +120,7 @@ class DefaultEntityMonitoringService implements EntityMonitoringService {
   }
 
   private void forwardToActiveServer(ManagementMessage.Type type, Serializable data) {
-    monitoringProducer.addNode(new String[0], "management", new ManagementMessage(getServerName(), getConsumerId(), isActiveEntityService(), type, data));
+    monitoringProducer.addNode(new String[0], RELIABLE_CHANNEL_KEY, new ManagementMessage(getServerName(), getConsumerId(), isActiveEntityService(), type, data));
   }
 
 }

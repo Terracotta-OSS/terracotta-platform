@@ -69,6 +69,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.RELIABLE_CHANNEL_KEY;
+import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.UNRELIABLE_CHANNEL_KEY;
 import static org.terracotta.management.service.monitoring.ManagementMessage.Type.NOTIFICATION;
 import static org.terracotta.management.service.monitoring.ManagementMessage.Type.STATISTICS;
 import static org.terracotta.monitoring.PlatformMonitoringConstants.CLIENTS_PATH;
@@ -369,9 +371,9 @@ public class VoltronMonitoringServiceTest {
     clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap()));
 
     ManagementMessage notif = new ManagementMessage("server-2", 1, false, NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
-    activeDataListener.addNode(passive, new String[0], "management", notif);
+    activeDataListener.addNode(passive, new String[0], RELIABLE_CHANNEL_KEY, notif);
     ContextualStatistics[] data = {new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap())};
-    activeDataListener.pushBestEffortsData(passive, "management/statistics", new ManagementMessage("server-2", 1, false, STATISTICS, data));
+    activeDataListener.pushBestEffortsData(passive, UNRELIABLE_CHANNEL_KEY, new ManagementMessage("server-2", 1, false, STATISTICS, data));
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION", "STATISTICS", "NOTIFICATION", "STATISTICS")));

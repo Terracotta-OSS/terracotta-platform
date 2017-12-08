@@ -27,6 +27,9 @@ import org.terracotta.monitoring.PlatformServer;
 import java.io.Serializable;
 import java.util.Objects;
 
+import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.RELIABLE_CHANNEL_KEY;
+import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.UNRELIABLE_CHANNEL_KEY;
+
 /**
  * Adapts the API-wanted {@link ManagementDataListener} into the current existing one ({@link org.terracotta.monitoring.IStripeMonitoring}),
  * that is still currently using addNode / removeNode methods linked to a tree structure and onManagementMessage
@@ -50,7 +53,7 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
     LOGGER.trace("[{}] addNode({}, {})", consumerId, name, String.valueOf(value));
-    if ("management".equals(name)) {
+    if (RELIABLE_CHANNEL_KEY.equals(name)) {
       if (value instanceof ManagementMessage) {
         fire((ManagementMessage) value);
       } else if (value != null) {
@@ -67,7 +70,7 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
 
   @Override
   public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
-    if ("management/statistics".equals(name) && data instanceof ManagementMessage) {
+    if (UNRELIABLE_CHANNEL_KEY.equals(name) && data instanceof ManagementMessage) {
       fire((ManagementMessage) data);
     }
   }

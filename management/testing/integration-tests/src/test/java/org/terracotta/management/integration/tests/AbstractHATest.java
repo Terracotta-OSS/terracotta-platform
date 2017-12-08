@@ -60,7 +60,7 @@ public abstract class AbstractHATest extends AbstractTest {
     nmsService.readMessages();
 
     // this is to wait for all passives to have exposed their management registry through the non-reliable communication channel (passive -> active)
-    while (nmsService.readTopology()
+    while (!Thread.currentThread().isInterrupted() && nmsService.readTopology()
         .serverStream()
         .filter(server -> !server.isActive())
         .flatMap(Server::serverEntityStream)
