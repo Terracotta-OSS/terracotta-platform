@@ -45,7 +45,11 @@ public final class Endpoint implements Serializable {
 
   @Override
   public String toString() {
-    return getAddress() + ":" + getPort();
+    String address = getAddress();
+    if (address.contains(":")) {
+      address = "[" + address + "]";
+    }
+    return address + ":" + getPort();
   }
 
   @Override
@@ -75,8 +79,18 @@ public final class Endpoint implements Serializable {
   }
 
   public static Endpoint valueOf(String str) {
-    String[] parts = str.split(":");
-    return create(parts[0], Integer.parseInt(parts[1]));
+    int lastColon = str.lastIndexOf(':');
+    String host = str.substring(0, lastColon);
+    String port = str.substring(lastColon+1);
+
+    if (host.startsWith("[")) {
+      if (!host.contains("]")) {
+        throw new IllegalArgumentException(String.format("Endpoint contains an invalid host '%s'. "
+          + "IPv6 address literals must be enclosed in '[' and ']' according to RFC 2732", str));
+      }
+      host = host.substring(1, host.lastIndexOf(']'));
+    }
+    return create(host, Integer.parseInt(port));
   }
 
 }
