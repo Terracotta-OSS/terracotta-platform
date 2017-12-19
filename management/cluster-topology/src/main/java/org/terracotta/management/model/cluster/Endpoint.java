@@ -80,6 +80,12 @@ public final class Endpoint implements Serializable {
 
   public static Endpoint valueOf(String str) {
     int lastColon = str.lastIndexOf(':');
+
+    if (lastColon == -1) {
+      throw new IllegalArgumentException(String.format("Invalid endpoint format for '%s'. " +
+        "Required format is <ip>:<port>.", str));
+    }
+
     String host = str.substring(0, lastColon);
     String port = str.substring(lastColon+1);
 
