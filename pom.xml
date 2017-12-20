@@ -32,7 +32,7 @@
     <terracotta-apis.version>1.4.0-pre7</terracotta-apis.version>
     <terracotta-configuration.version>10.4.0-pre7</terracotta-configuration.version>
     <passthrough-testing.version>1.4.0-pre8</passthrough-testing.version>
-    <terracotta-core.version>5.4.0-pre13</terracotta-core.version>
+    <terracotta-core.version>5.4-SNAPSHOT</terracotta-core.version>
     <statistics.version>1.5.0</statistics.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -52,6 +52,7 @@
     <module>runnel</module>
     <module>management</module>
     <module>client-message-tracker</module>
+    <module>coremon</module>
   </modules>
 
   <dependencyManagement>
@@ -120,6 +121,11 @@
         <groupId>org.terracotta</groupId>
         <artifactId>monitoring-support</artifactId>
         <version>${terracotta-apis.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.management</groupId>
+        <artifactId>monitoring-service-api</artifactId>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
