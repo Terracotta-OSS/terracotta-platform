@@ -82,7 +82,13 @@ public final class ClientIdentifier implements Serializable {
   }
 
   public String getVmId() {
-    return pid + "@" + hostAddress;
+    String ha = hostAddress;
+
+    if (hostAddress.contains(":")) {
+      ha = "[" + hostAddress + "]";
+    }
+
+    return pid + "@" + ha;
   }
 
   public String getClientId() {
@@ -130,12 +136,21 @@ public final class ClientIdentifier implements Serializable {
 
   public static ClientIdentifier valueOf(String identifier) {
     try {
-      int copy = identifier.indexOf('@');
-      int firstColon = identifier.indexOf(':', copy + 1);
+      int ampIdx = identifier.indexOf('@');
+      int firstColon;
+      String hostAddress;
+      if (identifier.charAt(ampIdx + 1) == '[') {
+        int end = identifier.indexOf("]");
+        hostAddress = identifier.substring(ampIdx + 2, end);
+        firstColon = identifier.indexOf(':', end + 1);
+      } else {
+        firstColon = identifier.indexOf(':', ampIdx + 1);
+        hostAddress = identifier.substring(ampIdx + 1, firstColon);
+      }
       int lastColon = identifier.lastIndexOf(':');
       return new ClientIdentifier(
-          Long.parseLong(identifier.substring(0, copy)),
-          identifier.substring(copy + 1, firstColon),
+          Long.parseLong(identifier.substring(0, ampIdx)),
+          hostAddress,
           identifier.substring(firstColon + 1, lastColon),
           identifier.substring(lastColon + 1));
     } catch (RuntimeException e) {

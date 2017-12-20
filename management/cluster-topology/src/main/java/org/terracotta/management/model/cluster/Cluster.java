@@ -19,7 +19,6 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;

@@ -48,6 +48,12 @@ public class ClientIdentifierTest {
     assertEquals("123@127.0.0.1", identifier.getVmId());
     assertEquals("jetty:app", identifier.getName());
     assertEquals("3", identifier.getConnectionUid());
+
+    identifier = ClientIdentifier.valueOf("123@[::1]:IS:app:4");
+    assertEquals("123@[::1]:IS:app:4", identifier.getClientId());
+    assertEquals("123@[::1]", identifier.getVmId());
+    assertEquals("IS:app", identifier.getName());
+    assertEquals("4", identifier.getConnectionUid());
   }
 
 }

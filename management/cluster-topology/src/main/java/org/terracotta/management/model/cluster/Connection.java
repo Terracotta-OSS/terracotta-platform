@@ -210,7 +210,7 @@ public final class Connection extends AbstractNode<Client> {
   }
 
   public static String key(String logicalConnectionUid, Server server, Endpoint clientEndpoint) {
-    return logicalConnectionUid + ":" + server.getStripe().getName() + ":" + server.getServerName() + ":" + clientEndpoint.getAddress() + ":" + clientEndpoint.getPort();
+    return logicalConnectionUid + ":" + server.getStripe().getName() + ":" + server.getServerName() + ":" + clientEndpoint;
   }
 
 }
