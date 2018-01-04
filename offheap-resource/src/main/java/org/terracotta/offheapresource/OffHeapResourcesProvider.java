@@ -28,6 +28,7 @@ import org.terracotta.offheapresource.management.OffHeapResourceBinding;
 import org.terracotta.offheapresource.management.OffHeapResourceSettingsManagementProvider;
 import org.terracotta.offheapresource.management.OffHeapResourceStatisticsManagementProvider;
 import org.terracotta.statistics.StatisticsManager;
+import org.terracotta.statistics.StatisticType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -37,7 +38,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -81,7 +81,8 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
           "allocatedMemory",
           new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
           properties,
-          (Callable<Number>) () -> offHeapResource.capacity() - offHeapResource.available());
+          StatisticType.GAUGE,
+          () -> offHeapResource.capacity() - offHeapResource.available());
     }
     Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
     if (physicalMemory != null && totalSize > physicalMemory) {

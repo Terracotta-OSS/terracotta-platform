@@ -162,7 +162,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         EntityMonitoringService entityMonitoringService = new DefaultEntityMonitoringService(consumerID, monitoringProducer, topologyService, activeEntity);
 
         // create a registry for the entity
-        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService);
+        DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService, timeSource);
 
         // make the registry listen for topology events
         topologyService.addTopologyEventListener(managementRegistry);

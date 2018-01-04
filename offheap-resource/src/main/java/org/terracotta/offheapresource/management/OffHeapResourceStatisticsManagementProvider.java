@@ -23,11 +23,7 @@ import org.terracotta.management.registry.collect.StatisticRegistry;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractExposedStatistics;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractStatisticsManagementProvider;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.util.Arrays.asList;
-import static org.terracotta.context.extended.ValueStatisticDescriptor.descriptor;
+import static org.terracotta.statistics.registry.ValueStatisticDescriptor.descriptor;
 
 @Named("OffHeapResourceStatistics")
 @RequiredContext({@Named("consumerId"), @Named("type"), @Named("alias")})
@@ -47,10 +43,8 @@ public class OffHeapResourceStatisticsManagementProvider extends AbstractStatist
     OffHeapResourceBindingExposedStatistics(Context context, OffHeapResourceBinding binding, StatisticRegistry statisticRegistry) {
       super(context.with("type", "OffHeapResource"), binding, statisticRegistry);
 
-      getRegistry().registerSize("AllocatedMemory", descriptor("allocatedMemory", tags("tier", "OffHeapResource")));
+      getStatisticRegistry().registerStatistic("AllocatedMemory", descriptor("allocatedMemory", "tier", "OffHeapResource"));
     }
   }
-
-  private static Set<String> tags(String... tags) {return new HashSet<>(asList(tags));}
 
 }

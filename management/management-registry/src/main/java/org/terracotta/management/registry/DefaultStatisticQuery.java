@@ -17,11 +17,12 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.statistics.registry.Statistic;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -39,8 +40,8 @@ public class DefaultStatisticQuery implements StatisticQuery {
   public DefaultStatisticQuery(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts) {
     this.capabilityManagement = capabilityManagement;
     this.capabilityName = capabilityName;
-    this.statisticNames = Collections.unmodifiableSet(new LinkedHashSet<String>(statisticNames));
-    this.contexts = Collections.unmodifiableCollection(new ArrayList<Context>(contexts));
+    this.statisticNames = Collections.unmodifiableSet(new LinkedHashSet<>(statisticNames));
+    this.contexts = Collections.unmodifiableCollection(new ArrayList<>(contexts));
 
     if (contexts.isEmpty()) {
       throw new IllegalArgumentException("You did not specify any context to extract the statistics from");
@@ -68,21 +69,20 @@ public class DefaultStatisticQuery implements StatisticQuery {
     Collection<ManagementProvider<?>> managementProviders = capabilityManagement.getManagementProvidersByCapability(capabilityName);
 
     for (Context context : contexts) {
-      Map<String, Number> statistics = new HashMap<String, Number>();
+      Map<String, Statistic<? extends Serializable>> statistics = null;
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
-          for (Map.Entry<String, Number> entry : managementProvider.collectStatistics(context, statisticNames).entrySet()) {
-            if (entry.getValue() != null && (entry.getValue().doubleValue() >= 0 || Double.isNaN(entry.getValue().doubleValue()))) {
-              statistics.put(entry.getKey(), entry.getValue());
-            }
+          if (statistics == null) {
+            statistics = managementProvider.collectStatistics(context, statisticNames);
+          } else {
+            statistics.putAll(managementProvider.collectStatistics(context, statisticNames));
           }
-
         }
       }
-      contextualStatistics.put(context, new ContextualStatistics(capabilityName, context, statistics));
+      contextualStatistics.put(context, new ContextualStatistics(capabilityName, context, statistics == null ? Collections.emptyMap() : statistics));
     }
 
-    return new DefaultResultSet<ContextualStatistics>(contextualStatistics);
+    return new DefaultResultSet<>(contextualStatistics);
   }
 
 }

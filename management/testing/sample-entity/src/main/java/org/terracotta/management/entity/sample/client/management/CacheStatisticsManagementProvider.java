@@ -15,8 +15,8 @@
  */
 package org.terracotta.management.entity.sample.client.management;
 
-import org.terracotta.context.extended.OperationStatisticDescriptor;
-import org.terracotta.context.extended.ValueStatisticDescriptor;
+import org.terracotta.statistics.registry.OperationStatisticDescriptor;
+import org.terracotta.statistics.registry.ValueStatisticDescriptor;
 import org.terracotta.management.entity.sample.CacheOperationOutcomes;
 import org.terracotta.management.entity.sample.client.ClientCache;
 import org.terracotta.management.model.context.Context;
@@ -24,6 +24,8 @@ import org.terracotta.management.registry.DefaultStatisticsExposedObject;
 import org.terracotta.management.registry.DefaultStatisticsManagementProvider;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
+
+import java.util.function.Supplier;
 
 import static java.util.Collections.singleton;
 import static java.util.EnumSet.allOf;
@@ -38,29 +40,29 @@ class CacheStatisticsManagementProvider extends DefaultStatisticsManagementProvi
 
   private final Context parentContext;
 
-  CacheStatisticsManagementProvider(Context parentContext) {
-    super(ClientCache.class);
+  CacheStatisticsManagementProvider(Context parentContext, Supplier<Long> timeSource) {
+    super(ClientCache.class, timeSource);
     this.parentContext = parentContext;
   }
 
   @Override
   protected ExposedClientCache wrap(ClientCache managedObject) {
-    return new ExposedClientCache(managedObject, parentContext.with("cacheName", managedObject.getName()));
+    return new ExposedClientCache(managedObject, timeSource, parentContext.with("cacheName", managedObject.getName()));
   }
 
   private static class ExposedClientCache extends DefaultStatisticsExposedObject<ClientCache> {
 
-    ExposedClientCache(ClientCache clientCache, Context context) {
-      super(clientCache, context);
-      
+    ExposedClientCache(ClientCache clientCache, Supplier<Long> timeSource, Context context) {
+      super(clientCache, timeSource, context);
+
       OperationStatisticDescriptor<CacheOperationOutcomes.GetOutcome> get = OperationStatisticDescriptor.descriptor("get", singleton("cache"), CacheOperationOutcomes.GetOutcome.class);
       OperationStatisticDescriptor<CacheOperationOutcomes.ClearOutcome> clear = OperationStatisticDescriptor.descriptor("clear", singleton("cache"), CacheOperationOutcomes.ClearOutcome.class);
 
-      statisticRegistry.registerCounter("Cache:HitCount", get, of(CacheOperationOutcomes.GetOutcome.HIT));
-      statisticRegistry.registerCounter("Cache:MissCount", get, of(CacheOperationOutcomes.GetOutcome.MISS));
-      statisticRegistry.registerCounter("Cache:ClearCount", clear, allOf(CacheOperationOutcomes.ClearOutcome.class));
+      statisticRegistry.registerStatistic("Cache:HitCount", get, of(CacheOperationOutcomes.GetOutcome.HIT));
+      statisticRegistry.registerStatistic("Cache:MissCount", get, of(CacheOperationOutcomes.GetOutcome.MISS));
+      statisticRegistry.registerStatistic("Cache:ClearCount", clear, allOf(CacheOperationOutcomes.ClearOutcome.class));
 
-      statisticRegistry.registerSize("Size", ValueStatisticDescriptor.descriptor("size", singleton("cache")));
+      statisticRegistry.registerStatistic("Size", ValueStatisticDescriptor.descriptor("size", singleton("cache")));
     }
   }
 }

@@ -99,8 +99,8 @@ public class FailoverIT extends AbstractHATest {
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
         .filter(o -> o.hasStatistic("Cluster:HitCount"))
-        .map(o -> o.getStatistic("Cluster:HitCount"))
-        .anyMatch(sample -> sample.longValue() == 1L)); // 1 hit
+        .map(o -> o.<Long>getLatestSample("Cluster:HitCount"))
+        .anyMatch(sample -> sample.get() == 1L)); // 1 hit
 
     get(1, "pets", "pet2"); // miss
 
@@ -118,14 +118,14 @@ public class FailoverIT extends AbstractHATest {
       test &= stats
           .stream()
           .filter(o -> o.hasStatistic("Cluster:MissCount"))
-          .map(o -> o.getStatistic("Cluster:MissCount"))
-          .anyMatch(sample -> sample.longValue() == 1L); // 1 miss
+          .map(o -> o.<Long>getLatestSample("Cluster:MissCount"))
+          .anyMatch(sample -> sample.get() == 1L); // 1 miss
 
       test &= stats
           .stream()
           .filter(o -> o.hasStatistic("ServerCache:Size"))
-          .map(o -> o.getStatistic("ServerCache:Size"))
-          .anyMatch(sample -> sample.longValue() == 1L); // size 1 on heap of entity
+          .map(o -> o.<Integer>getLatestSample("ServerCache:Size"))
+          .anyMatch(sample -> sample.get() == 1); // size 1 on heap of entity
 
       return test;
     });

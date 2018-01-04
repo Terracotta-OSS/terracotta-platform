@@ -43,11 +43,6 @@
       <artifactId>management-model</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>statistics</artifactId>
-      <version>${statistics.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>junit</groupId>

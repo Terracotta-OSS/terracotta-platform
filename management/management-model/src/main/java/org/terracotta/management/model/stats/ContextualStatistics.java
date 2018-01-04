@@ -15,13 +15,17 @@
  */
 package org.terracotta.management.model.stats;
 
-import java.util.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
+import org.terracotta.statistics.registry.Statistic;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * This class holds the statistics queried on a specific cluster element (context
@@ -32,12 +36,12 @@ public final class ContextualStatistics implements Contextual {
 
   private static final long serialVersionUID = 1;
 
-  private final Map<String, Number> statistics;
+  private final Map<String, Statistic<? extends Serializable>> statistics;
   private final String capability;
   private Context context;
 
-  public ContextualStatistics(String capability, Context context, Map<String, Number> statistics) {
-    this.statistics = new HashMap<String, Number>(Objects.requireNonNull(statistics));
+  public ContextualStatistics(String capability, Context context, Map<String, Statistic<? extends Serializable>> statistics) {
+    this.statistics = new HashMap<>(Objects.requireNonNull(statistics));
     this.context = Objects.requireNonNull(context);
     this.capability = Objects.requireNonNull(capability);
   }
@@ -50,8 +54,15 @@ public final class ContextualStatistics implements Contextual {
 
   public boolean isEmpty() {return statistics.isEmpty();}
 
-  public Map<String, Number> getStatistics() {
+  public Map<String, Statistic<? extends Serializable>> getStatistics() {
     return statistics;
+  }
+
+  public Map<String, ? extends Serializable> getLatestSamples() {
+    return statistics.entrySet()
+        .stream()
+        .filter(e -> !e.getValue().isEmpty())
+        .collect(toMap(Map.Entry::getKey, e -> e.getValue().getLatestSample().get()));
   }
 
   public boolean hasStatistic(String name) {
@@ -63,14 +74,14 @@ public final class ContextualStatistics implements Contextual {
    *
    * @param name The name of the statistic to return
    * @return The statistic found
-   * @throws NoSuchElementException If there is 0 or more than 1 statistic for given type
    */
-  public Number getStatistic(String name) throws NoSuchElementException {
-    Number stat = statistics.get(name);
-    if (stat == null) {
-      throw new NoSuchElementException(name);
-    }
-    return stat;
+  @SuppressWarnings("unchecked")
+  public <T extends Serializable> Optional<Statistic<T>> getStatistic(String name) {
+    return Optional.ofNullable((Statistic<T>) statistics.get(name));
+  }
+
+  public <T extends Serializable> Optional<T> getLatestSample(String name) {
+    return this.<T>getStatistic(name).flatMap(Statistic::getLatestSample);
   }
 
   @Override

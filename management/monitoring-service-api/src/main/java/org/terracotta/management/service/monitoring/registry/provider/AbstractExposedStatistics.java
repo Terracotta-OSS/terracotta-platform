@@ -19,10 +19,13 @@ import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.collect.StatisticRegistry;
+import org.terracotta.statistics.registry.Statistic;
 
 import java.io.Closeable;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 
 @CommonComponent
 public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBindingManagementProvider.ExposedAliasBinding<T> implements Closeable {
@@ -38,16 +41,16 @@ public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBind
   public void close() {
   }
 
-  protected StatisticRegistry getRegistry() {
+  protected StatisticRegistry getStatisticRegistry() {
     return statisticRegistry;
   }
 
   @SuppressWarnings("unchecked")
-  public Number queryStatistic(String fullStatisticName) {
+  public <T extends Serializable> Optional<Statistic<T>> queryStatistic(String fullStatisticName) {
     return statisticRegistry.queryStatistic(fullStatisticName);
   }
 
-  public Map<String, Number> queryStatistics() {
+  public Map<String, Statistic<? extends Serializable>> queryStatistics() {
     return statisticRegistry.queryStatistics();
   }
 

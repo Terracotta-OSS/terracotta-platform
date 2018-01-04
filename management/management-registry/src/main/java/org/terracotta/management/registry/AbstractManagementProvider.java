@@ -22,7 +22,9 @@ import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.statistics.registry.Statistic;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -107,7 +109,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   }
 
   @Override
-  public Map<String, Number> collectStatistics(Context context, Collection<String> statisticNames) {
+  public Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames) {
     throw new UnsupportedOperationException("Not a statistics provider : " + getCapabilityName());
   }
 
