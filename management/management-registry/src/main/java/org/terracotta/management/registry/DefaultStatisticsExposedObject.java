@@ -24,7 +24,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.LongSupplier;
 
 /**
  * @author Mathieu Carbou
@@ -33,12 +33,12 @@ public class DefaultStatisticsExposedObject<T> extends DefaultExposedObject<T> {
 
   protected final StatisticRegistry statisticRegistry;
   
-  public DefaultStatisticsExposedObject(T o, Supplier<Long> timeSource, Context context) {
+  public DefaultStatisticsExposedObject(T o, LongSupplier timeSource, Context context) {
     super(o, context);
     statisticRegistry = new StatisticRegistry(o, timeSource);
   }
 
-  public DefaultStatisticsExposedObject(T o, Supplier<Long> timeSource) {
+  public DefaultStatisticsExposedObject(T o, LongSupplier timeSource) {
     super(o);
     statisticRegistry = new StatisticRegistry(o, timeSource);
   }
