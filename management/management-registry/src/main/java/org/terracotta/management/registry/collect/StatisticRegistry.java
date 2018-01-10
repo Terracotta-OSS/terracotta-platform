@@ -16,22 +16,22 @@
 package org.terracotta.management.registry.collect;
 
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
-import org.terracotta.statistics.SampledStatistic;
 import org.terracotta.statistics.StatisticType;
+import org.terracotta.statistics.ValueStatistic;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.function.LongSupplier;
 
 /***
  * @author Mathieu Carbou
  */
 public class StatisticRegistry extends org.terracotta.statistics.registry.StatisticRegistry {
 
-  public StatisticRegistry(Object contextObject, Supplier<Long> timeSource) {
+  public StatisticRegistry(Object contextObject, LongSupplier timeSource) {
     super(contextObject, timeSource);
   }
 
@@ -41,7 +41,7 @@ public class StatisticRegistry extends org.terracotta.statistics.registry.Statis
 
   public Collection<StatisticDescriptor> getDescriptors() {
     Set<StatisticDescriptor> descriptors = new HashSet<>(getStatistics().size());
-    for (Map.Entry<String, SampledStatistic<? extends Serializable>> entry : getStatistics().entrySet()) {
+    for (Map.Entry<String, ValueStatistic<? extends Serializable>> entry : getStatistics().entrySet()) {
       String fullStatName = entry.getKey();
       StatisticType type = entry.getValue().type();
       descriptors.add(new StatisticDescriptor(fullStatName, type.name()));

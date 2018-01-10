@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.BinaryOperator;
-import java.util.function.Supplier;
+import java.util.function.LongSupplier;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -38,18 +38,18 @@ import static java.util.stream.Collectors.toMap;
 @StatisticProvider
 public class DefaultStatisticsManagementProvider<T> extends AbstractManagementProvider<T> {
 
-  protected final Supplier<Long> timeSource;
+  protected final LongSupplier timeSource;
   protected final Context parentContext;
 
   @SuppressWarnings("unchecked")
-  public DefaultStatisticsManagementProvider(Class<T> type, Supplier<Long> timeSource, Context parentContext) {
+  public DefaultStatisticsManagementProvider(Class<T> type, LongSupplier timeSource, Context parentContext) {
     super(type);
     this.timeSource = timeSource;
     this.parentContext = Objects.requireNonNull(parentContext);
   }
 
   @SuppressWarnings("unchecked")
-  public DefaultStatisticsManagementProvider(Class<T> type, Supplier<Long> timeSource) {
+  public DefaultStatisticsManagementProvider(Class<T> type, LongSupplier timeSource) {
     this(type, timeSource, Context.empty());
   }
 
