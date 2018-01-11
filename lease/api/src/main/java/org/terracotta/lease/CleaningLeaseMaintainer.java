@@ -25,20 +25,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-class CleaningLeaseMaintainer implements LeaseMaintainer {
+class CleaningLeaseMaintainer implements InternalLeaseMaintainer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CleaningLeaseMaintainer.class);
 
-  private final LeaseMaintainer delegate;
+  private final InternalLeaseMaintainer delegate;
   private final Connection connection;
   private final List<Closeable> resources;
 
 
-  CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, Closeable... resources) {
+  CleaningLeaseMaintainer(InternalLeaseMaintainer delegate, Connection connection, Closeable... resources) {
     this(delegate, connection, Arrays.asList(resources));
   }
 
-  private CleaningLeaseMaintainer(LeaseMaintainer delegate, Connection connection, List<Closeable> resources) {
+  private CleaningLeaseMaintainer(InternalLeaseMaintainer delegate, Connection connection, List<Closeable> resources) {
     this.delegate = delegate;
     this.connection = connection;
     this.resources = resources;
@@ -69,6 +69,15 @@ class CleaningLeaseMaintainer implements LeaseMaintainer {
   public void destroy() throws IOException {
     closeResources();
     connection.close();
+  }
+
+  @Override
+  public void setLeaseExpiryListener(ExpiryListener listener) {
+    delegate.setLeaseExpiryListener(listener);
+  }
+
+  public void leaseExpired() {
+    delegate.leaseExpired();
   }
 
   private void closeResources() {

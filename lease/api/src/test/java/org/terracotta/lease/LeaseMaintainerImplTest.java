@@ -16,13 +16,12 @@
 package org.terracotta.lease;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,6 +39,9 @@ public class LeaseMaintainerImplTest {
   private DelayedLeaseAcquirer delayedLeaseAcquirer;
 
   private LeaseMaintainerImpl leaseMaintainer;
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
   @Before
   public void before() throws Exception {
@@ -163,6 +165,15 @@ public class LeaseMaintainerImplTest {
   public void waitForLeaseWithLease() throws Exception {
     refreshLease(leaseMaintainer, 0L, 2000L);
     leaseMaintainer.waitForLease();
+  }
+
+  @Test
+  public void leaseExpiryListenerDoubleRegistration() {
+    exception.expect(IllegalStateException.class);
+    leaseMaintainer.setLeaseExpiryListener(() -> {});
+
+    leaseMaintainer.setLeaseExpiryListener(() -> {});
+
   }
 
   private void refreshLease(LeaseMaintainerImpl leaseMaintainer, long delay, long expectedWaitLength) throws Exception {

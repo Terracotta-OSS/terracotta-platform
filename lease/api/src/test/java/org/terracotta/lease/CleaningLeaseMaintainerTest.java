@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CleaningLeaseMaintainerTest {
   @Mock
-  private LeaseMaintainer delegate;
+  private InternalLeaseMaintainer delegate;
 
   @Mock
   private Connection connection;

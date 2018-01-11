@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * The implementation of LeaseMaintainer. It makes lease requests via the lease entity. Then, when lease
  * requests are granted, it updates the current lease to reflect that.
  */
-class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
+class LeaseMaintainerImpl implements InternalLeaseMaintainer, LeaseReconnectListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(LeaseMaintainerImpl.class);
   private static final long MAXIMUM_WAIT_LENGTH = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
   private static final long RETRY_MILLIS_DURING_RECONNECT = 200L;
@@ -36,6 +36,7 @@ class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
   private final TimeSource timeSource;
   private final AtomicReference<LeaseInternal> currentLease;
   private final CountDownLatch hasLease;
+  private volatile ExpiryListener listener = null;
 
   LeaseMaintainerImpl(LeaseAcquirer leaseAcquirer) {
     this.leaseAcquirer = leaseAcquirer;
@@ -150,5 +151,20 @@ class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
   @Override
   public void destroy() throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setLeaseExpiryListener(ExpiryListener listener) {
+    if (this.listener == null) {
+      this.listener = listener;
+    } else {
+      throw new IllegalStateException("Lease Expiry Listener already registered");
+    }
+  }
+
+  public void leaseExpired() {
+    if (listener != null) {
+      listener.notifyLeaseExpired();
+    }
   }
 }
