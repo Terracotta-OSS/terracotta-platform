@@ -71,7 +71,7 @@ public class HAStatisticsIT extends AbstractHATest {
             String serverName = stat.getContext().get(Server.NAME_KEY);
             //System.out.println("server: " + serverName);
 
-            long counter = stat.<Long>getLatestSample("Cluster:PutCount").get();
+            long counter = stat.<Long>getLatestSampleValue("Cluster:PutCount").get();
             //System.out.println("counterHistory: " + counterHistory.getLast().getValue());
 
             // if the counter history is not yet 1, return false, we continue looping

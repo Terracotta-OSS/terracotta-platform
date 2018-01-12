@@ -121,7 +121,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
         .filter(o -> o.hasStatistic("Cluster:HitCount") && o.hasStatistic("Cluster:CacheEntryLength"))
-        .map(o -> o.<Long>getLatestSample("Cluster:HitCount"))
+        .map(o -> o.<Long>getLatestSampleValue("Cluster:HitCount"))
         .anyMatch(counter -> counter.get() == 1L));
 
     queryAllRemoteStatsUntil(stats -> {
@@ -140,13 +140,13 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
       test &= stats
           .stream()
           .filter(o -> o.hasStatistic("Cluster:MissCount"))
-          .map(o -> o.<Long>getLatestSample("Cluster:MissCount"))
+          .map(o -> o.<Long>getLatestSampleValue("Cluster:MissCount"))
           .anyMatch(counter -> counter.get() == 1L); // 1 miss
 
       test &= stats
           .stream()
           .filter(o -> o.hasStatistic("ServerCache:Size"))
-          .map(o -> o.<Integer>getLatestSample("ServerCache:Size"))
+          .map(o -> o.<Integer>getLatestSampleValue("ServerCache:Size"))
           .anyMatch(size -> size.get() == 1); // // size 1 on heap of entity
 
       return test;
@@ -164,7 +164,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
         .filter(o -> o.hasStatistic("Cluster:CacheEntryLength"))
-        .map(o -> o.<Table>getLatestSample("Cluster:CacheEntryLength"))
+        .map(o -> o.<Table>getLatestSampleValue("Cluster:CacheEntryLength"))
         .anyMatch(table -> table.get().getRowCount() == 2 && table.get().getRowLabels().containsAll(Arrays.asList("pet1", "pet2"))));
   }
 

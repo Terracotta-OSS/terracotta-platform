@@ -41,8 +41,9 @@ import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.statistics.ConstantValueStatistic;
-import org.terracotta.statistics.registry.Statistic;
+import org.terracotta.statistics.Sample;
 import org.terracotta.statistics.StatisticType;
+import org.terracotta.statistics.registry.Statistic;
 import org.terracotta.testing.rules.Cluster;
 
 import java.io.File;
@@ -72,7 +73,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractTest {
 
   protected Logger logger = LoggerFactory.getLogger(getClass());
-  
+
   private final ObjectMapper mapper = new ObjectMapper().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 
   private Connection managementConnection;
@@ -323,12 +324,15 @@ public abstract class AbstractTest {
     public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
   }
 
-  public static abstract class StatisticMixin<T> {
+  public static abstract class StatisticMixin<T extends Serializable> {
     @JsonIgnore
     public abstract boolean isEmpty();
 
     @JsonIgnore
-    public abstract Optional<T> getLatestSample();
+    public abstract Optional<T> getLatestSampleValue();
+
+    @JsonIgnore
+    public abstract Optional<Sample<T>> getLatestSample();
   }
 
   public static abstract class ContextualStatisticsMixin {
@@ -339,7 +343,10 @@ public abstract class AbstractTest {
     public abstract boolean isEmpty();
 
     @JsonIgnore
-    public abstract Map<String, ? extends Serializable> getLatestSamples();
+    public abstract Map<String, ? extends Serializable> getLatestSampleValues();
+
+    @JsonIgnore
+    public abstract Map<String, Sample<? extends Serializable>> getLatestSamples();
   }
 
   public static abstract class ConstantValueStatisticMixin<T> {

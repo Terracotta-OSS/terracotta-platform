@@ -114,7 +114,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
     queryAllRemoteStatsUntil(stats -> stats
         .stream()
-        .map(o -> o.<Long>getLatestSample("Cache:HitCount"))
+        .map(o -> o.<Long>getLatestSampleValue("Cache:HitCount"))
         .anyMatch(counter -> counter.get() == 1L)); // 1 hit
 
     get(0, "pets", "pet2"); // miss on client 0
@@ -125,12 +125,12 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
 
       test &= stats
           .stream()
-          .map(o -> o.<Long>getLatestSample("Cache:MissCount"))
+          .map(o -> o.<Long>getLatestSampleValue("Cache:MissCount"))
           .anyMatch(counter -> counter.get() == 1L); // 1 miss
 
       test &= stats
           .stream()
-          .map(o -> o.<Integer>getLatestSample("ClientCache:Size"))
+          .map(o -> o.<Integer>getLatestSampleValue("ClientCache:Size"))
           .anyMatch(counter -> counter.get() == 1); // size 1 on heap of entity
 
       return test;
