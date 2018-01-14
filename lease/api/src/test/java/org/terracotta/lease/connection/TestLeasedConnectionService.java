@@ -15,11 +15,23 @@
  */
 package org.terracotta.lease.connection;
 
-import org.terracotta.connection.Connection;
+import org.mockito.Mockito;
+import org.terracotta.connection.ConnectionException;
 
-/**
- *
- */
-public interface LeasedConnection extends Connection {
+import java.net.URI;
+import java.util.Properties;
 
+public class TestLeasedConnectionService implements LeasedConnectionService {
+
+  public static final LeasedConnection LEASED_CONNECTION = Mockito.mock(LeasedConnection.class);
+
+  @Override
+  public boolean handlesURI(URI uri) {
+    return true;
+  }
+
+  @Override
+  public LeasedConnection connect(URI uri, Properties properties) throws ConnectionException {
+    return LEASED_CONNECTION;
+  }
 }

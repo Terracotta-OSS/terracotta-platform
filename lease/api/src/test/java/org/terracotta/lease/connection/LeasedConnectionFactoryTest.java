@@ -15,11 +15,19 @@
  */
 package org.terracotta.lease.connection;
 
-import org.terracotta.connection.Connection;
+import org.junit.Test;
+import org.terracotta.connection.ConnectionException;
 
-/**
- *
- */
-public interface LeasedConnection extends Connection {
+import java.net.URI;
 
+import static org.junit.Assert.*;
+
+public class LeasedConnectionFactoryTest {
+
+  @Test
+  public void connect() throws ConnectionException {
+    LeasedConnection leasedConnection = LeasedConnectionFactory.connect(URI.create("terracotta://localhost"), null);
+
+    assertSame(leasedConnection, TestLeasedConnectionService.LEASED_CONNECTION);
+  }
 }
