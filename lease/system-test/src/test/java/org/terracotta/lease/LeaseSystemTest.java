@@ -40,8 +40,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class LeaseSystemTest {
@@ -87,6 +89,10 @@ public class LeaseSystemTest {
     LeaseDelayedConnection delayedConnection = new LeaseDelayedConnection(connection);
     LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(delayedConnection);
 
+    AtomicBoolean atomicBoolean = new AtomicBoolean();
+
+    leaseMaintainer.addDisconnectListener(() -> atomicBoolean.set(true));
+
     LeaseTestUtil.waitForValidLease(leaseMaintainer);
 
     delayedConnection.setDelay(700L);
@@ -96,6 +102,7 @@ public class LeaseSystemTest {
     Lease lease2 = leaseMaintainer.getCurrentLease();
 
     assertFalse(lease2.isValidAndContiguous(lease1));
+    assertTrue(atomicBoolean.get());
   }
 
   @AfterClass

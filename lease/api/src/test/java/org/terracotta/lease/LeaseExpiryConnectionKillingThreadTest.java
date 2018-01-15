@@ -63,6 +63,7 @@ public class LeaseExpiryConnectionKillingThreadTest {
     thread.start();
     verify(timeSource, timeout(1000L).times(1)).sleep(200L);
     verifyNoMoreInteractions(connection);
+    verify(leaseMaintainer, times(0)).leaseExpired();
   }
 
   @Test
@@ -71,6 +72,7 @@ public class LeaseExpiryConnectionKillingThreadTest {
     thread.start();
     verify(timeSource, timeout(1000L).times(1)).sleep(200L);
     verifyNoMoreInteractions(connection);
+    verify(leaseMaintainer, times(0)).leaseExpired();
   }
 
   @Test
@@ -79,6 +81,7 @@ public class LeaseExpiryConnectionKillingThreadTest {
     thread.start();
     thread.join();
     verify(connection).close();
+    verify(leaseMaintainer, times(1)).leaseExpired();
   }
 
   @Test
@@ -88,5 +91,6 @@ public class LeaseExpiryConnectionKillingThreadTest {
     thread.start();
     thread.join();
     verify(connection).close();
+    verify(leaseMaintainer, times(1)).leaseExpired();
   }
 }

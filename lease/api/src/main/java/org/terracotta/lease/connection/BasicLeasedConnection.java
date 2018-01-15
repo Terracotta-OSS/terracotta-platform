@@ -22,6 +22,7 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.lease.Lease;
 import org.terracotta.lease.LeaseMaintainer;
 import org.terracotta.lease.LeaseMaintainerFactory;
 
@@ -83,7 +84,13 @@ class BasicLeasedConnection implements LeasedConnection {
   }
 
   @Override
-  public LeaseMaintainer getLeaseMaintainer() {
-    return leaseMaintainer;
+  public boolean isConnectionValid() {
+    Lease currentLease = leaseMaintainer.getCurrentLease();
+    return currentLease.isValidAndContiguous(currentLease);
+  }
+
+  @Override
+  public void addDisconnectListener(DisconnectedEventListener eventListener) {
+    leaseMaintainer.addDisconnectListener(eventListener);
   }
 }

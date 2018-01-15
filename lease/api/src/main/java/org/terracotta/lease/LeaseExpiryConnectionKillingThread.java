@@ -49,6 +49,7 @@ public class LeaseExpiryConnectionKillingThread extends Thread implements Closea
           if (!validLease) {
             try {
               LOGGER.info("Lease lost, so closing connection to server: " + lease);
+              leaseMaintainer.leaseExpired();
               connection.close();
             } catch (IOException e) {
               LOGGER.error("Closing connection, due to lease expiry, caused an error", e);

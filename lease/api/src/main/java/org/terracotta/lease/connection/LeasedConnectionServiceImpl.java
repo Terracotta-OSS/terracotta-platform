@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class LeasedConnectionServiceImpl implements LeasedConnectionService {
 
   private static final String SCHEME = "terracotta";
-  private static final Duration DEFAULT_LEASED_CONNECTION_TIMEOUT = Duration.ofSeconds(150);
+  private static final String DEFAULT_LEASED_CONNECTION_TIMEOUT = "150000";
 
   @Override
   public boolean handlesURI(URI uri) {
@@ -37,16 +37,18 @@ public class LeasedConnectionServiceImpl implements LeasedConnectionService {
 
   @Override
   public LeasedConnection connect(URI uri, Properties properties) throws ConnectionException {
+
+    TimeBudget timeBudget = createTimeBudget(properties);
     Connection connection = ConnectionFactory.connect(uri, properties);
 
-    LeasedConnection leasedConnection = BasicLeasedConnection.create(connection, createTimeBudget(properties));
+    LeasedConnection leasedConnection = BasicLeasedConnection.create(connection, timeBudget);
 
     return leasedConnection;
   }
 
   private static TimeBudget createTimeBudget(Properties properties) {
     String timeoutString = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT,
-            Long.toString(DEFAULT_LEASED_CONNECTION_TIMEOUT.toMillis()));
+            DEFAULT_LEASED_CONNECTION_TIMEOUT);
     long timeout = Long.parseLong(timeoutString);
     return new TimeBudget(timeout, TimeUnit.MILLISECONDS);
   }
