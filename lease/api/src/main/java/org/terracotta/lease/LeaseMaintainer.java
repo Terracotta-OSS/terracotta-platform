@@ -57,4 +57,24 @@ public interface LeaseMaintainer extends Closeable {
    * @throws IOException if an I/O error occurs
    */
   void destroy() throws IOException;
+
+  /**
+   * Sets a listener which will be called when lease expires and connection is closed
+   * This can be used to let layers above know about lease expiry and take corrective action
+   *
+   * @param listener to be called when lease expires
+   */
+  void setLeaseExpiryListener(ExpiryListener listener);
+
+  /**
+   * Listener to be installed for lease expiry notification
+   */
+  public interface ExpiryListener {
+
+    /**
+     * Notifies lease expiry
+     */
+    void notifyLeaseExpired();
+  }
+
 }

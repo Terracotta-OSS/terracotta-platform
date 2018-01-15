@@ -25,13 +25,13 @@ import java.io.IOException;
 public class LeaseExpiryConnectionKillingThread extends Thread implements Closeable {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseExpiryConnectionKillingThread.class);
 
-  private final LeaseMaintainer leaseMaintainer;
+  private final InternalLeaseMaintainer leaseMaintainer;
   private final Connection connection;
   private final TimeSource timeSource;
 
   private volatile boolean shutdown = false;
 
-  LeaseExpiryConnectionKillingThread(LeaseMaintainer leaseMaintainer, Connection connection) {
+  LeaseExpiryConnectionKillingThread(InternalLeaseMaintainer leaseMaintainer, Connection connection) {
     this.leaseMaintainer = leaseMaintainer;
     this.connection = connection;
     this.timeSource = TimeSourceProvider.getTimeSource();
@@ -49,6 +49,7 @@ public class LeaseExpiryConnectionKillingThread extends Thread implements Closea
           if (!validLease) {
             try {
               LOGGER.info("Lease lost, so closing connection to server: " + lease);
+              leaseMaintainer.leaseExpired();
               connection.close();
             } catch (IOException e) {
               LOGGER.error("Closing connection, due to lease expiry, caused an error", e);
