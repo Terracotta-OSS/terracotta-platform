@@ -197,6 +197,10 @@ public final class Client extends AbstractManageableNode<Cluster> {
     return getFetchedServerEntity(name, type).isPresent();
   }
 
+  public boolean hasFetchedServerEntity(String type) {
+    return fetchedServerEntityStream().anyMatch(serverEntity -> serverEntity.getType().equals(type));
+  }
+
   public Optional<ServerEntity> getFetchedServerEntity(String name, String type) {
     return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst();
   }

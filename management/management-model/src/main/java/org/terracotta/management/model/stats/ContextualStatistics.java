@@ -17,6 +17,7 @@ package org.terracotta.management.model.stats;
 
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
+import org.terracotta.statistics.Sample;
 import org.terracotta.statistics.registry.Statistic;
 
 import java.io.Serializable;
@@ -58,7 +59,14 @@ public final class ContextualStatistics implements Contextual {
     return statistics;
   }
 
-  public Map<String, ? extends Serializable> getLatestSamples() {
+  public Map<String, ? extends Serializable> getLatestSampleValues() {
+    return statistics.entrySet()
+        .stream()
+        .filter(e -> !e.getValue().isEmpty())
+        .collect(toMap(Map.Entry::getKey, e -> e.getValue().getLatestSampleValue().get()));
+  }
+
+  public Map<String, Sample<? extends Serializable>> getLatestSamples() {
     return statistics.entrySet()
         .stream()
         .filter(e -> !e.getValue().isEmpty())
@@ -80,7 +88,11 @@ public final class ContextualStatistics implements Contextual {
     return Optional.ofNullable((Statistic<T>) statistics.get(name));
   }
 
-  public <T extends Serializable> Optional<T> getLatestSample(String name) {
+  public <T extends Serializable> Optional<T> getLatestSampleValue(String name) {
+    return this.<T>getLatestSample(name).map(Sample::getSample);
+  }
+
+  public <T extends Serializable> Optional<Sample<T>> getLatestSample(String name) {
     return this.<T>getStatistic(name).flatMap(Statistic::getLatestSample);
   }
 

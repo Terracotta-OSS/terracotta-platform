@@ -122,31 +122,31 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     put(0, "pets", "pet1", "Cubitus");
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .<Long>getLatestSample("Cache:HitCount")
+        .<Long>getLatestSampleValue("Cache:HitCount")
         .get() == 0L); // 0 hit
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .<Long>getLatestSample("Cache:HitCount")
+        .<Long>getLatestSampleValue("Cache:HitCount")
         .get() == 0L); // 0 miss
 
     get(1, "pets", "pet1"); // hit
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .<Long>getLatestSample("Cache:HitCount")
+        .<Long>getLatestSampleValue("Cache:HitCount")
         .get() == 1L); // 1 hit
 
     get(1, "pets", "pet2"); // miss
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .<Long>getLatestSample("Cache:MissCount")
+        .<Long>getLatestSampleValue("Cache:MissCount")
         .get() == 1L); // 1 miss
 
     queryAllStatsUntil(1, "pets", stats -> stats
-        .<Integer>getLatestSample("ClientCache:Size")
+        .<Integer>getLatestSampleValue("ClientCache:Size")
         .get() == 1); // size 1 on heap of client 1
 
     queryAllStatsUntil(0, "pets", stats -> stats
-        .<Integer>getLatestSample("ClientCache:Size")
+        .<Integer>getLatestSampleValue("ClientCache:Size")
         .get() == 0); // size 0 on heap of client 0
   }
 
