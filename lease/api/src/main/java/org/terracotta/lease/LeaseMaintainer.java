@@ -15,6 +15,8 @@
  */
 package org.terracotta.lease;
 
+import org.terracotta.lease.connection.LeasedConnection;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -57,4 +59,17 @@ public interface LeaseMaintainer extends Closeable {
    * @throws IOException if an I/O error occurs
    */
   void destroy() throws IOException;
+
+  /**
+   * Sets a listener which will be called when lease expires and connection is closed
+   * This can be used to let layers above know about lease expiry and take corrective action
+   *
+   * @param listener to be called when lease expires
+   */
+  void addDisconnectListener(LeasedConnection.DisconnectedEventListener listener);
+
+  /**
+   * Called to notify that lease is expired
+   */
+  void leaseExpired();
 }

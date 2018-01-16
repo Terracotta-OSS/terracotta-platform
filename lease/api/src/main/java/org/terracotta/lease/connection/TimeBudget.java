@@ -17,15 +17,15 @@ package org.terracotta.lease.connection;
 
 import java.util.concurrent.TimeUnit;
 
-public class TimeBudget {
+class TimeBudget {
   private final long budgetExpiry;
 
-  public TimeBudget(long timeout, TimeUnit timeUnit) {
+  TimeBudget(long timeout, TimeUnit timeUnit) {
     long now = System.nanoTime();
     budgetExpiry = now + TimeUnit.NANOSECONDS.convert(timeout, timeUnit);
   }
 
-  public long remaining(TimeUnit timeUnit) {
+  long remaining(TimeUnit timeUnit) {
     long now = System.nanoTime();
     long remaining = budgetExpiry - now;
     return timeUnit.convert(remaining, TimeUnit.NANOSECONDS);

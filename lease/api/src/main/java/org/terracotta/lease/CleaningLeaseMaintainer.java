@@ -18,6 +18,7 @@ package org.terracotta.lease;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
+import org.terracotta.lease.connection.LeasedConnection;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -69,6 +70,15 @@ class CleaningLeaseMaintainer implements LeaseMaintainer {
   public void destroy() throws IOException {
     closeResources();
     connection.close();
+  }
+
+  @Override
+  public void addDisconnectListener(LeasedConnection.DisconnectedEventListener listener) {
+    delegate.addDisconnectListener(listener);
+  }
+
+  public void leaseExpired() {
+    delegate.leaseExpired();
   }
 
   private void closeResources() {

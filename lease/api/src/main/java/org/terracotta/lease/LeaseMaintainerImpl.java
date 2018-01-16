@@ -17,11 +17,16 @@ package org.terracotta.lease;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.lease.connection.LeasedConnection.DisconnectedEventListener;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The implementation of LeaseMaintainer. It makes lease requests via the lease entity. Then, when lease
@@ -36,6 +41,9 @@ class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
   private final TimeSource timeSource;
   private final AtomicReference<LeaseInternal> currentLease;
   private final CountDownLatch hasLease;
+  private final List<DisconnectedEventListener> listeners = new ArrayList<>();
+
+  private final Lock disconnectLock = new ReentrantLock();
 
   LeaseMaintainerImpl(LeaseAcquirer leaseAcquirer) {
     this.leaseAcquirer = leaseAcquirer;
@@ -150,5 +158,28 @@ class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
   @Override
   public void destroy() throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addDisconnectListener(DisconnectedEventListener listener) {
+    disconnectLock.lock();
+    try {
+      if (listener != null) {
+        this.listeners.add(listener);
+      } else {
+        throw new IllegalArgumentException("Listener cannot be null");
+      }
+    } finally {
+      disconnectLock.unlock();
+    }
+  }
+
+  public void leaseExpired() {
+    disconnectLock.lock();
+    try {
+      this.listeners.forEach(DisconnectedEventListener::notifyDisconnected);
+    } finally {
+      disconnectLock.unlock();
+    }
   }
 }

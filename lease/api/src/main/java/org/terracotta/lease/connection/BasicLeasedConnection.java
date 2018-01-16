@@ -22,6 +22,7 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.lease.Lease;
 import org.terracotta.lease.LeaseMaintainer;
 import org.terracotta.lease.LeaseMaintainerFactory;
 
@@ -29,13 +30,13 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 
-public class BasicLeasedConnection implements LeasedConnection {
+class BasicLeasedConnection implements LeasedConnection {
   private final static Logger LOGGER = LoggerFactory.getLogger(BasicLeasedConnection.class);
 
   private final Connection base;
   private final LeaseMaintainer leaseMaintainer;
 
-  public static BasicLeasedConnection create(Connection connection, TimeBudget timeBudget) throws ConnectionException {
+  static BasicLeasedConnection create(Connection connection, TimeBudget timeBudget) throws ConnectionException {
     LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
 
     Exception exception = null;
@@ -83,7 +84,13 @@ public class BasicLeasedConnection implements LeasedConnection {
   }
 
   @Override
-  public LeaseMaintainer getLeaseMaintainer() {
-    return leaseMaintainer;
+  public boolean isConnectionValid() {
+    Lease currentLease = leaseMaintainer.getCurrentLease();
+    return currentLease.isValidAndContiguous(currentLease);
+  }
+
+  @Override
+  public void addDisconnectListener(DisconnectedEventListener eventListener) {
+    leaseMaintainer.addDisconnectListener(eventListener);
   }
 }

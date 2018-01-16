@@ -16,16 +16,19 @@
 package org.terracotta.lease;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,6 +43,9 @@ public class LeaseMaintainerImplTest {
   private DelayedLeaseAcquirer delayedLeaseAcquirer;
 
   private LeaseMaintainerImpl leaseMaintainer;
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
   @Before
   public void before() throws Exception {
@@ -163,6 +169,25 @@ public class LeaseMaintainerImplTest {
   public void waitForLeaseWithLease() throws Exception {
     refreshLease(leaseMaintainer, 0L, 2000L);
     leaseMaintainer.waitForLease();
+  }
+
+  @Test
+  public void leaseExpiryListenerAdd() {
+    AtomicInteger atomicInteger = new AtomicInteger(0);
+    leaseMaintainer.addDisconnectListener(atomicInteger::incrementAndGet);
+    leaseMaintainer.addDisconnectListener(atomicInteger::incrementAndGet);
+
+    leaseMaintainer.leaseExpired();
+
+    assertThat(atomicInteger.get(), is(2));
+
+  }
+
+  @Test
+  public void addNullListener() {
+    exception.expect(IllegalArgumentException.class);
+
+    leaseMaintainer.addDisconnectListener(null);
   }
 
   private void refreshLease(LeaseMaintainerImpl leaseMaintainer, long delay, long expectedWaitLength) throws Exception {

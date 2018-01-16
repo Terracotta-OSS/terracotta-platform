@@ -19,8 +19,24 @@ import org.terracotta.connection.Connection;
 import org.terracotta.lease.LeaseMaintainer;
 
 /**
- *
+ * Connection provided on lease by server
  */
 public interface LeasedConnection extends Connection {
-  LeaseMaintainer getLeaseMaintainer();
+
+  /**
+   * returns true if connection is still valid, else false
+   * @return validity of connection
+   */
+  boolean isConnectionValid();
+
+  /**
+   * Sets a listener which will be called when disconnect happens
+   * This can be used to let layers above know about disconnection and take corrective action
+   * @param eventListener listener to be called when disconnect happens
+   */
+  void addDisconnectListener(DisconnectedEventListener eventListener);
+
+  interface DisconnectedEventListener {
+    void notifyDisconnected();
+  }
 }
