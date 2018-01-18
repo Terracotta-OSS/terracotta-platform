@@ -35,10 +35,6 @@ public class StatisticRegistry extends org.terracotta.statistics.registry.Statis
     super(contextObject, timeSource);
   }
 
-  public StatisticRegistry(Object contextObject) {
-    super(contextObject);
-  }
-
   public Collection<StatisticDescriptor> getDescriptors() {
     Set<StatisticDescriptor> descriptors = new HashSet<>(getStatistics().size());
     for (Map.Entry<String, ValueStatistic<? extends Serializable>> entry : getStatistics().entrySet()) {
