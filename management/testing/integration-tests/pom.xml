@@ -132,6 +132,11 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.terracotta</groupId>
+                  <artifactId>statistics</artifactId>
+                  <version>${statistics.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta</groupId>
                   <artifactId>offheap-resource</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
