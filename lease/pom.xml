@@ -37,6 +37,7 @@
     <module>entity-common</module>
     <module>entity-server</module>
     <module>system-test</module>
+    <module>passthrough-leased-connection-api</module>
   </modules>
 
   <dependencyManagement>
