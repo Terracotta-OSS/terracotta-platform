@@ -29,13 +29,13 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 
-class BasicLeasedConnection implements LeasedConnection {
+public class BasicLeasedConnection implements LeasedConnection {
   private final static Logger LOGGER = LoggerFactory.getLogger(BasicLeasedConnection.class);
 
   private final Connection base;
   private final LeaseMaintainer leaseMaintainer;
 
-  static BasicLeasedConnection create(Connection connection, TimeBudget timeBudget) throws ConnectionException {
+  public static BasicLeasedConnection create(Connection connection, TimeBudget timeBudget) throws ConnectionException {
     LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
 
     Exception exception = null;
