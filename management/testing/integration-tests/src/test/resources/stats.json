@@ -80,6 +80,7 @@
         "samples": [
           {
             "sample": {
+              "empty": false,
               "rowCount": 1,
               "rowLabels": [
                 "pet1"
@@ -168,24 +169,6 @@
           }
         ],
         "type": "COUNTER"
-      },
-      "Cluster:CacheEntryLength": {
-        "samples": [
-          {
-            "sample": {
-              "rowCount": 0,
-              "rowLabels": [],
-              "statisticCount": 2,
-              "statisticNames": [
-                "KeyLength",
-                "ValueLength"
-              ],
-              "statistics": {}
-            },
-            "timestamp": 0
-          }
-        ],
-        "type": "TABLE"
       },
       "ServerCache:Size": {
         "samples": [
