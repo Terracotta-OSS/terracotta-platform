@@ -165,7 +165,12 @@ public class DefaultNmsService implements NmsService {
   public void cancelAllManagementCalls() {
     InterruptedException stopper = new InterruptedException();
     while (!managementCallAnswers.isEmpty()) {
-      managementCallAnswers.values().forEach(f -> f.completeExceptionally(stopper));
+      managementCallAnswers.keySet().forEach(k -> {
+        CompletableFuture<ContextualReturn<?>> removed = managementCallAnswers.remove(k);
+        if (removed != null) {
+          removed.completeExceptionally(stopper);
+        }
+      });
     }
   }
 
