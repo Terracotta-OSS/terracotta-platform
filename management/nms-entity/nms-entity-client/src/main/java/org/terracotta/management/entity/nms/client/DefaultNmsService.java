@@ -24,6 +24,7 @@ import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.message.ManagementCallMessage;
 import org.terracotta.management.model.message.Message;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -38,12 +39,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou
  */
-public class DefaultNmsService implements NmsService {
+public class DefaultNmsService implements NmsService, Closeable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsService.class);
 
@@ -58,8 +60,13 @@ public class DefaultNmsService implements NmsService {
   }
 
   public DefaultNmsService(final NmsEntity entity, BlockingQueue<Optional<Message>> incomingMessageQueue) {
+    this(entity, incomingMessageQueue, message -> LOGGER.trace("Queue is full - Message lost: ", message));
+  }
+
+  public DefaultNmsService(final NmsEntity entity, BlockingQueue<Optional<Message>> incomingMessageQueue, Consumer<Message> sink) {
+    Objects.requireNonNull(sink);
     this.entity = Objects.requireNonNull(entity);
-    this.incomingMessageQueue = incomingMessageQueue;
+    this.incomingMessageQueue = Objects.requireNonNull(incomingMessageQueue);
     this.entity.registerMessageListener(Message.class, message -> {
       LOGGER.trace("onMessage({})", message);
 
@@ -75,7 +82,7 @@ public class DefaultNmsService implements NmsService {
         case "STATISTICS":
           boolean offered = incomingMessageQueue.offer(Optional.of(message));
           if (!offered) {
-            LOGGER.trace("Queue is full - Message lost: ", message);
+            sink.accept(message);
           }
           break;
 
@@ -84,6 +91,25 @@ public class DefaultNmsService implements NmsService {
 
       }
     });
+  }
+
+  public NmsEntity getEntity() {
+    return entity;
+  }
+
+  @Override
+  public void close() {
+    cancelAllManagementCalls();
+    // This close call is important.
+    // We have to close as much as possible the nms entities we have fetched.
+    // If we do not, then, when connection closes, the server can keep some "phantom" fetches
+    // on the server entity and thus it will prevent the entity from being destroyed.
+    // This is a server bug.
+    // This line does not solve completely the issue but limits its probability to happen.
+    // But at any point, when you know that the connection is open, you'd better close any entity
+    // endpoint. Otherwise, if you do not know the state of the connection, be careful because this
+    // method can block.
+    entity.close();
   }
 
   @Override
