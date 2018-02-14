@@ -64,8 +64,9 @@ public class DefaultNmsService implements NmsService, Closeable {
   }
 
   public DefaultNmsService(final NmsEntity entity, BlockingQueue<Optional<Message>> incomingMessageQueue, Consumer<Message> sink) {
+    Objects.requireNonNull(sink);
     this.entity = Objects.requireNonNull(entity);
-    this.incomingMessageQueue = incomingMessageQueue;
+    this.incomingMessageQueue = Objects.requireNonNull(incomingMessageQueue);
     this.entity.registerMessageListener(Message.class, message -> {
       LOGGER.trace("onMessage({})", message);
 
