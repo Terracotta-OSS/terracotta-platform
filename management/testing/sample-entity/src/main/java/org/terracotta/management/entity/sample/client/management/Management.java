@@ -18,7 +18,7 @@ package org.terracotta.management.entity.sample.client.management;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
-import org.terracotta.exception.ConnectionClosedException;
+import org.terracotta.management.entity.nms.agent.client.DefaultNmsAgentService;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityFactory;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentService;
 import org.terracotta.management.entity.sample.client.ClientCache;
@@ -29,12 +29,10 @@ import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.management.registry.collect.DefaultStatisticCollector;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author Mathieu Carbou
@@ -65,17 +63,7 @@ public class Management {
     this.statisticCollector = new DefaultStatisticCollector(
         managementRegistry,
         scheduledExecutorService,
-        statistics -> {
-          try {
-            nmsAgentService.pushStatistics(statistics);
-          } catch (ExecutionException e) {
-            LOGGER.warn("Unable to push statistics: " + e.getCause().getMessage(), e.getCause());
-          } catch (ConnectionClosedException ignored) {
-            // avoid printing warnings each time we close the connection when tests ends
-          } catch (Exception e) {
-            LOGGER.warn("Unable to push statistics: " + e.getMessage(), e);
-          }
-        });
+        statistics -> nmsAgentService.pushStatistics(statistics));
 
     // register the collector in the registry so that we can manage it
     managementRegistry.register(statisticCollector);
@@ -85,17 +73,11 @@ public class Management {
     return managementRegistry;
   }
 
-  public void init(Connection connection) throws ExecutionException, InterruptedException, TimeoutException {
+  public void init(Connection connection) {
     LOGGER.trace("[{}] init()", managementRegistry.getContextContainer().getValue());
 
     // connect the NMS Agent Entity to this registry to bridge the voltorn monitoring service
-    nmsAgentService = new NmsAgentService(new NmsAgentEntityFactory(connection).retrieve());
-    nmsAgentService.setManagementCallExecutor(executorService);
-    nmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
-    nmsAgentService.setManagementRegistry(managementRegistry);
-
-    // initialize the agent and send the registry info inside voltron
-    nmsAgentService.init();
+    nmsAgentService = createNmsAgentService(connection);
 
     // set some tags and push a notif
     nmsAgentService.setTags("caches", managementRegistry.getContextContainer().getValue());
@@ -126,6 +108,14 @@ public class Management {
     } catch (Exception e) {
       throw new RuntimeException(e); // do not do that in a real app, this is useful for testing purposes
     }
+  }
+
+  private NmsAgentService createNmsAgentService(Connection connection) {
+    DefaultNmsAgentService nmsAgentService = new DefaultNmsAgentService(new NmsAgentEntityFactory(connection).retrieve());
+    nmsAgentService.setManagementCallExecutor(executorService);
+    nmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
+    nmsAgentService.setManagementRegistry(managementRegistry);
+    return nmsAgentService;
   }
 
 }
