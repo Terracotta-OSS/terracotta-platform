@@ -35,8 +35,6 @@ import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author Mathieu Carbou
@@ -61,11 +59,11 @@ public class CacheFactory implements Closeable {
     return management.getManagementRegistry();
   }
 
-  public void init() throws ConnectionException, ExecutionException, InterruptedException, TimeoutException {
+  public void init() throws ConnectionException {
     init(null);
   }
 
-  public void init(String uuid) throws ConnectionException, ExecutionException, InterruptedException, TimeoutException {
+  public void init(String uuid) throws ConnectionException {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, path);
