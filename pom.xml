@@ -32,7 +32,7 @@
     <terracotta-apis.version>1.4.0-pre10</terracotta-apis.version>
     <terracotta-configuration.version>10.4.0-pre11</terracotta-configuration.version>
     <passthrough-testing.version>1.4.0-pre14</passthrough-testing.version>
-    <terracotta-core.version>5.4.0-pre25</terracotta-core.version>
+    <terracotta-core.version>5.4.0-pre27</terracotta-core.version>
     <statistics.version>2.0.4</statistics.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
