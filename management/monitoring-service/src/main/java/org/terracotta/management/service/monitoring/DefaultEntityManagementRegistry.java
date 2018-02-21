@@ -54,6 +54,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
   private final CompletableFuture<?> onEntityPromotionCompleted = new CompletableFuture<>();
   private final CompletableFuture<?> onClose = new CompletableFuture<>();
+  private volatile boolean closed;
 
   DefaultEntityManagementRegistry(long consumerId, EntityMonitoringService monitoringService, TimeSource timeSource) {
     this.contextContainer = new ContextContainer("consumerId", String.valueOf(consumerId));
@@ -196,10 +197,13 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void close() {
-    LOGGER.trace("[{}] close() active={}", consumerId, monitoringService.isActiveEntityService());
-    managementProviders.forEach(ManagementProvider::close);
-    managementProviders.clear();
-    onClose.complete(null);
+    if (!closed) {
+      closed = true;
+      LOGGER.trace("[{}] close() active={}", consumerId, monitoringService.isActiveEntityService());
+      managementProviders.forEach(ManagementProvider::close);
+      managementProviders.clear();
+      onClose.complete(null);
+    }
   }
 
   @Override
