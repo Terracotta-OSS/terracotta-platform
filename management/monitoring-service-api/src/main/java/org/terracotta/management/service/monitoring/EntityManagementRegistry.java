@@ -108,8 +108,13 @@ public interface EntityManagementRegistry extends CapabilityManagementSupport, C
   /**
    * Must be called in ServerEntity.loadExisting() method to clear the previous
    * management registry created by the passive entity once the promotion to active
-   * is completed
+   * is completed, and initialize the monitoring service for this entity
    */
   void entityPromotionCompleted();
 
+  /**
+   * Must be called in ServerEntity.createNew() method to initialize the monitoring service
+   * for this entity
+   */
+  void entityCreated();
 }

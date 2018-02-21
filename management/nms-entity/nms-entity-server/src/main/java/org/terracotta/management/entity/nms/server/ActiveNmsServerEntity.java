@@ -82,6 +82,7 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
   public void createNew() {
     super.createNew();
     LOGGER.trace("[{}] createNew()", consumerId);
+    entityManagementRegistry.entityCreated();
     entityManagementRegistry.refresh();
   }
 

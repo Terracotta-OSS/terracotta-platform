@@ -58,18 +58,19 @@ public class Management implements Closeable {
     managementRegistry.close();
   }
 
-  public void init() {
+  public void entityCreated() {
     if (managementRegistry != null) {
-      LOGGER.trace("[{}] init()", cacheName);
-      managementRegistry.refresh(); // send to voltron the registry at entity init
+      LOGGER.trace("[{}] entityCreated()", cacheName);
+      managementRegistry.entityCreated();
+      managementRegistry.refresh(); // send to voltron the registry at entity cretaion
     }
   }
 
-  public void reload() {
+  public void entityPromotionCompleted() {
     if (managementRegistry != null) {
-      LOGGER.trace("[{}] reload()", cacheName);
+      LOGGER.trace("[{}] entityPromotionCompleted()", cacheName);
       managementRegistry.entityPromotionCompleted();
-      init();
+      managementRegistry.refresh(); // send to voltron the registry at entity promotion
     }
   }
 

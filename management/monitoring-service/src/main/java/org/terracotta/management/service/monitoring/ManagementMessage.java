@@ -64,6 +64,7 @@ public class ManagementMessage implements Serializable {
     final StringBuilder sb = new StringBuilder("ManagementMessage{");
     sb.append("type=").append(type);
     sb.append(", messageSource=").append(messageSource);
+    sb.append(", data=").append(data);
     sb.append('}');
     return sb.toString();
   }

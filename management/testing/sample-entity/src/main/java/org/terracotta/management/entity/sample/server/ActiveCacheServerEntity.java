@@ -93,7 +93,7 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<CacheSync, Void,
   public void createNew() {
     super.createNew();
     LOGGER.trace("[{}] createNew()", cache.getName());
-    management.init();
+    management.entityCreated();
     management.serverCacheCreated(cache);
   }
 
@@ -101,7 +101,7 @@ class ActiveCacheServerEntity extends ActiveProxiedServerEntity<CacheSync, Void,
   public void loadExisting() {
     super.loadExisting();
     LOGGER.trace("[{}] loadExisting()", cache.getName());
-    management.reload();
+    management.entityPromotionCompleted();
     management.serverCacheCreated(cache);
   }
 

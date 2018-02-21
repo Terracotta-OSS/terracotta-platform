@@ -159,10 +159,14 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
         // create an active or passive monitoring service
         IMonitoringProducer monitoringProducer = managementRegistryConfiguration.getMonitoringProducer();
-        EntityMonitoringService entityMonitoringService = new DefaultEntityMonitoringService(consumerID, monitoringProducer, topologyService, activeEntity);
+        DefaultEntityMonitoringService entityMonitoringService = new DefaultEntityMonitoringService(consumerID, monitoringProducer, topologyService, activeEntity);
 
         // create a registry for the entity
         DefaultEntityManagementRegistry managementRegistry = new DefaultEntityManagementRegistry(consumerID, entityMonitoringService, timeSource);
+
+        // ensure voltron's monitoring tree is created or reseted on entity creation or failover
+        managementRegistry.onEntityCreated(entityMonitoringService::init);
+        managementRegistry.onEntityPromotionCompleted(entityMonitoringService::init);
 
         // make the registry listen for topology events
         topologyService.addTopologyEventListener(managementRegistry);
