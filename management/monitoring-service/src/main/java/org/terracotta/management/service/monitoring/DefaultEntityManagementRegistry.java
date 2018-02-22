@@ -53,6 +53,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   private final ContextContainer contextContainer;
   private final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
   private final CompletableFuture<?> onEntityPromotionCompleted = new CompletableFuture<>();
+  private final CompletableFuture<?> onEntityCreated = new CompletableFuture<>();
   private final CompletableFuture<?> onClose = new CompletableFuture<>();
   private volatile boolean closed;
 
@@ -65,6 +66,10 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   void onEntityPromotionCompleted(Runnable r) {
     onEntityPromotionCompleted.thenRun(r);
+  }
+
+  void onEntityCreated(Runnable r) {
+    onEntityCreated.thenRun(r);
   }
 
   void onClose(Runnable r) {
@@ -210,6 +215,12 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   public void entityPromotionCompleted() {
     LOGGER.trace("[{}] entityPromotionCompleted() active={}", consumerId, monitoringService.isActiveEntityService());
     onEntityPromotionCompleted.complete(null);
+  }
+
+  @Override
+  public void entityCreated() {
+    LOGGER.trace("[{}] entityCreated() active={}", consumerId, monitoringService.isActiveEntityService());
+    onEntityCreated.complete(null);
   }
 
   @Override

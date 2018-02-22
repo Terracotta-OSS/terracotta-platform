@@ -62,6 +62,7 @@ class PassiveNmsServerEntity extends PassiveProxiedServerEntity implements Nms, 
   public void createNew() {
     super.createNew();
     LOGGER.trace("[{}] createNew()", entityManagementRegistry.getMonitoringService().getConsumerId());
+    entityManagementRegistry.entityCreated();
     entityManagementRegistry.refresh();
   }
 

@@ -119,8 +119,16 @@ class DefaultEntityMonitoringService implements EntityMonitoringService {
     }
   }
 
+  public void init() {
+    LOGGER.trace("[{}] init()", getConsumerId());
+    monitoringProducer.addNode(new String[0], RELIABLE_CHANNEL_KEY, null);
+    Stream.of(REGISTRY, MANAGEMENT_ANSWER, NOTIFICATION)
+        .forEach(type -> monitoringProducer.addNode(new String[]{RELIABLE_CHANNEL_KEY}, type.name(), null));
+  }
+
   private void forwardToActiveServer(ManagementMessage.Type type, Serializable data) {
-    monitoringProducer.addNode(new String[0], RELIABLE_CHANNEL_KEY, new ManagementMessage(getServerName(), getConsumerId(), isActiveEntityService(), type, data));
+    LOGGER.trace("[{}] addNode(management/{}, {})", getConsumerId(), type, data);
+    monitoringProducer.addNode(new String[]{RELIABLE_CHANNEL_KEY}, type.name(), new ManagementMessage(getServerName(), getConsumerId(), isActiveEntityService(), type, data));
   }
 
 }

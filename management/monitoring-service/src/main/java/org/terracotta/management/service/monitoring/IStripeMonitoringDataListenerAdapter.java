@@ -53,11 +53,11 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
     LOGGER.trace("[{}] addNode({}, {})", consumerId, name, String.valueOf(value));
-    if (RELIABLE_CHANNEL_KEY.equals(name)) {
+    if (parents != null && parents.length == 1 && RELIABLE_CHANNEL_KEY.equals(parents[0])) {
       if (value instanceof ManagementMessage) {
         fire((ManagementMessage) value);
       } else if (value != null) {
-        Utils.warnOrAssert(LOGGER, "[0] addNode(from={}) IGNORED: wrong value type: {}", value.getClass().getSimpleName());
+        Utils.warnOrAssert(LOGGER, "[0] addNode(from={}) IGNORED: wrong value type: {}", name, value.getClass().getSimpleName());
       }
     }
     return false; // false to avoid replay of the cached data when a passive server becomes active

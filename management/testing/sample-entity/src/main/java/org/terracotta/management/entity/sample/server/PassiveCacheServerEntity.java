@@ -48,7 +48,7 @@ class PassiveCacheServerEntity extends PassiveProxiedServerEntity implements Cac
     super.createNew();
     
     LOGGER.trace("[{}] createNew()", cache.getName());
-    management.init();
+    management.entityCreated();
     management.serverCacheCreated(cache);
   }
 

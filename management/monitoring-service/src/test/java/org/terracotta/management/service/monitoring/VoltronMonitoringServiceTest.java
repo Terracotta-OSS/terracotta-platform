@@ -371,7 +371,7 @@ public class VoltronMonitoringServiceTest {
     clientMonitoringService.pushStatistics(new FakeDesc("1-1"), new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap()));
 
     ManagementMessage notif = new ManagementMessage("server-2", 1, false, NOTIFICATION, new ContextualNotification(Context.empty(), "TYPE-2"));
-    activeDataListener.addNode(passive, new String[0], RELIABLE_CHANNEL_KEY, notif);
+    activeDataListener.addNode(passive, new String[]{RELIABLE_CHANNEL_KEY}, NOTIFICATION.name(), notif);
     ContextualStatistics[] data = {new ContextualStatistics("capability", Context.empty().with("collectorId", "1"), Collections.emptyMap())};
     activeDataListener.pushBestEffortsData(passive, UNRELIABLE_CHANNEL_KEY, new ManagementMessage("server-2", 1, false, STATISTICS, data));
 
