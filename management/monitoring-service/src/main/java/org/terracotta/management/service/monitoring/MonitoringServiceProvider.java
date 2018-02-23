@@ -57,7 +57,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
   private final DefaultSharedEntityManagementRegistry sharedManagementRegistry = new DefaultSharedEntityManagementRegistry();
   private final BoundaryFlakeSequenceGenerator sequenceGenerator = new BoundaryFlakeSequenceGenerator(timeSource, NodeIdSource.BEST);
-  private final DefaultStatisticService statisticService = new DefaultStatisticService(sharedManagementRegistry);
+  private final DefaultStatisticService statisticService = new DefaultStatisticService(sharedManagementRegistry, timeSource);
   private final DefaultFiringService firingService = new DefaultFiringService(sequenceGenerator);
 
   private TopologyService topologyService;

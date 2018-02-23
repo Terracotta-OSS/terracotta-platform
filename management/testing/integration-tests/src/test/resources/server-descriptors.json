@@ -141,6 +141,10 @@
         "type": "COUNTER"
       },
       {
+        "name": "Cluster:GetLatency",
+        "type": "GAUGE"
+      },
+      {
         "name": "Cluster:HitCount",
         "type": "COUNTER"
       },

@@ -19,17 +19,19 @@ import org.junit.Test;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.stats.ContextualStatistics;
+import org.terracotta.statistics.registry.Statistic;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.lang.Thread.sleep;
 
 /**
  * @author Mathieu Carbou
  */
-public class CollectorReschedulingIT extends AbstractSingleTest {
+public class StatisticCollectorIT extends AbstractSingleTest {
 
   @Test
   public void can_reschedule_client_collectors() throws Exception {
@@ -73,7 +75,47 @@ public class CollectorReschedulingIT extends AbstractSingleTest {
     } while (end - start < 2000 && !Thread.currentThread().isInterrupted());
   }
 
-  private List<? extends ContextualStatistics> readClientStatistics() throws InterruptedException, ExecutionException, TimeoutException {
+  @Test
+  public void do_not_collect_already_collected_statistics() throws Exception {
+    // In ServerCacheStatisticsManagementProvider: window is 100ms
+
+    triggerServerStatComputation(2, TimeUnit.SECONDS);
+
+    get(0, "pets", "pet100");
+    sleep(150);
+    get(0, "pets", "pet100");
+
+    // wait for samples to come
+    queryAllRemoteStatsUntil(stats -> stats
+        .stream()
+        .flatMap(cs -> cs.<Long>getStatistic("Cluster:GetLatency")
+            .map(Statistic::getSamples)
+            .map(List::stream)
+            .orElse(Stream.empty()))
+        .count() == 2L);
+
+    // wait for next samples to come
+    queryAllRemoteStatsUntil(stats -> stats
+        .stream()
+        .flatMap(cs -> cs.<Long>getStatistic("Cluster:GetLatency")
+            .map(Statistic::getSamples)
+            .map(List::stream)
+            .orElse(Stream.empty()))
+        .count() == 0L);
+
+    get(0, "pets", "pet100");
+
+    // wait for next samples to come, without the 2 first ones
+    queryAllRemoteStatsUntil(stats -> stats
+        .stream()
+        .flatMap(cs -> cs.<Long>getStatistic("Cluster:GetLatency")
+            .map(Statistic::getSamples)
+            .map(List::stream)
+            .orElse(Stream.empty()))
+        .count() == 1L);
+  }
+
+  private List<? extends ContextualStatistics> readClientStatistics() {
     List<? extends ContextualStatistics> statistics;
     do {
       statistics = nmsService.readMessages()
@@ -86,7 +128,7 @@ public class CollectorReschedulingIT extends AbstractSingleTest {
     return statistics;
   }
 
-  private List<? extends ContextualStatistics> readServerStatistics() throws InterruptedException, ExecutionException, TimeoutException {
+  private List<? extends ContextualStatistics> readServerStatistics() {
     List<? extends ContextualStatistics> statistics;
     do {
       statistics = nmsService.readMessages()

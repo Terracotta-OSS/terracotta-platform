@@ -23,6 +23,7 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.CombiningCapabilityManagementSupport;
 import org.terracotta.management.registry.collect.DefaultStatisticCollector;
 import org.terracotta.management.registry.collect.StatisticCollector;
+import org.terracotta.management.sequence.TimeSource;
 import org.terracotta.management.service.monitoring.registry.provider.StatisticCollectorManagementProvider;
 
 import java.io.Closeable;
@@ -57,9 +58,11 @@ class DefaultStatisticService implements StatisticService, Closeable {
   ));
 
   private final SharedEntityManagementRegistry sharedEntityManagementRegistry;
+  private final TimeSource timeSource;
 
-  DefaultStatisticService(SharedEntityManagementRegistry sharedEntityManagementRegistry) {
+  DefaultStatisticService(SharedEntityManagementRegistry sharedEntityManagementRegistry, TimeSource timeSource) {
     this.sharedEntityManagementRegistry = Objects.requireNonNull(sharedEntityManagementRegistry);
+    this.timeSource = Objects.requireNonNull(timeSource);
   }
 
   @Override
@@ -86,7 +89,8 @@ class DefaultStatisticService implements StatisticService, Closeable {
           // Add a marker on the statistics to know which statistics collector has collected them (from which NMS entity)
           list.forEach(stats -> stats.setContext(stats.getContext().with("collectorId", "" + consumerId)));
           monitoringService.pushStatistics(list.toArray(new ContextualStatistics[list.size()]));
-        }
+        },
+        timeSource::getTimestamp
     );
 
     // add a collector service, not started by default, but that can be started through a remote management call

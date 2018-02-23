@@ -36,12 +36,14 @@ public class DefaultStatisticQuery implements StatisticQuery {
   private final String capabilityName;
   private final Collection<String> statisticNames;
   private final Collection<Context> contexts;
+  private final long since;
 
-  public DefaultStatisticQuery(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts) {
+  public DefaultStatisticQuery(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts, long since) {
     this.capabilityManagement = capabilityManagement;
     this.capabilityName = capabilityName;
     this.statisticNames = Collections.unmodifiableSet(new LinkedHashSet<>(statisticNames));
     this.contexts = Collections.unmodifiableCollection(new ArrayList<>(contexts));
+    this.since = since;
 
     if (contexts.isEmpty()) {
       throw new IllegalArgumentException("You did not specify any context to extract the statistics from");
@@ -64,6 +66,11 @@ public class DefaultStatisticQuery implements StatisticQuery {
   }
 
   @Override
+  public long getSince() {
+    return since;
+  }
+
+  @Override
   public ResultSet<ContextualStatistics> execute() {
     Map<Context, ContextualStatistics> contextualStatistics = new LinkedHashMap<Context, ContextualStatistics>(contexts.size());
     Collection<ManagementProvider<?>> managementProviders = capabilityManagement.getManagementProvidersByCapability(capabilityName);
@@ -73,9 +80,9 @@ public class DefaultStatisticQuery implements StatisticQuery {
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
           if (statistics == null) {
-            statistics = managementProvider.collectStatistics(context, statisticNames);
+            statistics = managementProvider.collectStatistics(context, statisticNames, since);
           } else {
-            statistics.putAll(managementProvider.collectStatistics(context, statisticNames));
+            statistics.putAll(managementProvider.collectStatistics(context, statisticNames, since));
           }
         }
       }

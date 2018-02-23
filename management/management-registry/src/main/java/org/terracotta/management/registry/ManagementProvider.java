@@ -88,7 +88,7 @@ public interface ManagementProvider<T> {
    * @param statisticNames the statistic names to collect. If empty, collect ALL statistics
    * @return the statistic map, the key being the statistic names.
    */
-  Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames);
+  Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames, long since);
 
   /**
    * Call an action, if the provider supports this.
