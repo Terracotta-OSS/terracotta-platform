@@ -128,8 +128,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
       String currentJson = toJson(stats).toString();
       String actual = removeRandomValues(currentJson);
       String expected = readJson("stats.json").toString();
-      assertEquals(expected, actual);
-      return true;
+      return actual.equals(expected);
     });
 
     get(1, "pets", "pet2"); // miss

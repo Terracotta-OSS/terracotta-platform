@@ -18,6 +18,7 @@ package org.terracotta.management.integration.tests;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.management.model.cluster.AbstractManageableNode;
+import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
 
@@ -67,13 +68,13 @@ public class FailoverIT extends AbstractHATest {
 
   @Test
   public void all_registries_reexposed_after_failover() throws Exception {
-    long clientReconnected;
+    long totalFetch;
     do {
-      clientReconnected = nmsService.readTopology()
+      totalFetch = nmsService.readTopology()
           .clientStream()
-          .filter(AbstractManageableNode::isManageable)
+          .flatMap(Client::fetchedServerEntityStream)
           .count();
-    } while (clientReconnected < 2);
+    } while (totalFetch < 7); // 1 for NmsEntity, 3 each for the cache clients (2 pets and 1 nms agent entity)
 
     Cluster cluster = nmsService.readTopology();
 

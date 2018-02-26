@@ -69,7 +69,12 @@ public class NmsAgentServiceIT {
   public Timeout timeout = Timeout.seconds(60);
 
   @Rule
-  public Cluster voltron = newCluster().in(new File("target/galvan")).withServiceFragment(resourceConfig).build();
+  public Cluster voltron = newCluster()
+      .in(new File("target/galvan"))
+      .withSystemProperty("terracotta.management.assert", "true")
+      .withTcProperty("terracotta.management.assert", "true")
+      .withServiceFragment(resourceConfig)
+      .build();
 
   Connection managementConnection;
   Connection clientConnection;
