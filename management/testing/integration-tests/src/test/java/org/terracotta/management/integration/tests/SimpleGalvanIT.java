@@ -43,7 +43,12 @@ public class SimpleGalvanIT {
 
   @ClassRule
   public static Cluster CLUSTER =
-      newCluster().in(new File("target/galvan")).withServiceFragment(RESOURCE_CONFIG).build();
+      newCluster()
+          .in(new File("target/galvan"))
+          .withSystemProperty("terracotta.management.assert", "true")
+          .withTcProperty("terracotta.management.assert", "true")
+          .withServiceFragment(RESOURCE_CONFIG)
+          .build();
 
   @BeforeClass
   public static void waitForActive() throws Exception {
