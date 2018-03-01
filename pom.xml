@@ -49,6 +49,7 @@
     <module>communicator-support</module>
     <module>healthchecker-entity</module>
     <module>lease</module>
+    <module>platform-base</module>
     <module>runnel</module>
     <module>management</module>
     <module>client-message-tracker</module>
