@@ -47,12 +47,12 @@ public class DefaultStatisticsExposedObject<T> extends DefaultExposedObject<T> {
     return statisticRegistry;
   }
 
-  public <T extends Serializable> Optional<Statistic<T>> queryStatistic(String fullStatisticName) {
-    return statisticRegistry.queryStatistic(fullStatisticName);
+  public <T extends Serializable> Optional<Statistic<T>> queryStatistic(String fullStatisticName, long since) {
+    return statisticRegistry.queryStatistic(fullStatisticName, since);
   }
 
-  public Map<String, Statistic<? extends Serializable>> queryStatistics() {
-    return statisticRegistry.queryStatistics();
+  public Map<String, Statistic<? extends Serializable>> queryStatistics(long since) {
+    return statisticRegistry.queryStatistics(since);
   }
 
   @Override

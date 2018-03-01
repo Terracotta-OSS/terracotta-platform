@@ -32,25 +32,27 @@ public class DefaultStatisticQueryBuilder implements StatisticQuery.Builder {
   private final String capabilityName;
   private final Collection<String> statisticNames;
   private final Collection<Context> contexts;
+  private final long since;
 
   DefaultStatisticQueryBuilder(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames) {
-    this(capabilityManagement, capabilityName, statisticNames, Collections.<Context>emptyList());
+    this(capabilityManagement, capabilityName, statisticNames, Collections.<Context>emptyList(), 0L);
   }
 
   DefaultStatisticQueryBuilder(CapabilityManagementSupport capabilityManagement, String capabilityName) {
-    this(capabilityManagement, capabilityName, Collections.<String>emptyList(), Collections.<Context>emptyList());
+    this(capabilityManagement, capabilityName, Collections.<String>emptyList(), Collections.<Context>emptyList(), 0L);
   }
 
-  private DefaultStatisticQueryBuilder(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts) {
+  private DefaultStatisticQueryBuilder(CapabilityManagementSupport capabilityManagement, String capabilityName, Collection<String> statisticNames, Collection<Context> contexts, long since) {
     this.capabilityManagement = capabilityManagement;
     this.capabilityName = capabilityName;
-    this.statisticNames = new LinkedHashSet<String>(statisticNames);
+    this.statisticNames = new LinkedHashSet<>(statisticNames);
     this.contexts = contexts;
+    this.since = since;
   }
 
   @Override
   public StatisticQuery build() {
-    return new DefaultStatisticQuery(capabilityManagement, capabilityName, statisticNames, contexts);
+    return new DefaultStatisticQuery(capabilityManagement, capabilityName, statisticNames, contexts, since);
   }
 
   @Override
@@ -58,7 +60,7 @@ public class DefaultStatisticQueryBuilder implements StatisticQuery.Builder {
     if (!contexts.contains(context)) {
       List<Context> contexts = new ArrayList<Context>(this.contexts);
       contexts.add(context);
-      return new DefaultStatisticQueryBuilder(capabilityManagement, capabilityName, statisticNames, contexts);
+      return new DefaultStatisticQueryBuilder(capabilityManagement, capabilityName, statisticNames, contexts, since);
     }
     return this;
   }
@@ -70,6 +72,11 @@ public class DefaultStatisticQueryBuilder implements StatisticQuery.Builder {
       newBuilder = newBuilder.on(context);
     }
     return newBuilder;
+  }
+
+  @Override
+  public StatisticQuery.Builder since(long unixTimestampMs) {
+    return new DefaultStatisticQueryBuilder(capabilityManagement, capabilityName, statisticNames, contexts, unixTimestampMs);
   }
 
 }

@@ -17,7 +17,6 @@ package org.terracotta.management.registry.collect;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.management.registry.CapabilityManagement;
@@ -29,11 +28,13 @@ import org.terracotta.management.registry.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
 
 /**
  * @author Mathieu Carbou
@@ -48,55 +49,60 @@ public class DefaultStatisticCollector implements StatisticCollector {
   private volatile boolean running;
   private ScheduledFuture<?> task;
   private long intervalMs;
+  private volatile long lastCollectTime;
 
   public DefaultStatisticCollector(final CapabilityManagementSupport managementRegistry,
                                    ScheduledExecutorService scheduledExecutorService,
-                                   final Collector collector) {
+                                   final Collector collector,
+                                   LongSupplier systemTimeSupplier) {
 
     this.scheduledExecutorService = Objects.requireNonNull(scheduledExecutorService);
 
     Objects.requireNonNull(managementRegistry);
     Objects.requireNonNull(collector);
 
-    this.runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (running) {
-            Collection<ContextualStatistics> statistics = new ArrayList<ContextualStatistics>();
+    this.runnable = () -> {
+      try {
+        if (running) {
+          Collection<ContextualStatistics> statistics = new ArrayList<>();
 
-            for (String capabilityName : managementRegistry.getCapabilityNames()) {
+          for (String capabilityName : managementRegistry.getCapabilityNames()) {
 
-              Set<Context> allContexts = new LinkedHashSet<Context>();
+            Set<Context> allContexts = new LinkedHashSet<>();
 
-              for (ManagementProvider<?> managementProvider : managementRegistry.getManagementProvidersByCapability(capabilityName)) {
-                if (managementProvider.getClass().isAnnotationPresent(StatisticProvider.class)) {
-                  for (ExposedObject<?> exposedObject : managementProvider.getExposedObjects()) {
-                    allContexts.add(exposedObject.getContext());
-                  }
-                }
-              }
-
-              if (!allContexts.isEmpty()) {
-                CapabilityManagement capabilityManagement = managementRegistry.withCapability(capabilityName);
-                ResultSet<ContextualStatistics> resultSet = capabilityManagement
-                    .queryAllStatistics()
-                    .on(allContexts)
-                    .build()
-                    .execute();
-                for (ContextualStatistics contextualStatistics : resultSet) {
-                  statistics.add(contextualStatistics);
+            for (ManagementProvider<?> managementProvider : managementRegistry.getManagementProvidersByCapability(capabilityName)) {
+              if (managementProvider.getClass().isAnnotationPresent(StatisticProvider.class)) {
+                for (ExposedObject<?> exposedObject : managementProvider.getExposedObjects()) {
+                  allContexts.add(exposedObject.getContext());
                 }
               }
             }
 
-            if (running && !statistics.isEmpty()) {
-              collector.onStatistics(statistics);
+            if (!allContexts.isEmpty()) {
+              CapabilityManagement capabilityManagement = managementRegistry.withCapability(capabilityName);
+              ResultSet<ContextualStatistics> resultSet = capabilityManagement
+                  .queryAllStatistics()
+                  .on(allContexts)
+                  .since(lastCollectTime)
+                  .build()
+                  .execute();
+              for (ContextualStatistics contextualStatistics : resultSet) {
+                statistics.add(contextualStatistics);
+              }
             }
           }
-        } catch (RuntimeException e) {
-          LOGGER.warn("StatisticCollector failed: " + e.getMessage(), e);
+
+          if (running && !statistics.isEmpty()) {
+            collector.onStatistics(statistics);
+
+            // We set the time of last collect after the collector is called.
+            // Thus, if any exception occurs (such as temporary network failure),
+            // the next sending of stat will contains the samples of the last collect.
+            lastCollectTime = systemTimeSupplier.getAsLong();
+          }
         }
+      } catch (RuntimeException e) {
+        LOGGER.warn("StatisticCollector failed: " + e.getMessage(), e);
       }
     };
   }

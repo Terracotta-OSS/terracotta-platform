@@ -71,24 +71,24 @@ public class DefaultStatisticsManagementProvider<T> extends AbstractManagementPr
   }
 
   @Override
-  public Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames) {
+  public Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames, long since) {
     DefaultStatisticsExposedObject<T> exposedObject = (DefaultStatisticsExposedObject<T>) findExposedObject(context);
     if (exposedObject == null) {
       return Collections.emptyMap();
     }
-    return DefaultStatisticsManagementProvider.collect(exposedObject.getStatisticRegistry(), statisticNames);
+    return DefaultStatisticsManagementProvider.collect(exposedObject.getStatisticRegistry(), statisticNames, since);
   }
 
-  public static Map<String, Statistic<? extends Serializable>> collect(StatisticRegistry registry, Collection<String> statisticNames) {
+  public static Map<String, Statistic<? extends Serializable>> collect(StatisticRegistry registry, Collection<String> statisticNames, long since) {
     if (statisticNames == null || statisticNames.isEmpty()) {
-      return registry.queryStatistics()
+      return registry.queryStatistics(since)
           .entrySet()
           .stream()
           .filter(e -> !e.getValue().isEmpty())
           .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, throwingMerger(), TreeMap::new));
     } else {
       return statisticNames.stream()
-          .map(name -> new AbstractMap.SimpleEntry<>(name, registry.queryStatistic(name)))
+          .map(name -> new AbstractMap.SimpleEntry<>(name, registry.queryStatistic(name, since)))
           .filter(e -> e.getValue().isPresent() && !e.getValue().get().isEmpty())
           .collect(toMap(Map.Entry::getKey, e -> e.getValue().get(), throwingMerger(), TreeMap::new));
     }

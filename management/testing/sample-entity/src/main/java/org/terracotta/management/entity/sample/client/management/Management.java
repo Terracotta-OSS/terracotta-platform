@@ -63,7 +63,8 @@ public class Management {
     this.statisticCollector = new DefaultStatisticCollector(
         managementRegistry,
         scheduledExecutorService,
-        statistics -> nmsAgentService.pushStatistics(statistics));
+        statistics -> nmsAgentService.pushStatistics(statistics),
+        System::currentTimeMillis);
 
     // register the collector in the registry so that we can manage it
     managementRegistry.register(statisticCollector);
