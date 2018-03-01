@@ -267,6 +267,15 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
     }
   }
 
+  @Override
+  public void flushEntity() {
+    if (entity != null) {
+      entity.setEndpointListener(null);
+      LOGGER.trace("flushEntity()");
+      entity = null;
+    }
+  }
+
   public void refreshManagementRegistry() {
     // expose the registry each time a new object is registered in the management registry
     if (isManagementRegistryBridged()) {
@@ -332,13 +341,6 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
       }
     }
     return entity;
-  }
-
-  protected void flushEntity() {
-    if (entity != null) {
-      LOGGER.trace("flushEntity()");
-      entity = null;
-    }
   }
 
   public interface Operation {

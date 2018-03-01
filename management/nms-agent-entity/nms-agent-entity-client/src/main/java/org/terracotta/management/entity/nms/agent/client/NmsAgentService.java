@@ -54,4 +54,9 @@ public interface NmsAgentService extends Closeable {
    * Sends registry and tags to server
    */
   void sendStates();
+
+  /**
+   * Clear the current entity which will force a recycling at next call
+   */
+  void flushEntity();
 }

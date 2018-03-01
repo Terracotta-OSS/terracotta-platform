@@ -122,6 +122,7 @@ public class NmsAgentServiceIT {
     assertThat(opErrors.get(), equalTo(2));
 
     clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+    nmsAgentService.flushEntity();
     nmsAgentService.sendStates();
     assertThat(opErrors.get(), equalTo(2));
 
