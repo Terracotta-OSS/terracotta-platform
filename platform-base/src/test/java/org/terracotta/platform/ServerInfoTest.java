@@ -28,6 +28,11 @@ public class ServerInfoTest {
   }
 
   @Test
+  public void isConstructorPublic() throws Exception {
+    assertNotNull(ServerInfo.class.getConstructor(String.class));
+  }
+
+  @Test
   public void getServerName() {
     ServerInfo serverInfo = new ServerInfo("ABC");
     assertEquals("ABC", serverInfo.getName());

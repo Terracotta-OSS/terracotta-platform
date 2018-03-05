@@ -23,7 +23,10 @@ import static java.util.Objects.requireNonNull;
 public class ServerInfo {
   private final String name;
 
-  ServerInfo(String name) {
+  // Constructor must be public because this class is marked @CommonComponent so gets loaded in a different classloader
+  // which means that, whilst the package name is the same as the package for ServerInfoProvider, the logical package
+  // is different, so package visibility on the constructor is not adequate.
+  public ServerInfo(String name) {
     this.name = requireNonNull(name, "name");
   }
 
