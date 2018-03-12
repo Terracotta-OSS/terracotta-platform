@@ -167,21 +167,25 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
    */
   public void setManagementRegistry(ManagementRegistry registry) {
     LOGGER.trace("setManagementRegistry({})", registry.getContextContainer().getValue());
-    this.registry = registry;
-    {
-      boolean alreadybridged = registry.getManagementProvidersByCapability(CAPABILITY_NAME)
-          .stream()
-          .anyMatch(provider -> provider == managementProvider); // need to check by reference to be sure this is the same instance linked to this class
-      if (!alreadybridged) {
-        registry.addManagementProvider(managementProvider);
+    if (this.registry == null) {
+      // install DiagnosticUtility
+      {
+        boolean alreadybridged = !registry.getManagementProvidersByCapability("DiagnosticCalls").isEmpty();
+        if (!alreadybridged) {
+          registry.addManagementProvider(diagnosticProvider);
+          registry.register(new DiagnosticUtility());
+        }
       }
-    }
-    {
-      boolean alreadybridged = !registry.getManagementProvidersByCapability("DiagnosticCalls").isEmpty();
-      if (!alreadybridged) {
-        registry.addManagementProvider(diagnosticProvider);
-        registry.register(new DiagnosticUtility());
+      // install the bridge
+      {
+        boolean alreadybridged = registry.getManagementProvidersByCapability(CAPABILITY_NAME)
+            .stream()
+            .anyMatch(provider -> provider == managementProvider); // need to check by reference to be sure this is the same instance linked to this class
+        if (!alreadybridged) {
+          registry.addManagementProvider(managementProvider);
+        }
       }
+      this.registry = registry;
     }
   }
 
