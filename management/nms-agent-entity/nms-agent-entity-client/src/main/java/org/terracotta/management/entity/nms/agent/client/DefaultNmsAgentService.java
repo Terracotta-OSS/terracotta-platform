@@ -322,7 +322,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
       } catch (ExecutionException e) {
         flushEntity();
         onOperationError.accept(() -> runOperation(op), e.getCause());
-      } catch (TimeoutException e) {
+      } catch (TimeoutException | RuntimeException e) {
         flushEntity();
         onOperationError.accept(() -> runOperation(op), e);
       }
