@@ -27,6 +27,7 @@ import org.terracotta.lease.connection.LeasedConnection;
 import org.terracotta.lease.connection.LeasedConnectionService;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Properties;
 
@@ -34,14 +35,24 @@ import java.util.Properties;
 public class PassthroughLeasedConnectionService implements LeasedConnectionService {
   @Override
   public boolean handlesURI(URI uri) {
-    return uri.getScheme().equals("passthrough") ||
-            uri.getScheme().equals("terracotta") || // for test and demo code
-            uri.getScheme().equals("mock"); // for the tests which are using mock connection service
+    return handlesConnectionType(uri.getScheme());
+  }
+
+  @Override
+  public boolean handlesConnectionType(String connectionType) {
+    return connectionType.equals("passthrough") ||
+           connectionType.equals("terracotta") || // for test and demo code
+           connectionType.equals("mock"); // for the tests which are using mock connection service
   }
 
   @Override
   public LeasedConnection connect(URI uri, Properties properties) throws ConnectionException {
     return new PassthroughLeasedConnection(ConnectionFactory.connect(uri, properties));
+  }
+
+  @Override
+  public LeasedConnection connect(Iterable<InetSocketAddress> servers, Properties properties) throws ConnectionException {
+    return new PassthroughLeasedConnection(ConnectionFactory.connect(servers, properties));
   }
 
   static class PassthroughLeasedConnection implements LeasedConnection {

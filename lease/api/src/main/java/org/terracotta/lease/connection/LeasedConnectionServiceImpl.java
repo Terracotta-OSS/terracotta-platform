@@ -20,8 +20,8 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
-import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -36,14 +36,25 @@ public class LeasedConnectionServiceImpl implements LeasedConnectionService {
   }
 
   @Override
+  public boolean handlesConnectionType(String connectionType) {
+    return SCHEME.equals(connectionType);
+  }
+
+  @Override
   public LeasedConnection connect(URI uri, Properties properties) throws ConnectionException {
-
-    TimeBudget timeBudget = createTimeBudget(properties);
     Connection connection = ConnectionFactory.connect(uri, properties);
+    return createLeasedConnection(properties, connection);
+  }
 
-    LeasedConnection leasedConnection = BasicLeasedConnection.create(connection, timeBudget);
+  @Override
+  public LeasedConnection connect(Iterable<InetSocketAddress> servers, Properties properties) throws ConnectionException {
+    Connection connection = ConnectionFactory.connect(servers, properties);
+    return createLeasedConnection(properties, connection);
+  }
 
-    return leasedConnection;
+  private LeasedConnection createLeasedConnection(Properties properties, Connection connection) throws ConnectionException {
+    TimeBudget timeBudget = createTimeBudget(properties);
+    return BasicLeasedConnection.create(connection, timeBudget);
   }
 
   private static TimeBudget createTimeBudget(Properties properties) {

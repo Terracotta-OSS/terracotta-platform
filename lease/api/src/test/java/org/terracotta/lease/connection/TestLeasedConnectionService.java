@@ -16,8 +16,8 @@
 package org.terracotta.lease.connection;
 
 import org.mockito.Mockito;
-import org.terracotta.connection.ConnectionException;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Properties;
 
@@ -31,7 +31,17 @@ public class TestLeasedConnectionService implements LeasedConnectionService {
   }
 
   @Override
-  public LeasedConnection connect(URI uri, Properties properties) throws ConnectionException {
+  public boolean handlesConnectionType(String connectionType) {
+    return true;
+  }
+
+  @Override
+  public LeasedConnection connect(URI uri, Properties properties) {
+    return LEASED_CONNECTION;
+  }
+
+  @Override
+  public LeasedConnection connect(Iterable<InetSocketAddress> servers, Properties properties) {
     return LEASED_CONNECTION;
   }
 }
