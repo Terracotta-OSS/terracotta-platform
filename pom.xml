@@ -275,7 +275,7 @@
                   <version>[${java.version},)</version>
                 </requireJavaVersion>
                 <requireMavenVersion>
-                  <version>[${maven.version}]</version>
+                  <version>[${maven.version},)</version>
                 </requireMavenVersion>
               </rules>
             </configuration>
