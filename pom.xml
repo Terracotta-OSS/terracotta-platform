@@ -21,7 +21,7 @@
 
   <groupId>org.terracotta</groupId>
   <artifactId>platform-root</artifactId>
-  <version>5.5-SNAPSHOT</version>
+  <version>5.5.0-pre1</version>
   <packaging>pom</packaging>
 
   <properties>
