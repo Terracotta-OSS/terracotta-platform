@@ -35,6 +35,7 @@ import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,6 +67,25 @@ public class LeaseSystemTest {
 
     URI clusterURI = URI.create("passthrough://stripe");
     Connection connection = ConnectionFactory.connect(clusterURI, properties);
+    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
+
+    LeaseTestUtil.waitForValidLease(leaseMaintainer);
+
+    Lease lease1 = leaseMaintainer.getCurrentLease();
+    Thread.sleep(1000L);
+    Lease lease2 = leaseMaintainer.getCurrentLease();
+
+    assertTrue(lease2.isValidAndContiguous(lease1));
+  }
+
+  @Test
+  public void operationLongerThanLeaseLengthWithIterableBasedAPI() throws Exception {
+    Properties properties = new Properties();
+    properties.put(ConnectionPropertyNames.CONNECTION_NAME, "LeaseSystemTest");
+    properties.put(ConnectionPropertyNames.CONNECTION_TYPE, "passthrough");
+
+    InetSocketAddress server = InetSocketAddress.createUnresolved("stripe", 0);
+    Connection connection = ConnectionFactory.connect(Collections.singletonList(server), properties);
     LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
 
     LeaseTestUtil.waitForValidLease(leaseMaintainer);

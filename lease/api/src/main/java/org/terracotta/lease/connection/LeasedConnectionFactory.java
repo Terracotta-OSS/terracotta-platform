@@ -17,7 +17,9 @@ package org.terracotta.lease.connection;
 
 import com.tc.util.ManagedServiceLoader;
 import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionPropertyNames;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Properties;
@@ -27,26 +29,58 @@ import java.util.Properties;
  */
 
 public class LeasedConnectionFactory {
+  private static final String DEFAULT_CONNECTION_TYPE = "terracotta";
 
   /**
    * Establish a connection based on the given uri. The method will attempt to look for the first suitable implementation
    * of a {@link LeasedConnectionService} based on whether or not it handles the given URI.
+   * {@link #connect(Iterable, Properties)} is preferable to this method, as the former does not involve extra parsing and
+   * enables you to provide multiple IPv6 addresses to connect to.
    *
    * @param uri URI to connect to
    * @param properties any configurations to be applied (implementation specific)
    * @return an established connection
    * @throws ConnectionException if there is an error while attempting to connect
+   * @see #connect(Iterable, Properties)
    */
   public static LeasedConnection connect(URI uri, Properties properties) throws ConnectionException {
-
-    Collection<LeasedConnectionService> serviceLoaders = ManagedServiceLoader.loadServices(LeasedConnectionService.class,
-            LeasedConnectionService.class.getClassLoader());
-    for (LeasedConnectionService connectionService : serviceLoaders) {
-      if (connectionService.handlesURI(uri)) {
-        return connectionService.connect(uri, properties);
-      }
-    }
-    throw new IllegalArgumentException("Unknown URI " + uri);
+    return getLeasedConnection(uri, properties);
   }
 
+  /**
+   * Establish a connection to the provided servers. The method will attempt to look for the first suitable implementation
+   * of a {@link LeasedConnectionService} based on whether or not it handles the given type.
+   * This method is preferable to {@link #connect(URI, Properties)}, as it does not involve extra parsing and enables
+   * you to provide multiple IPv6 addresses to connect to.
+   *
+   * @param servers servers to connect to
+   * @param properties any configurations to be applied (implementation specific), including a connection type
+   * @return an established connection
+   * @throws ConnectionException if there is an error while attempting to connect
+   * @see #connect(URI, Properties)
+   */
+  public static LeasedConnection connect(Iterable<InetSocketAddress> servers, Properties properties) throws ConnectionException {
+    return getLeasedConnection(servers, properties);
+  }
+
+  private static LeasedConnection getLeasedConnection(URI uri, Properties properties) throws ConnectionException {
+    LeasedConnectionService leasedConnectionService = getServices().stream()
+        .filter(connectionService -> connectionService.handlesURI(uri))
+        .findAny()
+        .orElseThrow(() -> new IllegalArgumentException("Unknown URI " + uri));
+    return leasedConnectionService.connect(uri, properties);
+  }
+
+  private static LeasedConnection getLeasedConnection(Iterable<InetSocketAddress> servers, Properties properties) throws ConnectionException {
+    String connectionType = properties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, DEFAULT_CONNECTION_TYPE);
+    LeasedConnectionService leasedConnectionService = getServices().stream()
+        .filter(connectionService -> connectionService.handlesConnectionType(connectionType))
+        .findAny()
+        .orElseThrow(() -> new IllegalArgumentException("Unknown connection type " + connectionType));
+    return leasedConnectionService.connect(servers, properties);
+  }
+
+  private static Collection<LeasedConnectionService> getServices() {
+    return ManagedServiceLoader.loadServices(LeasedConnectionService.class, LeasedConnectionService.class.getClassLoader());
+  }
 }
