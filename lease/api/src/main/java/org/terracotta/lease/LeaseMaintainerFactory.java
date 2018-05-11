@@ -41,7 +41,7 @@ public class LeaseMaintainerFactory {
    * @return the LeaseMaintainer that will maintain leases on the connection
    */
   public static LeaseMaintainer createLeaseMaintainer(Connection connection) {
-    LOGGER.info("Creating LeaseMaintainer for connection: " + connection);
+    LOGGER.trace("Creating LeaseMaintainer for connection: " + connection);
     ProxyLeaseReconnectListener leaseReconnectListener = new ProxyLeaseReconnectListener();
     LeaseAcquirer leaseAcquirer = getLeaseAcquirer(connection, leaseReconnectListener);
 
