@@ -29,19 +29,33 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
 public class ClusterTest extends AbstractTest {
+
+  @Test
+  public void keep_tags_ordering() {
+    Client client = Client.create("12345@127.0.0.1:ehcache:uid")
+        .addTags("webapp-1", "server-1", "cluster-1");
+    List<String> tags = new ArrayList<>(client.getTags());
+    assertThat(tags.size(), equalTo(3));
+    assertThat(tags.get(0), equalTo("webapp-1"));
+    assertThat(tags.get(1), equalTo("server-1"));
+    assertThat(tags.get(2), equalTo("cluster-1"));
+  }
 
   @Test
   public void test_serialization() throws IOException, ClassNotFoundException {
