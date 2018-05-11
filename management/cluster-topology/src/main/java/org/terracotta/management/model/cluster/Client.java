@@ -20,12 +20,11 @@ import org.terracotta.management.model.context.Context;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,7 +41,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
   private final Map<String, Connection> connections = new TreeMap<>();
 
   private final ClientIdentifier clientIdentifier;
-  private final SortedSet<String> tags = new TreeSet<>();
+  private final Collection<String> tags = new LinkedHashSet<>();
   private String hostName;
 
   private Client(ClientIdentifier clientIdentifier) {
