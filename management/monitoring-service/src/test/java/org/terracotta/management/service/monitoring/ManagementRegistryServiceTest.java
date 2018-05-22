@@ -68,7 +68,7 @@ public class ManagementRegistryServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    provider.initialize(null, new MyPlatformConfiguration("server-1"));
+    provider.initialize(null, new MyPlatformConfiguration("server-1", server.getHostName(), server.getBindPort()));
     platformListener = provider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));
   }
 
