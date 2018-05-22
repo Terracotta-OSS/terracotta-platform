@@ -22,14 +22,28 @@ import java.util.Collection;
 public class MyPlatformConfiguration implements PlatformConfiguration {
 
   private final String serverName;
+  private final String host;
+  private final int port;
 
-  public MyPlatformConfiguration(String serverName) {
+  public MyPlatformConfiguration(String serverName, String host, int port) {
     this.serverName =  serverName;
+    this.host = host;
+    this.port = port;
   }
 
   @Override
   public String getServerName() {
     return serverName;
+  }
+
+  @Override
+  public String getHost() {
+    return host;
+  }
+
+  @Override
+  public int getTsaPort() {
+    return port;
   }
 
   @Override
