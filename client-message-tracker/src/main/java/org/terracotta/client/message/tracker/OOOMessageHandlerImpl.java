@@ -25,6 +25,7 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
@@ -37,6 +38,7 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   private final List<ClientTracker<ClientSourceId, R>> clientMessageTrackers;
   private final Predicate<M> trackerPolicy;
   private final ToIntFunction<M> segmentationStrategy;
+  private final AtomicInteger pausedSegment = new AtomicInteger(-1);
 
   private final ClientTracker<ClientSourceId, R> sharedMessageTracker;
 
@@ -57,7 +59,9 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
       ClientSourceId clientId = context.getClientSource();
       int index = segmentationStrategy.applyAsInt(message);
       Tracker<R> messageTracker = clientMessageTrackers.get(index).getTracker(clientId);
-      messageTracker.reconcile(context.getOldestTransactionId());
+      if (pausedSegment.get() != index) {
+        messageTracker.reconcile(context.getOldestTransactionId());
+      }
       R response = messageTracker.getTrackedValue(context.getCurrentTransactionId());
 
       if (response == null && sharedMessageTracker.getTrackedClients().contains(clientId)) {
@@ -105,6 +109,13 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   @Override
   public void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses) {
     this.sharedMessageTracker.getTracker(clientSourceId).loadOnSync(trackedResponses);
+  }
+
+  @Override
+  public Runnable pauseReconciliationForSegment(int index) {
+    //need not handle for shared tracker
+    pausedSegment.set(index);
+    return () -> pausedSegment.set(-1);
   }
 
   @Override

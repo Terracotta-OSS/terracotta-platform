@@ -277,6 +277,61 @@ public class OOOMessageHandlerImplTest {
     assertThat(clients.contains(clientSourceId3), is(false));
   }
 
+  @Test
+  public void testPauseReconcile() throws EntityUserException {
+    EntityMessage message1 = mock(EntityMessage.class);
+    EntityMessage message2 = mock(EntityMessage.class);
+    EntityMessage message3 = mock(EntityMessage.class);
+    EntityMessage message4 = mock(EntityMessage.class);
+    EntityMessage message5 = mock(EntityMessage.class);
+    EntityMessage message6 = mock(EntityMessage.class);
+
+    EntityResponse response1 = mock(EntityResponse.class);
+    EntityResponse response2 = mock(EntityResponse.class);
+    EntityResponse response3 = mock(EntityResponse.class);
+    EntityResponse response4 = mock(EntityResponse.class);
+    EntityResponse response5 = mock(EntityResponse.class);
+    EntityResponse response6 = mock(EntityResponse.class);
+
+    DummyClientSourceId clientSourceId1 = new DummyClientSourceId(1);
+
+    InvokeContext context1 = new DummyContext(clientSourceId1, 25, 18);
+    InvokeContext context2 = new DummyContext(clientSourceId1, 26, 18);
+    InvokeContext context3 = new DummyContext(clientSourceId1, 27, 26);
+    InvokeContext context4 = new DummyContext(clientSourceId1, 32, 28);
+    InvokeContext context5 = new DummyContext(clientSourceId1, 33, 32);
+    InvokeContext context6 = new DummyContext(clientSourceId1, 34, 32);
+
+    ToIntFunction<EntityMessage> segmentationStrategy = m -> {
+      if (m == message1 || m == message3 || m == message6) {
+        return 0;
+      } else if (m == message2 || m == message4) {
+        return 1;
+      } else {
+        return 2;
+      }
+    };
+
+    OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = new OOOMessageHandlerImpl<>(m -> true, 3, segmentationStrategy);
+
+    messageHandler.invoke(context1, message1, (ctx, msg) -> response1);
+    Runnable resumeReconciliation = messageHandler.pauseReconciliationForSegment(0);
+    messageHandler.invoke(context2, message2, (ctx, msg) -> response2);
+    messageHandler.invoke(context3, message3, (ctx, msg) -> response3);
+    messageHandler.invoke(context4, message4, (ctx, msg) -> response4);
+    messageHandler.invoke(context5, message5, (ctx, msg) -> response5);
+
+    assertThat(messageHandler.getTrackedResponsesForSegment(0, clientSourceId1).size(), is(2));
+    assertThat(messageHandler.getTrackedResponsesForSegment(1, clientSourceId1).size(), is(1));
+    assertThat(messageHandler.getTrackedResponsesForSegment(2, clientSourceId1).size(), is(1));
+
+    resumeReconciliation.run();
+
+    messageHandler.invoke(context6, message6, (ctx, msg) -> response6);
+    assertThat(messageHandler.getTrackedResponsesForSegment(0, clientSourceId1).size(), is(1));
+
+  }
+
   /**
    * Test just making sure we got all the typing right. If it compiles, it means we do
    *

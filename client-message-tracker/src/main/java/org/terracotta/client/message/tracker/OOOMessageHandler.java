@@ -90,4 +90,13 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    */
   @Deprecated
   void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
+
+  /**
+   * Calling this method pauses the ongoing reconciliation of responses unless
+   * resumed
+   *
+   * @param index of the segment which needs to be paused
+   * @return the lambda which resumes reconciliation
+   */
+  Runnable pauseReconciliationForSegment(int index);
 }
