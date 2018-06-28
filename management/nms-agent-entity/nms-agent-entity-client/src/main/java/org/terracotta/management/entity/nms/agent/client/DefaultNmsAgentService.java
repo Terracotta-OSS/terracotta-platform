@@ -273,10 +273,11 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   @Override
   public void flushEntity() {
+    NmsAgentEntity entity = this.entity;
+    this.entity = null;
     if (entity != null) {
-      entity.setEndpointListener(null);
       LOGGER.trace("flushEntity()");
-      entity = null;
+      entity.setEndpointListener(null);
     }
   }
 
@@ -333,17 +334,29 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
-    if (entity == null) {
-      LOGGER.trace("getEntity()");
-      entity = Objects.requireNonNull(entitySupplier.get());
-      entity.registerMessageListener(Message.class, this);
-      entity.setEndpointListener(this);
 
-      refreshManagementRegistry();
-      if (previouslyExposedTags != null) {
-        setTags(previouslyExposedTags);
-      }
+    NmsAgentEntity entity = this.entity;
+
+    // check first if we have one
+    if (entity != null) {
+      return entity;
     }
+
+    // ask for one
+    LOGGER.trace("getEntity()");
+    entity = Objects.requireNonNull(entitySupplier.get());
+    entity.registerMessageListener(Message.class, this);
+    entity.setEndpointListener(this);
+
+    // assignement needed before calling refreshManagementRegistry();
+    this.entity = entity;
+
+    // this will call again getEntity();
+    refreshManagementRegistry();
+    if (previouslyExposedTags != null) {
+      setTags(previouslyExposedTags);
+    }
+
     return entity;
   }
 
