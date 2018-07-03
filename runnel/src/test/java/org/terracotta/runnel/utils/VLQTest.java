@@ -15,27 +15,32 @@
  */
 package org.terracotta.runnel.utils;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Ludovic Orban
  */
 public class VLQTest {
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEncodeNegativeFails() throws Exception {
-    VLQ.encode(-1, ByteBuffer.allocate(8));
+    assertThrows(IllegalArgumentException.class, () -> {
+      VLQ.encode(-1, ByteBuffer.allocate(8));
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEncodedSizeNegativeValueFails() throws Exception {
-    VLQ.encodedSize(-1);
+    assertThrows(IllegalArgumentException.class, () -> {
+      VLQ.encodedSize(-1);
+    });
   }
 
   @Test
@@ -105,5 +110,4 @@ public class VLQTest {
     }
     assertArrayEquals(bytes, ba);
   }
-
 }

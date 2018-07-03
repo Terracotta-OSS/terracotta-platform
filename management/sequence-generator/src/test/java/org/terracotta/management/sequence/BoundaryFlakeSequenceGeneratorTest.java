@@ -15,12 +15,9 @@
  */
 package org.terracotta.management.sequence;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -31,15 +28,16 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import javax.xml.bind.DatatypeConverter;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.terracotta.management.sequence.Defaults.readMacAddress;
 import static org.terracotta.management.sequence.Defaults.readPID;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
 public class BoundaryFlakeSequenceGeneratorTest {
 
   @Test
@@ -105,7 +103,7 @@ public class BoundaryFlakeSequenceGeneratorTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void test_no_collisions() throws InterruptedException {
     final BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.SYSTEM, NodeIdSource.MAC_PID);
     final Collection<Sequence> bag = new ConcurrentSkipListSet<Sequence>();

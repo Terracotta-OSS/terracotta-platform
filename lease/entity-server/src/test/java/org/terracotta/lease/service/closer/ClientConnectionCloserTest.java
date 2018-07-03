@@ -15,10 +15,11 @@
  */
 package org.terracotta.lease.service.closer;
 
-import com.tc.classloader.CommonComponent;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertNotNull;
+import com.tc.classloader.CommonComponent;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ClientConnectionCloserTest {
   @Test

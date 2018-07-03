@@ -15,8 +15,8 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -30,9 +30,9 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 import static java.util.stream.Collectors.toSet;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -40,7 +40,7 @@ public class OOOMessageHandlerImplTest {
 
   private OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0);
   }

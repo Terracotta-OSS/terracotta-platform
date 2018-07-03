@@ -16,23 +16,27 @@
 
 package org.terracotta.management.service.monitoring;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Mathieu Carbou
  */
-@Ignore
+@Disabled
 public class UtilsTest {
   static {
     System.setProperty("terracotta.management.assert", "true");
   }
 
-  @Test(expected = AssertionError.class)
+  @Test
   public void warnOrAssert() throws Exception {
-    Logger logger = LoggerFactory.getLogger("toto");
-    Utils.warnOrAssert(logger, "Hello {} and {}", "men", "women", new RuntimeException());
+    assertThrows(AssertionError.class, () -> {
+      Logger logger = LoggerFactory.getLogger("toto");
+      Utils.warnOrAssert(logger, "Hello {} and {}", "men", "women", new RuntimeException());
+    });
   }
 }

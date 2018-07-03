@@ -15,10 +15,8 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
@@ -35,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
@@ -48,7 +46,6 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
 public class ManagementRegistryServiceTest {
 
   MonitoringServiceProvider provider = new MonitoringServiceProvider();
@@ -66,7 +63,7 @@ public class ManagementRegistryServiceTest {
     }
   };
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     provider.initialize(null, new MyPlatformConfiguration("server-1", server.getHostName(), server.getBindPort()));
     platformListener = provider.getService(0, new BasicServiceConfiguration<>(IStripeMonitoring.class));

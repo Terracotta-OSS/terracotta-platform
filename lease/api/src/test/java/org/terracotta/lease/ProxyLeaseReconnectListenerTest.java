@@ -15,18 +15,22 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ProxyLeaseReconnectListenerTest {
   @Mock
   private LeaseReconnectListener underlying;
+
+  @BeforeEach
+  public void before() {
+    initMocks(this);
+  }
 
   @Test
   public void noErrorWhenNoUnderlyingListener() {

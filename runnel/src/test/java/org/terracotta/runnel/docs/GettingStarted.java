@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.docs;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;

@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.metadata;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
@@ -26,6 +26,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Ludovic Orban
@@ -65,26 +66,30 @@ public class MetadataTest {
     assertThat(sf2.index(), is(3));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testCheckFullyInitializedThrowsWhenNotInitialized() throws Exception {
-    StructField sf1 = new StructField("entry1", 1);
-    StructField sf2 = new StructField("entry2", 2);
+    assertThrows(IllegalStateException.class, () -> {
+      StructField sf1 = new StructField("entry1", 1);
+      StructField sf2 = new StructField("entry2", 2);
 
-    sf1.addField(sf2);
+      sf1.addField(sf2);
 
-    sf1.checkFullyInitialized();
+      sf1.checkFullyInitialized();
+    });
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testCheckFullyInitializedThrowsWhenSubStructureNotInitialized() throws Exception {
-    StructField sf1 = new StructField("entry1", 1);
-    StructField sf2 = new StructField("entry2", 2);
+    assertThrows(IllegalStateException.class, () -> {
+      StructField sf1 = new StructField("entry1", 1);
+      StructField sf2 = new StructField("entry2", 2);
 
-    sf1.addField(sf2);
+      sf1.addField(sf2);
 
-    sf1.init();
+      sf1.init();
 
-    sf1.checkFullyInitialized();
+      sf1.checkFullyInitialized();
+    });
   }
 
   @Test
@@ -116,20 +121,24 @@ public class MetadataTest {
     sf2.checkFullyInitialized();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testAddFieldThrowsWhenInitialized() throws Exception {
-    StructField mapEntryStructField = new StructField("entry", 5);
-    mapEntryStructField.addField(new StringField("key", 1));
-    mapEntryStructField.init();
+    assertThrows(IllegalStateException.class, () -> {
+      StructField mapEntryStructField = new StructField("entry", 5);
+      mapEntryStructField.addField(new StringField("key", 1));
+      mapEntryStructField.init();
 
-    mapEntryStructField.addField(new StringField("val", 2));
+      mapEntryStructField.addField(new StringField("val", 2));
+    });
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testTwoInitThrows() throws Exception {
-    StructField mapEntryStructField = new StructField("entry", 5);
-    mapEntryStructField.addField(new StringField("key", 1));
-    mapEntryStructField.init();
-    mapEntryStructField.init();
+    assertThrows(IllegalStateException.class, () -> {
+      StructField mapEntryStructField = new StructField("entry", 5);
+      mapEntryStructField.addField(new StringField("key", 1));
+      mapEntryStructField.init();
+      mapEntryStructField.init();
+    });
   }
 }

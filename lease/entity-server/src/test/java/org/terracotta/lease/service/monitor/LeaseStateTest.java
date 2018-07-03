@@ -15,11 +15,9 @@
  */
 package org.terracotta.lease.service.monitor;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.lease.MockStateDumpCollector;
 import org.terracotta.lease.TestTimeSource;
@@ -31,16 +29,16 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseStateTest {
   @Mock
   private ClientConnectionCloser clientConnectionCloser;
@@ -57,8 +55,10 @@ public class LeaseStateTest {
   private TestTimeSource timeSource;
   private LeaseState leaseState;
 
-  @Before
+  @BeforeEach
   public void before() {
+    initMocks(this);
+    
     timeSource = new TestTimeSource();
     leaseState = new LeaseState(timeSource, clientConnectionCloser);
   }

@@ -15,11 +15,12 @@
  */
 package org.terracotta.lease.service.config;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.lease.service.LeaseServiceProvider;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class LeaseConfigurationTest {
   @Test
@@ -34,13 +35,17 @@ public class LeaseConfigurationTest {
     assertEquals(4L, configuration.getLeaseLength());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void zeroLeaseLength() {
-    new LeaseConfiguration(0L);
+    assertThrows(IllegalArgumentException.class, () -> {
+      new LeaseConfiguration(0L);
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void negativeLeaseLength() {
-    new LeaseConfiguration(-1L);
+    assertThrows(IllegalArgumentException.class, () -> {
+      new LeaseConfiguration(-1L);
+    });
   }
 }

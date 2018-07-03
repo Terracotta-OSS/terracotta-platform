@@ -15,8 +15,10 @@
  */
 package org.terracotta.clientcommunicator.support;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author vmad
@@ -33,8 +35,8 @@ public class ClientCommunicatorRequestCodecTest {
                 new ClientCommunicatorRequest(TEST_REQUEST_TYPE, TEST_SEQUENCE_NUMBER, TEST_MESSAGE.getBytes()));
         ClientCommunicatorRequest deserializedRequest = ClientCommunicatorRequestCodec.deserialize(serialized);
 
-        Assert.assertEquals(TEST_REQUEST_TYPE, deserializedRequest.getRequestType());
-        Assert.assertEquals(TEST_SEQUENCE_NUMBER, deserializedRequest.getRequestSequenceNumber());
-        Assert.assertArrayEquals(TEST_MESSAGE.getBytes(), deserializedRequest.getMsgBytes());
+        assertEquals(TEST_REQUEST_TYPE, deserializedRequest.getRequestType());
+        assertEquals(TEST_SEQUENCE_NUMBER, deserializedRequest.getRequestSequenceNumber());
+        assertArrayEquals(TEST_MESSAGE.getBytes(), deserializedRequest.getMsgBytes());
     }
 }

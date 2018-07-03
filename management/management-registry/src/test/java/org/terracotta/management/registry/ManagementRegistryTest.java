@@ -15,12 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -29,18 +24,21 @@ import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.action.MyManagementProvider;
 import org.terracotta.management.registry.action.MyObject;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
 public class ManagementRegistryTest {
 
   @Test

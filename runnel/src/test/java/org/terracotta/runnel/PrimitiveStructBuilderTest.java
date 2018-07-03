@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.decoding.StructDecoder;
 
 import java.io.ByteArrayOutputStream;
@@ -25,7 +25,8 @@ import java.nio.ByteBuffer;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Ludovic Orban
@@ -39,26 +40,32 @@ public class PrimitiveStructBuilderTest {
       .int32("id", 4)
       .build();
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEncodingNonExistentNameThrows() throws Exception {
-    struct.encoder()
-        .string("unknown", "joe")
-    ;
+    assertThrows(IllegalArgumentException.class, () -> {
+      struct.encoder()
+          .string("unknown", "joe")
+      ;
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEncodingInvalidTypeThrows() throws Exception {
-    struct.encoder()
-        .int64("name", 1L)
-    ;
+    assertThrows(IllegalArgumentException.class, () -> {
+      struct.encoder()
+          .int64("name", 1L)
+      ;
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEncodingNotInIndexOrderThrows() throws Exception {
-    struct.encoder()
-        .int32("id", 1)
-        .int64("age", 40L)
-    ;
+    assertThrows(IllegalArgumentException.class, () -> {
+      struct.encoder()
+          .int32("id", 1)
+          .int64("age", 40L)
+      ;
+    });
   }
 
   @Test

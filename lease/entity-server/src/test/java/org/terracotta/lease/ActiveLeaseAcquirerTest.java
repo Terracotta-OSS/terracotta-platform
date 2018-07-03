@@ -15,31 +15,29 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.IEntityMessenger;
+import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.lease.service.LeaseResult;
 import org.terracotta.lease.service.LeaseService;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ReconnectRejectedException;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ActiveLeaseAcquirerTest {
   @Mock
   private LeaseService leaseService;
@@ -64,8 +62,10 @@ public class ActiveLeaseAcquirerTest {
 
   private ArgumentCaptor<LeaseMessage> selfMessageCaptor;
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
+    initMocks(this);
+
     selfMessageCaptor = ArgumentCaptor.forClass(LeaseMessage.class);
     doNothing().when(entityMessenger).messageSelf(selfMessageCaptor.capture());
     when(context.getClientDescriptor()).thenReturn(clientDescriptor);

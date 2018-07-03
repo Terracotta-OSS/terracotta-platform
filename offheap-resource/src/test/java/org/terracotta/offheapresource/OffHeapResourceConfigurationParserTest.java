@@ -15,6 +15,11 @@
  */
 package org.terracotta.offheapresource;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.terracotta.offheapresource.config.MemoryUnit;
+import org.w3c.dom.Document;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,14 +30,9 @@ import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.terracotta.offheapresource.config.MemoryUnit;
-import org.w3c.dom.Document;
-
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import org.junit.Assert;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifier;
 import static org.terracotta.offheapresource.OffHeapResourcesProvider.convert;
 import static org.terracotta.offheapresource.OffHeapResourcesProvider.longValueExact;
@@ -46,7 +46,7 @@ public class OffHeapResourceConfigurationParserTest {
   private OffHeapResourceConfigurationParser parser;
   private DocumentBuilderFactory domBuilderFactory;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     parser = new OffHeapResourceConfigurationParser();
 
@@ -75,7 +75,7 @@ public class OffHeapResourceConfigurationParserTest {
 
     try {
       parser.parse(dom.getDocumentElement(), "what is this thing?");
-      Assert.fail("Expected IllegalArgumentException");
+      fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       //expected
     }

@@ -15,8 +15,9 @@
  */
 package org.terracotta.voltron.proxy.server;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.connection.entity.Entity;
+import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
@@ -26,6 +27,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.InvokeMonitor;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
@@ -56,8 +58,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ActiveInvokeChannel;
-import org.terracotta.entity.InvokeMonitor;
 
 /**
  * @author Alex Snaps

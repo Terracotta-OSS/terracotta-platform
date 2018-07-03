@@ -15,9 +15,9 @@
  */
 package org.terracotta.lease;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
@@ -42,13 +42,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Properties;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LeaseSystemTest {
   private static PassthroughClusterControl cluster;
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeClass() {
     cluster = PassthroughTestHelpers.createActiveOnly("stripe",
             server -> {
@@ -118,7 +118,7 @@ public class LeaseSystemTest {
     assertFalse(lease2.isValidAndContiguous(lease1));
   }
 
-  @AfterClass
+  @AfterAll
   public static void afterClass() throws Exception {
     cluster.tearDown();
   }

@@ -15,12 +15,10 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
 
@@ -29,10 +27,10 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.terracotta.lease.LeaseEntityConstants.ENTITY_NAME;
 import static org.terracotta.lease.LeaseEntityConstants.ENTITY_VERSION;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseMaintainerFactoryTest {
   @Spy
   private TestTimeSource timeSource = new TestTimeSource();
@@ -46,8 +44,10 @@ public class LeaseMaintainerFactoryTest {
   @Mock
   private LeaseAcquirer leaseAcquirer;
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
+    initMocks(this);
+
     TimeSourceProvider.setTimeSource(timeSource);
 
     when(connection.getEntityRef(LeaseAcquirer.class, ENTITY_VERSION, ENTITY_NAME)).thenReturn(entityRef);

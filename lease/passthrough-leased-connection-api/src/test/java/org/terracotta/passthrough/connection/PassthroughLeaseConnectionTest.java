@@ -16,8 +16,7 @@
 package org.terracotta.passthrough.connection;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.lease.connection.LeasedConnection;
 import org.terracotta.lease.connection.LeasedConnectionFactory;
 import org.terracotta.passthrough.IAsynchronousServerCrasher;
@@ -27,6 +26,7 @@ import org.terracotta.passthrough.PassthroughServerRegistry;
 import java.net.URI;
 import java.util.Properties;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class PassthroughLeaseConnectionTest {
@@ -42,6 +42,6 @@ public class PassthroughLeaseConnectionTest {
     PassthroughServerRegistry.getSharedInstance().registerServer("localhost", passthroughServer);
 
     LeasedConnection connection = LeasedConnectionFactory.connect(URI.create("passthrough://localhost:8510"), new Properties());
-    Assert.assertThat(connection, CoreMatchers.instanceOf(PassthroughLeasedConnectionService.PassthroughLeasedConnection.class));
+    assertThat(connection, CoreMatchers.instanceOf(PassthroughLeasedConnectionService.PassthroughLeasedConnection.class));
   }
 }

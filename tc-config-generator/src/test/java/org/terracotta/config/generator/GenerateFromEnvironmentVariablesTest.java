@@ -18,10 +18,10 @@ package org.terracotta.config.generator;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GenerateFromEnvironmentVariablesTest {
 
@@ -44,9 +44,6 @@ public class GenerateFromEnvironmentVariablesTest {
     configuration.setLogTemplateExceptions(false);
     return configuration;
   }
-
-  @Rule
-  public ExpectedException thrown= ExpectedException.none();
 
   @Test
   public void createModelFromMapVariables_all_good() throws Exception {
@@ -138,7 +135,7 @@ public class GenerateFromEnvironmentVariablesTest {
     StringWriter output = new StringWriter();
     generateFromEnvironmentVariables.generateXmlFile(root, "template-tc-config.ftlh", output);
 
-    byte[] expectedEncoded = Files.readAllBytes(Paths.get(this.getClass().getResource("/tc-config-expected").getPath()));
+    byte[] expectedEncoded = Files.readAllBytes(Paths.get(this.getClass().getResource("tc-config-expected").getPath()));
     String expected = new String(expectedEncoded, "UTF-8");
     String actual = output.toString();
     assertThat(actual, equalTo(expected));

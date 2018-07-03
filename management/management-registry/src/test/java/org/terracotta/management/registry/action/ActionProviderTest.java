@@ -15,9 +15,7 @@
  */
 package org.terracotta.management.registry.action;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
@@ -33,12 +31,11 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
 public class ActionProviderTest {
 
   ManagementProvider<MyObject> managementProvider = new MyManagementProvider();

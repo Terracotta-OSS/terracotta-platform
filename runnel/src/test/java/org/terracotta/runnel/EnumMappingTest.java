@@ -15,13 +15,13 @@
  */
 package org.terracotta.runnel;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.decoding.StructDecoder;
 
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Ludovic Orban

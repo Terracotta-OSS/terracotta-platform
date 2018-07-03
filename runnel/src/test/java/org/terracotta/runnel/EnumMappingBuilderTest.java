@@ -16,12 +16,13 @@
 package org.terracotta.runnel;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Ludovic Orban
@@ -36,20 +37,24 @@ public class EnumMappingBuilderTest {
   private static final Character Y = 'y';
   private static final Character Z = 'z';
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testDuplicateEnumIsInvalidWithNonEnum() throws Exception {
-    EnumMappingBuilder.newEnumMappingBuilder(Character.class)
-        .mapping(X, 1)
-        .mapping(X, 2)
-        ;
+    assertThrows(IllegalArgumentException.class, () -> {
+      EnumMappingBuilder.newEnumMappingBuilder(Character.class)
+          .mapping(X, 1)
+          .mapping(X, 2)
+          ;
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testDuplicateIndexIsInvalidWithNonEnum() throws Exception {
-    EnumMappingBuilder.newEnumMappingBuilder(Character.class)
-        .mapping(X, 1)
-        .mapping(Y, 1)
-        ;
+    assertThrows(IllegalArgumentException.class, () -> {
+      EnumMappingBuilder.newEnumMappingBuilder(Character.class)
+          .mapping(X, 1)
+          .mapping(Y, 1)
+          ;
+    });
   }
 
   @Test
@@ -88,32 +93,40 @@ public class EnumMappingBuilderTest {
     assertThat(enm.toEnum(30), CoreMatchers.<Enum>is(TestEnum.C));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testUnmappedEnumInvalid() throws Exception {
-    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
-        .mapping(TestEnum.A, 10)
-        .mapping(TestEnum.C, 30)
-        .build();
+    assertThrows(IllegalStateException.class, () -> {
+      EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
+          .mapping(TestEnum.A, 10)
+          .mapping(TestEnum.C, 30)
+          .build();
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testNegativeIndexIsInvalid() throws Exception {
-    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
-        .mapping(TestEnum.A, -10);
+    assertThrows(IllegalArgumentException.class, () -> {
+      EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
+          .mapping(TestEnum.A, -10);
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testDuplicateIndexIsInvalid() throws Exception {
-    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
-        .mapping(TestEnum.A, 10)
-        .mapping(TestEnum.B, 10);
+    assertThrows(IllegalArgumentException.class, () -> {
+      EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
+          .mapping(TestEnum.A, 10)
+          .mapping(TestEnum.B, 10);
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testDuplicateEnumIsInvalid() throws Exception {
-    EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
-        .mapping(TestEnum.A, 10)
-        .mapping(TestEnum.A, 20);
+    assertThrows(IllegalArgumentException.class, () -> {
+      EnumMappingBuilder.newEnumMappingBuilder(TestEnum.class)
+          .mapping(TestEnum.A, 10)
+          .mapping(TestEnum.A, 20);
+    });
   }
 
 }

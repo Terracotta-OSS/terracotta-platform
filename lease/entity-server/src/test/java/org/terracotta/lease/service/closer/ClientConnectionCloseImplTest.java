@@ -15,7 +15,7 @@
  */
 package org.terracotta.lease.service.closer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 

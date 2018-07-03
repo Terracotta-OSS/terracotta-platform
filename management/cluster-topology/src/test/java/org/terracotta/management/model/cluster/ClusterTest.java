@@ -15,11 +15,13 @@
  */
 package org.terracotta.management.model.cluster;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.ContextContainer;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,17 +36,17 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
-public class ClusterTest extends AbstractTest {
+@ExtendWith(AbstractTest.class)
+public class ClusterTest {
 
   @Test
   public void keep_tags_ordering() {
@@ -58,7 +60,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_serialization() throws IOException, ClassNotFoundException {
+  public void test_serialization(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) throws IOException, ClassNotFoundException {
     assertEquals(cluster1, cluster2);
 
     // ensure parent ref is the same ref as another node within the topology
@@ -76,13 +78,13 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_equals_hashcode() {
+  public void test_equals_hashcode(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) {
     assertEquals(cluster2, cluster1);
     assertEquals(cluster2.hashCode(), cluster1.hashCode());
   }
 
   @Test
-  public void test_nodes_path() throws UnknownHostException {
+  public void test_nodes_path(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) throws UnknownHostException {
     assertEquals(3, cluster1.getActiveServerEntity(ehcache_server_entity.getContext()).get().getNodePath().size());
     assertEquals(
         "stripe-1/server-1/ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
@@ -100,7 +102,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_add_remove_client() {
+  public void test_add_remove_client(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) {
     assertEquals(1, cluster1.getClients().size());
 
     assertFalse(cluster1.addClient(Client.create("12345@127.0.0.1:ehcache:uid")));
@@ -117,7 +119,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_add_remove_stripes() {
+  public void test_add_remove_stripes(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) {
     assertEquals(2, cluster1.getStripes().size());
 
     assertFalse(cluster1.addStripe(Stripe.create("stripe-1")));
@@ -134,7 +136,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_add_remove_server() {
+  public void test_add_remove_server(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) {
     Stripe stripe = cluster1.getStripe("stripe-1").get();
 
     assertEquals(2, stripe.getServers().size());
@@ -153,7 +155,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_add_remove_connection() {
+  public void test_add_remove_connection(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer) {
     Client client = cluster1.getClient("12345@127.0.0.1:ehcache:uid").get();
 
     assertEquals(2, client.getConnections().size());
@@ -171,7 +173,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_add_remove_server_entity() {
+  public void test_add_remove_server_entity(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) {
     System.out.println(ClientIdentifier.discoverHostName());
 
     Server server = cluster1.stripeStream().findFirst().get().getActiveServer().get();
@@ -193,7 +195,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_fetch_unfetch() throws IOException {
+  public void test_fetch_unfetch(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) throws IOException {
     Connection connection = client.connectionStream().findFirst().get();
     assertFalse(connection.hasFetchedServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
 
@@ -212,7 +214,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_toMap() throws IOException {
+  public void test_toMap(Cluster cluster1, Cluster cluster2, ServerEntity ehcache_server_entity, Capability action, ContextContainer serverContextContainer, ContextContainer clientContextContainer, Client client) throws IOException {
     String expectedJson = new String(Files.readAllBytes(new File("src/test/resources/cluster.json").toPath()), "UTF-8");
     Map actual = cluster1.toMap();
     ObjectMapper mapper = new ObjectMapper();

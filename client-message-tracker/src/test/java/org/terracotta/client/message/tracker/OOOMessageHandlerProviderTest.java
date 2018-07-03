@@ -15,14 +15,15 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ServiceConfiguration;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 public class OOOMessageHandlerProviderTest {
@@ -40,10 +41,12 @@ public class OOOMessageHandlerProviderTest {
   }
 
   @SuppressWarnings("unchecked")
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void getServiceInvalidConfig() throws Exception {
-    OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
-    provider.getService(1L, mock(ServiceConfiguration.class));
+    assertThrows(IllegalArgumentException.class, ()-> {
+      OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
+      provider.getService(1L, mock(ServiceConfiguration.class));
+    });
   }
 
 }

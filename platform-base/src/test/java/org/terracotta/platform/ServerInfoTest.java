@@ -15,11 +15,12 @@
  */
 package org.terracotta.platform;
 
-import com.tc.classloader.CommonComponent;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import com.tc.classloader.CommonComponent;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ServerInfoTest {
   @Test
