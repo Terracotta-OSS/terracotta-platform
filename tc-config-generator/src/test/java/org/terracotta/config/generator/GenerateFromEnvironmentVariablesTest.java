@@ -135,7 +135,7 @@ public class GenerateFromEnvironmentVariablesTest {
     StringWriter output = new StringWriter();
     generateFromEnvironmentVariables.generateXmlFile(root, "template-tc-config.ftlh", output);
 
-    byte[] expectedEncoded = Files.readAllBytes(Paths.get(this.getClass().getResource("tc-config-expected").getPath()));
+    byte[] expectedEncoded = Files.readAllBytes(Paths.get(this.getClass().getResource("/tc-config-expected").getPath()));
     String expected = new String(expectedEncoded, "UTF-8");
     String actual = output.toString();
     assertThat(actual, equalTo(expected));
