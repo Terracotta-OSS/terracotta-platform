@@ -123,21 +123,21 @@ public class MetadataTest {
 
   @Test
   public void testAddFieldThrowsWhenInitialized() throws Exception {
-    assertThrows(IllegalStateException.class, () -> {
-      StructField mapEntryStructField = new StructField("entry", 5);
-      mapEntryStructField.addField(new StringField("key", 1));
-      mapEntryStructField.init();
+    StructField mapEntryStructField = new StructField("entry", 5);
+    mapEntryStructField.addField(new StringField("key", 1));
+    mapEntryStructField.init();
 
+    assertThrows(IllegalStateException.class, () -> {
       mapEntryStructField.addField(new StringField("val", 2));
     });
   }
 
   @Test
   public void testTwoInitThrows() throws Exception {
+    StructField mapEntryStructField = new StructField("entry", 5);
+    mapEntryStructField.addField(new StringField("key", 1));
+    mapEntryStructField.init();
     assertThrows(IllegalStateException.class, () -> {
-      StructField mapEntryStructField = new StructField("entry", 5);
-      mapEntryStructField.addField(new StringField("key", 1));
-      mapEntryStructField.init();
       mapEntryStructField.init();
     });
   }

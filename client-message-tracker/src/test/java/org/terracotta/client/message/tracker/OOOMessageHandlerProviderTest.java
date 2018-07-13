@@ -43,8 +43,8 @@ public class OOOMessageHandlerProviderTest {
   @SuppressWarnings("unchecked")
   @Test
   public void getServiceInvalidConfig() throws Exception {
+    OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
     assertThrows(IllegalArgumentException.class, ()-> {
-      OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
       provider.getService(1L, mock(ServiceConfiguration.class));
     });
   }
