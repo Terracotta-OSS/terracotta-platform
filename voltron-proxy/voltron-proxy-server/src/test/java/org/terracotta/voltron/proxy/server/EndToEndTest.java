@@ -39,6 +39,7 @@ import org.terracotta.voltron.proxy.client.ClientProxyFactory;
 import org.terracotta.voltron.proxy.client.ServerMessageAware;
 
 import java.io.Serializable;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -342,6 +343,11 @@ public class EndToEndTest {
             @Override
             public int getConcurrencyKey() {
               return 0;
+            }
+
+            @Override
+            public Properties getClientSourceProperties() {
+              return new Properties();
             }
           }, message);
         }
