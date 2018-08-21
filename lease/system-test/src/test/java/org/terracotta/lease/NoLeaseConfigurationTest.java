@@ -15,9 +15,9 @@
  */
 package org.terracotta.lease;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.PassthroughClusterControl;
@@ -25,14 +25,11 @@ import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.net.URI;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.fail;
 
 public class NoLeaseConfigurationTest {
   private static PassthroughClusterControl cluster;
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeClass() {
     cluster = PassthroughTestHelpers.createActiveOnly("stripe",
             server -> {
@@ -43,7 +40,7 @@ public class NoLeaseConfigurationTest {
     cluster.startAllServers();
   }
 
-  @AfterClass
+  @AfterAll
   public static void afterClass() throws Exception {
     cluster.tearDown();
   }

@@ -15,22 +15,26 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseEndpointDelegateTest {
   @Mock
   private LeaseReconnectListener reconnectListener;
 
   @Mock
   private LeaseReconnectDataSupplier reconnectDataSupplier;
+
+  @BeforeEach
+  public void before() {
+    initMocks(this);
+  }
 
   @Test
   public void messageFromServerInformsAboutReconnectedStatus() {

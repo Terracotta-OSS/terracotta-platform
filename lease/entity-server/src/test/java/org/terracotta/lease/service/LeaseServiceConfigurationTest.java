@@ -15,12 +15,13 @@
  */
 package org.terracotta.lease.service;
 
-import com.tc.classloader.CommonComponent;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import com.tc.classloader.CommonComponent;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 public class LeaseServiceConfigurationTest {

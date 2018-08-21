@@ -15,11 +15,12 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LeaseRequestResultTest {
   @Test
@@ -35,13 +36,17 @@ public class LeaseRequestResultTest {
     assertEquals(200L, response.getLeaseLength());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void zeroLease() {
-    LeaseRequestResult.leaseGranted(0L);
+    assertThrows(IllegalArgumentException.class, () -> {
+      LeaseRequestResult.leaseGranted(0L);
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void negativeLease() {
-    LeaseRequestResult.leaseGranted(-1L);
+    assertThrows(IllegalArgumentException.class, () -> {
+      LeaseRequestResult.leaseGranted(-1L);
+    });
   }
 }

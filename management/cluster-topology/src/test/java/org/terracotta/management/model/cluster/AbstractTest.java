@@ -15,21 +15,26 @@
  */
 package org.terracotta.management.model.cluster;
 
-import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.context.ContextContainer;
 
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
-public abstract class AbstractTest {
+
+public class AbstractTest implements BeforeEachCallback, ParameterResolver {
 
   protected Cluster cluster1;
   protected Cluster cluster2;
@@ -39,8 +44,7 @@ public abstract class AbstractTest {
   protected ContextContainer clientContextContainer;
   protected Client client;
 
-  @Before
-  public void createClusters() {
+  public void beforeEach(ExtensionContext extensionContext) {
     action = new DefaultCapability("ActionCapability", new CapabilityContext());
     clientContextContainer = new ContextContainer("cacheManagerName", "cache-manager-1", new ContextContainer("cacheName", "my-cache"));
     serverContextContainer = new ContextContainer("entityName", "ehcache-entity-name-1");
@@ -144,4 +148,56 @@ public abstract class AbstractTest {
         Endpoint.create("10.10.10.10", 3457)));
   }
 
+  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+    Optional<Object> parameterType = Arrays.stream(new Object[] { Cluster.class, ServerEntity.class, Capability.class, ContextContainer.class, Client.class })
+        .filter(clazz -> clazz == parameterContext.getParameter().getType())
+        .findAny();
+
+    return parameterType.isPresent();
+  }
+
+  public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+    Parameter parameter = parameterContext.getParameter();
+    switch (parameterContext.getIndex()) {
+      case 0:
+        return cluster1;
+      case 1:
+        return cluster2;
+      case 2:
+        return ehcache_server_entity;
+      case 3:
+        return action;
+      case 4:
+        return serverContextContainer;
+      case 5:
+        return clientContextContainer;
+      case 6:
+        return client;
+    };
+    Class<?> parameterType = parameter.getType();
+    String parameterName = parameter.getName();
+    if(parameterType == Cluster.class && parameterName.equals("cluster1")) {
+      return cluster1;
+    }
+    else if(parameterType == Cluster.class && parameterName.equals("cluster2")) {
+      return cluster2;
+    }
+    else if(parameterType == ServerEntity.class && parameterName.equals("ehcache_server_entity")) {
+      return ehcache_server_entity;
+    }
+    else if(parameterType == Capability.class && parameterName.equals("action")) {
+      return action;
+    }
+    else if(parameterType == ContextContainer.class && parameterName.equals("serverContextContainer")) {
+      return serverContextContainer;
+    }
+    else if(parameterType == ContextContainer.class && parameterName.equals("clientContextContainer")) {
+      return clientContextContainer;
+    }
+    else if(parameterType == Client.class && parameterName.equals("client")) {
+      return client;
+    }
+
+    throw new ParameterResolutionException("Could not resolve parameter " + parameterName + " for the test " + extensionContext.getTestMethod());
+  }
 }

@@ -15,10 +15,9 @@
  */
 package org.terracotta.lease;
 
-import com.tc.classloader.PermanentEntity;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
@@ -30,12 +29,13 @@ import org.terracotta.lease.service.LeaseService;
 import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 
-import java.util.Collections;
+import com.tc.classloader.PermanentEntity;
+
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

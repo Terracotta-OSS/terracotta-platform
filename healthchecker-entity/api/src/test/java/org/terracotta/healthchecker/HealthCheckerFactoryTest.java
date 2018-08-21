@@ -15,23 +15,25 @@
  */
 package org.terracotta.healthchecker;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.terracotta.connection.Connection;
+import org.terracotta.connection.entity.EntityRef;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.entity.EntityRef;
 
 /**
  *
@@ -41,19 +43,19 @@ public class HealthCheckerFactoryTest {
   public HealthCheckerFactoryTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 
@@ -96,7 +98,7 @@ public class HealthCheckerFactoryTest {
           throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
       });
-      Assert.fail("should throw");
+      fail("should throw");
     } catch (IllegalStateException closed) {
 //  expected;
     }

@@ -15,12 +15,12 @@
  */
 package org.terracotta.lease.connection;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.connection.ConnectionException;
 
 import java.net.URI;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class LeasedConnectionFactoryTest {
 

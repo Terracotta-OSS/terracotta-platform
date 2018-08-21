@@ -15,23 +15,27 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.MessageCodec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseAcquirerClientServiceTest {
   @Mock
   private EntityClientEndpoint<LeaseMessage, LeaseResponse> endpoint;
 
+  @BeforeEach
+  public void before() throws Exception {
+    initMocks(this);
+  }
+  
   @Test
   public void handlesCorrectClass() {
     LeaseAcquirerClientService clientService = new LeaseAcquirerClientService();

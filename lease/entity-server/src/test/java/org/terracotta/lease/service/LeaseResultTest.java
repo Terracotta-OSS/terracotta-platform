@@ -15,13 +15,15 @@
  */
 package org.terracotta.lease.service;
 
-import com.tc.classloader.CommonComponent;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import com.tc.classloader.CommonComponent;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LeaseResultTest {
   @Test
@@ -37,20 +39,26 @@ public class LeaseResultTest {
     assertFalse(result.isLeaseGranted());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void leaseNotGrantedDoesNotAllowGettingTheLength() {
-    LeaseResult result = LeaseResult.leaseNotGranted();
-    result.getLeaseLength();
+    assertThrows(IllegalStateException.class, () -> {
+      LeaseResult result = LeaseResult.leaseNotGranted();
+      result.getLeaseLength();
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void noZeroLengthLeases() {
-    LeaseResult.leaseGranted(0L);
+    assertThrows(IllegalArgumentException.class, () -> {
+      LeaseResult.leaseGranted(0L);
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void noNegativeLengthLeases() {
-    LeaseResult.leaseGranted(-1L);
+    assertThrows(IllegalArgumentException.class, () -> {
+      LeaseResult.leaseGranted(-1L);
+    });
   }
 
   @Test

@@ -15,8 +15,9 @@
  */
 package org.terracotta.lease.service;
 
-import com.tc.classloader.BuiltinService;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Spy;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
@@ -27,20 +28,31 @@ import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 import org.terracotta.lease.service.config.LeaseConfiguration;
 
+import com.tc.classloader.BuiltinService;
+
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class LeaseServiceProviderTest {
+  @Spy
+  private TestTimeSource timeSource = new TestTimeSource();
+
+  @BeforeEach
+  public void before() throws Exception {
+    initMocks(this);
+  }
+
   @Test
   public void serviceTypes() {
     LeaseServiceProvider serviceProvider = new LeaseServiceProvider();

@@ -15,25 +15,28 @@
  */
 package org.terracotta.lease.service.monitor;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.lease.TestTimeSource;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.atLeast;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseMonitorThreadTest {
   @Spy
   private TestTimeSource timeSource = new TestTimeSource();
+
+  @BeforeEach
+  public void before() throws Exception {
+    initMocks(this);
+  }
 
   @Test
   public void callsCheckLeasesPeriodically() throws Exception {

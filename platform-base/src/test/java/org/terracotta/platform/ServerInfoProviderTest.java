@@ -15,14 +15,15 @@
  */
 package org.terracotta.platform;
 
-import com.tc.classloader.BuiltinService;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.PlatformConfiguration;
+
+import com.tc.classloader.BuiltinService;
 
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

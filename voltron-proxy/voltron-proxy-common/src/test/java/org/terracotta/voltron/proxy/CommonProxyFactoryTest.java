@@ -16,7 +16,8 @@
 package org.terracotta.voltron.proxy;
 
 import org.hamcrest.core.Is;
-import org.junit.Test;
+import org.hamcrest.core.IsInstanceOf;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +25,8 @@ import java.util.concurrent.Future;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Mathieu Carbou
@@ -33,7 +35,7 @@ public class CommonProxyFactoryTest {
 
   @Test
   public void test_raw_type_determined_correctly() throws Throwable {
-    Class<?>[] expected = {
+    Class<?>[] expected = { 
         String.class, Collection.class, Object.class, Object.class, Object.class,
         Collection.class, String[].class, List.class, Collection.class, String[].class,
         Object.class, Object.class};
@@ -44,13 +46,13 @@ public class CommonProxyFactoryTest {
     for (int i = 1; i <= expected.length; i++) {
       MethodDescriptor methodDescriptor = MethodDescriptor.of(AsyncEntity.class.getMethod("test" + i));
       assertThat(methodDescriptor.isAsync(), is(true));
-      assertThat(methodDescriptor.getMessageType(), Is.<Class<?>>is(expected[i-1]));
+      assertTrue(methodDescriptor.getMessageType() == expected[i - 1]);
     }
 
     for (int i = 1; i <= expected.length; i++) {
       MethodDescriptor methodDescriptor = MethodDescriptor.of(NonAsyncEntity.class.getMethod("test" + i));
       assertThat(methodDescriptor.isAsync(), is(false));
-      assertThat(methodDescriptor.getMessageType(), Is.<Class<?>>is(Future.class));
+      assertTrue(methodDescriptor.getMessageType() == Future.class);
     }
   }
 

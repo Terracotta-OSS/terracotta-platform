@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
 import org.terracotta.runnel.encoding.StructEncoderFunction;
@@ -27,6 +27,7 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Ludovic Orban
@@ -44,13 +45,15 @@ public class StructStructBuilderTest {
       .int64("id", 3)
       .build();
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testCannotEncodeNonRoot() throws Exception {
-    struct.encoder()
-        .struct("mapEntry")
-          .string("key", "1")
-          .string("value", "one")
-        .encode();
+    assertThrows(IllegalStateException.class, () -> {
+      struct.encoder()
+          .struct("mapEntry")
+            .string("key", "1")
+            .string("value", "one")
+          .encode();
+    });
   }
 
   @Test

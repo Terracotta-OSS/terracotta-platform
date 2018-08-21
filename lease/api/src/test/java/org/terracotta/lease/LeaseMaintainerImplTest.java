@@ -15,22 +15,18 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseMaintainerImplTest {
   @Mock
   private LeaseAcquirer leaseAcquirer;
@@ -41,8 +37,10 @@ public class LeaseMaintainerImplTest {
 
   private LeaseMaintainerImpl leaseMaintainer;
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
+    initMocks(this);
+
     TimeSourceProvider.setTimeSource(timeSource);
     when(leaseAcquirer.acquireLease()).thenReturn(6000L);
     delayedLeaseAcquirer = new DelayedLeaseAcquirer(leaseAcquirer);
@@ -153,10 +151,12 @@ public class LeaseMaintainerImplTest {
     assertFalse(lease2.isValidAndContiguous(lease2));
   }
 
-  @Test(expected = InterruptedException.class)
+  @Test
   public void waitForLeaseWithoutALease() throws Exception {
-    ThreadInterrupter.interruptIn(300L);
-    leaseMaintainer.waitForLease();
+    assertThrows(InterruptedException.class, () -> {
+      ThreadInterrupter.interruptIn(300L);
+      leaseMaintainer.waitForLease();
+    });
   }
 
   @Test

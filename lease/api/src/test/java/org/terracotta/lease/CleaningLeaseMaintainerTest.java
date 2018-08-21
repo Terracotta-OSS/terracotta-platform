@@ -15,22 +15,21 @@
  */
 package org.terracotta.lease;
 
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
 
 import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class CleaningLeaseMaintainerTest {
   @Mock
   private LeaseMaintainer delegate;
@@ -47,7 +46,12 @@ public class CleaningLeaseMaintainerTest {
   @Mock
   private Lease lease;
 
-  @After
+  @BeforeEach
+  public void before() {
+    initMocks(this);
+  }
+
+  @AfterEach
   public void after() {
     verifyNoMoreInteractions(delegate, connection, thread1, thread2);
   }

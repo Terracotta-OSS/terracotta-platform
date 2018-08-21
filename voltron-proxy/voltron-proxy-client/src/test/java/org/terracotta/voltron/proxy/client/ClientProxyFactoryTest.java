@@ -15,7 +15,7 @@
  */
 package org.terracotta.voltron.proxy.client;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Matchers;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -36,12 +36,12 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.voltron.proxy.ProxyEntityResponse.messageResponse;
-
+  
 /**
  * @author Alex Snaps
  */

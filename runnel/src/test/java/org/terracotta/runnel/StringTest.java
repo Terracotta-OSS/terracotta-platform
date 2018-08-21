@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.decoding.ArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Ludovic Orban

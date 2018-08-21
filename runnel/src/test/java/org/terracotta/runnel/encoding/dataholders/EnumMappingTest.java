@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.EnumMapping;
 import org.terracotta.runnel.EnumMappingBuilder;
 import org.terracotta.runnel.utils.ReadBuffer;

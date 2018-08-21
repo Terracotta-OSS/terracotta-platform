@@ -17,7 +17,8 @@ package org.terracotta.lease;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
+
 
 public class LeaseTestUtil {
   public static void waitForValidLease(LeaseMaintainer leaseMaintainer) throws Exception {

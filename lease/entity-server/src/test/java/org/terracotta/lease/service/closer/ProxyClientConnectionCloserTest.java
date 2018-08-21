@@ -15,19 +15,22 @@
  */
 package org.terracotta.lease.service.closer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.ClientDescriptor;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 public class ProxyClientConnectionCloserTest {
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void mustSetDelegateBeforeUse() {
-    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+    assertThrows(IllegalStateException.class, () -> {
+      ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    ProxyClientConnectionCloser proxyCloser = new ProxyClientConnectionCloser();
-    proxyCloser.closeClientConnection(clientDescriptor);
+      ProxyClientConnectionCloser proxyCloser = new ProxyClientConnectionCloser();
+      proxyCloser.closeClientConnection(clientDescriptor);
+    });
   }
 
   @Test

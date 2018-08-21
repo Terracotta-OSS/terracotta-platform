@@ -15,12 +15,8 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
@@ -48,6 +44,9 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import java.io.File;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -61,8 +60,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -86,7 +85,6 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
 public class VoltronMonitoringServiceTest {
 
   ObjectMapper mapper = new ObjectMapper();
@@ -116,7 +114,7 @@ public class VoltronMonitoringServiceTest {
     }
   });
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 

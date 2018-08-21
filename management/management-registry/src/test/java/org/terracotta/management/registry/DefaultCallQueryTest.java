@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.context.Context;
@@ -27,8 +27,8 @@ import java.util.concurrent.ExecutionException;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

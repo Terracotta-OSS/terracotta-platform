@@ -15,9 +15,10 @@
  */
 package org.terracotta.runnel;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Ludovic Orban
@@ -142,40 +143,46 @@ public class StructBuilderTest {
     struct.encoder().int32("a", 1).int32("b", -1).encode();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void checkEncodingLazyStructAliasesThrowsWhenAliasedStructNotBuilt() throws Exception {
-    StructBuilder abStructBuilder = StructBuilder.newStructBuilder().int32("a", 2).int32("b", 3);
-    Struct lazilyInitializedAbStruct = abStructBuilder.alias();
+    assertThrows(IllegalStateException.class, () -> {
+      StructBuilder abStructBuilder = StructBuilder.newStructBuilder().int32("a", 2).int32("b", 3);
+      Struct lazilyInitializedAbStruct = abStructBuilder.alias();
 
-    // build a struct using a not-yet-built struct alias
-    Struct cdStruct = StructBuilder.newStructBuilder().int32("c", 5).int32("d", 6).struct("ab", 7, lazilyInitializedAbStruct).build();
+      // build a struct using a not-yet-built struct alias
+      Struct cdStruct = StructBuilder.newStructBuilder().int32("c", 5).int32("d", 6).struct("ab", 7, lazilyInitializedAbStruct).build();
 
-    // using the struct should fail because the aliased struct hasn't been built yet
-    cdStruct.encoder();
+      // using the struct should fail because the aliased struct hasn't been built yet
+      cdStruct.encoder();
+    });
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void checkDecodingLazyStructAliasesThrowsWhenAliasedStructNotBuilt() throws Exception {
-    StructBuilder abStructBuilder = StructBuilder.newStructBuilder().int32("a", 2).int32("b", 3);
-    Struct lazilyInitializedAbStruct = abStructBuilder.alias();
+    assertThrows(IllegalStateException.class, () -> {
+      StructBuilder abStructBuilder = StructBuilder.newStructBuilder().int32("a", 2).int32("b", 3);
+      Struct lazilyInitializedAbStruct = abStructBuilder.alias();
 
-    // build a struct using a not-yet-built struct alias
-    Struct cdStruct = StructBuilder.newStructBuilder().int32("c", 5).int32("d", 6).struct("ab", 7, lazilyInitializedAbStruct).build();
+      // build a struct using a not-yet-built struct alias
+      Struct cdStruct = StructBuilder.newStructBuilder().int32("c", 5).int32("d", 6).struct("ab", 7, lazilyInitializedAbStruct).build();
 
-    // using the struct should fail because the aliased struct hasn't been built yet
-    cdStruct.decoder(null);
+      // using the struct should fail because the aliased struct hasn't been built yet
+      cdStruct.decoder(null);
+    });
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void checkDumpingLazyStructAliasesThrowsWhenAliasedStructNotBuilt() throws Exception {
-    StructBuilder abStructBuilder = StructBuilder.newStructBuilder().int32("a", 2).int32("b", 3);
-    Struct lazilyInitializedAbStruct = abStructBuilder.alias();
+    assertThrows(IllegalStateException.class, () -> {
+      StructBuilder abStructBuilder = StructBuilder.newStructBuilder().int32("a", 2).int32("b", 3);
+      Struct lazilyInitializedAbStruct = abStructBuilder.alias();
 
-    // build a struct using a not-yet-built struct alias
-    Struct cdStruct = StructBuilder.newStructBuilder().int32("c", 5).int32("d", 6).struct("ab", 7, lazilyInitializedAbStruct).build();
+      // build a struct using a not-yet-built struct alias
+      Struct cdStruct = StructBuilder.newStructBuilder().int32("c", 5).int32("d", 6).struct("ab", 7, lazilyInitializedAbStruct).build();
 
-    // using the struct should fail because the aliased struct hasn't been built yet
-    cdStruct.dump(null, null);
+      // using the struct should fail because the aliased struct hasn't been built yet
+      cdStruct.dump(null, null);
+    });
   }
 
   @Test

@@ -15,9 +15,10 @@
  */
 package org.terracotta.lease.service.monitor;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ReconnectionLeaseTest {
   @Test
@@ -26,9 +27,11 @@ public class ReconnectionLeaseTest {
     assertFalse(lease.isExpired(0L));
   }
 
-  @Test(expected = AssertionError.class)
+  @Test
   public void shouldNeverBeAskedIfItCanBeRenewed() {
-    ReconnectionLease lease = new ReconnectionLease();
-    lease.allowRenewal();
+    assertThrows(AssertionError.class, () -> {
+      ReconnectionLease lease = new ReconnectionLease();
+      lease.allowRenewal();
+    });
   }
 }

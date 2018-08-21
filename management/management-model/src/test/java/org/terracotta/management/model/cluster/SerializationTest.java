@@ -15,9 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -33,12 +31,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
 public class SerializationTest {
 
   private Context context = Context.create("cacheManagerName", "my-cm-1");

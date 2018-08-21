@@ -15,7 +15,7 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.WriteBuffer;
 

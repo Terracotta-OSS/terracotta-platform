@@ -15,24 +15,21 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseExpiryConnectionKillingThreadTest {
   @Spy
   private TestTimeSource timeSource = new TestTimeSource();
@@ -45,8 +42,10 @@ public class LeaseExpiryConnectionKillingThreadTest {
 
   private LeaseExpiryConnectionKillingThread thread;
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
+    initMocks(this);
+
     TimeSourceProvider.setTimeSource(timeSource);
     thread = new LeaseExpiryConnectionKillingThread(leaseMaintainer, connection);
   }

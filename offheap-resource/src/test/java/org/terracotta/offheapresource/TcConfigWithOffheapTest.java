@@ -16,16 +16,16 @@
 
 package org.terracotta.offheapresource;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
 
 import java.util.List;
 import java.util.Set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
 /**
  * TcConfigWithOffheapTest

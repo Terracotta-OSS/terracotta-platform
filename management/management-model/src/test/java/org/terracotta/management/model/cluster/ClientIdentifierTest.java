@@ -15,20 +15,17 @@
  */
 package org.terracotta.management.model.cluster;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * @author Mathieu Carbou
  */
-@RunWith(JUnit4.class)
 public class ClientIdentifierTest {
 
   @Test

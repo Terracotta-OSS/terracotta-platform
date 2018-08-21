@@ -15,7 +15,7 @@
  */
 package org.terracotta.voltron.proxy.client;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Matchers;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.terracotta.voltron.proxy.CommonProxyFactory.createMethodMappings;

@@ -15,14 +15,12 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.junit.Test;
-import org.terracotta.entity.ClientSourceId;
+import org.junit.jupiter.api.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.mockito.Mockito.mock;
 
 public class ClientTrackerImplTest {
 

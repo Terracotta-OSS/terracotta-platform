@@ -15,22 +15,21 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LeaseAcquirerImplTest {
   @Mock
   private EntityClientEndpoint<LeaseMessage, LeaseResponse> endpoint;
@@ -51,8 +50,10 @@ public class LeaseAcquirerImplTest {
 
   private ArgumentCaptor<LeaseMessage> leaseMessageCaptor;
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
+    initMocks(this);
+
     leaseMessageCaptor = ArgumentCaptor.forClass(LeaseMessage.class);
     when(endpoint.beginInvoke()).thenReturn(invocationBuilder);
     when(invocationBuilder.message(leaseMessageCaptor.capture())).thenReturn(invocationBuilder);
@@ -64,17 +65,21 @@ public class LeaseAcquirerImplTest {
     leaseAcquirer = new LeaseAcquirerImpl(endpoint, reconnectListener);
   }
 
-  @Test(expected = LeaseReconnectingException.class)
+  @Test
   public void oldConnection() throws Exception {
-    when(leaseRequestResult.isConnectionGood()).thenReturn(false);
-    leaseAcquirer.acquireLease();
+    assertThrows(LeaseReconnectingException.class, () -> {
+      when(leaseRequestResult.isConnectionGood()).thenReturn(false);
+      leaseAcquirer.acquireLease();
+    });
   }
 
-  @Test(expected = LeaseException.class)
+  @Test
   public void leaseNotGranted() throws Exception {
-    when(leaseRequestResult.isConnectionGood()).thenReturn(true);
-    when(leaseRequestResult.isLeaseGranted()).thenReturn(false);
-    leaseAcquirer.acquireLease();
+    assertThrows(LeaseException.class, () -> {
+      when(leaseRequestResult.isConnectionGood()).thenReturn(true);
+      when(leaseRequestResult.isLeaseGranted()).thenReturn(false);
+      leaseAcquirer.acquireLease();
+    });
   }
 
   @Test
@@ -88,11 +93,13 @@ public class LeaseAcquirerImplTest {
     assertEquals(0, leaseRequest.getConnectionSequenceNumber());
   }
 
-  @Test(expected = LeaseReconnectingException.class)
+  @Test
   public void whenReconnectingDoesNotSendLeaseRequests() throws Exception {
-    leaseAcquirer.reconnecting();
-    verify(reconnectListener).reconnecting();
-    leaseAcquirer.acquireLease();
+    assertThrows(LeaseReconnectingException.class, () -> {
+      leaseAcquirer.reconnecting();
+      verify(reconnectListener).reconnecting();
+      leaseAcquirer.acquireLease();
+    });
   }
 
   @Test
