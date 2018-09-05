@@ -51,14 +51,21 @@ public class CharTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.chr("x"), is('a'));
-    ArrayDecoder<Character, StructDecoder<Void>> ad = decoder.chrs("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is('1'));
-    assertThat(ad.value(), is('2'));
-    assertThat(ad.value(), is('3'));
+    assertThat(decoder.mandatoryChr("x"), is('a'));
+    ArrayDecoder<Character, StructDecoder<Void>> ad = decoder.mandatoryChrs("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is('1'));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is('2'));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is('3'));
+
+    assertThat(ad.hasNext(), is(false));
     ad.end();
-    assertThat(decoder.chr("z"), is('z'));
+    assertThat(decoder.mandatoryChr("z"), is('z'));
   }
 
   @Test
@@ -83,12 +90,17 @@ public class CharTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Character, StructDecoder<Void>> ad = decoder.chrs("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is('w'));
-    assertThat(ad.value(), is('e'));
+    ArrayDecoder<Character, StructDecoder<Void>> ad = decoder.mandatoryChrs("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is('w'));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is('e'));
+
+    assertThat(ad.hasNext(), is(true));
     ad.end();
-    assertThat(decoder.chr("z"), is('t'));
+    assertThat(decoder.mandatoryChr("z"), is('t'));
   }
 
 }

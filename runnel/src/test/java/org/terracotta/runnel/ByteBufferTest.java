@@ -42,7 +42,7 @@ public class ByteBufferTest {
 
     StructDecoder decoder = struct.decoder(encoded);
 
-    ByteBuffer blob = decoder.byteBuffer("blob");
+    ByteBuffer blob = decoder.mandatoryByteBuffer("blob");
     assertThat(blob.remaining(), is(128));
     for (int i = 0; i < 128; i++) {
       byte b = blob.get();
@@ -66,7 +66,7 @@ public class ByteBufferTest {
 
     StructDecoder decoder = struct.decoder(encoded);
 
-    ByteBuffer blob = decoder.byteBuffer("blob2");
+    ByteBuffer blob = decoder.mandatoryByteBuffer("blob2");
     assertThat(blob.remaining(), is(128));
     for (int i = 0; i < 128; i++) {
       byte b = blob.get();

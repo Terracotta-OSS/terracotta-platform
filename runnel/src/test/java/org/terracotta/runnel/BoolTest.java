@@ -51,14 +51,21 @@ public class BoolTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.bool("x"), is(true));
-    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.bools("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is(false));
-    assertThat(ad.value(), is(true));
-    assertThat(ad.value(), is(false));
+    assertThat(decoder.mandatoryBool("x"), is(true));
+    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.mandatoryBools("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(false));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(true));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(false));
+
+    assertThat(ad.hasNext(), is(false));
     ad.end();
-    assertThat(decoder.bool("z"), is(true));
+    assertThat(decoder.mandatoryBool("z"), is(true));
   }
 
   @Test
@@ -83,12 +90,18 @@ public class BoolTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.bools("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is(true));
-    assertThat(ad.value(), is(false));
+    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.mandatoryBools("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(true));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(false));
+
+    assertThat(ad.hasNext(), is(true));
     ad.end();
-    assertThat(decoder.bool("z"), is(false));
+
+    assertThat(decoder.mandatoryBool("z"), is(false));
   }
 
 }

@@ -17,12 +17,13 @@ package org.terracotta.runnel;
 
 import org.junit.Test;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
@@ -70,7 +71,7 @@ public class PrimitiveStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
     try {
-      decoder.int64("unknown");
+      decoder.optionalInt64("unknown");
       fail("expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // expected
@@ -85,9 +86,9 @@ public class PrimitiveStructBuilderTest {
     bb.rewind();
 
     StructDecoder decoder = struct.decoder(bb);
-    decoder.int64("age");
+    decoder.optionalInt64("age");
     try {
-      decoder.string("name");
+      decoder.optionalString("name");
       fail("expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // expected
@@ -103,7 +104,7 @@ public class PrimitiveStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
     try {
-      decoder.byteBuffer("id");
+      decoder.optionalByteBuffer("id");
       fail("expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // expected
@@ -123,15 +124,15 @@ public class PrimitiveStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    assertThat(decoder.int64("age"), is(30L));
-    ByteBuffer blob = decoder.byteBuffer("blob");
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    assertThat(decoder.mandatoryInt64("age"), is(30L));
+    ByteBuffer blob = decoder.mandatoryByteBuffer("blob");
     assertThat(blob.remaining(), is(4096));
     for (int i = 0; i < 4096; i++) {
       byte b = blob.get();
       assertThat(b, is((byte) 'X'));
     }
-    assertThat(decoder.int32("id"), is(Integer.MIN_VALUE));
+    assertThat(decoder.mandatoryInt32("id"), is(Integer.MIN_VALUE));
   }
 
   @Test
@@ -160,15 +161,15 @@ public class PrimitiveStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    assertThat(decoder.int64("age"), is(30L));
-    ByteBuffer blob = decoder.byteBuffer("blob");
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    assertThat(decoder.mandatoryInt64("age"), is(30L));
+    ByteBuffer blob = decoder.mandatoryByteBuffer("blob");
     assertThat(blob.remaining(), is(4096));
     for (int i = 0; i < 4096; i++) {
       byte b = blob.get();
       assertThat(b, is((byte) 'X'));
     }
-    assertThat(decoder.int32("id"), is(nullValue()));
+    assertThat(decoder.optionalInt32("id"), is(Optional.empty()));
   }
 
   @Test
@@ -183,15 +184,15 @@ public class PrimitiveStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    assertThat(decoder.int64("age"), is(nullValue()));
-    ByteBuffer blob = decoder.byteBuffer("blob");
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    assertThat(decoder.optionalInt64("age"), is(Optional.empty()));
+    ByteBuffer blob = decoder.mandatoryByteBuffer("blob");
     assertThat(blob.remaining(), is(4096));
     for (int i = 0; i < 4096; i++) {
       byte b = blob.get();
       assertThat(b, is((byte) 'X'));
     }
-    assertThat(decoder.int32("id"), is(Integer.MIN_VALUE));
+    assertThat(decoder.optionalInt32("id"), is(Optional.of(Integer.MIN_VALUE)));
   }
 
   @Test
@@ -207,8 +208,8 @@ public class PrimitiveStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    assertThat(decoder.int32("id"), is(Integer.MIN_VALUE));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    assertThat(decoder.mandatoryInt32("id"), is(Integer.MIN_VALUE));
   }
 
   @Test
@@ -223,8 +224,27 @@ public class PrimitiveStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    assertThat(decoder.int32("id"), is(nullValue()));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    assertThat(decoder.optionalInt32("id"), is(Optional.empty()));
+  }
+
+  @Test
+  public void testReadMissingMandatoryField() throws Exception {
+    ByteBuffer bb = struct.encoder()
+        .int64("age", 30)
+        .byteBuffer("blob", buffer(4096, 'X'))
+        .encode();
+
+    bb.rewind();
+
+    StructDecoder decoder = struct.decoder(bb);
+
+    try {
+      decoder.mandatoryString("name");
+      fail("expected RunnelDecodingException");
+    } catch (RunnelDecodingException e) {
+      // expected
+    }
   }
 
 

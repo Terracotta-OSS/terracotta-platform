@@ -25,11 +25,11 @@ public class ReadBuffer {
   private final ByteBuffer byteBuffer;
   private final int limit;
 
-  public ReadBuffer(ByteBuffer byteBuffer) {
+  public ReadBuffer(ByteBuffer byteBuffer) throws RunnelDecodingException {
     this(byteBuffer, byteBuffer.remaining());
   }
 
-  private ReadBuffer(ByteBuffer byteBuffer, int limit) {
+  private ReadBuffer(ByteBuffer byteBuffer, int limit) throws RunnelDecodingException {
     this.byteBuffer = byteBuffer;
     this.limit = byteBuffer.position() + limit;
     if (this.limit > byteBuffer.capacity()) {
@@ -37,53 +37,53 @@ public class ReadBuffer {
     }
   }
 
-  public Boolean getBoolean() {
+  public Boolean getBoolean() throws RunnelDecodingException {
     if (byteBuffer.position() + 1 > limit) {
       throw new LimitReachedException();
     }
     return byteBuffer.get() == (byte) 0 ? Boolean.FALSE : Boolean.TRUE;
   }
 
-  public Double getDouble() {
+  public Double getDouble() throws RunnelDecodingException {
     if (byteBuffer.position() + 8 > limit) {
       throw new LimitReachedException();
     }
     return byteBuffer.getDouble();
   }
 
-  public Long getLong() {
+  public Long getLong() throws RunnelDecodingException {
     if (byteBuffer.position() + 8 > limit) {
       throw new LimitReachedException();
     }
     return byteBuffer.getLong();
   }
 
-  public Character getChar() {
+  public Character getChar() throws RunnelDecodingException {
     if (byteBuffer.position() + 2 > limit) {
       throw new LimitReachedException();
     }
     return byteBuffer.getChar();
   }
 
-  public Integer getInt() {
+  public Integer getInt() throws RunnelDecodingException {
     if (byteBuffer.position() + 4 > limit) {
       throw new LimitReachedException();
     }
     return byteBuffer.getInt();
   }
 
-  public int getVlqInt() {
+  public int getVlqInt() throws RunnelDecodingException {
     return VLQ.decode(this);
   }
 
-  byte getByte() {
+  byte getByte() throws RunnelDecodingException {
     if (byteBuffer.position() + 1 > limit) {
       throw new LimitReachedException();
     }
     return byteBuffer.get();
   }
 
-  public ByteBuffer getByteBuffer(int size) {
+  public ByteBuffer getByteBuffer(int size) throws RunnelDecodingException {
     if (byteBuffer.position() + size > limit) {
       throw new LimitReachedException();
     }
@@ -93,7 +93,7 @@ public class ReadBuffer {
     return slice;
   }
 
-  public String getString(int size) {
+  public String getString(int size) throws RunnelDecodingException {
     if (byteBuffer.position() + size > limit) {
       throw new LimitReachedException();
     }
@@ -106,7 +106,7 @@ public class ReadBuffer {
     return s;
   }
 
-  private String readString(ByteBuffer binary) {
+  private String readString(ByteBuffer binary) throws RunnelDecodingException {
     StringBuilder sb = new StringBuilder(binary.remaining());
     int i = binary.position();
     int end = binary.limit();
@@ -152,7 +152,7 @@ public class ReadBuffer {
     byteBuffer.position(limit);
   }
 
-  public void skip(int size) {
+  public void skip(int size) throws RunnelDecodingException {
     if (size < 0) {
       throw new IllegalArgumentException("size cannot be < 0");
     }
@@ -163,7 +163,7 @@ public class ReadBuffer {
     byteBuffer.position(targetPosition);
   }
 
-  public ReadBuffer limit(int size) {
+  public ReadBuffer limit(int size) throws RunnelDecodingException {
     if (size < 0) {
       throw new IllegalArgumentException("size cannot be < 0");
     }

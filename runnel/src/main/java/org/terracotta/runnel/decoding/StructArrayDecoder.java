@@ -15,44 +15,30 @@
  */
 package org.terracotta.runnel.decoding;
 
-import org.terracotta.runnel.decoding.fields.BoolField;
-import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.CharField;
-import org.terracotta.runnel.decoding.fields.EnumField;
-import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
-import org.terracotta.runnel.decoding.fields.Int32Field;
-import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.metadata.FieldDecoder;
 import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
-import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
  * @author Ludovic Orban
  */
-public class StructArrayDecoder<P> implements Iterator<StructDecoder<StructArrayDecoder<P>>> {
+public class StructArrayDecoder<P> implements DecodingIterator<StructDecoder<StructArrayDecoder<P>>> {
   private final P parent;
   private final ReadBuffer arrayReadBuffer;
   private final int arrayLength;
   private final StructField field;
 
   private StructDecoder<StructArrayDecoder<P>> current = null;
+  private int count = 0;
 
-  public StructArrayDecoder(StructField field, ReadBuffer readBuffer, P parent) {
+  public StructArrayDecoder(StructField field, ReadBuffer readBuffer, P parent) throws RunnelDecodingException {
     this.parent = parent;
     this.field = field;
     int arraySize = readBuffer.getVlqInt();
     this.arrayReadBuffer = readBuffer.limit(arraySize);
     this.arrayLength = readBuffer.getVlqInt();
-
-  }
-
-  public int length() {
-    return arrayLength;
   }
 
   public P end() {
@@ -62,23 +48,23 @@ public class StructArrayDecoder<P> implements Iterator<StructDecoder<StructArray
 
   @Override
   public boolean hasNext() {
-    return !arrayReadBuffer.limitReached();
-  }
-
-  public StructDecoder<StructArrayDecoder<P>> next() {
-    if (current != null) {
-      current.end();
-    }
-
-    if (arrayReadBuffer.limitReached()) {
-      throw new NoSuchElementException();
-    } else {
-      return current = new StructDecoder<StructArrayDecoder<P>>(field, arrayReadBuffer, this);
-    }
+    return count < arrayLength;
   }
 
   @Override
-  public void remove() {
-    throw new UnsupportedOperationException();
+  public StructDecoder<StructArrayDecoder<P>> next() throws RunnelDecodingException {
+    if (current != null) {
+      current.end();
+      current = null;
+    }
+
+    if (count >= arrayLength) {
+      throw new NoSuchElementException();
+    }
+
+    current = new StructDecoder<>(field, arrayReadBuffer, this);
+    count++;
+
+    return current;
   }
 }

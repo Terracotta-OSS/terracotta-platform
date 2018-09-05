@@ -51,14 +51,21 @@ public class Int64Test {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.int64("x"), is(-1L));
-    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.int64s("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is(-10L));
-    assertThat(ad.value(), is(-15L));
-    assertThat(ad.value(), is(-20L));
+    assertThat(decoder.mandatoryInt64("x"), is(-1L));
+    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.mandatoryInt64s("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-10L));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-15L));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-20L));
+
+    assertThat(ad.hasNext(), is(false));
     ad.end();
-    assertThat(decoder.int64("z"), is(Long.MAX_VALUE));
+    assertThat(decoder.mandatoryInt64("z"), is(Long.MAX_VALUE));
   }
 
   @Test
@@ -83,12 +90,17 @@ public class Int64Test {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.int64s("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is(-10L));
-    assertThat(ad.value(), is(-15L));
+    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.mandatoryInt64s("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-10L));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-15L));
+
+    assertThat(ad.hasNext(), is(true));
     ad.end();
-    assertThat(decoder.int64("z"), is(Long.MAX_VALUE));
+    assertThat(decoder.mandatoryInt64("z"), is(Long.MAX_VALUE));
   }
 
 }

@@ -23,6 +23,7 @@ import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 import java.nio.ByteBuffer;
 
@@ -43,9 +44,13 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
 
   @Override
   public LeaseMessage decodeMessage(byte[] bytes) throws MessageCodecException {
-    StructDecoder<Void> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
-    LeaseMessageType type = decoder.<LeaseMessageType>enm("messageType").get();
-    return type.decode(decoder);
+    try {
+      StructDecoder<Void> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
+      LeaseMessageType type = decoder.<LeaseMessageType>mandatoryEnm("messageType").get();
+      return type.decode(decoder);
+    } catch (RunnelDecodingException e) {
+      throw new MessageCodecException(e.getMessage(), e);
+    }
   }
 
   @Override
@@ -58,9 +63,13 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
 
   @Override
   public LeaseResponse decodeResponse(byte[] bytes) throws MessageCodecException {
-    StructDecoder<Void> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
-    LeaseResponseType type = decoder.<LeaseResponseType>enm("responseType").get();
-    return type.decode(decoder);
+    try {
+      StructDecoder<Void> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
+      LeaseResponseType type = decoder.<LeaseResponseType>mandatoryEnm("responseType").get();
+      return type.decode(decoder);
+    } catch (RunnelDecodingException e) {
+      throw new MessageCodecException(e.getMessage(), e);
+    }
   }
 
   private static Struct createMessageStruct() {

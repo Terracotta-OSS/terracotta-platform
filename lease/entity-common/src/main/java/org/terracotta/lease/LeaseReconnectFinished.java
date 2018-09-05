@@ -19,6 +19,7 @@ import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 import java.util.UUID;
 
@@ -59,10 +60,10 @@ public class LeaseReconnectFinished implements LeaseMessage {
     encoder.end();
   }
 
-  public static LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseReconnectFinished");
-    long uuidMSB = decoder.int64("uuidMSB");
-    long uuidLSB = decoder.int64("uuidLSB");
+  public static LeaseMessage decode(StructDecoder<Void> parentDecoder) throws RunnelDecodingException {
+    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.mandatoryStruct("leaseReconnectFinished");
+    long uuidMSB = decoder.mandatoryInt64("uuidMSB");
+    long uuidLSB = decoder.mandatoryInt64("uuidLSB");
 
     UUID uuid = new UUID(uuidMSB, uuidLSB);
     return new LeaseReconnectFinished(uuid);

@@ -22,8 +22,8 @@ import org.terracotta.runnel.decoding.StructDecoder;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -52,7 +52,7 @@ public class PrimitiveArrayStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.int64s("ids"), is(nullValue()));
+    assertThat(decoder.optionalInt64s("ids"), is(Optional.empty()));
   }
 
   @Test
@@ -68,8 +68,8 @@ public class PrimitiveArrayStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    ArrayDecoder<Long, StructDecoder<Void>> ids = decoder.int64s("ids");
-    assertThat(ids.length(), is(0));
+    ArrayDecoder<Long, StructDecoder<Void>> ids = decoder.optionalInt64s("ids").get();
+    assertThat(ids.hasNext(), is(false));
   }
 
 
@@ -96,24 +96,36 @@ public class PrimitiveArrayStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
 
-    ArrayDecoder<Long, StructDecoder<Void>> adi = decoder.int64s("ids");
-    assertThat(adi.length(), is(3));
-    assertThat(adi.value(), is(4L));
-    assertThat(adi.value(), is(5L));
-    assertThat(adi.value(), is(6L));
+    ArrayDecoder<Long, StructDecoder<Void>> adi = decoder.mandatoryInt64s("ids");
+
+    assertThat(adi.hasNext(), is(true));
+    assertThat(adi.next(), is(4L));
+
+    assertThat(adi.hasNext(), is(true));
+    assertThat(adi.next(), is(5L));
+
+    assertThat(adi.hasNext(), is(true));
+    assertThat(adi.next(), is(6L));
+
+    assertThat(adi.hasNext(), is(false));
     adi.end();
 
-    assertThat(decoder.string("address"), is("my street"));
+    assertThat(decoder.optionalString("address"), is(Optional.of("my street")));
 
-    ArrayDecoder<String, StructDecoder<Void>> ads = decoder.strings("colors");
-    assertThat(ads.length(), is(2));
-    assertThat(ads.value(), is("blue"));
-    assertThat(ads.value(), is("green"));
+    ArrayDecoder<String, StructDecoder<Void>> ads = decoder.mandatoryStrings("colors");
+
+    assertThat(ads.hasNext(), is(true));
+    assertThat(ads.next(), is("blue"));
+
+    assertThat(ads.hasNext(), is(true));
+    assertThat(ads.next(), is("green"));
+
+    assertThat(ads.hasNext(), is(false));
     ads.end();
 
-    assertThat(decoder.int64("age"), is(30L));
+    assertThat(decoder.optionalInt64("age"), is(Optional.of(30L)));
   }
 
   @Test
@@ -163,9 +175,9 @@ public class PrimitiveArrayStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    assertThat(decoder.string("address"), is("my street"));
-    assertThat(decoder.int64("age"), is(30L));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    assertThat(decoder.optionalString("address"), is(Optional.of("my street")));
+    assertThat(decoder.optionalInt64("age"), is(Optional.of(30L)));
   }
 
   @Test
@@ -191,21 +203,27 @@ public class PrimitiveArrayStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
 
-    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.int64s("ids");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is(4L));
+    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.mandatoryInt64s("ids");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(4L));
+
+    assertThat(ad.hasNext(), is(true));
     ad.end();
 
-    assertThat(decoder.string("address"), is("my street"));
+    assertThat(decoder.mandatoryString("address"), is("my street"));
 
-    ArrayDecoder<String, StructDecoder<Void>> ads = decoder.strings("colors");
-    assertThat(ads.length(), is(2));
-    assertThat(ads.value(), is("blue"));
+    ArrayDecoder<String, StructDecoder<Void>> ads = decoder.mandatoryStrings("colors");
+
+    assertThat(ads.hasNext(), is(true));
+    assertThat(ads.next(), is("blue"));
+
+    assertThat(ads.hasNext(), is(true));
     ads.end();
 
-    assertThat(decoder.int64("age"), is(30L));
+    assertThat(decoder.mandatoryInt64("age"), is(30L));
   }
 
 }

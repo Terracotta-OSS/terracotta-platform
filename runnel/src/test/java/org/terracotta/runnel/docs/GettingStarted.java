@@ -74,9 +74,9 @@ public class GettingStarted {
 
     StructDecoder decoder = struct.decoder(buffer); // <4>
 
-    String firstName = decoder.string("firstName"); // <5>
-    String lastName = decoder.string("lastName");
-    Long age = decoder.int64("age");
+    String firstName = decoder.mandatoryString("firstName"); // <5>
+    String lastName = decoder.mandatoryString("lastName");
+    long age = decoder.mandatoryInt64("age");
     // end::decodeSimpleStructure[]
   }
 

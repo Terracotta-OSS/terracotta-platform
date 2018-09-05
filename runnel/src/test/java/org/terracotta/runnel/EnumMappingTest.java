@@ -65,11 +65,11 @@ public class EnumMappingTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.<Character>enm("myEnum2").get(), is(W));
-    StructDecoder<StructDecoder<Void>> sd = decoder.struct("z");
-    assertThat(sd.<TestEnum1>enm("myEnum1").get(), is(TestEnum1.A));
+    assertThat(decoder.<Character>mandatoryEnm("myEnum2").get(), is(W));
+    StructDecoder<StructDecoder<Void>> sd = decoder.mandatoryStruct("z");
+    assertThat(sd.<TestEnum1>mandatoryEnm("myEnum1").get(), is(TestEnum1.A));
     sd.end();
-    assertThat(decoder.<Character>enm("myEnum2bis").get(), is(X));
+    assertThat(decoder.<Character>mandatoryEnm("myEnum2bis").get(), is(X));
   }
 
   @Test
@@ -109,7 +109,7 @@ public class EnumMappingTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.<Character>enm("myEnum2bis").get(), is(X));
+    assertThat(decoder.<Character>mandatoryEnm("myEnum2bis").get(), is(X));
   }
 
   private enum TestEnum1 {

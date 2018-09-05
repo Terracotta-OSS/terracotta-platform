@@ -19,6 +19,7 @@ import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 /**
  * A message to send from the client entity to the server entity to request a lease.
@@ -54,9 +55,9 @@ public class LeaseRequest implements LeaseMessage {
     encoder.end();
   }
 
-  public static LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseRequest");
-    long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
+  public static LeaseMessage decode(StructDecoder<Void> parentDecoder) throws RunnelDecodingException {
+    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.mandatoryStruct("leaseRequest");
+    long connectionSequenceNumber = decoder.mandatoryInt64("connectionSequenceNumber");
     return new LeaseRequest(connectionSequenceNumber);
   }
 }

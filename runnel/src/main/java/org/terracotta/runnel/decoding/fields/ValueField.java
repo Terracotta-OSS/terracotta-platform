@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 /**
@@ -22,6 +23,6 @@ import org.terracotta.runnel.utils.ReadBuffer;
  */
 public interface ValueField<T> extends Field {
 
-  T decode(ReadBuffer readBuffer);
+  T decode(ReadBuffer readBuffer) throws RunnelDecodingException;
 
 }

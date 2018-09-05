@@ -15,6 +15,8 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.DecodingErrorUtil;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.io.PrintStream;
@@ -36,20 +38,29 @@ public class ArrayField extends AbstractField {
   }
 
   @Override
-  public void dump(ReadBuffer parentBuffer, PrintStream out, int depth) {
-    int fieldSize = parentBuffer.getVlqInt();
-    out.append(" size: ").append(Integer.toString(fieldSize));
-    ReadBuffer readBuffer = parentBuffer.limit(fieldSize);
+  public boolean dump(ReadBuffer parentBuffer, PrintStream out, int depth) {
+    try {
+      int fieldSize = parentBuffer.getVlqInt();
+      out.append(" size: ").append(Integer.toString(fieldSize));
+      ReadBuffer readBuffer = parentBuffer.limit(fieldSize);
 
-    out.append(" type: ").append(getClass().getSimpleName());
+      out.append(" type: ").append(getClass().getSimpleName());
 
-    int length = readBuffer.getVlqInt();
-    out.append(" length: ").append(Integer.toString(length));
+      int length = readBuffer.getVlqInt();
+      out.append(" length: ").append(Integer.toString(length));
 
-    Field subField = subField();
-    for (int i = 0; i < length; i++) {
-      out.append("\n  "); for (int j = 0; j < depth; j++) out.append("  ");
-      subField.dump(readBuffer, out, depth + 1);
+      Field subField = subField();
+      for (int i = 0; i < length; i++) {
+        out.append("\n  ");
+        for (int j = 0; j < depth; j++) out.append("  ");
+        if (!subField.dump(readBuffer, out, depth + 1)) {
+          return false;
+        }
+      }
+
+      return true;
+    } catch (RunnelDecodingException e) {
+      return DecodingErrorUtil.write(out, e);
     }
   }
 }

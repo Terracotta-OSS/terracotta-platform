@@ -51,14 +51,21 @@ public class Int32Test {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.int32("x"), is(-1));
-    ArrayDecoder<Integer, StructDecoder<Void>> ad = decoder.int32s("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is(-10));
-    assertThat(ad.value(), is(-15));
-    assertThat(ad.value(), is(-20));
+    assertThat(decoder.mandatoryInt32("x"), is(-1));
+    ArrayDecoder<Integer, StructDecoder<Void>> ad = decoder.mandatoryInt32s("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-10));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-15));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-20));
+
+    assertThat(ad.hasNext(), is(false));
     ad.end();
-    assertThat(decoder.int32("z"), is(Integer.MAX_VALUE));
+    assertThat(decoder.mandatoryInt32("z"), is(Integer.MAX_VALUE));
   }
 
   @Test
@@ -83,12 +90,17 @@ public class Int32Test {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Integer, StructDecoder<Void>> ad = decoder.int32s("y");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is(-10));
-    assertThat(ad.value(), is(-15));
+    ArrayDecoder<Integer, StructDecoder<Void>> ad = decoder.mandatoryInt32s("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-10));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-15));
+
+    assertThat(ad.hasNext(), is(true));
     ad.end();
-    assertThat(decoder.int32("z"), is(Integer.MAX_VALUE));
+    assertThat(decoder.mandatoryInt32("z"), is(Integer.MAX_VALUE));
   }
 
 }

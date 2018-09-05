@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.CorruptDataException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
@@ -28,7 +29,7 @@ public class FloatingPoint64Field extends AbstractValueField<Double> {
   }
 
   @Override
-  public Double decode(ReadBuffer readBuffer) {
+  public Double decode(ReadBuffer readBuffer) throws RunnelDecodingException {
     int size = readBuffer.getVlqInt();
     if (size != 8) {
       throw new CorruptDataException("Expected field size of 8, read : " + size);

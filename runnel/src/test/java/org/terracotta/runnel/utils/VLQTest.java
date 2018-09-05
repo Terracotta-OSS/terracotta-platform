@@ -80,7 +80,7 @@ public class VLQTest {
     assertThat(VLQ.encodedSize(Integer.MAX_VALUE), is(5));
   }
 
-  private void checkDecoding(int value, int... bytes) {
+  private void checkDecoding(int value, int... bytes) throws Exception {
     ByteBuffer bb = ByteBuffer.allocate(8);
 
     for (int aByte : bytes) {

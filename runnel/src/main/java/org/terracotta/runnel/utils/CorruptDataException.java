@@ -18,7 +18,7 @@ package org.terracotta.runnel.utils;
 /**
  * @author Ludovic Orban
  */
-public class CorruptDataException extends RuntimeException {
+public class CorruptDataException extends RunnelDecodingException {
   public CorruptDataException(String msg) {
     super(msg);
   }

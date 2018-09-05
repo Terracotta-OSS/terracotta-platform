@@ -21,6 +21,7 @@ import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,14 +55,21 @@ public class StringTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.string("name"), is("john doe"));
-    ArrayDecoder<String, StructDecoder<Void>> ad = decoder.strings("colors");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is("red"));
-    assertThat(ad.value(), is("green"));
-    assertThat(ad.value(), is("blue"));
+    assertThat(decoder.mandatoryString("name"), is("john doe"));
+    ArrayDecoder<String, StructDecoder<Void>> ad = decoder.mandatoryStrings("colors");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is("red"));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is("green"));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is("blue"));
+
+    assertThat(ad.hasNext(), is(false));
     ad.end();
-    assertThat(decoder.string("address"), is("my street"));
+    assertThat(decoder.mandatoryString("address"), is("my street"));
   }
 
   @Test
@@ -86,12 +94,17 @@ public class StringTest {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<String, StructDecoder<Void>> ad = decoder.strings("colors");
-    assertThat(ad.length(), is(3));
-    assertThat(ad.value(), is("red"));
-    assertThat(ad.value(), is("green"));
+    ArrayDecoder<String, StructDecoder<Void>> ad = decoder.mandatoryStrings("colors");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is("red"));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is("green"));
+
+    assertThat(ad.hasNext(), is(true));
     ad.end();
-    assertThat(decoder.string("address"), is("my street"));
+    assertThat(decoder.mandatoryString("address"), is("my street"));
   }
 
   @Test
@@ -109,8 +122,8 @@ public class StringTest {
     encoded.rewind();
 
     StructDecoder decoder = struct.decoder(encoded);
-    assertThat(decoder.string("name"), is(nullValue()));
-    assertThat(decoder.string("address"), is("my street"));
+    assertThat(decoder.optionalString("name"), is(Optional.empty()));
+    assertThat(decoder.optionalString("address"), is(Optional.of("my street")));
   }
 
   @Test

@@ -52,7 +52,7 @@ public class VLQ {
     out.put((byte) (b));
   }
 
-  public static int decode(ReadBuffer in) {
+  public static int decode(ReadBuffer in) throws RunnelDecodingException {
     int b;
     int value = 0;
 
@@ -65,7 +65,7 @@ public class VLQ {
       value <<= 7;
     }
 
-    throw new IllegalArgumentException("Cannot decode value greater than Integer.MAX_VALUE");
+    throw new RunnelDecodingException("Cannot decode value greater than Integer.MAX_VALUE");
   }
 
   public static int encodedSize(int value) {

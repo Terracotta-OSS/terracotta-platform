@@ -40,7 +40,7 @@ public class LeaseEndpointDelegateTest {
   }
 
   @Test
-  public void supplyReconnectDataAndInformReconnectListenerWhenReconnectionStarts() {
+  public void supplyReconnectDataAndInformReconnectListenerWhenReconnectionStarts() throws Exception {
     when(reconnectDataSupplier.getReconnectData()).thenReturn(new LeaseReconnectData(1));
     LeaseEndpointDelegate delegate = new LeaseEndpointDelegate(reconnectListener, reconnectDataSupplier);
     byte[] bytes = delegate.createExtendedReconnectData();

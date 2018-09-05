@@ -19,6 +19,7 @@ import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 /**
  * A message sent from the the server entity to the client entity to indicate the response to the LeaseRequest.
@@ -88,11 +89,11 @@ public class LeaseRequestResult implements LeaseResponse {
     encoder.end();
   }
 
-  public static LeaseResponse decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseRequestResult");
-    boolean connectionGood = decoder.bool("connectionGood");
-    boolean leaseGranted = decoder.bool("leaseGranted");
-    long leaseLength = decoder.int64("leaseLength");
+  public static LeaseResponse decode(StructDecoder<Void> parentDecoder) throws RunnelDecodingException {
+    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.mandatoryStruct("leaseRequestResult");
+    boolean connectionGood = decoder.mandatoryBool("connectionGood");
+    boolean leaseGranted = decoder.mandatoryBool("leaseGranted");
+    long leaseLength = decoder.mandatoryInt64("leaseLength");
     return new LeaseRequestResult(connectionGood, leaseGranted, leaseLength);
   }
 }
