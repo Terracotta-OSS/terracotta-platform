@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.io.PrintStream;
@@ -28,6 +29,6 @@ public interface Field {
 
   int index();
 
-  void dump(ReadBuffer readBuffer, PrintStream out, int depth);
+  boolean dump(ReadBuffer readBuffer, PrintStream out, int depth);
 
 }

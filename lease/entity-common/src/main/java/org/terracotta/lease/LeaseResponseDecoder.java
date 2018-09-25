@@ -16,7 +16,8 @@
 package org.terracotta.lease;
 
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 public interface LeaseResponseDecoder {
-  LeaseResponse decode(StructDecoder<Void> parentDecoder);
+  LeaseResponse decode(StructDecoder<Void> parentDecoder) throws RunnelDecodingException;
 }

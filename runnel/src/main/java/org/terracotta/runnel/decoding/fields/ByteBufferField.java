@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.nio.ByteBuffer;
@@ -28,7 +29,7 @@ public class ByteBufferField extends AbstractValueField<ByteBuffer> {
   }
 
   @Override
-  public ByteBuffer decode(ReadBuffer readBuffer) {
+  public ByteBuffer decode(ReadBuffer readBuffer) throws RunnelDecodingException {
     int len = readBuffer.getVlqInt();
     return readBuffer.getByteBuffer(len);
   }

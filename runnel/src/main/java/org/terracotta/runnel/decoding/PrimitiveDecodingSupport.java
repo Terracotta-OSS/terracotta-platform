@@ -15,7 +15,10 @@
  */
 package org.terracotta.runnel.decoding;
 
+import org.terracotta.runnel.utils.RunnelDecodingException;
+
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 /**
  * Primitive types decoder interface.
@@ -25,58 +28,140 @@ public interface PrimitiveDecodingSupport {
   /**
    * Decode a boolean.
    * @param name the field name.
-   * @return the decoded value, or null if it was absent from the data.
+   * @return the decoded value wrapped in an Optional, or an empty optional if the field was absent from the data.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  Boolean bool(String name);
+  Optional<Boolean> optionalBool(String name) throws RunnelDecodingException;
+
+
+  /**
+   * Decode a boolean.
+   * @param name the field name.
+   * @return the decoded value.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data.
+   */
+  boolean mandatoryBool(String name) throws RunnelDecodingException;
 
   /**
    * Decode a character.
    * @param name the field name.
-   * @return the decoded value, or null if it was absent from the data.
+   * @return the decoded value wrapped in an Optional, or an empty optional if the field was absent from the data.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  Character chr(String name);
+  Optional<Character> optionalChr(String name) throws RunnelDecodingException;
+
+  /**
+   * Decode a character.
+   * @param name the field name.
+   * @return the decoded value.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data.
+   */
+  char mandatoryChr(String name) throws RunnelDecodingException;
 
   /**
    * Decode a 32-bit integer.
    * @param name the field name.
-   * @return the decoded value, or null if it was absent from the data.
+   * @return the decoded value wrapped in an Optional, or an empty optional if the field was absent from the data.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  Integer int32(String name);
+  Optional<Integer> optionalInt32(String name) throws RunnelDecodingException;
+
+  /**
+   * Decode a 32-bit integer.
+   * @param name the field name.
+   * @return the decoded value.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data.
+   */
+  int mandatoryInt32(String name) throws RunnelDecodingException;
 
   /**
    * Decode an enumeration.
    * @param name the field name.
    * @param <E> the enumration's actual type.
    * @return the decoded enumeration representation which can never be null.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  <E> Enm<E> enm(String name);
+  <E> Enm<E> optionalEnm(String name) throws RunnelDecodingException;
+
+  /**
+   * Decode an enumeration.
+   * @param name the field name.
+   * @param <E> the enumration's actual type.
+   * @return the decoded enumeration representation which can never be null.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data or if the enum value was not valid.
+   */
+  <E> Enm<E> mandatoryEnm(String name) throws RunnelDecodingException;
 
   /**
    * Decode a 64-bit integer.
    * @param name the field name.
-   * @return the decoded value, or null if it was absent from the data.
+   * @return the decoded value wrapped in an Optional, or an empty optional if the field was absent from the data.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  Long int64(String name);
+  Optional<Long> optionalInt64(String name) throws RunnelDecodingException;
+
+  /**
+   * Decode a 64-bit integer.
+   * @param name the field name.
+   * @return the decoded value.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data.
+   */
+  long mandatoryInt64(String name) throws RunnelDecodingException;
 
   /**
    * Decode a 64-bit, double-precision floating point number.
    * @param name the field name.
-   * @return the decoded value, or null if it was absent from the data.
+   * @return the decoded value wrapped in an Optional, or an empty optional if the field was absent from the data.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  Double fp64(String name);
+  Optional<Double> optionalFp64(String name) throws RunnelDecodingException;
+
+  /**
+   * Decode a 64-bit, double-precision floating point number.
+   * @param name the field name.
+   * @return the decoded value.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data.
+   */
+  double mandatoryFp64(String name) throws RunnelDecodingException;
 
   /**
    * Decode a character string.
    * @param name the field name.
-   * @return the decoded value, or null if it was absent from the data.
+   * @return the decoded value wrapped in an Optional, or an empty optional if the field was absent from the data.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  String string(String name);
+  Optional<String> optionalString(String name) throws RunnelDecodingException;
+
+  /**
+   * Decode a character string.
+   * @param name the field name.
+   * @return the decoded value, which can never be null.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data.
+   */
+  String mandatoryString(String name) throws RunnelDecodingException;
 
   /**
    * Decode a byte buffer.
    * @param name the field name.
-   * @return the decoded value, or null if it was absent from the data.
+   * @return the decoded value wrapped in an Optional, or an empty optional if the field was absent from the data.
+   * @throws RunnelDecodingException if there was a problem with the data to decode.
    */
-  ByteBuffer byteBuffer(String name);
+  Optional<ByteBuffer> optionalByteBuffer(String name) throws RunnelDecodingException;
+
+  /**
+   * Decode a byte buffer.
+   * @param name the field name.
+   * @return the decoded value, which can never be null.
+   * @throws RunnelDecodingException if there was a problem with the data to decode or if the field was absent from
+   * the data.
+   */
+  ByteBuffer mandatoryByteBuffer(String name) throws RunnelDecodingException;
 
 }

@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.decoding.fields;
+package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.utils.RunnelDecodingException;
-import org.terracotta.runnel.utils.ReadBuffer;
 
-/**
- * @author Ludovic Orban
- */
-public class StringField extends AbstractValueField<String> {
-  public StringField(String name, int index) {
-    super(name, index);
-  }
+public interface DecodingIterator<T> {
+  boolean hasNext();
 
-  @Override
-  public String decode(ReadBuffer readBuffer) throws RunnelDecodingException {
-    int len = readBuffer.getVlqInt();
-    return readBuffer.getString(len);
-  }
-
+  T next() throws RunnelDecodingException;
 }

@@ -15,6 +15,8 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.DecodingErrorUtil;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
 import java.io.PrintStream;
@@ -29,11 +31,16 @@ public abstract class AbstractValueField<T> extends AbstractField implements Val
   }
 
   @Override
-  public void dump(ReadBuffer readBuffer, PrintStream out, int depth) {
-    out.append(" type: ").append(getClass().getSimpleName());
-    out.append(" name: ").append(name());
-    T decoded = decode(readBuffer);
-    out.append(" decoded: [").append(decoded == null ? null : decoded.toString()).append("]");
+  public boolean dump(ReadBuffer readBuffer, PrintStream out, int depth) {
+    try {
+      out.append(" type: ").append(getClass().getSimpleName());
+      out.append(" name: ").append(name());
+      T decoded = decode(readBuffer);
+      out.append(" decoded: [").append(decoded == null ? null : decoded.toString()).append("]");
+      return true;
+    } catch (RunnelDecodingException e) {
+      return DecodingErrorUtil.write(out, e);
+    }
   }
 
 }

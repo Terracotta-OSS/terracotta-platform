@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.CorruptDataException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
@@ -28,7 +29,7 @@ public class BoolField extends AbstractValueField<Boolean> {
   }
 
   @Override
-  public Boolean decode(ReadBuffer readBuffer) {
+  public Boolean decode(ReadBuffer readBuffer) throws RunnelDecodingException {
     int size = readBuffer.getVlqInt();
     if (size != 1) {
       throw new CorruptDataException("Expected field size of 1, read : " + size);

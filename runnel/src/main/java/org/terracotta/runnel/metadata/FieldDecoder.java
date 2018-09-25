@@ -16,6 +16,7 @@
 package org.terracotta.runnel.metadata;
 
 import org.terracotta.runnel.decoding.ArrayDecoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.ArrayField;
@@ -39,7 +40,7 @@ public class FieldDecoder {
     this.readBuffer = readBuffer;
   }
 
-  public <P> StructArrayDecoder<P> decodeStructArray(String name, P parent) {
+  public <P> StructArrayDecoder<P> decodeStructArray(String name, P parent) throws RunnelDecodingException {
     ArrayField field = nextField(name, ArrayField.class, StructField.class);
     if (field == null) {
       return null;
@@ -47,7 +48,7 @@ public class FieldDecoder {
     return new StructArrayDecoder<P>(((StructField) field.subField()), readBuffer, parent);
   }
 
-  public <P> StructDecoder<P> decodeStruct(String name, P parent) {
+  public <P> StructDecoder<P> decodeStruct(String name, P parent) throws RunnelDecodingException {
     StructField field = nextField(name, StructField.class, null);
     if (field == null) {
       return null;
@@ -55,7 +56,7 @@ public class FieldDecoder {
     return new StructDecoder<P>(field, readBuffer, parent);
   }
 
-  public <T, P> ArrayDecoder<T, P> decodeValueArray(String name, Class<? extends ValueField<T>> clazz, P parent) {
+  public <T, P> ArrayDecoder<T, P> decodeValueArray(String name, Class<? extends ValueField<T>> clazz, P parent) throws RunnelDecodingException {
     ArrayField field = nextField(name, ArrayField.class, clazz);
     if (field == null) {
       return null;
@@ -63,7 +64,7 @@ public class FieldDecoder {
     return new ArrayDecoder<T, P>((ValueField<T>) field.subField(), readBuffer, parent);
   }
 
-  public <T> T decodeValue(String name, Class<? extends ValueField<T>> clazz) {
+  public <T> T decodeValue(String name, Class<? extends ValueField<T>> clazz) throws RunnelDecodingException {
     ValueField<T> field = nextField(name, clazz, null);
     if (field == null) {
       return null;
@@ -71,7 +72,7 @@ public class FieldDecoder {
     return field.decode(readBuffer);
   }
 
-  private  <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
+  private  <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) throws RunnelDecodingException {
     Field field = findFieldWithIndex(name, fieldClazz, subFieldClazz);
     if (readBuffer.limitReached()) {
       return null;

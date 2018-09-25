@@ -23,8 +23,10 @@ import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.lease.service.LeaseResult;
 import org.terracotta.lease.service.LeaseService;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,7 +106,12 @@ class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, LeaseRespo
   @Override
   public ActiveServerEntity.ReconnectHandler startReconnect() {
     return (ClientDescriptor clientDescriptor, byte[] bytes)->{
-      LeaseReconnectData reconnectData = LeaseReconnectData.decode(bytes);
+      LeaseReconnectData reconnectData;
+      try {
+        reconnectData = LeaseReconnectData.decode(bytes);
+      } catch (RunnelDecodingException e) {
+        throw new ReconnectRejectedException(e.getMessage(), e);
+      }
 
       long connectionSequenceNumber = reconnectData.getConnectionSequenceNumber();
       connectionSequenceNumbers.put(clientDescriptor, connectionSequenceNumber);

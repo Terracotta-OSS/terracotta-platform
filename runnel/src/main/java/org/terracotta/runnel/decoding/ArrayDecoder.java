@@ -17,18 +17,23 @@ package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.decoding.fields.ValueField;
 import org.terracotta.runnel.utils.ReadBuffer;
+import org.terracotta.runnel.utils.RunnelDecodingException;
+
+import java.util.NoSuchElementException;
 
 /**
  * @author Ludovic Orban
  */
-public class ArrayDecoder<T, P> {
+public class ArrayDecoder<T, P> implements DecodingIterator<T> {
 
   private final ValueField<T> arrayedField;
   private final ReadBuffer readBuffer;
   private final P parent;
   private final int length;
 
-  public ArrayDecoder(ValueField<T> arrayedField, ReadBuffer readBuffer, P parent) {
+  private int count = 0;
+
+  public ArrayDecoder(ValueField<T> arrayedField, ReadBuffer readBuffer, P parent) throws RunnelDecodingException {
     this.arrayedField = arrayedField;
     this.parent = parent;
     int size = readBuffer.getVlqInt();
@@ -37,11 +42,19 @@ public class ArrayDecoder<T, P> {
     this.length = readBuffer.getVlqInt();
   }
 
-  public int length() {
-    return length;
+  @Override
+  public boolean hasNext() {
+    return count < length;
   }
 
-  public T value() {
+  @Override
+  public T next() throws RunnelDecodingException {
+    if (count >= length) {
+      throw new NoSuchElementException();
+    }
+
+    count++;
+
     return arrayedField.decode(readBuffer);
   }
 

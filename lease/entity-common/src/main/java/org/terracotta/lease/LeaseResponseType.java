@@ -16,11 +16,12 @@
 package org.terracotta.lease;
 
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 public enum LeaseResponseType {
   LEASE_REQUEST_RESULT(new LeaseResponseDecoder() {
     @Override
-    public LeaseResponse decode(StructDecoder<Void> parentDecoder) {
+    public LeaseResponse decode(StructDecoder<Void> parentDecoder) throws RunnelDecodingException {
       return LeaseRequestResult.decode(parentDecoder);
     }
   }),
@@ -43,7 +44,7 @@ public enum LeaseResponseType {
     this.leaseResponseDecoder = leaseResponseDecoder;
   }
 
-  public LeaseResponse decode(StructDecoder<Void> decoder) {
+  public LeaseResponse decode(StructDecoder<Void> decoder) throws RunnelDecodingException {
     return leaseResponseDecoder.decode(decoder);
   }
 }

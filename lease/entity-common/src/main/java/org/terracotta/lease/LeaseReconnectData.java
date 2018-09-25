@@ -19,6 +19,7 @@ import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 
 import java.nio.ByteBuffer;
 
@@ -47,9 +48,9 @@ public class LeaseReconnectData {
     return encoder.encode().array();
   }
 
-  public static LeaseReconnectData decode(byte[] bytes) {
+  public static LeaseReconnectData decode(byte[] bytes) throws RunnelDecodingException {
     StructDecoder<Void> decoder = reconnectStruct.decoder(ByteBuffer.wrap(bytes));
-    long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
+    long connectionSequenceNumber = decoder.mandatoryInt64("connectionSequenceNumber");
     return new LeaseReconnectData(connectionSequenceNumber);
   }
 }

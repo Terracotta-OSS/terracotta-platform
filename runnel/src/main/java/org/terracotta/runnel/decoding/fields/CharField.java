@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.decoding.fields;
 
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.utils.CorruptDataException;
 import org.terracotta.runnel.utils.ReadBuffer;
 
@@ -28,7 +29,7 @@ public class CharField extends AbstractValueField<Character> {
   }
 
   @Override
-  public Character decode(ReadBuffer readBuffer) {
+  public Character decode(ReadBuffer readBuffer) throws RunnelDecodingException {
     int size = readBuffer.getVlqInt();
     if (size != 2) {
       throw new CorruptDataException("Expected field size of 2, read : " + size);

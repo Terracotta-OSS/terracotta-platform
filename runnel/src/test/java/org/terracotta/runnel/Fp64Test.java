@@ -53,16 +53,27 @@ public class Fp64Test {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    assertThat(decoder.fp64("x"), is(-1.0));
-    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.fp64s("y");
-    assertThat(ad.length(), is(5));
-    assertThat(ad.value(), is(1.0));
-    assertThat(ad.value(), is(-0.123));
-    assertThat(ad.value(), is(Double.NaN));
-    assertThat(ad.value(), is(Double.NEGATIVE_INFINITY));
-    assertThat(ad.value(), is(Double.POSITIVE_INFINITY));
+    assertThat(decoder.mandatoryFp64("x"), is(-1.0));
+    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.mandatoryFp64s("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(1.0));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-0.123));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(Double.NaN));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(Double.NEGATIVE_INFINITY));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(Double.POSITIVE_INFINITY));
+
+    assertThat(ad.hasNext(), is(false));
     ad.end();
-    assertThat(decoder.fp64("z"), is(2.0));
+    assertThat(decoder.mandatoryFp64("z"), is(2.0));
   }
 
   @Test
@@ -89,13 +100,20 @@ public class Fp64Test {
 
     StructDecoder<Void> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.fp64s("y");
-    assertThat(ad.length(), is(5));
-    assertThat(ad.value(), is(1.0));
-    assertThat(ad.value(), is(-0.123));
-    assertThat(ad.value(), is(Double.NaN));
+    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.mandatoryFp64s("y");
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(1.0));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(-0.123));
+
+    assertThat(ad.hasNext(), is(true));
+    assertThat(ad.next(), is(Double.NaN));
+
+    assertThat(ad.hasNext(), is(true));
     ad.end();
-    assertThat(decoder.fp64("z"), is(2.0));
+    assertThat(decoder.mandatoryFp64("z"), is(2.0));
   }
 
 }

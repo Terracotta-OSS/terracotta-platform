@@ -23,8 +23,8 @@ import org.terracotta.runnel.encoding.StructEncoderFunction;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -45,7 +45,7 @@ public class StructStructBuilderTest {
       .build();
 
   @Test(expected = IllegalStateException.class)
-  public void testCannotEncodeNonRoot() throws Exception {
+  public void testCannotEncodeNonRoot() {
     struct.encoder()
         .struct("mapEntry")
           .string("key", "1")
@@ -68,21 +68,21 @@ public class StructStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
 
-    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
-    assertThat(d2.string("key"), is("1"));
-    assertThat(d2.string("value"), is("one"));
+    StructDecoder<StructDecoder<Void>> d2 = decoder.mandatoryStruct("mapEntry");
+    assertThat(d2.mandatoryString("key"), is("1"));
+    assertThat(d2.mandatoryString("value"), is("one"));
     decoder = d2.end();
 
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
   public void testReadAll_withLambda() throws Exception {
     ByteBuffer bb = struct.encoder()
         .string("name", "joe")
-        .struct("mapEntry", new AbstractMap.SimpleEntry<String, String>("1", "one"), new StructEncoderFunction<Map.Entry<String, String>>() {
+        .struct("mapEntry", new AbstractMap.SimpleEntry<>("1", "one"), new StructEncoderFunction<Map.Entry<String, String>>() {
           @Override
           public void encode(StructEncoder<?> encoder, Map.Entry<String, String> entry) {
             encoder.string("key", entry.getKey())
@@ -96,14 +96,14 @@ public class StructStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
 
-    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
-    assertThat(d2.string("key"), is("1"));
-    assertThat(d2.string("value"), is("one"));
+    StructDecoder<StructDecoder<Void>> d2 = decoder.mandatoryStruct("mapEntry");
+    assertThat(d2.mandatoryString("key"), is("1"));
+    assertThat(d2.mandatoryString("value"), is("one"));
     decoder = d2.end();
 
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
@@ -121,7 +121,7 @@ public class StructStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
@@ -139,12 +139,12 @@ public class StructStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
-    assertThat(d2.string("key"), is("1"));
-    assertThat(d2.string("value"), is("one"));
+    StructDecoder<StructDecoder<Void>> d2 = decoder.mandatoryStruct("mapEntry");
+    assertThat(d2.mandatoryString("key"), is("1"));
+    assertThat(d2.mandatoryString("value"), is("one"));
     decoder = d2.end();
 
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
@@ -162,12 +162,12 @@ public class StructStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
 
-    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
+    StructDecoder<StructDecoder<Void>> d2 = decoder.mandatoryStruct("mapEntry");
     decoder = d2.end();
 
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
@@ -185,13 +185,13 @@ public class StructStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
 
-    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
-    assertThat(d2.string("value"), is("one"));
+    StructDecoder<StructDecoder<Void>> d2 = decoder.mandatoryStruct("mapEntry");
+    assertThat(d2.mandatoryString("value"), is("one"));
     decoder = d2.end();
 
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
@@ -209,13 +209,13 @@ public class StructStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
 
-    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
-    assertThat(d2.string("key"), is("1"));
+    StructDecoder<StructDecoder<Void>> d2 = decoder.mandatoryStruct("mapEntry");
+    assertThat(d2.mandatoryString("key"), is("1"));
     decoder = d2.end();
 
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
@@ -233,8 +233,8 @@ public class StructStructBuilderTest {
 
     StructDecoder decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
   @Test
@@ -251,12 +251,12 @@ public class StructStructBuilderTest {
 
     StructDecoder<Void> decoder = struct.decoder(bb);
 
-    assertThat(decoder.string("name"), is("joe"));
-    StructDecoder<StructDecoder<Void>> d2 = decoder.struct("mapEntry");
-    assertThat(d2.string("key"), is(nullValue()));
-    assertThat(d2.string("value"), is("one"));
+    assertThat(decoder.mandatoryString("name"), is("joe"));
+    StructDecoder<StructDecoder<Void>> d2 = decoder.mandatoryStruct("mapEntry");
+    assertThat(d2.optionalString("key"), is(Optional.empty()));
+    assertThat(d2.mandatoryString("value"), is("one"));
     decoder = d2.end();
-    assertThat(decoder.int64("id"), is(999L));
+    assertThat(decoder.mandatoryInt64("id"), is(999L));
   }
 
 }

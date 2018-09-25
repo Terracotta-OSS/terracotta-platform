@@ -15,6 +15,8 @@
  */
 package org.terracotta.runnel;
 
+import org.terracotta.runnel.utils.DecodingErrorUtil;
+import org.terracotta.runnel.utils.RunnelDecodingException;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.StructField;
@@ -60,7 +62,7 @@ public class Struct {
    * @param byteBuffer the byte buffer containing the data to be decoded.
    * @return the decoder.
    */
-  public StructDecoder<Void> decoder(ByteBuffer byteBuffer) {
+  public StructDecoder<Void> decoder(ByteBuffer byteBuffer) throws RunnelDecodingException {
     root.checkFullyInitialized();
     return new StructDecoder<Void>(root, new ReadBuffer(byteBuffer));
   }
@@ -70,30 +72,39 @@ public class Struct {
    * Note: this method is thread-safe.
    * @param byteBuffer the byte buffer containing the data to be dumped.
    * @param out the print stream to print to.
+   * @return true if the dump completed without error
    */
-  public void dump(ByteBuffer byteBuffer, PrintStream out) {
-    root.checkFullyInitialized();
-    Map<Integer, Field> fieldsByInteger = root.getMetadata().buildFieldsByIndexMap();
+  public boolean dump(ByteBuffer byteBuffer, PrintStream out) {
+    try {
+      root.checkFullyInitialized();
+      Map<Integer, Field> fieldsByInteger = root.getMetadata().buildFieldsByIndexMap();
 
-    ReadBuffer readBuffer = new ReadBuffer(byteBuffer);
-    int totalSize = readBuffer.getVlqInt();
-    readBuffer = readBuffer.limit(totalSize);
+      ReadBuffer readBuffer = new ReadBuffer(byteBuffer);
+      int totalSize = readBuffer.getVlqInt();
+      readBuffer = readBuffer.limit(totalSize);
 
-    while (!readBuffer.limitReached()) {
-      int index = readBuffer.getVlqInt();
-      out.append("index: ").append(Integer.toString(index));
-      Field field = fieldsByInteger.get(index);
-      if (field != null) {
-        field.dump(readBuffer, out, 0);
-      } else {
-        int fieldSize = readBuffer.getVlqInt();
-        out.append(" size: ").append(Integer.toString(fieldSize));
-        ReadBuffer fieldReadBuffer = readBuffer.limit(fieldSize);
+      while (!readBuffer.limitReached()) {
+        int index = readBuffer.getVlqInt();
+        out.append("index: ").append(Integer.toString(index));
+        Field field = fieldsByInteger.get(index);
+        if (field != null) {
+          if (!field.dump(readBuffer, out, 0)) {
+            return false;
+          }
+        } else {
+          int fieldSize = readBuffer.getVlqInt();
+          out.append(" size: ").append(Integer.toString(fieldSize));
+          ReadBuffer fieldReadBuffer = readBuffer.limit(fieldSize);
 
-        out.append(" type: ???");
-        fieldReadBuffer.skipAll();
+          out.append(" type: ???");
+          fieldReadBuffer.skipAll();
+        }
+        out.append("\n");
       }
-      out.append("\n");
+
+      return true;
+    } catch (RunnelDecodingException e) {
+      return DecodingErrorUtil.write(out, e);
     }
   }
 

@@ -23,9 +23,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -80,9 +80,9 @@ public class VersionCompatibilityTest {
     encoded_v2.rewind();
     StructDecoder decoder_v1 = STRUCT_V1.decoder(encoded_v2);
 
-    assertThat(decoder_v1.int32("age"), is(30));
-    assertThat(decoder_v1.int64("id"), is(1234L));
-    Enm<TestEnum_v1> letter = decoder_v1.enm("letter");
+    assertThat(decoder_v1.mandatoryInt32("age"), is(30));
+    assertThat(decoder_v1.mandatoryInt64("id"), is(1234L));
+    Enm<TestEnum_v1> letter = decoder_v1.optionalEnm("letter");
     try {
       letter.get();
       fail();
@@ -108,10 +108,10 @@ public class VersionCompatibilityTest {
     encoded_v1.rewind();
     StructDecoder decoder_v2 = STRUCT_V2.decoder(encoded_v1);
 
-    assertThat(decoder_v2.int32("age"), is(30));
-    assertThat(decoder_v2.string("name"), is(nullValue()));
-    assertThat(decoder_v2.int64("id"), is(1234L));
-    Enm<TestEnum_v1> letter = decoder_v2.enm("letter");
+    assertThat(decoder_v2.mandatoryInt32("age"), is(30));
+    assertThat(decoder_v2.optionalString("name"), is(Optional.empty()));
+    assertThat(decoder_v2.mandatoryInt64("id"), is(1234L));
+    Enm<TestEnum_v1> letter = decoder_v2.optionalEnm("letter");
     try {
       letter.get();
       fail();
@@ -122,7 +122,7 @@ public class VersionCompatibilityTest {
     assertThat(letter.isFound(), is(true));
     assertThat(letter.raw(), is(20));
 
-    Enm<Object> secondLetter = decoder_v2.enm("2ndLetter");
+    Enm<Object> secondLetter = decoder_v2.optionalEnm("2ndLetter");
     try {
       secondLetter.get();
       fail();
