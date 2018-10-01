@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
 pool:
   vmImage: 'Ubuntu 16.04'
 
 steps:
+- bash: |
+   curl -s https://raw.githubusercontent.com/Terracotta-OSS/cloud-tools/master/azure/init.sh?junk=$(date +%s) | bash      
+  displayName: 'Bash Script'
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
