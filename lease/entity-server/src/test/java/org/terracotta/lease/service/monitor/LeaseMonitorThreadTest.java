@@ -48,8 +48,8 @@ public class LeaseMonitorThreadTest {
 
     timeSource.tickMillis(200L);
 
-    verify(timeSource, timeout(20_000L).times(2)).sleep(200L);
-    verify(leaseState, times(2)).checkLeases();
+    verify(timeSource, timeout(10_000L).times(1)).sleep(200L);
+    verify(leaseState, times(1)).checkLeases();
 
     leaseMonitorThread.interrupt();
     leaseMonitorThread.join(10_000L);
