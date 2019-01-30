@@ -99,4 +99,46 @@ public class OffHeapResourceTest {
     offHeapResource.reserve(4); // Does print an info log statement
     offHeapResource.reserve(1); // Does print a warn log statement
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSetCapacityNegative() {
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20L);
+    ohr.setCapacity(-1L);
+  }
+
+  @Test
+  public void testSetCapacityBigger() {
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20L);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(30L), is(true));
+    assertThat(ohr.capacity(), is(30L));
+    assertThat(ohr.available(), is(16L));
+  }
+
+  @Test
+  public void testSetCapacitySmaller() {
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20L);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(16L), is(true));
+    assertThat(ohr.capacity(), is(16L));
+    assertThat(ohr.available(), is(2L));
+  }
+
+  @Test
+  public void testSetCapacityToReserved() {
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20L);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(14L), is(true));
+    assertThat(ohr.capacity(), is(14L));
+    assertThat(ohr.available(), is(0L));
+  }
+
+  @Test
+  public void testSetCapacityTooSmall() {
+    OffHeapResource ohr = new OffHeapResourceImpl(identifier, 20L);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(13L), is(false));
+    assertThat(ohr.capacity(), is(20L));
+    assertThat(ohr.available(), is(6L));
+  }
 }

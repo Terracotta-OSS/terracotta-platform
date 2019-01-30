@@ -59,4 +59,14 @@ public interface OffHeapResource {
    * @return the resource initial capacity
    */
   long capacity();
+
+  /**
+   * Set the capacity of this resource to a new value. The new value must be at
+   * least as much as is currently reserved.
+   *
+   * @param size new capacity for the offheap resource
+   * @return {code true} if the capacity was changed
+   * @throws IllegalArgumentException if the new capacity is negative
+   */
+  boolean setCapacity(long size) throws IllegalArgumentException;
 }
