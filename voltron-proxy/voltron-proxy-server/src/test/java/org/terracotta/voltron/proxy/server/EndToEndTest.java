@@ -41,6 +41,8 @@ import org.terracotta.voltron.proxy.client.ServerMessageAware;
 import java.io.Serializable;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -84,7 +86,7 @@ public class EndToEndTest {
   }
 
   @Test
-  public void testServerInitiatedMessageFiring() throws ExecutionException, InterruptedException {
+  public void testServerInitiatedMessageFiring() throws ExecutionException, InterruptedException, TimeoutException {
     final SerializationCodec codec = new SerializationCodec();
     final AtomicReference<EndpointDelegate> delegate = new AtomicReference<EndpointDelegate>();
     final ProxyMessageCodec messageCodec = new ProxyMessageCodec(Comparable.class, new Class[] {String.class});
@@ -138,11 +140,11 @@ public class EndToEndTest {
     };
 
     final ComparableEntity proxy = ClientProxyFactory.createEntityProxy(ComparableEntity.class, Comparable.class, endpoint, new Class[]{String.class}, codec);
-    final AtomicReference<String> messageReceived = new AtomicReference<String>();
+    final CompletableFuture<String> messageReceived = new CompletableFuture<>();
     proxy.registerMessageListener(String.class, new MessageListener<String>() {
       @Override
       public void onMessage(final String message) {
-        messageReceived.set(message);
+        messageReceived.complete(message);
       }
     });
     final String message = "Hello world!";
@@ -151,7 +153,7 @@ public class EndToEndTest {
     proxyInvoker.addClient(fakeClient);
     proxyInvoker.fireMessage(String.class, message, false);
 
-    assertThat(messageReceived.get(), equalTo(message));
+    assertThat(messageReceived.get(5, TimeUnit.SECONDS), equalTo(message));
   }
 
   @Test

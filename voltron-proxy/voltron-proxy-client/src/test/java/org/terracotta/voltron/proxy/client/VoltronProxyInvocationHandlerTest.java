@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
@@ -59,6 +60,7 @@ public class VoltronProxyInvocationHandlerTest {
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
+    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(ProxyEntityResponse.messageResponse(Void.TYPE, null));

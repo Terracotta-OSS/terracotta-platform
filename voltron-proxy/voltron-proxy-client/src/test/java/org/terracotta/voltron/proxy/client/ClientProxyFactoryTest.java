@@ -29,6 +29,7 @@ import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.SerializationCodec;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -66,6 +67,7 @@ public class ClientProxyFactoryTest {
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
+    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
     when(future.get()).thenReturn(messageResponse(Integer.class, 42));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, null, codec);
@@ -85,6 +87,7 @@ public class ClientProxyFactoryTest {
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
+    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(messageResponse(Integer.class, 42));
@@ -109,6 +112,7 @@ public class ClientProxyFactoryTest {
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
     when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
+    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(messageResponse(Integer.class, 42));

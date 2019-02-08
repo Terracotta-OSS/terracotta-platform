@@ -18,7 +18,6 @@ package org.terracotta.voltron.proxy.client;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
@@ -37,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -62,12 +63,16 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   }
 
   private final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint;
+  private final ExecutorService handler;
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
 
   private volatile EndpointListener endpointListener;
-
+  
   VoltronProxyInvocationHandler(final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, Collection<Class<?>> events, final Codec codec) {
     this.entityClientEndpoint = entityClientEndpoint;
+    handler = Executors.newSingleThreadExecutor(r->{
+      return new Thread(r, "Message Handler for " + entityClientEndpoint);
+    });
     this.listeners = new ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<MessageListener>>();
     if (events.size() > 0) {
       for (Class<?> aClass : events) {
@@ -79,10 +84,12 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         @SuppressWarnings("unchecked")
         @Override
         public void handleMessage(ProxyEntityResponse response) {
+          handler.execute(()->{
           final Class<?> aClass = response.getResponseType();
           for (MessageListener messageListener : listeners.get(aClass)) {
             messageListener.onMessage(response.getResponse());
           }
+          });
         }
 
         @Override
@@ -103,6 +110,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
           if (endpointListener != null) {
             endpointListener.onDisconnectUnexpectedly();
           }
+          handler.shutdownNow();
         }
       });
     }
@@ -112,6 +120,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
 
     if (close.equals(method)) {
+      handler.shutdown();
       entityClientEndpoint.close();
       return null;
 
@@ -133,7 +142,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
 
     final InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> builder = entityClientEndpoint.beginInvoke()
-        .message(new ProxyEntityMessage(methodDescriptor, args, MessageType.MESSAGE));
+        .message(new ProxyEntityMessage(methodDescriptor, args, MessageType.MESSAGE)).withExecutor(handler);
 
     if (methodDescriptor.isAsync()) {
       switch (methodDescriptor.getAck()) {

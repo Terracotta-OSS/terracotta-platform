@@ -96,8 +96,11 @@ public class CacheEntityFeaturesTest extends AbstractTest {
       size = size(0, "clients");
     }
     assertThat(size, equalTo(0));
-
-    assertThat(size(1, "clients"), equalTo(0));
+    size = size(1, "clients");
+    while (size != 0 && !Thread.currentThread().isInterrupted()) {
+      size = size(1, "clients");
+    }
+    assertThat(size, equalTo(0));
 
     assertThat(get(0, "clients", "client1"), is(nullValue()));
     assertThat(get(1, "clients", "client1"), is(nullValue()));
