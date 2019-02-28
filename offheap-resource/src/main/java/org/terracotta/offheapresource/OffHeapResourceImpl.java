@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
 /**
@@ -61,33 +61,54 @@ class OffHeapResourceImpl implements OffHeapResource {
     }
   }
 
-  private final AtomicLong remaining;
-  private final long capacity;
+  private final AtomicReference<OffHeapResourceState> state;
   private final String identifier;
   private final BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached;
+  private final CapacityChangeHandler onCapacityChanged;
   private final OffHeapResourceBinding managementBinding;
   private final AtomicInteger threshold = new AtomicInteger();
 
   /**
    * Creates a resource of the given initial size.
    *
+   * @param identifier
+   * @param size size of the resource
+   * @param onReservationThresholdReached event consumer - will receive events regarding usage thresholds
+   * @param onCapacityChanged event consumer - will receive an event when the capacity changes
+   * @throws IllegalArgumentException if the size is negative
+   */
+  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached, CapacityChangeHandler onCapacityChanged) throws IllegalArgumentException {
+    this.onReservationThresholdReached = onReservationThresholdReached;
+    this.onCapacityChanged = onCapacityChanged;
+    this.managementBinding = new OffHeapResourceBinding(identifier, this);
+    if (size < 0) {
+      throw new IllegalArgumentException("Resource size cannot be negative");
+    }
+
+    this.state = new AtomicReference<>(new OffHeapResourceState(size));
+    this.identifier = identifier;
+  }
+
+  /**
+   * Creates a resource of the given initial size.
+   *
+   * @param identifier
+   * @param size size of the resource
+   * @param onReservationThresholdReached event consumer - will receive events regarding usage thresholds
+   * @throws IllegalArgumentException if the size is negative
+   */
+  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached) throws IllegalArgumentException {
+    this(identifier, size, onReservationThresholdReached, (r, o, n) -> {});
+  }
+
+
+  /**
+   * Creates a resource of the given initial size.
    *
    * @param identifier
    * @param size size of the resource
    * @throws IllegalArgumentException if the size is negative
    */
-  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached) throws IllegalArgumentException {
-    this.onReservationThresholdReached = onReservationThresholdReached;
-    this.managementBinding = new OffHeapResourceBinding(identifier, this);
-    if (size < 0) {
-      throw new IllegalArgumentException("Resource size cannot be negative");
-    } else {
-      this.capacity = size;
-      this.remaining = new AtomicLong(size);
-      this.identifier = identifier;
-    }
-  }
-
   OffHeapResourceImpl(String identifier, long size) throws IllegalArgumentException {
     this(identifier, size, (r, p) -> {});
   }
@@ -104,23 +125,32 @@ class OffHeapResourceImpl implements OffHeapResource {
   public boolean reserve(long size) throws IllegalArgumentException {
     if (size < 0) {
       throw new IllegalArgumentException("Reservation size cannot be negative");
-    } else {
-      for (long current = remaining.get(); current >= size; current = remaining.get()) {
-        if (remaining.compareAndSet(current, current - size)) {
-          remainingUpdated(current - size);
-          return true;
-        }
+    }
+
+    while (true) {
+      OffHeapResourceState currentState = state.get();
+      OffHeapResourceState newState = currentState.reserve(size);
+
+      if (newState.isOverflowed()) {
+        return false;
       }
-      return false;
+
+      if (state.compareAndSet(currentState, newState)) {
+        stateUpdated(newState);
+        return true;
+      }
     }
   }
 
-  private void remainingUpdated(long remaining) {
-    long percentOccupied = (capacity - remaining) * 100 / capacity;
+  private void stateUpdated(OffHeapResourceState newState) {
+    long capacity = newState.getCapacity();
+    long used = newState.getUsed();
+
+    long percentOccupied = (used * 100L) / capacity;
     int newT, curT = threshold.get();
-    if (percentOccupied >= 90) {
+    if (percentOccupied >= 90L) {
       newT = 90;
-    } else if (percentOccupied >= 75) {
+    } else if (percentOccupied >= 75L) {
       newT = 75;
     } else {
       newT = 0;
@@ -152,9 +182,16 @@ class OffHeapResourceImpl implements OffHeapResource {
   public void release(long size) throws IllegalArgumentException {
     if (size < 0) {
       throw new IllegalArgumentException("Released size cannot be negative");
-    } else {
-      long remaining = this.remaining.addAndGet(size);
-      remainingUpdated(remaining);
+    }
+
+    while (true) {
+      OffHeapResourceState currentState = state.get();
+      OffHeapResourceState newState = currentState.release(size);
+
+      if (state.compareAndSet(currentState, newState)) {
+        stateUpdated(newState);
+        return;
+      }
     }
   }
 
@@ -163,12 +200,34 @@ class OffHeapResourceImpl implements OffHeapResource {
    */
   @Override
   public long available() {
-    return remaining.get();
+    return state.get().getRemaining();
   }
 
   @Override
   public long capacity() {
-    return capacity;
+    return state.get().getCapacity();
+  }
+
+  @Override
+  public boolean setCapacity(long size) throws IllegalArgumentException {
+    if (size < 0) {
+      throw new IllegalArgumentException("New capacity size cannot be negative");
+    }
+
+    while (true) {
+      OffHeapResourceState currentState = state.get();
+      OffHeapResourceState newState = currentState.withCapacity(size);
+
+      if (newState.isOverflowed()) {
+        return false;
+      }
+
+      if (state.compareAndSet(currentState, newState)) {
+        onCapacityChanged.onCapacityChanged(this, currentState.getCapacity(), newState.getCapacity());
+        stateUpdated(newState);
+        return true;
+      }
+    }
   }
   
   static class ThresholdChange {
@@ -178,6 +237,49 @@ class OffHeapResourceImpl implements OffHeapResource {
     ThresholdChange(int old, int now) {
       this.old = old;
       this.now = now;
+    }
+  }
+
+  private static class OffHeapResourceState {
+    private final long capacity;
+    private final long used;
+
+    public OffHeapResourceState(long capacity) {
+      this.capacity = capacity;
+      this.used = 0;
+    }
+
+    private OffHeapResourceState(long capacity, long used) {
+      this.capacity = capacity;
+      this.used = used;
+    }
+
+    public long getCapacity() {
+      return capacity;
+    }
+
+    public long getUsed() {
+      return used;
+    }
+
+    public long getRemaining() {
+      return capacity - used;
+    }
+
+    public boolean isOverflowed() {
+      return used > capacity;
+    }
+
+    public OffHeapResourceState reserve(long size) {
+      return new OffHeapResourceState(capacity, used + size);
+    }
+
+    public OffHeapResourceState release(long size) {
+      return new OffHeapResourceState(capacity, used - size);
+    }
+
+    public OffHeapResourceState withCapacity(long newCapacity) {
+      return new OffHeapResourceState(newCapacity, used);
     }
   }
 }

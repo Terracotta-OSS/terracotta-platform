@@ -18,9 +18,23 @@ package org.terracotta.offheapresource;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import org.junit.Test;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.function.BiConsumer;
+
+@RunWith(MockitoJUnitRunner.class)
 public class OffHeapResourceTest {
+  @Mock
+  private BiConsumer<OffHeapResourceImpl, OffHeapResourceImpl.ThresholdChange> onThresholdChange;
+
+  @Mock
+  private CapacityChangeHandler onCapacityChange;
 
   private String identifier = "id";
 
@@ -98,5 +112,52 @@ public class OffHeapResourceTest {
     offHeapResource.reserve(4); // Does not print a log statement
     offHeapResource.reserve(4); // Does print an info log statement
     offHeapResource.reserve(1); // Does print a warn log statement
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSetCapacityNegative() {
+    OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 20L, onThresholdChange, onCapacityChange);
+    ohr.setCapacity(-1L);
+    verifyNoMoreInteractions(onCapacityChange);
+  }
+
+  @Test
+  public void testSetCapacityBigger() {
+    OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 20L, onThresholdChange, onCapacityChange);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(30L), is(true));
+    assertThat(ohr.capacity(), is(30L));
+    assertThat(ohr.available(), is(16L));
+    verify(onCapacityChange).onCapacityChanged(ohr, 20L, 30L);
+  }
+
+  @Test
+  public void testSetCapacitySmaller() {
+    OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 20L, onThresholdChange, onCapacityChange);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(16L), is(true));
+    assertThat(ohr.capacity(), is(16L));
+    assertThat(ohr.available(), is(2L));
+    verify(onCapacityChange).onCapacityChanged(ohr, 20L, 16L);
+  }
+
+  @Test
+  public void testSetCapacityToReserved() {
+    OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 20L, onThresholdChange, onCapacityChange);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(14L), is(true));
+    assertThat(ohr.capacity(), is(14L));
+    assertThat(ohr.available(), is(0L));
+    verify(onCapacityChange).onCapacityChanged(ohr, 20L, 14L);
+  }
+
+  @Test
+  public void testSetCapacityTooSmall() {
+    OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 20L, onThresholdChange, onCapacityChange);
+    ohr.reserve(14L);
+    assertThat(ohr.setCapacity(13L), is(false));
+    assertThat(ohr.capacity(), is(20L));
+    assertThat(ohr.available(), is(6L));
+    verifyNoMoreInteractions(onCapacityChange);
   }
 }

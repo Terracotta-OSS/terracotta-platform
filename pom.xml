@@ -288,7 +288,7 @@
   <repositories>
     <repository>
       <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
 
