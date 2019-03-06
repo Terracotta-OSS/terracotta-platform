@@ -26,6 +26,8 @@ import org.terracotta.exception.ConnectionClosedException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -53,13 +55,13 @@ public class LeaseMaintenanceThreadTest {
     assertTrue(leaseMaintenanceThread.isDaemon());
     leaseMaintenanceThread.start();
 
-    verify(timeSource, timeout(1000L).times(1)).sleep(2000L);
+    verify(timeSource, timeout(2000L).times(1)).sleep(eq(2000L));
     verify(leaseMaintainer, times(1)).refreshLease();
-
+    
     timeSource.tickMillis(2000L);
 
-    verify(timeSource, timeout(1000L).times(2)).sleep(2000L);
-    verify(leaseMaintainer, times(2)).refreshLease();
+    verify(timeSource, timeout(2000L).atLeast(2)).sleep(eq(2000L));
+    verify(leaseMaintainer, atLeast(2)).refreshLease();
   }
 
   @Test
