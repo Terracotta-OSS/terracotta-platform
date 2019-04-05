@@ -42,4 +42,16 @@ public class OOOMessageHandlerProviderTest {
     provider.getService(1L, mock(ServiceConfiguration.class));
   }
 
+  @Test
+  public void testDestroyCallback() {
+    OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
+    OOOMessageHandlerConfiguration config = new OOOMessageHandlerConfiguration("foo", mock(TrackerPolicy.class));
+    OOOMessageHandler messageHandler = provider.getService(1L, config);
+
+    messageHandler.destroy();
+
+    OOOMessageHandler another = provider.getService(1L, config);
+    assertNotSame(another, messageHandler);
+  }
+
 }

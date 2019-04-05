@@ -42,7 +42,7 @@ public class OOOMessageHandlerProvider implements ServiceProvider {
     if (serviceConfiguration instanceof OOOMessageHandlerConfiguration) {
       OOOMessageHandlerConfiguration cmtServiceConfiguration = (OOOMessageHandlerConfiguration) serviceConfiguration;
       OOOMessageHandler messageHandler = serviceMap.computeIfAbsent(cmtServiceConfiguration.getEntityIdentifier(),
-          id -> new OOOMessageHandlerImpl(cmtServiceConfiguration.getTrackerPolicy()));
+          id -> new OOOMessageHandlerImpl(cmtServiceConfiguration.getTrackerPolicy(), () -> serviceMap.remove(id)));
       return serviceConfiguration.getServiceType().cast(messageHandler);
     }
     throw new IllegalArgumentException("Unexpected configuration type: " + serviceConfiguration);

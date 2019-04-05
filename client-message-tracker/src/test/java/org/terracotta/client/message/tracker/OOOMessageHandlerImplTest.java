@@ -41,7 +41,7 @@ public class OOOMessageHandlerImplTest {
   public void testInvokeCachesResponse() throws Exception {
     trackerPolicy = mock(TrackerPolicy.class);
     when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(true); //Messages are trackable
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy, () -> {});
 
     InvokeContext context = new DummyContext(new DummyClientDescriptor(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
@@ -59,7 +59,7 @@ public class OOOMessageHandlerImplTest {
   public void testInvokeDoesNotCacheUntrackableResponse() throws Exception {
     trackerPolicy = mock(TrackerPolicy.class);
     when(trackerPolicy.trackable(any(EntityMessage.class))).thenReturn(false);  //Messages are untrackable
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy);
+    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy, () -> {});
 
     InvokeContext context = new DummyContext(new DummyClientDescriptor(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);

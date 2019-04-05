@@ -47,4 +47,19 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    * @param clientDescriptor the client descriptor of the disconnected client
    */
   void untrackClient(ClientDescriptor clientDescriptor);
+
+  /**
+   * Destroys the {@code OOOMessageHandler}
+   */
+  void destroy();
+
+  /**
+   * Callback to be called when the handler is destroyed.
+   */
+  interface DestroyCallback {
+    /**
+     * The cleanup action required to be done on destruction
+     */
+    void destroy();
+  }
 }

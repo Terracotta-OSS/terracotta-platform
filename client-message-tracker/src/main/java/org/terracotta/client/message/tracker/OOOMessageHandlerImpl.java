@@ -27,9 +27,11 @@ import java.util.function.BiFunction;
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
 
   private final ClientMessageTracker<M, R> clientMessageTracker;
+  private final DestroyCallback callback;
 
-  public OOOMessageHandlerImpl(TrackerPolicy policy) {
+  public OOOMessageHandlerImpl(TrackerPolicy policy, DestroyCallback callback) {
     this.clientMessageTracker = new ClientMessageTrackerImpl(policy);
+    this.callback = callback;
   }
 
   @Override
@@ -49,6 +51,11 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   @Override
   public void untrackClient(ClientDescriptor clientDescriptor) {
     clientMessageTracker.untrackClient(clientDescriptor);
+  }
+
+  @Override
+  public void destroy() {
+    this.callback.destroy();
   }
 
   @Override
