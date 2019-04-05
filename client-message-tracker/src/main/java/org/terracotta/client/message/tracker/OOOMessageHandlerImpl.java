@@ -37,10 +37,11 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   private final List<ClientTracker<ClientSourceId, R>> clientMessageTrackers;
   private final Predicate<M> trackerPolicy;
   private final ToIntFunction<M> segmentationStrategy;
+  private final DestroyCallback callback;
 
   private final ClientTracker<ClientSourceId, R> sharedMessageTracker;
 
-  public OOOMessageHandlerImpl(Predicate<M> trackerPolicy, int segments, ToIntFunction<M> segmentationStrategy) {
+  public OOOMessageHandlerImpl(Predicate<M> trackerPolicy, int segments, ToIntFunction<M> segmentationStrategy, DestroyCallback callback) {
     this.trackerPolicy = trackerPolicy;
     this.segmentationStrategy = segmentationStrategy;
     this.clientMessageTrackers = new ArrayList<>(segments);
@@ -49,6 +50,7 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
       clientMessageTrackers.add(new ClientTrackerImpl(TRACK_ALL));
     }
     sharedMessageTracker = new ClientTrackerImpl(TRACK_ALL);
+    this.callback = callback;
   }
 
   @Override
@@ -105,6 +107,11 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
   @Override
   public void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses) {
     this.sharedMessageTracker.getTracker(clientSourceId).loadOnSync(trackedResponses);
+  }
+
+  @Override
+  public void destroy() {
+    this.callback.destroy();
   }
 
   @Override
