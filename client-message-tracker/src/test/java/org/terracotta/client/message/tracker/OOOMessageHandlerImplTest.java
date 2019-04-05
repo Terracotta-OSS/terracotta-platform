@@ -42,7 +42,7 @@ public class OOOMessageHandlerImplTest {
 
   @Before
   public void setUp() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0);
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0, () -> {});
   }
 
   @Test
@@ -61,7 +61,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testInvokeDoesNotCacheUntrackableResponse() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(msg -> false, 1, m -> 0);
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> false, 1, m -> 0, () -> {});
 
     InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
@@ -77,7 +77,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testInvokeDoesNotCacheMessagesNotFromRealClients() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, null);
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, null, () -> {});
 
     InvokeContext context = mock(InvokeContext.class);
     when(context.isValidClientInformation()).thenReturn(false);
@@ -120,7 +120,7 @@ public class OOOMessageHandlerImplTest {
       }
     };
 
-    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, segmentationStrategy);
+    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, segmentationStrategy, () -> {});
 
     DummyClientSourceId clientSourceId1 = new DummyClientSourceId(1);
     DummyClientSourceId clientSourceId2 = new DummyClientSourceId(2);
@@ -169,7 +169,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testLoadTrackedResponsesForSegment() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0);
+    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0, () -> {});
 
     EntityResponse response1 = mock(EntityResponse.class);
     EntityResponse response2 = mock(EntityResponse.class);
@@ -197,7 +197,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testLoadOnSyncWithOldServer() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0);
+    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0, () -> {});
 
     long txnId1 = 25;
     long txnId2 = 26;
@@ -254,7 +254,7 @@ public class OOOMessageHandlerImplTest {
       }
     };
 
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy, 2, segmentationStrategy);
+    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy, 2, segmentationStrategy, () -> {});
 
     DummyClientSourceId clientSourceId1 = new DummyClientSourceId(1);
     DummyClientSourceId clientSourceId2 = new DummyClientSourceId(2);
@@ -284,7 +284,7 @@ public class OOOMessageHandlerImplTest {
    */
   @Test
   public void testTyping() throws EntityUserException {
-    OOOMessageHandler<DummyEntityMessage, DummyEntityResponse> messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0);
+    OOOMessageHandler<DummyEntityMessage, DummyEntityResponse> messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0, () -> {});
 
     DummyClientSourceId clientSourceId = new DummyClientSourceId(1);
     InvokeContext context = new DummyContext(clientSourceId, 25, 25);

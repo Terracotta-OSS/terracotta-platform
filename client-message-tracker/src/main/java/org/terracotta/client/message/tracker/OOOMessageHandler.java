@@ -90,4 +90,20 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    */
   @Deprecated
   void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
+
+  /**
+   * Destroys the {@code OOOMessageHandler}
+   */
+  void destroy();
+
+  /**
+   * Callback to be called when the handler is destroyed.
+   */
+  @CommonComponent
+  interface DestroyCallback {
+    /**
+     * The cleanup action required to be done on destruction
+     */
+    void destroy();
+  }
 }
