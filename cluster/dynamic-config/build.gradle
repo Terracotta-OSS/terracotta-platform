@@ -1,0 +1,16 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+
+dependencies {
+  compile project(':utilities')
+  compile "com.beust:jcommander:$jcommanderVersion"
+  compile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
+  compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
+
+  testCompile "org.assertj:assertj-core:$assertjVersion"
+}
+
+apply plugin: TcDistribute
