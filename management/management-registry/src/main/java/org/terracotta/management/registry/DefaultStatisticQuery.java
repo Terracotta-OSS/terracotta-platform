@@ -26,6 +26,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static org.terracotta.management.model.stats.DelegatingStatistic.convertStats;
 
 /**
  * @author Mathieu Carbou
@@ -80,9 +83,9 @@ public class DefaultStatisticQuery implements StatisticQuery {
       for (ManagementProvider<?> managementProvider : managementProviders) {
         if (managementProvider.supports(context)) {
           if (statistics == null) {
-            statistics = managementProvider.collectStatistics(context, statisticNames, since);
+            statistics = getMap(managementProvider.collectStatistics(context, statisticNames, since));
           } else {
-            statistics.putAll(managementProvider.collectStatistics(context, statisticNames, since));
+            statistics.putAll(getMap(managementProvider.collectStatistics(context, statisticNames, since)));
           }
         }
       }
@@ -90,6 +93,26 @@ public class DefaultStatisticQuery implements StatisticQuery {
     }
 
     return new DefaultResultSet<>(contextualStatistics);
+  }
+
+  private static Map<String, Statistic<? extends Serializable>> getMap(Map<String, org.terracotta.management.model.stats.Statistic<? extends Serializable>> map) {
+    return map.entrySet().stream().map(x -> new Map.Entry<String, Statistic<? extends Serializable>>() {
+
+      @Override
+      public String getKey() {
+        return x.getKey();
+      }
+
+      @Override
+      public Statistic<? extends Serializable> getValue() {
+        return convertStats(x.getValue());
+      }
+
+      @Override
+      public Statistic<? extends Serializable> setValue(Statistic value) {
+        throw new UnsupportedOperationException();
+      }
+    }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
 }
