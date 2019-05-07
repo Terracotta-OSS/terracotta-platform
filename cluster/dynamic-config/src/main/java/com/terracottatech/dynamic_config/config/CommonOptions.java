@@ -4,7 +4,16 @@
  */
 package com.terracottatech.dynamic_config.config;
 
-public class AllOptions {
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Contains options common to CLI and config properties file.
+ */
+public class CommonOptions {
   public static final String NODE_NAME = "node-name";
   public static final String NODE_HOSTNAME = "node-hostname";
   public static final String NODE_PORT = "node-port";
@@ -26,4 +35,22 @@ public class AllOptions {
   public static final String OFFHEAP_RESOURCES = "offheap-resources";
   public static final String DATA_DIRS = "data-dirs";
   public static final String CLUSTER_NAME = "cluster-name";
+
+  public static Set<String> getAllOptions() {
+    return Arrays.stream(CommonOptions.class.getDeclaredFields())
+        .filter(CommonOptions::getConstants)
+        .map(field -> {
+          try {
+            return (String) field.get(CommonOptions.class);
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+        })
+        .collect(Collectors.toSet());
+  }
+
+  private static boolean getConstants(Field field) {
+    int modifiers = field.getModifiers();
+    return Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers);
+  }
 }

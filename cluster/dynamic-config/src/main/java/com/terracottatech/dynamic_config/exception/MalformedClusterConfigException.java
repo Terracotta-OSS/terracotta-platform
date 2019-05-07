@@ -4,14 +4,14 @@
  */
 package com.terracottatech.dynamic_config.exception;
 
-public class MalformedConfigFileException extends RuntimeException {
+public class MalformedClusterConfigException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
-  public MalformedConfigFileException(String message) {
+  public MalformedClusterConfigException(String message) {
     super(message);
   }
 
-  public MalformedConfigFileException(String message, Throwable cause) {
+  public MalformedClusterConfigException(String message, Throwable cause) {
     super(message, cause);
   }
 }

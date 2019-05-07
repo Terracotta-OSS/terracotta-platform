@@ -14,27 +14,27 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.terracottatech.dynamic_config.config.AllOptions.CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.config.AllOptions.CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.config.AllOptions.CLUSTER_NAME;
-import static com.terracottatech.dynamic_config.config.AllOptions.DATA_DIRS;
-import static com.terracottatech.dynamic_config.config.AllOptions.FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_BACKUP_DIR;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_CONFIG_DIR;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_GROUP_PORT;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_HOSTNAME;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_LOG_DIR;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_METADATA_DIR;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_NAME;
-import static com.terracottatech.dynamic_config.config.AllOptions.NODE_PORT;
-import static com.terracottatech.dynamic_config.config.AllOptions.OFFHEAP_RESOURCES;
-import static com.terracottatech.dynamic_config.config.AllOptions.SECURITY_AUDIT_LOG_DIR;
-import static com.terracottatech.dynamic_config.config.AllOptions.SECURITY_AUTHC;
-import static com.terracottatech.dynamic_config.config.AllOptions.SECURITY_DIR;
-import static com.terracottatech.dynamic_config.config.AllOptions.SECURITY_SSL_TLS;
-import static com.terracottatech.dynamic_config.config.AllOptions.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BACKUP_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_METADATA_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUDIT_LOG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUTHC;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 import static java.io.File.separator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -48,7 +48,7 @@ public class ConsoleParamsParserTest {
     assertThat(cluster.getStripes().size()).isEqualTo(1);
     assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(1);
 
-    Node node = cluster.getStripes().get(0).getNodes().get(0);
+    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName()).isEqualTo("node-1");
     assertThat(node.getClusterName()).isEqualTo("tc-cluster");
     assertThat(node.getNodeHostname()).isEqualTo("localhost");
@@ -77,30 +77,30 @@ public class ConsoleParamsParserTest {
 
   private Map<String, String> setProperties() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(NODE_BACKUP_DIR, "backup");
-    paramValueMap.put(NODE_CONFIG_DIR, "config");
-    paramValueMap.put(NODE_LOG_DIR, "logs");
-    paramValueMap.put(NODE_METADATA_DIR, "metadata");
-    paramValueMap.put(SECURITY_DIR, "security");
-    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "audit-logs");
-    paramValueMap.put(DATA_DIRS, "main:one,second:two");
+    paramValueMap.put("--" + NODE_BACKUP_DIR, "backup");
+    paramValueMap.put("--" + NODE_CONFIG_DIR, "config");
+    paramValueMap.put("--" + NODE_LOG_DIR, "logs");
+    paramValueMap.put("--" + NODE_METADATA_DIR, "metadata");
+    paramValueMap.put("--" + SECURITY_DIR, "security");
+    paramValueMap.put("--" + SECURITY_AUDIT_LOG_DIR, "audit-logs");
+    paramValueMap.put("--" + DATA_DIRS, "main:one,second:two");
 
-    paramValueMap.put(NODE_NAME, "node-1");
-    paramValueMap.put(NODE_PORT, "19410");
-    paramValueMap.put(NODE_GROUP_PORT, "19430");
-    paramValueMap.put(NODE_BIND_ADDRESS, "10.10.10.10");
-    paramValueMap.put(NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
-    paramValueMap.put(NODE_HOSTNAME, "localhost");
-    paramValueMap.put(CLUSTER_NAME, "tc-cluster");
-    paramValueMap.put(OFFHEAP_RESOURCES, "main:512MB,second:1GB");
+    paramValueMap.put("--" + NODE_NAME, "node-1");
+    paramValueMap.put("--" + NODE_PORT, "19410");
+    paramValueMap.put("--" + NODE_GROUP_PORT, "19430");
+    paramValueMap.put("--" + NODE_BIND_ADDRESS, "10.10.10.10");
+    paramValueMap.put("--" + NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
+    paramValueMap.put("--" + NODE_HOSTNAME, "localhost");
+    paramValueMap.put("--" + CLUSTER_NAME, "tc-cluster");
+    paramValueMap.put("--" + OFFHEAP_RESOURCES, "main:512MB,second:1GB");
 
-    paramValueMap.put(SECURITY_AUTHC, "ldap");
-    paramValueMap.put(SECURITY_SSL_TLS, "true");
-    paramValueMap.put(SECURITY_WHITELIST, "true");
+    paramValueMap.put("--" + SECURITY_AUTHC, "ldap");
+    paramValueMap.put("--" + SECURITY_SSL_TLS, "true");
+    paramValueMap.put("--" + SECURITY_WHITELIST, "true");
 
-    paramValueMap.put(FAILOVER_PRIORITY, "consistency:1");
-    paramValueMap.put(CLIENT_RECONNECT_WINDOW, "100s");
-    paramValueMap.put(CLIENT_LEASE_DURATION, "50s");
+    paramValueMap.put("--" + FAILOVER_PRIORITY, "consistency:1");
+    paramValueMap.put("--" + CLIENT_RECONNECT_WINDOW, "100s");
+    paramValueMap.put("--" + CLIENT_LEASE_DURATION, "50s");
     return paramValueMap;
   }
 
@@ -111,8 +111,8 @@ public class ConsoleParamsParserTest {
     assertThat(cluster.getStripes().size()).isEqualTo(1);
     assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(1);
 
-    Node node = cluster.getStripes().get(0).getNodes().get(0);
-    assertThat(node.getNodeName()).isEqualTo("%h:9410");
+    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
+    assertThat(node.getNodeName()).startsWith("node-");
     assertThat(node.getClusterName()).isNull();
     assertThat(node.getNodeHostname()).isEqualTo("%h");
     assertThat(node.getNodePort()).isEqualTo(9410);
@@ -121,7 +121,7 @@ public class ConsoleParamsParserTest {
     assertThat(node.getNodeGroupBindAddress()).isEqualTo("0.0.0.0");
     assertThat(node.getOffheapResources()).containsOnly(entry("main", "512MB"));
 
-    assertThat(node.getNodeBackupDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "backup");
+    assertThat(node.getNodeBackupDir()).isNull();
     assertThat(node.getNodeConfigDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "config");
     assertThat(node.getNodeLogDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "logs");
     assertThat(node.getNodeMetadataDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "metadata");

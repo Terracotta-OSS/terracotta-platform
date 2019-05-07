@@ -5,19 +5,19 @@
 package com.terracottatech.dynamic_config.config;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 
 public class Stripe {
-  private final List<Node> nodes;
+  private final Collection<Node> nodes;
 
-  public Stripe(List<Node> nodes) {
+  public Stripe(Collection<Node> nodes) {
     this.nodes = new ArrayList<>(nodes);
   }
 
-  public List<Node> getNodes() {
-    return Collections.unmodifiableList(nodes);
+  public Collection<Node> getNodes() {
+    return Collections.unmodifiableCollection(nodes);
   }
 
   @Override

@@ -6,17 +6,14 @@ package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.config.Cluster;
 import com.terracottatech.dynamic_config.config.Node;
-import com.terracottatech.dynamic_config.exception.MalformedConfigFileException;
 import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.Properties;
 
 import static java.io.File.separator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
 
 public class ConfigFileParserTest {
@@ -26,7 +23,7 @@ public class ConfigFileParserTest {
     assertThat(cluster.getStripes().size()).isEqualTo(1);
     assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(1);
 
-    Node node = cluster.getStripes().get(0).getNodes().get(0);
+    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName()).isEqualTo("node-1");
     assertThat(node.getClusterName()).isEqualTo("my-cluster");
     assertThat(node.getNodeHostname()).isEqualTo("node-1.company.internal");
@@ -62,34 +59,5 @@ public class ConfigFileParserTest {
     assertThat(cluster.getStripes().size()).isEqualTo(2);
     assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(2);
     assertThat(cluster.getStripes().get(1).getNodes().size()).isEqualTo(2);
-  }
-
-  @Test
-  public void testMalformedEntries_insufficientKeys() {
-    final Properties properties = new Properties();
-    properties.put("one.two", "something");
-
-    try {
-      ConfigFileParser.initCluster(properties);
-      failBecauseExceptionWasNotThrown(MalformedConfigFileException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedConfigFileException.class);
-      assertThat(e.getMessage()).contains("must have at least 4 period-separated fields");
-    }
-  }
-
-  @Test
-  public void testMalformedEntries_multipleClusterNames() {
-    final Properties properties = new Properties();
-    properties.put("cluster-1.stripe-1.server-1.prop", "something");
-    properties.put("cluster-2.stripe-1.server-1.prop", "something");
-
-    try {
-      ConfigFileParser.initCluster(properties);
-      failBecauseExceptionWasNotThrown(MalformedConfigFileException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedConfigFileException.class);
-      assertThat(e.getMessage()).isEqualTo("File should contain a single cluster information only");
-    }
   }
 }

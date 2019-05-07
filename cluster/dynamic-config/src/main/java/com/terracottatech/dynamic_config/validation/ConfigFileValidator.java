@@ -1,0 +1,126 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+package com.terracottatech.dynamic_config.validation;
+
+import com.terracottatech.dynamic_config.config.CommonOptions;
+import com.terracottatech.dynamic_config.config.NodeIdentifier;
+import com.terracottatech.dynamic_config.exception.MalformedConfigFileException;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
+
+public class ConfigFileValidator {
+  private static final Set<String> ALL_VALID_OPTIONS = CommonOptions.getAllOptions();
+
+  public static Properties validate(File file) {
+    Properties properties = loadProperties(file);
+    return validateProperties(properties, file.getName());
+  }
+
+  static Properties validateProperties(Properties properties, String fileName) {
+    properties.forEach((key, value) -> {
+      ensureCorrectFieldCount(key.toString(), value.toString(), fileName);
+      ensureNoInvalidOptions(key.toString(), fileName);
+      ensureCorrectNodeName(key.toString(), value.toString(), fileName);
+    });
+    ensureOnlyOneClusterName(properties, fileName);
+    ensureAllOptionsPresent(properties, fileName);
+    return properties;
+  }
+
+  private static void ensureOnlyOneClusterName(Properties properties, String fileName) {
+    Set<String> clusterNames = new HashSet<>();
+    properties.forEach((key, value) -> clusterNames.add(getClusterName(key.toString())));
+
+    if (clusterNames.size() != 1) {
+      throw new MalformedConfigFileException("Expected only one cluster name in config file: " + fileName + ", but found: " + clusterNames);
+    }
+  }
+
+  private static void ensureAllOptionsPresent(Properties properties, String fileName) {
+    Map<NodeIdentifier, Set<String>> allNodesProperties = new HashMap<>();
+    properties.forEach((key, value) -> {
+      NodeIdentifier node = new NodeIdentifier(getStripeName(key.toString()), getNodeName(key.toString()));
+      allNodesProperties.computeIfAbsent(node, k -> new HashSet<>());
+      allNodesProperties.get(node).add(getProperty(key.toString()));
+    });
+
+    allNodesProperties.forEach((node, nodeProperties) -> {
+      final HashSet<String> allOptions = new HashSet<>(ALL_VALID_OPTIONS);
+      allOptions.removeAll(nodeProperties);
+      if (allOptions.size() != 0) {
+        throw new MalformedConfigFileException(node.getStripeName() + "." + node.getServerName() + " in file: " + fileName + " is missing the following properties: " + allOptions);
+      }
+    });
+  }
+
+  private static Properties loadProperties(File propertiesFile) {
+    Properties props = new Properties();
+    try (Reader in = new InputStreamReader(new FileInputStream(propertiesFile), StandardCharsets.UTF_8)) {
+      props.load(in);
+    } catch (FileNotFoundException e) {
+      throw new UncheckedIOException(e);
+    } catch (IOException e) {
+      throw new MalformedConfigFileException("Failed to read config file: " + propertiesFile.getName(), e);
+    }
+    return props;
+  }
+
+  private static void ensureCorrectFieldCount(String key, String value, String fileName) {
+    if (splitKey(key).length < 4) {
+      throw new MalformedConfigFileException("Invalid line: " + key + "=" + value + " in config file: " + fileName + ". " +
+          "Each line must be of the format: <cluster-name>.<stripe-name>.<node-name>.<property>=value");
+    }
+  }
+
+  private static void ensureNoInvalidOptions(String key, String fileName) {
+    final String property = getProperty(key);
+    if (!ALL_VALID_OPTIONS.contains(property)) {
+      throw new MalformedConfigFileException("Unrecognized property: " + property + " in config file: " + fileName);
+    }
+  }
+
+  private static void ensureCorrectNodeName(String key, String value, String fileName) {
+    if (getProperty(key).equals(NODE_NAME)) {
+      if (!getNodeName(key).equals(value)) {
+        throw new MalformedConfigFileException("Invalid line: " + key + "=" + value + " in config file: " + fileName + ". " +
+            "Node name value should match the node name in the property. Expected: " + getNodeName(key) + ", found: " + value);
+      }
+    }
+  }
+
+  private static String getClusterName(String key) {
+    return splitKey(key)[0];
+  }
+
+  private static String getStripeName(String key) {
+    return splitKey(key)[1];
+  }
+
+  private static String getNodeName(String key) {
+    return splitKey(key)[2];
+  }
+
+  private static String getProperty(String key) {
+    return splitKey(key)[3];
+  }
+
+  private static String[] splitKey(String key) {
+    return key.split("\\.");
+  }
+}

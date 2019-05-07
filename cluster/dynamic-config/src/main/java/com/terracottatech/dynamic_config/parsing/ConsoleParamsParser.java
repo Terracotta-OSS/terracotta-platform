@@ -4,11 +4,13 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.config.AllOptions;
 import com.terracottatech.dynamic_config.config.Cluster;
 import com.terracottatech.dynamic_config.config.Node;
 import com.terracottatech.dynamic_config.config.Stripe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,139 +18,210 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_BACKUP_DIR;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_CONFIG_DIR;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_DATA_DIR;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_GROUP_PORT;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_HOSTNAME;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_LOG_DIR;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_METADATA_DIR;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_OFFHEAP_RESOURCE;
-import static com.terracottatech.dynamic_config.util.Constants.DEFAULT_PORT;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_DATA_DIR;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_GROUP_PORT;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_HOSTNAME;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_LOG_DIR;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_METADATA_DIR;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_OFFHEAP_RESOURCE;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BACKUP_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_METADATA_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUDIT_LOG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUTHC;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 
 
 public class ConsoleParamsParser {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsParser.class);
+
   public static Cluster parse(Map<String, String> paramValueMap) {
     Node node = new Node();
-    paramValueMap.forEach((param, value) -> Setting.set(param, value, node));
+    paramValueMap.forEach((param, value) -> Setting.set(stripDashDash(param), value, node));
     fillDefaultsIfNeeded(node);
     return createCluster(node);
   }
 
-  private static Cluster createCluster(Node node) {
-    List<Stripe> stripes = new ArrayList<>();
-    stripes.add(new Stripe(Collections.singletonList(node)));
-    return new Cluster(stripes);
+  private static String stripDashDash(String param) {
+    return param.substring(2);
+  }
+
+  private static String addDashDash(String param) {
+    return "--" + param;
   }
 
   private static void fillDefaultsIfNeeded(Node node) {
+    List<Object> defaultOptions = new ArrayList<>();
     if (node.getNodeName() == null) {
-      node.setNodeName(getDefaultNodeName(node));
+      defaultOptions.add(NODE_NAME);
+      node.setNodeName(getDefaultNodeName());
     }
+
     if (node.getNodeHostname() == null) {
+      defaultOptions.add(NODE_HOSTNAME);
       node.setNodeHostname(DEFAULT_HOSTNAME);
     }
+
     if (node.getNodePort() == 0) {
+      defaultOptions.add(NODE_PORT);
       node.setNodePort(DEFAULT_PORT);
     }
+
     if (node.getNodeGroupPort() == 0) {
+      defaultOptions.add(NODE_GROUP_PORT);
       node.setNodeGroupPort(DEFAULT_GROUP_PORT);
     }
+
     if (node.getOffheapResources().isEmpty()) {
+      defaultOptions.add(OFFHEAP_RESOURCES);
       String[] split = DEFAULT_OFFHEAP_RESOURCE.split(":");
       node.setOffheapResource(split[0], split[1]);
     }
+
     if (node.getDataDirs().isEmpty()) {
+      defaultOptions.add(DATA_DIRS);
       String[] split = DEFAULT_DATA_DIR.split(":");
       node.setDataDir(split[0], Paths.get(split[1]));
     }
+
     if (node.getNodeBindAddress() == null) {
+      defaultOptions.add(NODE_BIND_ADDRESS);
       node.setNodeBindAddress(DEFAULT_BIND_ADDRESS);
     }
+
     if (node.getNodeGroupBindAddress() == null) {
+      defaultOptions.add(NODE_GROUP_BIND_ADDRESS);
       node.setNodeGroupBindAddress(DEFAULT_GROUP_BIND_ADDRESS);
     }
+
     if (node.getNodeConfigDir() == null) {
+      defaultOptions.add(NODE_CONFIG_DIR);
       node.setNodeConfigDir(Paths.get(DEFAULT_CONFIG_DIR));
     }
+
     if (node.getNodeLogDir() == null) {
+      defaultOptions.add(NODE_LOG_DIR);
       node.setNodeLogDir(Paths.get(DEFAULT_LOG_DIR));
     }
+
     if (node.getNodeMetadataDir() == null) {
+      defaultOptions.add(NODE_METADATA_DIR);
       node.setNodeMetadataDir(Paths.get(DEFAULT_METADATA_DIR));
     }
-    if (node.getNodeBackupDir() == null) {
-      node.setNodeBackupDir(Paths.get(DEFAULT_BACKUP_DIR));
-    }
+
     if (node.getFailoverPriority() == null) {
+      defaultOptions.add(FAILOVER_PRIORITY);
       node.setFailoverPriority(DEFAULT_FAILOVER_PRIORITY);
     }
+
     if (node.getClientReconnectWindow() == null) {
+      defaultOptions.add(CLIENT_RECONNECT_WINDOW);
       node.setClientReconnectWindow(DEFAULT_CLIENT_RECONNECT_WINDOW);
     }
+
     if (node.getClientLeaseDuration() == null) {
+      defaultOptions.add(CLIENT_LEASE_DURATION);
       node.setClientLeaseDuration(DEFAULT_CLIENT_LEASE_DURATION);
+    }
+
+    if (!defaultOptions.isEmpty()) {
+      LOGGER.info("Added defaults values for: {}", defaultOptions.stream().map(o -> addDashDash(o.toString())).collect(Collectors.toList()));
     }
   }
 
-  private static String getDefaultNodeName(Node node) {
-    String hostName = node.getNodeHostname();
-    if (hostName == null) {
-      hostName = DEFAULT_HOSTNAME;
+  private static Cluster createCluster(Node node) {
+    List<Stripe> stripes = new ArrayList<>();
+    stripes.add(new Stripe(Collections.singleton(node)));
+    return new Cluster(stripes);
+  }
+
+  private static String getDefaultNodeName() {
+    UUID uuid = UUID.randomUUID();
+    byte[] data = new byte[16];
+    long msb = uuid.getMostSignificantBits();
+    long lsb = uuid.getLeastSignificantBits();
+    for (int i = 0; i < 8; i++) {
+      data[i] = (byte) (msb & 0xff);
+      msb >>>= 8;
+    }
+    for (int i = 8; i < 16; i++) {
+      data[i] = (byte) (lsb & 0xff);
+      lsb >>>= 8;
     }
 
-    int nodePort = node.getNodePort();
-    if (nodePort == 0) {
-      nodePort = DEFAULT_PORT;
-    }
-    return isValidIPv6(hostName) ? ("[" + hostName + "]:" + nodePort) : (hostName + ":" + nodePort);
+    return "node-" + DatatypeConverter.printBase64Binary(data)
+        // java-8 and other - compatible B64 url decoder use - and _ instead of + and /
+        // padding can be ignored to shorten the UUID
+        .replace('+', '-')
+        .replace('/', '_')
+        .replace("=", "");
   }
 
   private static class Setting {
-    private static final Map<String, BiConsumer<Node, String>> PARAM_ACTION_MAP = populateMap();
+    private static final Map<String, BiConsumer<Node, String>> PARAM_ACTION_MAP = new HashMap<>();
 
-    private static Map<String, BiConsumer<Node, String>> populateMap() {
-      HashMap<String, BiConsumer<Node, String>> paramActionMap = new HashMap<>();
-      paramActionMap.put(AllOptions.NODE_NAME, Node::setNodeName);
-      paramActionMap.put(AllOptions.NODE_HOSTNAME, Node::setNodeHostname);
-      paramActionMap.put(AllOptions.NODE_PORT, (node, value) -> node.setNodePort(Integer.parseInt(value)));
-      paramActionMap.put(AllOptions.NODE_GROUP_PORT, (node, value) -> node.setNodeGroupPort(Integer.parseInt(value)));
-      paramActionMap.put(AllOptions.NODE_BIND_ADDRESS, Node::setNodeBindAddress);
-      paramActionMap.put(AllOptions.NODE_GROUP_BIND_ADDRESS, Node::setNodeGroupBindAddress);
-      paramActionMap.put(AllOptions.NODE_CONFIG_DIR, (node, value) -> node.setNodeConfigDir(Paths.get(value)));
-      paramActionMap.put(AllOptions.NODE_METADATA_DIR, (node, value) -> node.setNodeMetadataDir(Paths.get(value)));
-      paramActionMap.put(AllOptions.NODE_LOG_DIR, (node, value) -> node.setNodeLogDir(Paths.get(value)));
-      paramActionMap.put(AllOptions.NODE_BACKUP_DIR, (node, value) -> node.setNodeBackupDir(Paths.get(value)));
-      paramActionMap.put(AllOptions.SECURITY_DIR, (node, value) -> node.setSecurityDir(Paths.get(value)));
-      paramActionMap.put(AllOptions.SECURITY_AUDIT_LOG_DIR, (node, value) -> node.setSecurityAuditLogDir(Paths.get(value)));
-      paramActionMap.put(AllOptions.SECURITY_AUTHC, Node::setSecurityAuthc);
-      paramActionMap.put(AllOptions.SECURITY_SSL_TLS, (node, value) -> node.setSecuritySslTls(Boolean.valueOf(value)));
-      paramActionMap.put(AllOptions.SECURITY_WHITELIST, (node, value) -> node.setSecurityWhitelist(Boolean.valueOf(value)));
-      paramActionMap.put(AllOptions.FAILOVER_PRIORITY, Node::setFailoverPriority);
-      paramActionMap.put(AllOptions.CLIENT_RECONNECT_WINDOW, Node::setClientReconnectWindow);
-      paramActionMap.put(AllOptions.CLIENT_LEASE_DURATION, Node::setClientLeaseDuration);
-      paramActionMap.put(AllOptions.CLUSTER_NAME, Node::setClusterName);
-      paramActionMap.put(AllOptions.OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(",")).forEach(ofr -> {
+    static {
+      PARAM_ACTION_MAP.put(NODE_NAME, Node::setNodeName);
+      PARAM_ACTION_MAP.put(NODE_HOSTNAME, Node::setNodeHostname);
+      PARAM_ACTION_MAP.put(NODE_PORT, (node, value) -> node.setNodePort(Integer.parseInt(value)));
+      PARAM_ACTION_MAP.put(NODE_GROUP_PORT, (node, value) -> node.setNodeGroupPort(Integer.parseInt(value)));
+      PARAM_ACTION_MAP.put(NODE_BIND_ADDRESS, Node::setNodeBindAddress);
+      PARAM_ACTION_MAP.put(NODE_GROUP_BIND_ADDRESS, Node::setNodeGroupBindAddress);
+      PARAM_ACTION_MAP.put(NODE_CONFIG_DIR, (node, value) -> node.setNodeConfigDir(Paths.get(value)));
+      PARAM_ACTION_MAP.put(NODE_METADATA_DIR, (node, value) -> node.setNodeMetadataDir(Paths.get(value)));
+      PARAM_ACTION_MAP.put(NODE_LOG_DIR, (node, value) -> node.setNodeLogDir(Paths.get(value)));
+      PARAM_ACTION_MAP.put(NODE_BACKUP_DIR, (node, value) -> node.setNodeBackupDir(Paths.get(value)));
+      PARAM_ACTION_MAP.put(SECURITY_DIR, (node, value) -> node.setSecurityDir(Paths.get(value)));
+      PARAM_ACTION_MAP.put(SECURITY_AUDIT_LOG_DIR, (node, value) -> node.setSecurityAuditLogDir(Paths.get(value)));
+      PARAM_ACTION_MAP.put(SECURITY_AUTHC, Node::setSecurityAuthc);
+      PARAM_ACTION_MAP.put(SECURITY_SSL_TLS, (node, value) -> node.setSecuritySslTls(Boolean.valueOf(value)));
+      PARAM_ACTION_MAP.put(SECURITY_WHITELIST, (node, value) -> node.setSecurityWhitelist(Boolean.valueOf(value)));
+      PARAM_ACTION_MAP.put(FAILOVER_PRIORITY, Node::setFailoverPriority);
+      PARAM_ACTION_MAP.put(CLIENT_RECONNECT_WINDOW, Node::setClientReconnectWindow);
+      PARAM_ACTION_MAP.put(CLIENT_LEASE_DURATION, Node::setClientLeaseDuration);
+      PARAM_ACTION_MAP.put(CLUSTER_NAME, Node::setClusterName);
+      PARAM_ACTION_MAP.put(OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(",")).forEach(ofr -> {
         String[] split = ofr.split(":");
         node.setOffheapResource(split[0], split[1]);
       }));
-      paramActionMap.put(AllOptions.DATA_DIRS, (node, value) -> Arrays.asList(value.split(",")).forEach(dir -> {
+      PARAM_ACTION_MAP.put(DATA_DIRS, (node, value) -> Arrays.asList(value.split(",")).forEach(dir -> {
         String[] split = dir.split(":");
         node.setDataDir(split[0], Paths.get(split[1]));
       }));
-      return paramActionMap;
     }
 
     static void set(String param, String value, Node node) {
-      PARAM_ACTION_MAP.get(param).accept(node, value);
+      BiConsumer<Node, String> action = PARAM_ACTION_MAP.get(param);
+      if (action == null) {
+        throw new AssertionError("Unrecognized param: " + param);
+      }
+      action.accept(node, value);
     }
   }
 }

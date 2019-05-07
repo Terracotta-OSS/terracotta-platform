@@ -6,7 +6,7 @@
 dependencies {
   compile project(':utilities')
   compile "com.beust:jcommander:$jcommanderVersion"
-  compile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
 

@@ -47,6 +47,7 @@ public class PrettyUsagePrintingJCommander extends JCommander {
     }
 
     sorted.sort(Comparator.comparing(ParameterDescription::getLongestName));
+    int maxParamLength = sorted.stream().map(pd -> pd.getLongestName().length()).max(Integer::compareTo).get();
 
     // Display all the names and descriptions
     if (sorted.size() > 0) {
@@ -58,10 +59,12 @@ public class PrettyUsagePrintingJCommander extends JCommander {
       out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "");
       String defaultValue = DefaultSettings.getDefaultValueFor(pd.getLongestName().substring(2));
       if (defaultValue != null) {
-        out.append(indent).append("    (default: ").append(defaultValue).append(")");
+        out.append(indent).append("    ");
+        for (int i = 0; i < maxParamLength - pd.getLongestName().length(); i++) {
+          out.append(" ");
+        }
+        out.append("(Default: ").append(defaultValue).append(")");
       }
-      out.append("\n");
-      out.append(indent).append("        ").append(pd.getDescription());
       out.append("\n");
     }
   }
