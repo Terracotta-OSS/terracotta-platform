@@ -21,18 +21,25 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getClusterName;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeName;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeName;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.splitKey;
 
 public class ConfigFileValidator {
   private static final Set<String> ALL_VALID_OPTIONS = CommonOptions.getAllOptions();
 
   public static Properties validate(File file) {
     Properties properties = loadProperties(file);
-    return validateProperties(properties, file.getName());
+    validateProperties(properties, file.getName());
+    return properties;
   }
 
-  static Properties validateProperties(Properties properties, String fileName) {
+  static void validateProperties(Properties properties, String fileName) {
     properties.forEach((key, value) -> {
       ensureCorrectFieldCount(key.toString(), value.toString(), fileName);
       ensureNoInvalidOptions(key.toString(), fileName);
@@ -40,7 +47,15 @@ public class ConfigFileValidator {
     });
     ensureOnlyOneClusterName(properties, fileName);
     ensureAllOptionsPresent(properties, fileName);
-    return properties;
+
+    Map<NodeIdentifier, Map<String, String>> nodeParamValueMap = properties.entrySet().stream()
+        .collect(
+            Collectors.groupingBy(
+                entry -> new NodeIdentifier(getStripeName(entry.getKey().toString()), getNodeName(entry.getKey().toString())),
+                Collectors.toMap(entry -> getProperty(entry.getKey().toString()), entry -> entry.getValue().toString())
+            )
+        );
+    nodeParamValueMap.forEach((nodeIdentifier, map) -> NodeParamsValidator.validate(map));
   }
 
   private static void ensureOnlyOneClusterName(Properties properties, String fileName) {
@@ -102,25 +117,5 @@ public class ConfigFileValidator {
             "Node name value should match the node name in the property. Expected: " + getNodeName(key) + ", found: " + value);
       }
     }
-  }
-
-  private static String getClusterName(String key) {
-    return splitKey(key)[0];
-  }
-
-  private static String getStripeName(String key) {
-    return splitKey(key)[1];
-  }
-
-  private static String getNodeName(String key) {
-    return splitKey(key)[2];
-  }
-
-  private static String getProperty(String key) {
-    return splitKey(key)[3];
-  }
-
-  private static String[] splitKey(String key) {
-    return key.split("\\.");
   }
 }

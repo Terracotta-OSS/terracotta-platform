@@ -27,9 +27,9 @@ public class Node {
   private boolean securitySslTls;
   private boolean securityWhitelist;
   private String failoverPriority;
-  private String clientReconnectWindow;
-  private String clientLeaseDuration;
-  private Map<String, String> offheapResources = new HashMap<>();
+  private long clientReconnectWindowInSeconds;
+  private long clientLeaseDurationInMillis;
+  private Map<String, Long> offheapResources = new HashMap<>(); //offheap resource in bytes
   private Map<String, Path> dataDirs = new HashMap<>();
   private String clusterName;
 
@@ -97,15 +97,15 @@ public class Node {
     return failoverPriority;
   }
 
-  public String getClientReconnectWindow() {
-    return clientReconnectWindow;
+  public long getClientReconnectWindow() {
+    return clientReconnectWindowInSeconds;
   }
 
-  public String getClientLeaseDuration() {
-    return clientLeaseDuration;
+  public long getClientLeaseDuration() {
+    return clientLeaseDurationInMillis;
   }
 
-  public Map<String, String> getOffheapResources() {
+  public Map<String, Long> getOffheapResources() {
     return Collections.unmodifiableMap(offheapResources);
   }
 
@@ -181,15 +181,15 @@ public class Node {
     this.failoverPriority = failoverPriority;
   }
 
-  public void setClientReconnectWindow(String clientReconnectWindow) {
-    this.clientReconnectWindow = clientReconnectWindow;
+  public void setClientReconnectWindow(Long clientReconnectWindow) {
+    this.clientReconnectWindowInSeconds = clientReconnectWindow;
   }
 
-  public void setClientLeaseDuration(String clientLeaseDuration) {
-    this.clientLeaseDuration = clientLeaseDuration;
+  public void setClientLeaseDuration(Long clientLeaseDuration) {
+    this.clientLeaseDurationInMillis = clientLeaseDuration;
   }
 
-  public void setOffheapResource(String name, String quantity) {
+  public void setOffheapResource(String name, Long quantity) {
     this.offheapResources.put(name, quantity);
   }
 
@@ -220,8 +220,8 @@ public class Node {
         ", securitySslTls=" + securitySslTls +
         ", securityWhitelist=" + securityWhitelist +
         ", failoverPriority='" + failoverPriority + '\'' +
-        ", clientReconnectWindow=" + clientReconnectWindow +
-        ", clientLeaseDuration=" + clientLeaseDuration +
+        ", clientReconnectWindowInSeconds=" + clientReconnectWindowInSeconds +
+        ", clientLeaseDurationInMillis=" + clientLeaseDurationInMillis +
         ", offheapResources=" + offheapResources +
         ", dataDirs=" + dataDirs +
         ", clusterName='" + clusterName + '\'' +

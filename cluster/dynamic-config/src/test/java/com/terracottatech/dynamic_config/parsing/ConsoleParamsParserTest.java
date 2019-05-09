@@ -35,6 +35,8 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AU
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
+import static com.terracottatech.utilities.MemoryUnit.GB;
+import static com.terracottatech.utilities.MemoryUnit.MB;
 import static java.io.File.separator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -56,7 +58,7 @@ public class ConsoleParamsParserTest {
     assertThat(node.getNodeGroupPort()).isEqualTo(19430);
     assertThat(node.getNodeBindAddress()).isEqualTo("10.10.10.10");
     assertThat(node.getNodeGroupBindAddress()).isEqualTo("20.20.20.20");
-    assertThat(node.getOffheapResources()).containsExactly(entry("main", "512MB"), entry("second", "1GB"));
+    assertThat(node.getOffheapResources()).containsExactly(entry("main", MB.toBytes(512)), entry("second", GB.toBytes(1)));
 
     assertThat(node.getNodeBackupDir().toString()).isEqualTo("backup");
     assertThat(node.getNodeConfigDir().toString()).isEqualTo("config");
@@ -71,36 +73,36 @@ public class ConsoleParamsParserTest {
     assertThat(node.getSecurityAuthc()).isEqualTo("ldap");
 
     assertThat(node.getFailoverPriority()).isEqualTo("consistency:1");
-    assertThat(node.getClientReconnectWindow()).isEqualTo("100s");
-    assertThat(node.getClientLeaseDuration()).isEqualTo("50s");
+    assertThat(node.getClientReconnectWindow()).isEqualTo(100L);
+    assertThat(node.getClientLeaseDuration()).isEqualTo(50000L);
   }
 
   private Map<String, String> setProperties() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put("--" + NODE_BACKUP_DIR, "backup");
-    paramValueMap.put("--" + NODE_CONFIG_DIR, "config");
-    paramValueMap.put("--" + NODE_LOG_DIR, "logs");
-    paramValueMap.put("--" + NODE_METADATA_DIR, "metadata");
-    paramValueMap.put("--" + SECURITY_DIR, "security");
-    paramValueMap.put("--" + SECURITY_AUDIT_LOG_DIR, "audit-logs");
-    paramValueMap.put("--" + DATA_DIRS, "main:one,second:two");
+    paramValueMap.put(NODE_BACKUP_DIR, "backup");
+    paramValueMap.put(NODE_CONFIG_DIR, "config");
+    paramValueMap.put(NODE_LOG_DIR, "logs");
+    paramValueMap.put(NODE_METADATA_DIR, "metadata");
+    paramValueMap.put(SECURITY_DIR, "security");
+    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "audit-logs");
+    paramValueMap.put(DATA_DIRS, "main:one,second:two");
 
-    paramValueMap.put("--" + NODE_NAME, "node-1");
-    paramValueMap.put("--" + NODE_PORT, "19410");
-    paramValueMap.put("--" + NODE_GROUP_PORT, "19430");
-    paramValueMap.put("--" + NODE_BIND_ADDRESS, "10.10.10.10");
-    paramValueMap.put("--" + NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
-    paramValueMap.put("--" + NODE_HOSTNAME, "localhost");
-    paramValueMap.put("--" + CLUSTER_NAME, "tc-cluster");
-    paramValueMap.put("--" + OFFHEAP_RESOURCES, "main:512MB,second:1GB");
+    paramValueMap.put(NODE_NAME, "node-1");
+    paramValueMap.put(NODE_PORT, "19410");
+    paramValueMap.put(NODE_GROUP_PORT, "19430");
+    paramValueMap.put(NODE_BIND_ADDRESS, "10.10.10.10");
+    paramValueMap.put(NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
+    paramValueMap.put(NODE_HOSTNAME, "localhost");
+    paramValueMap.put(CLUSTER_NAME, "tc-cluster");
+    paramValueMap.put(OFFHEAP_RESOURCES, "main:512MB,second:1GB");
 
-    paramValueMap.put("--" + SECURITY_AUTHC, "ldap");
-    paramValueMap.put("--" + SECURITY_SSL_TLS, "true");
-    paramValueMap.put("--" + SECURITY_WHITELIST, "true");
+    paramValueMap.put(SECURITY_AUTHC, "ldap");
+    paramValueMap.put(SECURITY_SSL_TLS, "true");
+    paramValueMap.put(SECURITY_WHITELIST, "true");
 
-    paramValueMap.put("--" + FAILOVER_PRIORITY, "consistency:1");
-    paramValueMap.put("--" + CLIENT_RECONNECT_WINDOW, "100s");
-    paramValueMap.put("--" + CLIENT_LEASE_DURATION, "50s");
+    paramValueMap.put(FAILOVER_PRIORITY, "consistency:1");
+    paramValueMap.put(CLIENT_RECONNECT_WINDOW, "100s");
+    paramValueMap.put(CLIENT_LEASE_DURATION, "50s");
     return paramValueMap;
   }
 
@@ -119,7 +121,7 @@ public class ConsoleParamsParserTest {
     assertThat(node.getNodeGroupPort()).isEqualTo(9430);
     assertThat(node.getNodeBindAddress()).isEqualTo("0.0.0.0");
     assertThat(node.getNodeGroupBindAddress()).isEqualTo("0.0.0.0");
-    assertThat(node.getOffheapResources()).containsOnly(entry("main", "512MB"));
+    assertThat(node.getOffheapResources()).containsOnly(entry("main", MB.toBytes(512)));
 
     assertThat(node.getNodeBackupDir()).isNull();
     assertThat(node.getNodeConfigDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "config");
@@ -134,7 +136,7 @@ public class ConsoleParamsParserTest {
     assertThat(node.getSecurityAuthc()).isNull();
 
     assertThat(node.getFailoverPriority()).isEqualTo("availability");
-    assertThat(node.getClientReconnectWindow()).isEqualTo("120s");
-    assertThat(node.getClientLeaseDuration()).isEqualTo("20s");
+    assertThat(node.getClientReconnectWindow()).isEqualTo(120L);
+    assertThat(node.getClientLeaseDuration()).isEqualTo(20000L);
   }
 }

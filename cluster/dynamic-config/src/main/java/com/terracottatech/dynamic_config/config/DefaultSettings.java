@@ -35,7 +35,7 @@ import static com.terracottatech.dynamic_config.Constants.DEFAULT_OFFHEAP_RESOUR
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_PORT;
 
 public class DefaultSettings {
-  private static final Map<String, String> DEFAULT_SETTING_VALUES = new HashMap<>();
+  private static final Map<String, Object> DEFAULT_SETTING_VALUES = new HashMap<>();
 
   static {
     DEFAULT_SETTING_VALUES.put(NODE_HOSTNAME, DEFAULT_HOSTNAME);
@@ -54,6 +54,7 @@ public class DefaultSettings {
   }
 
   public static String getDefaultValueFor(String setting) {
-    return DEFAULT_SETTING_VALUES.get(setting);
+    Object settingValue = DEFAULT_SETTING_VALUES.get(setting);
+    return settingValue == null ? null : settingValue.toString();
   }
 }

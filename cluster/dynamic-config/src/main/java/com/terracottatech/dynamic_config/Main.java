@@ -6,12 +6,20 @@ package com.terracottatech.dynamic_config;
 
 import com.terracottatech.dynamic_config.config.Options;
 import com.terracottatech.dynamic_config.parsing.PrettyUsagePrintingJCommander;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+
   public static void main(String[] args) {
     Options command = new Options();
     PrettyUsagePrintingJCommander jCommander = new PrettyUsagePrintingJCommander("start-node", command);
-    jCommander.parse(args);
-    command.process(jCommander);
+    try {
+      jCommander.parse(args);
+      command.process(jCommander);
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage());
+    }
   }
 }

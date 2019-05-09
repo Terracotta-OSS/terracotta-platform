@@ -2,14 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.config;
+package com.terracottatech.dynamic_config.managers;
 
-public class Util {
-  public static String stripDashDash(String param) {
-    return param.substring(2);
-  }
+import com.tc.server.TCServerMain;
 
-  public static String addDashDash(String param) {
-    return "--" + param;
+
+public class NodeManager {
+  public static void startServer(String... args) {
+    TCServerMain.main(args);
   }
 }
