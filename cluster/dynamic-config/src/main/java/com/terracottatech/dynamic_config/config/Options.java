@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.config;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
@@ -12,18 +11,22 @@ import com.beust.jcommander.Parameters;
 import com.tc.server.TCServerMain;
 import com.terracottatech.dynamic_config.Constants;
 import com.terracottatech.dynamic_config.managers.ClusterManager;
+import com.terracottatech.dynamic_config.parsing.PrettyUsagePrintingJCommander;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.util.ParameterSubstitutor;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,6 +55,7 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AU
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.config.Util.addDashDash;
 
 @Parameters(separators = "=")
 public class Options {
@@ -112,10 +116,10 @@ public class Options {
   private int clientLeaseDuration;
 
   @Parameter(names = "--" + OFFHEAP_RESOURCES)
-  private List<String> offheapResources = new ArrayList<>();
+  private String offheapResources;
 
   @Parameter(names = "--" + DATA_DIRS)
-  private List<String> dataDirs = new ArrayList<>();
+  private String dataDirs;
 
   @Parameter(names = "--" + CLUSTER_NAME)
   private String clusterName;
@@ -126,7 +130,7 @@ public class Options {
   @Parameter(names = "--help", help = true)
   private boolean help;
 
-  public void process(JCommander jCommander) {
+  public void process(PrettyUsagePrintingJCommander jCommander) {
     if (help) {
       jCommander.usage();
       return;
@@ -135,13 +139,16 @@ public class Options {
     Optional<String> configRepo = findConfigRepo();
     if (configRepo.isPresent()) {
       LOGGER.info("Reading cluster config repository from: {}", configRepo.get());
-      TCServerMain.main(new String[]{"-r", Paths.get(nodeConfigDir).toString(), "-n", getNodeName(configRepo.get())});
+      startServer("-r", Paths.get(nodeConfigDir).toString(), "-n", getNodeName(configRepo.get()));
     } else {
+      Set<String> specifiedOptions = jCommander.getUserSpecifiedOptions();
       if (configFile != null) {
-        if (nodeName != null || nodeGroupPort != 0 || nodeBindAddress != null || nodeGroupBindAddress != null || nodeBackupDir != null ||
-            nodeLogDir != null || nodeMetadataDir != null || failoverPriority != null || clientLeaseDuration != 0 ||
-            clientReconnectWindow != 0 || clusterName != null || !offheapResources.isEmpty() || !dataDirs.isEmpty() ||
-            securitySslTls || securityWhitelist || securityAuditLogDir != null || securityAuthc != null || securityDir != null) {
+        Set<String> filteredOptions = new HashSet<>(specifiedOptions);
+        filteredOptions.remove(addDashDash(NODE_HOSTNAME));
+        filteredOptions.remove(addDashDash(NODE_PORT));
+        filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
+
+        if (filteredOptions.size() != 0) {
           throw new ParameterException(
               String.format(
                   "'--config-file' parameter can only be used with '--%s', '--%s', and '--%s' parameters",
@@ -154,16 +161,82 @@ public class Options {
         ClusterManager.createCluster(configFile);
         //TODO: Expose this cluster object to an MBean
         //TODO: Identify the correct server from the config file and start server - depends on TDB-4483
+
       } else {
-        Map<String, String> paramValueMap = jCommander.getParameters().stream()
-            .filter(pd -> !pd.getLongestName().equals("--config-file"))
-            .filter(pd -> !pd.getParameter().getAssignment().equals(""))
-            .collect(Collectors.toMap(ParameterDescription::getLongestName, pd -> pd.getParameter().getAssignment()));
-        ClusterManager.createCluster(paramValueMap);
+        Map<String, String> paramValueMap =
+            jCommander.getParameters().stream()
+                      .filter(pd -> specifiedOptions.contains(pd.getLongestName()))
+                      .collect(Collectors.toMap(ParameterDescription::getLongestName,
+                                                pd -> pd.getParameterized().get(this).toString()));
+
+        Cluster cluster = ClusterManager.createCluster(paramValueMap);
         //TODO: Expose this cluster object to an MBean
-        //TODo: Start the server now - depends on TDB-4483
+
+        // single node cluster
+        Node node = cluster.getStripes().get(0).getNodes().iterator().next();
+
+        Path configFilePath = createConfigFile(node);
+
+        startServer("--config-consistency",
+                    "--config-file",
+                    configFilePath.toAbsolutePath().toString());
       }
     }
+  }
+
+  private static Path createConfigFile(Node node) {
+    try {
+      Path configPath = Files.createTempFile("tc-config", ".xml");
+
+      String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
+                             "   <plugins>\n" +
+                             getDataDirectoryConfig(node) +
+                             getSecurityConfig(node) +
+                             "   </plugins>\n" +
+                             "    <servers>\n" +
+                             "        <server host=\"${HOSTNAME}\" name=\"${NAME}\" bind=\"${BIND}\">\n" +
+                             "            <logs>${LOGS}</logs>\n" +
+                             "            <tsa-port>${PORT}</tsa-port>\n" +
+                             "            <tsa-group-port bind=\"${GROUP-BIND}\">${GROUP-PORT}</tsa-group-port>\n" +
+                             "        </server>\n" +
+                             "    </servers>\n" +
+                             "</tc-config>";
+
+      String configuration = defaultConfig.replaceAll(Pattern.quote("${HOSTNAME}"), node.getNodeHostname())
+                                          .replaceAll(Pattern.quote("${NAME}"), node.getNodeName())
+                                          .replaceAll(Pattern.quote("${BIND}"), node.getNodeBindAddress())
+                                          .replaceAll(Pattern.quote("${PORT}"), String.valueOf(node.getNodePort()))
+                                          .replaceAll(Pattern.quote("${LOGS}"),  node.getNodeLogDir().toString())
+                                          .replaceAll(Pattern.quote("${GROUP-BIND}"), node.getNodeGroupBindAddress())
+                                          .replaceAll(Pattern.quote("${GROUP-PORT}"), String.valueOf(node.getNodeGroupPort()));
+
+      Files.write(configPath, configuration.getBytes(StandardCharsets.UTF_8));
+
+      return configPath;
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to create temp file for storing the configuration", e);
+    }
+  }
+
+  private static String getSecurityConfig(Node node) {
+    //TODO: implement me
+    return "";
+  }
+
+  private static String getDataDirectoryConfig(Node node) {
+    String dataDirectoryConfig = "     <config xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n" +
+                                 "     <data:data-directories>\n" +
+                                 "        <data:directory name=\"data\" " +
+                                 "use-for-platform=\"true\">${DATA_DIR}</data:directory>\n" +
+                                 "     </data:data-directories>\n" +
+                                 "     </config>\n";
+
+
+    return dataDirectoryConfig.replaceAll(Pattern.quote("${DATA_DIR}"), node.getNodeMetadataDir().toString());
+  }
+
+  private static void startServer(String... args) {
+    TCServerMain.main(args);
   }
 
   private Optional<String> findConfigRepo() {

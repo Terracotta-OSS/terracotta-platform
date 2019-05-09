@@ -56,6 +56,8 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AU
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.config.Util.addDashDash;
+import static com.terracottatech.dynamic_config.config.Util.stripDashDash;
 
 
 public class ConsoleParamsParser {
@@ -66,14 +68,6 @@ public class ConsoleParamsParser {
     paramValueMap.forEach((param, value) -> Setting.set(stripDashDash(param), value, node));
     fillDefaultsIfNeeded(node);
     return createCluster(node);
-  }
-
-  private static String stripDashDash(String param) {
-    return param.substring(2);
-  }
-
-  private static String addDashDash(String param) {
-    return "--" + param;
   }
 
   private static void fillDefaultsIfNeeded(Node node) {

@@ -10,15 +10,30 @@ import com.beust.jcommander.WrappedParameter;
 import com.beust.jcommander.internal.Lists;
 import com.terracottatech.dynamic_config.config.DefaultSettings;
 
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PrettyUsagePrintingJCommander extends JCommander {
   private final String programName;
+  private final Set<String> userSpecifiedOptions = new HashSet<>();
 
   public PrettyUsagePrintingJCommander(String programName, Object object) {
     super(object);
     this.programName = programName;
+
+    // It appears like Jcommander doesn't have API to fetch the options user has specified
+    // on the command-line, this is a hacky way to capture that information
+    addConverterInstanceFactory((parameter, forType) -> {
+      userSpecifiedOptions.add(parameter.names()[0]);
+      return null;
+    });
+  }
+
+  public Set<String> getUserSpecifiedOptions() {
+    return Collections.unmodifiableSet(userSpecifiedOptions);
   }
 
   @Override
