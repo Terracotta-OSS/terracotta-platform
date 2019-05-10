@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.config.util.ParameterSubstitutor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,6 +22,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_HOSTNAME;
+import static com.terracottatech.dynamic_config.Constants.DEFAULT_PORT;
 import static com.terracottatech.dynamic_config.Constants.REGEX_PREFIX;
 import static com.terracottatech.dynamic_config.Constants.REGEX_SUFFIX;
 import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
@@ -131,13 +134,14 @@ public class Options {
     Optional<String> configRepo = findConfigRepo(nodeConfigDir);
     if (configRepo.isPresent()) {
       LOGGER.info("Reading cluster config repository from: {}", configRepo.get());
-      startServer("-r", Paths.get(nodeConfigDir).toString(), "-n", getNodeName(configRepo.get()));
+      startServer("-r", Paths.get(nodeConfigDir).toString(), "-n", extractNodeName(configRepo.get()));
     } else {
       Cluster cluster;
       Node node;
       Set<String> specifiedOptions = jCommander.getUserSpecifiedOptions();
       if (configFile != null) {
         Set<String> filteredOptions = new HashSet<>(specifiedOptions);
+        filteredOptions.remove("--config-file");
         filteredOptions.remove(addDashDash(NODE_HOSTNAME));
         filteredOptions.remove(addDashDash(NODE_PORT));
         filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
@@ -154,8 +158,7 @@ public class Options {
         }
         LOGGER.info("Reading cluster config properties file from: {}", configFile);
         cluster = ClusterManager.createCluster(configFile);
-        node = cluster.getStripes().get(0).getNodes().iterator().next(); //FIXME: Find the correct node instead of the first node
-
+        node = getMatchingNodeFromConfigFile(cluster, specifiedOptions);
         //TODO: Expose this cluster object to an MBean
       } else {
         Map<String, String> paramValueMap = jCommander.getParameters().stream()
