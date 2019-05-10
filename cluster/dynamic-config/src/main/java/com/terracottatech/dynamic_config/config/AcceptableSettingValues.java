@@ -12,13 +12,17 @@ import java.util.Set;
 
 import static com.terracottatech.dynamic_config.config.CommonOptions.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUTHC;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 
 public class AcceptableSettingValues {
   private static final Map<String, Set<String>> ACCEPTABLE_SETTING_VALUES = new HashMap<>();
 
   static {
     ACCEPTABLE_SETTING_VALUES.put(FAILOVER_PRIORITY, new HashSet<>(Arrays.asList("availability", "consistency")));
-    ACCEPTABLE_SETTING_VALUES.put(SECURITY_AUTHC, new HashSet<>(Arrays.asList("file", "cert", "ldap")));
+    ACCEPTABLE_SETTING_VALUES.put(SECURITY_AUTHC, new HashSet<>(Arrays.asList("file", "certificate", "ldap")));
+    ACCEPTABLE_SETTING_VALUES.put(SECURITY_SSL_TLS, new HashSet<>(Arrays.asList("true", "false")));
+    ACCEPTABLE_SETTING_VALUES.put(SECURITY_WHITELIST, new HashSet<>(Arrays.asList("true", "false")));
   }
 
   public static Set<String> get(String setting) {

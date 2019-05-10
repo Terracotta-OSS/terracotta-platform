@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.config;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 
 public class Cluster {
@@ -18,6 +19,19 @@ public class Cluster {
 
   public List<Stripe> getStripes() {
     return Collections.unmodifiableList(stripes);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Cluster cluster = (Cluster) o;
+    return stripes.equals(cluster.stripes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(stripes);
   }
 
   @Override

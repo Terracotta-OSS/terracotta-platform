@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.dynamic_config.config.CommonOptions;
+import com.terracottatech.dynamic_config.config.DefaultSettings;
 import com.terracottatech.dynamic_config.config.NodeIdentifier;
 import com.terracottatech.dynamic_config.exception.MalformedConfigFileException;
 
@@ -23,7 +24,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
 import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getClusterName;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeName;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
@@ -47,6 +50,7 @@ public class ConfigFileValidator {
     });
     ensureOnlyOneClusterName(properties, fileName);
     ensureAllOptionsPresent(properties, fileName);
+    ensureMandatoryPropertiesHaveValues(properties, fileName);
 
     Map<NodeIdentifier, Map<String, String>> nodeParamValueMap = properties.entrySet().stream()
         .collect(
@@ -56,6 +60,21 @@ public class ConfigFileValidator {
             )
         );
     nodeParamValueMap.forEach((nodeIdentifier, map) -> NodeParamsValidator.validate(map));
+  }
+
+  private static void ensureMandatoryPropertiesHaveValues(Properties properties, String fileName) {
+    // DefaultSettings contains properties which are mandatory (except offheap and data-dirs), and are thus defaulted if not specified
+    Set<String> mandatorySettings = DefaultSettings.getAll().keySet()
+        .stream()
+        .filter(key -> !key.equals(OFFHEAP_RESOURCES) && !key.equals(DATA_DIRS))
+        .collect(Collectors.toSet());
+    properties.forEach((key, value) -> {
+      String property = getProperty(key.toString());
+      if (mandatorySettings.contains(property) && value.toString().isEmpty()) {
+        throw new MalformedConfigFileException("Missing value for property: " + property + " in config file: " + fileName +
+            ". The following properties need to have values: " + mandatorySettings);
+      }
+    });
   }
 
   private static void ensureOnlyOneClusterName(Properties properties, String fileName) {

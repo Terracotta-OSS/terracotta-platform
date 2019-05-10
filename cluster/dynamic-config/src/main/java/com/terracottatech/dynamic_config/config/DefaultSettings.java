@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.config;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,8 +40,8 @@ public class DefaultSettings {
 
   static {
     DEFAULT_SETTING_VALUES.put(NODE_HOSTNAME, DEFAULT_HOSTNAME);
-    DEFAULT_SETTING_VALUES.put(NODE_PORT, String.valueOf(DEFAULT_PORT));
-    DEFAULT_SETTING_VALUES.put(NODE_GROUP_PORT, String.valueOf(DEFAULT_GROUP_PORT));
+    DEFAULT_SETTING_VALUES.put(NODE_PORT, DEFAULT_PORT);
+    DEFAULT_SETTING_VALUES.put(NODE_GROUP_PORT, DEFAULT_GROUP_PORT);
     DEFAULT_SETTING_VALUES.put(NODE_BIND_ADDRESS, DEFAULT_BIND_ADDRESS);
     DEFAULT_SETTING_VALUES.put(NODE_GROUP_BIND_ADDRESS, DEFAULT_GROUP_BIND_ADDRESS);
     DEFAULT_SETTING_VALUES.put(NODE_CONFIG_DIR, DEFAULT_CONFIG_DIR);
@@ -51,6 +52,10 @@ public class DefaultSettings {
     DEFAULT_SETTING_VALUES.put(CLIENT_LEASE_DURATION, DEFAULT_CLIENT_LEASE_DURATION);
     DEFAULT_SETTING_VALUES.put(OFFHEAP_RESOURCES, DEFAULT_OFFHEAP_RESOURCE);
     DEFAULT_SETTING_VALUES.put(DATA_DIRS, DEFAULT_DATA_DIR);
+  }
+
+  public static Map<String, Object> getAll() {
+    return Collections.unmodifiableMap(DEFAULT_SETTING_VALUES);
   }
 
   public static String getDefaultValueFor(String setting) {

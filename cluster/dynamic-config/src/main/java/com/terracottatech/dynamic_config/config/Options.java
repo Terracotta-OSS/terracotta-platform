@@ -8,7 +8,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.managers.ClusterManager;
-import com.terracottatech.dynamic_config.parsing.PrettyUsagePrintingJCommander;
+import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +47,7 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WH
 import static com.terracottatech.dynamic_config.managers.NodeManager.startServer;
 import static com.terracottatech.dynamic_config.util.ConfigUtils.findConfigRepo;
 import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDashDash;
+import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDashDash;
 
 @Parameters(separators = "=")
 public class Options {
@@ -56,10 +57,10 @@ public class Options {
   private String nodeHostname;
 
   @Parameter(names = "--" + NODE_PORT)
-  private int nodePort;
+  private String nodePort;
 
   @Parameter(names = "--" + NODE_GROUP_PORT)
-  private int nodeGroupPort;
+  private String nodeGroupPort;
 
   @Parameter(names = "--" + NODE_NAME)
   private String nodeName;
@@ -92,10 +93,10 @@ public class Options {
   private String securityAuthc;
 
   @Parameter(names = "--" + SECURITY_SSL_TLS)
-  private boolean securitySslTls;
+  private String securitySslTls;
 
   @Parameter(names = "--" + SECURITY_WHITELIST)
-  private boolean securityWhitelist;
+  private String securityWhitelist;
 
   @Parameter(names = "--" + FAILOVER_PRIORITY)
   private String failoverPriority;
@@ -121,7 +122,7 @@ public class Options {
   @Parameter(names = "--help", help = true)
   private boolean help;
 
-  public void process(PrettyUsagePrintingJCommander jCommander) {
+  public void process(CustomJCommander jCommander) {
     if (help) {
       jCommander.usage();
       return;
@@ -151,7 +152,7 @@ public class Options {
               )
           );
         }
-        LOGGER.info("Reading cluster config properties file from: " + configFile);
+        LOGGER.info("Reading cluster config properties file from: {}", configFile);
         cluster = ClusterManager.createCluster(configFile);
         node = cluster.getStripes().get(0).getNodes().iterator().next(); //FIXME: Find the correct node instead of the first node
 
@@ -159,7 +160,7 @@ public class Options {
       } else {
         Map<String, String> paramValueMap = jCommander.getParameters().stream()
             .filter(pd -> specifiedOptions.contains(pd.getLongestName()))
-            .collect(Collectors.toMap(pd -> pd.getLongestName().substring(2), pd -> pd.getParameterized().get(this).toString()));
+            .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
 
         cluster = ClusterManager.createCluster(paramValueMap);
         node = cluster.getStripes().get(0).getNodes().iterator().next(); // Cluster object will have only 1 node, just get that
@@ -170,7 +171,29 @@ public class Options {
     }
   }
 
-  private String getNodeName(String configRepo) {
+  private Node getMatchingNodeFromConfigFile(Cluster cluster, Set<String> specifiedOptions) {
+    String host = specifiedOptions.contains(addDashDash(NODE_HOSTNAME)) ? nodeHostname : DEFAULT_HOSTNAME;
+    String substitutedHost = ParameterSubstitutor.substitute(host);
+    String port = specifiedOptions.contains(addDashDash(NODE_PORT)) ? nodePort : DEFAULT_PORT;
+    Node node = cluster.getStripes().stream()
+        .flatMap(stripe -> stripe.getNodes().stream())
+        .filter(node1 -> node1.getNodeHostname().equals(substitutedHost) && node1.getNodePort() == Integer.parseInt(port))
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException(
+            String.format(
+                "Did not find a matching node entry in config file: %s based on %s=%s and %s=%s",
+                configFile,
+                NODE_HOSTNAME,
+                substitutedHost,
+                NODE_PORT,
+                port
+            )
+        ));
+    LOGGER.info("Found matching node entry from config file based on {}={} and {}={}", NODE_HOSTNAME, substitutedHost, NODE_PORT, port);
+    return node;
+  }
+
+  private String extractNodeName(String configRepo) {
     return configRepo.replaceAll("^" + REGEX_PREFIX, "").replaceAll(REGEX_SUFFIX + "$", "");
   }
 }

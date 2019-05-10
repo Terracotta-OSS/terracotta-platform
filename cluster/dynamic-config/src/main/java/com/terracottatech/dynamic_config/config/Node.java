@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 public class Node {
@@ -199,6 +200,41 @@ public class Node {
 
   public void setClusterName(String clusterName) {
     this.clusterName = clusterName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Node node = (Node) o;
+    return nodePort == node.nodePort &&
+        nodeGroupPort == node.nodeGroupPort &&
+        nodeName.equals(node.nodeName) &&
+        nodeHostname.equals(node.nodeHostname) &&
+        nodeBindAddress.equals(node.nodeBindAddress) &&
+        nodeGroupBindAddress.equals(node.nodeGroupBindAddress) &&
+        nodeConfigDir.equals(node.nodeConfigDir) &&
+        nodeMetadataDir.equals(node.nodeMetadataDir) &&
+        nodeLogDir.equals(node.nodeLogDir) &&
+        nodeBackupDir.equals(node.nodeBackupDir) &&
+        securitySslTls == node.securitySslTls &&
+        securityWhitelist == node.securityWhitelist &&
+        securityDir.equals(node.securityDir) &&
+        securityAuditLogDir.equals(node.securityAuditLogDir) &&
+        securityAuthc.equals(node.securityAuthc) &&
+        failoverPriority.equals(node.failoverPriority) &&
+        clientReconnectWindow.equals(node.clientReconnectWindow) &&
+        clientLeaseDuration.equals(node.clientLeaseDuration) &&
+        offheapResources.equals(node.offheapResources) &&
+        dataDirs.equals(node.dataDirs) &&
+        clusterName.equals(node.clusterName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeConfigDir,
+        nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls,
+        securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs, clusterName);
   }
 
   @Override

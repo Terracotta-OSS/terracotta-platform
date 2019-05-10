@@ -20,4 +20,8 @@ public class CommonParamsUtils {
       return new String[] {quantityUnit.substring(0, i), quantityUnit.substring(i)};
     }
   }
+
+  public static boolean nullOrEmpty(String value) {
+    return value == null || value.isEmpty();
+  }
 }

@@ -7,8 +7,8 @@ package com.terracottatech.dynamic_config;
 import static java.io.File.separator;
 
 public class Constants {
-  public static final int DEFAULT_PORT = 9410;
-  public static final int DEFAULT_GROUP_PORT = 9430;
+  public static final String DEFAULT_PORT = "9410";
+  public static final String DEFAULT_GROUP_PORT = "9430";
   public static final String DEFAULT_BIND_ADDRESS = "0.0.0.0";
   public static final String DEFAULT_GROUP_BIND_ADDRESS = "0.0.0.0";
   public static final String DEFAULT_HOSTNAME = "%h";

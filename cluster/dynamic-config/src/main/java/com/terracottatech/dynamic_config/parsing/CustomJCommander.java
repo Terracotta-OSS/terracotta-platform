@@ -16,16 +16,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PrettyUsagePrintingJCommander extends JCommander {
+import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDashDash;
+
+public class CustomJCommander extends JCommander {
   private final String programName;
   private final Set<String> userSpecifiedOptions = new HashSet<>();
 
-  public PrettyUsagePrintingJCommander(String programName, Object object) {
+  public CustomJCommander(String programName, Object object) {
     super(object);
     this.programName = programName;
 
-    // It appears like Jcommander doesn't have API to fetch the options user has specified
-    // on the command-line, this is a hacky way to capture that information
+    // Hacky way to get the specified options, since JCommander doesn't provide this functionality out-of-the-box
     addConverterInstanceFactory((parameter, forType) -> {
       userSpecifiedOptions.add(parameter.names()[0]);
       return null;
@@ -72,7 +73,7 @@ public class PrettyUsagePrintingJCommander extends JCommander {
     for (ParameterDescription pd : sorted) {
       WrappedParameter parameter = pd.getParameter();
       out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "");
-      String defaultValue = DefaultSettings.getDefaultValueFor(pd.getLongestName().substring(2));
+      String defaultValue = DefaultSettings.getDefaultValueFor(stripDashDash(pd.getLongestName()));
       if (defaultValue != null) {
         out.append(indent).append("    ");
         for (int i = 0; i < maxParamLength - pd.getLongestName().length(); i++) {

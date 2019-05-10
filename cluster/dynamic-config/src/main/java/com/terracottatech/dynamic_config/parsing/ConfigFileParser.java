@@ -51,6 +51,9 @@ public class ConfigFileParser {
 
     Cluster cluster = new Cluster(stripes);
     properties.forEach((key, value) -> {
+      if (value.toString().isEmpty()) {
+        return;
+      }
       NodeIdentifier nodeIdentifier = new NodeIdentifier(getStripeName(key.toString()), getNodeName(key.toString()));
       NodeParameterSetter.set(getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
     });

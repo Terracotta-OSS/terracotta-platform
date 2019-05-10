@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.config;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 
 public class Stripe {
@@ -18,6 +19,19 @@ public class Stripe {
 
   public Collection<Node> getNodes() {
     return Collections.unmodifiableCollection(nodes);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Stripe stripe = (Stripe) o;
+    return nodes.equals(stripe.nodes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(nodes);
   }
 
   @Override

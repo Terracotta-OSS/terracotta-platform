@@ -286,6 +286,35 @@ public class NodeParamsValidatorTest {
   public void testBadSecurity_3() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(SECURITY_DIR, "security-root-dir");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).isEqualTo("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
+    }
+  }
+
+  @Test
+  public void testBadSecurity_4() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_DIR, "security-root-dir");
+    paramValueMap.put(SECURITY_SSL_TLS, "false");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).isEqualTo("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
+    }
+  }
+
+  @Test
+  public void testBadSecurity_5() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_DIR, "");
     paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-log-dir");
 
     try {
@@ -293,8 +322,152 @@ public class NodeParamsValidatorTest {
       failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
     } catch (Exception e) {
       assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).isEqualTo("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security auditing configuration");
+      assertThat(e.getMessage()).contains(SECURITY_DIR + " is mandatory");
     }
+  }
+
+  @Test
+  public void testBadSecurity_6() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_AUTHC, "certificate");
+    paramValueMap.put(SECURITY_DIR, "security-root-dir");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).startsWith(SECURITY_SSL_TLS + " is required");
+    }
+  }
+
+  @Test
+  public void testBadSecurity_7() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_AUTHC, "certificate");
+    paramValueMap.put(SECURITY_DIR, "security-root-dir");
+    paramValueMap.put(SECURITY_SSL_TLS, "");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).startsWith(SECURITY_SSL_TLS + " is required");
+    }
+  }
+
+  @Test
+  public void testBadSecurity_8() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_AUTHC, "certificate");
+    paramValueMap.put(SECURITY_DIR, "security-root-dir");
+    paramValueMap.put(SECURITY_SSL_TLS, "false");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).startsWith(SECURITY_SSL_TLS + " is required");
+    }
+  }
+
+  @Test
+  public void testBadSecurity_9() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "false");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).startsWith(SECURITY_DIR + " is mandatory");
+    }
+  }
+
+  @Test
+  public void testBadSecurity_10() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "blah");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).startsWith(SECURITY_SSL_TLS + " should be one of");
+    }
+  }
+
+  @Test
+  public void testBadSecurity_11() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_WHITELIST, "blah");
+
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).startsWith(SECURITY_WHITELIST + " should be one of");
+    }
+  }
+
+  @Test
+  public void testGoodSecurity_1() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "false");
+    paramValueMap.put(SECURITY_AUTHC, "");
+    paramValueMap.put(SECURITY_WHITELIST, "true");
+    paramValueMap.put(SECURITY_DIR, "security-dir");
+    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
+    NodeParamsValidator.validate(paramValueMap);
+  }
+
+  @Test
+  public void testGoodSecurity_2() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "");
+    paramValueMap.put(SECURITY_AUTHC, "");
+    paramValueMap.put(SECURITY_WHITELIST, "true");
+    paramValueMap.put(SECURITY_DIR, "security-dir");
+    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
+    NodeParamsValidator.validate(paramValueMap);
+  }
+
+  @Test
+  public void testGoodSecurity_3() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "");
+    paramValueMap.put(SECURITY_AUTHC, "");
+    paramValueMap.put(SECURITY_WHITELIST, "");
+    paramValueMap.put(SECURITY_DIR, "");
+    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "");
+    NodeParamsValidator.validate(paramValueMap);
+  }
+
+  @Test
+  public void testGoodSecurity_4() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "true");
+    paramValueMap.put(SECURITY_AUTHC, "certificate");
+    paramValueMap.put(SECURITY_WHITELIST, "");
+    paramValueMap.put(SECURITY_DIR, "security-root-dir");
+    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "");
+    NodeParamsValidator.validate(paramValueMap);
+  }
+
+  @Test
+  public void testGoodSecurity_5() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "true");
+    paramValueMap.put(SECURITY_AUTHC, "certificate");
+    paramValueMap.put(SECURITY_WHITELIST, "true");
+    paramValueMap.put(SECURITY_DIR, "security-root-dir");
+    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
+    NodeParamsValidator.validate(paramValueMap);
   }
 
   @Test
@@ -319,7 +492,7 @@ public class NodeParamsValidatorTest {
       failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
     } catch (Exception e) {
       assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).contains("should be either 'availability' or 'consistency:N'");
+      assertThat(e.getMessage()).contains("should be either 'availability', 'consistency', or 'consistency:N'");
     }
   }
 
@@ -332,7 +505,7 @@ public class NodeParamsValidatorTest {
       failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
     } catch (Exception e) {
       assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).contains("should be either 'availability' or 'consistency:N'");
+      assertThat(e.getMessage()).contains("should be either 'availability', 'consistency', or 'consistency:N'");
     }
   }
 
@@ -345,7 +518,7 @@ public class NodeParamsValidatorTest {
       failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
     } catch (Exception e) {
       assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).contains("should be either 'availability' or 'consistency:N'");
+      assertThat(e.getMessage()).contains("should be either 'availability', 'consistency', or 'consistency:N'");
     }
   }
 
@@ -359,6 +532,19 @@ public class NodeParamsValidatorTest {
     } catch (Exception e) {
       assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
       assertThat(e.getMessage()).endsWith("should be one of: " + AcceptableSettingValues.get(FAILOVER_PRIORITY));
+    }
+  }
+
+  @Test
+  public void testBadFailoverSettings_6() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(FAILOVER_PRIORITY, "consistency:0");
+    try {
+      NodeParamsValidator.validate(paramValueMap);
+      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
+      assertThat(e.getMessage()).contains("where 'N' is the voter count expressed as a positive integer");
     }
   }
 

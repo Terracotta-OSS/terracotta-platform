@@ -77,13 +77,13 @@ public class ConsoleParamsParser {
     }
 
     if (node.getNodePort() == 0) {
-      defaultOptions.add(NODE_PORT);
-      node.setNodePort(DEFAULT_PORT);
+      node.setNodePort(Integer.parseInt(DEFAULT_PORT));
+      defaultOptions.put(NODE_PORT, DEFAULT_PORT);
     }
 
     if (node.getNodeGroupPort() == 0) {
-      defaultOptions.add(NODE_GROUP_PORT);
-      node.setNodeGroupPort(DEFAULT_GROUP_PORT);
+      node.setNodeGroupPort(Integer.parseInt(DEFAULT_GROUP_PORT));
+      defaultOptions.put(NODE_GROUP_PORT, DEFAULT_GROUP_PORT);
     }
 
     if (node.getOffheapResources().isEmpty()) {
