@@ -4,6 +4,9 @@
  */
 package com.terracottatech.dynamic_config.config;
 
+import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.utilities.TimeUnit;
+
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,9 +31,9 @@ public class Node {
   private boolean securitySslTls;
   private boolean securityWhitelist;
   private String failoverPriority;
-  private long clientReconnectWindowInSeconds;
-  private long clientLeaseDurationInMillis;
-  private Map<String, Long> offheapResources = new HashMap<>(); //offheap resource in bytes
+  private Measure<TimeUnit> clientReconnectWindow;
+  private Measure<TimeUnit> clientLeaseDuration;
+  private Map<String, Measure<MemoryUnit>> offheapResources = new HashMap<>();
   private Map<String, Path> dataDirs = new HashMap<>();
   private String clusterName;
 
@@ -98,15 +101,15 @@ public class Node {
     return failoverPriority;
   }
 
-  public long getClientReconnectWindow() {
-    return clientReconnectWindowInSeconds;
+  public Measure<TimeUnit> getClientReconnectWindow() {
+    return clientReconnectWindow;
   }
 
-  public long getClientLeaseDuration() {
-    return clientLeaseDurationInMillis;
+  public Measure<TimeUnit> getClientLeaseDuration() {
+    return clientLeaseDuration;
   }
 
-  public Map<String, Long> getOffheapResources() {
+  public Map<String, Measure<MemoryUnit>> getOffheapResources() {
     return Collections.unmodifiableMap(offheapResources);
   }
 
@@ -182,16 +185,16 @@ public class Node {
     this.failoverPriority = failoverPriority;
   }
 
-  public void setClientReconnectWindow(Long clientReconnectWindow) {
-    this.clientReconnectWindowInSeconds = clientReconnectWindow;
+  public void setClientReconnectWindow(long clientReconnectWindow, TimeUnit timeUnit) {
+    this.clientReconnectWindow = Measure.of(clientReconnectWindow, timeUnit);
   }
 
-  public void setClientLeaseDuration(Long clientLeaseDuration) {
-    this.clientLeaseDurationInMillis = clientLeaseDuration;
+  public void setClientLeaseDuration(long clientLeaseDuration, TimeUnit timeUnit) {
+    this.clientLeaseDuration = Measure.of(clientLeaseDuration, timeUnit);
   }
 
-  public void setOffheapResource(String name, Long quantity) {
-    this.offheapResources.put(name, quantity);
+  public void setOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
+    this.offheapResources.put(name, Measure.of(quantity, memoryUnit));
   }
 
   public void setDataDir(String name, Path path) {
@@ -256,8 +259,8 @@ public class Node {
         ", securitySslTls=" + securitySslTls +
         ", securityWhitelist=" + securityWhitelist +
         ", failoverPriority='" + failoverPriority + '\'' +
-        ", clientReconnectWindowInSeconds=" + clientReconnectWindowInSeconds +
-        ", clientLeaseDurationInMillis=" + clientLeaseDurationInMillis +
+        ", clientReconnectWindow=" + clientReconnectWindow +
+        ", clientLeaseDuration=" + clientLeaseDuration +
         ", offheapResources=" + offheapResources +
         ", dataDirs=" + dataDirs +
         ", clusterName='" + clusterName + '\'' +

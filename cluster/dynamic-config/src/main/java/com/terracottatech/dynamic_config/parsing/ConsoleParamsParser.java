@@ -118,7 +118,7 @@ public class ConsoleParamsParser {
     if (node.getOffheapResources().isEmpty()) {
       String[] split = DEFAULT_OFFHEAP_RESOURCE.split(PARAM_INTERNAL_SEP);
       String[] quantityUnit = splitQuantityUnit(split[1]);
-      node.setOffheapResource(split[0], MemoryUnit.valueOf(quantityUnit[1]).toBytes(Long.parseLong(quantityUnit[0])));
+      node.setOffheapResource(split[0], Long.parseLong(quantityUnit[0]), MemoryUnit.valueOf(quantityUnit[1]));
       defaultOptions.put(OFFHEAP_RESOURCES, DEFAULT_OFFHEAP_RESOURCE);
     }
 
@@ -158,15 +158,15 @@ public class ConsoleParamsParser {
       defaultOptions.put(FAILOVER_PRIORITY, DEFAULT_FAILOVER_PRIORITY);
     }
 
-    if (node.getClientReconnectWindow() == 0) {
+    if (node.getClientReconnectWindow() == null) {
       String[] quantityUnit = splitQuantityUnit(DEFAULT_CLIENT_RECONNECT_WINDOW);
-      node.setClientReconnectWindow(TimeUnit.from(quantityUnit[1]).get().toSeconds(Long.parseLong(quantityUnit[0])));
+      node.setClientReconnectWindow(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
       defaultOptions.put(CLIENT_RECONNECT_WINDOW, DEFAULT_CLIENT_RECONNECT_WINDOW);
     }
 
-    if (node.getClientLeaseDuration() == 0) {
+    if (node.getClientLeaseDuration() == null) {
       String[] quantityUnit = splitQuantityUnit(DEFAULT_CLIENT_LEASE_DURATION);
-      node.setClientLeaseDuration((long) TimeUnit.from(quantityUnit[1]).get().toMillis(Long.parseLong(quantityUnit[0])));
+      node.setClientLeaseDuration(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
       defaultOptions.put(CLIENT_LEASE_DURATION, DEFAULT_CLIENT_LEASE_DURATION);
     }
 

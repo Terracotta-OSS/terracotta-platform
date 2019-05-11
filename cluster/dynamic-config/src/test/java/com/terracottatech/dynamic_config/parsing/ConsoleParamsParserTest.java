@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.parsing;
 
 
 import com.terracottatech.dynamic_config.config.Cluster;
+import com.terracottatech.dynamic_config.config.Measure;
 import com.terracottatech.dynamic_config.config.Node;
 import org.junit.Test;
 
@@ -37,6 +38,7 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SS
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
+import static com.terracottatech.utilities.TimeUnit.SECONDS;
 import static java.io.File.separator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -58,7 +60,7 @@ public class ConsoleParamsParserTest {
     assertThat(node.getNodeGroupPort()).isEqualTo(19430);
     assertThat(node.getNodeBindAddress()).isEqualTo("10.10.10.10");
     assertThat(node.getNodeGroupBindAddress()).isEqualTo("20.20.20.20");
-    assertThat(node.getOffheapResources()).containsExactly(entry("main", MB.toBytes(512)), entry("second", GB.toBytes(1)));
+    assertThat(node.getOffheapResources()).containsExactly(entry("main", Measure.of(512L, MB)), entry("second", Measure.of(1L, GB)));
 
     assertThat(node.getNodeBackupDir().toString()).isEqualTo("backup");
     assertThat(node.getNodeConfigDir().toString()).isEqualTo("config");
@@ -73,8 +75,8 @@ public class ConsoleParamsParserTest {
     assertThat(node.getSecurityAuthc()).isEqualTo("ldap");
 
     assertThat(node.getFailoverPriority()).isEqualTo("consistency:1");
-    assertThat(node.getClientReconnectWindow()).isEqualTo(100L);
-    assertThat(node.getClientLeaseDuration()).isEqualTo(50000L);
+    assertThat(node.getClientReconnectWindow()).isEqualTo(Measure.of(100L, SECONDS));
+    assertThat(node.getClientLeaseDuration()).isEqualTo(Measure.of(50L, SECONDS));
   }
 
   private Map<String, String> setProperties() {
@@ -121,7 +123,7 @@ public class ConsoleParamsParserTest {
     assertThat(node.getNodeGroupPort()).isEqualTo(9430);
     assertThat(node.getNodeBindAddress()).isEqualTo("0.0.0.0");
     assertThat(node.getNodeGroupBindAddress()).isEqualTo("0.0.0.0");
-    assertThat(node.getOffheapResources()).containsOnly(entry("main", MB.toBytes(512)));
+    assertThat(node.getOffheapResources()).containsOnly(entry("main", Measure.of(512L, MB)));
 
     assertThat(node.getNodeBackupDir()).isNull();
     assertThat(node.getNodeConfigDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "config");
@@ -136,7 +138,7 @@ public class ConsoleParamsParserTest {
     assertThat(node.getSecurityAuthc()).isNull();
 
     assertThat(node.getFailoverPriority()).isEqualTo("availability");
-    assertThat(node.getClientReconnectWindow()).isEqualTo(120L);
-    assertThat(node.getClientLeaseDuration()).isEqualTo(20000L);
+    assertThat(node.getClientReconnectWindow()).isEqualTo(Measure.of(120L, SECONDS));
+    assertThat(node.getClientLeaseDuration()).isEqualTo(Measure.of(20L, SECONDS));
   }
 }

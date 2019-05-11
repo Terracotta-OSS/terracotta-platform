@@ -18,6 +18,7 @@ import java.util.Random;
 
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
+import static com.terracottatech.utilities.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
@@ -42,8 +43,8 @@ public class ClusterConfigValidatorTest {
   public void testDifferingClientLeaseDurations() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setClientLeaseDuration(10L);
-    node2.setClientLeaseDuration(100L);
+    node1.setClientLeaseDuration(10L, SECONDS);
+    node2.setClientLeaseDuration(100L, SECONDS);
 
     try {
       ClusterConfigValidator.validate(createCluster(node1, node2));
@@ -58,8 +59,8 @@ public class ClusterConfigValidatorTest {
   public void testDifferingClientReconnectWindows() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setClientReconnectWindow(10L);
-    node2.setClientReconnectWindow(100L);
+    node1.setClientReconnectWindow(10L, SECONDS);
+    node2.setClientReconnectWindow(100L, SECONDS);
 
     try {
       ClusterConfigValidator.validate(createCluster(node1, node2));
@@ -122,8 +123,8 @@ public class ClusterConfigValidatorTest {
   public void testDifferingOffheapNames() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setOffheapResource("main", MB.toBytes(512));
-    node2.setOffheapResource("other", GB.toBytes(1));
+    node1.setOffheapResource("main", 512L, MB);
+    node1.setOffheapResource("other", 1L, GB);
 
     try {
       ClusterConfigValidator.validate(createCluster(node1, node2));
@@ -138,10 +139,10 @@ public class ClusterConfigValidatorTest {
   public void testDifferingOffheapNames_multipleOffheapResources() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setOffheapResource("main", GB.toBytes(1));
-    node1.setOffheapResource("second", GB.toBytes(2));
-    node2.setOffheapResource("main", GB.toBytes(1));
-    node2.setOffheapResource("other", GB.toBytes(2));
+    node1.setOffheapResource("main", 1L, GB);
+    node1.setOffheapResource("second", 2L, GB);
+    node2.setOffheapResource("main", 1L, GB);
+    node2.setOffheapResource("other", 2L, GB);
 
     try {
       ClusterConfigValidator.validate(createCluster(node1, node2));
@@ -156,9 +157,10 @@ public class ClusterConfigValidatorTest {
   public void testDifferingOffheapResources() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setOffheapResource("main", GB.toBytes(1));
-    node1.setOffheapResource("second", GB.toBytes(2));
-    node2.setOffheapResource("main", GB.toBytes(1));
+    node1.setOffheapResource("main", 1L, GB);
+    node1.setOffheapResource("second", 2L, GB);
+    node2.setOffheapResource("main", 1L, GB);
+    node2.setOffheapResource("other", 2L, GB);
 
     try {
       ClusterConfigValidator.validate(createCluster(node1, node2));
@@ -173,8 +175,8 @@ public class ClusterConfigValidatorTest {
   public void testDifferingOffheapQuantities() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setOffheapResource("main", GB.toBytes(1));
-    node2.setOffheapResource("main", GB.toBytes(2));
+    node1.setOffheapResource("main", 1L, GB);
+    node2.setOffheapResource("main", 2L, GB);
 
     try {
       ClusterConfigValidator.validate(createCluster(node1, node2));
@@ -250,11 +252,11 @@ public class ClusterConfigValidatorTest {
     node.setSecurityWhitelist(false);
     node.setSecurityAuditLogDir(Paths.get("audit-" + random.nextInt()));
     node.setSecurityDir(Paths.get("security-root" + random.nextInt()));
-    node.setOffheapResource("main", GB.toBytes(1));
+    node.setOffheapResource("main", 1L, GB);
     node.setDataDir("dir-1", Paths.get("some-path" + random.nextInt()));
     node.setFailoverPriority("consistency");
-    node.setClientReconnectWindow(100L);
-    node.setClientLeaseDuration(100L);
+    node.setClientReconnectWindow(100L, SECONDS);
+    node.setClientLeaseDuration(100L, SECONDS);
     node.setNodeBackupDir(Paths.get("backup-" + random.nextInt()));
     node.setNodeMetadataDir(Paths.get("metadata-" + random.nextInt()));
     node.setNodeLogDir(Paths.get("logs-" + random.nextInt()));

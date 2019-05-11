@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.config.Cluster;
+import com.terracottatech.dynamic_config.config.Measure;
 import com.terracottatech.dynamic_config.config.Node;
 import org.junit.Test;
 
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
+import static com.terracottatech.utilities.TimeUnit.SECONDS;
 import static java.io.File.separator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -33,7 +35,7 @@ public class ConfigFileParserTest {
     assertThat(node.getNodeGroupPort()).isEqualTo(19430);
     assertThat(node.getNodeBindAddress()).isEqualTo("10.10.10.10");
     assertThat(node.getNodeGroupBindAddress()).isEqualTo("10.10.10.10");
-    assertThat(node.getOffheapResources()).containsOnly(entry("main", MB.toBytes(512)), entry("second", GB.toBytes(1)));
+    assertThat(node.getOffheapResources()).containsOnly(entry("main", Measure.of(512L, MB)), entry("second", Measure.of(1L, GB)));
 
     assertThat(node.getNodeBackupDir().toString()).isEqualTo(separator + "home" + separator + "terracotta" + separator + "backup");
     assertThat(node.getNodeConfigDir().toString()).isEqualTo(separator + "home" + separator + "terracotta" + separator + "config");
@@ -51,8 +53,8 @@ public class ConfigFileParserTest {
     assertThat(node.getSecurityAuthc()).isEqualTo("file");
 
     assertThat(node.getFailoverPriority()).isEqualTo("consistency:2");
-    assertThat(node.getClientReconnectWindow()).isEqualTo(100L);
-    assertThat(node.getClientLeaseDuration()).isEqualTo(50000L);
+    assertThat(node.getClientReconnectWindow()).isEqualTo(Measure.of(100L, SECONDS));
+    assertThat(node.getClientLeaseDuration()).isEqualTo(Measure.of(50L, SECONDS));
   }
 
   @Test

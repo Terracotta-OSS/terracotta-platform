@@ -39,58 +39,51 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SS
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 import static com.terracottatech.dynamic_config.util.CommonParamsUtils.splitQuantityUnit;
 
-
 /**
  * Sets pre-validated parameters to their corresponding values in {@code Node} object.
  */
 class NodeParameterSetter {
-  private static final Map<String, BiConsumer<Node, Object>> PARAM_ACTION_MAP = new HashMap<>();
+  private static final Map<String, BiConsumer<Node, String>> PARAM_ACTION_MAP = new HashMap<>();
 
   static {
-    PARAM_ACTION_MAP.put(NODE_NAME, (node, nodeName) -> node.setNodeName(nodeName.toString()));
-    PARAM_ACTION_MAP.put(NODE_HOSTNAME, (node, nodeHostname) -> node.setNodeHostname(nodeHostname.toString()));
-    PARAM_ACTION_MAP.put(NODE_PORT, (node, value) -> node.setNodePort(Integer.parseInt(value.toString())));
-    PARAM_ACTION_MAP.put(NODE_GROUP_PORT, (node, value) -> node.setNodeGroupPort(Integer.parseInt(value.toString())));
-    PARAM_ACTION_MAP.put(NODE_BIND_ADDRESS, (node, nodeBindAddress) -> node.setNodeBindAddress(nodeBindAddress.toString()));
-    PARAM_ACTION_MAP.put(NODE_GROUP_BIND_ADDRESS, (node, nodeGroupBindAddress) -> node.setNodeGroupBindAddress(nodeGroupBindAddress.toString()));
-    PARAM_ACTION_MAP.put(NODE_CONFIG_DIR, (node, value) -> node.setNodeConfigDir(Paths.get(value.toString())));
-    PARAM_ACTION_MAP.put(NODE_METADATA_DIR, (node, value) -> node.setNodeMetadataDir(Paths.get(value.toString())));
-    PARAM_ACTION_MAP.put(NODE_LOG_DIR, (node, value) -> node.setNodeLogDir(Paths.get(value.toString())));
-    PARAM_ACTION_MAP.put(NODE_BACKUP_DIR, (node, value) -> node.setNodeBackupDir(Paths.get(value.toString())));
-    PARAM_ACTION_MAP.put(SECURITY_DIR, (node, value) -> node.setSecurityDir(Paths.get(value.toString())));
-    PARAM_ACTION_MAP.put(SECURITY_AUDIT_LOG_DIR, (node, value) -> node.setSecurityAuditLogDir(Paths.get(value.toString())));
-    PARAM_ACTION_MAP.put(SECURITY_AUTHC, (node, securityAuthc) -> node.setSecurityAuthc(securityAuthc.toString()));
-    PARAM_ACTION_MAP.put(SECURITY_SSL_TLS, (node, value) -> node.setSecuritySslTls(Boolean.valueOf(value.toString())));
-    PARAM_ACTION_MAP.put(SECURITY_WHITELIST, (node, value) -> node.setSecurityWhitelist(Boolean.valueOf(value.toString())));
-    PARAM_ACTION_MAP.put(FAILOVER_PRIORITY, (node, failoverPriority) -> node.setFailoverPriority(failoverPriority.toString()));
+    PARAM_ACTION_MAP.put(NODE_NAME, Node::setNodeName);
+    PARAM_ACTION_MAP.put(NODE_HOSTNAME, Node::setNodeHostname);
+    PARAM_ACTION_MAP.put(NODE_PORT, (node, value) -> node.setNodePort(Integer.parseInt(value)));
+    PARAM_ACTION_MAP.put(NODE_GROUP_PORT, (node, value) -> node.setNodeGroupPort(Integer.parseInt(value)));
+    PARAM_ACTION_MAP.put(NODE_BIND_ADDRESS, Node::setNodeBindAddress);
+    PARAM_ACTION_MAP.put(NODE_GROUP_BIND_ADDRESS, Node::setNodeGroupBindAddress);
+    PARAM_ACTION_MAP.put(NODE_CONFIG_DIR, (node, value) -> node.setNodeConfigDir(Paths.get(value)));
+    PARAM_ACTION_MAP.put(NODE_METADATA_DIR, (node, value) -> node.setNodeMetadataDir(Paths.get(value)));
+    PARAM_ACTION_MAP.put(NODE_LOG_DIR, (node, value) -> node.setNodeLogDir(Paths.get(value)));
+    PARAM_ACTION_MAP.put(NODE_BACKUP_DIR, (node, value) -> node.setNodeBackupDir(Paths.get(value)));
+    PARAM_ACTION_MAP.put(SECURITY_DIR, (node, value) -> node.setSecurityDir(Paths.get(value)));
+    PARAM_ACTION_MAP.put(SECURITY_AUDIT_LOG_DIR, (node, value) -> node.setSecurityAuditLogDir(Paths.get(value)));
+    PARAM_ACTION_MAP.put(SECURITY_AUTHC, Node::setSecurityAuthc);
+    PARAM_ACTION_MAP.put(SECURITY_SSL_TLS, (node, value) -> node.setSecuritySslTls(Boolean.valueOf(value)));
+    PARAM_ACTION_MAP.put(SECURITY_WHITELIST, (node, value) -> node.setSecurityWhitelist(Boolean.valueOf(value)));
+    PARAM_ACTION_MAP.put(FAILOVER_PRIORITY, Node::setFailoverPriority);
     PARAM_ACTION_MAP.put(CLIENT_RECONNECT_WINDOW, (node, clientReconnectWindow) -> {
-      String[] quantityUnit = splitQuantityUnit(clientReconnectWindow.toString());
-      long quantity = Long.parseLong(quantityUnit[0]);
-      String unit = quantityUnit[1];
-      node.setClientReconnectWindow(TimeUnit.from(unit).get().toSeconds(quantity));
+      String[] quantityUnit = splitQuantityUnit(clientReconnectWindow);
+      node.setClientReconnectWindow(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
     });
     PARAM_ACTION_MAP.put(CLIENT_LEASE_DURATION, (node, clientLeaseDuration) -> {
-      String[] quantityUnit = splitQuantityUnit(clientLeaseDuration.toString());
-      long quantity = Long.parseLong(quantityUnit[0]);
-      String unit = quantityUnit[1];
-      node.setClientLeaseDuration(TimeUnit.from(unit).get().toMillis(quantity));
+      String[] quantityUnit = splitQuantityUnit(clientLeaseDuration);
+      node.setClientLeaseDuration(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
     });
-    PARAM_ACTION_MAP.put(CLUSTER_NAME, (node, clusterName) -> node.setClusterName(clusterName.toString()));
-    PARAM_ACTION_MAP.put(OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.toString().split(MULTI_VALUE_SEP)).forEach(ofr -> {
+    PARAM_ACTION_MAP.put(CLUSTER_NAME, Node::setClusterName);
+    PARAM_ACTION_MAP.put(OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(ofr -> {
       String[] split = ofr.split(PARAM_INTERNAL_SEP);
       String[] quantityUnit = splitQuantityUnit(split[1]);
-      long quantity = Long.parseLong(quantityUnit[0]);
-      String unit = quantityUnit[1];
-      node.setOffheapResource(split[0], MemoryUnit.valueOf(unit).toBytes(quantity));
+      node.setOffheapResource(split[0], Long.parseLong(quantityUnit[0]), MemoryUnit.valueOf(quantityUnit[1]));
     }));
-    PARAM_ACTION_MAP.put(DATA_DIRS, (node, value) -> Arrays.asList(value.toString().split(MULTI_VALUE_SEP)).forEach(dir -> {
+    PARAM_ACTION_MAP.put(DATA_DIRS, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(dir -> {
       String[] split = dir.split(PARAM_INTERNAL_SEP);
       node.setDataDir(split[0], Paths.get(split[1]));
     }));
   }
 
   static void set(String param, String value, Node node) {
-    BiConsumer<Node, Object> action = PARAM_ACTION_MAP.get(param);
+    BiConsumer<Node, String> action = PARAM_ACTION_MAP.get(param);
     if (action == null) {
       throw new AssertionError("Unrecognized param: " + param);
     }
