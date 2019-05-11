@@ -36,7 +36,6 @@ public class ConfigUtils {
       String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
           "   <plugins>\n" +
           getDataDirectoryConfig(node) +
-          getOffheapResourcesConfig(node) +
           getSecurityConfig(node) +
           "   </plugins>\n" +
           "    <servers>\n" +
@@ -109,33 +108,23 @@ public class ConfigUtils {
     return dataDirectoryConfig.replaceAll(Pattern.quote("${DATA_DIR}"), node.getNodeMetadataDir().toString());
   }
 
-  private static String getOffheapResourcesConfig(Node node) {
-    String configPrefix = "     <config xmlns:ofr=\"http://www.terracotta.org/config/offheap-resource\">\n" +
-        "     <ofr:offheap-resources>\n";
-    String configSuffix = "     </ofr:offheap-resources>\n" +
-        "     </config>\n";
-
-    StringBuilder sb = new StringBuilder();
-    String dataDirectoryConfig = "         <ofr:resource name=\"${NAME}\" unit=\"B\">${QUANTITY}</ofr:resource>\n";
-    node.getOffheapResources().forEach((key, value) -> {
-      String substituted = dataDirectoryConfig
-          .replaceAll(Pattern.quote("${NAME}"), key)
-          .replaceAll(Pattern.quote("${QUANTITY}"), String.valueOf(value));
-      sb.append(substituted);
-    });
-    return configPrefix + sb.toString() + configSuffix;
-  }
-
   public static Optional<String> findConfigRepo(String nodeConfigDir) {
     String specifiedOrDefaultConfigDir = nodeConfigDir == null ? Constants.DEFAULT_CONFIG_DIR : nodeConfigDir;
     String substitutedConfigDir = ParameterSubstitutor.substitute(specifiedOrDefaultConfigDir);
 
+    Optional<String> found = Optional.empty();
     try (Stream<Path> stream = Files.list(Paths.get(substitutedConfigDir).resolve(NOMAD_CONFIG_DIR))) {
-      return stream.map(path -> path.getFileName().toString()).filter(fileName -> fileName.matches(CONFIG_REPO_FILENAME_REGEX)).findAny();
+      found = stream.map(path -> path.getFileName().toString()).filter(fileName -> fileName.matches(CONFIG_REPO_FILENAME_REGEX)).findAny();
     } catch (IOException e) {
       LOGGER.debug("Reading cluster config repository from: {} resulted in exception: {}", substitutedConfigDir, e);
     }
-    return Optional.empty();
+
+    if (found.isPresent()) {
+      LOGGER.info("Found cluster config repository from: {}", found.get());
+    } else {
+      LOGGER.info("Did not find cluster config repository in: {}", substitutedConfigDir);
+    }
+    return found;
   }
 
   public static String generateNodeName() {

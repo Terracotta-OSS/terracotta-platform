@@ -133,7 +133,6 @@ public class Options {
 
     Optional<String> configRepo = findConfigRepo(nodeConfigDir);
     if (configRepo.isPresent()) {
-      LOGGER.info("Reading cluster config repository from: {}", configRepo.get());
       startServer("-r", Paths.get(nodeConfigDir).toString(), "-n", extractNodeName(configRepo.get()));
     } else {
       Cluster cluster;
