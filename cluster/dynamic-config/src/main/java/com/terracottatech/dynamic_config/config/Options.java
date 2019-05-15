@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.config;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.terracottatech.dynamic_config.management.ClusterTopologyMBean;
+import com.terracottatech.dynamic_config.management.ClusterTopologyMBeanImpl;
 import com.terracottatech.dynamic_config.managers.ClusterManager;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
@@ -168,7 +168,7 @@ public class Options {
         node = cluster.getStripes().get(0).getNodes().iterator().next(); // Cluster object will have only 1 node, just get that
       }
 
-      ClusterTopologyMBean.init(cluster);
+      ClusterTopologyMBeanImpl.init(cluster);
       Path configPath = ConfigUtils.createTempTcConfig(node);
       startServer("--config-consistency", "--config", configPath.toAbsolutePath().toString());
     }
