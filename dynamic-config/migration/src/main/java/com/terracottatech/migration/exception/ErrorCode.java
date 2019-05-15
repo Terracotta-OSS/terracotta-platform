@@ -1,0 +1,36 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+package com.terracottatech.migration.exception;
+
+public enum ErrorCode {
+  UNKNOWN_ERROR(10),
+  INVALID_INPUT_PATTERN(50),
+  INVALID_MIXED_INPUT_PATTERN(75),
+  SAME_SERVICE_DEFINED_MULTIPLE_TIMES(100),
+  MISMATCHED_SERVICE_CONFIGURATION(200),
+  DUPLICATE_STRIPE_NAME(300),
+  DUPLICATE_SERVER_NAME_IN_STRIPE(460),
+  INVALID_FILE_TYPE(600),
+  MISSING_SERVERS(700),
+  MISMATCHED_SERVERS(800),
+  INVALID_ATTRIBUTE_NAME(900),
+  MISMATCHED_OFF_HEAPS(1000),
+  MISMATCHED_OFF_HEAP_RESOURCE_NUMBERS(1050),
+  BOTH_WHITELIST_DEPR_WHITELIST_PRESENT(1100),
+  MISMATCHED_SECURITY_CONFIGURATION(1200),
+  MISMATCHED_LEASE_TIME_CONFIGURATION(1300),
+  MISMATCHED_DATA_DIR_RESOURCE_NUMBERS(1400),
+  MISMATCHED_DATA_DIR(1500),
+  MULTIPLE_PLATFORM_DATA_DIRS(1600),
+  NON_UNIQUE_PLATFORM_DATA_ROOT_NAME(1700),
+  PLATFORM_DATA_ROOT_MISSING_IN_SOME_OF_THE_CONFIG_FILES(1800),
+  UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE(60000);
+
+  private final int code;
+
+  ErrorCode(int errorCode){
+    this.code = errorCode;
+  }
+}

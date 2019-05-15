@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+
+apply plugin: TcDeploy
+
+dependencies {
+
+  compile project(':backup-and-restore-server')
+  compile project(':frs-platform-persistence')
+  compile project(':security-platform-server')
+  compile project(':cluster-topology')
+  compile project(':sanskrit')
+  compile project(':nomad')
+  compile project(':cluster-tool-server')
+
+  compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
+  compileOnly "org.terracotta:offheap-resource:$terracottaPlatformVersion"
+  compileOnly "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
+  compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  compileOnly "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
+
+  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  testCompile("org.mockito:mockito-core:$mockitoVersion") {
+    exclude group: 'net.bytebuddy'
+  }
+}
