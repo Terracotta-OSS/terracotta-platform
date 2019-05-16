@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.config;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.management.ClusterTopologyMBeanImpl;
@@ -17,14 +18,17 @@ import org.terracotta.config.util.ParameterSubstitutor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_HOSTNAME;
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_PORT;
+import static com.terracottatech.dynamic_config.Constants.MULTI_VALUE_SEP;
 import static com.terracottatech.dynamic_config.Constants.REGEX_PREFIX;
 import static com.terracottatech.dynamic_config.Constants.REGEX_SUFFIX;
 import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
@@ -50,6 +54,7 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SS
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 import static com.terracottatech.dynamic_config.managers.NodeManager.startServer;
 import static com.terracottatech.dynamic_config.util.ConfigUtils.findConfigRepo;
+import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDash;
 import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDashDash;
 import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDashDash;
 
@@ -57,73 +62,73 @@ import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDas
 public class Options {
   private static final Logger LOGGER = LoggerFactory.getLogger(Options.class);
 
-  @Parameter(names = "--" + NODE_HOSTNAME)
+  @Parameter(names = {"-nh", "--" + NODE_HOSTNAME})
   private String nodeHostname;
 
-  @Parameter(names = "--" + NODE_PORT)
+  @Parameter(names = {"-np", "--" + NODE_PORT})
   private String nodePort;
 
-  @Parameter(names = "--" + NODE_GROUP_PORT)
+  @Parameter(names = {"-ngp", "--" + NODE_GROUP_PORT})
   private String nodeGroupPort;
 
-  @Parameter(names = "--" + NODE_NAME)
+  @Parameter(names = {"-nn", "--" + NODE_NAME})
   private String nodeName;
 
-  @Parameter(names = "--" + NODE_BIND_ADDRESS)
+  @Parameter(names = {"-nba", "--" + NODE_BIND_ADDRESS})
   private String nodeBindAddress;
 
-  @Parameter(names = "--" + NODE_GROUP_BIND_ADDRESS)
+  @Parameter(names = {"-ngba", "--" + NODE_GROUP_BIND_ADDRESS})
   private String nodeGroupBindAddress;
 
-  @Parameter(names = "--" + NODE_CONFIG_DIR)
+  @Parameter(names = {"-ncd", "--" + NODE_CONFIG_DIR})
   private String nodeConfigDir;
 
-  @Parameter(names = "--" + NODE_METADATA_DIR)
+  @Parameter(names = {"-nmd", "--" + NODE_METADATA_DIR})
   private String nodeMetadataDir;
 
-  @Parameter(names = "--" + NODE_LOG_DIR)
+  @Parameter(names = {"-nld", "--" + NODE_LOG_DIR})
   private String nodeLogDir;
 
-  @Parameter(names = "--" + NODE_BACKUP_DIR)
+  @Parameter(names = {"-nbd", "--" + NODE_BACKUP_DIR})
   private String nodeBackupDir;
 
-  @Parameter(names = "--" + SECURITY_DIR)
+  @Parameter(names = {"-sd", "--" + SECURITY_DIR})
   private String securityDir;
 
-  @Parameter(names = "--" + SECURITY_AUDIT_LOG_DIR)
+  @Parameter(names = {"-sald", "--" + SECURITY_AUDIT_LOG_DIR})
   private String securityAuditLogDir;
 
-  @Parameter(names = "--" + SECURITY_AUTHC)
+  @Parameter(names = {"-sa", "--" + SECURITY_AUTHC})
   private String securityAuthc;
 
-  @Parameter(names = "--" + SECURITY_SSL_TLS)
+  @Parameter(names = {"-sst", "--" + SECURITY_SSL_TLS})
   private String securitySslTls;
 
-  @Parameter(names = "--" + SECURITY_WHITELIST)
+  @Parameter(names = {"-sw", "--" + SECURITY_WHITELIST})
   private String securityWhitelist;
 
-  @Parameter(names = "--" + FAILOVER_PRIORITY)
+  @Parameter(names = {"-fp", "--" + FAILOVER_PRIORITY})
   private String failoverPriority;
 
-  @Parameter(names = "--" + CLIENT_RECONNECT_WINDOW)
+  @Parameter(names = {"-crw", "--" + CLIENT_RECONNECT_WINDOW})
   private String clientReconnectWindow;
 
-  @Parameter(names = "--" + CLIENT_LEASE_DURATION)
+  @Parameter(names = {"-cld", "--" + CLIENT_LEASE_DURATION})
   private String clientLeaseDuration;
 
-  @Parameter(names = "--" + OFFHEAP_RESOURCES)
+  @Parameter(names = {"-or", "--" + OFFHEAP_RESOURCES})
   private String offheapResources;
 
-  @Parameter(names = "--" + DATA_DIRS)
+  @Parameter(names = {"-dd", "--" + DATA_DIRS})
   private String dataDirs;
 
-  @Parameter(names = "--" + CLUSTER_NAME)
+  @Parameter(names = {"-cn", "--" + CLUSTER_NAME})
   private String clusterName;
 
-  @Parameter(names = "--config-file")
+  @Parameter(names = {"-cf", "--config-file"})
   private String configFile;
 
-  @Parameter(names = "--help", help = true)
+  @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
 
   public void process(CustomJCommander jCommander) {
@@ -140,30 +145,12 @@ public class Options {
       Node node;
       Set<String> specifiedOptions = jCommander.getUserSpecifiedOptions();
       if (configFile != null) {
-        Set<String> filteredOptions = new HashSet<>(specifiedOptions);
-        filteredOptions.remove("--config-file");
-        filteredOptions.remove(addDashDash(NODE_HOSTNAME));
-        filteredOptions.remove(addDashDash(NODE_PORT));
-        filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
-
-        if (filteredOptions.size() != 0) {
-          throw new ParameterException(
-              String.format(
-                  "'--config-file' parameter can only be used with '%s', '%s', and '%s' parameters",
-                  addDashDash(NODE_HOSTNAME),
-                  addDashDash(NODE_PORT),
-                  addDashDash(NODE_CONFIG_DIR)
-              )
-          );
-        }
+        validateOptionsForConfigFile(specifiedOptions);
         LOGGER.info("Reading cluster config properties file from: {}", configFile);
         cluster = ClusterManager.createCluster(configFile);
         node = getMatchingNodeFromConfigFile(cluster, specifiedOptions);
       } else {
-        Map<String, String> paramValueMap = jCommander.getParameters().stream()
-            .filter(pd -> specifiedOptions.contains(pd.getLongestName()))
-            .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
-
+        Map<String, String> paramValueMap = buildParamValueMap(jCommander, specifiedOptions);
         cluster = ClusterManager.createCluster(paramValueMap);
         node = cluster.getStripes().get(0).getNodes().iterator().next(); // Cluster object will have only 1 node, just get that
       }
@@ -174,10 +161,46 @@ public class Options {
     }
   }
 
+  private Map<String, String> buildParamValueMap(CustomJCommander jCommander, Set<String> specifiedOptions) {
+    Predicate<ParameterDescription> isSpecified =
+        pd -> Arrays.stream(pd.getNames()
+            .split(MULTI_VALUE_SEP))
+            .map(String::trim)
+            .anyMatch(specifiedOptions::contains);
+    return jCommander.getParameters()
+        .stream()
+        .filter(isSpecified)
+        .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
+  }
+
+  private void validateOptionsForConfigFile(Set<String> specifiedOptions) {
+    Set<String> filteredOptions = new HashSet<>(specifiedOptions);
+    filteredOptions.remove("-cf");
+    filteredOptions.remove("-nh");
+    filteredOptions.remove("-np");
+    filteredOptions.remove("-ncd");
+
+    filteredOptions.remove("--config-file");
+    filteredOptions.remove(addDashDash(NODE_HOSTNAME));
+    filteredOptions.remove(addDashDash(NODE_PORT));
+    filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
+
+    if (filteredOptions.size() != 0) {
+      throw new ParameterException(
+          String.format(
+              "'--config-file' parameter can only be used with '%s', '%s', and '%s' parameters",
+              addDashDash(NODE_HOSTNAME),
+              addDashDash(NODE_PORT),
+              addDashDash(NODE_CONFIG_DIR)
+          )
+      );
+    }
+  }
+
   private Node getMatchingNodeFromConfigFile(Cluster cluster, Set<String> specifiedOptions) {
-    String host = specifiedOptions.contains(addDashDash(NODE_HOSTNAME)) ? nodeHostname : DEFAULT_HOSTNAME;
+    String host = specifiedOptions.contains(addDash(NODE_HOSTNAME)) || specifiedOptions.contains(addDashDash(NODE_HOSTNAME)) ? nodeHostname : DEFAULT_HOSTNAME;
     String substitutedHost = ParameterSubstitutor.substitute(host);
-    String port = specifiedOptions.contains(addDashDash(NODE_PORT)) ? nodePort : DEFAULT_PORT;
+    String port = specifiedOptions.contains(addDash(NODE_PORT)) || specifiedOptions.contains(addDashDash(NODE_PORT)) ? nodePort : DEFAULT_PORT;
     Node node = cluster.getStripes().stream()
         .flatMap(stripe -> stripe.getNodes().stream())
         .filter(node1 -> node1.getNodeHostname().equals(substitutedHost) && node1.getNodePort() == Integer.parseInt(port))
