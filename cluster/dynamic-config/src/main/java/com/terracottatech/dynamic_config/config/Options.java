@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -198,24 +199,39 @@ public class Options {
   }
 
   private Node getMatchingNodeFromConfigFile(Cluster cluster, Set<String> specifiedOptions) {
-    String host = specifiedOptions.contains(addDash(NODE_HOSTNAME)) || specifiedOptions.contains(addDashDash(NODE_HOSTNAME)) ? nodeHostname : DEFAULT_HOSTNAME;
-    String substitutedHost = ParameterSubstitutor.substitute(host);
-    String port = specifiedOptions.contains(addDash(NODE_PORT)) || specifiedOptions.contains(addDashDash(NODE_PORT)) ? nodePort : DEFAULT_PORT;
-    Node node = cluster.getStripes().stream()
+    boolean isHostnameSpecified = specifiedOptions.contains(addDash(NODE_HOSTNAME)) || specifiedOptions.contains(addDashDash(NODE_HOSTNAME));
+    boolean isPortSpecified = specifiedOptions.contains(addDash(NODE_PORT)) || specifiedOptions.contains(addDashDash(NODE_PORT));
+
+    String substitutedHost = ParameterSubstitutor.substitute(isHostnameSpecified ? nodeHostname : DEFAULT_HOSTNAME);
+    String port = isPortSpecified ? nodePort : DEFAULT_PORT;
+
+    List<Node> allNodes = cluster.getStripes().stream()
         .flatMap(stripe -> stripe.getNodes().stream())
+        .collect(Collectors.toList());
+    Optional<Node> matchingNodeOptional = allNodes.stream()
         .filter(node1 -> node1.getNodeHostname().equals(substitutedHost) && node1.getNodePort() == Integer.parseInt(port))
-        .findFirst()
-        .orElseThrow(() -> new RuntimeException(
-            String.format(
-                "Did not find a matching node entry in config file: %s based on %s=%s and %s=%s",
-                configFile,
-                NODE_HOSTNAME,
-                substitutedHost,
-                NODE_PORT,
-                port
-            )
-        ));
-    LOGGER.info("Found matching node entry from config file based on {}={} and {}={}", NODE_HOSTNAME, substitutedHost, NODE_PORT, port);
+        .findAny();
+
+    Node node;
+    // See if we find a match for a node based on the specified params. If not, we see if the config file contains just one node
+    if (matchingNodeOptional.isPresent()) {
+      LOGGER.info("Found matching node entry from config file based on {}={} and {}={}", NODE_HOSTNAME, substitutedHost, NODE_PORT, port);
+      node = matchingNodeOptional.get();
+    } else if (!isHostnameSpecified && !isPortSpecified && allNodes.size() == 1) {
+      LOGGER.info("Found only one node information in config file");
+      node = allNodes.get(0);
+    } else {
+      throw new RuntimeException(
+          String.format(
+              "Did not find a matching node entry in config file: %s based on %s=%s and %s=%s",
+              configFile,
+              NODE_HOSTNAME,
+              substitutedHost,
+              NODE_PORT,
+              port
+          )
+      );
+    }
     return node;
   }
 
