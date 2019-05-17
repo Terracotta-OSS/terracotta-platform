@@ -140,7 +140,7 @@ public class Options {
 
     Optional<String> configRepo = findConfigRepo(nodeConfigDir);
     if (configRepo.isPresent()) {
-      startServer("-r", Paths.get(nodeConfigDir).toString(), "--node-name", extractNodeName(configRepo.get()));
+      startServer("-r", Paths.get(nodeConfigDir).toString(), "-n", extractNodeName(configRepo.get()));
     } else {
       Cluster cluster;
       Node node;
