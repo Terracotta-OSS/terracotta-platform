@@ -118,7 +118,7 @@ public class ConfigUtils {
     }
 
     if (found.isPresent()) {
-      LOGGER.info("Found cluster config repository from: {}", found.get());
+      LOGGER.info("Found cluster config repository at: {}", substitutedConfigDir);
     } else {
       LOGGER.info("Did not find cluster config repository in: {}", substitutedConfigDir);
     }
