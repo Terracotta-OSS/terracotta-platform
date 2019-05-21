@@ -143,6 +143,7 @@ public class Options {
     if (configRepo.isPresent()) {
       startServer("-r", Paths.get(getSubstitutedConfigDir(nodeConfigDir)).toString(), "-n", extractNodeName(configRepo.get()));
     } else {
+      LOGGER.info("Attempting to start the node in UNCONFIGURED state");
       Cluster cluster;
       Node node;
       Set<String> specifiedOptions = jCommander.getUserSpecifiedOptions();
