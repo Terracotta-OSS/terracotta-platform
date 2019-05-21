@@ -109,9 +109,7 @@ public class ConfigUtils {
   }
 
   public static Optional<String> findConfigRepo(String nodeConfigDir) {
-    String specifiedOrDefaultConfigDir = nodeConfigDir == null ? Constants.DEFAULT_CONFIG_DIR : nodeConfigDir;
-    String substitutedConfigDir = ParameterSubstitutor.substitute(specifiedOrDefaultConfigDir);
-
+    String substitutedConfigDir = getSubstitutedConfigDir(nodeConfigDir);
     Optional<String> found = Optional.empty();
     try (Stream<Path> stream = Files.list(Paths.get(substitutedConfigDir).resolve(NOMAD_CONFIG_DIR))) {
       found = stream.map(path -> path.getFileName().toString()).filter(fileName -> fileName.matches(CONFIG_REPO_FILENAME_REGEX)).findAny();
@@ -125,6 +123,11 @@ public class ConfigUtils {
       LOGGER.info("Did not find cluster config repository in: {}", substitutedConfigDir);
     }
     return found;
+  }
+
+  public static String getSubstitutedConfigDir(String nodeConfigDir) {
+    String specifiedOrDefaultConfigDir = nodeConfigDir == null ? Constants.DEFAULT_CONFIG_DIR : nodeConfigDir;
+    return ParameterSubstitutor.substitute(specifiedOrDefaultConfigDir);
   }
 
   public static String generateNodeName() {

@@ -55,6 +55,7 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SS
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 import static com.terracottatech.dynamic_config.managers.NodeManager.startServer;
 import static com.terracottatech.dynamic_config.util.ConfigUtils.findConfigRepo;
+import static com.terracottatech.dynamic_config.util.ConfigUtils.getSubstitutedConfigDir;
 import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDash;
 import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDashDash;
 import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDashDash;
@@ -140,7 +141,7 @@ public class Options {
 
     Optional<String> configRepo = findConfigRepo(nodeConfigDir);
     if (configRepo.isPresent()) {
-      startServer("-r", Paths.get(nodeConfigDir).toString(), "-n", extractNodeName(configRepo.get()));
+      startServer("-r", Paths.get(getSubstitutedConfigDir(nodeConfigDir)).toString(), "-n", extractNodeName(configRepo.get()));
     } else {
       Cluster cluster;
       Node node;
