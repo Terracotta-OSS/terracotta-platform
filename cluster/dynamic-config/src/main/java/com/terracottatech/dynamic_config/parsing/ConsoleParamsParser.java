@@ -18,6 +18,7 @@ import org.terracotta.config.util.ParameterSubstitutor;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +82,7 @@ public class ConsoleParamsParser {
   }
 
   private static String toDisplayParams(Map<String, String> supplied) {
-    String suppliedParameters = supplied.entrySet().stream()
+    String suppliedParameters = supplied.entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
         .map(entry -> addDashDash(entry.getKey()) + "=" + ParameterSubstitutor.substitute(entry.getValue()))
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {
