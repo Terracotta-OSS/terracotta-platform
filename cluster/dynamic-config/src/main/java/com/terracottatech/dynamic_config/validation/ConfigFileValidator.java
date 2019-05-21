@@ -24,6 +24,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLUSTER_NAME;
 import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
 import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
 import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
@@ -47,6 +48,7 @@ public class ConfigFileValidator {
       ensureCorrectFieldCount(key.toString(), value.toString(), fileName);
       ensureNoInvalidOptions(key.toString(), fileName);
       ensureCorrectNodeName(key.toString(), value.toString(), fileName);
+      ensureCorrectClusterName(key.toString(), value.toString(), fileName);
     });
     ensureOnlyOneClusterName(properties, fileName);
     ensureAllOptionsPresent(properties, fileName);
@@ -134,6 +136,15 @@ public class ConfigFileValidator {
       if (!getNodeName(key).equals(value)) {
         throw new MalformedConfigFileException("Invalid line: " + key + "=" + value + " in config file: " + fileName + ". " +
             "Node name value should match the node name in the property. Expected: " + getNodeName(key) + ", found: " + value);
+      }
+    }
+  }
+
+  private static void ensureCorrectClusterName(String key, String value, String fileName) {
+    if (getProperty(key).equals(CLUSTER_NAME)) {
+      if (!getClusterName(key).equals(value)) {
+        throw new MalformedConfigFileException("Invalid line: " + key + "=" + value + " in config file: " + fileName + ". " +
+            "Cluster name value should match the cluster name in the property. Expected: " + getClusterName(key) + ", found: " + value);
       }
     }
   }

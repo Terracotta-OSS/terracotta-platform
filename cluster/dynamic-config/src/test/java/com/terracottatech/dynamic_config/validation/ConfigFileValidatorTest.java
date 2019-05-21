@@ -58,6 +58,20 @@ public class ConfigFileValidatorTest {
   }
 
   @Test
+  public void testMismatchingClusterNames() {
+    Properties properties = new Properties();
+    properties.put("my-cluster.stripe.node-1.cluster-name", "cluster");
+
+    try {
+      ConfigFileValidator.validateProperties(properties, "test-file");
+      failBecauseExceptionWasNotThrown(MalformedConfigFileException.class);
+    } catch (Exception e) {
+      assertThat(e.getClass()).isEqualTo(MalformedConfigFileException.class);
+      assertThat(e.getMessage()).contains("Cluster name value should match the cluster name in the property");
+    }
+  }
+
+  @Test
   public void testMissingNodeProperty() {
     Properties properties = new Properties();
     properties.put("my-cluster.stripe-1.node-1.node-hostname", "node-1.company.internal");
