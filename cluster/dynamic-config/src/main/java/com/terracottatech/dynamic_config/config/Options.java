@@ -148,8 +148,8 @@ public class Options {
       Node node;
       Set<String> specifiedOptions = jCommander.getUserSpecifiedOptions();
       if (configFile != null) {
-        validateOptionsForConfigFile(specifiedOptions);
         LOGGER.info("Reading cluster config properties file from: {}", configFile);
+        validateOptionsForConfigFile(specifiedOptions);
         cluster = ClusterManager.createCluster(configFile);
         node = getMatchingNodeFromConfigFile(cluster, specifiedOptions);
       } else {
