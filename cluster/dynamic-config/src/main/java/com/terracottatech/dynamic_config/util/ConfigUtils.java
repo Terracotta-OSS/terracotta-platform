@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.Constants.CONFIG_REPO_FILENAME_REGEX;
@@ -48,14 +47,15 @@ public class ConfigUtils {
           "    </servers>\n" +
           "</tc-config>";
 
-      String configuration = defaultConfig.replaceAll(Pattern.quote("${HOSTNAME}"), node.getNodeHostname())
-          .replaceAll(Pattern.quote("${NAME}"), node.getNodeName())
-          .replaceAll(Pattern.quote("${BIND}"), node.getNodeBindAddress())
-          .replaceAll(Pattern.quote("${PORT}"), String.valueOf(node.getNodePort()))
-          .replaceAll(Pattern.quote("${LOGS}"), node.getNodeLogDir().toString())
-          .replaceAll(Pattern.quote("${GROUP-BIND}"), node.getNodeGroupBindAddress())
-          .replaceAll(Pattern.quote("${GROUP-PORT}"), String.valueOf(node.getNodeGroupPort()))
-          .replaceAll(Pattern.quote("${RECONNECT_WINDOW}"), String.valueOf((int)(node.getClientReconnectWindow().getType().toSeconds(node.getClientReconnectWindow().getQuantity()))));
+      String configuration = defaultConfig
+          .replace("${HOSTNAME}", node.getNodeHostname())
+          .replace("${NAME}", node.getNodeName())
+          .replace("${BIND}", node.getNodeBindAddress())
+          .replace("${PORT}", String.valueOf(node.getNodePort()))
+          .replace("${LOGS}", node.getNodeLogDir().toString())
+          .replace("${GROUP-BIND}", node.getNodeGroupBindAddress())
+          .replace("${GROUP-PORT}", String.valueOf(node.getNodeGroupPort()))
+          .replace("${RECONNECT_WINDOW}", String.valueOf((int)(node.getClientReconnectWindow().getType().toSeconds(node.getClientReconnectWindow().getQuantity()))));
 
       Files.write(configPath, configuration.getBytes(StandardCharsets.UTF_8));
       return configPath;
@@ -105,7 +105,7 @@ public class ConfigUtils {
                                  "     </data:data-directories>\n" +
                                  "     </config>\n";
 
-    return dataDirectoryConfig.replaceAll(Pattern.quote("${DATA_DIR}"), node.getNodeMetadataDir().toString());
+    return dataDirectoryConfig.replace("${DATA_DIR}", node.getNodeMetadataDir().toString());
   }
 
   public static Optional<String> findConfigRepo(String nodeConfigDir) {
