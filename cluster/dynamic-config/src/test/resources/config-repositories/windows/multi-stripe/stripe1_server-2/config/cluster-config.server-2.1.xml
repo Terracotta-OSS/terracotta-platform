@@ -1,0 +1,285 @@
+<tc-config xmlns="http://www.terracotta.org/config" xmlns:br="http://www.terracottatech.com/config/backup-restore" xmlns:data="http://www.terracottatech.com/config/data-roots" xmlns:ohr="http://www.terracotta.org/config/offheap-resource" xmlns:persistence="http://www.terracottatech.com/config/platform-persistence">
+  <plugins>
+    <config>
+      <data:data-directories>
+        <data:directory name="root1" use-for-platform="false">test/data1</data:directory>
+      </data:data-directories>
+    </config>
+    <service>
+      <br:backup-restore>
+        <br:backup-location path="test/tmp/backup"/>
+      </br:backup-restore>
+    </service>
+    <service>
+      <persistence:platform-persistence data-directory-id="root1"/>
+    </service>
+    <config>
+      <ohr:offheap-resources>
+        <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+      </ohr:offheap-resources>
+    </config>
+    <config>
+      <cl:cluster xmlns:cl="http://www.terracotta.org/config/cluster">
+        <cl:name>testCluster</cl:name>
+        <cl:stripe>
+          <cl:name>stripe1</cl:name>
+          <cl:node>
+            <cl:name>server-1</cl:name>
+            <cl:server-config>
+              <tc-config>
+                <plugins>
+                  <config>
+                    <data:data-directories>
+                      <data:directory name="root1" use-for-platform="false">test/data1</data:directory>
+                    </data:data-directories>
+                  </config>
+                  <service>
+                    <br:backup-restore>
+                      <br:backup-location path="test/tmp/backup"/>
+                    </br:backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <config>
+                    <ohr:offheap-resources>
+                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+                    </ohr:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="localhost" name="server-1">
+                    <logs>%H/terracotta-logs/logs11</logs>
+                    <tsa-port>9410</tsa-port>
+                    <tsa-group-port>9430</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-2">
+                    <logs>%H/terracotta-logs/logs12</logs>
+                    <tsa-port>9510</tsa-port>
+                    <tsa-group-port>9530</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+                <failover-priority>
+                  <availability/>
+                </failover-priority>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+          <cl:node>
+            <cl:name>server-2</cl:name>
+            <cl:server-config>
+              <tc-config>
+                <plugins>
+                  <config>
+                    <data:data-directories>
+                      <data:directory name="root1" use-for-platform="false">test/data1</data:directory>
+                    </data:data-directories>
+                  </config>
+                  <service>
+                    <br:backup-restore>
+                      <br:backup-location path="test/tmp/backup"/>
+                    </br:backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <config>
+                    <ohr:offheap-resources>
+                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+                    </ohr:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="localhost" name="server-1">
+                    <logs>%H/terracotta-logs/logs11</logs>
+                    <tsa-port>9410</tsa-port>
+                    <tsa-group-port>9430</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-2">
+                    <logs>%H/terracotta-logs/logs12</logs>
+                    <tsa-port>9510</tsa-port>
+                    <tsa-group-port>9530</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+                <failover-priority>
+                  <availability/>
+                </failover-priority>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+        </cl:stripe>
+        <cl:stripe>
+          <cl:name>stripe2</cl:name>
+          <cl:node>
+            <cl:name>server-1</cl:name>
+            <cl:server-config>
+              <tc-config xmlns:ohr="http://www.terracottatech.com/config/data-roots" xmlns:ohr1="http://www.terracotta.org/config/offheap-resource">
+                <plugins>
+                  <config>
+                    <ohr:data-directories>
+                      <ohr:directory name="root1" use-for-platform="false">test/data2</ohr:directory>
+                    </ohr:data-directories>
+                  </config>
+                  <service>
+                    <br:backup-restore>
+                      <br:backup-location path="test/tmp/backup2"/>
+                    </br:backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <config>
+                    <ohr1:offheap-resources>
+                      <ohr1:resource name="primary-server-resource" unit="MB">64</ohr1:resource>
+                    </ohr1:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="localhost" name="server-1">
+                    <logs>%H/terracotta-logs/logs21</logs>
+                    <tsa-port>9610</tsa-port>
+                    <tsa-group-port>9630</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-2">
+                    <logs>%H/terracotta-logs/logs22</logs>
+                    <tsa-port>9710</tsa-port>
+                    <tsa-group-port>9730</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-3">
+                    <logs>%H/terracotta-logs/logs23</logs>
+                    <tsa-port>9810</tsa-port>
+                    <tsa-group-port>9830</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+                <failover-priority>
+                  <availability/>
+                </failover-priority>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+          <cl:node>
+            <cl:name>server-2</cl:name>
+            <cl:server-config>
+              <tc-config xmlns:ohr="http://www.terracottatech.com/config/data-roots" xmlns:ohr1="http://www.terracotta.org/config/offheap-resource">
+                <plugins>
+                  <config>
+                    <ohr:data-directories>
+                      <ohr:directory name="root1" use-for-platform="false">test/data2</ohr:directory>
+                    </ohr:data-directories>
+                  </config>
+                  <service>
+                    <br:backup-restore>
+                      <br:backup-location path="test/tmp/backup2"/>
+                    </br:backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <config>
+                    <ohr1:offheap-resources>
+                      <ohr1:resource name="primary-server-resource" unit="MB">64</ohr1:resource>
+                    </ohr1:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="localhost" name="server-1">
+                    <logs>%H/terracotta-logs/logs21</logs>
+                    <tsa-port>9610</tsa-port>
+                    <tsa-group-port>9630</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-2">
+                    <logs>%H/terracotta-logs/logs22</logs>
+                    <tsa-port>9710</tsa-port>
+                    <tsa-group-port>9730</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-3">
+                    <logs>%H/terracotta-logs/logs23</logs>
+                    <tsa-port>9810</tsa-port>
+                    <tsa-group-port>9830</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+                <failover-priority>
+                  <availability/>
+                </failover-priority>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+          <cl:node>
+            <cl:name>server-3</cl:name>
+            <cl:server-config>
+              <tc-config xmlns:ohr="http://www.terracottatech.com/config/data-roots" xmlns:ohr1="http://www.terracotta.org/config/offheap-resource">
+                <plugins>
+                  <config>
+                    <ohr:data-directories>
+                      <ohr:directory name="root1" use-for-platform="false">test/data2</ohr:directory>
+                    </ohr:data-directories>
+                  </config>
+                  <service>
+                    <br:backup-restore>
+                      <br:backup-location path="test/tmp/backup2"/>
+                    </br:backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <config>
+                    <ohr1:offheap-resources>
+                      <ohr1:resource name="primary-server-resource" unit="MB">64</ohr1:resource>
+                    </ohr1:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="localhost" name="server-1">
+                    <logs>%H/terracotta-logs/logs21</logs>
+                    <tsa-port>9610</tsa-port>
+                    <tsa-group-port>9630</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-2">
+                    <logs>%H/terracotta-logs/logs22</logs>
+                    <tsa-port>9710</tsa-port>
+                    <tsa-group-port>9730</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="localhost" name="server-3">
+                    <logs>%H/terracotta-logs/logs23</logs>
+                    <tsa-port>9810</tsa-port>
+                    <tsa-group-port>9830</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+                <failover-priority>
+                  <availability/>
+                </failover-priority>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+        </cl:stripe>
+      </cl:cluster>
+    </config>
+  </plugins>
+  <tc-properties/>
+  <servers>
+    <server bind="0.0.0.0" host="localhost" name="server-1">
+      <logs>%H/terracotta-logs/logs11</logs>
+      <tsa-port>9410</tsa-port>
+      <tsa-group-port>9430</tsa-group-port>
+    </server>
+    <server bind="0.0.0.0" host="localhost" name="server-2">
+      <logs>%H/terracotta-logs/logs12</logs>
+      <tsa-port>9510</tsa-port>
+      <tsa-group-port>9530</tsa-group-port>
+    </server>
+    <client-reconnect-window>120</client-reconnect-window>
+  </servers>
+  <failover-priority>
+    <availability/>
+  </failover-priority>
+</tc-config>

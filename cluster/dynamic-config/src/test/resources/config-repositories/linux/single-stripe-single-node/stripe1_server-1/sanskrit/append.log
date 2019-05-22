@@ -1,0 +1,48 @@
+2019-05-21T16:45:13.245Z
+{
+  "mutativeMessageCount" : 1,
+  "mode" : "ACCEPTING",
+  "currentVersion" : 0,
+  "highestVersion" : 0
+}
+624d32f29c8a7cb5596e836f6156a4270f15a4ce
+
+2019-05-21T16:45:13.285Z
+{
+  "mutativeMessageCount" : 2,
+  "mode" : "PREPARED",
+  "latestChangeUuid" : "1109b07c-b6a8-44bd-b4d7-73fffa035bf7",
+  "highestVersion" : 1,
+  "lastMutationHost" : "SAG-C02VH0MTHTD8.local",
+  "lastMutationUser" : "saag",
+  "1109b07c-b6a8-44bd-b4d7-73fffa035bf7" : {
+    "summary" : "Migrating Configuration",
+    "creationUser" : "saag",
+    "creationHost" : "SAG-C02VH0MTHTD8.local",
+    "changeResultHash" : "51801b120c6427224775a4c955f3049596bd5eca",
+    "state" : "PREPARED",
+    "version" : 1,
+    "operation" : "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:br=\"http://www.terracottatech.com/config/backup-restore\" xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\" xmlns:persistence=\"http://www.terracottatech.com/config/platform-persistence\">\n  <plugins>\n    <config>\n      <data:data-directories>\n        <data:directory name=\"root1\" use-for-platform=\"false\">test/data1</data:directory>\n      </data:data-directories>\n    </config>\n    <service>\n      <br:backup-restore>\n        <br:backup-location path=\"test/tmp/backup\"/>\n      </br:backup-restore>\n    </service>\n    <service>\n      <persistence:platform-persistence data-directory-id=\"root1\"/>\n    </service>\n    <config>\n      <ohr:offheap-resources>\n        <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n      </ohr:offheap-resources>\n    </config>\n    <config>\n      <cl:cluster xmlns:cl=\"http://www.terracotta.org/config/cluster\">\n        <cl:name>testCluster</cl:name>\n        <cl:stripe>\n          <cl:name>stripe1</cl:name>\n          <cl:node>\n            <cl:name>server-1</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"root1\" use-for-platform=\"false\">test/data1</data:directory>\n                    </data:data-directories>\n                  </config>\n                  <service>\n                    <br:backup-restore>\n                      <br:backup-location path=\"test/tmp/backup\"/>\n                    </br:backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"server-1\">\n                    <logs>%H/terracotta-logs/logs11</logs>\n                    <tsa-port>9410</tsa-port>\n                    <tsa-group-port>9430</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n      </cl:cluster>\n    </config>\n  </plugins>\n  <tc-properties/>\n  <servers>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"server-1\">\n      <logs>%H/terracotta-logs/logs11</logs>\n      <tsa-port>9410</tsa-port>\n      <tsa-group-port>9430</tsa-group-port>\n    </server>\n    <client-reconnect-window>120</client-reconnect-window>\n  </servers>\n  <failover-priority>\n    <availability/>\n  </failover-priority>\n</tc-config>\n"
+  }
+}
+341de33ec4f3f9686bf05e7d2107100da0b1d0cc
+
+2019-05-21T16:45:13.294Z
+{
+  "mutativeMessageCount" : 3,
+  "mode" : "ACCEPTING",
+  "currentVersion" : 1,
+  "lastMutationHost" : "SAG-C02VH0MTHTD8.local",
+  "lastMutationUser" : "saag",
+  "1109b07c-b6a8-44bd-b4d7-73fffa035bf7" : {
+    "summary" : "Migrating Configuration",
+    "creationUser" : "saag",
+    "creationHost" : "SAG-C02VH0MTHTD8.local",
+    "changeResultHash" : "51801b120c6427224775a4c955f3049596bd5eca",
+    "state" : "COMMITTED",
+    "version" : 1,
+    "operation" : "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:br=\"http://www.terracottatech.com/config/backup-restore\" xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\" xmlns:persistence=\"http://www.terracottatech.com/config/platform-persistence\">\n  <plugins>\n    <config>\n      <data:data-directories>\n        <data:directory name=\"root1\" use-for-platform=\"false\">test/data1</data:directory>\n      </data:data-directories>\n    </config>\n    <service>\n      <br:backup-restore>\n        <br:backup-location path=\"test/tmp/backup\"/>\n      </br:backup-restore>\n    </service>\n    <service>\n      <persistence:platform-persistence data-directory-id=\"root1\"/>\n    </service>\n    <config>\n      <ohr:offheap-resources>\n        <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n      </ohr:offheap-resources>\n    </config>\n    <config>\n      <cl:cluster xmlns:cl=\"http://www.terracotta.org/config/cluster\">\n        <cl:name>testCluster</cl:name>\n        <cl:stripe>\n          <cl:name>stripe1</cl:name>\n          <cl:node>\n            <cl:name>server-1</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"root1\" use-for-platform=\"false\">test/data1</data:directory>\n                    </data:data-directories>\n                  </config>\n                  <service>\n                    <br:backup-restore>\n                      <br:backup-location path=\"test/tmp/backup\"/>\n                    </br:backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"server-1\">\n                    <logs>%H/terracotta-logs/logs11</logs>\n                    <tsa-port>9410</tsa-port>\n                    <tsa-group-port>9430</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n      </cl:cluster>\n    </config>\n  </plugins>\n  <tc-properties/>\n  <servers>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"server-1\">\n      <logs>%H/terracotta-logs/logs11</logs>\n      <tsa-port>9410</tsa-port>\n      <tsa-group-port>9430</tsa-group-port>\n    </server>\n    <client-reconnect-window>120</client-reconnect-window>\n  </servers>\n  <failover-priority>\n    <availability/>\n  </failover-priority>\n</tc-config>\n"
+  }
+}
+26b1234690dccb703f2a61e40c7fb229300327d2
+

@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.entry;
 public class ConfigFileParserTest {
   @Test
   public void testParse_singleStripe() throws Exception {
-    Cluster cluster = ConfigFileParser.parse(new File(getClass().getResource("/config.properties").toURI()));
+    Cluster cluster = ConfigFileParser.parse(new File(getClass().getResource("/config-property-files/single-stripe_full.properties").toURI()));
     assertThat(cluster.getStripes().size()).isEqualTo(1);
     assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(1);
 
@@ -59,7 +59,7 @@ public class ConfigFileParserTest {
 
   @Test
   public void testParse_multiStripe() throws Exception {
-    Cluster cluster = ConfigFileParser.parse(new File(getClass().getResource("/multistripe-config.properties").toURI()));
+    Cluster cluster = ConfigFileParser.parse(new File(getClass().getResource("/config-property-files/multi-stripe.properties").toURI()));
     assertThat(cluster.getStripes().size()).isEqualTo(2);
     assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(2);
     assertThat(cluster.getStripes().get(1).getNodes().size()).isEqualTo(2);
