@@ -34,6 +34,7 @@
     <passthrough-testing.version>1.6.1</passthrough-testing.version>
     <terracotta-core.version>5.6.4-pre2</terracotta-core.version>
     <statistics.version>2.1</statistics.version>
+    <jackson-databind.version>2.9.9</jackson-databind.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.8</java.version>
@@ -122,6 +123,11 @@
         <groupId>org.terracotta</groupId>
         <artifactId>monitoring-support</artifactId>
         <version>${terracotta-apis.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson-databind.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
