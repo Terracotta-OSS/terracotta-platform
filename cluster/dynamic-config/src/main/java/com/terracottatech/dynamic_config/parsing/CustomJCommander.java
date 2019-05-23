@@ -46,7 +46,7 @@ public class CustomJCommander extends JCommander {
 
   private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {
     List<ParameterDescription> sorted = jCommander.getParameters();
-    sorted.sort(Comparator.comparing(ParameterDescription::getNames));
+    sorted.sort(Comparator.comparing(ParameterDescription::getLongestName));
     int maxParamLength = sorted.stream().map(pd -> pd.getNames().length()).max(Integer::compareTo).get();
 
     // Display all the names and descriptions

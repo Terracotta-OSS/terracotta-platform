@@ -64,70 +64,70 @@ import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDas
 public class Options {
   private static final Logger LOGGER = LoggerFactory.getLogger(Options.class);
 
-  @Parameter(names = {"-nh", "--" + NODE_HOSTNAME})
+  @Parameter(names = {"-s", "--" + NODE_HOSTNAME})
   private String nodeHostname;
 
-  @Parameter(names = {"-np", "--" + NODE_PORT})
+  @Parameter(names = {"-p", "--" + NODE_PORT})
   private String nodePort;
 
-  @Parameter(names = {"-ngp", "--" + NODE_GROUP_PORT})
+  @Parameter(names = {"-P", "--" + NODE_GROUP_PORT})
   private String nodeGroupPort;
 
-  @Parameter(names = {"-nn", "--" + NODE_NAME})
+  @Parameter(names = {"-n", "--" + NODE_NAME})
   private String nodeName;
 
-  @Parameter(names = {"-nba", "--" + NODE_BIND_ADDRESS})
+  @Parameter(names = {"-a", "--" + NODE_BIND_ADDRESS})
   private String nodeBindAddress;
 
-  @Parameter(names = {"-ngba", "--" + NODE_GROUP_BIND_ADDRESS})
+  @Parameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS})
   private String nodeGroupBindAddress;
 
-  @Parameter(names = {"-ncd", "--" + NODE_CONFIG_DIR})
+  @Parameter(names = {"-c", "--" + NODE_CONFIG_DIR})
   private String nodeConfigDir;
 
-  @Parameter(names = {"-nmd", "--" + NODE_METADATA_DIR})
+  @Parameter(names = {"-m", "--" + NODE_METADATA_DIR})
   private String nodeMetadataDir;
 
-  @Parameter(names = {"-nld", "--" + NODE_LOG_DIR})
+  @Parameter(names = {"-l", "--" + NODE_LOG_DIR})
   private String nodeLogDir;
 
-  @Parameter(names = {"-nbd", "--" + NODE_BACKUP_DIR})
+  @Parameter(names = {"-b", "--" + NODE_BACKUP_DIR})
   private String nodeBackupDir;
 
-  @Parameter(names = {"-sd", "--" + SECURITY_DIR})
+  @Parameter(names = {"-x", "--" + SECURITY_DIR})
   private String securityDir;
 
-  @Parameter(names = {"-sald", "--" + SECURITY_AUDIT_LOG_DIR})
+  @Parameter(names = {"-u", "--" + SECURITY_AUDIT_LOG_DIR})
   private String securityAuditLogDir;
 
-  @Parameter(names = {"-sa", "--" + SECURITY_AUTHC})
+  @Parameter(names = {"-z", "--" + SECURITY_AUTHC})
   private String securityAuthc;
 
-  @Parameter(names = {"-sst", "--" + SECURITY_SSL_TLS})
+  @Parameter(names = {"-t", "--" + SECURITY_SSL_TLS})
   private String securitySslTls;
 
-  @Parameter(names = {"-sw", "--" + SECURITY_WHITELIST})
+  @Parameter(names = {"-w", "--" + SECURITY_WHITELIST})
   private String securityWhitelist;
 
-  @Parameter(names = {"-fp", "--" + FAILOVER_PRIORITY})
+  @Parameter(names = {"-y", "--" + FAILOVER_PRIORITY})
   private String failoverPriority;
 
-  @Parameter(names = {"-crw", "--" + CLIENT_RECONNECT_WINDOW})
+  @Parameter(names = {"-r", "--" + CLIENT_RECONNECT_WINDOW})
   private String clientReconnectWindow;
 
-  @Parameter(names = {"-cld", "--" + CLIENT_LEASE_DURATION})
+  @Parameter(names = {"-i", "--" + CLIENT_LEASE_DURATION})
   private String clientLeaseDuration;
 
-  @Parameter(names = {"-or", "--" + OFFHEAP_RESOURCES})
+  @Parameter(names = {"-o", "--" + OFFHEAP_RESOURCES})
   private String offheapResources;
 
-  @Parameter(names = {"-dd", "--" + DATA_DIRS})
+  @Parameter(names = {"-d", "--" + DATA_DIRS})
   private String dataDirs;
 
-  @Parameter(names = {"-cn", "--" + CLUSTER_NAME})
+  @Parameter(names = {"-N", "--" + CLUSTER_NAME})
   private String clusterName;
 
-  @Parameter(names = {"-cf", "--config-file"})
+  @Parameter(names = {"-f", "--config-file"})
   private String configFile;
 
   @Parameter(names = {"-h", "--help"}, help = true)
@@ -178,10 +178,10 @@ public class Options {
 
   private void validateOptionsForConfigFile(Set<String> specifiedOptions) {
     Set<String> filteredOptions = new HashSet<>(specifiedOptions);
-    filteredOptions.remove("-cf");
-    filteredOptions.remove("-nh");
-    filteredOptions.remove("-np");
-    filteredOptions.remove("-ncd");
+    filteredOptions.remove("-f");
+    filteredOptions.remove("-s");
+    filteredOptions.remove("-p");
+    filteredOptions.remove("-c");
 
     filteredOptions.remove("--config-file");
     filteredOptions.remove(addDashDash(NODE_HOSTNAME));
