@@ -40,10 +40,6 @@ public class CustomJCommander extends JCommander {
   @Override
   public void usage(StringBuilder out, String indent) {
     out.append(indent).append("Usage: ").append(programName).append(" [options]");
-
-    if (getMainParameter() != null) {
-      out.append(" ").append(getMainParameter().getDescription());
-    }
     out.append("\n");
     appendOptions(this, out, indent);
   }
