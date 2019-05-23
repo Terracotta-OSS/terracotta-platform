@@ -4,23 +4,17 @@
  */
 package com.terracottatech.dynamic_config.config;
 
+import com.terracottatech.dynamic_config.Constants;
+import com.terracottatech.dynamic_config.util.CommonParamsUtils;
+import com.terracottatech.dynamic_config.util.ConfigUtils;
+import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.utilities.TimeUnit;
+
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_CONFIG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_PORT;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_HOSTNAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_LOG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_METADATA_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_PORT;
-import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_CLIENT_RECONNECT_WINDOW;
@@ -34,6 +28,19 @@ import static com.terracottatech.dynamic_config.Constants.DEFAULT_LOG_DIR;
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_METADATA_DIR;
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_OFFHEAP_RESOURCE;
 import static com.terracottatech.dynamic_config.Constants.DEFAULT_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_METADATA_DIR;
+import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_PORT;
+import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
 
 public class DefaultSettings {
   private static final Map<String, Object> DEFAULT_SETTING_VALUES = new HashMap<>();
@@ -62,4 +69,86 @@ public class DefaultSettings {
     Object settingValue = DEFAULT_SETTING_VALUES.get(setting);
     return settingValue == null ? null : settingValue.toString();
   }
+
+  public static Map<String, String> fillDefaultsIfNeeded(Node node) {
+    Map<String, String> defaultOptions = new HashMap<>();
+    if (node.getNodeName() == null) {
+      String generateNodeName = ConfigUtils.generateNodeName();
+      node.setNodeName(generateNodeName);
+      defaultOptions.put(CommonOptions.NODE_NAME, generateNodeName);
+    }
+
+    if (node.getNodeHostname() == null) {
+      node.setNodeHostname(Constants.DEFAULT_HOSTNAME);
+      defaultOptions.put(CommonOptions.NODE_HOSTNAME, Constants.DEFAULT_HOSTNAME);
+    }
+
+    if (node.getNodePort() == 0) {
+      node.setNodePort(Integer.parseInt(Constants.DEFAULT_PORT));
+      defaultOptions.put(CommonOptions.NODE_PORT, Constants.DEFAULT_PORT);
+    }
+
+    if (node.getNodeGroupPort() == 0) {
+      node.setNodeGroupPort(Integer.parseInt(Constants.DEFAULT_GROUP_PORT));
+      defaultOptions.put(CommonOptions.NODE_GROUP_PORT, Constants.DEFAULT_GROUP_PORT);
+    }
+
+    if (node.getOffheapResources().isEmpty()) {
+      String[] split = Constants.DEFAULT_OFFHEAP_RESOURCE.split(Constants.PARAM_INTERNAL_SEP);
+      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(split[1]);
+      node.setOffheapResource(split[0], Long.parseLong(quantityUnit[0]), MemoryUnit.valueOf(quantityUnit[1]));
+      defaultOptions.put(CommonOptions.OFFHEAP_RESOURCES, Constants.DEFAULT_OFFHEAP_RESOURCE);
+    }
+
+    if (node.getDataDirs().isEmpty()) {
+      String[] split = Constants.DEFAULT_DATA_DIR.split(Constants.PARAM_INTERNAL_SEP);
+      node.setDataDir(split[0], Paths.get(split[1]));
+      defaultOptions.put(CommonOptions.DATA_DIRS, Constants.DEFAULT_DATA_DIR);
+    }
+
+    if (node.getNodeBindAddress() == null) {
+      node.setNodeBindAddress(Constants.DEFAULT_BIND_ADDRESS);
+      defaultOptions.put(CommonOptions.NODE_BIND_ADDRESS, Constants.DEFAULT_BIND_ADDRESS);
+    }
+
+    if (node.getNodeGroupBindAddress() == null) {
+      node.setNodeGroupBindAddress(Constants.DEFAULT_GROUP_BIND_ADDRESS);
+      defaultOptions.put(CommonOptions.NODE_GROUP_BIND_ADDRESS, Constants.DEFAULT_GROUP_BIND_ADDRESS);
+    }
+
+    if (node.getNodeConfigDir() == null) {
+      node.setNodeConfigDir(Paths.get(Constants.DEFAULT_CONFIG_DIR));
+      defaultOptions.put(CommonOptions.NODE_CONFIG_DIR, Constants.DEFAULT_CONFIG_DIR);
+    }
+
+    if (node.getNodeLogDir() == null) {
+      node.setNodeLogDir(Paths.get(Constants.DEFAULT_LOG_DIR));
+      defaultOptions.put(CommonOptions.NODE_LOG_DIR, Constants.DEFAULT_LOG_DIR);
+    }
+
+    if (node.getNodeMetadataDir() == null) {
+      node.setNodeMetadataDir(Paths.get(Constants.DEFAULT_METADATA_DIR));
+      defaultOptions.put(CommonOptions.NODE_METADATA_DIR, Constants.DEFAULT_METADATA_DIR);
+    }
+
+    if (node.getFailoverPriority() == null) {
+      node.setFailoverPriority(Constants.DEFAULT_FAILOVER_PRIORITY);
+      defaultOptions.put(CommonOptions.FAILOVER_PRIORITY, Constants.DEFAULT_FAILOVER_PRIORITY);
+    }
+
+    if (node.getClientReconnectWindow() == null) {
+      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(Constants.DEFAULT_CLIENT_RECONNECT_WINDOW);
+      node.setClientReconnectWindow(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
+      defaultOptions.put(CommonOptions.CLIENT_RECONNECT_WINDOW, Constants.DEFAULT_CLIENT_RECONNECT_WINDOW);
+    }
+
+    if (node.getClientLeaseDuration() == null) {
+      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(Constants.DEFAULT_CLIENT_LEASE_DURATION);
+      node.setClientLeaseDuration(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
+      defaultOptions.put(CommonOptions.CLIENT_LEASE_DURATION, Constants.DEFAULT_CLIENT_LEASE_DURATION);
+    }
+
+    return defaultOptions;
+  }
+
 }

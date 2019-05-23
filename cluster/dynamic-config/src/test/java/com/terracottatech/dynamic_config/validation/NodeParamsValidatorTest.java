@@ -312,41 +312,10 @@ public class NodeParamsValidatorTest {
   }
 
   @Test
-  public void testBadSecurity_5() {
-    Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(SECURITY_DIR, "");
-    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-log-dir");
-
-    try {
-      NodeParamsValidator.validate(paramValueMap);
-      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).contains(SECURITY_DIR + " is mandatory");
-    }
-  }
-
-  @Test
   public void testBadSecurity_6() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(SECURITY_AUTHC, "certificate");
     paramValueMap.put(SECURITY_DIR, "security-root-dir");
-
-    try {
-      NodeParamsValidator.validate(paramValueMap);
-      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).startsWith(SECURITY_SSL_TLS + " is required");
-    }
-  }
-
-  @Test
-  public void testBadSecurity_7() {
-    Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(SECURITY_AUTHC, "certificate");
-    paramValueMap.put(SECURITY_DIR, "security-root-dir");
-    paramValueMap.put(SECURITY_SSL_TLS, "");
 
     try {
       NodeParamsValidator.validate(paramValueMap);
@@ -376,14 +345,14 @@ public class NodeParamsValidatorTest {
   @Test
   public void testBadSecurity_9() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(SECURITY_SSL_TLS, "false");
+    paramValueMap.put(SECURITY_WHITELIST, "blah");
 
     try {
       NodeParamsValidator.validate(paramValueMap);
       failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
     } catch (Exception e) {
       assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).startsWith(SECURITY_DIR + " is mandatory");
+      assertThat(e.getMessage()).startsWith(SECURITY_WHITELIST + " should be one of");
     }
   }
 
@@ -402,24 +371,9 @@ public class NodeParamsValidatorTest {
   }
 
   @Test
-  public void testBadSecurity_11() {
-    Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(SECURITY_WHITELIST, "blah");
-
-    try {
-      NodeParamsValidator.validate(paramValueMap);
-      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(IllegalArgumentException.class);
-      assertThat(e.getMessage()).startsWith(SECURITY_WHITELIST + " should be one of");
-    }
-  }
-
-  @Test
   public void testGoodSecurity_1() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(SECURITY_SSL_TLS, "false");
-    paramValueMap.put(SECURITY_AUTHC, "");
     paramValueMap.put(SECURITY_WHITELIST, "true");
     paramValueMap.put(SECURITY_DIR, "security-dir");
     paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
@@ -429,8 +383,6 @@ public class NodeParamsValidatorTest {
   @Test
   public void testGoodSecurity_2() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(SECURITY_SSL_TLS, "");
-    paramValueMap.put(SECURITY_AUTHC, "");
     paramValueMap.put(SECURITY_WHITELIST, "true");
     paramValueMap.put(SECURITY_DIR, "security-dir");
     paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
@@ -440,11 +392,6 @@ public class NodeParamsValidatorTest {
   @Test
   public void testGoodSecurity_3() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(SECURITY_SSL_TLS, "");
-    paramValueMap.put(SECURITY_AUTHC, "");
-    paramValueMap.put(SECURITY_WHITELIST, "");
-    paramValueMap.put(SECURITY_DIR, "");
-    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "");
     NodeParamsValidator.validate(paramValueMap);
   }
 
@@ -453,9 +400,7 @@ public class NodeParamsValidatorTest {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(SECURITY_SSL_TLS, "true");
     paramValueMap.put(SECURITY_AUTHC, "certificate");
-    paramValueMap.put(SECURITY_WHITELIST, "");
     paramValueMap.put(SECURITY_DIR, "security-root-dir");
-    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "");
     NodeParamsValidator.validate(paramValueMap);
   }
 
@@ -467,6 +412,13 @@ public class NodeParamsValidatorTest {
     paramValueMap.put(SECURITY_WHITELIST, "true");
     paramValueMap.put(SECURITY_DIR, "security-root-dir");
     paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
+    NodeParamsValidator.validate(paramValueMap);
+  }
+
+  @Test
+  public void testGoodSecurity_6() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(SECURITY_SSL_TLS, "false");
     NodeParamsValidator.validate(paramValueMap);
   }
 

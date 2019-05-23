@@ -30,7 +30,6 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AU
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
-import static com.terracottatech.dynamic_config.util.CommonParamsUtils.nullOrEmpty;
 import static com.terracottatech.dynamic_config.util.CommonParamsUtils.splitQuantityUnit;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
@@ -50,7 +49,7 @@ public class NodeParamsValidator {
   private static void validateFailoverPriority(Map<String, String> paramValueMap) {
     String param = FAILOVER_PRIORITY;
     String value = paramValueMap.get(param);
-    if (nullOrEmpty(value)) {
+    if (value == null) {
       return;
     }
 
@@ -96,7 +95,7 @@ public class NodeParamsValidator {
   private static void validateBooleanSetting(Map<String, String> paramValueMap, String param) {
     String setting = paramValueMap.get(param);
     Set<String> acceptableValues = AcceptableSettingValues.get(param);
-    if (!nullOrEmpty(setting) && !acceptableValues.contains(setting)) {
+    if (setting != null && !acceptableValues.contains(setting)) {
       throw new IllegalArgumentException(param + " should be one of: " + acceptableValues);
     }
   }
@@ -108,12 +107,12 @@ public class NodeParamsValidator {
     String sslTls = paramValueMap.get(SECURITY_SSL_TLS);
     String whitelist = paramValueMap.get(SECURITY_WHITELIST);
 
-    if ((!nullOrEmpty(authc) && nullOrEmpty(securityDir)) || (!nullOrEmpty(audirLogDir) && nullOrEmpty(securityDir)) ||
-        (!nullOrEmpty(sslTls) && nullOrEmpty(securityDir)) || (!nullOrEmpty(whitelist) && nullOrEmpty(securityDir))) {
+    if ((authc != null && securityDir == null) || (audirLogDir != null && securityDir == null) ||
+        (Boolean.parseBoolean(sslTls) && securityDir == null) || (Boolean.parseBoolean(whitelist) && securityDir == null)) {
       throw new IllegalArgumentException(SECURITY_DIR + " is mandatory for any of the security configuration");
     }
 
-    if (!nullOrEmpty(securityDir) && !Boolean.parseBoolean(sslTls) && nullOrEmpty(authc) && !Boolean.parseBoolean(whitelist)) {
+    if (securityDir != null && !Boolean.parseBoolean(sslTls) && authc == null && !Boolean.parseBoolean(whitelist)) {
       throw new IllegalArgumentException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
     }
   }
@@ -121,7 +120,7 @@ public class NodeParamsValidator {
   private static void validateSecurityAuthc(Map<String, String> paramValueMap) {
     String param = SECURITY_AUTHC;
     String value = paramValueMap.get(param);
-    if (nullOrEmpty(value)) {
+    if (value == null) {
       return;
     }
 
@@ -131,7 +130,7 @@ public class NodeParamsValidator {
     }
 
     String ssl = paramValueMap.get(SECURITY_SSL_TLS);
-    if (value.equals("certificate") && (nullOrEmpty(ssl) || !Boolean.parseBoolean(ssl))) {
+    if (value.equals("certificate") && !Boolean.parseBoolean(ssl)) {
       throw new IllegalArgumentException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
     }
   }
@@ -143,7 +142,7 @@ public class NodeParamsValidator {
 
   private static void validateClientSetting(Map<String, String> paramValueMap, String setting) {
     String value = paramValueMap.get(setting);
-    if (nullOrEmpty(value)) {
+    if (value == null) {
       return;
     }
 
@@ -173,7 +172,7 @@ public class NodeParamsValidator {
 
   private static void validateBindAddress(Map<String, String> paramValueMap, String setting) {
     String value = paramValueMap.get(setting);
-    if (nullOrEmpty(value)) {
+    if (value == null) {
       return;
     }
 
@@ -185,7 +184,7 @@ public class NodeParamsValidator {
   private static void validateNodeHostname(Map<String, String> paramValueMap) {
     String param = NODE_HOSTNAME;
     String value = paramValueMap.get(param);
-    if (nullOrEmpty(value)) {
+    if (value == null) {
       return;
     }
 
@@ -201,7 +200,7 @@ public class NodeParamsValidator {
 
   private static void validatePort(Map<String, String> paramValueMap, String setting) {
     String value = paramValueMap.get(setting);
-    if (nullOrEmpty(value)) {
+    if (value == null) {
       return;
     }
 
@@ -220,7 +219,7 @@ public class NodeParamsValidator {
   private static void validateOffheap(Map<String, String> paramValueMap) {
     final String param = OFFHEAP_RESOURCES;
     String value = paramValueMap.get(param);
-    if (nullOrEmpty(value)) {
+    if (value == null) {
       return;
     }
 

@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.config.Cluster;
+import com.terracottatech.dynamic_config.config.DefaultSettings;
 import com.terracottatech.dynamic_config.config.Node;
 import com.terracottatech.dynamic_config.config.NodeIdentifier;
 import com.terracottatech.dynamic_config.config.Stripe;
@@ -20,24 +21,23 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeName;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNode;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeName;
-
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripe;
 
 public class ConfigFileParser {
   public static Cluster parse(File file) {
     Properties properties = ConfigFileValidator.validate(file);
-    return initCluster(properties);
+    return createCluster(properties);
   }
 
-  private static Cluster initCluster(Properties properties) {
+  private static Cluster createCluster(Properties properties) {
     Set<String> stripeSet = new HashSet<>();
     Map<NodeIdentifier, Node> uniqueServerToNodeMapping = new HashMap<>();
     properties.forEach((key, value) -> {
-      // my-cluster.stripe-1.node-1.node-name=node-1
-      stripeSet.add(getStripeName(key.toString()));
-      uniqueServerToNodeMapping.putIfAbsent(new NodeIdentifier(getStripeName(key.toString()), getNodeName(key.toString())), new Node());
+      // stripe.1.node.1.node-name=node-1
+      stripeSet.add(getStripe(key.toString()));
+      uniqueServerToNodeMapping.putIfAbsent(new NodeIdentifier(getStripe(key.toString()), getNode(key.toString())), new Node());
     });
 
     List<Stripe> stripes = new ArrayList<>();
@@ -54,9 +54,11 @@ public class ConfigFileParser {
       if (value.toString().isEmpty()) {
         return;
       }
-      NodeIdentifier nodeIdentifier = new NodeIdentifier(getStripeName(key.toString()), getNodeName(key.toString()));
+      NodeIdentifier nodeIdentifier = new NodeIdentifier(getStripe(key.toString()), getNode(key.toString()));
       NodeParameterSetter.set(getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
     });
+
+    uniqueServerToNodeMapping.values().forEach(DefaultSettings::fillDefaultsIfNeeded);
     ClusterConfigValidator.validate(cluster);
     return cluster;
   }

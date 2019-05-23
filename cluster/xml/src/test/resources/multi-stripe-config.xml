@@ -90,12 +90,12 @@
                   </ns2:consistency>
                 </ns2:failover-priority>
                 <ns2:servers>
-                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
+                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
                   </ns2:server>
-                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
+                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
@@ -151,12 +151,12 @@
                   </ns2:consistency>
                 </ns2:failover-priority>
                 <ns2:servers>
-                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
+                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
                   </ns2:server>
-                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
+                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
@@ -215,12 +215,12 @@
                   </ns2:consistency>
                 </ns2:failover-priority>
                 <ns2:servers>
-                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
+                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
                   </ns2:server>
-                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
+                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
@@ -276,12 +276,12 @@
                   </ns2:consistency>
                 </ns2:failover-priority>
                 <ns2:servers>
-                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
+                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
                   </ns2:server>
-                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
+                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
                     <ns2:logs>logs</ns2:logs>
                     <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
@@ -301,12 +301,12 @@
     </consistency>
   </failover-priority>
   <servers>
-    <server host="host3" name="node-1" bind="10.10.10.10">
+    <server host="host1" name="node-1" bind="10.10.10.10">
       <logs>logs</logs>
       <tsa-port bind="10.10.10.10">19410</tsa-port>
       <tsa-group-port bind="10.10.10.10">19430</tsa-group-port>
     </server>
-    <server host="host4" name="node-2" bind="10.10.10.10">
+    <server host="host2" name="node-2" bind="10.10.10.10">
       <logs>logs</logs>
       <tsa-port bind="10.10.10.10">19410</tsa-port>
       <tsa-group-port bind="10.10.10.10">19430</tsa-group-port>

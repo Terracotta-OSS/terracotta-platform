@@ -39,6 +39,7 @@ public class XmlConfigurationTest {
     String actual =
         new XmlConfiguration(cluster, "stripe-1", "node-1").toString();
 
+    System.out.println(actual);
     assertXml(actual, "multi-stripe-config.xml");
   }
 

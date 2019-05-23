@@ -6,20 +6,16 @@ package com.terracottatech.dynamic_config.util;
 
 
 public class ConfigFileParamsUtils {
-  public static String getClusterName(String key) {
-    return splitKey(key)[0];
+  public static String getStripe(String key) {
+    return splitKey(key)[0] + splitKey(key)[1];
   }
 
-  public static String getStripeName(String key) {
-    return splitKey(key)[1];
-  }
-
-  public static String getNodeName(String key) {
-    return splitKey(key)[2];
+  public static String getNode(String key) {
+    return splitKey(key)[2] + splitKey(key)[3];
   }
 
   public static String getProperty(String key) {
-    return splitKey(key)[3];
+    return splitKey(key)[4];
   }
 
   public static String[] splitKey(String key) {
