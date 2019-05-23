@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
+import org.terracotta.runnel.utils.StringTool;
 import org.terracotta.runnel.utils.WriteBuffer;
 
 import java.io.ByteArrayOutputStream;
@@ -25,6 +26,8 @@ import java.nio.ByteBuffer;
  * @author Ludovic Orban
  */
 public class StringDataHolder extends AbstractDataHolder {
+
+  private static final boolean V1_STRING_ENCODING = false;
 
   private final ByteBuffer encodedString;
 
@@ -43,43 +46,51 @@ public class StringDataHolder extends AbstractDataHolder {
     writeBuffer.putByteBuffer(encodedString);
   }
 
-
   private ByteBuffer encodeString(String object) {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream(2 * object.length() + 1);
-    try {
-      int length = object.length();
-      int i = 0;
+    if (V1_STRING_ENCODING) {
+      ByteArrayOutputStream bout = new ByteArrayOutputStream(2 * object.length() + 1);
+      try {
+        int length = object.length();
+        int i = 0;
 
-      for (; i < length; i++) {
-        char c = object.charAt(i);
-        if ((c == 0x0000) || (c > 0x007f)) break;
-        bout.write(c);
-      }
-
-      for (; i < length; i++) {
-        char c = object.charAt(i);
-        if (c == 0x0000) {
-          bout.write(0xc0);
-          bout.write(0x80);
-        } else if (c < 0x0080) {
+        for (; i < length; i++) {
+          char c = object.charAt(i);
+          if ((c == 0x0000) || (c > 0x007f)) {
+            break;
+          }
           bout.write(c);
-        } else if (c < 0x800) {
-          bout.write(0xc0 | ((c >>> 6) & 0x1f));
-          bout.write(0x80 | (c & 0x3f));
-        } else {
-          bout.write(0xe0 | ((c >>> 12) & 0x1f));
-          bout.write(0x80 | ((c >>> 6) & 0x3f));
-          bout.write(0x80 | (c & 0x3f));
+        }
+
+        for (; i < length; i++) {
+          char c = object.charAt(i);
+          if (c == 0x0000) {
+            bout.write(0xc0);
+            bout.write(0x80);
+          } else if (c < 0x0080) {
+            bout.write(c);
+          } else if (c < 0x800) {
+            bout.write(0xc0 | ((c >>> 6) & 0x1f));
+            bout.write(0x80 | (c & 0x3f));
+          } else {
+            bout.write(0xe0 | ((c >>> 12) & 0x1f));
+            bout.write(0x80 | ((c >>> 6) & 0x3f));
+            bout.write(0x80 | (c & 0x3f));
+          }
+        }
+      } finally {
+        try {
+          bout.close();
+        } catch (IOException ex) {
+          throw new AssertionError(ex);
         }
       }
-    } finally {
-      try {
-        bout.close();
-      } catch (IOException ex) {
-        throw new AssertionError(ex);
-      }
+      return ByteBuffer.wrap(bout.toByteArray());
+    } else {
+      ByteBuffer w = ByteBuffer.allocate(4 * object.length() + 1);
+      StringTool.putEncoded(w, object, object.length());
+      w.flip();
+      return w.slice();
     }
-    return ByteBuffer.wrap(bout.toByteArray());
   }
 
 }
