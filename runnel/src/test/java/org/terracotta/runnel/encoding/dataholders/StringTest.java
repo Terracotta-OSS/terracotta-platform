@@ -15,6 +15,7 @@
  */
 package org.terracotta.runnel.encoding.dataholders;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.runnel.utils.ReadBuffer;
 import org.terracotta.runnel.utils.WriteBuffer;
@@ -64,6 +65,7 @@ public class StringTest {
   }
 
   @Test
+  @Ignore
   public void testEncodeDecodeSpeed() {
     final Random r = new Random(0);
     final int MIN_LEN = 80;
@@ -102,6 +104,7 @@ public class StringTest {
   }
 
   @Test
+  @Ignore
   public void testDecodeSpeed() {
     final Random r = new Random(0);
     final int MIN_LEN = 80;
@@ -142,6 +145,7 @@ public class StringTest {
   }
 
   @Test
+  @Ignore
   public void testEncodeSpeed() {
     final Random r = new Random(0);
     final int MIN_LEN = 80;
