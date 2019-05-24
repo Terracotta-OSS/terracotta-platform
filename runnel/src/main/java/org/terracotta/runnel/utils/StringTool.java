@@ -64,7 +64,6 @@ import java.util.Objects;
  * characters which encode by simply casting to {@code byte}.
  *
  * @author Clifford W. Johnson
- * @implNote Although the format permits lengths greater than {@code Integer.MAX_VALUE}, present
  * {@code ByteBuffer} capacity is limited to {@code Integer.MAX_VALUE} so the maximum supported
  * length for an encoded {@code String} is less than {@code Integer.MAX_VALUE}.
  */
@@ -352,6 +351,7 @@ public final class StringTool {
    * @param os the {@code OutputStream} into which {@code str} is encoded
    * @param str the {@code String} to encode
    * @param strLength the length of {@code str}
+   * @return size
    * @throws IOException if thereis a problem writing to the underlying stream
    */
   public static int putEncoded(OutputStream os, final String str, final int strLength) throws IOException {
