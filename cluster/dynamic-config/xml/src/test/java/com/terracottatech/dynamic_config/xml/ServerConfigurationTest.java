@@ -14,7 +14,7 @@ import org.terracotta.config.Service;
 import org.terracotta.config.Services;
 import org.terracotta.config.TcConfig;
 
-import com.terracottatech.dynamic_config.config.Node;
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 

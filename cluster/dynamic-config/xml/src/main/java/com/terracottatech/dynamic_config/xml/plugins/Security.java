@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.xml.plugins;
 import org.w3c.dom.Element;
 
 import com.terracottatech.config.security.ObjectFactory;
-import com.terracottatech.dynamic_config.config.Node;
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.xml.Utils;
 
 import javax.xml.bind.JAXBElement;

@@ -8,7 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.terracottatech.dynamic_config.config.Node;
+import com.terracottatech.dynamic_config.model.Node;
 
 import java.io.IOException;
 import java.nio.file.Path;

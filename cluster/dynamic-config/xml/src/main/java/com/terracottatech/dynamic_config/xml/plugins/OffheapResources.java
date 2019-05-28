@@ -9,7 +9,7 @@ import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
 import org.w3c.dom.Element;
 
-import com.terracottatech.dynamic_config.config.Measure;
+import com.terracottatech.dynamic_config.model.Measure;
 import com.terracottatech.dynamic_config.xml.Utils;
 import com.terracottatech.utilities.MemoryUnit;
 

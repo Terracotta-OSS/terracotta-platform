@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.config.Node;
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 

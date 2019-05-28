@@ -8,5 +8,5 @@ import org.gradle.internal.jvm.Jvm
 apply plugin: TcDeploy
 
 dependencies {
-
+  compile project(':utilities')
 }

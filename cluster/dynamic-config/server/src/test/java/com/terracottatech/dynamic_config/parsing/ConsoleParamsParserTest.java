@@ -5,9 +5,9 @@
 package com.terracottatech.dynamic_config.parsing;
 
 
-import com.terracottatech.dynamic_config.config.Cluster;
-import com.terracottatech.dynamic_config.config.Measure;
-import com.terracottatech.dynamic_config.config.Node;
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.model.Node;
 import org.junit.Test;
 
 import java.nio.file.Paths;

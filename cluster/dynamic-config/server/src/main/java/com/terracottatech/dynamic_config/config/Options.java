@@ -10,6 +10,8 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.management.ClusterTopologyMBeanImpl;
 import com.terracottatech.dynamic_config.managers.ClusterManager;
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
 import org.slf4j.Logger;

@@ -6,7 +6,6 @@ import org.gradle.internal.jvm.Jvm
  */
 
 dependencies {
-  compile project(':utilities')
   compile project(':dynamic-config-common')
   compile "com.beust:jcommander:$jcommanderVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"

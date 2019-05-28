@@ -9,7 +9,7 @@ import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.ElementSelectors;
 
-import com.terracottatech.dynamic_config.config.Cluster;
+import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.parsing.ConfigFileParser;
 
 import java.io.File;

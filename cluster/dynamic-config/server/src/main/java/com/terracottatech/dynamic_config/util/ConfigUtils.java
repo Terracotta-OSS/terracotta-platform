@@ -6,7 +6,7 @@
 package com.terracottatech.dynamic_config.util;
 
 import com.terracottatech.dynamic_config.Constants;
-import com.terracottatech.dynamic_config.config.Node;
+import com.terracottatech.dynamic_config.model.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.util.ParameterSubstitutor;

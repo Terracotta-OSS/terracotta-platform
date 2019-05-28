@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.config;
 
 import com.terracottatech.dynamic_config.Constants;
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.util.CommonParamsUtils;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
 import com.terracottatech.utilities.MemoryUnit;

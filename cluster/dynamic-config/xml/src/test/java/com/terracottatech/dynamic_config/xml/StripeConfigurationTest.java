@@ -11,8 +11,8 @@ import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.TcConfig;
 
-import com.terracottatech.dynamic_config.config.Node;
-import com.terracottatech.dynamic_config.config.Stripe;
+import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.utilities.TimeUnit;
 
 import java.io.IOException;

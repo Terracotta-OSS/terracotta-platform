@@ -9,9 +9,9 @@ import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 
-import com.terracottatech.dynamic_config.config.Measure;
-import com.terracottatech.dynamic_config.config.Node;
-import com.terracottatech.dynamic_config.config.Stripe;
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.utilities.TimeUnit;
 
 import java.util.HashMap;

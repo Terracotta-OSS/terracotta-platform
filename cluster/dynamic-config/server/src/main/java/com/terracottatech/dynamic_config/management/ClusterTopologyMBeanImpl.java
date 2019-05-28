@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
-import com.terracottatech.dynamic_config.config.Cluster;
+import com.terracottatech.dynamic_config.model.Cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

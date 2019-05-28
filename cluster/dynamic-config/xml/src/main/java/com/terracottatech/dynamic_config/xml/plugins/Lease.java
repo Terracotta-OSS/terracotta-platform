@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.xml.plugins;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.terracottatech.dynamic_config.config.Measure;
+import com.terracottatech.dynamic_config.model.Measure;
 import com.terracottatech.utilities.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilder;
