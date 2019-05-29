@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
@@ -65,18 +64,13 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private DefaultManagementDataListener managementDataListener;
   private Collection<ManageableServerComponent> manageablePlugins;
 
-  public MonitoringServiceProvider() {
-    // because only passthrough is calling close(), not tc-core, so this is to cleanly close services (thread pools) at shutdown
-    Runtime.getRuntime().addShutdownHook(new Thread(this::close));
-  }
-
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
     return providedServiceTypes;
   }
 
   @Override
-  public void prepareForSynchronization() throws ServiceProviderCleanupException {
+  public void prepareForSynchronization() {
   }
 
   @Override
