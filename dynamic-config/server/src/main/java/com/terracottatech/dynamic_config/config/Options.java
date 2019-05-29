@@ -8,11 +8,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.terracottatech.dynamic_config.management.ClusterTopologyMBeanImpl;
-import com.terracottatech.dynamic_config.managers.ClusterManager;
+import com.terracottatech.dynamic_config.Constants;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.management.ClusterTopologyMBeanImpl;
+import com.terracottatech.dynamic_config.managers.ClusterManager;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
+import com.terracottatech.dynamic_config.util.ConsoleParamsUtils;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +31,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.Constants.DEFAULT_HOSTNAME;
-import static com.terracottatech.dynamic_config.Constants.DEFAULT_PORT;
-import static com.terracottatech.dynamic_config.Constants.MULTI_VALUE_SEP;
-import static com.terracottatech.dynamic_config.Constants.REGEX_PREFIX;
-import static com.terracottatech.dynamic_config.Constants.REGEX_SUFFIX;
 import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.config.CommonOptions.CLUSTER_NAME;
@@ -58,9 +55,6 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WH
 import static com.terracottatech.dynamic_config.managers.NodeManager.startServer;
 import static com.terracottatech.dynamic_config.util.ConfigUtils.findConfigRepo;
 import static com.terracottatech.dynamic_config.util.ConfigUtils.getSubstitutedConfigDir;
-import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDash;
-import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDashDash;
-import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDashDash;
 
 @Parameters(separators = "=")
 public class Options {
@@ -169,13 +163,13 @@ public class Options {
   private Map<String, String> buildParamValueMap(CustomJCommander jCommander, Set<String> specifiedOptions) {
     Predicate<ParameterDescription> isSpecified =
         pd -> Arrays.stream(pd.getNames()
-            .split(MULTI_VALUE_SEP))
+            .split(Constants.MULTI_VALUE_SEP))
             .map(String::trim)
             .anyMatch(specifiedOptions::contains);
     return jCommander.getParameters()
         .stream()
         .filter(isSpecified)
-        .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
+        .collect(Collectors.toMap(pd -> ConsoleParamsUtils.stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
   }
 
   private void validateOptionsForConfigFile(Set<String> specifiedOptions) {
@@ -186,28 +180,28 @@ public class Options {
     filteredOptions.remove("-c");
 
     filteredOptions.remove("--config-file");
-    filteredOptions.remove(addDashDash(NODE_HOSTNAME));
-    filteredOptions.remove(addDashDash(NODE_PORT));
-    filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
+    filteredOptions.remove(ConsoleParamsUtils.addDashDash(NODE_HOSTNAME));
+    filteredOptions.remove(ConsoleParamsUtils.addDashDash(NODE_PORT));
+    filteredOptions.remove(ConsoleParamsUtils.addDashDash(NODE_CONFIG_DIR));
 
     if (filteredOptions.size() != 0) {
       throw new ParameterException(
           String.format(
               "'--config-file' parameter can only be used with '%s', '%s', and '%s' parameters",
-              addDashDash(NODE_HOSTNAME),
-              addDashDash(NODE_PORT),
-              addDashDash(NODE_CONFIG_DIR)
+              ConsoleParamsUtils.addDashDash(NODE_HOSTNAME),
+              ConsoleParamsUtils.addDashDash(NODE_PORT),
+              ConsoleParamsUtils.addDashDash(NODE_CONFIG_DIR)
           )
       );
     }
   }
 
   private Node getMatchingNodeFromConfigFile(Cluster cluster, Set<String> specifiedOptions) {
-    boolean isHostnameSpecified = specifiedOptions.contains(addDash(NODE_HOSTNAME)) || specifiedOptions.contains(addDashDash(NODE_HOSTNAME));
-    boolean isPortSpecified = specifiedOptions.contains(addDash(NODE_PORT)) || specifiedOptions.contains(addDashDash(NODE_PORT));
+    boolean isHostnameSpecified = specifiedOptions.contains(ConsoleParamsUtils.addDash(NODE_HOSTNAME)) || specifiedOptions.contains(ConsoleParamsUtils.addDashDash(NODE_HOSTNAME));
+    boolean isPortSpecified = specifiedOptions.contains(ConsoleParamsUtils.addDash(NODE_PORT)) || specifiedOptions.contains(ConsoleParamsUtils.addDashDash(NODE_PORT));
 
-    String substitutedHost = ParameterSubstitutor.substitute(isHostnameSpecified ? nodeHostname : DEFAULT_HOSTNAME);
-    String port = isPortSpecified ? nodePort : DEFAULT_PORT;
+    String substitutedHost = ParameterSubstitutor.substitute(isHostnameSpecified ? nodeHostname : Constants.DEFAULT_HOSTNAME);
+    String port = isPortSpecified ? nodePort : Constants.DEFAULT_PORT;
 
     List<Node> allNodes = cluster.getStripes().stream()
         .flatMap(stripe -> stripe.getNodes().stream())
@@ -240,6 +234,6 @@ public class Options {
   }
 
   private String extractNodeName(String configRepo) {
-    return configRepo.replaceAll("^" + REGEX_PREFIX, "").replaceAll(REGEX_SUFFIX + "$", "");
+    return configRepo.replaceAll("^" + Constants.REGEX_PREFIX, "").replaceAll(Constants.REGEX_SUFFIX + "$", "");
   }
 }

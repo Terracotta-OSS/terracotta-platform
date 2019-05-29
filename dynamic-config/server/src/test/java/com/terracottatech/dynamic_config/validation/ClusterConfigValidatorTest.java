@@ -4,10 +4,10 @@
  */
 package com.terracottatech.dynamic_config.validation;
 
+import com.terracottatech.dynamic_config.exception.MalformedClusterConfigException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.exception.MalformedClusterConfigException;
 import org.junit.Test;
 
 import java.nio.file.Paths;

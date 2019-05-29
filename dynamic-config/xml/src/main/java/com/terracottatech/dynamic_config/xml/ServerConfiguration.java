@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.xml.plugins.BackupRestore;
 import org.terracotta.config.Config;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
@@ -16,7 +17,6 @@ import org.terracotta.config.Voter;
 import org.w3c.dom.Element;
 
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.xml.plugins.BackupRestore;
 import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
 import com.terracottatech.dynamic_config.xml.plugins.Lease;
 import com.terracottatech.dynamic_config.xml.plugins.OffheapResources;

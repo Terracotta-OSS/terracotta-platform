@@ -4,10 +4,11 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.config.DefaultSettings;
+import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.util.ConsoleParamsUtils;
 import com.terracottatech.dynamic_config.validation.NodeParamsValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDashDash;
 import static java.lang.System.lineSeparator;
 
 public class ConsoleParamsParser {
@@ -49,7 +49,7 @@ public class ConsoleParamsParser {
 
   private static String toDisplayParams(Map<String, String> supplied) {
     String suppliedParameters = supplied.entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
-        .map(entry -> addDashDash(entry.getKey()) + "=" + ParameterSubstitutor.substitute(entry.getValue()))
+        .map(entry -> ConsoleParamsUtils.addDashDash(entry.getKey()) + "=" + ParameterSubstitutor.substitute(entry.getValue()))
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {
       suppliedParameters = "[]";

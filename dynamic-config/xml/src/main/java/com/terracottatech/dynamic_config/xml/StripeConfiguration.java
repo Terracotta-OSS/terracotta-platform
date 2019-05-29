@@ -4,14 +4,14 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Stripe;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 
-import com.terracottatech.dynamic_config.model.Measure;
-import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.utilities.TimeUnit;
 
 import java.util.HashMap;

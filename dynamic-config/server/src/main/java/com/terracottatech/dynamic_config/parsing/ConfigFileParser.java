@@ -4,11 +4,12 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.config.DefaultSettings;
-import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.config.NodeIdentifier;
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.util.ConfigFileParamsUtils;
 import com.terracottatech.dynamic_config.validation.ClusterConfigValidator;
 import com.terracottatech.dynamic_config.validation.ConfigFileValidator;
 
@@ -21,10 +22,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNode;
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripe;
-
 public class ConfigFileParser {
   public static Cluster parse(File file) {
     Properties properties = ConfigFileValidator.validate(file);
@@ -36,8 +33,8 @@ public class ConfigFileParser {
     Map<NodeIdentifier, Node> uniqueServerToNodeMapping = new HashMap<>();
     properties.forEach((key, value) -> {
       // stripe.1.node.1.node-name=node-1
-      stripeSet.add(getStripe(key.toString()));
-      uniqueServerToNodeMapping.putIfAbsent(new NodeIdentifier(getStripe(key.toString()), getNode(key.toString())), new Node());
+      stripeSet.add(ConfigFileParamsUtils.getStripe(key.toString()));
+      uniqueServerToNodeMapping.putIfAbsent(new NodeIdentifier(ConfigFileParamsUtils.getStripe(key.toString()), ConfigFileParamsUtils.getNode(key.toString())), new Node());
     });
 
     List<Stripe> stripes = new ArrayList<>();
@@ -54,8 +51,8 @@ public class ConfigFileParser {
       if (value.toString().isEmpty()) {
         return;
       }
-      NodeIdentifier nodeIdentifier = new NodeIdentifier(getStripe(key.toString()), getNode(key.toString()));
-      NodeParameterSetter.set(getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
+      NodeIdentifier nodeIdentifier = new NodeIdentifier(ConfigFileParamsUtils.getStripe(key.toString()), ConfigFileParamsUtils.getNode(key.toString()));
+      NodeParameterSetter.set(ConfigFileParamsUtils.getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
     });
 
     uniqueServerToNodeMapping.values().forEach(DefaultSettings::fillDefaultsIfNeeded);

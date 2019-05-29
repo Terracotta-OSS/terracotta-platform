@@ -4,9 +4,9 @@
  */
 package com.terracottatech.dynamic_config.validation;
 
+import com.terracottatech.dynamic_config.exception.MalformedClusterConfigException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.exception.MalformedClusterConfigException;
 
 import java.util.Set;
 import java.util.function.Function;

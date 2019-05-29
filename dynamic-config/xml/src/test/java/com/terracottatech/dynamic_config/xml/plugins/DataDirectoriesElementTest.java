@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.terracottatech.dynamic_config.xml.plugins.DataDirectories.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -37,12 +36,12 @@ public class DataDirectoriesElementTest {
     dataRootMap.put("data-root-2", dataRoot2);
 
     com.terracottatech.data.config.DataDirectories dataDirectories =
-        new com.terracottatech.dynamic_config.xml.plugins.DataDirectories(dataRootMap, metadataRoot).createDataDirectories();
+        new DataDirectories(dataRootMap, metadataRoot).createDataDirectories();
 
     Map<String, Pair> expected = new HashMap<>();
     expected.put("data-root-1", new Pair(dataRoot1.toString(), false));
     expected.put("data-root-2", new Pair(dataRoot2.toString(), false));
-    expected.put(META_DATA_ROOT_NAME, new Pair(metadataRoot.toString(), true));
+    expected.put(DataDirectories.META_DATA_ROOT_NAME, new Pair(metadataRoot.toString(), true));
 
     List<DataRootMapping> dataRootMappings = dataDirectories.getDirectory();
     Map<String, Pair> actual = new HashMap<>();
@@ -64,7 +63,7 @@ public class DataDirectoriesElementTest {
     dataRootMap.put("data-root-2", dataRoot2);
 
     com.terracottatech.data.config.DataDirectories dataDirectories =
-        new com.terracottatech.dynamic_config.xml.plugins.DataDirectories(dataRootMap, dataRoot1).createDataDirectories();
+        new DataDirectories(dataRootMap, dataRoot1).createDataDirectories();
 
     Map<String, Pair> expected = new HashMap<>();
     expected.put("data-root-1", new Pair(dataRoot1.toString(), true));

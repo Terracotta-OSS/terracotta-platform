@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+
+import org.gradle.internal.jvm.Jvm
+
+dependencies {
+  testCompile "org.assertj:assertj-core:$assertjVersion"
+  testCompile project(':galvan-support-ee')
+  testCompile ("org.awaitility:awaitility:$awaitility")
+  testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
+    exclude group: 'junit'
+  }
+}
+
+apply plugin: TcDistribute
+
+task unzipKit(type: Copy) {
+  dependsOn project(':terracotta-db').distZip
+  from zipTree(project(':terracotta-db').distZip.archivePath)
+  into 'build/tc-db-kit'
+}
+
+test {
+  dependsOn unzipKit
+
+// Server-side
+  def serverJvm = Jvm.current()
+  environment 'JAVA_HOME', serverJvm.javaHome
+  if (serverJvm.getJavaVersion().compareTo(JavaVersion.VERSION_1_8) > 0) {
+    environment 'JAVA_OPTS', '--add-modules java.xml.bind'
+  }
+
+//If this directory does not exist, tests will fail with a cryptic assert failure
+  systemProperty 'kitInstallationPath', "$unzipKit.destinationDir/${project(':terracotta-db').archivesBaseName}-$project.version"
+//systemProperty 'serverDebugStartPort', "5005"
+
+  testLogging {
+    events 'started'
+  }
+}

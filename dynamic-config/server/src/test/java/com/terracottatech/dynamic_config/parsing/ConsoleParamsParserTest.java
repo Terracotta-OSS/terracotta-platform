@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.parsing;
 
 
+import com.terracottatech.dynamic_config.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Measure;
 import com.terracottatech.dynamic_config.model.Node;
@@ -15,27 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLUSTER_NAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BACKUP_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_CONFIG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_PORT;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_HOSTNAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_LOG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_METADATA_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_PORT;
-import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUDIT_LOG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUTHC;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
@@ -81,30 +61,30 @@ public class ConsoleParamsParserTest {
 
   private Map<String, String> setProperties() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(NODE_BACKUP_DIR, "backup");
-    paramValueMap.put(NODE_CONFIG_DIR, "config");
-    paramValueMap.put(NODE_LOG_DIR, "logs");
-    paramValueMap.put(NODE_METADATA_DIR, "metadata");
-    paramValueMap.put(SECURITY_DIR, "security");
-    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "audit-logs");
-    paramValueMap.put(DATA_DIRS, "main:one,second:two");
+    paramValueMap.put(CommonOptions.NODE_BACKUP_DIR, "backup");
+    paramValueMap.put(CommonOptions.NODE_CONFIG_DIR, "config");
+    paramValueMap.put(CommonOptions.NODE_LOG_DIR, "logs");
+    paramValueMap.put(CommonOptions.NODE_METADATA_DIR, "metadata");
+    paramValueMap.put(CommonOptions.SECURITY_DIR, "security");
+    paramValueMap.put(CommonOptions.SECURITY_AUDIT_LOG_DIR, "audit-logs");
+    paramValueMap.put(CommonOptions.DATA_DIRS, "main:one,second:two");
 
-    paramValueMap.put(NODE_NAME, "node-1");
-    paramValueMap.put(NODE_PORT, "19410");
-    paramValueMap.put(NODE_GROUP_PORT, "19430");
-    paramValueMap.put(NODE_BIND_ADDRESS, "10.10.10.10");
-    paramValueMap.put(NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
-    paramValueMap.put(NODE_HOSTNAME, "localhost");
-    paramValueMap.put(CLUSTER_NAME, "tc-cluster");
-    paramValueMap.put(OFFHEAP_RESOURCES, "main:512MB,second:1GB");
+    paramValueMap.put(CommonOptions.NODE_NAME, "node-1");
+    paramValueMap.put(CommonOptions.NODE_PORT, "19410");
+    paramValueMap.put(CommonOptions.NODE_GROUP_PORT, "19430");
+    paramValueMap.put(CommonOptions.NODE_BIND_ADDRESS, "10.10.10.10");
+    paramValueMap.put(CommonOptions.NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
+    paramValueMap.put(CommonOptions.NODE_HOSTNAME, "localhost");
+    paramValueMap.put(CommonOptions.CLUSTER_NAME, "tc-cluster");
+    paramValueMap.put(CommonOptions.OFFHEAP_RESOURCES, "main:512MB,second:1GB");
 
-    paramValueMap.put(SECURITY_AUTHC, "ldap");
-    paramValueMap.put(SECURITY_SSL_TLS, "true");
-    paramValueMap.put(SECURITY_WHITELIST, "true");
+    paramValueMap.put(CommonOptions.SECURITY_AUTHC, "ldap");
+    paramValueMap.put(CommonOptions.SECURITY_SSL_TLS, "true");
+    paramValueMap.put(CommonOptions.SECURITY_WHITELIST, "true");
 
-    paramValueMap.put(FAILOVER_PRIORITY, "consistency:1");
-    paramValueMap.put(CLIENT_RECONNECT_WINDOW, "100s");
-    paramValueMap.put(CLIENT_LEASE_DURATION, "50s");
+    paramValueMap.put(CommonOptions.FAILOVER_PRIORITY, "consistency:1");
+    paramValueMap.put(CommonOptions.CLIENT_RECONNECT_WINDOW, "100s");
+    paramValueMap.put(CommonOptions.CLIENT_LEASE_DURATION, "50s");
     return paramValueMap;
   }
 

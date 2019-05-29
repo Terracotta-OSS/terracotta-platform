@@ -21,9 +21,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.Constants.CONFIG_REPO_FILENAME_REGEX;
-import static com.terracottatech.dynamic_config.Constants.NOMAD_CONFIG_DIR;
-
 
 public class ConfigUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigUtils.class);
@@ -111,8 +108,8 @@ public class ConfigUtils {
   public static Optional<String> findConfigRepo(String nodeConfigDir) {
     String substitutedConfigDir = getSubstitutedConfigDir(nodeConfigDir);
     Optional<String> found = Optional.empty();
-    try (Stream<Path> stream = Files.list(Paths.get(substitutedConfigDir).resolve(NOMAD_CONFIG_DIR))) {
-      found = stream.map(path -> path.getFileName().toString()).filter(fileName -> fileName.matches(CONFIG_REPO_FILENAME_REGEX)).findAny();
+    try (Stream<Path> stream = Files.list(Paths.get(substitutedConfigDir).resolve(Constants.NOMAD_CONFIG_DIR))) {
+      found = stream.map(path -> path.getFileName().toString()).filter(fileName -> fileName.matches(Constants.CONFIG_REPO_FILENAME_REGEX)).findAny();
     } catch (IOException e) {
       LOGGER.debug("Reading cluster config repository from: {} resulted in exception: {}", substitutedConfigDir, e);
     }
