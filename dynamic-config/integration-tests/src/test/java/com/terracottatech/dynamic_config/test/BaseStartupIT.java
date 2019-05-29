@@ -4,31 +4,31 @@
  */
 package com.terracottatech.dynamic_config.test;
 
-import com.terracottatech.testing.lock.LockingPortChooser;
-import com.terracottatech.testing.lock.LockingPortChoosers;
+import com.terracottatech.diagnostic.common.JsonDiagnosticCodec;
+import com.terracottatech.dynamic_config.test.util.Env;
+import com.terracottatech.dynamic_config.test.util.NodeProcess;
+import com.terracottatech.testing.lock.PortLockingRule;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Rule;
+import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -36,35 +36,44 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.readAllLines;
 import static java.nio.file.Files.walkFileTree;
 import static java.nio.file.Files.write;
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.pollinterval.IterativePollInterval.iterative;
 
 public class BaseStartupIT {
-  final LockingPortChooser portChooser = LockingPortChoosers.getFileLockingPortChooser();
-  private final Pattern PID_PATTERN = Pattern.compile(".*PID is (\\d+)");
-  private volatile int serverPid = -1;
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
+  @Rule public final PortLockingRule ports = new PortLockingRule(2);
 
-  @Rule
-  public final SystemOutRule systemOutRule = new SystemOutRule().enableLog();
+  volatile NodeProcess nodeProcess;
 
   @After
-  public void tearDown() throws Exception {
-    if (this.serverPid != -1) {
-      System.out.println("Killing the server with pid: " + this.serverPid);
-      if (isWindows()) {
-        Runtime.getRuntime().exec("taskkill /F /t /pid " + this.serverPid);
-      } else {
-        Runtime.getRuntime().exec("kill " + this.serverPid);
-      }
+  public void tearDown() {
+    if (nodeProcess != null) {
+      nodeProcess.close();
     }
   }
 
-  static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
+  String toPrettyJson(Object o) {
+    return new JsonDiagnosticCodec(true).serialize(o);
+  }
+
+  InetSocketAddress getServerAddress() {
+    return InetSocketAddress.createUnresolved("localhost", ports.getPort());
+  }
+
+  Path configFilePath() throws Exception {
+    return configFilePath("", String.valueOf(ports.getPort()));
+  }
+
+  Path configFilePath(String suffix, String port) throws Exception {
+    String resourceName = "/config-property-files/single-stripe" + suffix + ".properties";
+    Path original = Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
+    String contents = new String(Files.readAllBytes(original));
+    String replacedContents = contents.replaceAll(Pattern.quote("${PORT}"), port);
+    Path newPath = temporaryFolder.newFile().toPath();
+    Files.write(newPath, replacedContents.getBytes(StandardCharsets.UTF_8));
+    return newPath;
   }
 
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
@@ -74,28 +83,15 @@ public class BaseStartupIT {
         .until(callable, matcher);
   }
 
-  void startServer(Path scriptPath, String... args) throws Exception {
-    if (!Files.exists(scriptPath)) {
-      fail("Terracotta server start script does not exist: " + scriptPath);
-    }
-
-    List<String> processArgs = new ArrayList<>();
-    processArgs.add(scriptPath.toString());
-    processArgs.addAll(asList(args));
-
-    Process process = new ProcessBuilder(processArgs).start();
-    CompletableFuture.runAsync(() -> printServerLogs(process.getInputStream()));
-  }
-
   Path configRepoPath(Function<String, Path> nomadRootFunction, String serverName) throws Exception {
     String directory = "config-repositories";
-    String platform = isWindows() ? "windows" : "linux";
+    String platform = Env.isWindows() ? "windows" : "linux";
     Path configurationRepoPath = nomadRootFunction.apply(directory + "/" + platform);
     Path temporaryPath = temporaryFolder.newFolder().toPath();
 
     copyDirectory(configurationRepoPath, temporaryPath);
 
-    if (isWindows()) {
+    if (Env.isWindows()) {
       changeLineSeparator(Paths.get("sanskrit").resolve("append.log"), configurationRepoPath, temporaryPath);
       changeLineSeparator(Paths.get("config").resolve("cluster-config." + serverName + ".1.xml"), configurationRepoPath, temporaryPath);
     }
@@ -136,21 +132,6 @@ public class BaseStartupIT {
     };
   }
 
-  private void printServerLogs(InputStream inputStream) {
-    try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
-      String line;
-      while ((line = bufferedReader.readLine()) != null) {
-        System.out.println(line);
-        java.util.regex.Matcher matcher = PID_PATTERN.matcher(line);
-        if (matcher.matches()) {
-          this.serverPid = Integer.parseInt(matcher.group(1));
-        }
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private static void changeLineSeparator(Path file, Path configurationRepoPath, Path temporaryPath) throws IOException {
     List<String> lines = readAllLines(configurationRepoPath.resolve(file), UTF_8);
     String modifiedContent = String.join(System.lineSeparator(), lines) + System.lineSeparator();
@@ -172,4 +153,5 @@ public class BaseStartupIT {
       }
     });
   }
+
 }
