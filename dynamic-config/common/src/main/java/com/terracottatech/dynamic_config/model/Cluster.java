@@ -4,7 +4,11 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -13,8 +17,13 @@ import java.util.Objects;
 public class Cluster {
   private final List<Stripe> stripes;
 
-  public Cluster(List<Stripe> stripes) {
+  @JsonCreator
+  public Cluster(@JsonProperty("stripes") List<Stripe> stripes) {
     this.stripes = new ArrayList<>(stripes);
+  }
+
+  public Cluster(Stripe... stripes) {
+    this(Arrays.asList(stripes));
   }
 
   public List<Stripe> getStripes() {

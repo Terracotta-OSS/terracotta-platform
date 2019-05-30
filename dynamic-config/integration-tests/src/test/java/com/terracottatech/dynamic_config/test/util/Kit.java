@@ -17,8 +17,8 @@ import java.util.Optional;
 public class Kit {
 
   // memoize results for subsequent test execution to fasten build feedback in case of error
-  private static Path KIT_PATH;
-  private static RuntimeException ERROR;
+  private static Path kitPath;
+  private static RuntimeException error;
 
   public static Optional<Path> getPath() {
     return Optional.ofNullable(System.getProperty("kitInstallationPath")).map(s -> Paths.get(s));
@@ -33,11 +33,11 @@ public class Kit {
   }
 
   public static synchronized Path build() {
-    if (KIT_PATH != null) {
-      return KIT_PATH;
+    if (kitPath != null) {
+      return kitPath;
     }
-    if (ERROR != null) {
-      throw ERROR;
+    if (error != null) {
+      throw error;
     }
     try {
       Path rootPath = Env.getProjectRootPath();
@@ -56,15 +56,15 @@ public class Kit {
       if (children == null || children.length != 1) {
         throw new IllegalStateException("Kit directory not found in " + parent);
       }
-      KIT_PATH = children[0].toPath();
-      return KIT_PATH;
+      kitPath = children[0].toPath();
+      return kitPath;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      ERROR = new IllegalStateException(e);
-      throw ERROR;
+      error = new IllegalStateException(e);
+      throw error;
     } catch (RuntimeException e) {
-      ERROR = e;
-      throw ERROR;
+      error = e;
+      throw error;
     }
   }
 

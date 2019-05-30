@@ -4,7 +4,11 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -13,8 +17,13 @@ import java.util.Objects;
 public class Stripe {
   private final Collection<Node> nodes;
 
-  public Stripe(Collection<Node> nodes) {
+  @JsonCreator
+  public Stripe(@JsonProperty("nodes") Collection<Node> nodes) {
     this.nodes = new ArrayList<>(nodes);
+  }
+
+  public Stripe(Node... nodes) {
+    this(Arrays.asList(nodes));
   }
 
   public Collection<Node> getNodes() {

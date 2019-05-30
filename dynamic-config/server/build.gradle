@@ -5,6 +5,7 @@
 
 dependencies {
   compile project(':dynamic-config-common')
+  compile project(':diagnostic-server')
   compile "com.beust:jcommander:$jcommanderVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"

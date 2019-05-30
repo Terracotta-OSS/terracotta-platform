@@ -4,11 +4,19 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 public class Measure<T extends Enum<T>> {
   private final long quantity;
+  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final T type;
 
-  public static <U extends Enum<U>> Measure<U> of(long quantity, U type) {
+  @JsonCreator
+  public static <U extends Enum<U>> Measure<U> of(
+      @JsonProperty("quantity") long quantity,
+      @JsonProperty("type") U type) {
     return new Measure<>(quantity, type);
   }
 
@@ -45,7 +53,7 @@ public class Measure<T extends Enum<T>> {
 
   @Override
   public String toString() {
-    return "Config{" +
+    return "Measure{" +
         "quantity=" + quantity +
         ", type=" + type +
         '}';

@@ -121,88 +121,119 @@ public class Node {
     return clusterName;
   }
 
-  public void setNodeName(String nodeName) {
+  public Node setNodeName(String nodeName) {
     this.nodeName = nodeName;
+    return this;
   }
 
-  public void setNodeHostname(String nodeHostname) {
+  public Node setNodeHostname(String nodeHostname) {
     this.nodeHostname = nodeHostname;
+    return this;
   }
 
-  public void setNodePort(int nodePort) {
+  public Node setNodePort(int nodePort) {
     this.nodePort = nodePort;
+    return this;
   }
 
-  public void setNodeGroupPort(int nodeGroupPort) {
+  public Node setNodeGroupPort(int nodeGroupPort) {
     this.nodeGroupPort = nodeGroupPort;
+    return this;
   }
 
-  public void setNodeBindAddress(String nodeBindAddress) {
+  public Node setNodeBindAddress(String nodeBindAddress) {
     this.nodeBindAddress = nodeBindAddress;
+    return this;
   }
 
-  public void setNodeGroupBindAddress(String nodeGroupBindAddress) {
+  public Node setNodeGroupBindAddress(String nodeGroupBindAddress) {
     this.nodeGroupBindAddress = nodeGroupBindAddress;
+    return this;
   }
 
-  public void setNodeConfigDir(Path nodeConfigDir) {
+  public Node setNodeConfigDir(Path nodeConfigDir) {
     this.nodeConfigDir = nodeConfigDir;
+    return this;
   }
 
-  public void setNodeMetadataDir(Path nodeMetadataDir) {
+  public Node setNodeMetadataDir(Path nodeMetadataDir) {
     this.nodeMetadataDir = nodeMetadataDir;
+    return this;
   }
 
-  public void setNodeLogDir(Path nodeLogDir) {
+  public Node setNodeLogDir(Path nodeLogDir) {
     this.nodeLogDir = nodeLogDir;
+    return this;
   }
 
-  public void setNodeBackupDir(Path nodeBackupDir) {
+  public Node setNodeBackupDir(Path nodeBackupDir) {
     this.nodeBackupDir = nodeBackupDir;
+    return this;
   }
 
-  public void setSecurityDir(Path securityDir) {
+  public Node setSecurityDir(Path securityDir) {
     this.securityDir = securityDir;
+    return this;
   }
 
-  public void setSecurityAuditLogDir(Path securityAuditLogDir) {
+  public Node setSecurityAuditLogDir(Path securityAuditLogDir) {
     this.securityAuditLogDir = securityAuditLogDir;
+    return this;
   }
 
-  public void setSecurityAuthc(String securityAuthc) {
+  public Node setSecurityAuthc(String securityAuthc) {
     this.securityAuthc = securityAuthc;
+    return this;
   }
 
-  public void setSecuritySslTls(boolean securitySslTls) {
+  public Node setSecuritySslTls(boolean securitySslTls) {
     this.securitySslTls = securitySslTls;
+    return this;
   }
 
-  public void setSecurityWhitelist(boolean securityWhitelist) {
+  public Node setSecurityWhitelist(boolean securityWhitelist) {
     this.securityWhitelist = securityWhitelist;
+    return this;
   }
 
-  public void setFailoverPriority(String failoverPriority) {
+  public Node setFailoverPriority(String failoverPriority) {
     this.failoverPriority = failoverPriority;
+    return this;
   }
 
-  public void setClientReconnectWindow(long clientReconnectWindow, TimeUnit timeUnit) {
+  public Node setClientReconnectWindow(long clientReconnectWindow, TimeUnit timeUnit) {
     this.clientReconnectWindow = Measure.of(clientReconnectWindow, timeUnit);
+    return this;
   }
 
-  public void setClientLeaseDuration(long clientLeaseDuration, TimeUnit timeUnit) {
+  public Node setClientReconnectWindow(long clientReconnectWindow, java.util.concurrent.TimeUnit jdkUnit) {
+    this.clientReconnectWindow = Measure.of(clientReconnectWindow, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name())));
+    return this;
+  }
+
+  public Node setClientLeaseDuration(long clientLeaseDuration, TimeUnit timeUnit) {
     this.clientLeaseDuration = Measure.of(clientLeaseDuration, timeUnit);
+    return this;
   }
 
-  public void setOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
+  public Node setClientLeaseDuration(long clientLeaseDuration, java.util.concurrent.TimeUnit jdkUnit) {
+    this.clientLeaseDuration = Measure.of(clientLeaseDuration, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name())));
+    return this;
+  }
+
+  public Node setOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
     this.offheapResources.put(name, Measure.of(quantity, memoryUnit));
+    return this;
   }
 
-  public void setDataDir(String name, Path path) {
+  public Node setDataDir(String name, Path path) {
     this.dataDirs.put(name, path);
+    return this;
   }
 
-  public void setClusterName(String clusterName) {
+  public Node setClusterName(String clusterName) {
     this.clusterName = clusterName;
+    return this;
   }
 
   @Override
@@ -212,32 +243,30 @@ public class Node {
     Node node = (Node) o;
     return nodePort == node.nodePort &&
         nodeGroupPort == node.nodeGroupPort &&
-        nodeName.equals(node.nodeName) &&
-        nodeHostname.equals(node.nodeHostname) &&
-        nodeBindAddress.equals(node.nodeBindAddress) &&
-        nodeGroupBindAddress.equals(node.nodeGroupBindAddress) &&
-        nodeConfigDir.equals(node.nodeConfigDir) &&
-        nodeMetadataDir.equals(node.nodeMetadataDir) &&
-        nodeLogDir.equals(node.nodeLogDir) &&
-        nodeBackupDir.equals(node.nodeBackupDir) &&
         securitySslTls == node.securitySslTls &&
         securityWhitelist == node.securityWhitelist &&
-        securityDir.equals(node.securityDir) &&
-        securityAuditLogDir.equals(node.securityAuditLogDir) &&
-        securityAuthc.equals(node.securityAuthc) &&
-        failoverPriority.equals(node.failoverPriority) &&
-        clientReconnectWindow.equals(node.clientReconnectWindow) &&
-        clientLeaseDuration.equals(node.clientLeaseDuration) &&
-        offheapResources.equals(node.offheapResources) &&
-        dataDirs.equals(node.dataDirs) &&
-        clusterName.equals(node.clusterName);
+        Objects.equals(nodeName, node.nodeName) &&
+        Objects.equals(nodeHostname, node.nodeHostname) &&
+        Objects.equals(nodeBindAddress, node.nodeBindAddress) &&
+        Objects.equals(nodeGroupBindAddress, node.nodeGroupBindAddress) &&
+        Objects.equals(nodeConfigDir, node.nodeConfigDir) &&
+        Objects.equals(nodeMetadataDir, node.nodeMetadataDir) &&
+        Objects.equals(nodeLogDir, node.nodeLogDir) &&
+        Objects.equals(nodeBackupDir, node.nodeBackupDir) &&
+        Objects.equals(securityDir, node.securityDir) &&
+        Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
+        Objects.equals(securityAuthc, node.securityAuthc) &&
+        Objects.equals(failoverPriority, node.failoverPriority) &&
+        Objects.equals(clientReconnectWindow, node.clientReconnectWindow) &&
+        Objects.equals(clientLeaseDuration, node.clientLeaseDuration) &&
+        Objects.equals(offheapResources, node.offheapResources) &&
+        Objects.equals(dataDirs, node.dataDirs) &&
+        Objects.equals(clusterName, node.clusterName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeConfigDir,
-        nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls,
-        securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs, clusterName);
+    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeConfigDir, nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls, securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs, clusterName);
   }
 
   @Override

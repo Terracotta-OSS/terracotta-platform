@@ -8,11 +8,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.dynamic_config.Constants;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigServiceImpl;
+import com.terracottatech.dynamic_config.managers.ClusterManager;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.management.ClusterTopologyMBeanImpl;
-import com.terracottatech.dynamic_config.managers.ClusterManager;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import com.terracottatech.dynamic_config.util.ConsoleParamsUtils;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
@@ -154,7 +156,9 @@ public class Options {
         node = cluster.getStripes().get(0).getNodes().iterator().next(); // Cluster object will have only 1 node, just get that
       }
 
-      ClusterTopologyMBeanImpl.init(cluster);
+      DynamicConfigServiceImpl serviceImplementation = new DynamicConfigServiceImpl(cluster);
+      DiagnosticServices.register(DynamicConfigService.class, serviceImplementation);
+
       Path configPath = ConfigUtils.createTempTcConfig(node);
       startServer("--config-consistency", "--config", configPath.toAbsolutePath().toString());
     }
