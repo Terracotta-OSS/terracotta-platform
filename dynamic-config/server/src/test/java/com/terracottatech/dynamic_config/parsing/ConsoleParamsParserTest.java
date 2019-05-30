@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-
 import com.terracottatech.dynamic_config.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Measure;
@@ -20,8 +19,15 @@ import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
 import static java.io.File.separator;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
 
 public class ConsoleParamsParserTest {
   @Test
@@ -29,34 +35,40 @@ public class ConsoleParamsParserTest {
     Map<String, String> paramValueMap = setProperties();
     Cluster cluster = ConsoleParamsParser.parse(paramValueMap);
 
-    assertThat(cluster.getStripes().size()).isEqualTo(1);
-    assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(1);
+    assertThat(cluster.getStripes().size(), is(1));
+    assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeName()).isEqualTo("node-1");
-    assertThat(node.getClusterName()).isEqualTo("tc-cluster");
-    assertThat(node.getNodeHostname()).isEqualTo("localhost");
-    assertThat(node.getNodePort()).isEqualTo(19410);
-    assertThat(node.getNodeGroupPort()).isEqualTo(19430);
-    assertThat(node.getNodeBindAddress()).isEqualTo("10.10.10.10");
-    assertThat(node.getNodeGroupBindAddress()).isEqualTo("20.20.20.20");
-    assertThat(node.getOffheapResources()).containsExactly(entry("main", Measure.of(512L, MB)), entry("second", Measure.of(1L, GB)));
+    assertThat(node.getNodeName(), is("node-1"));
+    assertThat(node.getClusterName(), is("tc-cluster"));
+    assertThat(node.getNodeHostname(), is("localhost"));
+    assertThat(node.getNodePort(), is(19410));
+    assertThat(node.getNodeGroupPort(), is(19430));
+    assertThat(node.getNodeBindAddress(), is("10.10.10.10"));
+    assertThat(node.getNodeGroupBindAddress(), is("20.20.20.20"));
+    assertThat(node.getOffheapResources(), allOf(
+        hasEntry("main", Measure.of(512L, MB)),
+        hasEntry("second", Measure.of(1L, GB)))
+    );
 
-    assertThat(node.getNodeBackupDir().toString()).isEqualTo("backup");
-    assertThat(node.getNodeConfigDir().toString()).isEqualTo("config");
-    assertThat(node.getNodeLogDir().toString()).isEqualTo("logs");
-    assertThat(node.getNodeMetadataDir().toString()).isEqualTo("metadata");
-    assertThat(node.getSecurityDir().toString()).isEqualTo("security");
-    assertThat(node.getSecurityAuditLogDir().toString()).isEqualTo("audit-logs");
-    assertThat(node.getDataDirs()).containsOnly(entry("main", Paths.get("one")), entry("second", Paths.get("two")));
+    assertThat(node.getNodeBackupDir().toString(), is("backup"));
+    assertThat(node.getNodeConfigDir().toString(), is("config"));
+    assertThat(node.getNodeLogDir().toString(), is("logs"));
+    assertThat(node.getNodeMetadataDir().toString(), is("metadata"));
+    assertThat(node.getSecurityDir().toString(), is("security"));
+    assertThat(node.getSecurityAuditLogDir().toString(), is("audit-logs"));
+    assertThat(node.getDataDirs(), allOf(
+        hasEntry("main", Paths.get("one")),
+        hasEntry("second", Paths.get("two")))
+    );
 
-    assertThat(node.isSecurityWhitelist()).isTrue();
-    assertThat(node.isSecuritySslTls()).isTrue();
-    assertThat(node.getSecurityAuthc()).isEqualTo("ldap");
+    assertTrue(node.isSecurityWhitelist());
+    assertTrue(node.isSecuritySslTls());
+    assertThat(node.getSecurityAuthc(), is("ldap"));
 
-    assertThat(node.getFailoverPriority()).isEqualTo("consistency:1");
-    assertThat(node.getClientReconnectWindow()).isEqualTo(Measure.of(100L, SECONDS));
-    assertThat(node.getClientLeaseDuration()).isEqualTo(Measure.of(50L, SECONDS));
+    assertThat(node.getFailoverPriority(), is("consistency:1"));
+    assertThat(node.getClientReconnectWindow(), is(Measure.of(100L, SECONDS)));
+    assertThat(node.getClientLeaseDuration(), is(Measure.of(50L, SECONDS)));
   }
 
   private Map<String, String> setProperties() {
@@ -92,33 +104,33 @@ public class ConsoleParamsParserTest {
   public void testDefaults() {
     Cluster cluster = ConsoleParamsParser.parse(Collections.emptyMap());
 
-    assertThat(cluster.getStripes().size()).isEqualTo(1);
-    assertThat(cluster.getStripes().get(0).getNodes().size()).isEqualTo(1);
+    assertThat(cluster.getStripes().size(), is(1));
+    assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeName()).startsWith("node-");
-    assertThat(node.getClusterName()).isNull();
-    assertThat(node.getNodeHostname()).isEqualTo("%h");
-    assertThat(node.getNodePort()).isEqualTo(9410);
-    assertThat(node.getNodeGroupPort()).isEqualTo(9430);
-    assertThat(node.getNodeBindAddress()).isEqualTo("0.0.0.0");
-    assertThat(node.getNodeGroupBindAddress()).isEqualTo("0.0.0.0");
-    assertThat(node.getOffheapResources()).containsOnly(entry("main", Measure.of(512L, MB)));
+    assertThat(node.getNodeName(), startsWith("node-"));
+    assertThat(node.getClusterName(), is(nullValue()));
+    assertThat(node.getNodeHostname(), is("%h"));
+    assertThat(node.getNodePort(), is(9410));
+    assertThat(node.getNodeGroupPort(), is(9430));
+    assertThat(node.getNodeBindAddress(), is("0.0.0.0"));
+    assertThat(node.getNodeGroupBindAddress(), is("0.0.0.0"));
+    assertThat(node.getOffheapResources(), hasEntry("main", Measure.of(512L, MB)));
 
-    assertThat(node.getNodeBackupDir()).isNull();
-    assertThat(node.getNodeConfigDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "config");
-    assertThat(node.getNodeLogDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "logs");
-    assertThat(node.getNodeMetadataDir().toString()).isEqualTo("%H" + separator + "terracotta" + separator + "metadata");
-    assertThat(node.getSecurityDir()).isNull();
-    assertThat(node.getSecurityAuditLogDir()).isNull();
-    assertThat(node.getDataDirs()).containsOnly(entry("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main")));
+    assertThat(node.getNodeBackupDir(), is(nullValue()));
+    assertThat(node.getNodeConfigDir().toString(), is("%H" + separator + "terracotta" + separator + "config"));
+    assertThat(node.getNodeLogDir().toString(), is("%H" + separator + "terracotta" + separator + "logs"));
+    assertThat(node.getNodeMetadataDir().toString(), is("%H" + separator + "terracotta" + separator + "metadata"));
+    assertThat(node.getSecurityDir(), is(nullValue()));
+    assertThat(node.getSecurityAuditLogDir(), is(nullValue()));
+    assertThat(node.getDataDirs(), hasEntry("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main")));
 
-    assertThat(node.isSecurityWhitelist()).isFalse();
-    assertThat(node.isSecuritySslTls()).isFalse();
-    assertThat(node.getSecurityAuthc()).isNull();
+    assertFalse(node.isSecurityWhitelist());
+    assertFalse(node.isSecuritySslTls());
+    assertThat(node.getSecurityAuthc(), is(nullValue()));
 
-    assertThat(node.getFailoverPriority()).isEqualTo("availability");
-    assertThat(node.getClientReconnectWindow()).isEqualTo(Measure.of(120L, SECONDS));
-    assertThat(node.getClientLeaseDuration()).isEqualTo(Measure.of(20L, SECONDS));
+    assertThat(node.getFailoverPriority(), is("availability"));
+    assertThat(node.getClientReconnectWindow(), is(Measure.of(120L, SECONDS)));
+    assertThat(node.getClientLeaseDuration(), is(Measure.of(20L, SECONDS)));
   }
 }

@@ -8,7 +8,9 @@ import com.terracottatech.dynamic_config.exception.MalformedClusterConfigExcepti
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -19,10 +21,11 @@ import java.util.Random;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
 public class ClusterConfigValidatorTest {
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+
   @Test
   public void testMultipleClusterNames() {
     Node node1 = new Node();
@@ -30,13 +33,7 @@ public class ClusterConfigValidatorTest {
     node1.setClusterName("tc-one");
     node2.setClusterName("tc-two");
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("All the nodes should belong to the same cluster");
-    }
+    testThrowsWithMessage(node1, node2, "All the nodes should belong to the same cluster");
   }
 
   @Test
@@ -46,13 +43,7 @@ public class ClusterConfigValidatorTest {
     node1.setClientLeaseDuration(10L, SECONDS);
     node2.setClientLeaseDuration(100L, SECONDS);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Client lease duration of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Client lease duration of all nodes should match");
   }
 
   @Test
@@ -62,13 +53,7 @@ public class ClusterConfigValidatorTest {
     node1.setClientReconnectWindow(10L, SECONDS);
     node2.setClientReconnectWindow(100L, SECONDS);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Client reconnect window of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Client reconnect window of all nodes should match");
   }
 
   @Test
@@ -78,13 +63,7 @@ public class ClusterConfigValidatorTest {
     node1.setFailoverPriority("availability");
     node2.setFailoverPriority("consistency");
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Failover setting of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Failover setting of all nodes should match");
   }
 
   @Test
@@ -94,13 +73,7 @@ public class ClusterConfigValidatorTest {
     node1.setFailoverPriority("consistency");
     node2.setFailoverPriority("consistency:2");
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Failover setting of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Failover setting of all nodes should match");
   }
 
   @Test
@@ -110,13 +83,7 @@ public class ClusterConfigValidatorTest {
     node1.setDataDir("dir-1", Paths.get("data"));
     node2.setDataDir("dir-2", Paths.get("data"));
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Data directory names of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Data directory names of all nodes should match");
   }
 
   @Test
@@ -126,13 +93,7 @@ public class ClusterConfigValidatorTest {
     node1.setOffheapResource("main", 512L, MB);
     node1.setOffheapResource("other", 1L, GB);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Offheap resources of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Offheap resources of all nodes should match");
   }
 
   @Test
@@ -144,13 +105,7 @@ public class ClusterConfigValidatorTest {
     node2.setOffheapResource("main", 1L, GB);
     node2.setOffheapResource("other", 2L, GB);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Offheap resources of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Offheap resources of all nodes should match");
   }
 
   @Test
@@ -162,13 +117,7 @@ public class ClusterConfigValidatorTest {
     node2.setOffheapResource("main", 1L, GB);
     node2.setOffheapResource("other", 2L, GB);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Offheap resources of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Offheap resources of all nodes should match");
   }
 
   @Test
@@ -178,13 +127,7 @@ public class ClusterConfigValidatorTest {
     node1.setOffheapResource("main", 1L, GB);
     node2.setOffheapResource("main", 2L, GB);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Offheap resources of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Offheap resources of all nodes should match");
   }
 
   @Test
@@ -194,13 +137,7 @@ public class ClusterConfigValidatorTest {
     node1.setSecurityWhitelist(false);
     node1.setSecurityWhitelist(true);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Whitelist setting of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Whitelist setting of all nodes should match");
   }
 
   @Test
@@ -210,13 +147,7 @@ public class ClusterConfigValidatorTest {
     node1.setSecuritySslTls(false);
     node1.setSecuritySslTls(true);
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("SSL/TLS setting of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "SSL/TLS setting of all nodes should match");
   }
 
   @Test
@@ -226,13 +157,7 @@ public class ClusterConfigValidatorTest {
     node1.setSecurityAuthc("file");
     node1.setSecurityAuthc("ldap");
 
-    try {
-      ClusterConfigValidator.validate(createCluster(node1, node2));
-      failBecauseExceptionWasNotThrown(MalformedClusterConfigException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedClusterConfigException.class);
-      assertThat(e.getMessage()).startsWith("Authentication setting of all nodes should match");
-    }
+    testThrowsWithMessage(node1, node2, "Authentication setting of all nodes should match");
   }
 
   @Test
@@ -273,5 +198,11 @@ public class ClusterConfigValidatorTest {
     List<Stripe> stripes = new ArrayList<>();
     stripes.add(new Stripe(Arrays.asList(nodes)));
     return new Cluster(stripes);
+  }
+
+  private void testThrowsWithMessage(Node node1, Node node2, String message) {
+    exception.expect(MalformedClusterConfigException.class);
+    exception.expectMessage(message);
+    ClusterConfigValidator.validate(createCluster(node1, node2));
   }
 }

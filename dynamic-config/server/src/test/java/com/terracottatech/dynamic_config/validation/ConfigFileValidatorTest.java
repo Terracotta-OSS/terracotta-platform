@@ -5,68 +5,47 @@
 package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.dynamic_config.exception.MalformedConfigFileException;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
-
-
 public class ConfigFileValidatorTest {
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+
   @Test
   public void testInsufficientKeys() {
     Properties properties = new Properties();
     properties.put("one.two.three", "something");
-
-    try {
-      ConfigFileValidator.validateProperties(properties, "test-file");
-      failBecauseExceptionWasNotThrown(MalformedConfigFileException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedConfigFileException.class);
-      assertThat(e.getMessage()).startsWith("Invalid line: one.two.three");
-    }
+    testThrowsWithMessage(properties, "Invalid line: one.two.three");
   }
 
   @Test
   public void testExtraKeys() {
     Properties properties = new Properties();
     properties.put("stripe.0.node.0.property.foo", "bar");
-
-    try {
-      ConfigFileValidator.validateProperties(properties, "test-file");
-      failBecauseExceptionWasNotThrown(MalformedConfigFileException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedConfigFileException.class);
-      assertThat(e.getMessage()).startsWith("Invalid line: stripe.0.node.0.property.foo");
-    }
+    testThrowsWithMessage(properties, "Invalid line: stripe.0.node.0.property.foo");
   }
 
   @Test
   public void testUnknownNodeProperty() {
     Properties properties = new Properties();
     properties.put("stripe.0.node.0.blah", "something");
-
-    try {
-      ConfigFileValidator.validateProperties(properties, "test-file");
-      failBecauseExceptionWasNotThrown(MalformedConfigFileException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedConfigFileException.class);
-      assertThat(e.getMessage()).startsWith("Unrecognized property: blah");
-    }
+    testThrowsWithMessage(properties, "Unrecognized property: blah");
   }
 
   @Test
   public void testMissingPropertyValue() {
     Properties properties = new Properties();
     properties.put("stripe.1.node.1.security-ssl-tls", "");
+    testThrowsWithMessage(properties, "Missing value");
+  }
 
-    try {
-      ConfigFileValidator.validateProperties(properties, "test-file");
-      failBecauseExceptionWasNotThrown(MalformedConfigFileException.class);
-    } catch (Exception e) {
-      assertThat(e.getClass()).isEqualTo(MalformedConfigFileException.class);
-      assertThat(e.getMessage()).contains("Missing value");
-    }
+  private void testThrowsWithMessage(Properties properties, String message) {
+    exception.expect(MalformedConfigFileException.class);
+    exception.expectMessage(message);
+    ConfigFileValidator.validateProperties(properties, "test-file");
   }
 }

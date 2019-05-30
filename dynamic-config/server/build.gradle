@@ -11,8 +11,7 @@ dependencies {
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
-
-  testCompile "org.assertj:assertj-core:$assertjVersion"
+  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
 }
 
 apply plugin: TcDistribute
