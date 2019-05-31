@@ -69,8 +69,8 @@ public class DynamicConfigServiceIT extends BaseStartupIT {
           .setFailoverPriority("consistency:2")
           .setOffheapResource("main", 512, MB)
           .setOffheapResource("second", 1, GB)
-          .setDataDir("main", Paths.get("/home/terracotta/user-data/main"))
-          .setDataDir("second", Paths.get("/home/terracotta/user-data/second"))
+          .setDataDir("main", Paths.get("/home/terracotta/user-data/main").toAbsolutePath())
+          .setDataDir("second", Paths.get("/home/terracotta/user-data/second").toAbsolutePath())
       )))));
     }
   }
