@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 public class Measure<T extends Enum<T>> {
   private final long quantity;
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+  @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS)
   private final T type;
 
   @JsonCreator
