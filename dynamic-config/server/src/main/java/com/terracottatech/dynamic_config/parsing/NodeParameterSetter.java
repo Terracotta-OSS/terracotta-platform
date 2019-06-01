@@ -6,8 +6,8 @@ package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.Constants;
 import com.terracottatech.dynamic_config.config.CommonOptions;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.util.CommonParamsUtils;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 
@@ -40,19 +40,12 @@ class NodeParameterSetter {
     PARAM_ACTION_MAP.put(CommonOptions.SECURITY_SSL_TLS, (node, value) -> node.setSecuritySslTls(Boolean.valueOf(value)));
     PARAM_ACTION_MAP.put(CommonOptions.SECURITY_WHITELIST, (node, value) -> node.setSecurityWhitelist(Boolean.valueOf(value)));
     PARAM_ACTION_MAP.put(CommonOptions.FAILOVER_PRIORITY, Node::setFailoverPriority);
-    PARAM_ACTION_MAP.put(CommonOptions.CLIENT_RECONNECT_WINDOW, (node, clientReconnectWindow) -> {
-      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(clientReconnectWindow);
-      node.setClientReconnectWindow(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
-    });
-    PARAM_ACTION_MAP.put(CommonOptions.CLIENT_LEASE_DURATION, (node, clientLeaseDuration) -> {
-      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(clientLeaseDuration);
-      node.setClientLeaseDuration(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
-    });
+    PARAM_ACTION_MAP.put(CommonOptions.CLIENT_RECONNECT_WINDOW, (node, clientReconnectWindow) -> node.setClientReconnectWindow(Measure.parse(clientReconnectWindow, TimeUnit.class)));
+    PARAM_ACTION_MAP.put(CommonOptions.CLIENT_LEASE_DURATION, (node, clientLeaseDuration) -> node.setClientLeaseDuration(Measure.parse(clientLeaseDuration, TimeUnit.class)));
     PARAM_ACTION_MAP.put(CommonOptions.CLUSTER_NAME, Node::setClusterName);
     PARAM_ACTION_MAP.put(CommonOptions.OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(Constants.MULTI_VALUE_SEP)).forEach(ofr -> {
       String[] split = ofr.split(Constants.PARAM_INTERNAL_SEP);
-      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(split[1]);
-      node.setOffheapResource(split[0], Long.parseLong(quantityUnit[0]), MemoryUnit.valueOf(quantityUnit[1]));
+      node.setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));
     }));
     PARAM_ACTION_MAP.put(CommonOptions.DATA_DIRS, (node, value) -> Arrays.asList(value.split(Constants.MULTI_VALUE_SEP)).forEach(dir -> {
       String[] split = dir.split(Constants.PARAM_INTERNAL_SEP);

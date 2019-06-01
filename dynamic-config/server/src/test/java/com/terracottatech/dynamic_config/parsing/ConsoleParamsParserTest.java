@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.model.Node;
 import org.junit.Test;
 

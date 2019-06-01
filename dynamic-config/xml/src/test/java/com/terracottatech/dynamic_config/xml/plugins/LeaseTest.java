@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.xml.plugins;
 import org.junit.Test;
 import org.w3c.dom.Element;
 
-import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;

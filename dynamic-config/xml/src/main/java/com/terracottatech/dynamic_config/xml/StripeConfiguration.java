@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
-import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import org.terracotta.config.BindPort;
@@ -47,7 +47,7 @@ class StripeConfiguration {
       servers.getServer().add(createServer(node));
       if (reconnectWindow == -1) {
         Measure<TimeUnit> clientReconnectWindow = node.getClientReconnectWindow();
-        reconnectWindow = (int)clientReconnectWindow.getType().toSeconds(clientReconnectWindow.getQuantity());
+        reconnectWindow = (int)clientReconnectWindow.getUnit().toSeconds(clientReconnectWindow.getQuantity());
       }
     }
 

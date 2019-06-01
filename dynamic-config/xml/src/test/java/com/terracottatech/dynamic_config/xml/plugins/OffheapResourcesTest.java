@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
 
-import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 
 import java.util.HashMap;

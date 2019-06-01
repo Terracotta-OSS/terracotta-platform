@@ -5,8 +5,8 @@
 package com.terracottatech.dynamic_config.config;
 
 import com.terracottatech.dynamic_config.Constants;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.util.CommonParamsUtils;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -83,8 +83,7 @@ public class DefaultSettings {
 
     if (node.getOffheapResources().isEmpty()) {
       String[] split = Constants.DEFAULT_OFFHEAP_RESOURCE.split(Constants.PARAM_INTERNAL_SEP);
-      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(split[1]);
-      node.setOffheapResource(split[0], Long.parseLong(quantityUnit[0]), MemoryUnit.valueOf(quantityUnit[1]));
+      node.setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));
       defaultOptions.put(CommonOptions.OFFHEAP_RESOURCES, Constants.DEFAULT_OFFHEAP_RESOURCE);
     }
 
@@ -125,14 +124,12 @@ public class DefaultSettings {
     }
 
     if (node.getClientReconnectWindow() == null) {
-      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(Constants.DEFAULT_CLIENT_RECONNECT_WINDOW);
-      node.setClientReconnectWindow(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
+      node.setClientReconnectWindow(Measure.parse(Constants.DEFAULT_CLIENT_RECONNECT_WINDOW, TimeUnit.class));
       defaultOptions.put(CommonOptions.CLIENT_RECONNECT_WINDOW, Constants.DEFAULT_CLIENT_RECONNECT_WINDOW);
     }
 
     if (node.getClientLeaseDuration() == null) {
-      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(Constants.DEFAULT_CLIENT_LEASE_DURATION);
-      node.setClientLeaseDuration(Long.parseLong(quantityUnit[0]), TimeUnit.from(quantityUnit[1]).get());
+      node.setClientLeaseDuration(Measure.parse(Constants.DEFAULT_CLIENT_LEASE_DURATION, TimeUnit.class));
       defaultOptions.put(CommonOptions.CLIENT_LEASE_DURATION, Constants.DEFAULT_CLIENT_LEASE_DURATION);
     }
 

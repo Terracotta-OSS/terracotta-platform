@@ -31,15 +31,15 @@ public class NodeParamsValidatorTest {
   @Test
   public void testBadOffheap_2() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(CommonOptions.OFFHEAP_RESOURCES, "blah:blah");
-    testThrowsWithMessage(paramValueMap, "must be a long digit");
+    paramValueMap.put(CommonOptions.OFFHEAP_RESOURCES, "blah:foo");
+    testThrowsWithMessage(paramValueMap, "Invalid measure: 'foo'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
   }
 
   @Test
   public void testBadOffheap_3() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.OFFHEAP_RESOURCES, "blah:200blah");
-    testThrowsWithMessage(paramValueMap, "<quantity><unit> must be one of: " + Arrays.stream(MemoryUnit.values()).map(memoryUnit -> memoryUnit.name()).collect(Collectors.toList()));
+    testThrowsWithMessage(paramValueMap, "Invalid measure: '200blah'. <unit> must be one of [B, KB, MB, GB, TB, PB].");
   }
 
   @Test
@@ -303,7 +303,7 @@ public class NodeParamsValidatorTest {
   public void testBadClientReconnectWindow_1() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.CLIENT_RECONNECT_WINDOW, "blah");
-    testThrowsWithMessage(paramValueMap, "must be a long digit");
+    testThrowsWithMessage(paramValueMap, "Invalid measure: 'blah'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
   }
 
   @Test
@@ -317,21 +317,21 @@ public class NodeParamsValidatorTest {
   public void testBadClientReconnectWindow_3() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.CLIENT_RECONNECT_WINDOW, "MB");
-    testThrowsWithMessage(paramValueMap, "must be a long digit");
+    testThrowsWithMessage(paramValueMap, "Invalid measure: 'MB'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
   }
 
   @Test
   public void testBadClientReconnectWindow_4() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.CLIENT_RECONNECT_WINDOW, "100blah");
-    testThrowsWithMessage(paramValueMap, "<quantity><unit> must be one of: " + AcceptableSettingUnits.get(CommonOptions.CLIENT_RECONNECT_WINDOW));
+    testThrowsWithMessage(paramValueMap, "Invalid measure: '100blah'. <unit> must be one of [s, m, h].");
   }
 
   @Test
   public void testBadClientLeaseDuration_1() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.CLIENT_LEASE_DURATION, "blah");
-    testThrowsWithMessage(paramValueMap, "must be a long digit");
+    testThrowsWithMessage(paramValueMap, "Invalid measure: 'blah'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
   }
 
   @Test
@@ -345,14 +345,14 @@ public class NodeParamsValidatorTest {
   public void testBadClientLeaseDuration_3() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.CLIENT_LEASE_DURATION, "MB");
-    testThrowsWithMessage(paramValueMap, "must be a long digit");
+    testThrowsWithMessage(paramValueMap, "Invalid measure: 'MB'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
   }
 
   @Test
   public void testBadClientLeaseDuration_4() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.CLIENT_LEASE_DURATION, "100blah");
-    testThrowsWithMessage(paramValueMap, "<quantity><unit> must be one of: " + AcceptableSettingUnits.get(CommonOptions.CLIENT_LEASE_DURATION));
+    testThrowsWithMessage(paramValueMap, "Invalid measure: '100blah'. <unit> must be one of [ms, s, m, h].");
   }
 
   private void testThrowsWithMessage(Map<String, String> paramValueMap, String message) {

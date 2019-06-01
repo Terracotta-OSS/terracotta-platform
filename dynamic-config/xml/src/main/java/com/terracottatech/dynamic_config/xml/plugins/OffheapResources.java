@@ -9,7 +9,7 @@ import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
 import org.w3c.dom.Element;
 
-import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.xml.Utils;
 import com.terracottatech.utilities.MemoryUnit;
 
@@ -44,7 +44,7 @@ public class OffheapResources {
       resourceType.setName(entry.getKey());
 
       resourceType.setValue(BigInteger.valueOf(entry.getValue().getQuantity()));
-      resourceType.setUnit(org.terracotta.offheapresource.config.MemoryUnit.valueOf(entry.getValue().getType().toString()));
+      resourceType.setUnit(org.terracotta.offheapresource.config.MemoryUnit.valueOf(entry.getValue().getUnit().name()));
 
       offheapResourcesType.getResource().add(resourceType);
     }

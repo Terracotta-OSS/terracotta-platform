@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.xml.plugins;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -29,7 +29,7 @@ public class Lease {
 
       Element connectionLeasingElement = document.createElementNS(LEASE_NAMESPACE, "connection-leasing");
       Element leaseLengthElement = document.createElementNS(LEASE_NAMESPACE, "lease-length");
-      leaseLengthElement.setAttribute("unit", measure.getType().toString().toLowerCase());
+      leaseLengthElement.setAttribute("unit", measure.getUnit().name().toLowerCase());
 
       leaseLengthElement.setTextContent(String.valueOf(measure.getQuantity()));
       connectionLeasingElement.appendChild(leaseLengthElement);

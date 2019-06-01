@@ -8,14 +8,12 @@ import com.terracottatech.dynamic_config.Constants;
 import com.terracottatech.dynamic_config.config.AcceptableSettingUnits;
 import com.terracottatech.dynamic_config.config.AcceptableSettingValues;
 import com.terracottatech.dynamic_config.config.CommonOptions;
-import com.terracottatech.dynamic_config.util.CommonParamsUtils;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.utilities.TimeUnit;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
@@ -132,23 +130,8 @@ public class NodeParamsValidator {
       return;
     }
 
-    String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(value);
-    if (quantityUnit.length != 2) {
-      throw new IllegalArgumentException(setting + " should be specified in <quantity><unit> format");
-    }
-
-    String quantity = quantityUnit[0];
-    try {
-      Long.parseLong(quantity);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("<quantity> specified in " + setting + "=<quantity><unit> must be a long digit");
-    }
-
-    String unit = quantityUnit[1];
-    Set<String> acceptableUnits = AcceptableSettingUnits.get(setting);
-    if (!acceptableUnits.contains(unit)) {
-      throw new IllegalArgumentException("<unit> specified in " + setting + "=<quantity><unit> must be one of: " + acceptableUnits);
-    }
+    Set<TimeUnit> acceptableUnits = AcceptableSettingUnits.get(setting);
+    Measure.parse(value, TimeUnit.class, null, acceptableUnits);
   }
 
   private static void validateBindAddresses(Map<String, String> paramValueMap) {
@@ -215,24 +198,7 @@ public class NodeParamsValidator {
       if (nameQuantity.length != 2) {
         throw new IllegalArgumentException(param + " should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
       }
-
-      String[] quantityUnit = CommonParamsUtils.splitQuantityUnit(nameQuantity[1]);
-      if (quantityUnit.length != 2) {
-        throw new IllegalArgumentException(param + " should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
-      }
-
-      String quantity = quantityUnit[0];
-      try {
-        Long.parseLong(quantity);
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("<quantity> specified in " + param + "=<resource-name>:<quantity><unit> must be a long digit");
-      }
-
-      String unit = quantityUnit[1];
-      List<String> memoryUnits = Arrays.stream(MemoryUnit.values()).map(memoryUnit -> memoryUnit.name()).collect(Collectors.toList());
-      if (!memoryUnits.contains(unit)) {
-        throw new IllegalArgumentException("<unit> specified in " + param + "=<resource-name>:<quantity><unit> must be one of: " + memoryUnits);
-      }
+      Measure.parse(nameQuantity[1], MemoryUnit.class);
     }
   }
 }

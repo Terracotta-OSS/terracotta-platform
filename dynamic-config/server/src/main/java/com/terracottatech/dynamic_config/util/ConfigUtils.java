@@ -52,7 +52,7 @@ public class ConfigUtils {
           .replace("${LOGS}", node.getNodeLogDir().toString())
           .replace("${GROUP-BIND}", node.getNodeGroupBindAddress())
           .replace("${GROUP-PORT}", String.valueOf(node.getNodeGroupPort()))
-          .replace("${RECONNECT_WINDOW}", String.valueOf((int)(node.getClientReconnectWindow().getType().toSeconds(node.getClientReconnectWindow().getQuantity()))));
+          .replace("${RECONNECT_WINDOW}", String.valueOf((int)(node.getClientReconnectWindow().getUnit().toSeconds(node.getClientReconnectWindow().getQuantity()))));
 
       Files.write(configPath, configuration.getBytes(StandardCharsets.UTF_8));
       return configPath;

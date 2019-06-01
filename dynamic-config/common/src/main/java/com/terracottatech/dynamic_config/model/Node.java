@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 
@@ -202,27 +203,37 @@ public class Node {
   }
 
   public Node setClientReconnectWindow(long clientReconnectWindow, TimeUnit timeUnit) {
-    this.clientReconnectWindow = Measure.of(clientReconnectWindow, timeUnit);
-    return this;
+    return setClientReconnectWindow(Measure.of(clientReconnectWindow, timeUnit));
   }
 
   public Node setClientReconnectWindow(long clientReconnectWindow, java.util.concurrent.TimeUnit jdkUnit) {
-    this.clientReconnectWindow = Measure.of(clientReconnectWindow, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name())));
+    return setClientReconnectWindow(Measure.of(clientReconnectWindow, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name()))));
+  }
+
+  public Node setClientReconnectWindow(Measure<TimeUnit> measure) {
+    this.clientReconnectWindow = measure;
     return this;
   }
 
   public Node setClientLeaseDuration(long clientLeaseDuration, TimeUnit timeUnit) {
-    this.clientLeaseDuration = Measure.of(clientLeaseDuration, timeUnit);
-    return this;
+    return setClientLeaseDuration(Measure.of(clientLeaseDuration, timeUnit));
   }
 
   public Node setClientLeaseDuration(long clientLeaseDuration, java.util.concurrent.TimeUnit jdkUnit) {
-    this.clientLeaseDuration = Measure.of(clientLeaseDuration, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name())));
+    return setClientLeaseDuration(Measure.of(clientLeaseDuration, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name()))));
+  }
+
+  public Node setClientLeaseDuration(Measure<TimeUnit> measure) {
+    this.clientLeaseDuration = measure;
     return this;
   }
 
   public Node setOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
-    this.offheapResources.put(name, Measure.of(quantity, memoryUnit));
+    return setOffheapResource(name, Measure.of(quantity, memoryUnit));
+  }
+
+  public Node setOffheapResource(String name, Measure<MemoryUnit> measure) {
+    this.offheapResources.put(name, measure);
     return this;
   }
 
