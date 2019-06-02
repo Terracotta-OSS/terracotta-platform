@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 
 public class ConfigUtils {
@@ -103,23 +100,6 @@ public class ConfigUtils {
                                  "     </config>\n";
 
     return dataDirectoryConfig.replace("${DATA_DIR}", node.getNodeMetadataDir().toString());
-  }
-
-  public static Optional<String> findConfigRepo(String nodeConfigDir) {
-    String substitutedConfigDir = getSubstitutedConfigDir(nodeConfigDir);
-    Optional<String> found = Optional.empty();
-    try (Stream<Path> stream = Files.list(Paths.get(substitutedConfigDir).resolve(Constants.NOMAD_CONFIG_DIR))) {
-      found = stream.map(path -> path.getFileName().toString()).filter(fileName -> fileName.matches(Constants.CONFIG_REPO_FILENAME_REGEX)).findAny();
-    } catch (IOException e) {
-      LOGGER.debug("Reading cluster config repository from: {} resulted in exception: {}", substitutedConfigDir, e);
-    }
-
-    if (found.isPresent()) {
-      LOGGER.info("Found cluster config repository at: {}", substitutedConfigDir);
-    } else {
-      LOGGER.info("Did not find cluster config repository in: {}", substitutedConfigDir);
-    }
-    return found;
   }
 
   public static String getSubstitutedConfigDir(String nodeConfigDir) {

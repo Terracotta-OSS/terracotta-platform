@@ -16,6 +16,7 @@ import com.terracottatech.dynamic_config.managers.ClusterManager;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
+import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.dynamic_config.util.ConsoleParamsUtils;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
 import org.slf4j.Logger;
@@ -55,7 +56,6 @@ import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DI
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
 import static com.terracottatech.dynamic_config.managers.NodeManager.startServer;
-import static com.terracottatech.dynamic_config.util.ConfigUtils.findConfigRepo;
 import static com.terracottatech.dynamic_config.util.ConfigUtils.getSubstitutedConfigDir;
 
 @Parameters(separators = "=")
@@ -136,10 +136,10 @@ public class Options {
       jCommander.usage();
       return;
     }
-
-    Optional<String> configRepo = findConfigRepo(nodeConfigDir);
-    if (configRepo.isPresent()) {
-      startServer("-r", Paths.get(getSubstitutedConfigDir(nodeConfigDir)).toString(), "-n", extractNodeName(configRepo.get()));
+    Path substitutedConfigDir = Paths.get(getSubstitutedConfigDir(nodeConfigDir));
+    Optional<String> configRepoName = extractNodeName(substitutedConfigDir);
+    if (configRepoName.isPresent()) {
+      startServer("-r", substitutedConfigDir.toString(), "-n", configRepoName.get());
     } else {
       LOGGER.info("Attempting to start the node in UNCONFIGURED state");
       Cluster cluster;
@@ -237,7 +237,8 @@ public class Options {
     return node;
   }
 
-  private String extractNodeName(String configRepo) {
-    return configRepo.replaceAll("^" + Constants.REGEX_PREFIX, "").replaceAll(Constants.REGEX_SUFFIX + "$", "");
+  private Optional<String> extractNodeName(Path nomadRoot) {
+    NomadRepositoryManager repositoryStructureManager = new NomadRepositoryManager(nomadRoot);
+    return repositoryStructureManager.getNodeName();
   }
 }

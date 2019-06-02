@@ -21,12 +21,6 @@ public class Constants {
   public static final String DEFAULT_OFFHEAP_RESOURCE = "main:512MB";
   public static final String DEFAULT_DATA_DIR = "main:%H" + separator + "terracotta" + separator + "user-data" + separator + "main";
 
-  public static final String REGEX_PREFIX = "cluster-config\\.";
-  public static final String REGEX_SUFFIX = "\\.[1-9][0-9]*\\.xml";
-  public static final String CONFIG_REPO_FILENAME_REGEX = REGEX_PREFIX + "[\\S]+" + REGEX_SUFFIX;
   public static final String MULTI_VALUE_SEP = ",";
   public static final String PARAM_INTERNAL_SEP = ":";
-
-  public static final String NOMAD_CONFIG_DIR = "config";
-  public static final String NOMAD_META_DIR = "sanskrit";
 }
