@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.test;
 
-import com.terracottatech.diagnostic.common.JsonDiagnosticCodec;
 import com.terracottatech.dynamic_config.test.util.Env;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.testing.lock.PortLockingRule;
@@ -52,10 +51,6 @@ public class BaseStartupIT {
     if (nodeProcess != null) {
       nodeProcess.close();
     }
-  }
-
-  String toPrettyJson(Object o) {
-    return new JsonDiagnosticCodec(true).serialize(o);
   }
 
   InetSocketAddress getServerAddress() {
