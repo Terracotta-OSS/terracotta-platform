@@ -4,6 +4,7 @@
  */
 package com.terracottatech.migration.nomad;
 
+import com.terracottatech.nomad.client.change.SimpleNomadChange;
 import org.w3c.dom.Node;
 
 import com.terracottatech.migration.NodeConfigurationHandler;
@@ -70,7 +71,7 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
 
         PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, host,
-            user, nomadRequestId, nextVersionNumber, xml, summary);
+            user, nomadRequestId, nextVersionNumber, new SimpleNomadChange(xml, summary));
         AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
         if (!response.isAccepted()) {
           throw new MigrationException(ErrorCode.UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE
