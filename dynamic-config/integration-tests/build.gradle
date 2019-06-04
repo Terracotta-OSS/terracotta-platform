@@ -8,7 +8,13 @@ import org.gradle.internal.jvm.Jvm
 dependencies {
   testCompile project(':diagnostic-client')
   testCompile project(':dynamic-config-common')
+  testCompile project(':dynamic-config-migration')
   testCompile project(':galvan-support-ee')
+  testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  testCompile "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
+  testCompile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
+  testCompile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
+  testCompile "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
   testCompile ("org.awaitility:awaitility:$awaitility")
   testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
     exclude group: 'junit'

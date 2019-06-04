@@ -2,14 +2,14 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.migration;
+package com.terracottatech.dynamic_config.test;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
 import org.terracotta.config.BindPort;
 import org.terracotta.config.Config;
 import org.terracotta.config.Server;
@@ -18,8 +18,11 @@ import org.terracotta.config.Services;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.config.util.ParameterSubstitutor;
 import org.w3c.dom.Element;
 
+import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
+import com.terracottatech.migration.MigrationImpl;
 import com.terracottatech.migration.util.Pair;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServer;
@@ -43,12 +46,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.hamcrest.Matchers.isOneOf;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.isOneOf;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 public class MigrationIT {
@@ -101,7 +103,7 @@ public class MigrationIT {
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
-    Path inputFilePath = Paths.get(MigrationIT.class.getResource("/tc-config-single-server.xml").toURI());
+    Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server.xml").toURI());
     String inputFileLocation = inputFilePath.toString();
     migration.processInput("testCluster", Arrays.asList("stripe1" + "," + inputFileLocation));
     List<Path> subdirectory;
@@ -161,8 +163,7 @@ public class MigrationIT {
     assertThat(clusterTcConfig.getServers(), notNullValue());
     assertThat(tcConfig.getServers().getClientReconnectWindow(), notNullValue());
     assertThat(clusterTcConfig.getServers().getClientReconnectWindow(), notNullValue());
-    assertThat(clusterTcConfig.getServers()
-        .getClientReconnectWindow(), is(tcConfig.getServers().getClientReconnectWindow()));
+    assertThat(clusterTcConfig.getServers().getClientReconnectWindow(), is(tcConfig.getServers().getClientReconnectWindow()));
 
     List<Server> serverList = tcConfig.getServers().getServer();
     List<Server> serverListCluster = clusterTcConfig.getServers().getServer();
@@ -202,7 +203,7 @@ public class MigrationIT {
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
-    Path inputFilePath = Paths.get(MigrationIT.class.getResource("/tc-config-single-server.xml").toURI());
+    Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server.xml").toURI());
     String inputFileLocation = inputFilePath.toString();
     migration.processInput("testCluster", Arrays.asList(inputFileLocation));
     List<Path> subdirectory;
@@ -305,9 +306,9 @@ public class MigrationIT {
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
-    Path inputFilePath = Paths.get(MigrationIT.class.getResource("/tc-config-single-server-with-security.xml").toURI());
-    String inputFileLocation = inputFilePath.toString();
-    migration.processInput("testCluster", Arrays.asList("stripe1" + "," + inputFileLocation));
+    Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server-with-security.xml")
+        .toURI());
+    migration.processInput("testCluster", Arrays.asList("stripe1" + "," + inputFilePath));
     List<Path> subdirectory;
     try (Stream<Path> filePathStream = Files.walk(outputFolderPath)) {
       subdirectory = filePathStream.filter(Files::isDirectory)
@@ -406,8 +407,8 @@ public class MigrationIT {
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
-    Path inputFilePathStripe1 = Paths.get(MigrationIT.class.getResource("/tc-config-1.xml").toURI());
-    Path inputFilePathStripe2 = Paths.get(MigrationIT.class.getResource("/tc-config-2.xml").toURI());
+    Path inputFilePathStripe1 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-1.xml").toURI());
+    Path inputFilePathStripe2 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-2.xml").toURI());
     String inputFileLocation1 = inputFilePathStripe1.toString();
     String inputFileLocation2 = inputFilePathStripe2.toString();
     migration.processInput("testCluster", Arrays.asList(
@@ -473,9 +474,9 @@ public class MigrationIT {
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
     Path inputFilePathStripe1 = Paths.get(MigrationIT.class.
-        getResource("/tc-config-common-server-name-1.xml").toURI());
+        getResource("/migration/tc-config-common-server-name-1.xml").toURI());
     Path inputFilePathStripe2 = Paths.get(MigrationIT.class.
-        getResource("/tc-config-common-server-name-2.xml").toURI());
+        getResource("/migration/tc-config-common-server-name-2.xml").toURI());
     String inputFileLocation1 = inputFilePathStripe1.toString();
     String inputFileLocation2 = inputFilePathStripe2.toString();
     migration.processInput("testCluster", Arrays.asList(
@@ -537,7 +538,7 @@ public class MigrationIT {
   }
 
   private void validateMultiStripeSingleFileForStripeInsideClusterResult(String serverName
-      , String convertedConfigContent1) throws Exception{
+      , String convertedConfigContent1) throws Exception {
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
@@ -556,13 +557,13 @@ public class MigrationIT {
       assertThat(servers.size(), is(2));
       servers.forEach(server -> {
         assertThat(server.getName(), isOneOf("testServer1", "testServer2"));
-        validateMultiStripeSingleFileForStripeServers(server.getName(), server);
+        validateMultiStripeSingleFileForStripeServers(server.getName(), server, true);
       });
     } else {
       assertThat(servers.size(), is(3));
       servers.forEach(server -> {
         assertThat(server.getName(), isOneOf("testServer3", "testServer4", "testServer5"));
-        validateMultiStripeSingleFileForStripeServers(server.getName(), server);
+        validateMultiStripeSingleFileForStripeServers(server.getName(), server, true);
       });
     }
 
@@ -581,7 +582,7 @@ public class MigrationIT {
     assertThat(stripe2, notNullValue());
     assertThat(stripe1.getName(), isOneOf("stripe1", "stripe2"));
     assertThat(stripe2.getName(), isOneOf("stripe1", "stripe2"));
-    assertThat(stripe1.getName(), is(not(stripe2.getName())));
+    assertThat(stripe1.getName(), is(CoreMatchers.not(stripe2.getName())));
 
     List<Node> nodes1 = stripe1.getNodes();
     Set<String> uniqueMembers = new HashSet<>();
@@ -665,14 +666,14 @@ public class MigrationIT {
         severList1.forEach(server -> {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer1", "testServer2"));
-          validateMultiStripeSingleFileForStripeServers(internalName, server);
+          validateMultiStripeSingleFileForStripeServers(internalName, server, false);
         });
       } else {
         assertThat(severList1.size(), is(3));
         severList1.forEach(server -> {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer3", "testServer4", "testServer5"));
-          validateMultiStripeSingleFileForStripeServers(internalName, server);
+          validateMultiStripeSingleFileForStripeServers(internalName, server, false);
         });
       }
       Services clusterServices = clusterTcConfig1.getPlugins();
@@ -697,7 +698,7 @@ public class MigrationIT {
   }
 
   private void validateMultiStripeSingleFileForStripeWithDuplicateServerNameInsideClusterResult(
-      String serverName, String convertedConfigContent1) throws Exception{
+      String serverName, String convertedConfigContent1) throws Exception {
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
@@ -717,14 +718,14 @@ public class MigrationIT {
       servers.forEach(server -> {
         assertThat(server.getName(), isOneOf("testServer1", "testServer2"));
         validateMultiStripeSingleFileDuplicateServerNameForStripeServers("stripe1"
-            , server.getName(), server);
+            , server.getName(), server, true);
       });
     } else {
       assertThat(servers.size(), is(3));
       servers.forEach(server -> {
         assertThat(server.getName(), isOneOf("testServer3", "testServer4", "testServer1"));
         validateMultiStripeSingleFileDuplicateServerNameForStripeServers("stripe2"
-            , server.getName(), server);
+            , server.getName(), server, true);
       });
     }
 
@@ -743,7 +744,7 @@ public class MigrationIT {
     assertThat(stripe2, notNullValue());
     assertThat(stripe1.getName(), isOneOf("stripe1", "stripe2"));
     assertThat(stripe2.getName(), isOneOf("stripe1", "stripe2"));
-    assertThat(stripe1.getName(), is(not(stripe2.getName())));
+    assertThat(stripe1.getName(), is(CoreMatchers.not(stripe2.getName())));
 
     List<Node> nodes1 = stripe1.getNodes();
     Set<Pair<String, String>> uniqueMembers = new HashSet<>();
@@ -832,7 +833,7 @@ public class MigrationIT {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer1", "testServer2"));
           validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne()
-              , internalName, server);
+              , internalName, server, false);
         });
       } else if (stripeServerNamePair.getOne().equals("stripe2") &&
                  (stripeServerNamePair.getAnother().equals("testServer3") ||
@@ -844,7 +845,7 @@ public class MigrationIT {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer3", "testServer4", "testServer1"));
           validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne()
-              , internalName, server);
+              , internalName, server, false);
         });
       } else {
         fail("Wrong servers in Stripes");
@@ -871,10 +872,11 @@ public class MigrationIT {
     });
   }
 
-  private void validateMultiStripeSingleFileForStripeServers(String serverName, Server server) {
+  private void validateMultiStripeSingleFileForStripeServers(String serverName, Server server, boolean parsedByPlatform) {
     if (serverName.equals("testServer1")) {
       assertThat(server.getHost(), is("172.96.36.44"));
-      assertThat(server.getLogs(), is("/export1/homes/kcleerem/server/passive/logs1"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export1/homes/kcleerem/server/passive/logs1"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(4164));
@@ -883,7 +885,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(4165));
     } else if (serverName.equals("testServer2")) {
       assertThat(server.getHost(), is("172.96.42.56"));
-      assertThat(server.getLogs(), is("/export2/homes/kcleerem/server/passive/logs1"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export2/homes/kcleerem/server/passive/logs1"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(9510));
@@ -892,7 +895,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(9630));
     } else if (serverName.equals("testServer3")) {
       assertThat(server.getHost(), is("172.68.22.34"));
-      assertThat(server.getLogs(), is("/export3/homes/kcleerem/server/passive/logs2"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export3/homes/kcleerem/server/passive/logs2"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(4190));
@@ -901,7 +905,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(4191));
     } else if (serverName.equals("testServer4")) {
       assertThat(server.getHost(), is("172.68.33.11"));
-      assertThat(server.getLogs(), is("/export4/homes/kcleerem/server/passive/logs2"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export4/homes/kcleerem/server/passive/logs2"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(9580));
@@ -910,7 +915,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(9690));
     } else if (serverName.equals("testServer5")) {
       assertThat(server.getHost(), is("172.68.44.22"));
-      assertThat(server.getLogs(), is("/export5/homes/kcleerem/server/passive/logs2"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export5/homes/kcleerem/server/passive/logs2"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(9680));
@@ -921,10 +927,11 @@ public class MigrationIT {
   }
 
   private void validateMultiStripeSingleFileDuplicateServerNameForStripeServers(String stripeName
-      , String serverName, Server server) {
+      , String serverName, Server server, boolean parsedByPlatform) {
     if (stripeName.equals("stripe1") && serverName.equals("testServer1")) {
       assertThat(server.getHost(), is("172.96.36.44"));
-      assertThat(server.getLogs(), is("/export1/homes/kcleerem/server/passive/logs1"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export1/homes/kcleerem/server/passive/logs1"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(4164));
@@ -933,7 +940,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(4165));
     } else if (stripeName.equals("stripe1") && serverName.equals("testServer2")) {
       assertThat(server.getHost(), is("172.96.42.56"));
-      assertThat(server.getLogs(), is("/export2/homes/kcleerem/server/passive/logs1"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export2/homes/kcleerem/server/passive/logs1"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(9510));
@@ -942,7 +950,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(9630));
     } else if (stripeName.equals("stripe2") && serverName.equals("testServer3")) {
       assertThat(server.getHost(), is("172.68.22.34"));
-      assertThat(server.getLogs(), is("/export3/homes/kcleerem/server/passive/logs2"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export3/homes/kcleerem/server/passive/logs2"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(4190));
@@ -951,7 +960,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(4191));
     } else if (stripeName.equals("stripe2") && serverName.equals("testServer4")) {
       assertThat(server.getHost(), is("172.68.33.11"));
-      assertThat(server.getLogs(), is("/export4/homes/kcleerem/server/passive/logs2"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export4/homes/kcleerem/server/passive/logs2"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(9580));
@@ -960,7 +970,8 @@ public class MigrationIT {
       assertThat(groupBindPort.getValue(), is(9690));
     } else if (stripeName.equals("stripe2") && serverName.equals("testServer1")) {
       assertThat(server.getHost(), is("172.68.44.22"));
-      assertThat(server.getLogs(), is("/export5/homes/kcleerem/server/passive/logs2"));
+      assertThat(server.getLogs(), is(getSubstitutedPath("/export5/homes/kcleerem/server/passive/logs2"
+          , parsedByPlatform)));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(9680));
@@ -970,5 +981,21 @@ public class MigrationIT {
     } else {
       fail("Mismatched stripe-server combination");
     }
+  }
+
+  //Mimics how platform resolves log location.
+  private String getAbsolutePath(String substituted, File directoryLoadedFrom) {
+    File out = new File(substituted);
+    if (!out.isAbsolute()) {
+      out = new File(directoryLoadedFrom, substituted);
+    }
+    return out.toPath().normalize().toString();
+  }
+
+  private String getSubstitutedPath(String path, boolean parsedByPlatform) {
+    if (parsedByPlatform) {
+      return getAbsolutePath(ParameterSubstitutor.substitute(path), new File("."));
+    }
+    return path;
   }
 }
