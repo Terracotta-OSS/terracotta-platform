@@ -37,7 +37,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
     String stripeName = "stripe2";
-    String nodeName = "server-3";
+    String nodeName = "testServer2";
     Path configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName), nodeName);
     startServer("-r", configurationRepo.toString(), "-n", nodeName);
     waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
