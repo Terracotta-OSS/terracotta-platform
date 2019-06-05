@@ -11,12 +11,12 @@
   <plugins>
     <config>
       <data:data-directories>
-        <data:directory name="root1">test/data1</data:directory>
+        <data:directory name="root1">build/data1</data:directory>
       </data:data-directories>
     </config>
     <service>
       <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-        <backup-location path="test/tmp/backup"/>
+        <backup-location path="build/backup1"/>
       </backup-restore>
     </service>
     <service>
@@ -30,17 +30,19 @@
   </plugins>
   <tc-properties/>
   <servers>
-    <server host="172.96.36.44" name="testServer1">
-      <logs>/export1/homes/kcleerem/server/passive/logs1</logs>
-      <tsa-port>4164</tsa-port>
-      <tsa-group-port>4165</tsa-group-port>
+    <server host="localhost" name="testServer1">
+      <logs>logs1</logs>
+      <tsa-port>9410</tsa-port>
+      <tsa-group-port>9430</tsa-group-port>
     </server>
-    <server host="172.96.42.56" name="testServer2">
-      <logs>/export2/homes/kcleerem/server/passive/logs1</logs>
+    <server host="localhost" name="testServer2">
+      <logs>logs2</logs>
       <tsa-port>9510</tsa-port>
-      <tsa-group-port>9630</tsa-group-port>
+      <tsa-group-port>9530</tsa-group-port>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>
-
+  <failover-priority>
+    <availability/>
+  </failover-priority>
 </tc-config>

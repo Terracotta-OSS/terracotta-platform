@@ -11,12 +11,12 @@
   <plugins>
     <config>
       <ohr:data-directories>
-        <ohr:directory name="root1">test/data2</ohr:directory>
+        <ohr:directory name="root1">build/data2</ohr:directory>
       </ohr:data-directories>
     </config>
     <service>
       <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-        <backup-location path="test/tmp/backup2"/>
+        <backup-location path="build/backup2"/>
       </backup-restore>
     </service>
     <service>
@@ -30,22 +30,19 @@
   </plugins>
   <tc-properties/>
   <servers>
-    <server host="172.68.22.34" name="testServer3">
-      <logs>/export3/homes/kcleerem/server/passive/logs2</logs>
-      <tsa-port>4190</tsa-port>
-      <tsa-group-port>4191</tsa-group-port>
+    <server host="localhost" name="testServer1">
+      <logs>logs1</logs>
+      <tsa-port>9610</tsa-port>
+      <tsa-group-port>9630</tsa-group-port>
     </server>
-    <server host="172.68.33.11" name="testServer4">
-      <logs>/export4/homes/kcleerem/server/passive/logs2</logs>
-      <tsa-port>9580</tsa-port>
-      <tsa-group-port>9690</tsa-group-port>
-    </server>
-    <server host="172.68.44.22" name="testServer1">
-      <logs>/export5/homes/kcleerem/server/passive/logs2</logs>
-      <tsa-port>9680</tsa-port>
-      <tsa-group-port>9790</tsa-group-port>
+    <server host="localhost" name="testServer2">
+      <logs>logs2</logs>
+      <tsa-port>9710</tsa-port>
+      <tsa-group-port>9730</tsa-group-port>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>
-
+  <failover-priority>
+    <availability/>
+  </failover-priority>
 </tc-config>

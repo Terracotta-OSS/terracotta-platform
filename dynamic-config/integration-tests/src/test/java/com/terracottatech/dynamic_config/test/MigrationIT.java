@@ -14,8 +14,6 @@ import com.terracottatech.topology.config.xmlobjects.Node;
 import com.terracottatech.topology.config.xmlobjects.ServerConfig;
 import com.terracottatech.topology.config.xmlobjects.Stripe;
 import org.hamcrest.CoreMatchers;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -27,16 +25,13 @@ import org.terracotta.config.Services;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
-import org.terracotta.config.util.ParameterSubstitutor;
 import org.w3c.dom.Element;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -53,46 +49,8 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 public class MigrationIT {
-
-  private static Path dataDirectoryRoot;
-  private static boolean deleteAtExit = false;
-
   @Rule
-  public TemporaryFolder folder = new TemporaryFolder(new File("build/tmp"));
-
-  @BeforeClass
-  public static void createDir() {
-    Path rootPath = Paths.get(".").toAbsolutePath();
-    dataDirectoryRoot = rootPath.resolve("test").normalize();
-    try {
-      deleteAtExit = !ensureDirectory(dataDirectoryRoot);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to create data directory: " + dataDirectoryRoot, e);
-    }
-  }
-
-  @AfterClass
-  public static void deleteDir() throws IOException {
-    if (deleteAtExit) {
-      Files.walk(dataDirectoryRoot)
-          .sorted(Comparator.reverseOrder())
-          .map(Path::toFile)
-          .forEach(File::delete);
-    }
-  }
-
-  static boolean ensureDirectory(Path directory) throws IOException {
-    boolean directoryAlreadyExists = true;
-    if (!Files.exists(directory)) {
-      Files.createDirectories(directory);
-      directoryAlreadyExists = false;
-    } else {
-      if (!Files.isDirectory(directory)) {
-        throw new RuntimeException("A file with configured data directory (" + directory + ") already exists!");
-      }
-    }
-    return directoryAlreadyExists;
-  }
+  public TemporaryFolder folder = new TemporaryFolder();
 
   @Test
   public void testSingleStripeSingleFile() throws Exception {
@@ -103,8 +61,7 @@ public class MigrationIT {
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
     Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server.xml").toURI());
-    String inputFileLocation = inputFilePath.toString();
-    migration.processInput("testCluster", Arrays.asList("stripe1" + "," + inputFileLocation));
+    migration.processInput("testCluster", singletonList("stripe1" + "," + inputFilePath));
     List<Path> subdirectory;
     try (Stream<Path> filePathStream = Files.walk(outputFolderPath)) {
       subdirectory = filePathStream.filter(Files::isDirectory)
@@ -116,12 +73,12 @@ public class MigrationIT {
         File file = filePath.toFile();
         if (file.isDirectory() && file.getParentFile().toPath().equals(outputFolderPath)) {
           String directoryName = file.getName();
-          assertThat(directoryName, is("stripe1_server-1"));
+          assertThat(directoryName, is("stripe1_testServer1"));
         }
       }
     });
 
-    NomadServer nomadServer = serverMap.get("stripe1_server-1");
+    NomadServer nomadServer = serverMap.get("stripe1_testServer1");
     DiscoverResponse discoverResponse = nomadServer.discover();
 
     String convertedConfigContent = discoverResponse.getLatestChange().getResult();
@@ -145,7 +102,7 @@ public class MigrationIT {
     assertThat(stripe.getName(), is("stripe1"));
     List<Node> nodes = stripe.getNodes();
     assertThat(nodes.size(), is(1));
-    assertThat(nodes.get(0).getName(), is("server-1"));
+    assertThat(nodes.get(0).getName(), is("testServer1"));
 
     ServerConfig serverConfig = nodes.get(0).getServerConfig();
     assertThat(serverConfig, notNullValue());
@@ -203,8 +160,7 @@ public class MigrationIT {
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
     Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server.xml").toURI());
-    String inputFileLocation = inputFilePath.toString();
-    migration.processInput("testCluster", Arrays.asList(inputFileLocation));
+    migration.processInput("testCluster", singletonList(inputFilePath.toString()));
     List<Path> subdirectory;
     try (Stream<Path> filePathStream = Files.walk(outputFolderPath)) {
       subdirectory = filePathStream.filter(Files::isDirectory)
@@ -216,12 +172,12 @@ public class MigrationIT {
         File file = filePath.toFile();
         if (file.isDirectory() && file.getParentFile().toPath().equals(outputFolderPath)) {
           String directoryName = file.getName();
-          assertThat(directoryName, is("stripe-1_server-1"));
+          assertThat(directoryName, is("stripe-1_testServer1"));
         }
       }
     });
 
-    NomadServer nomadServer = serverMap.get("stripe-1_server-1");
+    NomadServer nomadServer = serverMap.get("stripe-1_testServer1");
     DiscoverResponse discoverResponse = nomadServer.discover();
 
     String convertedConfigContent = discoverResponse.getLatestChange().getResult();
@@ -246,7 +202,7 @@ public class MigrationIT {
     assertThat(stripe.getName(), is("stripe-1"));
     List<Node> nodes = stripe.getNodes();
     assertThat(nodes.size(), is(1));
-    assertThat(nodes.get(0).getName(), is("server-1"));
+    assertThat(nodes.get(0).getName(), is("testServer1"));
 
     ServerConfig serverConfig = nodes.get(0).getServerConfig();
     assertThat(serverConfig, notNullValue());
@@ -307,7 +263,7 @@ public class MigrationIT {
 
     Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server-with-security.xml")
         .toURI());
-    migration.processInput("testCluster", Arrays.asList("stripe1" + "," + inputFilePath));
+    migration.processInput("testCluster", singletonList("stripe1" + "," + inputFilePath));
     List<Path> subdirectory;
     try (Stream<Path> filePathStream = Files.walk(outputFolderPath)) {
       subdirectory = filePathStream.filter(Files::isDirectory)
@@ -319,13 +275,13 @@ public class MigrationIT {
         File file = filePath.toFile();
         if (file.isDirectory() && file.getParentFile().toPath().equals(outputFolderPath)) {
           String directoryName = file.getName();
-          assertThat(directoryName, is("stripe1_server-1"));
+          assertThat(directoryName, is("stripe1_testServer1"));
         }
       }
     });
 
 
-    NomadServer nomadServer = serverMap.get("stripe1_server-1");
+    NomadServer nomadServer = serverMap.get("stripe1_testServer1");
     DiscoverResponse discoverResponse = nomadServer.discover();
     String convertedConfigContent = discoverResponse.getLatestChange().getResult();
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
@@ -348,7 +304,7 @@ public class MigrationIT {
     assertThat("stripe1", stripe.getName(), is("stripe1"));
     List<Node> nodes = stripe.getNodes();
     assertThat(nodes.size(), is(1));
-    assertThat(nodes.get(0).getName(), is("server-1"));
+    assertThat(nodes.get(0).getName(), is("testServer1"));
 
     ServerConfig serverConfig = nodes.get(0).getServerConfig();
     assertThat(serverConfig, notNullValue());
@@ -408,11 +364,8 @@ public class MigrationIT {
 
     Path inputFilePathStripe1 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-1.xml").toURI());
     Path inputFilePathStripe2 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-2.xml").toURI());
-    String inputFileLocation1 = inputFilePathStripe1.toString();
-    String inputFileLocation2 = inputFilePathStripe2.toString();
-    migration.processInput("testCluster", Arrays.asList(
-        "stripe1" + "," + inputFileLocation1,
-        "stripe2" + "," + inputFileLocation2));
+    migration.processInput("testCluster", Arrays.asList("stripe1" + "," + inputFilePathStripe1, "stripe2" + "," + inputFilePathStripe2));
+
     List<Path> subdirectory;
     try (Stream<Path> filePathStream = Files.walk(outputFolderPath)) {
       subdirectory = filePathStream.filter(Files::isDirectory)
@@ -425,10 +378,7 @@ public class MigrationIT {
         File file = filePath.toFile();
         if (file.isDirectory() && file.getParentFile().toPath().equals(outputFolderPath)) {
           String directoryName = file.getName();
-          assertThat(directoryName
-              , isOneOf(
-                  "stripe1_testServer1", "stripe1_testServer2"
-                  , "stripe2_testServer3", "stripe2_testServer4", "stripe2_testServer5"));
+          assertThat(directoryName, isOneOf("stripe1_testServer1", "stripe1_testServer2", "stripe2_testServer3", "stripe2_testServer4"));
         }
       }
     });
@@ -449,16 +399,11 @@ public class MigrationIT {
     DiscoverResponse discoverResponse4 = nomadServer4.discover();
     String convertedConfigContent4 = discoverResponse4.getLatestChange().getResult();
 
-    NomadServer nomadServer5 = serverMap.get("stripe2_testServer5");
-    DiscoverResponse discoverResponse5 = nomadServer5.discover();
-    String convertedConfigContent5 = discoverResponse5.getLatestChange().getResult();
-
     Map<String, String> serverNameConvertedConfigContentsMap = new HashMap<>();
     serverNameConvertedConfigContentsMap.put("stripe1_testServer1", convertedConfigContent1);
     serverNameConvertedConfigContentsMap.put("stripe1_testServer2", convertedConfigContent2);
     serverNameConvertedConfigContentsMap.put("stripe2_testServer3", convertedConfigContent3);
     serverNameConvertedConfigContentsMap.put("stripe2_testServer4", convertedConfigContent4);
-    serverNameConvertedConfigContentsMap.put("stripe2_testServer5", convertedConfigContent5);
 
     for (Map.Entry<String, String> entry : serverNameConvertedConfigContentsMap.entrySet()) {
       validateMultiStripeSingleFileForStripeInsideClusterResult(entry.getKey(), entry.getValue());
@@ -472,15 +417,10 @@ public class MigrationIT {
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
-    Path inputFilePathStripe1 = Paths.get(MigrationIT.class.
-        getResource("/migration/tc-config-common-server-name-1.xml").toURI());
-    Path inputFilePathStripe2 = Paths.get(MigrationIT.class.
-        getResource("/migration/tc-config-common-server-name-2.xml").toURI());
-    String inputFileLocation1 = inputFilePathStripe1.toString();
-    String inputFileLocation2 = inputFilePathStripe2.toString();
-    migration.processInput("testCluster", Arrays.asList(
-        "stripe1" + "," + inputFileLocation1,
-        "stripe2" + "," + inputFileLocation2));
+    Path inputFilePathStripe1 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-common-server-name-1.xml").toURI());
+    Path inputFilePathStripe2 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-common-server-name-2.xml").toURI());
+    migration.processInput("testCluster", Arrays.asList("stripe1" + "," + inputFilePathStripe1, "stripe2" + "," + inputFilePathStripe2));
+
     List<Path> subdirectory;
     try (Stream<Path> filePathStream = Files.walk(outputFolderPath)) {
       subdirectory = filePathStream.filter(Files::isDirectory)
@@ -493,12 +433,7 @@ public class MigrationIT {
         File file = filePath.toFile();
         if (file.isDirectory() && file.getParentFile().toPath().equals(outputFolderPath)) {
           String directoryName = file.getName();
-          assertThat(directoryName, isOneOf(
-              "stripe1_testServer1",
-              "stripe1_testServer2",
-              "stripe2_testServer3",
-              "stripe2_testServer4",
-              "stripe2_testServer1"));
+          assertThat(directoryName, isOneOf("stripe1_testServer1", "stripe1_testServer2", "stripe2_testServer2", "stripe2_testServer1"));
         }
       }
     });
@@ -511,13 +446,9 @@ public class MigrationIT {
     DiscoverResponse discoverResponse2 = nomadServer2.discover();
     String convertedConfigContent2 = discoverResponse2.getLatestChange().getResult();
 
-    NomadServer nomadServer3 = serverMap.get("stripe2_testServer3");
+    NomadServer nomadServer3 = serverMap.get("stripe2_testServer2");
     DiscoverResponse discoverResponse3 = nomadServer3.discover();
     String convertedConfigContent3 = discoverResponse3.getLatestChange().getResult();
-
-    NomadServer nomadServer4 = serverMap.get("stripe2_testServer4");
-    DiscoverResponse discoverResponse4 = nomadServer4.discover();
-    String convertedConfigContent4 = discoverResponse4.getLatestChange().getResult();
 
     NomadServer nomadServer5 = serverMap.get("stripe2_testServer1");
     DiscoverResponse discoverResponse5 = nomadServer5.discover();
@@ -526,24 +457,21 @@ public class MigrationIT {
     Map<String, String> serverNameConvertedConfigContentsMap = new HashMap<>();
     serverNameConvertedConfigContentsMap.put("stripe1_testServer1", convertedConfigContent1);
     serverNameConvertedConfigContentsMap.put("stripe1_testServer2", convertedConfigContent2);
-    serverNameConvertedConfigContentsMap.put("stripe2_testServer3", convertedConfigContent3);
-    serverNameConvertedConfigContentsMap.put("stripe2_testServer4", convertedConfigContent4);
+    serverNameConvertedConfigContentsMap.put("stripe2_testServer2", convertedConfigContent3);
     serverNameConvertedConfigContentsMap.put("stripe2_testServer1", convertedConfigContent5);
 
     for (Map.Entry<String, String> entry : serverNameConvertedConfigContentsMap.entrySet()) {
-      validateMultiStripeSingleFileForStripeWithDuplicateServerNameInsideClusterResult(entry.getKey()
-          , entry.getValue());
+      validateMultiStripeSingleFileForStripeWithDuplicateServerNameInsideClusterResult(entry.getKey(), entry.getValue());
     }
   }
 
-  private void validateMultiStripeSingleFileForStripeInsideClusterResult(String serverName
-      , String convertedConfigContent1) throws Exception {
+  private void validateMultiStripeSingleFileForStripeInsideClusterResult(String serverName, String convertedConfigContent1) throws Exception {
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
     TcConfig tcConfig = configuration.getPlatformConfiguration();
 
-    assertThat(tcConfig.getFailoverPriority(), nullValue());
+    assertThat(tcConfig.getFailoverPriority(), notNullValue());
     assertThat(tcConfig.getTcProperties(), notNullValue());
     assertThat(tcConfig.getServers(), notNullValue());
     assertThat(tcConfig.getServers().getClientReconnectWindow(), notNullValue());
@@ -556,13 +484,13 @@ public class MigrationIT {
       assertThat(servers.size(), is(2));
       servers.forEach(server -> {
         assertThat(server.getName(), isOneOf("testServer1", "testServer2"));
-        validateMultiStripeSingleFileForStripeServers(server.getName(), server, true);
+        validateMultiStripeSingleFileForStripeServers(server.getName(), server);
       });
     } else {
-      assertThat(servers.size(), is(3));
+      assertThat(servers.size(), is(2));
       servers.forEach(server -> {
-        assertThat(server.getName(), isOneOf("testServer3", "testServer4", "testServer5"));
-        validateMultiStripeSingleFileForStripeServers(server.getName(), server, true);
+        assertThat(server.getName(), isOneOf("testServer3", "testServer4"));
+        validateMultiStripeSingleFileForStripeServers(server.getName(), server);
       });
     }
 
@@ -604,9 +532,9 @@ public class MigrationIT {
       serverConfigMap1.put(nodes1.get(1).getName(), serverConfig2);
     } else {
       assertThat(nodes1.size(), is(3));
-      assertThat(nodes1.get(0).getName(), isOneOf("testServer3", "testServer4", "testServer5"));
-      assertThat(nodes1.get(1).getName(), isOneOf("testServer3", "testServer4", "testServer5"));
-      assertThat(nodes1.get(2).getName(), isOneOf("testServer3", "testServer4", "testServer5"));
+      assertThat(nodes1.get(0).getName(), isOneOf("testServer3", "testServer4"));
+      assertThat(nodes1.get(1).getName(), isOneOf("testServer3", "testServer4"));
+      assertThat(nodes1.get(2).getName(), isOneOf("testServer3", "testServer4"));
       uniqueMembers.add(nodes1.get(0).getName());
       uniqueMembers.add(nodes1.get(1).getName());
       uniqueMembers.add(nodes1.get(2).getName());
@@ -631,27 +559,23 @@ public class MigrationIT {
       serverConfigMap1.put(nodes2.get(0).getName(), serverConfig1);
       serverConfigMap1.put(nodes2.get(1).getName(), serverConfig2);
     } else {
-      assertThat(nodes2.size(), is(3));
-      assertThat(nodes2.get(0).getName(), isOneOf("testServer3", "testServer4", "testServer5"));
-      assertThat(nodes2.get(1).getName(), isOneOf("testServer3", "testServer4", "testServer5"));
-      assertThat(nodes2.get(2).getName(), isOneOf("testServer3", "testServer4", "testServer5"));
+      assertThat(nodes2.size(), is(2));
+      assertThat(nodes2.get(0).getName(), isOneOf("testServer3", "testServer4"));
+      assertThat(nodes2.get(1).getName(), isOneOf("testServer3", "testServer4"));
       uniqueMembers.add(nodes2.get(0).getName());
       uniqueMembers.add(nodes2.get(1).getName());
-      uniqueMembers.add(nodes2.get(2).getName());
       serverConfig3 = nodes2.get(0).getServerConfig();
       serverConfig4 = nodes2.get(1).getServerConfig();
-      serverConfig5 = nodes2.get(2).getServerConfig();
       serverConfigMap1.put(nodes2.get(0).getName(), serverConfig3);
       serverConfigMap1.put(nodes2.get(1).getName(), serverConfig4);
-      serverConfigMap1.put(nodes2.get(2).getName(), serverConfig5);
     }
 
-    assertThat(uniqueMembers.size(), is(5));
+    assertThat(uniqueMembers.size(), is(4));
 
     serverConfigMap1.forEach((name, clusterServerConfig) -> {
       TcConfig clusterTcConfig1 = clusterServerConfig.getTcConfig();
       assertThat(clusterTcConfig1, notNullValue());
-      assertThat(clusterTcConfig1.getFailoverPriority(), nullValue());
+      assertThat(clusterTcConfig1.getFailoverPriority(), notNullValue());
       assertThat(clusterTcConfig1.getTcProperties(), notNullValue());
       assertThat(clusterTcConfig1.getServers(), notNullValue());
       assertThat(clusterTcConfig1.getServers().getClientReconnectWindow(), notNullValue());
@@ -665,21 +589,21 @@ public class MigrationIT {
         severList1.forEach(server -> {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer1", "testServer2"));
-          validateMultiStripeSingleFileForStripeServers(internalName, server, false);
+          validateMultiStripeSingleFileForStripeServers(internalName, server);
         });
       } else {
-        assertThat(severList1.size(), is(3));
+        assertThat(severList1.size(), is(2));
         severList1.forEach(server -> {
           String internalName = server.getName();
-          assertThat(internalName, isOneOf("testServer3", "testServer4", "testServer5"));
-          validateMultiStripeSingleFileForStripeServers(internalName, server, false);
+          assertThat(internalName, isOneOf("testServer3", "testServer4"));
+          validateMultiStripeSingleFileForStripeServers(internalName, server);
         });
       }
       Services clusterServices = clusterTcConfig1.getPlugins();
       assertThat(clusterServices, notNullValue());
       List<Object> servicesOrConfigs = clusterServices.getConfigOrService();
       assertThat(servicesOrConfigs, notNullValue());
-      assertThat(servicesOrConfigs.size(), is(4));
+      assertThat(servicesOrConfigs.size(), is(3));
 
       servicesOrConfigs.forEach(object -> {
         assertThat((object instanceof Service || object instanceof Config), is(true));
@@ -703,7 +627,7 @@ public class MigrationIT {
 
     TcConfig tcConfig = configuration.getPlatformConfiguration();
 
-    assertThat(tcConfig.getFailoverPriority(), nullValue());
+    assertThat(tcConfig.getFailoverPriority(), notNullValue());
     assertThat(tcConfig.getTcProperties(), notNullValue());
     assertThat(tcConfig.getServers(), notNullValue());
     assertThat(tcConfig.getServers().getClientReconnectWindow(), notNullValue());
@@ -716,15 +640,13 @@ public class MigrationIT {
       assertThat(servers.size(), is(2));
       servers.forEach(server -> {
         assertThat(server.getName(), isOneOf("testServer1", "testServer2"));
-        validateMultiStripeSingleFileDuplicateServerNameForStripeServers("stripe1"
-            , server.getName(), server, true);
+        validateMultiStripeSingleFileDuplicateServerNameForStripeServers("stripe1", server.getName(), server);
       });
     } else {
-      assertThat(servers.size(), is(3));
+      assertThat(servers.size(), is(2));
       servers.forEach(server -> {
-        assertThat(server.getName(), isOneOf("testServer3", "testServer4", "testServer1"));
-        validateMultiStripeSingleFileDuplicateServerNameForStripeServers("stripe2"
-            , server.getName(), server, true);
+        assertThat(server.getName(), isOneOf("testServer2", "testServer3", "testServer1"));
+        validateMultiStripeSingleFileDuplicateServerNameForStripeServers("stripe2", server.getName(), server);
       });
     }
 
@@ -766,9 +688,9 @@ public class MigrationIT {
       serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes1.get(1).getName()), serverConfig2);
     } else {
       assertThat(nodes1.size(), is(3));
-      assertThat(nodes1.get(0).getName(), isOneOf("testServer3", "testServer4", "testServer1"));
-      assertThat(nodes1.get(1).getName(), isOneOf("testServer3", "testServer4", "testServer1"));
-      assertThat(nodes1.get(2).getName(), isOneOf("testServer3", "testServer4", "testServer1"));
+      assertThat(nodes1.get(0).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
+      assertThat(nodes1.get(1).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
+      assertThat(nodes1.get(2).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
       uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(0).getName()));
       uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(1).getName()));
       uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(2).getName()));
@@ -793,28 +715,23 @@ public class MigrationIT {
       serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes2.get(0).getName()), serverConfig1);
       serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes2.get(1).getName()), serverConfig2);
     } else {
-      assertThat(nodes2.size(), is(3));
-      assertThat(nodes2.get(0).getName(), isOneOf("testServer3", "testServer4", "testServer1"));
-      assertThat(nodes2.get(1).getName(), isOneOf("testServer3", "testServer4", "testServer1"));
-      assertThat(nodes2.get(2).getName(), isOneOf("testServer3", "testServer4", "testServer1"));
+      assertThat(nodes2.size(), is(2));
+      assertThat(nodes2.get(0).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
+      assertThat(nodes2.get(1).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
       uniqueMembers.add(new Pair<>(stripe2.getName(), nodes2.get(0).getName()));
       uniqueMembers.add(new Pair<>(stripe2.getName(), nodes2.get(1).getName()));
-      uniqueMembers.add(new Pair<>(stripe2.getName(), nodes2.get(2).getName()));
       serverConfig3 = nodes2.get(0).getServerConfig();
       serverConfig4 = nodes2.get(1).getServerConfig();
-      serverConfig5 = nodes2.get(2).getServerConfig();
       serverConfigMap1.put(new Pair<>(stripe2.getName(), nodes2.get(0).getName()), serverConfig3);
       serverConfigMap1.put(new Pair<>(stripe2.getName(), nodes2.get(1).getName()), serverConfig4);
-      serverConfigMap1.put(new Pair<>(stripe2.getName(), nodes2.get(2).getName()), serverConfig5);
     }
 
-
-    assertThat(uniqueMembers.size(), is(5));
+    assertThat(uniqueMembers.size(), is(4));
 
     serverConfigMap1.forEach((stripeServerNamePair, clusterServerConfig) -> {
       TcConfig clusterTcConfig1 = clusterServerConfig.getTcConfig();
       assertThat(clusterTcConfig1, notNullValue());
-      assertThat(clusterTcConfig1.getFailoverPriority(), nullValue());
+      assertThat(clusterTcConfig1.getFailoverPriority(), notNullValue());
       assertThat(clusterTcConfig1.getTcProperties(), notNullValue());
       assertThat(clusterTcConfig1.getServers(), notNullValue());
       assertThat(clusterTcConfig1.getServers().getClientReconnectWindow(), notNullValue());
@@ -831,20 +748,16 @@ public class MigrationIT {
         severList1.forEach(server -> {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer1", "testServer2"));
-          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne()
-              , internalName, server, false);
+          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne(), internalName, server);
         });
       } else if (stripeServerNamePair.getOne().equals("stripe2") &&
-          (stripeServerNamePair.getAnother().equals("testServer3") ||
-              stripeServerNamePair.getAnother().equals("testServer4") ||
-              stripeServerNamePair.getAnother().equals("testServer1"))) {
+          (stripeServerNamePair.getAnother().equals("testServer2") || stripeServerNamePair.getAnother().equals("testServer1"))) {
 
-        assertThat(severList1.size(), is(3));
+        assertThat(severList1.size(), is(2));
         severList1.forEach(server -> {
           String internalName = server.getName();
-          assertThat(internalName, isOneOf("testServer3", "testServer4", "testServer1"));
-          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne()
-              , internalName, server, false);
+          assertThat(internalName, isOneOf("testServer2", "testServer1"));
+          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne(), internalName, server);
         });
       } else {
         fail("Wrong servers in Stripes");
@@ -871,130 +784,94 @@ public class MigrationIT {
     });
   }
 
-  private void validateMultiStripeSingleFileForStripeServers(String serverName, Server server, boolean parsedByPlatform) {
-    if (serverName.equals("testServer1")) {
-      assertThat(server.getHost(), is("172.96.36.44"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export1/homes/kcleerem/server/passive/logs1"
-          , parsedByPlatform)));
-      BindPort bindPort = server.getTsaPort();
-      assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(4164));
-      BindPort groupBindPort = server.getTsaGroupPort();
-      assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(4165));
-    } else if (serverName.equals("testServer2")) {
-      assertThat(server.getHost(), is("172.96.42.56"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export2/homes/kcleerem/server/passive/logs1"
-          , parsedByPlatform)));
-      BindPort bindPort = server.getTsaPort();
-      assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(9510));
-      BindPort groupBindPort = server.getTsaGroupPort();
-      assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(9630));
-    } else if (serverName.equals("testServer3")) {
-      assertThat(server.getHost(), is("172.68.22.34"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export3/homes/kcleerem/server/passive/logs2"
-          , parsedByPlatform)));
-      BindPort bindPort = server.getTsaPort();
-      assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(4190));
-      BindPort groupBindPort = server.getTsaGroupPort();
-      assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(4191));
-    } else if (serverName.equals("testServer4")) {
-      assertThat(server.getHost(), is("172.68.33.11"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export4/homes/kcleerem/server/passive/logs2"
-          , parsedByPlatform)));
-      BindPort bindPort = server.getTsaPort();
-      assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(9580));
-      BindPort groupBindPort = server.getTsaGroupPort();
-      assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(9690));
-    } else if (serverName.equals("testServer5")) {
-      assertThat(server.getHost(), is("172.68.44.22"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export5/homes/kcleerem/server/passive/logs2"
-          , parsedByPlatform)));
-      BindPort bindPort = server.getTsaPort();
-      assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(9680));
-      BindPort groupBindPort = server.getTsaGroupPort();
-      assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(9790));
+  private void validateMultiStripeSingleFileForStripeServers(String serverName, Server server) {
+    switch (serverName) {
+      case "testServer1": {
+        assertThat(server.getHost(), is("localhost"));
+        assertThat(server.getLogs(), is("logs1"));
+        BindPort bindPort = server.getTsaPort();
+        assertThat(bindPort, notNullValue());
+        assertThat(bindPort.getValue(), is(9410));
+        BindPort groupBindPort = server.getTsaGroupPort();
+        assertThat(groupBindPort, notNullValue());
+        assertThat(groupBindPort.getValue(), is(9430));
+        break;
+      }
+      case "testServer2": {
+        assertThat(server.getHost(), is("localhost"));
+        assertThat(server.getLogs(), is("logs2"));
+        BindPort bindPort = server.getTsaPort();
+        assertThat(bindPort, notNullValue());
+        assertThat(bindPort.getValue(), is(9510));
+        BindPort groupBindPort = server.getTsaGroupPort();
+        assertThat(groupBindPort, notNullValue());
+        assertThat(groupBindPort.getValue(), is(9530));
+        break;
+      }
+      case "testServer3": {
+        assertThat(server.getHost(), is("localhost"));
+        assertThat(server.getLogs(), is("logs3"));
+        BindPort bindPort = server.getTsaPort();
+        assertThat(bindPort, notNullValue());
+        assertThat(bindPort.getValue(), is(9610));
+        BindPort groupBindPort = server.getTsaGroupPort();
+        assertThat(groupBindPort, notNullValue());
+        assertThat(groupBindPort.getValue(), is(9630));
+        break;
+      }
+      case "testServer4": {
+        assertThat(server.getHost(), is("localhost"));
+        assertThat(server.getLogs(), is("logs4"));
+        BindPort bindPort = server.getTsaPort();
+        assertThat(bindPort, notNullValue());
+        assertThat(bindPort.getValue(), is(9710));
+        BindPort groupBindPort = server.getTsaGroupPort();
+        assertThat(groupBindPort, notNullValue());
+        assertThat(groupBindPort.getValue(), is(9730));
+        break;
+      }
     }
   }
 
-  private void validateMultiStripeSingleFileDuplicateServerNameForStripeServers(String stripeName
-      , String serverName, Server server, boolean parsedByPlatform) {
+  private void validateMultiStripeSingleFileDuplicateServerNameForStripeServers(String stripeName, String serverName, Server server) {
     if (stripeName.equals("stripe1") && serverName.equals("testServer1")) {
-      assertThat(server.getHost(), is("172.96.36.44"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export1/homes/kcleerem/server/passive/logs1"
-          , parsedByPlatform)));
+      assertThat(server.getHost(), is("localhost"));
+      assertThat(server.getLogs(), is("logs1"));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(4164));
+      assertThat(bindPort.getValue(), is(9410));
       BindPort groupBindPort = server.getTsaGroupPort();
       assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(4165));
+      assertThat(groupBindPort.getValue(), is(9430));
     } else if (stripeName.equals("stripe1") && serverName.equals("testServer2")) {
-      assertThat(server.getHost(), is("172.96.42.56"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export2/homes/kcleerem/server/passive/logs1"
-          , parsedByPlatform)));
+      assertThat(server.getHost(), is("localhost"));
+      assertThat(server.getLogs(), is("logs2"));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
       assertThat(bindPort.getValue(), is(9510));
       BindPort groupBindPort = server.getTsaGroupPort();
       assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(9630));
-    } else if (stripeName.equals("stripe2") && serverName.equals("testServer3")) {
-      assertThat(server.getHost(), is("172.68.22.34"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export3/homes/kcleerem/server/passive/logs2"
-          , parsedByPlatform)));
-      BindPort bindPort = server.getTsaPort();
-      assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(4190));
-      BindPort groupBindPort = server.getTsaGroupPort();
-      assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(4191));
-    } else if (stripeName.equals("stripe2") && serverName.equals("testServer4")) {
-      assertThat(server.getHost(), is("172.68.33.11"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export4/homes/kcleerem/server/passive/logs2"
-          , parsedByPlatform)));
-      BindPort bindPort = server.getTsaPort();
-      assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(9580));
-      BindPort groupBindPort = server.getTsaGroupPort();
-      assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(9690));
+      assertThat(groupBindPort.getValue(), is(9530));
     } else if (stripeName.equals("stripe2") && serverName.equals("testServer1")) {
-      assertThat(server.getHost(), is("172.68.44.22"));
-      assertThat(server.getLogs(), is(getSubstitutedPath("/export5/homes/kcleerem/server/passive/logs2"
-          , parsedByPlatform)));
+      assertThat(server.getHost(), is("localhost"));
+      assertThat(server.getLogs(), is("logs1"));
       BindPort bindPort = server.getTsaPort();
       assertThat(bindPort, notNullValue());
-      assertThat(bindPort.getValue(), is(9680));
+      assertThat(bindPort.getValue(), is(9610));
       BindPort groupBindPort = server.getTsaGroupPort();
       assertThat(groupBindPort, notNullValue());
-      assertThat(groupBindPort.getValue(), is(9790));
+      assertThat(groupBindPort.getValue(), is(9630));
+    } else if (stripeName.equals("stripe2") && serverName.equals("testServer2")) {
+      assertThat(server.getHost(), is("localhost"));
+      assertThat(server.getLogs(), is("logs2"));
+      BindPort bindPort = server.getTsaPort();
+      assertThat(bindPort, notNullValue());
+      assertThat(bindPort.getValue(), is(9710));
+      BindPort groupBindPort = server.getTsaGroupPort();
+      assertThat(groupBindPort, notNullValue());
+      assertThat(groupBindPort.getValue(), is(9730));
     } else {
       fail("Mismatched stripe-server combination");
     }
-  }
-
-  //Mimics how platform resolves log location.
-  private String getAbsolutePath(String substituted, File directoryLoadedFrom) {
-    File out = new File(substituted);
-    if (!out.isAbsolute()) {
-      out = new File(directoryLoadedFrom, substituted);
-    }
-    return out.toPath().normalize().toString();
-  }
-
-  private String getSubstitutedPath(String path, boolean parsedByPlatform) {
-    if (parsedByPlatform) {
-      return getAbsolutePath(ParameterSubstitutor.substitute(path), new File("."));
-    }
-    return path;
   }
 }
