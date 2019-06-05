@@ -4,9 +4,6 @@
  */
 package com.terracottatech.migration.nomad;
 
-import com.terracottatech.nomad.client.change.SimpleNomadChange;
-import org.w3c.dom.Node;
-
 import com.terracottatech.migration.NodeConfigurationHandler;
 import com.terracottatech.migration.exception.ErrorCode;
 import com.terracottatech.migration.exception.MigrationException;
@@ -18,6 +15,8 @@ import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.server.NomadServer;
+import com.terracottatech.tools.nomad.command.ConfigMigrationNomadChange;
+import org.w3c.dom.Node;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -59,7 +58,6 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
     return (Pair<String, String> stripeNameServerName, Node doc) -> {
       try {
         String xml = getXmlString(doc);
-        String summary = "Migrating Configuration";
 
         NomadServer nomadServer = getNomadServer(stripeNameServerName.getOne(), stripeNameServerName.getAnother());
 
@@ -71,7 +69,7 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
 
         PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, host,
-            user, nomadRequestId, nextVersionNumber, new SimpleNomadChange(xml, summary));
+            user, nomadRequestId, nextVersionNumber, new ConfigMigrationNomadChange(xml));
         AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
         if (!response.isAccepted()) {
           throw new MigrationException(ErrorCode.UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE

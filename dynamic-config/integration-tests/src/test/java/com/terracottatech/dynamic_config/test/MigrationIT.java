@@ -4,6 +4,15 @@
  */
 package com.terracottatech.dynamic_config.test;
 
+import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
+import com.terracottatech.migration.MigrationImpl;
+import com.terracottatech.migration.util.Pair;
+import com.terracottatech.nomad.messages.DiscoverResponse;
+import com.terracottatech.nomad.server.NomadServer;
+import com.terracottatech.topology.config.xmlobjects.Cluster;
+import com.terracottatech.topology.config.xmlobjects.Node;
+import com.terracottatech.topology.config.xmlobjects.ServerConfig;
+import com.terracottatech.topology.config.xmlobjects.Stripe;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -20,16 +29,6 @@ import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.config.util.ParameterSubstitutor;
 import org.w3c.dom.Element;
-
-import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
-import com.terracottatech.migration.MigrationImpl;
-import com.terracottatech.migration.util.Pair;
-import com.terracottatech.nomad.messages.DiscoverResponse;
-import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.topology.config.xmlobjects.Cluster;
-import com.terracottatech.topology.config.xmlobjects.Node;
-import com.terracottatech.topology.config.xmlobjects.ServerConfig;
-import com.terracottatech.topology.config.xmlobjects.Stripe;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +58,7 @@ public class MigrationIT {
   private static boolean deleteAtExit = false;
 
   @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
+  public TemporaryFolder folder = new TemporaryFolder(new File("build/tmp"));
 
   @BeforeClass
   public static void createDir() {
@@ -185,11 +184,11 @@ public class MigrationIT {
     servicesOrConfigs.forEach(object -> {
       assertThat((object instanceof Service || object instanceof Config), is(true));
       if (object instanceof Service) {
-        Service service = (Service)object;
+        Service service = (Service) object;
         Element serviceContent = service.getServiceContent();
         assertThat(serviceContent, notNullValue());
       } else {
-        Config config = (Config)object;
+        Config config = (Config) object;
         Element configContent = config.getConfigContent();
         assertThat(configContent, notNullValue());
       }
@@ -288,11 +287,11 @@ public class MigrationIT {
     servicesOrConfigs.forEach(object -> {
       assertThat((object instanceof Service || object instanceof Config), is(true));
       if (object instanceof Service) {
-        Service service = (Service)object;
+        Service service = (Service) object;
         Element serviceContent = service.getServiceContent();
         assertThat(serviceContent, notNullValue());
       } else {
-        Config config = (Config)object;
+        Config config = (Config) object;
         Element configContent = config.getConfigContent();
         assertThat(configContent, notNullValue());
       }
@@ -389,11 +388,11 @@ public class MigrationIT {
     servicesOrConfigs.forEach(object -> {
       assertThat((object instanceof Service || object instanceof Config), is(true));
       if (object instanceof Service) {
-        Service service = (Service)object;
+        Service service = (Service) object;
         Element serviceContent = service.getServiceContent();
         assertThat(serviceContent, notNullValue());
       } else {
-        Config config = (Config)object;
+        Config config = (Config) object;
         Element configContent = config.getConfigContent();
         assertThat(configContent, notNullValue());
       }
@@ -685,11 +684,11 @@ public class MigrationIT {
       servicesOrConfigs.forEach(object -> {
         assertThat((object instanceof Service || object instanceof Config), is(true));
         if (object instanceof Service) {
-          Service service = (Service)object;
+          Service service = (Service) object;
           Element serviceContent = service.getServiceContent();
           assertThat(serviceContent, notNullValue());
         } else {
-          Config config = (Config)object;
+          Config config = (Config) object;
           Element configContent = config.getConfigContent();
           assertThat(configContent, notNullValue());
         }
@@ -826,7 +825,7 @@ public class MigrationIT {
 
       if (stripeServerNamePair.getOne().equals("stripe1") &&
           (stripeServerNamePair.getAnother().equals("testServer1")
-           || stripeServerNamePair.getAnother().equals("testServer2"))) {
+              || stripeServerNamePair.getAnother().equals("testServer2"))) {
 
         assertThat(severList1.size(), is(2));
         severList1.forEach(server -> {
@@ -836,9 +835,9 @@ public class MigrationIT {
               , internalName, server, false);
         });
       } else if (stripeServerNamePair.getOne().equals("stripe2") &&
-                 (stripeServerNamePair.getAnother().equals("testServer3") ||
-                  stripeServerNamePair.getAnother().equals("testServer4") ||
-                  stripeServerNamePair.getAnother().equals("testServer1"))) {
+          (stripeServerNamePair.getAnother().equals("testServer3") ||
+              stripeServerNamePair.getAnother().equals("testServer4") ||
+              stripeServerNamePair.getAnother().equals("testServer1"))) {
 
         assertThat(severList1.size(), is(3));
         severList1.forEach(server -> {
@@ -860,11 +859,11 @@ public class MigrationIT {
       servicesOrConfigs.forEach(object -> {
         assertThat((object instanceof Service || object instanceof Config), is(true));
         if (object instanceof Service) {
-          Service service = (Service)object;
+          Service service = (Service) object;
           Element serviceContent = service.getServiceContent();
           assertThat(serviceContent, notNullValue());
         } else {
-          Config config = (Config)object;
+          Config config = (Config) object;
           Element configContent = config.getConfigContent();
           assertThat(configContent, notNullValue());
         }

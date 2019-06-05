@@ -6,7 +6,6 @@ package com.terracottatech.migration.nomad;
 
 import com.terracottatech.migration.util.FileUtility;
 import com.terracottatech.nomad.client.change.NomadChange;
-import com.terracottatech.nomad.client.change.SimpleNomadChange;
 import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
@@ -14,6 +13,7 @@ import com.terracottatech.nomad.server.NomadServerImpl;
 import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
+import com.terracottatech.tools.nomad.command.ConfigMigrationNomadChange;
 import com.terracottatech.tools.server.nomad.persistence.FileConfigStorage;
 import com.terracottatech.tools.server.nomad.persistence.InitialConfigStorage;
 import com.terracottatech.tools.server.nomad.persistence.SanskritNomadServerState;
@@ -34,7 +34,7 @@ public class NomadServerProvider {
 
       @Override
       public PotentialApplicationResult canApply(final String existing, final NomadChange change) {
-        return PotentialApplicationResult.allow(((SimpleNomadChange) change).getChange());
+        return PotentialApplicationResult.allow(((ConfigMigrationNomadChange) change).getConfiguration());
       }
 
       @Override
