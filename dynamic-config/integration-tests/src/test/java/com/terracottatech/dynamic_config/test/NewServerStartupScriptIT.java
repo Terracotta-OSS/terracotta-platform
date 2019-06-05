@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -16,30 +15,27 @@ import static org.hamcrest.Matchers.containsString;
 
 public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
-  @Ignore("might cause build failures as configuration repo uses a pre-defined port")
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     String stripeName = "stripe1";
-    String nodeName = "server-1";
+    String nodeName = "testServer1";
     Path configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName), nodeName);
     startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
-  @Ignore("might cause build failures as configuration repo uses a pre-defined port")
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     String stripeName = "stripe1";
-    String nodeName = "server-2";
+    String nodeName = "testServer2";
     Path configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName), nodeName);
     startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
-  @Ignore("might cause build failures as configuration repo uses a pre-defined port")
   public void testStartingWithMultiStripeRepo() throws Exception {
     String stripeName = "stripe2";
-    String nodeName = "server-1";
+    String nodeName = "testServer1";
     Path configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName), nodeName);
     startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
@@ -68,7 +64,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_nonExistentFile() throws Exception {
+  public void testFailedStartupConfigFile_nonExistentFile() {
     Path configurationFile = Paths.get(".").resolve("blah");
     startServer("--config-file", configurationFile.toString());
     waitedAssert(out::getLog, containsString("FileNotFoundException"));
@@ -98,31 +94,31 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidAuthc() throws Exception {
+  public void testFailedStartupCliParams_invalidAuthc() {
     startServer("--security-authc=blah");
     waitedAssert(out::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidHostname() throws Exception {
+  public void testFailedStartupCliParams_invalidHostname() {
     startServer("--node-hostname=:::");
     waitedAssert(out::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidFailoverPriority() throws Exception {
+  public void testFailedStartupCliParams_invalidFailoverPriority() {
     startServer("--failover-priority=blah");
     waitedAssert(out::getLog, containsString("failover-priority should be one of: [availability, consistency]"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidSecurity() throws Exception {
+  public void testFailedStartupCliParams_invalidSecurity() {
     startServer("--security-audit-log-dir", "audit-dir");
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
   @Test
-  public void testSuccessfulStartupCliParams() throws Exception {
+  public void testSuccessfulStartupCliParams() {
     startServer("-p", String.valueOf(ports.getPort()));
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }

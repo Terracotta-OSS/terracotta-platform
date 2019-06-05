@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -18,27 +17,24 @@ import static org.hamcrest.Matchers.containsString;
 
 public class OldServerStartupScriptIT extends BaseStartupIT {
   @Test
-  @Ignore("might cause build failures as configuration repo uses a pre-defined port")
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     String stripeName = "stripe1";
-    String nodeName = "server-1";
+    String nodeName = "testServer1";
     Path configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName), nodeName);
     startServer("-r", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
-  @Ignore("might cause build failures as configuration repo uses a pre-defined port")
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     String stripeName = "stripe1";
-    String nodeName = "server-2";
+    String nodeName = "testServer2";
     Path configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName), nodeName);
     startServer("-r", configurationRepo.toString(), "-n", nodeName);
     waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
-  @Ignore("might cause build failures as configuration repo uses a pre-defined port")
   public void testStartingWithMultiStripeRepo() throws Exception {
     String stripeName = "stripe2";
     String nodeName = "server-3";
@@ -81,7 +77,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
         "     </config>\n" +
         "  </plugins>\n" +
         "  <servers>\n" +
-        "    <server host=\"localhost\" name=\"server-1\">\n" +
+        "    <server host=\"localhost\" name=\"testServer1\">\n" +
         "      <tsa-port>${TSA_PORT}</tsa-port>\n" +
         "      <tsa-group-port>${GROUP_PORT}</tsa-group-port>\n" +
         "    </server>\n" +
