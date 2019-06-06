@@ -528,26 +528,16 @@ public final class StringTool {
     return str.length() * 4 + 8;
   }
 
-  public static String attemptDecodeAsAscii(ByteBuffer binary, int probeSize) {
+  public static String attemptDecodeAsAscii(ByteBuffer binary) {
     int start = binary.position();
-    boolean utfSeen = false;
-    int passes = Math.min(binary.remaining() / Long.BYTES, probeSize / Long.BYTES);
-    if (passes > 0) {
-      for (int i = start; !utfSeen && passes-- > 0; i+= Long.BYTES) {
-        long val = binary.getLong(i);
-        utfSeen = (val & 0x8080808080808080L) != 0L;
-      }
-    }
-    if (!utfSeen) {
-      try {
-        return ThreadLocalCoders.decoderFor(StandardCharsets.US_ASCII)
-                                .onMalformedInput(CodingErrorAction.REPORT)
-                                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                                .decode(binary)
-                                .toString();
-      } catch (CharacterCodingException e) {
-        binary.position(start);
-      }
+    try {
+      return ThreadLocalCoders.decoderFor(StandardCharsets.US_ASCII)
+                              .onMalformedInput(CodingErrorAction.REPORT)
+                              .onUnmappableCharacter(CodingErrorAction.REPORT)
+                              .decode(binary)
+                              .toString();
+    } catch (CharacterCodingException e) {
+      binary.position(start);
     }
     return null;
   }

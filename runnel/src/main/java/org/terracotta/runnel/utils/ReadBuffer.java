@@ -151,7 +151,7 @@ public class ReadBuffer {
       return sb.toString();
     } else {
       try {
-        String ret = StringTool.attemptDecodeAsAscii(binary, 256);
+        String ret = StringTool.attemptDecodeAsAscii(binary);
         if (ret != null) {
           return ret;
         }
