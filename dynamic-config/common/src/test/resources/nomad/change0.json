@@ -1,0 +1,36 @@
+{
+  "type": "ClusterActivationNomadChange",
+  "cluster": {
+    "stripes": [
+      {
+        "nodes": [
+          {
+            "clientReconnectWindow": {
+              "quantity": 60,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "dataDirs": {},
+            "nodeGroupPort": 0,
+            "nodeName": "foo",
+            "nodePort": 0,
+            "offheapResources": {
+              "foo": {
+                "quantity": 1,
+                "unit": "GB",
+                "type": "MEMORY"
+              }
+            },
+            "securitySslTls": false,
+            "securityWhitelist": false
+          }
+        ]
+      }
+    ]
+  },
+  "clusterName": "myClusterName",
+  "applicability": {
+    "type": "CLUSTER"
+  },
+  "summary": "Activating cluster"
+}

@@ -1,0 +1,5 @@
+{
+  "type": "ConfigMigrationNomadChange",
+  "configuration": "xml config",
+  "summary": "Migrating configuration"
+}

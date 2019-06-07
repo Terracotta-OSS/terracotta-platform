@@ -11,9 +11,7 @@ dependencies {
   compile project(':frs-platform-persistence')
   compile project(':security-platform-server')
   compile project(':cluster-topology')
-  compile project(':sanskrit')
-  compile project(':nomad')
-  compile project(':cluster-tool-server')
+  compile project(':dynamic-config-server')
 
   compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
   compileOnly "org.terracotta:offheap-resource:$terracottaPlatformVersion"

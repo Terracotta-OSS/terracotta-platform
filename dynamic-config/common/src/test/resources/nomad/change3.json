@@ -1,0 +1,12 @@
+{
+  "type": "SettingNomadChange",
+  "applicability": {
+    "nodeName": "node1",
+    "stripeName": "stripe1",
+    "type": "NODE"
+  },
+  "cmd": "SET",
+  "name": "offheap-resources.foo",
+  "value": "2GB",
+  "summary": "set offheap-resources.foo=2GB"
+}

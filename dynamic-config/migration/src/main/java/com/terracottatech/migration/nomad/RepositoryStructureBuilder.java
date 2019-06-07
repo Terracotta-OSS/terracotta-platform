@@ -15,7 +15,7 @@ import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.tools.nomad.command.ConfigMigrationNomadChange;
+import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
 import org.w3c.dom.Node;
 
 import java.io.File;

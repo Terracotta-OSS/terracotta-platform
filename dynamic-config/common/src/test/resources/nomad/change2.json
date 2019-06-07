@@ -1,0 +1,5 @@
+{
+  "type": "ConfigRepairNomadChange",
+  "configuration": "xml config",
+  "summary": "Repairing configuration"
+}

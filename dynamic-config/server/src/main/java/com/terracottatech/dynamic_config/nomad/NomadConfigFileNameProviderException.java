@@ -2,15 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
+package com.terracottatech.dynamic_config.nomad;
 
-apply plugin: TcDeploy
+public class NomadConfigFileNameProviderException extends RuntimeException {
 
-dependencies {
-  compile project(':utilities')
-  compile project(':nomad')
+  private static final long serialVersionUID = 1L;
 
-  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-
-  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
-  testCompile "org.mockito:mockito-core:$mockitoVersion"
+  public NomadConfigFileNameProviderException(final String message) {
+    super(message);
+  }
 }

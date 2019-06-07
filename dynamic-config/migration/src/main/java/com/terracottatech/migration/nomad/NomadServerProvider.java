@@ -4,6 +4,11 @@
  */
 package com.terracottatech.migration.nomad;
 
+import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
+import com.terracottatech.dynamic_config.nomad.NomadJson;
+import com.terracottatech.dynamic_config.nomad.persistence.FileConfigStorage;
+import com.terracottatech.dynamic_config.nomad.persistence.InitialConfigStorage;
+import com.terracottatech.dynamic_config.nomad.persistence.SanskritNomadServerState;
 import com.terracottatech.migration.util.FileUtility;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeApplicator;
@@ -13,11 +18,6 @@ import com.terracottatech.nomad.server.NomadServerImpl;
 import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
-import com.terracottatech.tools.nomad.command.ConfigMigrationNomadChange;
-import com.terracottatech.tools.nomad.command.NomadJson;
-import com.terracottatech.tools.server.nomad.persistence.FileConfigStorage;
-import com.terracottatech.tools.server.nomad.persistence.InitialConfigStorage;
-import com.terracottatech.tools.server.nomad.persistence.SanskritNomadServerState;
 
 import java.nio.file.Path;
 

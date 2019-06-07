@@ -1,0 +1,28 @@
+{
+  "type": "MultipleNomadChanges",
+  "changes": [
+    {
+      "type": "SettingNomadChange",
+      "applicability": {
+        "nodeName": "node1",
+        "stripeName": "stripe1",
+        "type": "NODE"
+      },
+      "cmd": "SET",
+      "name": "offheap-resources.foo",
+      "value": "2GB",
+      "summary": "set offheap-resources.foo=2GB"
+    },
+    {
+      "type": "SettingNomadChange",
+      "applicability": {
+        "type": "CLUSTER"
+      },
+      "cmd": "SET",
+      "name": "offheap-resources.bar",
+      "value": "512MB",
+      "summary": "set offheap-resources.bar=512MB"
+    }
+  ],
+  "summary": "set offheap-resources.foo=2GB, and set offheap-resources.bar=512MB"
+}
