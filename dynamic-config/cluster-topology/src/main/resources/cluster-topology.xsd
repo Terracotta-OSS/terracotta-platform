@@ -1,0 +1,65 @@
+<!--
+  Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+  Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+  -->
+<xs:schema xmlns:cl="http://www.terracotta.org/config/cluster"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tc="http://www.terracotta.org/config"
+           version="1.0" targetNamespace="http://www.terracotta.org/config/cluster"
+           elementFormDefault="qualified">
+  <xs:import namespace="http://www.terracotta.org/config" schemaLocation="http://www.terracotta.org/terracotta.xsd"/>
+
+  <xs:element name="cluster" substitutionGroup="tc:config-content" type="cl:cluster"/>
+
+  <xs:complexType name="cluster">
+    <xs:sequence>
+      <xs:element name="name" type="tc:non-blank-token"/>
+      <xs:sequence>
+        <xs:element name="stripe" type="cl:stripe" minOccurs="1" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:sequence>
+
+      </xs:sequence>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="stripe">
+    <xs:sequence>
+      <xs:element name="name" type="tc:non-blank-token" minOccurs="1" maxOccurs="1"/>
+      <xs:sequence>
+        <xs:element name="node" type="cl:node" minOccurs="1" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="node">
+    <xs:sequence>
+      <xs:element name="name" type="tc:non-blank-token" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="server-config" type="cl:server-config" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="server-config">
+    <xs:all>
+      <!--
+      Contains the configuration for each node of the cluster.
+      This element is already defined in terracotta.xsd, we are just reusing it.
+      When xjc runs, corresponding xml pojo objects are regenerated and we do not 
+      want this as xml pojo objects are already present in tcconfig-schema.jar. 
+      This is one of the reasons why xml pojo objects for this xsd are
+      generated once and then only the required files are committed.
+      Another reason is, QName field representing config-content is
+      again gets defined in generated ObjectFactory class. This causes error in
+      runtime. We need to remove this generated field from ObjectFactory
+      -->
+      <xs:element ref="tc:tc-config">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            This section defines the list of plugins which are provided to the server by the platform.
+            Each plugin provider defines their own schema and parsing responsibility is left up to the plugin provider.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+</xs:schema>
