@@ -14,6 +14,7 @@ import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 import com.terracottatech.tools.nomad.command.ConfigMigrationNomadChange;
+import com.terracottatech.tools.nomad.command.NomadJson;
 import com.terracottatech.tools.server.nomad.persistence.FileConfigStorage;
 import com.terracottatech.tools.server.nomad.persistence.InitialConfigStorage;
 import com.terracottatech.tools.server.nomad.persistence.SanskritNomadServerState;
@@ -44,9 +45,8 @@ public class NomadServerProvider {
     };
     return new NomadServerImpl(new SanskritNomadServerState(
         Sanskrit.init(
-            new FileBasedFilesystemDirectory(
-                sanskritPath
-            )
+            new FileBasedFilesystemDirectory(sanskritPath),
+            NomadJson.buildObjectMapper()
         ),
         new InitialConfigStorage(
             new FileConfigStorage(

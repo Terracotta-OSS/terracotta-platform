@@ -18,7 +18,7 @@ public class JsonSanskritChangeVisitorTest {
 
   @Test
   public void someData() throws Exception {
-    SanskritObjectImpl object = new SanskritObjectImpl();
+    SanskritObjectImpl object = new SanskritObjectImpl(Json.copyObjectMapper());
     object.setString("E", "e");
 
     JsonSanskritChangeVisitor visitor = new JsonSanskritChangeVisitor(Json.copyObjectMapper());

@@ -20,10 +20,6 @@ public class SanskritObjectImpl implements MutableSanskritObject {
   private final ObjectNode mappings;
   private final ObjectMapper objectMapper;
 
-  SanskritObjectImpl() {
-    this(Json.copyObjectMapper());
-  }
-
   public SanskritObjectImpl(ObjectMapper objectMapper) {
     this(objectMapper, objectMapper.createObjectNode());
   }

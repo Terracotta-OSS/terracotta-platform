@@ -5,6 +5,7 @@
 package com.terracottatech.persistence.sanskrit;
 
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
+import com.terracottatech.utilities.Json;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -22,21 +23,21 @@ public class SanskritIT {
     Path root = folder.newFolder().toPath();
     FilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(root);
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       sanskrit.setString("configHash", "49e1ceea34a674b42cd70b1764a5477227d1ffcd");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertEquals("49e1ceea34a674b42cd70b1764a5477227d1ffcd", sanskrit.getString("configHash"));
       sanskrit.setString("configHash", "019eddbd529da0184ba78422db59539454ddc55f");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertEquals("019eddbd529da0184ba78422db59539454ddc55f", sanskrit.getString("configHash"));
       sanskrit.setString("configHash", "b5da3b7595c55a5d241e567d576c5b59711dc95a");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertEquals("b5da3b7595c55a5d241e567d576c5b59711dc95a", sanskrit.getString("configHash"));
     }
   }
@@ -47,8 +48,8 @@ public class SanskritIT {
     Path root = folder.newFolder().toPath();
     FilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(root);
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
-      Sanskrit.init(filesystemDirectory);
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+      Sanskrit.init(filesystemDirectory, Json.copyObjectMapper());
     }
   }
 }

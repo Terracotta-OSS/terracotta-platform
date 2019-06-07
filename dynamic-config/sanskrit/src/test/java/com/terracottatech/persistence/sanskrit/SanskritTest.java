@@ -6,6 +6,7 @@ package com.terracottatech.persistence.sanskrit;
 
 import com.terracottatech.persistence.sanskrit.change.SanskritChange;
 import com.terracottatech.persistence.sanskrit.change.SanskritChangeBuilder;
+import com.terracottatech.utilities.Json;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -95,7 +96,7 @@ public class SanskritTest {
     createFileWithContent("append.log", logInfo.getText());
     createFileWithContent("hash0", logInfo.getHash(0));
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertEquals("value1", sanskrit.getString("key"));
     }
 
@@ -217,7 +218,7 @@ public class SanskritTest {
 
   @Test
   public void writeString() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       sanskrit.setString("key", "value");
     }
 
@@ -226,12 +227,12 @@ public class SanskritTest {
 
   @Test
   public void writeMultiple() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       sanskrit.setString("key1", "value1");
       sanskrit.setString("key2", "value2");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertState(sanskrit, makeMap("key1", "value1", "key2", "value2"));
       sanskrit.setString("key1", "value");
       sanskrit.setString("key3", "value3");
@@ -242,7 +243,7 @@ public class SanskritTest {
 
   @Test
   public void writeLong() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       sanskrit.setLong("key1", 3L);
       sanskrit.setLong("key2", -3L);
       sanskrit.setLong("key3", 0);
@@ -255,21 +256,21 @@ public class SanskritTest {
 
   @Test
   public void writeObject() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
-      SanskritObjectImpl object = new SanskritObjectImpl();
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+      SanskritObjectImpl object = new SanskritObjectImpl(Json.copyObjectMapper());
       object.setString("subkey1", "abc");
       object.setLong("subkey2", 1L);
 
       sanskrit.setObject("key", object);
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       SanskritObject object = sanskrit.getObject("key");
 
       assertEquals("abc", object.getString("subkey1"));
       assertEquals(1L, (long) object.getLong("subkey2"));
 
-      SanskritObjectImpl newObject = new SanskritObjectImpl();
+      SanskritObjectImpl newObject = new SanskritObjectImpl(Json.copyObjectMapper());
       newObject.setString("subkey1", "def");
       newObject.setLong("subkey3", 2L);
       newObject.setString("key", "overwrite");
@@ -277,7 +278,7 @@ public class SanskritTest {
       sanskrit.setObject("key", newObject);
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       SanskritObject object = sanskrit.getObject("key");
 
       assertEquals("def", object.getString("subkey1"));
@@ -289,8 +290,8 @@ public class SanskritTest {
 
   @Test
   public void writeExternal() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
-      SanskritObjectImpl object = new SanskritObjectImpl();
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+      SanskritObjectImpl object = new SanskritObjectImpl(Json.copyObjectMapper());
       object.setString("subkey1", "abc");
       object.setLong("subkey2", 1L);
 
@@ -300,13 +301,13 @@ public class SanskritTest {
     TestData.Tomato tomato = new TestData.Tomato(new TestData.TomatoCooking(), "red");
     TestData.Pepper pepper = new TestData.Pepper(new TestData.TomatoCooking(), "spain");
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       SanskritObject object = sanskrit.getObject("key");
 
       assertEquals("abc", object.getString("subkey1"));
       assertEquals(1L, (long) object.getLong("subkey2"));
 
-      SanskritObjectImpl newObject = new SanskritObjectImpl();
+      SanskritObjectImpl newObject = new SanskritObjectImpl(Json.copyObjectMapper());
       newObject.setString("subkey1", "def");
       newObject.setLong("subkey3", 2L);
       newObject.setString("key", "overwrite");
@@ -317,7 +318,7 @@ public class SanskritTest {
       sanskrit.setObject("key", newObject);
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       SanskritObject object = sanskrit.getObject("key");
 
       assertEquals("def", object.getString("subkey1"));
@@ -332,34 +333,34 @@ public class SanskritTest {
 
   @Test
   public void removeKey() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       sanskrit.setString("key", "value1");
       assertEquals("value1", sanskrit.getString("key"));
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       sanskrit.removeKey("key");
       assertNull(sanskrit.getString("key"));
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertNull(sanskrit.getString("key"));
       sanskrit.setString("key", "value2");
       assertEquals("value2", sanskrit.getString("key"));
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertEquals("value2", sanskrit.getString("key"));
     }
   }
 
   @Test
   public void applyChange() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
-      SanskritObjectImpl subSanskritObject = new SanskritObjectImpl();
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+      SanskritObjectImpl subSanskritObject = new SanskritObjectImpl(Json.copyObjectMapper());
       subSanskritObject.setString("a", "b");
 
-      SanskritObjectImpl sanskritObject = new SanskritObjectImpl();
+      SanskritObjectImpl sanskritObject = new SanskritObjectImpl(Json.copyObjectMapper());
       sanskritObject.setString("subkey1", "abc");
       sanskritObject.setLong("subkey2", 4L);
       sanskritObject.setObject("subkey3", subSanskritObject);
@@ -386,8 +387,8 @@ public class SanskritTest {
 
   @Test
   public void noSneakyChangesAsWriter() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
-      SanskritObjectImpl object = new SanskritObjectImpl();
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+      SanskritObjectImpl object = new SanskritObjectImpl(Json.copyObjectMapper());
       object.setString("A", "B");
 
       sanskrit.setObject("key", object);
@@ -401,11 +402,11 @@ public class SanskritTest {
 
   @Test
   public void noSneakyChangesAsReader() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
-      SanskritObjectImpl subObject = new SanskritObjectImpl();
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+      SanskritObjectImpl subObject = new SanskritObjectImpl(Json.copyObjectMapper());
       subObject.setString("F", "G");
 
-      SanskritObjectImpl object = new SanskritObjectImpl();
+      SanskritObjectImpl object = new SanskritObjectImpl(Json.copyObjectMapper());
       object.setString("A", "B");
       object.setObject("D", subObject);
 
@@ -429,7 +430,7 @@ public class SanskritTest {
 
   @Test(expected = SanskritException.class)
   public void shouldBeUnusableAfterFailure() throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       filesystemDirectory.fail();
       try {
         sanskrit.setString("key", "value");
@@ -445,8 +446,8 @@ public class SanskritTest {
   @Test(expected = SanskritException.class)
   @SuppressWarnings("try")
   public void lockedForSingleUse() throws Exception {
-    try (Sanskrit sanskrit1 = Sanskrit.init(filesystemDirectory)) {
-      Sanskrit sanskrit2 = Sanskrit.init(filesystemDirectory);
+    try (Sanskrit sanskrit1 = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+      Sanskrit sanskrit2 = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper());
     }
   }
 
@@ -478,7 +479,7 @@ public class SanskritTest {
     String hash0 = getFileText("hash0");
     String hash1 = getFileText("hash1");
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       fail("Expected SanskritException");
     } catch (SanskritException e) {
       // expected
@@ -490,13 +491,13 @@ public class SanskritTest {
   }
 
   private void loadAndAssertState(String... missingKeys) throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertState(sanskrit, makeMap(), missingKeys);
     }
   }
 
   private void loadAndAssertState(Map<String, Object> expected, String... missingKeys) throws Exception {
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
       assertState(sanskrit, expected, missingKeys);
     }
   }

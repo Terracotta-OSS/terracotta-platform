@@ -15,7 +15,7 @@ public class JsonUtilsTest {
   public void parseEmpty() throws Exception {
     String input = "{}";
 
-    SanskritObjectImpl result = new SanskritObjectImpl();
+    SanskritObjectImpl result = new SanskritObjectImpl(Json.copyObjectMapper());
     JsonUtils.parse(Json.copyObjectMapper(), input, result);
 
     assertNull(result.getString("A"));
@@ -32,7 +32,7 @@ public class JsonUtilsTest {
         "  \"D\" : null" + System.lineSeparator() +
         "}";
 
-    SanskritObjectImpl result = new SanskritObjectImpl();
+    SanskritObjectImpl result = new SanskritObjectImpl(Json.copyObjectMapper());
     JsonUtils.parse(Json.copyObjectMapper(), input, result);
 
     assertEquals("a", result.getString("A"));

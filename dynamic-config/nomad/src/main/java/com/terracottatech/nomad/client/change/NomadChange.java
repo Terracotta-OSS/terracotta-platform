@@ -7,7 +7,7 @@ package com.terracottatech.nomad.client.change;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
 public interface NomadChange {
 
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)

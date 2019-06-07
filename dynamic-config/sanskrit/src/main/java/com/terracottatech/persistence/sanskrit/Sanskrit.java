@@ -10,17 +10,12 @@ import com.terracottatech.persistence.sanskrit.change.AddObjectSanskritChange;
 import com.terracottatech.persistence.sanskrit.change.AddStringSanskritChange;
 import com.terracottatech.persistence.sanskrit.change.SanskritChange;
 import com.terracottatech.persistence.sanskrit.change.UnsetKeySanskritChange;
-import com.terracottatech.utilities.Json;
 
 import java.io.IOException;
 
 import static com.terracottatech.persistence.sanskrit.Owner.own;
 
 public interface Sanskrit extends AutoCloseable {
-
-  static Sanskrit init(FilesystemDirectory filesystemDirectory) throws SanskritException {
-    return init(filesystemDirectory, Json.copyObjectMapper(true));
-  }
 
   static Sanskrit init(FilesystemDirectory filesystemDirectory, ObjectMapper objectMapper) throws SanskritException {
     try (
