@@ -70,13 +70,14 @@ public class SanskritImpl implements Sanskrit {
                 String hash = record.removeLast();
                 String json = record.stream().collect(Collectors.joining(System.lineSeparator()));
 
-                checkHash(timestamp, json, hash);
+                hash = checkHash(timestamp, json, hash);
                 String hashedHash = HashUtils.generateHash(hash);
                 boolean acceptRecord = hashChecker.check(hashedHash);
 
                 if (acceptRecord) {
                   parser.mark();
                   JsonUtils.parse(objectMapper, json, result);
+                  onNewRecord(timestamp, json);
                   lastHash = hash;
                 }
               } catch (SanskritException e) {
@@ -105,7 +106,7 @@ public class SanskritImpl implements Sanskrit {
         }
       }
 
-      String hashToDelete = hashChecker.done();
+      String hashToDelete = getHashToDelete(hashChecker);
       if (hashToDelete != null) {
         filesToDelete.add(hashToDelete);
       }
@@ -120,6 +121,13 @@ public class SanskritImpl implements Sanskrit {
     } catch (IOException e) {
       throw new SanskritException(e);
     }
+  }
+
+  String getHashToDelete(HashChecker hashChecker) throws SanskritException {
+    return hashChecker.done();
+  }
+
+  void onNewRecord(String timestamp, String json) throws SanskritException {
   }
 
   private String getHashFromFile(String hashFile, List<String> filesToDelete) throws SanskritException {
@@ -153,15 +161,16 @@ public class SanskritImpl implements Sanskrit {
     return StandardCharsets.UTF_8.decode(hashBuffer).toString();
   }
 
-  private void checkHash(String timestamp, String json, String hash) throws SanskritException {
+  String checkHash(String timestamp, String json, String hash) throws SanskritException {
     String expectedHash = calculateHash(timestamp, json);
     if (!hash.equals(expectedHash)) {
       // Don't add expectedHash to the error - the customer will just go and change the file!
       throw new SanskritException("Hash mismatch: " + hash);
     }
+    return hash;
   }
 
-  private String calculateHash(String timestamp, String json) {
+  String calculateHash(String timestamp, String json) {
     if (lastHash == null) {
       return HashUtils.generateHash(
           timestamp,
@@ -206,7 +215,7 @@ public class SanskritImpl implements Sanskrit {
   @Override
   public void applyChange(SanskritChange change) throws SanskritException {
     change.accept(data);
-    append(change);
+    appendChange(change);
   }
 
   @Override
@@ -214,9 +223,9 @@ public class SanskritImpl implements Sanskrit {
     return new SanskritObjectImpl(objectMapper);
   }
 
-  private void append(SanskritChange change) throws SanskritException {
+  private void appendChange(SanskritChange change) throws SanskritException {
     String json = changeAsJson(change);
-    append(json);
+    appendChange(json);
   }
 
   private String changeAsJson(SanskritChange change) throws SanskritException {
@@ -225,28 +234,21 @@ public class SanskritImpl implements Sanskrit {
     return visitor.getJson();
   }
 
-  private void append(String json) throws SanskritException {
-    StringBuilder logEntry = new StringBuilder();
-
+  private void appendChange(String json) throws SanskritException {
     String timestamp = getTimestamp();
+    appendRecord(timestamp, json);
+  }
+
+  void appendRecord(String timestamp, String json) throws SanskritException {
     String hash = calculateHash(timestamp, json);
-
-    logEntry.append(timestamp);
-    logEntry.append(System.lineSeparator());
-    logEntry.append(json);
-    logEntry.append(System.lineSeparator());
-    logEntry.append(hash);
-    logEntry.append(System.lineSeparator());
-    logEntry.append(System.lineSeparator());
-
-    append(logEntry.toString(), hash);
+    appendEntry(timestamp + System.lineSeparator() + json + System.lineSeparator() + hash + System.lineSeparator() + System.lineSeparator(), hash);
   }
 
   private String getTimestamp() {
     return Instant.now().toString();
   }
 
-  private void append(String logEntry, String entryHash) throws SanskritException {
+  private void appendEntry(String logEntry, String entryHash) throws SanskritException {
     String finalHash = HashUtils.generateHash(entryHash);
 
     try (
