@@ -4,18 +4,14 @@
  */
 package com.terracottatech.dynamic_config.validation;
 
-import com.terracottatech.dynamic_config.config.AcceptableSettingUnits;
 import com.terracottatech.dynamic_config.config.AcceptableSettingValues;
 import com.terracottatech.dynamic_config.config.CommonOptions;
-import com.terracottatech.utilities.MemoryUnit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class NodeParamsValidatorTest {
   @Rule
