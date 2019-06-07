@@ -15,12 +15,14 @@
  */
 package org.terracotta.runnel.utils;
 
+import java.io.UTFDataFormatException;
 import java.nio.ByteBuffer;
 
 /**
  * @author Ludovic Orban
  */
 public class ReadBuffer {
+  private static final boolean V1_STRING_DECODING = false;
 
   private final ByteBuffer byteBuffer;
   private final int limit;
@@ -107,42 +109,60 @@ public class ReadBuffer {
   }
 
   private String readString(ByteBuffer binary) {
-    StringBuilder sb = new StringBuilder(binary.remaining());
-    int i = binary.position();
-    int end = binary.limit();
-    for (; i < end; i++) {
-      byte a = binary.get(i);
-      if (((a & 0x80) != 0)) break;
-      sb.append((char) a);
-    }
-
-    for (; i < end; i++) {
-      byte a = binary.get(i);
-      if ((a & 0x80) == 0) {
-        sb.append((char) a);
-      } else if ((a & 0xe0) == 0xc0) {
-        sb.append((char) (((a & 0x1f) << 6) | ((binary.get(++i) & 0x3f))));
-      } else if ((a & 0xf0) == 0xe0) {
-        sb.append((char) (((a & 0x0f) << 12) | ((binary.get(++i) & 0x3f) << 6) | (binary.get(++i) & 0x3f)));
-      } else {
-        //these remaining stanzas are for compatibility with the previous regular UTF-8 codec
-        int codepoint;
-        if ((a & 0xf8) == 0xf0) {
-          codepoint = ((a & 0x7) << 18) | ((binary.get(++i) & 0x3f) << 12) | ((binary.get(++i) & 0x3f) << 6) | ((binary.get(++i) & 0x3f));
-        } else if ((a & 0xfc) == 0xf8) {
-          codepoint = ((a & 0x3) << 24) | ((binary.get(++i) & 0x3f) << 18) | ((binary.get(++i) & 0x3f) << 12) | ((binary.get(++i) & 0x3f) << 6) | ((binary.get(++i) & 0x3f));
-        } else if ((a & 0xfe) == 0xfc) {
-          codepoint = ((a & 0x1) << 30) | ((binary.get(++i) & 0x3f) << 24) | ((binary.get(++i) & 0x3f) << 18) | ((binary.get(++i) & 0x3f) << 12) | ((binary.get(++i) & 0x3f) << 6) | ((binary.get(++i) & 0x3f));
-        } else {
-          throw new CorruptDataException("Unexpected encoding");
+    if (V1_STRING_DECODING) {
+      StringBuilder sb = new StringBuilder(binary.remaining());
+      int i = binary.position();
+      int end = binary.limit();
+      for (; i < end; i++) {
+        byte a = binary.get(i);
+        if (((a & 0x80) != 0)) {
+          break;
         }
-        sb.appendCodePoint(codepoint);
+        sb.append((char) a);
+      }
+
+      for (; i < end; i++) {
+        byte a = binary.get(i);
+        if ((a & 0x80) == 0) {
+          sb.append((char) a);
+        } else if ((a & 0xe0) == 0xc0) {
+          sb.append((char) (((a & 0x1f) << 6) | ((binary.get(++i) & 0x3f))));
+        } else if ((a & 0xf0) == 0xe0) {
+          sb.append((char) (((a & 0x0f) << 12) | ((binary.get(++i) & 0x3f) << 6) | (binary.get(++i) & 0x3f)));
+        } else {
+          //these remaining stanzas are for compatibility with the previous regular UTF-8 codec
+          int codepoint;
+          if ((a & 0xf8) == 0xf0) {
+            codepoint = ((a & 0x7) << 18) | ((binary.get(++i) & 0x3f) << 12) | ((binary.get(++i) & 0x3f) << 6) | ((binary
+              .get(++i) & 0x3f));
+          } else if ((a & 0xfc) == 0xf8) {
+            codepoint = ((a & 0x3) << 24) | ((binary.get(++i) & 0x3f) << 18) | ((binary.get(++i) & 0x3f) << 12) | ((binary
+              .get(++i) & 0x3f) << 6) | ((binary.get(++i) & 0x3f));
+          } else if ((a & 0xfe) == 0xfc) {
+            codepoint = ((a & 0x1) << 30) | ((binary.get(++i) & 0x3f) << 24) | ((binary.get(++i) & 0x3f) << 18) | ((binary
+              .get(++i) & 0x3f) << 12) | ((binary.get(++i) & 0x3f) << 6) | ((binary.get(++i) & 0x3f));
+          } else {
+            throw new CorruptDataException("Unexpected encoding");
+          }
+          sb.appendCodePoint(codepoint);
+        }
+      }
+
+      return sb.toString();
+    } else {
+      try {
+        String ret = StringTool.attemptDecodeAsAscii(binary);
+        if (ret != null) {
+          return ret;
+        }
+        return StringTool.decodeString(binary, binary.remaining());
+      } catch (UTFDataFormatException e) {
+        CorruptDataException cde = new CorruptDataException("Unexpected encoding");
+        cde.addSuppressed(e);
+        throw cde;
       }
     }
-
-    return sb.toString();
   }
-
 
   public boolean limitReached() {
     return byteBuffer.position() == limit;
