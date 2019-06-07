@@ -55,12 +55,12 @@ public class LeaseMaintenanceThreadTest {
     assertTrue(leaseMaintenanceThread.isDaemon());
     leaseMaintenanceThread.start();
 
-    verify(timeSource, timeout(2000L).times(1)).sleep(eq(2000L));
+    verify(timeSource, timeout(3000L).times(1)).sleep(eq(2000L));
     verify(leaseMaintainer, times(1)).refreshLease();
     
     timeSource.tickMillis(2000L);
 
-    verify(timeSource, timeout(2000L).atLeast(2)).sleep(eq(2000L));
+    verify(timeSource, timeout(4000L).atLeast(2)).sleep(eq(2000L));
     verify(leaseMaintainer, atLeast(2)).refreshLease();
   }
 
