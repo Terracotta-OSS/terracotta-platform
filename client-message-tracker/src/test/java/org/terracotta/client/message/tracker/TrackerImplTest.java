@@ -82,19 +82,16 @@ public class TrackerImplTest {
     assertThat(tracker.getTrackedValue(1L), notNullValue());
     assertThat(tracker.getTrackedValue(2L), notNullValue());
     assertThat(tracker.getTrackedValue(3L), notNullValue());
-    assertThat(tracker.getLastReconciledId(), is(1L));
 
     tracker.reconcile(2L);
     assertThat(tracker.getTrackedValue(1L), nullValue());
     assertThat(tracker.getTrackedValue(2L), notNullValue());
     assertThat(tracker.getTrackedValue(3L), notNullValue());
-    assertThat(tracker.getLastReconciledId(), is(2L));
 
     tracker.reconcile(3L);
     assertThat(tracker.getTrackedValue(1L), nullValue());
     assertThat(tracker.getTrackedValue(2L), nullValue());
     assertThat(tracker.getTrackedValue(3L), notNullValue());
-    assertThat(tracker.getLastReconciledId(), is(3L));
   }
 
   @Test

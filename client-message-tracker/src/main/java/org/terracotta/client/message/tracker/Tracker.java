@@ -26,7 +26,7 @@ import java.util.function.Predicate;
  *
  * @param <R> type of the value
  */
-public interface Tracker<R> extends StateDumpable {
+interface Tracker<R> extends StateDumpable {
 
   /**
    * A tracker policy that will track all messages
