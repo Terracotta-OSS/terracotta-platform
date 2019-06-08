@@ -6,9 +6,9 @@ package com.terracottatech.dynamic_config.cli.nomad;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
+import com.terracottatech.diagnostic.client.connection.Endpoint;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.diagnostic.client.connection.NodeInfo;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.SimpleNomadChange;
 import com.terracottatech.nomad.server.NomadException;
@@ -74,10 +74,10 @@ public class NomadClientFactoryTest {
     when(connectionFactory.createConnection(hostPortList)).thenReturn(connection);
     when(environment.getHost()).thenReturn("host");
     when(environment.getUser()).thenReturn("user");
-    NodeInfo server1 = new NodeInfo("server1", "host1", 1234);
-    NodeInfo server2 = new NodeInfo("server2", "host1", 1235);
-    NodeInfo server3 = new NodeInfo("server3", "host2", 1234);
-    NodeInfo server4 = new NodeInfo("server4", "host1", 1235);
+    Endpoint server1 = new Endpoint("server1", "host1", 1234);
+    Endpoint server2 = new Endpoint("server2", "host1", 1235);
+    Endpoint server3 = new Endpoint("server3", "host2", 1234);
+    Endpoint server4 = new Endpoint("server4", "host1", 1235);
     when(connection.getServers()).thenReturn(new HashSet<>(Arrays.asList(server1, server2, server3, server4)));
     when(connection.getDiagnosticService(server1)).thenReturn(diagnostics1);
     when(connection.getDiagnosticService(server2)).thenReturn(diagnostics2);

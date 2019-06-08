@@ -6,9 +6,9 @@ package com.terracottatech.dynamic_config.cli.nomad;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
+import com.terracottatech.diagnostic.client.connection.Endpoint;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.diagnostic.client.connection.NodeInfo;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.server.NomadServer;
@@ -49,8 +49,8 @@ public class NomadClientFactory {
     return new CloseableNomadClient(client, connection);
   }
 
-  private NamedNomadServer createNamedNomadServer(NodeInfo node, DiagnosticService diagnosticService) {
+  private NamedNomadServer createNamedNomadServer(Endpoint node, DiagnosticService diagnosticService) {
     NomadServer nomadServerProxy = diagnosticService.getProxy(NomadServer.class);
-    return new NamedNomadServer(node.getName(), nomadServerProxy);
+    return new NamedNomadServer(node.getNodeName(), nomadServerProxy);
   }
 }
