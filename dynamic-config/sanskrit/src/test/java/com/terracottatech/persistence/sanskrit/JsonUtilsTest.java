@@ -7,6 +7,7 @@ package com.terracottatech.persistence.sanskrit;
 import com.terracottatech.utilities.Json;
 import org.junit.Test;
 
+import static com.terracottatech.persistence.sanskrit.MarkableLineParser.LS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -23,13 +24,13 @@ public class JsonUtilsTest {
 
   @Test
   public void parseData() throws Exception {
-    String input = "{" + System.lineSeparator() +
-        "  \"A\" : \"a\"," + System.lineSeparator() +
-        "  \"B\" : 1," + System.lineSeparator() +
-        "  \"C\" : {" + System.lineSeparator() +
-        "    \"E\" : \"e\"" + System.lineSeparator() +
-        "  }," + System.lineSeparator() +
-        "  \"D\" : null" + System.lineSeparator() +
+    String input = "{" + LS +
+        "  \"A\" : \"a\"," + LS +
+        "  \"B\" : 1," + LS +
+        "  \"C\" : {" + LS +
+        "    \"E\" : \"e\"" + LS +
+        "  }," + LS +
+        "  \"D\" : null" + LS +
         "}";
 
     SanskritObjectImpl result = new SanskritObjectImpl(Json.copyObjectMapper());

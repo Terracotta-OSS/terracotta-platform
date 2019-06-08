@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.terracottatech.persistence.sanskrit.MarkableLineParser.LS;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertEquals;
@@ -54,7 +55,7 @@ public class MarkableLineParserTest {
       }
     });
 
-    int expectedMarkPosition = 6 + System.lineSeparator().length() * 5;
+    int expectedMarkPosition = 6 + LS.length() * 5;
 
     assertEquals(expectedMarkPosition, parser.getMark());
   }
@@ -64,7 +65,7 @@ public class MarkableLineParserTest {
 
     for (String line : lines) {
       text.append(line);
-      text.append(System.lineSeparator());
+      text.append(LS);
     }
 
     ByteBuffer byteBuffer = StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap(text));

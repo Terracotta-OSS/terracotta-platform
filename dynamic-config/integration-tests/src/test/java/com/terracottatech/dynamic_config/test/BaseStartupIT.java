@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.test;
 
-import com.terracottatech.dynamic_config.test.util.Env;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.testing.lock.PortLockingRule;
 import org.awaitility.Awaitility;
@@ -26,15 +25,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.Files.readAllLines;
 import static java.nio.file.Files.walkFileTree;
-import static java.nio.file.Files.write;
 import static org.awaitility.pollinterval.IterativePollInterval.iterative;
 
 public class BaseStartupIT {
@@ -78,19 +73,10 @@ public class BaseStartupIT {
         .until(callable, matcher);
   }
 
-  Path configRepoPath(Function<String, Path> nomadRootFunction, String serverName) throws Exception {
-    String directory = "config-repositories";
-    String platform = Env.isWindows() ? "windows" : "linux";
-    Path configurationRepoPath = nomadRootFunction.apply(directory + "/" + platform);
+  Path configRepoPath(Function<String, Path> nomadRootFunction) throws Exception {
+    Path configurationRepoPath = nomadRootFunction.apply("config-repositories");
     Path temporaryPath = temporaryFolder.newFolder().toPath();
-
     copyDirectory(configurationRepoPath, temporaryPath);
-
-    if (Env.isWindows()) {
-      changeLineSeparator(Paths.get("sanskrit").resolve("append.log"), configurationRepoPath, temporaryPath);
-      changeLineSeparator(Paths.get("config").resolve("cluster-config." + serverName + ".1.xml"), configurationRepoPath, temporaryPath);
-    }
-
     return temporaryPath;
   }
 
@@ -125,12 +111,6 @@ public class BaseStartupIT {
         throw new RuntimeException(e);
       }
     };
-  }
-
-  private static void changeLineSeparator(Path file, Path configurationRepoPath, Path temporaryPath) throws IOException {
-    List<String> lines = readAllLines(configurationRepoPath.resolve(file), UTF_8);
-    String modifiedContent = String.join(System.lineSeparator(), lines) + System.lineSeparator();
-    write(temporaryPath.resolve(file), modifiedContent.getBytes(UTF_8));
   }
 
   private static void copyDirectory(Path source, Path destination) throws IOException {

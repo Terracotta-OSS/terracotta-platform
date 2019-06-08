@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.terracottatech.persistence.sanskrit.MarkableLineParser.LS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -148,7 +149,7 @@ public class SanskritTest {
   public void invalidJson() throws Exception {
     String timestamp = "2018-12-05T17:15:28";
     String json = "json";
-    String hash = HashUtils.generateHash(timestamp + System.lineSeparator() + json);
+    String hash = HashUtils.generateHash(timestamp + LS + json);
     String finalHash = HashUtils.generateHash(hash);
     createFileWithContent("append.log", lines(timestamp, json, hash, ""));
     createFileWithContent("hash0", finalHash);
@@ -170,7 +171,7 @@ public class SanskritTest {
   }
 
   private String removeLastNewline(String text) {
-    String newline = System.lineSeparator();
+    String newline = LS;
     if (newline.equals(text.substring(text.length() - newline.length()))) {
       return text.substring(0, text.length() - newline.length());
     }
@@ -455,7 +456,7 @@ public class SanskritTest {
     StringBuilder sb = new StringBuilder();
     for (String line : lines) {
       sb.append(line);
-      sb.append(System.lineSeparator());
+      sb.append(LS);
     }
     return sb.toString();
   }

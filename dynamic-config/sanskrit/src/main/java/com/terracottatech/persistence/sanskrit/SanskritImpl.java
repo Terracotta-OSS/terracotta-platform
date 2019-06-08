@@ -19,9 +19,10 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static com.terracottatech.persistence.sanskrit.MarkableLineParser.LS;
 
 /**
  * The main class for reading and writing a Sanskrit append log.
@@ -68,7 +69,7 @@ public class SanskritImpl implements Sanskrit {
 
                 String timestamp = record.removeFirst();
                 String hash = record.removeLast();
-                String json = record.stream().collect(Collectors.joining(System.lineSeparator()));
+                String json = String.join(LS, record);
 
                 hash = checkHash(timestamp, json, hash);
                 String hashedHash = HashUtils.generateHash(hash);
@@ -174,16 +175,16 @@ public class SanskritImpl implements Sanskrit {
     if (lastHash == null) {
       return HashUtils.generateHash(
           timestamp,
-          System.lineSeparator(),
+          LS,
           json
       );
     } else {
       return HashUtils.generateHash(
           lastHash,
-          System.lineSeparator(),
-          System.lineSeparator(),
+          LS,
+          LS,
           timestamp,
-          System.lineSeparator(),
+          LS,
           json
       );
     }
@@ -241,7 +242,7 @@ public class SanskritImpl implements Sanskrit {
 
   void appendRecord(String timestamp, String json) throws SanskritException {
     String hash = calculateHash(timestamp, json);
-    appendEntry(timestamp + System.lineSeparator() + json + System.lineSeparator() + hash + System.lineSeparator() + System.lineSeparator(), hash);
+    appendEntry(timestamp + LS + json + LS + hash + LS + LS, hash);
   }
 
   private String getTimestamp() {

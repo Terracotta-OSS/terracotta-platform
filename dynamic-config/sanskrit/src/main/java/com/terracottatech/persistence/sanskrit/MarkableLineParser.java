@@ -22,6 +22,9 @@ import java.util.stream.StreamSupport;
  * newline.
  */
 public class MarkableLineParser {
+
+  public static final String LS = "\n";
+
   private final InputStream input;
   private long position;
   private long mark;
@@ -87,7 +90,7 @@ public class MarkableLineParser {
         CharBuffer nextCharacter = CharBuffer.allocate(1);
         CoderResult decodeResult = decoder.decode(nextBytes, nextCharacter, false);
         if (decodeResult.isError()) {
-            decodeResult.throwException();
+          decodeResult.throwException();
         }
         if (nextCharacter.position() == 0) {
           nextBytes.compact();
@@ -102,20 +105,20 @@ public class MarkableLineParser {
     }
 
     private boolean endsWithLineSeparator(StringBuilder sb) {
-      if (sb.length() < System.lineSeparator().length()) {
+      if (sb.length() < LS.length()) {
         return false;
       }
 
-      char[] lastChars = new char[System.lineSeparator().length()];
-      sb.getChars(sb.length() - System.lineSeparator().length(), sb.length(), lastChars, 0);
+      char[] lastChars = new char[LS.length()];
+      sb.getChars(sb.length() - LS.length(), sb.length(), lastChars, 0);
 
       String suffix = new String(lastChars);
 
-      return System.lineSeparator().equals(suffix);
+      return LS.equals(suffix);
     }
 
     private String withoutLineSeparator(StringBuilder sb) {
-      sb.delete(sb.length() - System.lineSeparator().length(), sb.length());
+      sb.delete(sb.length() - LS.length(), sb.length());
       return sb.toString();
     }
 

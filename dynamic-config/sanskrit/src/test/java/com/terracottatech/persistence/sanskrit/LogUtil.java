@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.terracottatech.persistence.sanskrit.MarkableLineParser.LS;
+
 public class LogUtil {
   @SafeVarargs
   public static LogInfo createLog(Map<String, Object>... records) throws Exception {
@@ -24,11 +26,11 @@ public class LogUtil {
       String timestamp = Instant.now().toString();
       String json = Json.toPrettyJson(record);
 
-      String entryString = timestamp + System.lineSeparator() + json;
+      String entryString = timestamp + LS + json;
 
       String hashString = "";
       if (lastHash != null) {
-        hashString = lastHash + System.lineSeparator() + System.lineSeparator();
+        hashString = lastHash + LS + LS;
       }
 
       hashString += entryString;
@@ -36,10 +38,10 @@ public class LogUtil {
       lastHash = HashUtils.generateHash(hashString.getBytes("UTF-8"));
 
       log.append(entryString);
-      log.append(System.lineSeparator());
+      log.append(LS);
       log.append(lastHash);
-      log.append(System.lineSeparator());
-      log.append(System.lineSeparator());
+      log.append(LS);
+      log.append(LS);
 
       texts.add(log.toString());
       hashes.add(HashUtils.generateHash(lastHash));
