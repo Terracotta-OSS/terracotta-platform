@@ -7,9 +7,8 @@ package com.terracottatech.migration.util;
 import java.util.Objects;
 
 public final class Pair<T, U> {
-
-  final T one;
-  final U another;
+  private final T one;
+  private final U another;
 
   public Pair(T t, U u) {
     one = t;

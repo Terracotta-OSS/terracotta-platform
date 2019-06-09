@@ -4,13 +4,11 @@
  */
 package com.terracottatech.topology.config;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
 import com.terracottatech.migration.util.Pair;
 import com.terracottatech.migration.util.XmlUtility;
 import com.terracottatech.topology.config.parser.SchemaProvider;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,11 +17,11 @@ import java.util.Map;
 
 public class ClusteredConfigBuilder {
 
-  static final String TERRACOTTA_CLUSTER_CONFIG_NAMESPACE = SchemaProvider.NAMESPACE_URI.toString();
-  static final String PLUGINS_NODE_NAME = "plugins";
-  static final String CONFIG_NODE_NAME = "config";
+  private static final String TERRACOTTA_CLUSTER_CONFIG_NAMESPACE = SchemaProvider.NAMESPACE_URI.toString();
+  private static final String PLUGINS_NODE_NAME = "plugins";
+  private static final String CONFIG_NODE_NAME = "config";
 
-  final Map<Pair<String, String>, Node> serverNameRootNodeMap;
+  private final Map<Pair<String, String>, Node> serverNameRootNodeMap;
   private final Map<Pair<String, String>, Node> hostClonedConfigMap;
   private final Map<String, List<String>> stripeServerListMap;
 
@@ -42,7 +40,7 @@ public class ClusteredConfigBuilder {
     );
   }
 
-  protected void createEntireCluster(String clusterName, Map.Entry<Pair<String, String>, Node> hostConfigMapNodeEntry) {
+  private void createEntireCluster(String clusterName, Map.Entry<Pair<String, String>, Node> hostConfigMapNodeEntry) {
 
     Node clusterNode = createClusterElement(clusterName, hostConfigMapNodeEntry.getValue());
     List<Node> stripes = createStripeElementsForOneServer(hostConfigMapNodeEntry.getValue());
@@ -64,30 +62,30 @@ public class ClusteredConfigBuilder {
     }
   }
 
-  protected Node createConfigNode(Node rootNode) {
-    return ((Document)rootNode).createElement(CONFIG_NODE_NAME);
+  private Node createConfigNode(Node rootNode) {
+    return ((Document) rootNode).createElement(CONFIG_NODE_NAME);
   }
 
-  protected Node createServerElement(Node rootNode, Node serverConfigNode) {
+  private Node createServerElement(Node rootNode, Node serverConfigNode) {
     Node serverConfigElement = createNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:server-config");
 
     //TODO revisit
     if (serverConfigElement.getOwnerDocument() != serverConfigNode.getOwnerDocument()) {
-      serverConfigNode = ((Document)rootNode).importNode(serverConfigNode, true);
+      serverConfigNode = ((Document) rootNode).importNode(serverConfigNode, true);
     }
 
     serverConfigElement.appendChild(serverConfigNode);
     return serverConfigElement;
   }
 
-  protected Node createClusterElement(String clusterName, Node rootNode) {
+  private Node createClusterElement(String clusterName, Node rootNode) {
     Node clusterElement = createNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:cluster");
     Node clusterNameElement = createSimpleTextNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:name", clusterName);
     clusterElement.appendChild(clusterNameElement);
     return clusterElement;
   }
 
-  protected Node createStripeElement(String stripeName, List<String> serverNames, Node rootNode, Map<Pair<String, String>, Node> hostClonedConfigMap) {
+  private Node createStripeElement(String stripeName, List<String> serverNames, Node rootNode, Map<Pair<String, String>, Node> hostClonedConfigMap) {
     Node stripeElement = createNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:stripe");
 
     Node stripeNameElement = createSimpleTextNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:name", stripeName);
@@ -105,8 +103,7 @@ public class ClusteredConfigBuilder {
     return stripeElement;
   }
 
-
-  protected List<Node> createStripeElementsForOneServer(Node rootNode) {
+  private List<Node> createStripeElementsForOneServer(Node rootNode) {
     List<Node> retList = new ArrayList<>();
     for (Map.Entry<String, List<String>> concatServerNamesStripeName : this.stripeServerListMap.entrySet()) {
       Node oneStripeElement = createStripeElement(concatServerNamesStripeName.getKey(), concatServerNamesStripeName.getValue(), rootNode, hostClonedConfigMap);
@@ -115,16 +112,15 @@ public class ClusteredConfigBuilder {
     return retList;
   }
 
-  public static Node createNode(Node documentRoot, String nameSpace, String nodeName) {
+  private static Node createNode(Node documentRoot, String nameSpace, String nodeName) {
     return XmlUtility.createNode(documentRoot, nameSpace, nodeName);
   }
 
-  protected Node createSimpleTextNode(Node rootNode, String nameSpace, String nodeName, String texValue) {
+  private Node createSimpleTextNode(Node rootNode, String nameSpace, String nodeName, String texValue) {
     return XmlUtility.createSimpleTextNode(rootNode, nameSpace, nodeName, texValue);
   }
 
-  public Node createInternalTerracottaConfigurationNode(Node rootElement) {
-    Element tcConfigElement = (Element)((Document)rootElement).importNode(rootElement.getChildNodes().item(0), true);
-    return tcConfigElement;
+  private Node createInternalTerracottaConfigurationNode(Node rootElement) {
+    return ((Document) rootElement).importNode(rootElement.getChildNodes().item(0), true);
   }
 }

@@ -15,15 +15,11 @@ apply plugin: TcDeploy
 
 dependencies {
 //  xjcEpisode "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
-
   compileOnly "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
-
-  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
-  testCompile "org.mockito:mockito-core:$mockitoVersion"
-  compileOnly "junit:junit:$junitVersion"
 }
 
+// NOTE: DO NOT DELETE THE FOLLOWING. IT WILL BE USEFUL TO REGENERATE CLASSES IN XMLOBJECTS PACKAGE
 /*
 xjcGenerate {
   source = fileTree('src/main/resources') { include '*.xsd' }

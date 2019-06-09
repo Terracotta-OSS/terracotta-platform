@@ -1,9 +1,9 @@
-package com.terracottatech.migration.util;
-
 /*
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
+
+package com.terracottatech.migration.util;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -68,8 +68,7 @@ public class XmlUtility {
 
   public static Node getClonedParentDocFromRootNode(Node rootNode) {
     Node parentNode = rootNode.getParentNode();
-    Node clonedNode = parentNode.cloneNode(true);
-    return clonedNode;
+    return parentNode.cloneNode(true);
   }
 
   public static String getPrettyPrintableXmlString(Node doc) throws Exception {
@@ -81,8 +80,7 @@ public class XmlUtility {
     StreamResult result = new StreamResult(new StringWriter());
     DOMSource source = new DOMSource(doc);
     transformer.transform(source, result);
-    String xmlString = result.getWriter().toString();
-    return xmlString;
+    return result.getWriter().toString();
   }
 
 }

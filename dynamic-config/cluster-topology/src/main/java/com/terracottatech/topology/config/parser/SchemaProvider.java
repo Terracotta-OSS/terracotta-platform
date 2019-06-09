@@ -15,7 +15,7 @@ import javax.xml.transform.stream.StreamSource;
 
 public class SchemaProvider {
   public static final URI NAMESPACE_URI = URI.create("http://www.terracotta.org/config/cluster");
-  public static final URL XML_SCHEMA = ServiceConfigParser.class.getResource("/cluster-topology.xsd");
+  private static final URL XML_SCHEMA = ServiceConfigParser.class.getResource("/cluster-topology.xsd");
 
   public static Source getXmlSchema() throws IOException {
     return new StreamSource(XML_SCHEMA.openStream());
