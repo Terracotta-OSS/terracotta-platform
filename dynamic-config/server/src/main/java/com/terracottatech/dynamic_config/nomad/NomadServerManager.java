@@ -2,7 +2,9 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.config.nomad;
+package com.terracottatech.dynamic_config.nomad;
+
+import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 
 import java.io.Closeable;
 import java.nio.file.Path;
@@ -42,7 +44,7 @@ public interface NomadServerManager extends Closeable {
   void repairConfiguration(String configuration, long version) throws NomadConfigurationException;
 
   /**
-   * Unregisters internal MBean
+   * Used to perform cleanup
    */
   @Override
   void close();

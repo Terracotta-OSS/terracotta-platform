@@ -5,7 +5,7 @@
 package com.terracottatech.config;
 
 import com.terracotta.config.ConfigurationException;
-import com.terracottatech.config.nomad.NomadConfigurationException;
+import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 
 class TcConfigProviderFactory {
   static TcConfigProvider init(CommandLineParser commandLineParser) throws ConfigurationException {

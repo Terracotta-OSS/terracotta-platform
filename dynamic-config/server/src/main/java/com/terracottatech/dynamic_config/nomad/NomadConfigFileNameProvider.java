@@ -4,6 +4,8 @@
  */
 package com.terracottatech.dynamic_config.nomad;
 
+import com.terracottatech.dynamic_config.nomad.exception.NomadConfigFileNameProviderException;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;

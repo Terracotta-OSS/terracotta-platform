@@ -8,9 +8,9 @@ import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
 
 import com.terracotta.config.ConfigurationException;
-import com.terracottatech.config.nomad.NomadConfigurationException;
-import com.terracottatech.config.nomad.NomadServerManager;
-import com.terracottatech.config.nomad.NomadServerManagerImpl;
+import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
+import com.terracottatech.dynamic_config.nomad.NomadServerManager;
+import com.terracottatech.dynamic_config.nomad.NomadServerManagerImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;

@@ -2,19 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.config.nomad;
+package com.terracottatech.dynamic_config.nomad;
 
 import com.terracottatech.diagnostic.common.Constants;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
-import com.terracottatech.dynamic_config.nomad.ConfigChangeApplicator;
-import com.terracottatech.dynamic_config.nomad.ConfigController;
-import com.terracottatech.dynamic_config.nomad.ConfigRepairNomadChange;
-import com.terracottatech.dynamic_config.nomad.NomadConfigFileNameProvider;
-import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
-import com.terracottatech.dynamic_config.nomad.NomadJson;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
-import com.terracottatech.dynamic_config.nomad.SingleThreadedNomadServer;
+import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
+import com.terracottatech.dynamic_config.nomad.exception.NomadServerManagerStateException;
 import com.terracottatech.dynamic_config.nomad.persistence.FileConfigStorage;
 import com.terracottatech.dynamic_config.nomad.persistence.InitialConfigStorage;
 import com.terracottatech.dynamic_config.nomad.persistence.SanskritNomadServerState;

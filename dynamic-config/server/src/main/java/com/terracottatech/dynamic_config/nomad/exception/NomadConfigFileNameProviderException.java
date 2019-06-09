@@ -2,17 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.config.nomad;
+package com.terracottatech.dynamic_config.nomad.exception;
 
-public class NomadConfigurationException extends Exception {
+public class NomadConfigFileNameProviderException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  public NomadConfigurationException(String message) {
+  public NomadConfigFileNameProviderException(final String message) {
     super(message);
-  }
-
-  public NomadConfigurationException(String message, Throwable cause) {
-    super(message, cause);
   }
 }

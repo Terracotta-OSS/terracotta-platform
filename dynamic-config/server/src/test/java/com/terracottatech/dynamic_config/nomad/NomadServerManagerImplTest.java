@@ -2,8 +2,9 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.config.nomad;
+package com.terracottatech.dynamic_config.nomad;
 
+import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.repository.MalformedRepositoryException;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
@@ -15,7 +16,6 @@ import com.terracottatech.nomad.messages.RejectionReason;
 import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
-import com.terracottatech.dynamic_config.nomad.ConfigController;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;

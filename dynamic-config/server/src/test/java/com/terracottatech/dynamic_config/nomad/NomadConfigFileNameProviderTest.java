@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.nomad;
 
+import com.terracottatech.dynamic_config.nomad.exception.NomadConfigFileNameProviderException;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import org.junit.Rule;

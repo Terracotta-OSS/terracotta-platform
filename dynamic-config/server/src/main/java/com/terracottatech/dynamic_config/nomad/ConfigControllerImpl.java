@@ -2,10 +2,8 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.config.nomad;
+package com.terracottatech.dynamic_config.nomad;
 
-import com.terracottatech.dynamic_config.nomad.ConfigController;
-import com.terracottatech.dynamic_config.nomad.ConfigControllerException;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 
@@ -32,12 +30,12 @@ public class ConfigControllerImpl implements ConfigController {
   }
 
   @Override
-  public Measure<MemoryUnit> getOffheapSize(final String name) throws ConfigControllerException {
+  public Measure<MemoryUnit> getOffheapSize(final String name) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void setOffheapSize(String name, Measure<MemoryUnit> newOffheapSize) throws ConfigControllerException {
+  public void setOffheapSize(String name, Measure<MemoryUnit> newOffheapSize) {
     throw new UnsupportedOperationException();
   }
 }
