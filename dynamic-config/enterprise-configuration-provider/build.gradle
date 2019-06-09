@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+
+apply plugin: TcDeploy
+
+dependencies {
+  compile project(':dynamic-config-server')
+  compile "commons-cli:commons-cli:1.3.1"
+  
+  compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
+  compileOnly "org.terracotta.internal:configuration-provider:$terracottaCoreVersion"
+
+  testCompile("org.mockito:mockito-core:$mockitoVersion") {
+    exclude group: 'net.bytebuddy'
+  }
+  testCompile project(':galvan-support-ee')
+}
+
+task unzipKit(type: Copy) {
+  dependsOn project(':terracotta').distZip
+  from zipTree(project(':terracotta').distZip.archivePath)
+  into 'build/tc-db-kit'
+}
+
+test {
+  dependsOn unzipKit
+
+  //If this directory does not exist, tests will fail with a cryptic assert failure
+  systemProperty 'kitInstallationPath', "$unzipKit.destinationDir/${project(':terracotta').archivesBaseName}-$project.version"
+  //systemProperty 'serverDebugStartPort', "5005"
+
+  testLogging {
+    events 'started'
+  }
+}
