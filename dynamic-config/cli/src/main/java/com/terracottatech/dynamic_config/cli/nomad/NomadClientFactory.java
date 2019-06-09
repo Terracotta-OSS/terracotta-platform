@@ -9,6 +9,7 @@ import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.Endpoint;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.server.NomadServer;
@@ -24,7 +25,8 @@ public class NomadClientFactory {
   private final long requestTimeoutMillis;
   private final ConcurrencySizing concurrencySizing;
 
-  public NomadClientFactory(MultiDiagnosticServiceConnectionFactory connectionFactory, ConcurrencySizing concurrencySizing, NomadEnvironment environment, long requestTimeoutMillis) {
+  public NomadClientFactory(MultiDiagnosticServiceConnectionFactory connectionFactory, ConcurrencySizing concurrencySizing,
+                            NomadEnvironment environment, long requestTimeoutMillis) {
     this.connectionFactory = connectionFactory;
     this.environment = environment;
     this.requestTimeoutMillis = requestTimeoutMillis;

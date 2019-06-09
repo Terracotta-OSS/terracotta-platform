@@ -11,6 +11,7 @@ import com.terracottatech.dynamic_config.nomad.ConfigChangeApplicator;
 import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.dynamic_config.nomad.ConfigRepairNomadChange;
 import com.terracottatech.dynamic_config.nomad.NomadConfigFileNameProvider;
+import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
 import com.terracottatech.dynamic_config.nomad.NomadJson;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.nomad.SingleThreadedNomadServer;
@@ -35,19 +36,15 @@ import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class NomadServerManagerImpl implements NomadServerManager {
-
-  private static final String USER_NAME_PROPERTY = "user.name";
-
   private volatile UpgradableNomadServer nomadServer;
   private volatile DiagnosticServicesRegistration<NomadServer> registration;
   private final AtomicReference<STATE> initStateAtomicReference = new AtomicReference<>();
+  private final NomadEnvironment nomadEnvironment = new NomadEnvironment();
 
   public NomadServerManagerImpl() {
     initStateAtomicReference.set(STATE.UNINITIALIZED);
@@ -75,8 +72,9 @@ public class NomadServerManagerImpl implements NomadServerManager {
     ChangeApplicator changeApplicator = new ConfigChangeApplicator(
         new ApplicabilityNomadChangeProcessor(
             configController,
-            new RoutingNomadChangeProcessor()
-                .register(SettingNomadChange.class, new SettingNomadChangeProcessor(configController))));
+            new RoutingNomadChangeProcessor().register(SettingNomadChange.class, new SettingNomadChangeProcessor(configController))
+        )
+    );
 
     nomadServer.setChangeApplicator(changeApplicator);
   }
@@ -85,10 +83,10 @@ public class NomadServerManagerImpl implements NomadServerManager {
   public String getConfiguration() throws NomadConfigurationException {
     STATE currentState = initStateAtomicReference.get();
     if (currentState != STATE.INITIALIZED) {
-      String errorMessage = "getConfiguration() cannot be invoked when " +
-          "state is " + currentState.name();
+      String errorMessage = "getConfiguration() cannot be invoked when state is " + currentState.name();
       throw new NomadServerManagerStateException(currentState.name(), errorMessage);
     }
+
     ChangeDetails latestChange;
     try {
       latestChange = nomadServer.discover().getLatestChange();
@@ -96,10 +94,12 @@ public class NomadServerManagerImpl implements NomadServerManager {
       String errorMessage = "Exception while making discover call to Nomad";
       throw new NomadConfigurationException(errorMessage, e);
     }
+
     String missingConfigErrorMessage = "Did not get last stored configuration from Nomad";
     if (latestChange == null) {
       throw new NomadConfigurationException(missingConfigErrorMessage);
     }
+
     String configuration = latestChange.getResult();
     if (configuration == null || configuration.isEmpty()) {
       throw new NomadConfigurationException(missingConfigErrorMessage);
@@ -111,21 +111,18 @@ public class NomadServerManagerImpl implements NomadServerManager {
   public void repairConfiguration(String configuration, long version) throws NomadConfigurationException {
     try {
       UUID nomadRequestId = UUID.randomUUID();
-      String host = getHost();
-      String user = getUser();
-
       DiscoverResponse discoverResponse = nomadServer.discover();
       long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
+      PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), nomadRequestId,
+          version, new ConfigRepairNomadChange(configuration));
 
-      PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, host,
-          user, nomadRequestId, version, new ConfigRepairNomadChange(configuration));
       AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
       if (!response.isAccepted()) {
         throw new NomadConfigurationException("Repair message is rejected by Nomad. Reason for rejection is "
             + response.getRejectionReason().name());
       }
       long nextMutativeMessageCount = mutativeMessageCount + 1;
-      CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, host, user, nomadRequestId);
+      CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, getHost(), getUser(), nomadRequestId);
       AcceptRejectResponse commitResponse = nomadServer.commit(commitMessage);
       if (!commitResponse.isAccepted()) {
         throw new NomadConfigurationException("Unexpected commit failure. Reason for failure is "
@@ -183,21 +180,11 @@ public class NomadServerManagerImpl implements NomadServerManager {
   }
 
   String getHost() {
-    try {
-      InetAddress localHost = InetAddress.getLocalHost();
-      return localHost.getHostName();
-    } catch (UnknownHostException e) {
-      return "unknown";
-    }
+    return nomadEnvironment.getHost();
   }
 
   String getUser() {
-    String user = System.getProperty(USER_NAME_PROPERTY);
-
-    if (user == null) {
-      return "unknown";
-    }
-    return user;
+    return nomadEnvironment.getUser();
   }
 
   enum STATE {

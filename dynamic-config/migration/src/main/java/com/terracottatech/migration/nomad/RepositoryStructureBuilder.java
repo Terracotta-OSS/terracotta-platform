@@ -4,6 +4,8 @@
  */
 package com.terracottatech.migration.nomad;
 
+import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
+import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
 import com.terracottatech.migration.NodeConfigurationHandler;
 import com.terracottatech.migration.exception.ErrorCode;
 import com.terracottatech.migration.exception.MigrationException;
@@ -15,7 +17,6 @@ import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
 import org.w3c.dom.Node;
 
 import java.io.File;
@@ -26,9 +27,9 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public class RepositoryStructureBuilder implements NodeConfigurationHandler {
-
   private final Path outputFolderPath;
   private final UUID nomadRequestId;
+  private final NomadEnvironment nomadEnvironment;
 
   /*
   For integration test only. Need to get reference of NomadServer. IT code will pass the map
@@ -42,34 +43,25 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
   public RepositoryStructureBuilder(Path outputFolderPath) {
     this.outputFolderPath = outputFolderPath;
     this.nomadRequestId = UUID.randomUUID();
+    this.nomadEnvironment = new NomadEnvironment();
   }
 
   @Override
   public void process(final Map<Pair<String, String>, Node> nodeNameNodeConfigMap) {
-    /*
-    Prints output to a file
-     */
-    nodeNameNodeConfigMap.forEach(
-        printToFile()
-    );
+    nodeNameNodeConfigMap.forEach(printToFile());
   }
 
   protected BiConsumer<Pair<String, String>, Node> printToFile() {
     return (Pair<String, String> stripeNameServerName, Node doc) -> {
       try {
         String xml = getXmlString(doc);
-
         NomadServer nomadServer = getNomadServer(stripeNameServerName.getOne(), stripeNameServerName.getAnother());
-
-        String host = getHost();
-        String user = getUser();
-
         DiscoverResponse discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
 
-        PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, host,
-            user, nomadRequestId, nextVersionNumber, new ConfigMigrationNomadChange(xml));
+        PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), nomadRequestId,
+            nextVersionNumber, new ConfigMigrationNomadChange(xml));
         AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
         if (!response.isAccepted()) {
           throw new MigrationException(ErrorCode.UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE
@@ -77,7 +69,7 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
               .getRejectionReason());
         }
         long nextMutativeMessageCount = mutativeMessageCount + 1;
-        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, host, user, nomadRequestId);
+        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, getHost(), getUser(), nomadRequestId);
         nomadServer.commit(commitMessage);
       } catch (RuntimeException e) {
         throw e;
@@ -89,14 +81,12 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
 
   protected NomadServer getNomadServer(String nodeName) throws Exception {
     Path folderForServer = createRootDirectoryForServer(outputFolderPath, nodeName);
-    NomadServer nomadServer = NomadServerProvider.getNomadServer(folderForServer, nodeName);
-    return nomadServer;
+    return NomadServerProvider.getNomadServer(folderForServer, nodeName);
   }
 
   protected NomadServer getNomadServer(String stripeName, String nodeName) throws Exception {
     Path folderForServer = createRootDirectoryForServer(outputFolderPath, stripeName, nodeName);
-    NomadServer nomadServer = NomadServerProvider.getNomadServer(folderForServer, nodeName);
-    return nomadServer;
+    return NomadServerProvider.getNomadServer(folderForServer, nodeName);
   }
 
   protected String getXmlString(Node doc) throws Exception {
@@ -116,10 +106,10 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
   }
 
   protected String getUser() {
-    return NomadUtil.getUser();
+    return nomadEnvironment.getUser();
   }
 
   protected String getHost() {
-    return NomadUtil.getHost();
+    return nomadEnvironment.getHost();
   }
 }
