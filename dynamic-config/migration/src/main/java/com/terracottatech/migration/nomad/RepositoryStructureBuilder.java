@@ -6,39 +6,34 @@ package com.terracottatech.migration.nomad;
 
 import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
 import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
+import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
+import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.migration.NodeConfigurationHandler;
-import com.terracottatech.migration.exception.ErrorCode;
 import com.terracottatech.migration.exception.MigrationException;
-import com.terracottatech.migration.util.FileUtility;
 import com.terracottatech.migration.util.Pair;
 import com.terracottatech.migration.util.XmlUtility;
+import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.messages.PrepareMessage;
+import com.terracottatech.nomad.server.ChangeApplicator;
+import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
+import com.terracottatech.nomad.server.PotentialApplicationResult;
+import com.terracottatech.persistence.sanskrit.SanskritException;
 import org.w3c.dom.Node;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.BiConsumer;
+
+import static com.terracottatech.migration.exception.ErrorCode.UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE;
 
 public class RepositoryStructureBuilder implements NodeConfigurationHandler {
   private final Path outputFolderPath;
   private final UUID nomadRequestId;
   private final NomadEnvironment nomadEnvironment;
-
-  /*
-  For integration test only. Need to get reference of NomadServer. IT code will pass the map
-  which contains NomadServer for each server. If we have have two servers server-1 and server-2 in a stripe,
-  then map will contain entries for server1->NomadServer1 and server2->NomadServer2
-  Converted configuration will be read in IT code and will be validated. To read the converted configuration,
-  IT will require NomadServer reference.
-   */
-  //private final Map<String, NomadServer> serverMap;
 
   public RepositoryStructureBuilder(Path outputFolderPath) {
     this.outputFolderPath = outputFolderPath;
@@ -48,13 +43,9 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
 
   @Override
   public void process(final Map<Pair<String, String>, Node> nodeNameNodeConfigMap) {
-    nodeNameNodeConfigMap.forEach(printToFile());
-  }
-
-  protected BiConsumer<Pair<String, String>, Node> printToFile() {
-    return (Pair<String, String> stripeNameServerName, Node doc) -> {
+    nodeNameNodeConfigMap.forEach((stripeNameServerName, doc) -> {
       try {
-        String xml = getXmlString(doc);
+        String xml = XmlUtility.getPrettyPrintableXmlString(doc);
         NomadServer nomadServer = getNomadServer(stripeNameServerName.getOne(), stripeNameServerName.getAnother());
         DiscoverResponse discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
@@ -64,10 +55,9 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
             nextVersionNumber, new ConfigMigrationNomadChange(xml));
         AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
         if (!response.isAccepted()) {
-          throw new MigrationException(ErrorCode.UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE
-              , "Response code from nomad:" + response
-              .getRejectionReason());
+          throw new MigrationException(UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE, "Response code from nomad:" + response.getRejectionReason());
         }
+
         long nextMutativeMessageCount = mutativeMessageCount + 1;
         CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, getHost(), getUser(), nomadRequestId);
         nomadServer.commit(commitMessage);
@@ -76,33 +66,35 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
-    };
+    });
   }
 
   protected NomadServer getNomadServer(String nodeName) throws Exception {
-    Path folderForServer = createRootDirectoryForServer(outputFolderPath, nodeName);
-    return NomadServerProvider.getNomadServer(folderForServer, nodeName);
+    Path nomadRoot = outputFolderPath.resolve(nodeName);
+    return createServer(nomadRoot, nodeName);
   }
 
   protected NomadServer getNomadServer(String stripeName, String nodeName) throws Exception {
-    Path folderForServer = createRootDirectoryForServer(outputFolderPath, stripeName, nodeName);
-    return NomadServerProvider.getNomadServer(folderForServer, nodeName);
+    Path nomadRoot = outputFolderPath.resolve(stripeName + "_" + nodeName);
+    return createServer(nomadRoot, nodeName);
   }
 
-  protected String getXmlString(Node doc) throws Exception {
-    return XmlUtility.getPrettyPrintableXmlString(doc);
-  }
+  private NomadServer createServer(Path nomadRoot, String nodeName) throws SanskritException, NomadException {
+    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot);
+    nomadRepositoryManager.createIfAbsent();
 
-  protected Path createRootDirectoryForServer(Path folder, String serverName) throws Exception {
-    Path folderForServer = Paths.get(folder + File.separator + serverName);
-    FileUtility.createDirectory(folderForServer);
-    return folderForServer;
-  }
+    ChangeApplicator changeApplicator = new ChangeApplicator() {
+      @Override
+      public PotentialApplicationResult canApply(final String existing, final NomadChange change) {
+        return PotentialApplicationResult.allow(((ConfigMigrationNomadChange) change).getConfiguration());
+      }
 
-  protected Path createRootDirectoryForServer(Path folder, String stripeName, String serverName) throws Exception {
-    Path folderForServer = Paths.get(folder + File.separator + stripeName + "_" + serverName);
-    FileUtility.createDirectory(folderForServer);
-    return folderForServer;
+      @Override
+      public void apply(final NomadChange change) {
+      }
+    };
+
+    return UpgradableNomadServerFactory.createServer(nomadRepositoryManager, changeApplicator, nodeName);
   }
 
   protected String getUser() {

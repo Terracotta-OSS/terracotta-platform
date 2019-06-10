@@ -53,7 +53,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithEmptyConfigurationRepo() throws Exception {
     String configurationRepo = temporaryFolder.newFolder().getAbsolutePath();
     startServer("-r", configurationRepo);
-    waitedAssert(out::getLog, containsString("restart the server in 'config-consistency' mode"));
+    waitedAssert(out::getLog, containsString("No configuration files found"));
   }
 
   @Test

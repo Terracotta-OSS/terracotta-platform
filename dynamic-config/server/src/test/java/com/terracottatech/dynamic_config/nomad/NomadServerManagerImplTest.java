@@ -65,14 +65,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testInitFail() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     Exception exception = mock(NomadException.class);
-    doThrow(exception).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doThrow(exception).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -112,21 +108,17 @@ public class NomadServerManagerImplTest {
   @Test
   public void testInitUpgradeAndDestroy() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
     //Init
     spyNomadManager.init(nomadRoot);
 
-    verify(spyNomadManager, times(1)).createServer(sanskritPath, configPath);
+    verify(spyNomadManager, times(1)).createServer(repositoryStructureManager);
 
     String nodeName = "node0";
     String stripeName = "stripe1";
@@ -143,14 +135,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testGetConfigurationWithExceptionInDiscover() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -166,14 +154,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testGetConfigurationWithEmptyLatestChange() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -190,14 +174,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testGetConfigurationWithNullConfigurationString() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -217,14 +197,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testGetConfigurationWithEmptyConfigurationString() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -243,14 +219,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testGetConfiguration() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -278,14 +250,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testRepairConfiguration() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     resetServerState(spyNomadManager);
     //Init
@@ -335,14 +303,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testRepairConfigurationWithPrepareFail() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -377,14 +341,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testRepairConfigurationWithServerThrowingNomadException() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);
@@ -417,14 +377,10 @@ public class NomadServerManagerImplTest {
   @Test
   public void testRepairConfigurationWithCommitFail() throws Exception {
     Path nomadRoot = mock(Path.class);
-    Path sanskritPath = mock(Path.class);
-    Path configPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
-    when(repositoryStructureManager.getSanskritPath()).thenReturn(sanskritPath);
-    when(repositoryStructureManager.getConfigurationPath()).thenReturn(configPath);
     UpgradableNomadServer upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(sanskritPath, configPath);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager);
 
     //Reset
     resetServerState(spyNomadManager);

@@ -9,16 +9,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.FULL;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.CONFIG_REPO_FILENAME_REGEX;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_PREFIX;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_SUFFIX;
 
 public class NomadRepositoryManager {
   private static final String SANSKRIT = "sanskrit";
@@ -62,28 +56,7 @@ public class NomadRepositoryManager {
   }
 
   String extractNodeName() {
-    try (Stream<Path> stream = Files.list(configPath)) {
-      Set<String> distinctFileNames = stream.map(path -> path.getFileName().toString())
-          .filter(fileName -> fileName.matches(CONFIG_REPO_FILENAME_REGEX))
-          .collect(Collectors.toSet());
-
-      if (distinctFileNames.isEmpty()) {
-        throw new MalformedRepositoryException("No configuration file found in: " + configPath + ". " +
-            "A valid configuration file follows the '" + CONFIG_REPO_FILENAME_REGEX + "' regular expression");
-      } else {
-        Set<String> nodeNames = distinctFileNames.stream().map(this::extractInternal).collect(Collectors.toSet());
-        if (nodeNames.size() > 1) {
-          throw new MalformedRepositoryException("Found multiple configuration files corresponding to the following different node names: " + nodeNames);
-        }
-        return nodeNames.iterator().next();
-      }
-    } catch (IOException e) {
-      throw new MalformedRepositoryException("Repository is partially formed. A valid repository should contain '" + SANSKRIT + "' and '" + CONFIG + "' directories");
-    }
-  }
-
-  private String extractInternal(String fileName) {
-    return fileName.replaceAll("^" + REGEX_PREFIX, "").replaceAll(REGEX_SUFFIX + "$", "");
+    return NodeNameExtractor.extractFromConfig(configPath);
   }
 
   RepositoryDepth getRepositoryDepth() {

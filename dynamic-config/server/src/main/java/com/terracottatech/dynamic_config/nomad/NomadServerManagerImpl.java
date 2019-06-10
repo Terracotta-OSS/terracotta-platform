@@ -9,9 +9,6 @@ import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.nomad.exception.NomadServerManagerStateException;
-import com.terracottatech.dynamic_config.nomad.persistence.FileConfigStorage;
-import com.terracottatech.dynamic_config.nomad.persistence.InitialConfigStorage;
-import com.terracottatech.dynamic_config.nomad.persistence.SanskritNomadServerState;
 import com.terracottatech.dynamic_config.nomad.processor.ApplicabilityNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
@@ -24,11 +21,8 @@ import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.nomad.server.NomadServerImpl;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
-import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
-import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 import java.nio.file.Path;
 import java.util.UUID;
@@ -50,7 +44,7 @@ public class NomadServerManagerImpl implements NomadServerManager {
     try {
       NomadRepositoryManager repositoryManager = createNomadRepositoryManager(nomadRoot);
       repositoryManager.createIfAbsent();
-      nomadServer = createServer(repositoryManager.getSanskritPath(), repositoryManager.getConfigurationPath());
+      nomadServer = createServer(repositoryManager);
       registration = DiagnosticServices.register(NomadServer.class, nomadServer);
       registration.registerMBean(Constants.MBEAN_NOMAD);
       initStateAtomicReference.set(STATE.INITIALIZED);
@@ -135,24 +129,8 @@ public class NomadServerManagerImpl implements NomadServerManager {
     }
   }
 
-  UpgradableNomadServer createServer(Path sanskritPath, Path configPath) throws SanskritException, NomadException {
-    return new SingleThreadedNomadServer(
-        new NomadServerImpl(
-            new SanskritNomadServerState(
-                Sanskrit.init(
-                    new FileBasedFilesystemDirectory(sanskritPath),
-                    NomadJson.buildObjectMapper()
-                ),
-                new InitialConfigStorage(
-                    new FileConfigStorage(
-                        configPath,
-                        NomadConfigFileNameProvider.getFileNameProvider(configPath, null)
-                    )
-                )
-            ),
-            null
-        )
-    );
+  UpgradableNomadServer createServer(NomadRepositoryManager repositoryManager) throws SanskritException, NomadException {
+    return new SingleThreadedNomadServer(UpgradableNomadServerFactory.createServer(repositoryManager, null));
   }
 
   void guardInit() throws NomadConfigurationException {
@@ -160,6 +138,7 @@ public class NomadServerManagerImpl implements NomadServerManager {
     if (currentInitState != STATE.UNINITIALIZED) {
       throw new NomadConfigurationException("NomadServerManager is not in UNINITIALIZED state");
     }
+
     if (!initStateAtomicReference.compareAndSet(STATE.UNINITIALIZED, STATE.INITIALIZING)) {
       throw new NomadConfigurationException("NomadServerManager is getting initialized concurrently");
     }

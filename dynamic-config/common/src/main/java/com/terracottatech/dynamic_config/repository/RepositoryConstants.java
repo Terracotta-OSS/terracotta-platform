@@ -5,7 +5,9 @@
 package com.terracottatech.dynamic_config.repository;
 
 public class RepositoryConstants {
-  public static final String REGEX_PREFIX = "cluster-config\\.";
-  public static final String REGEX_SUFFIX = "\\.[1-9][0-9]*\\.xml";
+  public static final String FILENAME_PREFIX = "cluster-config";
+  public static final String FILENAME_EXT = "xml";
+  public static final String REGEX_PREFIX = FILENAME_PREFIX + "\\.";
+  public static final String REGEX_SUFFIX = "\\.[1-9][0-9]*\\." + FILENAME_EXT;
   public static final String CONFIG_REPO_FILENAME_REGEX = REGEX_PREFIX + "[\\S]+" + REGEX_SUFFIX;
 }

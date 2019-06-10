@@ -4,11 +4,6 @@
  */
 package com.terracottatech.migration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import com.terracottatech.migration.exception.ErrorCode;
 import com.terracottatech.migration.exception.ErrorParamKey;
 import com.terracottatech.migration.exception.InvalidInputConfigurationContentException;
@@ -17,8 +12,12 @@ import com.terracottatech.migration.exception.MigrationException;
 import com.terracottatech.migration.util.Pair;
 import com.terracottatech.migration.util.XmlUtility;
 import com.terracottatech.migration.validators.ValidationWrapper;
-import com.terracottatech.migration.validators.ValidatorFactory;
 import com.terracottatech.topology.config.ClusteredConfigBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.config.TCConfigurationParser;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -38,15 +37,15 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.terracottatech.migration.exception.ErrorCode.UNKNOWN_ERROR;
+import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.util.stream.Collectors.toList;
 
 /*
 ```
 cluster-tool.sh convert-config -tt <topology-type> -tn <topology-name> -c <update-string> -c <update-string> -d <dir>
-
 ```
 .. Input
 ... <topology-name> name of the cluster
@@ -129,7 +128,7 @@ public class MigrationImpl implements Migration {
     }
   }
 
-  protected boolean validateInputAndDecideSyntheticStripeNameGeneration(List<String> migrationStrings) {
+  private boolean validateInputAndDecideSyntheticStripeNameGeneration(List<String> migrationStrings) {
     Objects.requireNonNull(migrationStrings, "Null Input String");
     boolean doNotGenerateStripeName = false;
     boolean generateStripeName = false;
@@ -140,15 +139,19 @@ public class MigrationImpl implements Migration {
       }
       if (inputStringArray.length == 1) {
         if (doNotGenerateStripeName) {
-          String errorMessage = migrationStrings.stream().collect(Collectors.joining(" "));
-          throw new InvalidInputException(ErrorCode.INVALID_MIXED_INPUT_PATTERN, "Invalid Input " + errorMessage);
+          throw new InvalidInputException(
+              ErrorCode.INVALID_MIXED_INPUT_PATTERN,
+              "Invalid Input " + join(" ", migrationStrings)
+          );
         }
         generateStripeName = true;
       }
       if (inputStringArray.length == 2) {
         if (generateStripeName) {
-          String errorMessage = migrationStrings.stream().collect(Collectors.joining(" "));
-          throw new InvalidInputException(ErrorCode.INVALID_MIXED_INPUT_PATTERN, "Invalid Input " + errorMessage);
+          throw new InvalidInputException(
+              ErrorCode.INVALID_MIXED_INPUT_PATTERN,
+              "Invalid Input " + join(" ", migrationStrings)
+          );
         }
         doNotGenerateStripeName = true;
       }
@@ -156,7 +159,7 @@ public class MigrationImpl implements Migration {
     return generateStripeName;
   }
 
-  protected void valueValidators() {
+  private void valueValidators() {
     /*
     Creates a Map of configuration files and Map of namespace, corresponding plugin configuration
      */
@@ -174,11 +177,9 @@ public class MigrationImpl implements Migration {
         prepareValidatorsForPluginConfigurations(namespaces, configAndServiceNodesPerConfigFile);
 
     validatePluginConfigurations(validatorsWithParams);
-
   }
 
-  protected Set<String> validateAllConfigurationFilesHaveSamePluginTypes(Map<Path
-      , Map<String, Node>> configAndServiceNodesPerConfigFile) {
+  protected Set<String> validateAllConfigurationFilesHaveSamePluginTypes(Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
     AtomicReference<Set<String>> previousSetReference = new AtomicReference<>();
     AtomicReference<Path> previousPath = new AtomicReference<>();
     configAndServiceNodesPerConfigFile.forEach((path, nodeMap) -> {
@@ -189,54 +190,41 @@ public class MigrationImpl implements Migration {
       }
       Set<String> currentSet = nodeMap.keySet();
       if (!previousSetReference.get().equals(currentSet)) {
-        throw new InvalidInputConfigurationContentException(ErrorCode.MISMATCHED_SERVICE_CONFIGURATION
-            , "Mismatched Service Configuration"
-            , new Pair<>(ErrorParamKey.CONFIG_FILE.name(), path.toString())
-            , new Pair<>(ErrorParamKey.CONFIG_FILE.name(), previousPath.get()
-            .toString()));
+        throw new InvalidInputConfigurationContentException(
+            ErrorCode.MISMATCHED_SERVICE_CONFIGURATION,
+            "Mismatched Service Configuration",
+            new Pair<>(ErrorParamKey.CONFIG_FILE.name(), path.toString()),
+            new Pair<>(ErrorParamKey.CONFIG_FILE.name(), previousPath.get().toString())
+        );
       }
       previousSetReference.set(nodeMap.keySet());
     });
-    Set<String> namespaces = previousSetReference.get();
-    return namespaces;
+    return previousSetReference.get();
   }
 
-  protected List<Pair<Map<Path, Node>, ValidationWrapper>> prepareValidatorsForPluginConfigurations(Set<String> namespaces
+  private List<Pair<Map<Path, Node>, ValidationWrapper>> prepareValidatorsForPluginConfigurations(Set<String> namespaces
       , Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
     List<Pair<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
     namespaces.forEach(namespace -> {
       Map<Path, Node> configFilesAndNodesMap = new HashMap<>();
       configAndServiceNodesPerConfigFile.forEach((path, nodeMap) -> {
-
-        /*
-        For a give namespace, create a map of config-file -> plugin-configuration node present in that config-file
-        */
-
+        // For a give namespace, create a map of config-file -> plugin-configuration node present in that config-file
         Node node = nodeMap.get(namespace);
         configFilesAndNodesMap.put(path, node);
       });
-      Supplier<ValidationWrapper> validatorSupplier = getValidatorSuppliers(namespace);
-      if (validatorSupplier != null) {
-        validatorsWithParams.add(new Pair<>(configFilesAndNodesMap, validatorSupplier.get()));
-      }
+      Supplier<ValidationWrapper> validatorSupplier = getValidatorSupplier(namespace);
+      validatorsWithParams.add(new Pair<>(configFilesAndNodesMap, validatorSupplier.get()));
     });
     return validatorsWithParams;
   }
 
   protected void validatePluginConfigurations(List<Pair<Map<Path, Node>, ValidationWrapper>> validatorsWithParams) {
-    /*
-    Do the validation
-     */
-    validatorsWithParams.forEach(pair -> {
-      pair.getAnother().check(pair.getOne());
-    });
+    validatorsWithParams.forEach(pair -> pair.getAnother().check(pair.getOne()));
   }
 
   protected Node getRootNode(Path configFilePath) throws Exception {
     File configFile = configFilePath.toFile();
-    Node element = ConfigurationParser.getRoot(configFile
-        , Thread.currentThread().getContextClassLoader());
-    return element;
+    return ConfigurationParser.getRoot(configFile, Thread.currentThread().getContextClassLoader());
   }
 
   protected Node getClonedParentDocNode(Node rootNode) {
@@ -266,13 +254,16 @@ public class MigrationImpl implements Migration {
     if (attributeValue.isPresent()) {
       return attributeValue.get();
     }
-    throw new MigrationException(ErrorCode.INVALID_ATTRIBUTE_NAME, "Attribute " + attributeName + " is missing in Node " + node
-        .getLocalName()
-        , new Pair<>("AttributeName", attributeName)
-        , new Pair<>("nodeName", node.getLocalName()));
+
+    throw new MigrationException(
+        ErrorCode.INVALID_ATTRIBUTE_NAME,
+        "Attribute " + attributeName + " is missing in Node " + node.getLocalName(),
+        new Pair<>("AttributeName", attributeName),
+        new Pair<>("nodeName", node.getLocalName())
+    );
   }
 
-  protected Optional<String> getOptionalAttributeValue(Node node, String attributeName) {
+  private Optional<String> getOptionalAttributeValue(Node node, String attributeName) {
     return XmlUtility.getAttributeValue(node, attributeName);
   }
 
@@ -291,9 +282,11 @@ public class MigrationImpl implements Migration {
                   Node configServiceNode = configNode.getChildNodes().item(0);
                   String uri = configServiceNode.getNamespaceURI();
                   if (uriServiceConfigNodeMap.containsKey(uri)) {
-                    throw new InvalidInputException(ErrorCode.SAME_SERVICE_DEFINED_MULTIPLE_TIMES
-                        , "URI" + uri + " has multiple service configuration", new Pair<>(ErrorParamKey.URI
-                        .name(), uri));
+                    throw new InvalidInputException(
+                        ErrorCode.SAME_SERVICE_DEFINED_MULTIPLE_TIMES,
+                        "URI" + uri + " has multiple service configuration",
+                        new Pair<>(ErrorParamKey.URI.name(), uri)
+                    );
                   }
                   uriServiceConfigNodeMap.put(configServiceNode.getNamespaceURI(), configServiceNode);
                 }
@@ -306,8 +299,8 @@ public class MigrationImpl implements Migration {
     return configAndServiceNodesPerConfigFile;
   }
 
-  protected Supplier<ValidationWrapper> getValidatorSuppliers(String namespace) {
-    return ValidatorFactory.getParserValidatorValidator(URI.create(namespace));
+  private Supplier<ValidationWrapper> getValidatorSupplier(String namespace) {
+    return () -> new ValidationWrapper(TCConfigurationParser.getValidator(URI.create(namespace)));
   }
 
   protected void createServerConfigMapFunction(Map<Pair<String, String>
@@ -319,15 +312,17 @@ public class MigrationImpl implements Migration {
         List<String> serverNames = extractServerNames(element);
         checkUniqueServerNamesInStripe(serverNames, stripeName, configFilePath);
         allServers.addAll(serverNames);
-        serverNames.forEach(s -> stripeServerConfigMapNode.put(new Pair<>(stripeName, s)
-            , getClonedParentDocNode(element)));
+        serverNames.forEach(s -> stripeServerConfigMapNode.put(new Pair<>(stripeName, s), getClonedParentDocNode(element)));
         stripeServerNameMap.put(stripeName, serverNames);
       } else {
-        throw new InvalidInputException(ErrorCode.INVALID_FILE_TYPE, "Invalid file. Provided file is not a regular file"
-            , new Pair<>(ErrorParamKey.INVALID_FILE_TYPE.name(), configFilePath.toString()));
+        throw new InvalidInputException(
+            ErrorCode.INVALID_FILE_TYPE,
+            "Invalid file. Provided file is not a regular file",
+            new Pair<>(ErrorParamKey.INVALID_FILE_TYPE.name(), configFilePath.toString())
+        );
       }
     } catch (MigrationException e) {
-      throw  e;
+      throw e;
     } catch (Exception e) {
       String errorMessage = "Unexpected error while migrating the configuration files";
       LOGGER.error(errorMessage, e);
@@ -335,25 +330,28 @@ public class MigrationImpl implements Migration {
     }
   }
 
-  protected void checkUniqueServerNamesInStripe(List<String> serverNames, String stripeNme, Path configFilePath) {
+  private void checkUniqueServerNamesInStripe(List<String> serverNames, String stripeName, Path configFilePath) {
     List<String> serverNamesLocal = new ArrayList<>(serverNames);
-    Set<String> distinctServerNames = serverNames.stream().distinct().collect(Collectors.toSet());
+    Set<String> distinctServerNames = new HashSet<>(serverNames);
     if (distinctServerNames.size() != serverNames.size()) {
       for (String uniqueServerName : serverNames) {
         serverNamesLocal.remove(uniqueServerName);
       }
-      String duplicateServerNames = String.join(",", serverNamesLocal);
-      throw new InvalidInputConfigurationContentException(ErrorCode.DUPLICATE_SERVER_NAME_IN_STRIPE,
-          "Duplicate server names " + duplicateServerNames + "in configuration file " + configFilePath + "for stripe "
-          + stripeNme);
+
+      throw new InvalidInputConfigurationContentException(
+          ErrorCode.DUPLICATE_SERVER_NAME_IN_STRIPE,
+          format(
+              "Duplicate server names %s in configuration file %s for stripe %s",
+              join(",", serverNamesLocal),
+              configFilePath,
+              stripeName
+          )
+      );
     }
   }
 
 
-  public void buildCluster(String clusterName, Map<Pair<String, String>, Node> hostConfigMapNode) {
-    /*
-    Validates if the configuration files provided are indeed part of existing valid cluster
-     */
+  private void buildCluster(String clusterName, Map<Pair<String, String>, Node> hostConfigMapNode) {
     validateProvidedConfiguration(hostConfigMapNode, allServers);
     ClusteredConfigBuilder clusteredConfigBuilder = new ClusteredConfigBuilder(hostConfigMapNode, stripeServerNameMap);
     clusteredConfigBuilder.createEntireCluster(clusterName);
@@ -361,19 +359,20 @@ public class MigrationImpl implements Migration {
     if (repositoryBuilder != null) {
       repositoryBuilder.process(hostConfigMapNode);
     }
-
   }
 
-  protected void validateProvidedConfiguration(Map<Pair<String, String>, Node> hostConfigMapNode
-      , List<String> allServers) {
-    List<String> serversInAllStripesAsInput = hostConfigMapNode.entrySet()
+  /*
+   * Validates if the configuration files provided are indeed part of existing valid cluster
+   */
+  protected void validateProvidedConfiguration(Map<Pair<String, String>, Node> hostConfigMapNode, List<String> allServers) {
+    List<String> serversInAllStripesAsInput = hostConfigMapNode.keySet()
         .stream()
-        .map(entry -> entry.getKey().getAnother())
+        .map(Pair::getAnother)
         .collect(toList());
+
     if (serversInAllStripesAsInput.size() != allServers.size()) {
-      String serversInConfigurationFiles = String.join(",", allServers);
       @SuppressWarnings("unchecked")
-      Pair<String, String>[] servers = (Pair<String, String>[])Array.newInstance(Pair.class
+      Pair<String, String>[] servers = (Pair<String, String>[]) Array.newInstance(Pair.class
           , serversInAllStripesAsInput.size() + allServers.size());
 
       AtomicInteger counter = new AtomicInteger(0);
@@ -385,25 +384,28 @@ public class MigrationImpl implements Migration {
         servers[counter.getAndIncrement()] = new Pair<>(ErrorParamKey.SERVERS_IN_CONFIG_FILES.name(), server);
       });
 
-      String serversAsInput = String.join(",", serversInAllStripesAsInput);
-      throw new InvalidInputException(ErrorCode.MISSING_SERVERS,
-          "Not all servers are provided. " +
-          "Servers provides as input are " + serversAsInput + ". Servers " +
-          "present in configuration files are " + serversInConfigurationFiles
-          , servers);
+      throw new InvalidInputException(
+          ErrorCode.MISSING_SERVERS,
+          format(
+              "Not all servers are provided. Servers provided as input are: %s, whereas servers present in configuration files are: %s ",
+              join(",", serversInAllStripesAsInput),
+              join(",", allServers)
+          ),
+          servers);
     }
+
     Collection<String> mismatched = mismatchedServers(hostConfigMapNode, allServers);
     if (mismatched.size() > 0) {
-      String mismatchedString = String.join(",", mismatched);
-      throw new InvalidInputException(ErrorCode.MISMATCHED_SERVERS,
-          "Mismatched servers are : " + mismatchedString
-          , new Pair<>(ErrorParamKey.MISMATCHED_SERVERS
-          .name(), mismatchedString));
+      String mismatchedString = join(",", mismatched);
+      throw new InvalidInputException(
+          ErrorCode.MISMATCHED_SERVERS,
+          "Mismatched servers are : " + mismatchedString,
+          new Pair<>(ErrorParamKey.MISMATCHED_SERVERS.name(), mismatchedString)
+      );
     }
   }
 
-  protected Collection<String> mismatchedServers(Map<Pair<String, String>, Node> hostConfigMapNode
-      , List<String> allServers) {
+  protected Collection<String> mismatchedServers(Map<Pair<String, String>, Node> hostConfigMapNode, List<String> allServers) {
     return hostConfigMapNode.keySet().stream()
         .map(pair -> {
           String serverName = pair.getAnother();

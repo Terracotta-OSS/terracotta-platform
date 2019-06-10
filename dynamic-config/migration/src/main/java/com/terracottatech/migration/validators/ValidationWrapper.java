@@ -4,13 +4,12 @@
  */
 package com.terracottatech.migration.validators;
 
+import com.terracottatech.migration.exception.ErrorCodeMapper;
+import com.terracottatech.migration.exception.InvalidInputConfigurationContentException;
 import org.terracotta.config.service.ConfigValidator;
 import org.terracotta.config.service.ValidationException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import com.terracottatech.migration.exception.ErrorCodeMapper;
-import com.terracottatech.migration.exception.InvalidInputConfigurationContentException;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -27,21 +26,17 @@ public class ValidationWrapper {
   public void check(Map<Path, Node> fileNodeMap) {
     AtomicReference<Node> previousNodes = new AtomicReference<>();
     AtomicReference<Path> previousPathRef = new AtomicReference<>();
-    fileNodeMap.forEach(
-        (path, node) -> {
-          if (validator != null) {
-            validate(validator, (Element)node, path);
-            if (previousNodes.get() != null) {
-              compare(validator, (Element)node, (Element)previousNodes.get(), path, previousPathRef.get());
-            }
-          }
-          previousNodes.set(node);
-          previousPathRef.set(path);
+    fileNodeMap.forEach((path, node) -> {
+        validate(validator, (Element) node, path);
+        if (previousNodes.get() != null) {
+          compare(validator, (Element) node, (Element) previousNodes.get(), path, previousPathRef.get());
         }
-    );
+      previousNodes.set(node);
+      previousPathRef.set(path);
+    });
   }
 
-  protected void validate(ConfigValidator validator, Element element, Path path) {
+  void validate(ConfigValidator validator, Element element, Path path) {
     try {
       if (validator != null) {
         validator.validate(element);
@@ -53,8 +48,7 @@ public class ValidationWrapper {
     }
   }
 
-  protected void compare(ConfigValidator validator, Element elementOne, Element elementOther
-      , Path pathOne, Path pathOther) {
+  private void compare(ConfigValidator validator, Element elementOne, Element elementOther, Path pathOne, Path pathOther) {
     try {
       if (validator != null) {
         validator.validateAgainst(elementOne, elementOther);
