@@ -4,10 +4,14 @@
  */
 package com.terracottatech.dynamic_config.cli.command;
 
-public class NodeAddressDiscoveryException extends RuntimeException {
-  static final long serialVersionUID = 1L;
+/**
+ * @author Mathieu Carbou
+ */
+public interface DynamicConfigCommand extends Runnable {
+  String name();
 
-  public NodeAddressDiscoveryException(Throwable cause) {
-    super(cause);
-  }
+  /**
+   * Run extra global validation after each parameter has been parsed, converted, injected and validated
+   */
+  void validate();
 }

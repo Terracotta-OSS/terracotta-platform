@@ -8,16 +8,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 
-public class Node {
+public class Node implements Cloneable {
   private String nodeName;
   private String nodeHostname;
   private int nodePort;
@@ -36,8 +37,8 @@ public class Node {
   private String failoverPriority;
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
-  private Map<String, Measure<MemoryUnit>> offheapResources = new HashMap<>();
-  private Map<String, Path> dataDirs = new HashMap<>();
+  private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
+  private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
   private String clusterName;
 
   public String getNodeName() {
@@ -239,14 +240,57 @@ public class Node {
     return this;
   }
 
+  public Node setOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
+    this.offheapResources.putAll(offheapResources);
+    return this;
+  }
+
   public Node setDataDir(String name, Path path) {
     this.dataDirs.put(name, path);
+    return this;
+  }
+
+  public Node setDataDirs(Map<String, Path> dataDirs) {
+    this.dataDirs.putAll(dataDirs);
     return this;
   }
 
   public Node setClusterName(String clusterName) {
     this.clusterName = clusterName;
     return this;
+  }
+
+  @JsonIgnore
+  public InetSocketAddress getNodeAddress() {
+    return InetSocketAddress.createUnresolved(getNodeHostname(), getNodePort());
+  }
+
+  @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
+  public Node clone() {
+    return new Node()
+        .setClientLeaseDuration(clientLeaseDuration)
+        .setClientReconnectWindow(clientReconnectWindow)
+        .setClusterName(clusterName)
+        .setDataDirs(dataDirs)
+        .setFailoverPriority(failoverPriority)
+        .setNodeBackupDir(nodeBackupDir)
+        .setNodeBindAddress(nodeBindAddress)
+        .setNodeConfigDir(nodeConfigDir)
+        .setNodeGroupBindAddress(nodeGroupBindAddress)
+        .setNodeGroupPort(nodeGroupPort)
+        .setNodeHostname(nodeHostname)
+        .setNodeLogDir(nodeLogDir)
+        .setNodeMetadataDir(nodeMetadataDir)
+        .setNodeName(nodeName)
+        .setNodePort(nodePort)
+        .setOffheapResources(offheapResources)
+        .setSecurityAuditLogDir(securityAuditLogDir)
+        .setSecurityAuthc(securityAuthc)
+        .setSecurityDir(securityDir)
+        .setSecuritySslTls(securitySslTls)
+        .setSecurityWhitelist(securityWhitelist);
   }
 
   @Override
@@ -307,10 +351,5 @@ public class Node {
         ", dataDirs=" + dataDirs +
         ", clusterName='" + clusterName + '\'' +
         '}';
-  }
-
-  @JsonIgnore
-  public InetSocketAddress getNodeAddress() {
-    return InetSocketAddress.createUnresolved(getNodeHostname(), getNodePort());
   }
 }
