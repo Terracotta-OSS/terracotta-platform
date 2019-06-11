@@ -15,8 +15,6 @@
  */
 package org.terracotta.runnel.utils;
 
-import sun.nio.cs.ThreadLocalCoders;
-
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,6 +24,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -69,6 +68,13 @@ import java.util.Objects;
  */
 // PERFORMANCE NOTE:  The methods in this class are organized and sized to promote JIT inlining.
 public final class StringTool {
+  private static ThreadLocal<CharsetDecoder> US_ASCII_THREAD_LOCAL = ThreadLocal.withInitial(() -> {
+    CharsetDecoder cs = StandardCharsets.US_ASCII.newDecoder()
+                                                 .onMalformedInput(CodingErrorAction.REPORT)
+                                                 .onUnmappableCharacter(CodingErrorAction.REPORT);
+    return cs;
+  });
+
   /**
    * Private niladic constructor to prevent instantiation.
    */
@@ -531,11 +537,9 @@ public final class StringTool {
   public static String attemptDecodeAsAscii(ByteBuffer binary) {
     int start = binary.position();
     try {
-      return ThreadLocalCoders.decoderFor(StandardCharsets.US_ASCII)
-                              .onMalformedInput(CodingErrorAction.REPORT)
-                              .onUnmappableCharacter(CodingErrorAction.REPORT)
-                              .decode(binary)
-                              .toString();
+      CharsetDecoder cs = US_ASCII_THREAD_LOCAL.get();
+      cs.reset();
+      return cs.decode(binary).toString();
     } catch (CharacterCodingException e) {
       binary.position(start);
     }
