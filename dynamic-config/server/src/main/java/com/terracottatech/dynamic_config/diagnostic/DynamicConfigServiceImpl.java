@@ -35,7 +35,7 @@ public class DynamicConfigServiceImpl implements DynamicConfigService {
   @Override
   public void prepareActivation(Cluster validatedTopology) {
     LOGGER.debug("Preparing activation of Node with validated topology: {}", validatedTopology);
-    //TODO: TO BE COMPLETED: DO WE NEED SOME PARAMETERS AND RETURN SOMETHING ?
+    //TODO [DYNAMIC-CONFIG]: TO BE COMPLETED: DO WE NEED SOME PARAMETERS AND RETURN SOMETHING ?
     throw new UnsupportedOperationException("TODO: TO BE COMPLETED: DO WE NEED SOME PARAMETERS AND RETURN SOMETHING ?");
   }
 }
