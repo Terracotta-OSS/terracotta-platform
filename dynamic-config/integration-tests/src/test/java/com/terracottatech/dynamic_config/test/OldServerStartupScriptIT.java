@@ -22,7 +22,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     String nodeName = "testServer1";
     Path configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
     startServer("-r", configurationRepo.toString());
-    waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
@@ -31,7 +31,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     String nodeName = "testServer2";
     Path configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
     startServer("-r", configurationRepo.toString(), "-n", nodeName);
-    waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
@@ -40,7 +40,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     String nodeName = "testServer2";
     Path configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
     startServer("-r", configurationRepo.toString(), "-n", nodeName);
-    waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
@@ -59,7 +59,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithTcConfig() throws Exception {
     startServer("-f", getConfigurationPath());
-    waitedAssert(out::getLog, containsString("Becoming State[ ACTIVE-COORDINATOR ]"));
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   private String getConfigurationPath() throws Exception {
