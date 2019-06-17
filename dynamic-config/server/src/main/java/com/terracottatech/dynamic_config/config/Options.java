@@ -17,8 +17,8 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
-import com.terracottatech.dynamic_config.util.ConsoleParamsUtils;
 import com.terracottatech.dynamic_config.util.ConfigUtils;
+import com.terracottatech.dynamic_config.util.ConsoleParamsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.util.ParameterSubstitutor;
@@ -156,7 +156,7 @@ public class Options {
         node = cluster.getStripes().get(0).getNodes().iterator().next(); // Cluster object will have only 1 node, just get that
       }
 
-      DynamicConfigServiceImpl serviceImplementation = new DynamicConfigServiceImpl(cluster);
+      DynamicConfigServiceImpl serviceImplementation = new DynamicConfigServiceImpl(cluster, node);
       DiagnosticServices.register(DynamicConfigService.class, serviceImplementation);
 
       Path configPath = ConfigUtils.createTempTcConfig(node);

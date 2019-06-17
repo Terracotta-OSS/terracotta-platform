@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.diagnostic;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,21 +16,28 @@ public class DynamicConfigServiceImpl implements DynamicConfigService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
 
-  private volatile Cluster pendingTopology;
+  private volatile Cluster cluster;
+  private volatile Node me;
 
-  public DynamicConfigServiceImpl(Cluster pendingTopology) {
-    this.pendingTopology = requireNonNull(pendingTopology);
+  public DynamicConfigServiceImpl(Cluster cluster, Node me) {
+    this.cluster = requireNonNull(cluster);
+    this.me = requireNonNull(me);
   }
 
   @Override
-  public Cluster getPendingTopology() {
-    return pendingTopology;
+  public Node getThisNode() {
+    return me;
   }
 
   @Override
-  public void setPendingTopology(Cluster pendingTopology) {
-    this.pendingTopology = requireNonNull(pendingTopology);
-    LOGGER.debug("Set pending topology to: {}", pendingTopology);
+  public Cluster getTopology() {
+    return cluster;
+  }
+
+  @Override
+  public void setTopology(Cluster cluster) {
+    this.cluster = requireNonNull(cluster);
+    LOGGER.debug("Set pending topology to: {}", cluster);
   }
 
   @Override

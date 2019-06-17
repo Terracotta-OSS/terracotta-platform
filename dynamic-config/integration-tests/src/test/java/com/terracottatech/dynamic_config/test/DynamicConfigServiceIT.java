@@ -47,7 +47,7 @@ public class DynamicConfigServiceIT extends BaseStartupIT {
         null)) {
 
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
-      Cluster pendingTopology = proxy.getPendingTopology();
+      Cluster pendingTopology = proxy.getTopology();
 
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));

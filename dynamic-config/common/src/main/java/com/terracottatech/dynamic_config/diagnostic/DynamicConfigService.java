@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.diagnostic;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Node;
 
 /**
  * @author Mathieu Carbou
@@ -12,16 +13,24 @@ import com.terracottatech.dynamic_config.model.Cluster;
 public interface DynamicConfigService {
 
   /**
+   * @return this node information
+   */
+  Node getThisNode();
+
+  /**
    * @return The topology in memory that is currently being built before activation of the cluster.
    * The initial topology for a node is created based on the script parameters ot config file passed
    * to the CLI.
+   * When the node is activated, returns the equivalent of the config repository.
    */
-  Cluster getPendingTopology();
+  Cluster getTopology();
 
   /**
    * Change the in-memory topology to a new one for this node. (i.e. through the CLI attach command)
+   * <p>
+   * When the node is activated, this operations is used to change the topology at runtime.
    */
-  void setPendingTopology(Cluster pendingTopology);
+  void setTopology(Cluster cluster);
 
   /**
    * This method is called by the activate CLI command when topology has been validated for
