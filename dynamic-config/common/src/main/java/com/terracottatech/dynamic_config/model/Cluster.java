@@ -5,13 +5,17 @@
 package com.terracottatech.dynamic_config.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 public class Cluster {
@@ -48,5 +52,10 @@ public class Cluster {
     return "Cluster{" +
         "stripes=" + stripes +
         '}';
+  }
+
+  @JsonIgnore
+  public Collection<InetSocketAddress> getNodeAddresses() {
+    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getNodeAddress).collect(Collectors.toSet());
   }
 }

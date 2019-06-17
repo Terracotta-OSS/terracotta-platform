@@ -4,10 +4,12 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -305,5 +307,10 @@ public class Node {
         ", dataDirs=" + dataDirs +
         ", clusterName='" + clusterName + '\'' +
         '}';
+  }
+
+  @JsonIgnore
+  public InetSocketAddress getNodeAddress() {
+    return InetSocketAddress.createUnresolved(getNodeHostname(), getNodePort());
   }
 }
