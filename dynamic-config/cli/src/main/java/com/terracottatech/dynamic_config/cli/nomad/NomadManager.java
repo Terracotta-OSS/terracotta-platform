@@ -9,7 +9,8 @@ import com.terracottatech.nomad.client.change.NomadChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 
 public class NomadManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);
@@ -20,7 +21,7 @@ public class NomadManager {
     this.clientFactory = clientFactory;
   }
 
-  public void runChange(List<String> connectionServers, NomadChange change) {
+  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change) {
     LOGGER.info("Attempting to make co-ordinated configuration change: {}", change);
 
     try (CloseableNomadClient client = clientFactory.createClient(connectionServers)) {

@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.cli.nomad;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
-import com.terracottatech.diagnostic.client.connection.Endpoint;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
@@ -22,9 +21,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -67,23 +67,25 @@ public class NomadClientFactoryTest {
   @Captor
   private ArgumentCaptor<Set<String>> serverNamesCaptor;
 
-  private List<String> hostPortList;
+  private Collection<InetSocketAddress> hostPortList;
 
   @Before
   public void before() {
-    hostPortList = Arrays.asList("host1:1234", "host2:1234");
+    InetSocketAddress server1 = InetSocketAddress.createUnresolved("host1", 1234);
+    InetSocketAddress server2 = InetSocketAddress.createUnresolved("host1", 1235);
+    InetSocketAddress server3 = InetSocketAddress.createUnresolved("host2", 1234);
+    InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
+
+    hostPortList = Arrays.asList(server1, server2, server3, server4);
     when(connectionFactory.createConnection(hostPortList)).thenReturn(connection);
     when(environment.getHost()).thenReturn("host");
     when(environment.getUser()).thenReturn("user");
-    Endpoint server1 = new Endpoint("server1", "host1", 1234);
-    Endpoint server2 = new Endpoint("server2", "host1", 1235);
-    Endpoint server3 = new Endpoint("server3", "host2", 1234);
-    Endpoint server4 = new Endpoint("server4", "host1", 1235);
-    when(connection.getServers()).thenReturn(new HashSet<>(Arrays.asList(server1, server2, server3, server4)));
-    when(connection.getDiagnosticService(server1)).thenReturn(diagnostics1);
-    when(connection.getDiagnosticService(server2)).thenReturn(diagnostics2);
-    when(connection.getDiagnosticService(server3)).thenReturn(diagnostics3);
-    when(connection.getDiagnosticService(server4)).thenReturn(diagnostics4);
+
+    when(connection.getEndpoints()).thenReturn(hostPortList);
+    when(connection.getDiagnosticService(server1)).thenReturn(Optional.of(diagnostics1));
+    when(connection.getDiagnosticService(server2)).thenReturn(Optional.of(diagnostics2));
+    when(connection.getDiagnosticService(server3)).thenReturn(Optional.of(diagnostics3));
+    when(connection.getDiagnosticService(server4)).thenReturn(Optional.of(diagnostics4));
     Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4)
         .forEach(diagnostics -> when(diagnostics.getProxy(NomadServer.class)).thenReturn(nomadServer));
   }
@@ -95,7 +97,7 @@ public class NomadClientFactoryTest {
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
 
     verify(results).startDiscovery(serverNamesCaptor.capture());
-    assertThat(serverNamesCaptor.getValue(), containsInAnyOrder("server1", "server2", "server3", "server4"));
+    assertThat(serverNamesCaptor.getValue(), containsInAnyOrder("host1:1234", "host2:1234", "host1:1235", "host2:1235"));
 
     Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4)
         .forEach(diagnostics -> verify(diagnostics).getProxy(NomadServer.class));
