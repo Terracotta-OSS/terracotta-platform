@@ -38,12 +38,9 @@ public class Cluster implements Cloneable {
     return Collections.unmodifiableList(stripes);
   }
 
-  public boolean addStripe(Stripe stripe) {
-    return stripes.add(stripe);
-  }
-
-  public boolean removeStripe(Stripe stripe) {
-    return stripes.remove(stripe);
+  @JsonIgnore
+  public boolean isEmpty() {
+    return getNodeAddresses().isEmpty();
   }
 
   @Override
@@ -88,15 +85,43 @@ public class Cluster implements Cloneable {
     return new Cluster(stripes.stream().map(Stripe::clone).collect(toList()));
   }
 
-  public boolean detach(Node node) {
-    return detach(node.getNodeAddress());
+  public Cluster attachStripe(Stripe stripe) {
+    if (isEmpty()) {
+      throw new IllegalStateException("Empty cluster.");
+    }
+
+    List<String> duplicates = stripe.getNodes().stream()
+        .map(Node::getNodeAddress)
+        .filter(this::containsNode)
+        .map(InetSocketAddress::toString)
+        .collect(toList());
+    if (!duplicates.isEmpty()) {
+      throw new IllegalArgumentException("Nodes are already in the cluster: " + String.join(", ", duplicates) + ".");
+    }
+
+    Node aNode = stripes.iterator().next().getNodes().iterator().next();
+    Stripe newStripe = stripe.cloneForAttachment(aNode);
+    stripes.add(newStripe);
+
+    return this;
   }
 
-  public boolean detach(InetSocketAddress address) {
-    boolean detached = stripes.stream().anyMatch(stripe -> stripe.detach(address));
+  public boolean detachStripe(Stripe stripe) {
+    return stripes.remove(stripe);
+  }
+
+  public boolean detachNode(InetSocketAddress address) {
+    boolean detached = stripes.stream().anyMatch(stripe -> stripe.detachNode(address));
     if (detached) {
       stripes.removeIf(Stripe::isEmpty);
     }
     return detached;
+  }
+
+  public Optional<Node> getNode(InetSocketAddress nodeAddress) {
+    return stripes.stream()
+        .flatMap(stripe -> stripe.getNodes().stream())
+        .filter(node -> node.getNodeAddress().equals(nodeAddress))
+        .findFirst();
   }
 }

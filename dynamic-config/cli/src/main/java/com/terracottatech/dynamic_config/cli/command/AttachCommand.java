@@ -12,7 +12,11 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * @author Mathieu Carbou
@@ -25,7 +29,7 @@ public class AttachCommand extends TopologyChangeCommand {
   }
 
   @Override
-  public String name() {
+  public String getName() {
     return "attach";
   }
 
@@ -37,19 +41,20 @@ public class AttachCommand extends TopologyChangeCommand {
     switch (getType()) {
 
       case NODE: {
-        Stripe stripe = cluster.getStripe(destination.getNode().getNodeAddress())
-            // should NEVER happen
-            .orElseThrow(() -> new IllegalStateException("Node " + destination.getNode().getNodeAddress() + " not anymore in cluster " + cluster));
+        Collection<InetSocketAddress> duplicates = cluster.getNodeAddresses();
+        duplicates.retainAll(sources.stream().map(Node::getNodeAddress).collect(Collectors.toSet()));
+        if (!duplicates.isEmpty()) {
+          throw new IllegalArgumentException("Cluster already contains nodes: " + duplicates.stream().map(InetSocketAddress::toString).collect(joining(", ")) + ".");
+        }
+        Stripe stripe = cluster.getStripe(destination.getConfiguredNodeAddress()).get();
         // add the source nodes to the destination stripe
-        sources.forEach(stripe::attach);
+        sources.forEach(stripe::attachNode);
         break;
       }
 
       case STRIPE: {
         // add a new stripe in destination cluster containing all the source nodes
-        Stripe stripe = new Stripe();
-        sources.forEach(stripe::attach);
-        cluster.addStripe(stripe);
+        cluster.attachStripe(new Stripe(sources));
         break;
       }
 

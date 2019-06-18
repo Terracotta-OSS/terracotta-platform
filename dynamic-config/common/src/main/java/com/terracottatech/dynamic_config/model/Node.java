@@ -15,6 +15,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -245,6 +247,16 @@ public class Node implements Cloneable {
     return this;
   }
 
+  public Node removeOffheapResource(String key) {
+    this.offheapResources.remove(key);
+    return this;
+  }
+
+  public Node clearOffheapResources() {
+    this.offheapResources.clear();
+    return this;
+  }
+
   public Node setDataDir(String name, Path path) {
     this.dataDirs.put(name, path);
     return this;
@@ -252,6 +264,11 @@ public class Node implements Cloneable {
 
   public Node setDataDirs(Map<String, Path> dataDirs) {
     this.dataDirs.putAll(dataDirs);
+    return this;
+  }
+
+  public Node removeDataDir(String key) {
+    dataDirs.remove(key);
     return this;
   }
 
@@ -351,5 +368,45 @@ public class Node implements Cloneable {
         ", dataDirs=" + dataDirs +
         ", clusterName='" + clusterName + '\'' +
         '}';
+  }
+
+  public Node cloneForAttachment(Node aNodeFromTargetCluster) {
+    // validate security folder
+    if (aNodeFromTargetCluster.getSecurityDir() != null && securityDir == null) {
+      throw new IllegalArgumentException("Node " + getNodeAddress() + " must be started with a security directory.");
+    }
+
+    // Validate the user data directories.
+    // We validate that the node we want to attach has EXACTLY the same user data directories ID as the destination cluster.
+    Set<String> requiredDataDirs = new TreeSet<>(aNodeFromTargetCluster.getDataDirs().keySet());
+    Set<String> dataDirs = new TreeSet<>(this.dataDirs.keySet());
+    if (!dataDirs.containsAll(requiredDataDirs)) {
+      // case where the attached node would not have all the required IDs
+      requiredDataDirs.removeAll(dataDirs);
+      throw new IllegalArgumentException("Node " + getNodeAddress() + " must declare the following data directories: " + String.join(", ", requiredDataDirs) + ".");
+    }
+    if (dataDirs.size() > requiredDataDirs.size()) {
+      // case where the attached node would have more than the required IDs
+      dataDirs.removeAll(requiredDataDirs);
+      throw new IllegalArgumentException("Node " + getNodeAddress() + " must not declare the following data directories: " + String.join(", ", dataDirs) + ".");
+    }
+
+    // override all the cluster-wide parameters of the node to be attached
+    Node thisCopy = clone()
+        .setSecurityAuthc(aNodeFromTargetCluster.getSecurityAuthc())
+        .setSecuritySslTls(aNodeFromTargetCluster.isSecuritySslTls())
+        .setSecurityWhitelist(aNodeFromTargetCluster.isSecurityWhitelist())
+        .setFailoverPriority(aNodeFromTargetCluster.getFailoverPriority())
+        .setClientReconnectWindow(aNodeFromTargetCluster.getClientReconnectWindow())
+        .setClientLeaseDuration(aNodeFromTargetCluster.getClientLeaseDuration())
+        .clearOffheapResources()
+        .setOffheapResources(aNodeFromTargetCluster.getOffheapResources());
+
+    if (aNodeFromTargetCluster.getSecurityDir() == null && securityDir != null) {
+      // node was started with a security directory but destination cluster is not secured so we do not need one
+      thisCopy.setSecurityDir(null);
+    }
+
+    return thisCopy;
   }
 }

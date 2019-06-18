@@ -4,16 +4,24 @@
  */
 package com.terracottatech.dynamic_config.cli.connect;
 
+import com.terracottatech.utilities.Tuple2;
+
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
 /**
- * Discover the nodes of a cluster by connecting to one of the cluster node.
- *
  * @author Mathieu Carbou
  */
 public interface NodeAddressDiscovery {
 
-  Collection<InetSocketAddress> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException;
+  /**
+   * Discover the nodes of a cluster by connecting to one of the cluster node.
+   * <p>
+   * The first tuple value is the configured host/port address of the node we are connected to.
+   * In example, we could connect with 127.0.0.1:9410 but the configured host/port for the node might be localhost:9410.
+   * <p>
+   * The second value of the tuple is the list of addresses of the cluster nodes. The first tuple value is of course contained in this collection.
+   */
+  Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException;
 
 }

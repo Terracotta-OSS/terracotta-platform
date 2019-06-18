@@ -12,15 +12,17 @@ import com.terracottatech.dynamic_config.cli.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.utilities.Tuple2;
 
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.concat;
 
 /**
  * @author Mathieu Carbou
@@ -50,28 +52,57 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
     return type;
   }
 
-  public void setType(Type type) {
+  public TopologyChangeCommand setType(Type type) {
     this.type = type;
+    return this;
   }
 
   public InetSocketAddress getDestination() {
     return destination;
   }
 
-  public void setDestination(InetSocketAddress destination) {
+  public TopologyChangeCommand setDestination(InetSocketAddress destination) {
     this.destination = destination;
+    return this;
+  }
+
+  public TopologyChangeCommand setDestination(String host, int port) {
+    return setDestination(InetSocketAddress.createUnresolved(host, port));
   }
 
   public List<InetSocketAddress> getSources() {
     return sources;
   }
 
-  public void setSources(List<InetSocketAddress> sources) {
+  public TopologyChangeCommand setSources(List<InetSocketAddress> sources) {
     this.sources = sources;
+    return this;
+  }
+
+  public TopologyChangeCommand setSources(InetSocketAddress... sources) {
+    setSources(Arrays.asList(sources));
+    return this;
+  }
+
+  public TopologyChangeCommand setSource(InetSocketAddress source) {
+    return setSources(source);
+  }
+
+  public TopologyChangeCommand setSource(String host, int port) {
+    return setSource(InetSocketAddress.createUnresolved(host, port));
   }
 
   @Override
-  public void validate() {
+  public final void validate() {
+    if (sources.isEmpty()) {
+      throw new IllegalArgumentException("Missing source nodes.");
+    }
+    if (destination == null) {
+      throw new IllegalArgumentException("Missing destination node.");
+    }
+    if (type == null) {
+      throw new IllegalArgumentException("Missing type.");
+    }
     if (sources.contains(destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
@@ -80,17 +111,21 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
   @Override
   public final void run() {
     // get all the nodes to update (which includes source node plus all the nodes on the destination cluster)
-    Collection<InetSocketAddress> addresses = Stream.concat(
-        nodeAddressDiscovery.discover(destination).stream(),
-        sources.stream()).collect(toSet());
+    Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discovered = nodeAddressDiscovery.discover(destination);
 
-    // create a multi-connection based on all teh cluster addresses plus the one to add
+    // replaces the destination address used by the user by the real configured one
+    InetSocketAddress destination = discovered.t1;
+
+    // create a list of addresses to connect to
+    Collection<InetSocketAddress> addresses = concat(discovered.t2.stream(), sources.stream()).collect(toSet());
+
+    // create a multi-connection based on all the cluster addresses plus the one to add
     try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(addresses)) {
 
       // get the target node / cluster
       Target dest = connections.getDiagnosticService(destination)
           .map(ds -> ds.getProxy(DynamicConfigService.class))
-          .map(dcs -> new Target(dcs.getThisNode(), dcs.getTopology()))
+          .map(dcs -> new Target(destination, dcs.getTopology()))
           .get();
 
       // get all the source node info
@@ -116,22 +151,22 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
 
   static class Target {
 
-    // the node information from DynamicConfigService
-    private final Node node;
+    // the node address from DynamicConfigService
+    private final InetSocketAddress nodeAddress;
 
     // the cluster topology this node has
     private final Cluster cluster;
 
-    Target(Node node, Cluster cluster) {
-      this.node = node;
+    Target(InetSocketAddress nodeAddress, Cluster cluster) {
+      this.nodeAddress = nodeAddress;
       this.cluster = cluster;
-      if (!cluster.containsNode(node.getNodeAddress())) {
-        throw new IllegalArgumentException("Node " + node.getNodeAddress() + " not found in cluster " + cluster);
+      if (!cluster.containsNode(nodeAddress)) {
+        throw new IllegalArgumentException("Node " + nodeAddress + " not found in cluster " + cluster);
       }
     }
 
-    Node getNode() {
-      return node;
+    InetSocketAddress getConfiguredNodeAddress() {
+      return nodeAddress;
     }
 
     Cluster getCluster() {

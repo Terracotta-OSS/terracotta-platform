@@ -9,6 +9,8 @@ import com.terracottatech.dynamic_config.model.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+
 import static java.util.Objects.requireNonNull;
 
 
@@ -27,6 +29,11 @@ public class DynamicConfigServiceImpl implements DynamicConfigService {
   @Override
   public Node getThisNode() {
     return me;
+  }
+
+  @Override
+  public InetSocketAddress getThisNodeAddress() {
+    return me.getNodeAddress();
   }
 
   @Override

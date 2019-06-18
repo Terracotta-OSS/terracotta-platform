@@ -7,6 +7,8 @@ package com.terracottatech.dynamic_config.diagnostic;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 
+import java.net.InetSocketAddress;
+
 /**
  * @author Mathieu Carbou
  */
@@ -16,6 +18,8 @@ public interface DynamicConfigService {
    * @return this node information
    */
   Node getThisNode();
+
+  InetSocketAddress getThisNodeAddress();
 
   /**
    * @return The topology in memory that is currently being built before activation of the cluster.

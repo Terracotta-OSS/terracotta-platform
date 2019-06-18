@@ -7,10 +7,15 @@ package com.terracottatech.dynamic_config.cli.connect;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.utilities.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+
+import static com.terracottatech.utilities.Tuple2.tuple2;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Mathieu Carbou
@@ -22,15 +27,18 @@ public class DynamicConfigNodeAddressDiscovery implements NodeAddressDiscovery {
   private final TimeUnit connectTimeoutUnit;
 
   public DynamicConfigNodeAddressDiscovery(DiagnosticServiceProvider diagnosticServiceProvider, long connectTimeout, TimeUnit connectTimeoutUnit) {
-    this.diagnosticServiceProvider = diagnosticServiceProvider;
+    this.diagnosticServiceProvider = requireNonNull(diagnosticServiceProvider);
     this.connectTimeout = connectTimeout;
-    this.connectTimeoutUnit = connectTimeoutUnit;
+    this.connectTimeoutUnit = requireNonNull(connectTimeoutUnit);
   }
 
   @Override
-  public Collection<InetSocketAddress> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException {
+  public Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(aNode, connectTimeout, connectTimeoutUnit)) {
-      return diagnosticService.getProxy(DynamicConfigService.class).getTopology().getNodeAddresses();
+      DynamicConfigService dynamicConfigService = requireNonNull(diagnosticService.getProxy(DynamicConfigService.class));
+      InetSocketAddress thisNodeAddress = requireNonNull(dynamicConfigService.getThisNodeAddress());
+      Cluster cluster = requireNonNull(dynamicConfigService.getTopology());
+      return tuple2(thisNodeAddress, cluster.getNodeAddresses());
     } catch (Exception e) {
       throw new NodeAddressDiscoveryException(e);
     }

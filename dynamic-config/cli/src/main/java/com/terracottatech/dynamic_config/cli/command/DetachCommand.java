@@ -12,7 +12,6 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
@@ -25,7 +24,7 @@ public class DetachCommand extends TopologyChangeCommand {
   }
 
   @Override
-  public String name() {
+  public String getName() {
     return "detach";
   }
 
@@ -38,17 +37,13 @@ public class DetachCommand extends TopologyChangeCommand {
 
       case NODE: {
         // removes the source nodes from the destination cluster (whatever the stripe is)
-        sources.forEach(cluster::detach);
+        sources.stream().map(Node::getNodeAddress).forEach(cluster::detachNode);
         break;
       }
 
       case STRIPE: {
         // removes all the stripes of destination cluster containing the source nodes
-        sources.stream()
-            .map(node -> cluster.getStripe(node.getNodeAddress()))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .forEach(cluster::removeStripe);
+        sources.stream().map(Node::getNodeAddress).forEach(address -> cluster.getStripe(address).ifPresent(cluster::detachStripe));
         break;
       }
 

@@ -8,7 +8,7 @@ package com.terracottatech.dynamic_config.cli.command;
  * @author Mathieu Carbou
  */
 public interface DynamicConfigCommand extends Runnable {
-  String name();
+  String getName();
 
   /**
    * Run extra global validation after each parameter has been parsed, converted, injected and validated

@@ -4,9 +4,26 @@
  */
 package com.terracottatech.dynamic_config.cli.command;
 
+import org.junit.Test;
+
+import static org.junit.Assert.fail;
+
 /**
  * @author Mathieu Carbou
  */
-public class DetachCommandTest {
+public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
+  @Override
+  protected DetachCommand newCommand() {
+    return new DetachCommand(nodeAddressDiscovery, connectionFactory);
+  }
 
+  @Test
+  public void test_detach_node_from_stripe() {
+    fail("TODO");
+  }
+
+  @Test
+  public void test_detach_stripe() {
+    fail("TODO");
+  }
 }

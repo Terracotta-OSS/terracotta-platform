@@ -14,8 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.function.Predicate.isEqual;
@@ -58,6 +57,10 @@ public class Stripe implements Cloneable {
         '}';
   }
 
+  public Optional<Node> getNode(InetSocketAddress address) {
+    return nodes.stream().filter(node -> node.getNodeAddress().equals(address)).findFirst();
+  }
+
   public boolean containsNode(InetSocketAddress address) {
     return nodes.stream().map(Node::getNodeAddress).anyMatch(isEqual(address));
   }
@@ -69,7 +72,9 @@ public class Stripe implements Cloneable {
     return new Stripe(nodes.stream().map(Node::clone).collect(toList()));
   }
 
-  public boolean detach(InetSocketAddress address) {
+  // please keep this package-local:
+  // detachment of a node should be handled by cluster object
+  boolean detachNode(InetSocketAddress address) {
     return nodes.removeIf(node -> Objects.equals(node.getNodeAddress(), address));
   }
 
@@ -86,51 +91,35 @@ public class Stripe implements Cloneable {
    * Also, we cannot attach a node to an empty stripe: this is impossible since
    * attachment needs a source and destination node, which belongs to a non-empty stripe
    */
-  public void attach(Node source) {
+  public Stripe attachNode(Node source) {
     if (containsNode(source.getNodeAddress())) {
-      throw new IllegalArgumentException("Node " + source.getNodeAddress() + " is already in the stripe");
+      throw new IllegalArgumentException("Node " + source.getNodeAddress() + " is already in the stripe.");
     }
-
     if (isEmpty()) {
-      throw new IllegalStateException("Empty stripe");
+      throw new IllegalStateException("Empty stripe.");
     }
-
     Node aNode = nodes.iterator().next();
+    Node newNode = source.cloneForAttachment(aNode);
+    addNode(newNode);
+    return this;
+  }
 
-    // override all the cluster-wide parameters of the node to be attached
-    source
-        .setSecurityAuthc(aNode.getSecurityAuthc())
-        .setSecuritySslTls(aNode.isSecuritySslTls())
-        .setSecurityWhitelist(aNode.isSecurityWhitelist())
-        .setFailoverPriority(aNode.getFailoverPriority())
-        .setClientReconnectWindow(aNode.getClientReconnectWindow())
-        .setClientLeaseDuration(aNode.getClientLeaseDuration())
-        .setOffheapResources(aNode.getOffheapResources());
-
-    // validate security folder
-    if (aNode.getSecurityDir() != null && source.getSecurityDir() == null) {
-      throw new IllegalArgumentException("Node " + source.getNodeAddress() + " must be started with a security directory");
-    }
-    if (aNode.getSecurityDir() == null && source.getSecurityDir() != null) {
-      // node was started with a security directory but destination cluster is not secured so we do not need one
-      source.setSecurityDir(null);
-    }
-
-    // Validate the user data directories.
-    // We validate that the node we want to attach has EXACTLY the same user data directories ID as the destination cluster.
-    Set<String> requiredDataDirs = aNode.getDataDirs().keySet();
-    Set<String> dataDirs = source.getDataDirs().keySet();
-    if (!dataDirs.containsAll(requiredDataDirs)) {
-      // case where the attached node would not have all the required IDs
-      requiredDataDirs.removeAll(dataDirs);
-      throw new IllegalArgumentException("Node " + source.getNodeAddress() + " must declare the following data directories: " + String.join(", ", new TreeSet<>(requiredDataDirs)));
-    }
-    if (dataDirs.size() > requiredDataDirs.size()) {
-      // case where the attached node would have more than the required IDs
-      dataDirs.removeAll(requiredDataDirs);
-      throw new IllegalArgumentException("Node " + source.getNodeAddress() + " must not declare the following data directories: " + String.join(", ", new TreeSet<>(dataDirs)));
-    }
-
+  public Stripe addNode(Node source) {
     nodes.add(source);
+    return this;
+  }
+
+  public Stripe addNodes(Collection<Node> sources) {
+    nodes.addAll(sources);
+    return this;
+  }
+
+  public Stripe cloneForAttachment(Node aNodeFromTargetCluster) {
+    return nodes.stream()
+        .map(node -> node.cloneForAttachment(aNodeFromTargetCluster))
+        .reduce(
+            new Stripe(),
+            Stripe::addNode,
+            (s1, s2) -> new Stripe().addNodes(s1.getNodes()).addNodes(s2.getNodes()));
   }
 }
