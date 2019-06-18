@@ -6,8 +6,6 @@ package com.terracottatech.dynamic_config.cli.command;
 
 
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.converters.EnumConverter;
-import com.beust.jcommander.converters.InetAddressConverter;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.connect.NodeAddressDiscovery;
@@ -42,10 +40,10 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
   @Parameter(required = true, names = {"-t"}, converter = TypeConverter.class)
   private Type type = Type.NODE;
 
-  @Parameter(required = true, names = {"-d"}, converter = InetAddressConverter.class)
+  @Parameter(required = true, names = {"-d"}, converter = InetSocketAddressConverter.class)
   private InetSocketAddress destination;
 
-  @Parameter(required = true, names = {"-s"}, variableArity = true, converter = InetAddressConverter.class)
+  @Parameter(required = true, names = {"-s"}, variableArity = true, converter = InetSocketAddressConverter.class)
   private List<InetSocketAddress> sources = Collections.emptyList();
 
   public Type getType() {
@@ -115,12 +113,6 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
   }
 
   protected abstract Cluster updateTopology(Target destination, Collection<Node> sources);
-
-  public static class TypeConverter extends EnumConverter<Type> {
-    public TypeConverter() {
-      super("-t", Type.class);
-    }
-  }
 
   static class Target {
 
