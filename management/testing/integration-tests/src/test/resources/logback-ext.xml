@@ -17,5 +17,5 @@
 
 -->
 <included>
-  <logger name="org.terracotta.management" level="TRACE"/>
+  <logger name="org.terracotta.management" level="INFO"/> <!-- TRACE makes slow machines timeout -->
 </included>
