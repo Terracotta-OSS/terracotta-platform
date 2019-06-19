@@ -17,7 +17,7 @@ import java.net.InetSocketAddress;
  */
 public abstract class AbstractCommand implements DynamicConfigCommand {
 
-  @Parameter(names = {"-h", "--help"}, help = true)
+  @Parameter(names = {"-h", "--help"}, description = "Help", help = true)
   public boolean help;
 
   // JCommander converters and validators

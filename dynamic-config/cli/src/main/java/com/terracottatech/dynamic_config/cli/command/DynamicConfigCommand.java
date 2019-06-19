@@ -14,4 +14,6 @@ public interface DynamicConfigCommand extends Runnable {
    * Run extra global validation after each parameter has been parsed, converted, injected and validated
    */
   void validate();
+
+  String usage();
 }

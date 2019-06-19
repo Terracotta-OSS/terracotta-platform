@@ -13,6 +13,8 @@ import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.Tuple2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
@@ -28,6 +30,7 @@ import static java.util.stream.Stream.concat;
  * @author Mathieu Carbou
  */
 public abstract class TopologyChangeCommand extends AbstractCommand {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TopologyChangeCommand.class);
 
   private final NodeAddressDiscovery nodeAddressDiscovery;
   private final MultiDiagnosticServiceConnectionFactory connectionFactory;
@@ -39,13 +42,13 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
 
   public enum Type {NODE, STRIPE}
 
-  @Parameter(required = true, names = {"-t"}, converter = TypeConverter.class)
+  @Parameter(required = true, names = {"-t"}, description = "Type", converter = TypeConverter.class)
   private Type type = Type.NODE;
 
-  @Parameter(required = true, names = {"-d"}, converter = InetSocketAddressConverter.class)
+  @Parameter(required = true, names = {"-d"}, description = "Destination node", converter = InetSocketAddressConverter.class)
   private InetSocketAddress destination;
 
-  @Parameter(required = true, names = {"-s"}, variableArity = true, converter = InetSocketAddressConverter.class)
+  @Parameter(required = true, names = {"-s"}, description = "Source node", variableArity = true, converter = InetSocketAddressConverter.class)
   private List<InetSocketAddress> sources = Collections.emptyList();
 
   public Type getType() {
@@ -110,6 +113,11 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
 
   @Override
   public final void run() {
+    if (help) {
+      LOGGER.info(usage());
+      return;
+    }
+
     // get all the nodes to update (which includes source node plus all the nodes on the destination cluster)
     Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discovered = nodeAddressDiscovery.discover(destination);
 
@@ -145,6 +153,11 @@ public abstract class TopologyChangeCommand extends AbstractCommand {
           .map(ds -> ds.getProxy(DynamicConfigService.class))
           .forEach(dcs -> dcs.setTopology(result));
     }
+  }
+
+  @Override
+  public String usage() {
+    return getName() + " -t <node|stripe> -d HOST[:PORT] [-d HOST[:PORT]]... -s HOST[:PORT] [-s HOST[:PORT]]...";
   }
 
   protected abstract Cluster updateTopology(Target destination, Collection<Node> sources);

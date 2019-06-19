@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.command;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.fail;
@@ -18,11 +19,13 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   }
 
   @Test
+  @Ignore("Ignore until properly written")
   public void test_detach_node_from_stripe() {
     fail("TODO");
   }
 
   @Test
+  @Ignore("Ignore until properly written")
   public void test_detach_stripe() {
     fail("TODO");
   }
