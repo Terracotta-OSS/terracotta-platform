@@ -91,8 +91,8 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
     // capture the new topology set calls
     verify(dynamicConfigServiceMock("localhost", 9410)).setTopology(newCluster.capture());
-    verify(dynamicConfigServiceMock("127.0.0.1", 9411)).setTopology(newCluster.capture());
-    verify(dynamicConfigServiceMock("127.0.0.1", 9412)).setTopology(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9411)).setTopology(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9412)).setTopology(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(3));
@@ -115,8 +115,8 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
     // capture the new topology set calls
     verify(dynamicConfigServiceMock("localhost", 9410)).setTopology(newCluster.capture());
-    verify(dynamicConfigServiceMock("127.0.0.1", 9411)).setTopology(newCluster.capture());
-    verify(dynamicConfigServiceMock("127.0.0.1", 9412)).setTopology(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9411)).setTopology(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9412)).setTopology(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(3));

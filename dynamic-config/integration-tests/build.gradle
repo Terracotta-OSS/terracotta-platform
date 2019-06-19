@@ -9,6 +9,7 @@ dependencies {
   testCompile project(':diagnostic-client')
   testCompile project(':dynamic-config-common')
   testCompile project(':dynamic-config-migration')
+  testCompile project(':dynamic-config-cli')
   testCompile project(':galvan-support-ee')
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   testCompile "org.terracotta:tcconfig-schema:$terracottaConfigVersion"

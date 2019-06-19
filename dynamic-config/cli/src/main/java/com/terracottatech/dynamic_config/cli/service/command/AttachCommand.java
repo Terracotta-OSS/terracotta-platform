@@ -30,19 +30,25 @@ public class AttachCommand extends TopologyChangeCommand {
     switch (getType()) {
 
       case NODE: {
+        logger.info(
+            "Attaching nodes {} to stripe {}...",
+            sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
+            destination.getConfiguredNodeAddress());
         Collection<InetSocketAddress> duplicates = cluster.getNodeAddresses();
         duplicates.retainAll(sources.stream().map(Node::getNodeAddress).collect(Collectors.toSet()));
         if (!duplicates.isEmpty()) {
           throw new IllegalArgumentException("Cluster already contains nodes: " + duplicates.stream().map(InetSocketAddress::toString).collect(joining(", ")) + ".");
         }
         Stripe stripe = cluster.getStripe(destination.getConfiguredNodeAddress()).get();
-        // add the source nodes to the destination stripe
         sources.forEach(stripe::attachNode);
         break;
       }
 
       case STRIPE: {
-        // add a new stripe in destination cluster containing all the source nodes
+        logger.info(
+            "Attaching a new stripe containing nodes {} to cluster {}...",
+            sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
+            destination.getConfiguredNodeAddress());
         cluster.attachStripe(new Stripe(sources));
         break;
       }

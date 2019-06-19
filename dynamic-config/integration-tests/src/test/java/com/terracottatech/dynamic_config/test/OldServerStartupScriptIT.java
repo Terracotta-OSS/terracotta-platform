@@ -94,7 +94,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   }
 
   private void startServer(String... cli) {
-    nodeProcess = NodeProcess.startTcServer(Kit.getOrCreatePath(), cli);
+    nodeProcesses.add(NodeProcess.startTcServer(Kit.getOrCreatePath(), cli));
   }
 
 }

@@ -32,7 +32,7 @@ public class DynamicConfigServiceIT extends BaseStartupIT {
 
   @Before
   public void setUp() throws Exception {
-    nodeProcess = NodeProcess.startNode(Kit.getOrCreatePath(), "--config-file", configFilePath().toString());
+    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), "--config-file", configFilePath().toString()));
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
@@ -68,8 +68,8 @@ public class DynamicConfigServiceIT extends BaseStartupIT {
           .setFailoverPriority("consistency:2")
           .setOffheapResource("main", 512, MB)
           .setOffheapResource("second", 1, GB)
-          .setDataDir("main", Paths.get("/home/terracotta/user-data/main").toAbsolutePath())
-          .setDataDir("second", Paths.get("/home/terracotta/user-data/second").toAbsolutePath())
+          .setDataDir("main", Paths.get("/home/terracotta/user-data/main"))
+          .setDataDir("second", Paths.get("/home/terracotta/user-data/second"))
       )))));
     }
   }

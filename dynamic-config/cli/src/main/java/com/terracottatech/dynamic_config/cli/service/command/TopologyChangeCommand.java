@@ -14,7 +14,10 @@ import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscover
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.Tuple2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.net.InetSocketAddress;
@@ -22,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -45,6 +49,8 @@ public abstract class TopologyChangeCommand extends Command {
 
   @Resource public NodeAddressDiscovery nodeAddressDiscovery;
   @Resource public MultiDiagnosticServiceConnectionFactory connectionFactory;
+
+  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Parameter(names = {"-t"}, description = "Type of attachment or detachment (default: node)", converter = TypeConverter.class)
   private Type type = Type.NODE;
@@ -101,6 +107,7 @@ public abstract class TopologyChangeCommand extends Command {
 
   @Override
   public final void validate() {
+    logger.debug("Validating parameter commands...");
     if (sources.isEmpty()) {
       throw new IllegalArgumentException("Missing source nodes.");
     }
@@ -113,41 +120,60 @@ public abstract class TopologyChangeCommand extends Command {
     if (sources.contains(destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
+    logger.debug("Command is valid and ready to be executed.");
   }
 
   @Override
   public final void run() {
+    logger.debug("Discovering destination cluster nodes to update by using node {}...", destination);
+
     // get all the nodes to update (which includes source node plus all the nodes on the destination cluster)
     Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discovered = nodeAddressDiscovery.discover(destination);
 
-    // replaces the destination address used by the user by the real configured one
-    InetSocketAddress destination = discovered.t1;
+    if (logger.isDebugEnabled()) {
+      logger.debug("Discovered nodes {} through {}.", discovered.t2.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", ")), discovered.t1);
+    }
 
     // create a list of addresses to connect to
     Collection<InetSocketAddress> addresses = concat(discovered.t2.stream(), sources.stream()).collect(toSet());
 
-    // create a multi-connection based on all the cluster addresses plus the one to add
+    if (logger.isDebugEnabled()) {
+      logger.debug("Connecting to nodes: {}...", addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", ")));
+    }
+
+    Cluster result;
+
+    // create a multi-connection based on all the cluster addresses
     try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(addresses)) {
 
       // get the target node / cluster
-      Target dest = connections.getDiagnosticService(destination)
+      Target dest = connections.getDiagnosticService(discovered.t1)
           .map(ds -> ds.getProxy(DynamicConfigService.class))
-          .map(dcs -> new Target(destination, dcs.getTopology()))
-          .get();
+          .map(dcs -> new Target(discovered.t1, dcs.getTopology()))
+          .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
       Collection<Node> src = sources.stream()
           .map(addr -> connections.getDiagnosticService(addr)
               .map(ds -> ds.getProxy(DynamicConfigService.class))
               .map(DynamicConfigService::getThisNode)
-              .get())
+              .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + addr)))
           .collect(toList());
 
       // build an updated topology
-      Cluster result = updateTopology(dest, src);
+      result = updateTopology(dest, src);
+
+      if (logger.isDebugEnabled()) {
+        logger.debug("Updated topology:\n{}.", Json.toPrettyJson(result));
+      }
+    }
+
+    // apply the changes only to the nodes remaining on the cluster
+    try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(result.getNodeAddresses())) {
+      logger.info("Pushing the updated topology to all the cluster nodes: {}.", result.getNodeAddresses().stream().map(InetSocketAddress::toString).collect(Collectors.joining(", ")));
 
       // push the updated topology to all the addresses
-      addresses.stream()
+      result.getNodeAddresses().stream()
           .map(endpoint -> connections.getDiagnosticService(endpoint).get())
           .map(ds -> ds.getProxy(DynamicConfigService.class))
           .forEach(dcs -> dcs.setTopology(result));

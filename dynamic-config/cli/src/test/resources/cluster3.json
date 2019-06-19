@@ -1,0 +1,27 @@
+{
+  "stripes": [
+    {
+      "nodes": [
+        {
+          "dataDirs": {
+            "cache": "/data/cache0"
+          },
+          "nodeConfigDir": "/config/node0",
+          "nodeGroupPort": 0,
+          "nodeHostname": "localhost",
+          "nodeName": "node0",
+          "nodePort": 9410,
+          "offheapResources": {
+            "foo": {
+              "quantity": 1,
+              "unit": "GB",
+              "type": "MEMORY"
+            }
+          },
+          "securitySslTls": false,
+          "securityWhitelist": false
+        }
+      ]
+    }
+  ]
+}

@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -37,15 +39,13 @@ public class BaseStartupIT {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
-  @Rule public final PortLockingRule ports = new PortLockingRule(2);
+  @Rule public final PortLockingRule ports = new PortLockingRule(4);
 
-  volatile NodeProcess nodeProcess;
+  protected final Collection<NodeProcess> nodeProcesses = new ArrayList<>(ports.getPorts().length);
 
   @After
   public void tearDown() {
-    if (nodeProcess != null) {
-      nodeProcess.close();
-    }
+    nodeProcesses.forEach(NodeProcess::close);
   }
 
   InetSocketAddress getServerAddress() {

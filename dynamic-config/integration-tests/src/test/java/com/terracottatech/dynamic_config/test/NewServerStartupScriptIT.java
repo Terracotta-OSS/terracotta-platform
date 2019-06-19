@@ -124,6 +124,6 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   private void startServer(String... cli) {
-    nodeProcess = NodeProcess.startNode(Kit.getOrCreatePath(), cli);
+    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), cli));
   }
 }
