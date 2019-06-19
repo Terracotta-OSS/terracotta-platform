@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.manager;
 
 import com.terracottatech.dynamic_config.cli.command.AttachCommand;
+import com.terracottatech.dynamic_config.cli.command.DumpTopology;
 import com.terracottatech.dynamic_config.cli.command.DetachCommand;
 import com.terracottatech.dynamic_config.cli.command.DynamicConfigCommand;
 import com.terracottatech.dynamic_config.cli.command.MainCommand;
@@ -24,7 +25,8 @@ public class CommandManager {
     this.commandMap = Stream.of(
         new MainCommand(),
         new AttachCommand(),
-        new DetachCommand()
+        new DetachCommand(),
+        new DumpTopology()
     ).collect(
         Collectors.toMap(
             DynamicConfigCommand::getName,
