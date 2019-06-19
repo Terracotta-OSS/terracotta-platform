@@ -4,17 +4,16 @@
  */
 package com.terracottatech.dynamic_config.cli;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.dynamic_config.cli.command.MainCommand;
-import com.terracottatech.dynamic_config.cli.connect.ConnectionDefaults;
-import com.terracottatech.dynamic_config.cli.connect.DynamicConfigNodeAddressDiscovery;
-import com.terracottatech.dynamic_config.cli.connect.NodeAddressDiscovery;
-import com.terracottatech.dynamic_config.cli.manager.CommandManager;
-import com.terracottatech.dynamic_config.cli.parse.CustomJCommander;
+import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
+import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
+import com.terracottatech.dynamic_config.cli.service.command.DumpTopology;
+import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
+import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
+import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +21,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
+  private static final MainCommand MAIN = new MainCommand();
 
   public static void main(String[] args) {
     ConfigTool configTool = new ConfigTool();
@@ -42,51 +42,53 @@ public class ConfigTool {
   }
 
   private void start(String[] args) {
-    CommandManager commandManager = new CommandManager();
-    MainCommand mainCommand = (MainCommand) commandManager.getCommand(MainCommand.NAME);
-    mainCommand.process(null, null, null);
+    CommandRepository commandRepository = new CommandRepository();
 
-    String connectionTimeout = mainCommand.getConnectionTimeout();
-    String requestTimeout = mainCommand.getRequestTimeout();
-    String securityRootDirectory = mainCommand.getSecurityRootDirectory();
-    int connTimeout = connectionTimeout == null ? ConnectionDefaults.DEFAULT_CONNECTION_TIMEOUT_MILLIS : Integer.parseInt(connectionTimeout);
-    int reqTimeout = requestTimeout == null ? ConnectionDefaults.DEFAULT_DIAGNOSTIC_REQUEST_TIMEOUT_MILLIS : Integer.parseInt(requestTimeout);
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", reqTimeout, MILLISECONDS, securityRootDirectory);
-    MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, connTimeout, MILLISECONDS, new ConcurrencySizing());
-    NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider, connTimeout, MILLISECONDS);
+    // register commands
+    commandRepository.addAll(
+        MAIN,
+        new AttachCommand(),
+        new DetachCommand(),
+        new DumpTopology());
 
-    JCommander jCommander = parseArguments(args, commandManager);
+    // parse command line
+    CustomJCommander jCommander = parseArguments(args, commandRepository);
 
-    // If no command is provided, process help command
-    if (jCommander.getParsedCommand() == null) {
+    // Process arguments like '-v'
+    MAIN.run();
+
+    // create services
+    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getRequestTimeout(), MILLISECONDS, MAIN.getSecurityRootDirectory());
+    MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, MAIN.getConnectionTimeout(), MILLISECONDS, new ConcurrencySizing());
+    NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider, MAIN.getConnectionTimeout(), MILLISECONDS);
+
+    // inject services
+    commandRepository.inject(diagnosticServiceProvider, connectionFactory, nodeAddressDiscovery);
+
+    jCommander.getAskedCommand().map(command -> {
+      // check for help
+      if (command.isHelp()) {
+        jCommander.printUsage();
+        return true;
+      }
+      // validate the real command
+      command.validate();
+      // run the real command
+      command.run();
+      return true;
+    }).orElseGet(() -> {
+      // If no command is provided, process help command
       jCommander.usage();
-      return;
-    }
-
-    // Otherwise, process the real command
-    try {
-      commandManager.getCommand(jCommander.getParsedCommand()).process(jCommander, nodeAddressDiscovery, connectionFactory);
-    } catch (ParameterException iax) {
-      jCommander.usage(jCommander.getParsedCommand());
-      throw iax;
-    }
+      return false;
+    });
   }
 
-  private JCommander parseArguments(String[] args, CommandManager commandManager) {
-    JCommander jCommander = new CustomJCommander(commandManager.getCommand(MainCommand.NAME), commandManager);
-    commandManager.getCommands().forEach(command -> {
-      if (!MainCommand.NAME.equals(command.getName())) {
-        jCommander.addCommand(command.getName(), command);
-      }
-    });
-
+  private CustomJCommander parseArguments(String[] args, CommandRepository commandRepository) {
+    CustomJCommander jCommander = new CustomJCommander(MAIN, commandRepository);
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {
-      String parsedCommand = jCommander.getParsedCommand();
-      if (parsedCommand != null) {
-        jCommander.usage(parsedCommand);
-      }
+      jCommander.printUsage();
       throw e;
     }
     return jCommander;
