@@ -10,7 +10,6 @@ import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.test.util.Env;
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Before;
@@ -60,10 +59,10 @@ public class DynamicConfigServiceIT extends BaseStartupIT {
           .setNodeGroupPort(9430)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
-          .setNodeConfigDir(Env.getModulePath().resolve("build/config"))
-          .setNodeMetadataDir(Env.getModulePath().resolve("build/metadata"))
-          .setNodeLogDir(Env.getModulePath().resolve("build/logs"))
-          .setNodeBackupDir(Env.getModulePath().resolve("build/backup"))
+          .setNodeConfigDir(Paths.get("build/config"))
+          .setNodeMetadataDir(Paths.get("build/metadata"))
+          .setNodeLogDir(Paths.get("build/logs"))
+          .setNodeBackupDir(Paths.get("build/backup"))
           .setClientReconnectWindow(100, SECONDS)
           .setClientLeaseDuration(50, SECONDS)
           .setFailoverPriority("consistency:2")
