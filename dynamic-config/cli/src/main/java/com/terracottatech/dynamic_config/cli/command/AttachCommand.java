@@ -6,8 +6,6 @@ package com.terracottatech.dynamic_config.cli.command;
 
 
 import com.beust.jcommander.Parameters;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.dynamic_config.cli.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -23,11 +21,6 @@ import static java.util.stream.Collectors.joining;
  */
 @Parameters(commandDescription = "Attach a node to an existing stripe or attach a node to a new stripe")
 public class AttachCommand extends TopologyChangeCommand {
-
-  public AttachCommand(NodeAddressDiscovery nodeAddressDiscovery, MultiDiagnosticServiceConnectionFactory connectionFactory) {
-    super(nodeAddressDiscovery, connectionFactory);
-  }
-
   @Override
   public String getName() {
     return "attach";

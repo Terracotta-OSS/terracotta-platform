@@ -61,7 +61,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Override
   protected AttachCommand newCommand() {
-    return new AttachCommand(nodeAddressDiscovery, connectionFactory);
+    return new AttachCommand();
   }
 
   @Override
@@ -87,7 +87,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
         .setType(TopologyChangeCommand.Type.NODE)
         .setDestination("127.0.0.1", 9410)
         .setSources(createUnresolved("127.0.0.1", 9411), createUnresolved("127.0.0.1", 9412))
-        .run();
+        .process(jCommander, nodeAddressDiscovery, connectionFactory);
 
     // capture the new topology set calls
     verify(dynamicConfigServiceMock("localhost", 9410)).setTopology(newCluster.capture());
@@ -111,7 +111,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
         .setType(TopologyChangeCommand.Type.STRIPE)
         .setDestination("127.0.0.1", 9410)
         .setSources(createUnresolved("127.0.0.1", 9411), createUnresolved("127.0.0.1", 9412))
-        .run();
+        .process(jCommander, nodeAddressDiscovery, connectionFactory);
 
     // capture the new topology set calls
     verify(dynamicConfigServiceMock("localhost", 9410)).setTopology(newCluster.capture());

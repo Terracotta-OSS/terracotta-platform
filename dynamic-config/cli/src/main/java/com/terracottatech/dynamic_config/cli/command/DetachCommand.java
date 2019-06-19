@@ -6,8 +6,6 @@ package com.terracottatech.dynamic_config.cli.command;
 
 
 import com.beust.jcommander.Parameters;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.dynamic_config.cli.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 
@@ -18,11 +16,6 @@ import java.util.Collection;
  */
 @Parameters(commandDescription = "Detach a node from an existing stripe or detach a stripe from a cluster")
 public class DetachCommand extends TopologyChangeCommand {
-
-  public DetachCommand(NodeAddressDiscovery nodeAddressDiscovery, MultiDiagnosticServiceConnectionFactory connectionFactory) {
-    super(nodeAddressDiscovery, connectionFactory);
-  }
-
   @Override
   public String getName() {
     return "detach";

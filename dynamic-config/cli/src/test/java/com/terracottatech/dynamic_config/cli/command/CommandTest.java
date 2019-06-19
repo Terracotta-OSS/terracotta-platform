@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.command;
 
+import com.beust.jcommander.JCommander;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
@@ -30,9 +31,10 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class CommandTest<C extends DynamicConfigCommand> {
 
-  protected NodeAddressDiscovery nodeAddressDiscovery;
-  protected DiagnosticServiceProvider diagnosticServiceProvider;
-  protected MultiDiagnosticServiceConnectionFactory connectionFactory;
+  NodeAddressDiscovery nodeAddressDiscovery;
+  DiagnosticServiceProvider diagnosticServiceProvider;
+  MultiDiagnosticServiceConnectionFactory connectionFactory;
+  JCommander jCommander;
 
   private final Map<InetSocketAddress, DiagnosticService> diagnosticServices = new HashMap<>();
   private final Map<InetSocketAddress, DynamicConfigService> dynamicConfigServices = new HashMap<>();
@@ -53,6 +55,7 @@ public abstract class CommandTest<C extends DynamicConfigCommand> {
     };
     nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider, 5, TimeUnit.SECONDS);
     connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, 5, TimeUnit.SECONDS, new ConcurrencySizing());
+    jCommander = mock(JCommander.class);
   }
 
   DiagnosticService diagnosticServiceMock(InetSocketAddress address) {

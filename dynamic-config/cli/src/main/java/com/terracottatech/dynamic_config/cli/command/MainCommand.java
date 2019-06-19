@@ -8,7 +8,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.dynamic_config.cli.connect.NodeAddressDiscovery;
 import org.slf4j.LoggerFactory;
 
 public class MainCommand extends AbstractCommand {
@@ -32,7 +35,7 @@ public class MainCommand extends AbstractCommand {
   }
 
   @Override
-  public void run() {
+  public void process(JCommander jCommander, NodeAddressDiscovery nodeAddressDiscovery, MultiDiagnosticServiceConnectionFactory connectionFactory) {
     if (verbose) {
       Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
       rootLogger.setLevel(Level.DEBUG);
@@ -54,5 +57,17 @@ public class MainCommand extends AbstractCommand {
   @Override
   public void validate() {
     // Do nothing
+  }
+
+  public String getRequestTimeout() {
+    return requestTimeout;
+  }
+
+  public String getConnectionTimeout() {
+    return connectionTimeout;
+  }
+
+  public String getSecurityRootDirectory() {
+    return securityRootDirectory;
   }
 }

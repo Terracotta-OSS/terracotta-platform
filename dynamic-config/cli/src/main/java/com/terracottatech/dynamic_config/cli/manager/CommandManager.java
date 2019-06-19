@@ -4,12 +4,10 @@
  */
 package com.terracottatech.dynamic_config.cli.manager;
 
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.command.AttachCommand;
 import com.terracottatech.dynamic_config.cli.command.DetachCommand;
 import com.terracottatech.dynamic_config.cli.command.DynamicConfigCommand;
 import com.terracottatech.dynamic_config.cli.command.MainCommand;
-import com.terracottatech.dynamic_config.cli.connect.NodeAddressDiscovery;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -22,11 +20,11 @@ import java.util.stream.Stream;
 public class CommandManager {
   private final Map<String, DynamicConfigCommand> commandMap;
 
-  public CommandManager(NodeAddressDiscovery nodeAddressDiscovery, MultiDiagnosticServiceConnectionFactory connectionFactory) {
+  public CommandManager() {
     this.commandMap = Stream.of(
         new MainCommand(),
-        new AttachCommand(nodeAddressDiscovery, connectionFactory),
-        new DetachCommand(nodeAddressDiscovery, connectionFactory)
+        new AttachCommand(),
+        new DetachCommand()
     ).collect(
         Collectors.toMap(
             DynamicConfigCommand::getName,

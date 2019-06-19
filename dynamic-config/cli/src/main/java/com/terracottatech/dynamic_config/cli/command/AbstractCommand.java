@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.cli.command;
 
 
 import com.beust.jcommander.IStringConverter;
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.EnumConverter;
 import com.terracottatech.utilities.InetSocketAddressConvertor;
@@ -20,15 +21,20 @@ public abstract class AbstractCommand implements DynamicConfigCommand {
   @Parameter(names = {"-h", "--help"}, description = "Help", help = true)
   public boolean help;
 
+  boolean processHelp(boolean help, JCommander jCommander) {
+    if (help) {
+      jCommander.usage(getName());
+      return true;
+    }
+    return false;
+  }
+
   // JCommander converters and validators
 
   public static class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
-
-    private static final int DEFAULT_PORT = 9410;
-
     @Override
     public InetSocketAddress convert(String value) {
-      return InetSocketAddressConvertor.getInetSocketAddress(value, DEFAULT_PORT);
+      return InetSocketAddressConvertor.getInetSocketAddress(value);
     }
   }
 

@@ -15,7 +15,7 @@ import static org.junit.Assert.fail;
 public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   @Override
   protected DetachCommand newCommand() {
-    return new DetachCommand(nodeAddressDiscovery, connectionFactory);
+    return new DetachCommand();
   }
 
   @Test
