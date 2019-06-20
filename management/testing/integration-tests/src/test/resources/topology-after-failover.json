@@ -484,6 +484,7 @@
       "clientId": "0@127.0.0.1:FailoverIT:<uuid>",
       "hostName": "<hostname>",
       "tags": [],
+      "version": "<version>",
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
@@ -514,6 +515,7 @@
         "caches",
         "pet-clinic"
       ],
+      "version": "<version>",
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
@@ -709,6 +711,7 @@
         "caches",
         "pet-clinic"
       ],
+      "version": "<version>",
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
