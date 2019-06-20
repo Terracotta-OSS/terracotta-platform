@@ -586,6 +586,7 @@
       "clientId": "0@127.0.0.1:StripeNamedIT:<uuid>",
       "hostName": "<hostname>",
       "tags": [],
+      "version": "<version>",
       "connections": [
         {
           "id": "<uuid>:MY_SUPER_STRIPE:testServer0:127.0.0.1:0",
@@ -613,6 +614,7 @@
       "clientId": "0@127.0.0.1:StripeNamedIT:<uuid>",
       "hostName": "<hostname>",
       "tags": [],
+      "version": "<version>",
       "connections": [
         {
           "id": "<uuid>:MY_SUPER_STRIPE:testServer0:127.0.0.1:0",
@@ -643,6 +645,7 @@
         "caches",
         "pet-clinic"
       ],
+      "version": "<version>",
       "connections": [
         {
           "id": "<uuid>:MY_SUPER_STRIPE:testServer0:127.0.0.1:0",
@@ -838,6 +841,7 @@
         "caches",
         "pet-clinic"
       ],
+      "version": "<version>",
       "connections": [
         {
           "id": "<uuid>:MY_SUPER_STRIPE:testServer0:127.0.0.1:0",
