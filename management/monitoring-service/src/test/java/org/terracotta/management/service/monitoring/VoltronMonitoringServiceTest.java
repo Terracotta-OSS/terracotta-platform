@@ -137,7 +137,7 @@ public class VoltronMonitoringServiceTest {
     activePlatformListener.addNode(active, PLATFORM_PATH, CLIENTS_ROOT_NAME, null);
 
     // simulate a client connection
-    activePlatformListener.addNode(active, CLIENTS_PATH, "client-1", new PlatformConnectedClient("uuid-1", "name", InetAddress.getByName("localhost"), 1234, InetAddress.getByName("localhost"), 5678, 111));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-1", new PlatformConnectedClient("uuid-1", "name", InetAddress.getByName("localhost"), 1234, InetAddress.getByName("localhost"), 5678, 111, "1.2.0"));
 
     // simulate an entity creation
     activePlatformListener.addNode(active, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, true));
@@ -177,7 +177,7 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_add_new_client() throws Exception {
-    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222, "1.2.0"));
     assertTopologyEquals("cluster-2.json");
 
     List<Message> messages = messages();
@@ -389,7 +389,7 @@ public class VoltronMonitoringServiceTest {
   public void test_management_call() throws Exception {
     activePlatformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1")));
 
-    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222, "1.2.0"));
     activePlatformListener.addNode(active, FETCHED_PATH, "fetch-2-1", new PlatformClientFetchedEntity("client-2", "entity-1", new FakeDesc("2-1")));
 
     clientMonitoringService.exposeManagementRegistry(

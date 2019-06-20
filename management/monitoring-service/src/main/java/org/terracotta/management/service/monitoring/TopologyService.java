@@ -43,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -249,6 +250,17 @@ class TopologyService implements PlatformListener {
 
           Client client = Client.create(clientIdentifier)
               .setHostName(platformConnectedClient.remoteAddress.getHostName());
+
+          try {
+            Field f = platformConnectedClient.getClass().getDeclaredField("version");
+            f.setAccessible(true);
+            Object versionObj = f.get(platformConnectedClient);
+            if (versionObj != null) {
+              client.setVersion(versionObj.toString());
+            }
+          } catch (NoSuchFieldException | IllegalAccessException e) {
+            //
+          }
 
           cluster.addClient(client);
 
@@ -526,7 +538,7 @@ class TopologyService implements PlatformListener {
     return Objects.requireNonNull(currentActive);
   }
 
-  private boolean isCurrentServerActive() {
+  public boolean isCurrentServerActive() {
     return isServerActive(getServerName());
   }
 
