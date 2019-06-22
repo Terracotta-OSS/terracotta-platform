@@ -120,7 +120,7 @@ public abstract class TopologyChangeCommand extends Command {
     if (sources.contains(destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
-    logger.debug("Command is valid and ready to be executed.");
+    logger.debug("Command validation successful.");
   }
 
   @Override
@@ -129,16 +129,14 @@ public abstract class TopologyChangeCommand extends Command {
 
     // get all the nodes to update (which includes source node plus all the nodes on the destination cluster)
     Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discovered = nodeAddressDiscovery.discover(destination);
-
     if (logger.isDebugEnabled()) {
-      logger.debug("Discovered nodes {} through {}.", discovered.t2.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", ")), discovered.t1);
+      logger.debug("Discovered nodes {} through {}.", nodeAddresses(discovered.t2), discovered.t1);
     }
 
     // create a list of addresses to connect to
     Collection<InetSocketAddress> addresses = concat(discovered.t2.stream(), sources.stream()).collect(toSet());
-
     if (logger.isDebugEnabled()) {
-      logger.debug("Connecting to nodes: {}...", addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", ")));
+      logger.debug("Connecting to nodes: {}...", nodeAddresses(addresses));
     }
 
     Cluster result;
@@ -170,7 +168,7 @@ public abstract class TopologyChangeCommand extends Command {
 
     // apply the changes only to the nodes remaining on the cluster
     try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(result.getNodeAddresses())) {
-      logger.info("Pushing the updated topology to all the cluster nodes: {}.", result.getNodeAddresses().stream().map(InetSocketAddress::toString).collect(Collectors.joining(", ")));
+      logger.info("Pushing the updated topology to all the cluster nodes: {}.", nodeAddresses(result.getNodeAddresses()));
 
       // push the updated topology to all the addresses
       result.getNodeAddresses().stream()
@@ -178,9 +176,14 @@ public abstract class TopologyChangeCommand extends Command {
           .map(ds -> ds.getProxy(DynamicConfigService.class))
           .forEach(dcs -> dcs.setTopology(result));
     }
+    logger.info("Command successful!\n");
   }
 
   protected abstract Cluster updateTopology(Target destination, Collection<Node> sources);
+
+  private String nodeAddresses(Collection<InetSocketAddress> addresses) {
+    return addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", "));
+  }
 
   static class Target {
 

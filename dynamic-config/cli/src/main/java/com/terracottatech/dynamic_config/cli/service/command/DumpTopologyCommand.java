@@ -28,19 +28,19 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 
 @Parameters(commandNames = "dump-topology", commandDescription = "Dump the cluster topology")
-@Usage("dump-topology -d HOST[:PORT] -o output.json")
-public class DumpTopology extends Command {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DumpTopology.class);
+@Usage("dump-topology -s HOST[:PORT] -o OUTPUT_FILE")
+public class DumpTopologyCommand extends Command {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DumpTopologyCommand.class);
 
-  @Parameter(required = true, names = {"-d"}, description = "Destination node", converter = InetSocketAddressConverter.class)
+  @Parameter(required = true, names = {"-s"}, description = "Node to connect to for topology information", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-o"}, description = "Destination node", converter = PathConverter.class)
-  private Path output;
+  @Parameter(names = {"-o"}, description = "Path of file topology information should be saved to", converter = PathConverter.class)
+  private Path outputPath;
 
   @Resource public MultiDiagnosticServiceConnectionFactory connectionFactory;
 
-  public DumpTopology setNode(InetSocketAddress node) {
+  public DumpTopologyCommand setNode(InetSocketAddress node) {
     this.node = node;
     return this;
   }
@@ -48,7 +48,7 @@ public class DumpTopology extends Command {
   @Override
   public void validate() {
     if (node == null) {
-      throw new IllegalArgumentException("Missing destination node.");
+      throw new IllegalArgumentException("Missing node.");
     }
   }
 
@@ -56,15 +56,17 @@ public class DumpTopology extends Command {
   public final void run() {
     try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(Collections.singletonList(node))) {
       Cluster topology = connections.getDiagnosticService(node).get().getProxy(DynamicConfigService.class).getTopology();
-      if (output == null) {
+      if (outputPath == null) {
         LOGGER.info("Topology from '{}':\n{}", node, Json.toPrettyJson(topology));
       } else {
         try {
-          Files.write(output, Json.toPrettyJson(topology).getBytes(StandardCharsets.UTF_8), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+          Files.write(outputPath, Json.toPrettyJson(topology).getBytes(StandardCharsets.UTF_8), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+          LOGGER.info("Output saved to '{}'\n", outputPath);
         } catch (IOException e) {
           throw new UncheckedIOException(e);
         }
       }
+      LOGGER.info("Command successful!\n");
     }
   }
 }

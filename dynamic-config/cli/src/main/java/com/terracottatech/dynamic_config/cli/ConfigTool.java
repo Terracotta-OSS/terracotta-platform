@@ -10,7 +10,7 @@ import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
-import com.terracottatech.dynamic_config.cli.service.command.DumpTopology;
+import com.terracottatech.dynamic_config.cli.service.command.DumpTopologyCommand;
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
@@ -49,7 +49,8 @@ public class ConfigTool {
         MAIN,
         new AttachCommand(),
         new DetachCommand(),
-        new DumpTopology());
+        new DumpTopologyCommand()
+    );
 
     // parse command line
     CustomJCommander jCommander = parseArguments(args, commandRepository);

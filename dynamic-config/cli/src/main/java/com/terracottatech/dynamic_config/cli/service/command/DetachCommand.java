@@ -29,18 +29,20 @@ public class DetachCommand extends TopologyChangeCommand {
 
       case NODE: {
         logger.info(
-            "Detaching nodes {} from stripe {}...",
+            "Detaching nodes {} from stripe {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress());
+            destination.getConfiguredNodeAddress()
+        );
         sources.stream().map(Node::getNodeAddress).forEach(cluster::detachNode);
         break;
       }
 
       case STRIPE: {
         logger.info(
-            "Detaching stripes containing nodes {} from cluster {}...",
+            "Detaching stripes containing nodes {} from cluster {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress());
+            destination.getConfiguredNodeAddress()
+        );
         sources.stream().map(Node::getNodeAddress).forEach(address -> cluster.getStripe(address).ifPresent(cluster::detachStripe));
         break;
       }

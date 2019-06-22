@@ -31,9 +31,10 @@ public class AttachCommand extends TopologyChangeCommand {
 
       case NODE: {
         logger.info(
-            "Attaching nodes {} to stripe {}...",
+            "Attaching nodes {} to stripe {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress());
+            destination.getConfiguredNodeAddress()
+        );
         Collection<InetSocketAddress> duplicates = cluster.getNodeAddresses();
         duplicates.retainAll(sources.stream().map(Node::getNodeAddress).collect(Collectors.toSet()));
         if (!duplicates.isEmpty()) {
@@ -46,9 +47,10 @@ public class AttachCommand extends TopologyChangeCommand {
 
       case STRIPE: {
         logger.info(
-            "Attaching a new stripe containing nodes {} to cluster {}...",
+            "Attaching a new stripe containing nodes {} to cluster {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress());
+            destination.getConfiguredNodeAddress()
+        );
         cluster.attachStripe(new Stripe(sources));
         break;
       }

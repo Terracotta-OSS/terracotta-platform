@@ -52,35 +52,35 @@ public class AttachDetachCommandIT extends BaseStartupIT {
   public void test() {
     int[] ports = this.ports.getPorts();
 
-    ConfigTool.main("dump-topology", "-d", "127.0.0.1:" + ports[0], "-o", "build/output.json");
+    ConfigTool.main("dump-topology", "-s", "127.0.0.1:" + ports[0], "-o", "build/output.json");
     Cluster cluster = Json.parse(Paths.get("build/output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
 
     // add a node
     ConfigTool.main("attach", "-d", "127.0.0.1:" + ports[0], "-s", "127.0.0.1:" + ports[1]);
-    ConfigTool.main("dump-topology", "-d", "127.0.0.1:" + ports[0], "-o", "build/output.json");
+    ConfigTool.main("dump-topology", "-s", "127.0.0.1:" + ports[0], "-o", "build/output.json");
     cluster = Json.parse(Paths.get("build/output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // add a stripe
     ConfigTool.main("attach", "-t", "stripe", "-d", "127.0.0.1:" + ports[0], "-s", "127.0.0.1:" + ports[2], "-s", "127.0.0.1:" + ports[3]);
-    ConfigTool.main("dump-topology", "-d", "127.0.0.1:" + ports[0], "-o", "build/output.json");
+    ConfigTool.main("dump-topology", "-s", "127.0.0.1:" + ports[0], "-o", "build/output.json");
     cluster = Json.parse(Paths.get("build/output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getNodeAddresses(), hasSize(4));
 
     // remove the previously added stripe
     ConfigTool.main("detach", "-t", "stripe", "-d", "127.0.0.1:" + ports[0], "-s", "127.0.0.1:" + ports[2]);
-    ConfigTool.main("dump-topology", "-d", "127.0.0.1:" + ports[0], "-o", "build/output.json");
+    ConfigTool.main("dump-topology", "-s", "127.0.0.1:" + ports[0], "-o", "build/output.json");
     cluster = Json.parse(Paths.get("build/output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // remove the previously added node
     ConfigTool.main("detach", "-d", "127.0.0.1:" + ports[0], "-s", "127.0.0.1:" + ports[1]);
-    ConfigTool.main("dump-topology", "-d", "127.0.0.1:" + ports[0], "-o", "build/output.json");
+    ConfigTool.main("dump-topology", "-s", "127.0.0.1:" + ports[0], "-o", "build/output.json");
     cluster = Json.parse(Paths.get("build/output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
