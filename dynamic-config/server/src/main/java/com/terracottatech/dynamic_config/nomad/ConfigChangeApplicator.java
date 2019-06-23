@@ -12,11 +12,12 @@ import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.PotentialApplicationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.terracottatech.nomad.server.PotentialApplicationResult.allow;
+import static com.terracottatech.nomad.server.PotentialApplicationResult.reject;
 
 public class ConfigChangeApplicator implements ChangeApplicator {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeApplicator.class);
@@ -28,37 +29,20 @@ public class ConfigChangeApplicator implements ChangeApplicator {
   }
 
   @Override
-  public PotentialApplicationResult canApply(String existing, NomadChange change) {
-    Document config;
-    try {
-      config = XmlUtils.parse(existing);
-    } catch (Exception e) {
-      LOGGER.error("Failed to parse existing configuration: " + existing, e);
-      return PotentialApplicationResult.reject("Internal error: parsing existing config");
-    }
-
+  public PotentialApplicationResult canApply(String baseConfig, NomadChange change) {
     // supports multiple changes
     List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
 
-    Element configElement = config.getDocumentElement();
     for (NomadChange c : changes) {
       try {
-        commandProcessor.canApply(configElement, c);
+        baseConfig = commandProcessor.getConfigWithChange(baseConfig, c);
       } catch (NomadException e) {
         LOGGER.warn(e.getMessage(), e);
-        return PotentialApplicationResult.reject(e.getMessage());
+        return reject(e.getMessage());
       }
     }
 
-    String newConfig;
-    try {
-      newConfig = XmlUtils.render(config);
-    } catch (Exception e) {
-      LOGGER.error("Failed to render configuration. Existing: " + existing + " change: " + change, e);
-      return PotentialApplicationResult.reject("Internal error: rendering config");
-    }
-
-    return PotentialApplicationResult.allow(newConfig);
+    return allow(baseConfig);
   }
 
   @Override

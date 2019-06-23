@@ -25,9 +25,9 @@ public class RoutingNomadChangeProcessor implements NomadChangeProcessor<NomadCh
   }
 
   @Override
-  public void canApply(Element existing, NomadChange change) throws NomadException {
+  public String getConfigWithChange(String baseConfig, NomadChange change) throws NomadException {
     NomadChangeProcessor<NomadChange> processor = getProcessor(change);
-    processor.canApply(existing, change);
+    return processor.getConfigWithChange(baseConfig, change);
   }
 
   @Override

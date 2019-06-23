@@ -30,48 +30,14 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
   }
 
   @Override
-  public void canApply(Element root, NomadChange change) throws NomadException {
-    List<Element> applicableElements = getClusterElements(root, change);
-
-    if (applicableToThisServer(change)) {
-      applicableElements.add(root);
-    }
-
-    for (Element applicableElement : applicableElements) {
-      underlying.canApply(applicableElement, change);
-    }
+  public String getConfigWithChange(String baseConfig, NomadChange change) throws NomadException {
+    return underlying.getConfigWithChange(baseConfig, change);
   }
 
   @Override
   public void apply(NomadChange change) throws NomadException {
     if (applicableToThisServer(change)) {
       underlying.apply(change);
-    }
-  }
-
-  private List<Element> getClusterElements(Element root, NomadChange change) {
-    if (!(change instanceof FilteredNomadChange)) {
-      return Collections.emptyList();
-    }
-    Applicability applicability = ((FilteredNomadChange) change).getApplicability();
-    try {
-      switch (applicability.getType()) {
-        case CLUSTER:
-          return getElements(root, "/tc-config/plugins/config/cluster/stripe/node/server-config/tc-config");
-        case STRIPE:
-          return getElements(root,
-              "/tc-config/plugins/config/cluster/stripe[name[text() = '%s']]/node/server-config/tc-config",
-              applicability.getStripeName());
-        case NODE:
-          return getElements(root,
-              "/tc-config/plugins/config/cluster/stripe[name[text() = '%s']]/node[name[text() = '%s']]/server-config/tc-config",
-              applicability.getStripeName(),
-              applicability.getNodeName());
-        default:
-          throw new AssertionError("Unknown applicability: " + applicability);
-      }
-    } catch (XPathExpressionException e) {
-      throw new AssertionError("Bad XPath expression with applicability: " + applicability, e);
     }
   }
 

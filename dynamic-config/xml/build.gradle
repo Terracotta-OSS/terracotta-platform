@@ -4,20 +4,20 @@
  */
 
 dependencies {
-  compile project(':dynamic-config-server')
+  compile project(':dynamic-config-common')
+  compile project(':data-root-config')
+  compile project(':backup-and-restore-server')
+  compile project(':cluster-topology')
+  compile project(':security-platform-server')
   compile project(':utilities')
-  compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
-  compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
 
+  compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
+  compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   compileOnly "org.terracotta:offheap-resource:$terracottaPlatformVersion"
   compileOnly "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
-  compileOnly project(':data-root-config')
-  compileOnly project(':backup-and-restore-server')
-  compileOnly project(':cluster-topology')
-  compileOnly project(':security-platform-server')
   
-
+  testCompile project(':dynamic-config-server')
   testCompile 'org.xmlunit:xmlunit-core:2.6.0', 'org.xmlunit:xmlunit-matchers:2.6.0'
 }
 
-apply plugin: TcDistribute
+apply plugin: TcDeploy

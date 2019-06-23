@@ -28,48 +28,20 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   }
 
   @Override
-  public void canApply(Element existing, SettingNomadChange change) throws NomadException {
+  public String getConfigWithChange(String baseConfig, SettingNomadChange change) throws NomadException {
     //TODO [DYNAMIC-CONFIG]: TRACK 2: DYNAMIC CONFIG CHANGE:
     // * parse the "name" property as defined in the design doc to determine which setting to change
     // * use common code from config / parameter parser
 
     // at the moment, for the offheap example, name == "offheap-resources.<resource-name>" and value is "<quantity><unit>"
 
-    String name = change.getName().substring(18);
-    Measure<MemoryUnit> newMeasure = Measure.parse(change.getValue(), MemoryUnit.class);
-
-    try {
-      Element element = XmlUtils.getElement(existing, "./plugins/config/offheap-resources/resource[@name='%s']", name);
-
-      if (element != null) {
-        element.setAttribute("unit", newMeasure.getUnit().name());
-        element.setTextContent(Long.toString(newMeasure.getQuantity()));
-      }
-    } catch (XPathExpressionException e) {
-      throw new AssertionError("Bad XPath expression with offheap name: " + name, e);
-    }
-
-    Measure<MemoryUnit> existingSize;
-    try {
-      existingSize = configController.getOffheapSize(name);
-    } catch (ConfigControllerException e) {
-      throw new NomadException(e);
-    }
-
-    if (newMeasure.compareTo(existingSize) < 0) {
-      throw new NomadException("New offheap size: " + newMeasure + " is smaller than existing one: " + existingSize);
-    }
+    throw new UnsupportedOperationException("Implement me");
   }
 
   @Override
   public void apply(SettingNomadChange change) throws NomadException {
-    String name = change.getName().substring(18);
-    Measure<MemoryUnit> newMeasure = Measure.parse(change.getValue(), MemoryUnit.class);
+    //TODO [DYNAMIC-CONFIG]: TRACK 2: DYNAMIC CONFIG CHANGE
 
-    try {
-      configController.setOffheapSize(name, newMeasure);
-    } catch (ConfigControllerException e) {
-      throw new NomadException(e);
-    }
+    throw new UnsupportedOperationException("Implement me");
   }
 }

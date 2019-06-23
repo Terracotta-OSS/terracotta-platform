@@ -10,6 +10,7 @@ import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.nomad.exception.NomadServerManagerStateException;
 import com.terracottatech.dynamic_config.nomad.processor.ApplicabilityNomadChangeProcessor;
+import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
@@ -60,7 +61,12 @@ public class NomadServerManagerImpl implements NomadServerManager {
     ChangeApplicator changeApplicator = new ConfigChangeApplicator(
         new ApplicabilityNomadChangeProcessor(
             configController,
-            new RoutingNomadChangeProcessor().register(SettingNomadChange.class, new SettingNomadChangeProcessor(configController))
+            new RoutingNomadChangeProcessor()
+                .register(
+                    SettingNomadChange.class, new SettingNomadChangeProcessor(configController)
+                ).register(
+                    ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController)
+                )
         )
     );
 

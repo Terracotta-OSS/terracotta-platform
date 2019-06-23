@@ -7,6 +7,7 @@ dependencies {
   compile project(':dynamic-config-common')
   compile project(':diagnostic-server')
   compile project(':sanskrit')
+  compile project(':dynamic-config-xml')
 
   compile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
   compile "com.beust:jcommander:$jcommanderVersion"
@@ -16,10 +17,11 @@ dependencies {
   compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
 
+  testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile("org.mockito:mockito-core:$mockitoVersion") {
     exclude group: 'net.bytebuddy'
   }
 }
 
-apply plugin: TcDistribute
+apply plugin: TcDeploy

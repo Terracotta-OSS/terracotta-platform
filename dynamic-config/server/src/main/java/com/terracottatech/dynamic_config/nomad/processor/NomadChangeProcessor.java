@@ -9,7 +9,8 @@ import com.terracottatech.nomad.server.NomadException;
 import org.w3c.dom.Element;
 
 public interface NomadChangeProcessor<T extends NomadChange> {
-  void canApply(Element existing, T change) throws NomadException;
+  // TODO: any better name for this api?
+  String getConfigWithChange(String baseConfig, T change) throws NomadException;
 
   void apply(T change) throws NomadException;
 }
