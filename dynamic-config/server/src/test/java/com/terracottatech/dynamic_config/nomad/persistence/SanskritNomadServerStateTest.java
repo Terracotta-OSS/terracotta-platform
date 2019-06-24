@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.nomad.persistence;
 
 import com.terracottatech.dynamic_config.nomad.Applicability;
+import com.terracottatech.dynamic_config.nomad.NomadJson;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeRequest;
@@ -13,7 +14,6 @@ import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritObject;
 import com.terracottatech.persistence.sanskrit.SanskritObjectImpl;
 import com.terracottatech.persistence.sanskrit.change.SanskritChange;
-import com.terracottatech.utilities.Json;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +51,7 @@ public class SanskritNomadServerStateTest {
 
   @Before
   public void before() {
-    when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(Json.copyObjectMapper()));
+    when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(NomadJson.buildObjectMapper()));
     state = new SanskritNomadServerState(sanskrit, configStorage);
   }
 
