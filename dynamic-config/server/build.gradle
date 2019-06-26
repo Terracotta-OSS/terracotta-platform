@@ -8,6 +8,10 @@ dependencies {
   compile project(':diagnostic-server')
   compile project(':sanskrit')
   compile project(':dynamic-config-xml')
+  compile project(':dynamic-config-change')
+
+  compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"
 
   compile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
   compile "com.beust:jcommander:$jcommanderVersion"

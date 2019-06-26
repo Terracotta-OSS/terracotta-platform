@@ -9,13 +9,6 @@ import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.dynamic_config.nomad.FilteredNomadChange;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.NomadException;
-import org.w3c.dom.Element;
-
-import javax.xml.xpath.XPathExpressionException;
-import java.util.Collections;
-import java.util.List;
-
-import static com.terracottatech.dynamic_config.nomad.XmlUtils.getElements;
 
 /**
  * Filters Nomad changes of type {@link FilteredNomadChange} based on their applicability
@@ -35,9 +28,9 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
   }
 
   @Override
-  public void apply(NomadChange change) throws NomadException {
+  public void applyChange(NomadChange change) throws NomadException {
     if (applicableToThisServer(change)) {
-      underlying.apply(change);
+      underlying.applyChange(change);
     }
   }
 

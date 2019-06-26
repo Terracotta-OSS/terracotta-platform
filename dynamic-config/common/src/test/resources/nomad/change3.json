@@ -6,7 +6,8 @@
     "type": "NODE"
   },
   "cmd": "SET",
-  "name": "offheap-resources.foo",
+  "configType": "OFFHEAP",
+  "name": "foo",
   "value": "2GB",
   "summary": "set offheap-resources.foo=2GB"
 }

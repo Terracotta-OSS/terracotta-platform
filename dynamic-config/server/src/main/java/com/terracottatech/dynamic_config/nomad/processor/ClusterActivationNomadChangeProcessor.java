@@ -37,7 +37,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
   }
 
   @Override
-  public void apply(ClusterActivationNomadChange change) {
+  public void applyChange(ClusterActivationNomadChange change) {
     // no-op
   }
 }

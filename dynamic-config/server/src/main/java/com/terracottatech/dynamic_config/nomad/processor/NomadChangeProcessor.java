@@ -4,13 +4,16 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
+import com.terracottatech.dynamic_config.nomad.Applicability;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.NomadException;
 import org.w3c.dom.Element;
+
+import java.util.List;
 
 public interface NomadChangeProcessor<T extends NomadChange> {
   // TODO: any better name for this api?
   String getConfigWithChange(String baseConfig, T change) throws NomadException;
 
-  void apply(T change) throws NomadException;
+  void applyChange(T change) throws NomadException;
 }

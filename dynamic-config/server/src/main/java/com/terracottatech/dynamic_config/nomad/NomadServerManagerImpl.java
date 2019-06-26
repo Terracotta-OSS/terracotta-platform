@@ -63,7 +63,7 @@ public class NomadServerManagerImpl implements NomadServerManager {
             configController,
             new RoutingNomadChangeProcessor()
                 .register(
-                    SettingNomadChange.class, new SettingNomadChangeProcessor(configController)
+                    SettingNomadChange.class, SettingNomadChangeProcessor.get()
                 ).register(
                     ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController)
                 )

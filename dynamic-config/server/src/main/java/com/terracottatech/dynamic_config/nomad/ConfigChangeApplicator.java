@@ -51,7 +51,7 @@ public class ConfigChangeApplicator implements ChangeApplicator {
     List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
 
     for (NomadChange c : changes) {
-      commandProcessor.apply(c);
+      commandProcessor.applyChange(c);
     }
   }
 

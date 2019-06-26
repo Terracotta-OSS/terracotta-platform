@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.nomad.processor;
 
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.NomadException;
-import org.w3c.dom.Element;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,9 +30,9 @@ public class RoutingNomadChangeProcessor implements NomadChangeProcessor<NomadCh
   }
 
   @Override
-  public void apply(NomadChange change) throws NomadException {
+  public void applyChange(NomadChange change) throws NomadException {
     NomadChangeProcessor<NomadChange> processor = getProcessor(change);
-    processor.apply(change);
+    processor.applyChange(change);
   }
 
   private NomadChangeProcessor<NomadChange> getProcessor(NomadChange change) throws NomadException {

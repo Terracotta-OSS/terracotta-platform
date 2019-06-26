@@ -5,7 +5,9 @@
 package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.terracottatech.dynamic_config.ConfigChangeHandler.Type;
 
 import java.util.Objects;
 
@@ -21,16 +23,19 @@ public class SettingNomadChange extends FilteredNomadChange {
   public enum Cmd {SET, UNSET}
 
   private final Cmd cmd;
+  private final Type configType;
   private final String name;
   private final String value;
 
   @JsonCreator
   private SettingNomadChange(@JsonProperty("applicability") Applicability applicability,
                              @JsonProperty("cmd") Cmd cmd,
+                             @JsonProperty("configType") Type configType,
                              @JsonProperty("name") String name,
                              @JsonProperty("value") String value) {
     super(applicability);
     this.cmd = requireNonNull(cmd);
+    this.configType = requireNonNull(configType);
     this.name = requireNonNull(name);
     this.value = value;
   }
@@ -38,8 +43,13 @@ public class SettingNomadChange extends FilteredNomadChange {
   @Override
   public String getSummary() {
     return cmd == Cmd.SET ?
-        ("set " + name + "=" + value) :
-        ("unset " + name);
+        ("set " + configType + "." + name + "=" + value) :
+        ("unset " + configType + "." + name);
+  }
+
+  @JsonIgnore
+  public String getChange() {
+    return cmd == Cmd.SET ? name + "=" + value : name;
   }
 
   //TODO [DYNAMIC-CONFIG]: The setting name contains the value of the key defined in the APi doc. Example: offheap-resources.foo
@@ -51,6 +61,10 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   public String getValue() {
     return value;
+  }
+
+  public Type getConfigType() {
+    return configType;
   }
 
   public Cmd getCmd() {
@@ -73,12 +87,12 @@ public class SettingNomadChange extends FilteredNomadChange {
     return Objects.hash(super.hashCode(), getCmd(), getName(), getValue());
   }
 
-  public static SettingNomadChange set(Applicability applicability, String name, String value) {
-    return new SettingNomadChange(applicability, Cmd.SET, name, value);
+  public static SettingNomadChange set(Applicability applicability, Type type, String name, String value) {
+    return new SettingNomadChange(applicability, Cmd.SET, type, name, value);
   }
 
-  public static SettingNomadChange unset(Applicability applicability, String name) {
-    return new SettingNomadChange(applicability, Cmd.UNSET, name, null);
+  public static SettingNomadChange unset(Applicability applicability, Type type, String name) {
+    return new SettingNomadChange(applicability, Cmd.UNSET, type, name, null);
   }
 
 }

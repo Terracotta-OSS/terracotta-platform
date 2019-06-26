@@ -9,7 +9,8 @@
         "type": "NODE"
       },
       "cmd": "SET",
-      "name": "offheap-resources.foo",
+      "configType": "OFFHEAP",
+      "name": "foo",
       "value": "2GB",
       "summary": "set offheap-resources.foo=2GB"
     },
@@ -19,7 +20,8 @@
         "type": "CLUSTER"
       },
       "cmd": "SET",
-      "name": "offheap-resources.bar",
+      "configType": "OFFHEAP",
+      "name": "bar",
       "value": "512MB",
       "summary": "set offheap-resources.bar=512MB"
     }

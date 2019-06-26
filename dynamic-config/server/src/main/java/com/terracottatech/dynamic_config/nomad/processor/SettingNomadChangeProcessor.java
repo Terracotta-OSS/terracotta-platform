@@ -4,16 +4,18 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
-import com.terracottatech.dynamic_config.nomad.ConfigController;
-import com.terracottatech.dynamic_config.nomad.ConfigControllerException;
+import com.terracottatech.dynamic_config.ConfigChangeHandler;
+import com.terracottatech.dynamic_config.ConfigChangeHandler.Type;
+import com.terracottatech.dynamic_config.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
-import com.terracottatech.dynamic_config.nomad.XmlUtils;
 import com.terracottatech.nomad.server.NomadException;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.MemoryUnit;
-import org.w3c.dom.Element;
 
-import javax.xml.xpath.XPathExpressionException;
+import org.terracotta.entity.PlatformConfiguration;
+
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,27 +23,61 @@ import static java.util.Objects.requireNonNull;
  * Supports the processing of {@link SettingNomadChange} for dynamic configuration
  */
 public class SettingNomadChangeProcessor implements NomadChangeProcessor<SettingNomadChange> {
-  private final ConfigController configController;
+  private static final Map<Type, ConfigChangeHandler> CHANGE_HANDLERS = Collections.synchronizedMap(new EnumMap<>(Type.class));
 
-  public SettingNomadChangeProcessor(ConfigController configController) {
-    this.configController = requireNonNull(configController);
+  private static SettingNomadChangeProcessor INSTANCE = new SettingNomadChangeProcessor();
+
+  public static SettingNomadChangeProcessor get() {
+    return INSTANCE;
+  }
+
+  private SettingNomadChangeProcessor() {
+
+  }
+
+  private volatile boolean initialized;
+
+  public void setPlatformConfiguration(PlatformConfiguration platformConfiguration) {
+    initializeChangeHandlers(platformConfiguration);
+    initialized = true;
   }
 
   @Override
   public String getConfigWithChange(String baseConfig, SettingNomadChange change) throws NomadException {
-    //TODO [DYNAMIC-CONFIG]: TRACK 2: DYNAMIC CONFIG CHANGE:
-    // * parse the "name" property as defined in the design doc to determine which setting to change
-    // * use common code from config / parameter parser
-
-    // at the moment, for the offheap example, name == "offheap-resources.<resource-name>" and value is "<quantity><unit>"
-
-    throw new UnsupportedOperationException("Implement me");
+    try {
+      return getHandler(change.getConfigType()).getConfigWithChange(baseConfig, change.getChange());
+    } catch (InvalidConfigChangeException e) {
+      throw new NomadException(e);
+    }
   }
 
   @Override
-  public void apply(SettingNomadChange change) throws NomadException {
-    //TODO [DYNAMIC-CONFIG]: TRACK 2: DYNAMIC CONFIG CHANGE
+  public void applyChange(SettingNomadChange change) throws NomadException {
+    getHandler(change.getConfigType()).applyChange(change.getChange());
+  }
 
-    throw new UnsupportedOperationException("Implement me");
+  private ConfigChangeHandler getHandler(ConfigChangeHandler.Type type) throws NomadException {
+    checkInitialized();
+
+    ConfigChangeHandler configChangeHandler = CHANGE_HANDLERS.get(type);
+    if (configChangeHandler == null) {
+      throw new NomadException("Unknown ConfigChangeHandler type: " + type);
+    }
+    return configChangeHandler;
+  }
+
+  private void checkInitialized() {
+    if (!initialized) {
+      throw new RuntimeException("SettingNomadChangeProcessor is not initialized");
+    }
+  }
+
+  private void initializeChangeHandlers(PlatformConfiguration platformConfiguration) {
+    for (ConfigChangeHandler configChangeHandler : ServiceLoader.load(ConfigChangeHandler.class)) {
+      configChangeHandler.initialize(platformConfiguration);
+      if (CHANGE_HANDLERS.putIfAbsent(configChangeHandler.getType(), configChangeHandler) != null) {
+        throw new RuntimeException("Found multiple ConfigChangeHandlers of type: " + configChangeHandler.getType());
+      }
+    }
   }
 }

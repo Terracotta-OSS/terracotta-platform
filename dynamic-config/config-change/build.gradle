@@ -3,15 +3,8 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-apply plugin: TcDeploy
-
 dependencies {
-  compile project(':utilities')
-  compile project(':nomad')
-  compile project(':dynamic-config-change')
-
-  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-
-  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
-  testCompile "org.mockito:mockito-core:$mockitoVersion"
+  compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
 }
+
+apply plugin: TcDeploy
