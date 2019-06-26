@@ -18,18 +18,15 @@ package org.terracotta.management.registry;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.stats.Statistic;
 import org.terracotta.management.registry.collect.StatisticProvider;
-import org.terracotta.management.registry.collect.StatisticRegistry;
-import org.terracotta.statistics.registry.Statistic;
+import org.terracotta.management.model.stats.StatisticRegistry;
 
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
-import java.util.function.BinaryOperator;
 import java.util.function.LongSupplier;
 
 import static java.util.stream.Collectors.toList;
@@ -76,28 +73,7 @@ public class DefaultStatisticsManagementProvider<T> extends AbstractManagementPr
     if (exposedObject == null) {
       return Collections.emptyMap();
     }
-    return DefaultStatisticsManagementProvider.collect(exposedObject.getStatisticRegistry(), statisticNames, since);
-  }
-
-  public static Map<String, Statistic<? extends Serializable>> collect(StatisticRegistry registry, Collection<String> statisticNames, long since) {
-    if (statisticNames == null || statisticNames.isEmpty()) {
-      return registry.queryStatistics(since)
-          .entrySet()
-          .stream()
-          .filter(e -> !e.getValue().isEmpty())
-          .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, throwingMerger(), TreeMap::new));
-    } else {
-      return statisticNames.stream()
-          .map(name -> new AbstractMap.SimpleEntry<>(name, registry.queryStatistic(name, since)))
-          .filter(e -> e.getValue().isPresent() && !e.getValue().get().isEmpty())
-          .collect(toMap(Map.Entry::getKey, e -> e.getValue().get(), throwingMerger(), TreeMap::new));
-    }
-  }
-
-  private static <T> BinaryOperator<T> throwingMerger() {
-    return (u, v) -> {
-      throw new IllegalStateException(String.format("Duplicate key %s", u));
-    };
+    return StatisticRegistry.collect(exposedObject.getStatisticRegistry(), statisticNames, since);
   }
 
 }

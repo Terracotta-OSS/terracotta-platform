@@ -19,12 +19,11 @@ import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.DefaultStatisticsManagementProvider;
 import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
-import org.terracotta.management.registry.collect.StatisticRegistry;
-import org.terracotta.statistics.registry.Statistic;
+import org.terracotta.management.model.stats.Statistic;
+import org.terracotta.management.model.stats.StatisticRegistry;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -62,7 +61,7 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
     if (exposedObject == null) {
       return Collections.emptyMap();
     }
-    return DefaultStatisticsManagementProvider.collect(exposedObject.getStatisticRegistry(), statisticNames, since);
+    return StatisticRegistry.collect(exposedObject.getStatisticRegistry(), statisticNames, since);
   }
 
   @Override

@@ -57,7 +57,9 @@ public class LeaseMaintenanceThreadTest {
 
     verify(timeSource, timeout(3000L).times(1)).sleep(eq(2000L));
     verify(leaseMaintainer, times(1)).refreshLease();
-    
+
+    Thread.sleep(3000);
+
     timeSource.tickMillis(2000L);
 
     verify(timeSource, timeout(4000L).atLeast(2)).sleep(eq(2000L));
