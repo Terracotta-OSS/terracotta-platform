@@ -6,8 +6,8 @@ package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.utilities.Measure;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -27,6 +27,7 @@ import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 
 public class ConsoleParamsParserTest {
@@ -110,7 +111,7 @@ public class ConsoleParamsParserTest {
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName(), startsWith("node-"));
     assertThat(node.getClusterName(), is(nullValue()));
-    assertThat(node.getNodeHostname(), is("%h"));
+    assertThat(node.getNodeHostname(), is(substitute("%h")));
     assertThat(node.getNodePort(), is(9410));
     assertThat(node.getNodeGroupPort(), is(9430));
     assertThat(node.getNodeBindAddress(), is("0.0.0.0"));
@@ -118,12 +119,12 @@ public class ConsoleParamsParserTest {
     assertThat(node.getOffheapResources(), hasEntry("main", Measure.of(512L, MB)));
 
     assertThat(node.getNodeBackupDir(), is(nullValue()));
-    assertThat(node.getNodeConfigDir().toString(), is("%H" + separator + "terracotta" + separator + "config"));
-    assertThat(node.getNodeLogDir().toString(), is("%H" + separator + "terracotta" + separator + "logs"));
-    assertThat(node.getNodeMetadataDir().toString(), is("%H" + separator + "terracotta" + separator + "metadata"));
+    assertThat(node.getNodeConfigDir().toString(), is(substitute("%H" + separator + "terracotta" + separator + "repository")));
+    assertThat(node.getNodeLogDir().toString(), is(substitute("%H" + separator + "terracotta" + separator + "logs")));
+    assertThat(node.getNodeMetadataDir().toString(), is(substitute("%H" + separator + "terracotta" + separator + "metadata")));
     assertThat(node.getSecurityDir(), is(nullValue()));
     assertThat(node.getSecurityAuditLogDir(), is(nullValue()));
-    assertThat(node.getDataDirs(), hasEntry("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main")));
+    assertThat(node.getDataDirs(), hasEntry("main", Paths.get(substitute("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"))));
 
     assertFalse(node.isSecurityWhitelist());
     assertFalse(node.isSecuritySslTls());
