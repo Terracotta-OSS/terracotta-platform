@@ -4,27 +4,53 @@
  */
 package com.terracottatech.dynamic_config.repository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.CONFIG_REPO_FILENAME_REGEX;
+import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_EXT;
+import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_PREFIX;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_PREFIX;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_SUFFIX;
+import static java.util.Objects.requireNonNull;
 
 public class NodeNameExtractor {
-  public static String extractFromConfig(Path configPath) {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NodeNameExtractor.class);
+
+  public static Optional<String> extractFromConfigOptional(Path nomadRoot) {
+    Optional<String> nodeNameOptional = Optional.empty();
+    try {
+      String nodeName = extractFromConfig(nomadRoot);
+      return Optional.of(nodeName);
+    } catch (MalformedRepositoryException e) {
+      return nodeNameOptional;
+    }
+  }
+
+  public static String extractFromConfig(Path nomadRoot) {
+    Path configPath = requireNonNull(nomadRoot).resolve("config");
     try (Stream<Path> stream = Files.list(configPath)) {
       Set<String> distinctFileNames = stream.map(path -> path.getFileName().toString())
           .filter(fileName -> fileName.matches(CONFIG_REPO_FILENAME_REGEX))
           .collect(Collectors.toSet());
 
       if (distinctFileNames.isEmpty()) {
-        throw new MalformedRepositoryException("No configuration files found in: " + configPath + ". " +
-                                               "A valid configuration file follows the '" + CONFIG_REPO_FILENAME_REGEX + "' regular expression");
+        String format = FILENAME_PREFIX + ".<node-name>.<version>." + FILENAME_EXT;
+        throw new MalformedRepositoryException(
+            String.format(
+                "No configuration files found in: %s. A valid configuration file is of the format: %s",
+                configPath,
+                format
+            )
+        );
       } else {
         Set<String> nodeNames = distinctFileNames.stream().map(NodeNameExtractor::extractInternal).collect(Collectors.toSet());
         if (nodeNames.size() > 1) {

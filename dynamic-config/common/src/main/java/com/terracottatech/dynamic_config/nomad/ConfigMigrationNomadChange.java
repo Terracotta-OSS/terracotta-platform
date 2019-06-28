@@ -45,4 +45,11 @@ public class ConfigMigrationNomadChange implements NomadChange {
   public int hashCode() {
     return Objects.hash(getConfiguration());
   }
+
+  @Override
+  public String toString() {
+    return "ConfigMigrationNomadChange{" +
+        "configuration='" + configuration + '\'' +
+        '}';
+  }
 }

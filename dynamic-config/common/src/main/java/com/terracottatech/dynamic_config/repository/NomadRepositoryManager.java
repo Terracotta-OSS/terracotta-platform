@@ -13,6 +13,7 @@ import java.util.Optional;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.FULL;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
+import static java.util.Objects.requireNonNull;
 
 public class NomadRepositoryManager {
   private static final String SANSKRIT = "sanskrit";
@@ -23,7 +24,7 @@ public class NomadRepositoryManager {
   private final Path configPath;
 
   public NomadRepositoryManager(Path nomadRoot) {
-    this.nomadRoot = nomadRoot;
+    this.nomadRoot = requireNonNull(nomadRoot);
     this.sanskritPath = nomadRoot.resolve(SANSKRIT);
     this.configPath = nomadRoot.resolve(CONFIG);
   }
@@ -33,10 +34,10 @@ public class NomadRepositoryManager {
     if (repositoryDepth == NONE || repositoryDepth == ROOT_ONLY) {
       return Optional.empty();
     }
-    return Optional.of(extractNodeName());
+    return extractNodeName();
   }
 
-  public void createIfAbsent() {
+  public void createDirectories() {
     RepositoryDepth repositoryDepth = getRepositoryDepth();
     if (repositoryDepth == NONE) {
       createNomadRoot();
@@ -47,6 +48,10 @@ public class NomadRepositoryManager {
     }
   }
 
+  public Path getNomadRoot() {
+    return nomadRoot;
+  }
+
   public Path getConfigurationPath() {
     return configPath;
   }
@@ -55,8 +60,8 @@ public class NomadRepositoryManager {
     return sanskritPath;
   }
 
-  String extractNodeName() {
-    return NodeNameExtractor.extractFromConfig(configPath);
+  Optional<String> extractNodeName() {
+    return NodeNameExtractor.extractFromConfigOptional(nomadRoot);
   }
 
   RepositoryDepth getRepositoryDepth() {

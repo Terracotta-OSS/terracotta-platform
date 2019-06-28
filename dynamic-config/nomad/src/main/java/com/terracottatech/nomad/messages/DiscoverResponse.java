@@ -4,6 +4,8 @@
  */
 package com.terracottatech.nomad.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.terracottatech.nomad.server.NomadServerMode;
 
 public class DiscoverResponse {
@@ -15,15 +17,14 @@ public class DiscoverResponse {
   private final long highestVersion;
   private ChangeDetails latestChange;
 
-  public DiscoverResponse(
-      NomadServerMode mode,
-      long mutativeMessageCount,
-      String lastMutationHost,
-      String lastMutationUser,
-      long currentVersion,
-      long highestVersion,
-      ChangeDetails latestChange
-  ) {
+  @JsonCreator
+  public DiscoverResponse(@JsonProperty("mode") NomadServerMode mode,
+                          @JsonProperty("mutativeMessageCount") long mutativeMessageCount,
+                          @JsonProperty("lastMutationHost") String lastMutationHost,
+                          @JsonProperty("lastMutationUser") String lastMutationUser,
+                          @JsonProperty("currentVersion") long currentVersion,
+                          @JsonProperty("highestVersion") long highestVersion,
+                          @JsonProperty("latestChange") ChangeDetails latestChange) {
     this.mode = mode;
     this.mutativeMessageCount = mutativeMessageCount;
     this.lastMutationHost = lastMutationHost;

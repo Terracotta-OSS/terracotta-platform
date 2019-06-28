@@ -21,7 +21,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     String stripeName = "stripe1";
     String nodeName = "testServer1";
     Path configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
-    startServer("-r", configurationRepo.toString());
+    startServer("-r", configurationRepo.toString(), "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -30,7 +30,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     String stripeName = "stripe1";
     String nodeName = "testServer2";
     Path configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
-    startServer("-r", configurationRepo.toString(), "-n", nodeName);
+    startServer("-r", configurationRepo.toString(), "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -39,7 +39,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     String stripeName = "stripe2";
     String nodeName = "testServer2";
     Path configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
-    startServer("-r", configurationRepo.toString(), "-n", nodeName);
+    startServer("-r", configurationRepo.toString(), "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -47,13 +47,6 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithConsistencyMode() throws Exception {
     startServer("--config", getConfigurationPath(), "--config-consistency");
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-  }
-
-  @Test
-  public void testStartingWithEmptyConfigurationRepo() throws Exception {
-    String configurationRepo = temporaryFolder.newFolder().getAbsolutePath();
-    startServer("-r", configurationRepo);
-    waitedAssert(out::getLog, containsString("No configuration files found"));
   }
 
   @Test

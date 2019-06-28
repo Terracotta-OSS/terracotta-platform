@@ -15,7 +15,6 @@ import java.net.InetSocketAddress;
 public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
   @Override
   public InetSocketAddress convert(String value) {
-      //TODO [DYNAMIC-CONFIG]: Check if we could move the 9410 default port to InetSocketAddressConvertor instead of using 0
-    return InetSocketAddressConvertor.getInetSocketAddress(value, 9410);
+    return InetSocketAddressConvertor.getInetSocketAddress(value);
   }
 }

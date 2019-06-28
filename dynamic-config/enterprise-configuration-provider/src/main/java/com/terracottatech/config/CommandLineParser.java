@@ -21,13 +21,15 @@ import java.util.List;
 import static com.terracottatech.config.CommandLineParser.Opt.CONFIG;
 import static com.terracottatech.config.CommandLineParser.Opt.CONFIG_CONSISTENCY;
 import static com.terracottatech.config.CommandLineParser.Opt.CONFIG_REPO;
+import static com.terracottatech.config.CommandLineParser.Opt.NODE_NAME;
 
 class CommandLineParser {
 
   enum Opt {
     CONFIG(null, "config"),
     CONFIG_REPO("r", "config-repo"),
-    CONFIG_CONSISTENCY(null, "config-consistency");
+    CONFIG_CONSISTENCY(null, "config-consistency"),
+    NODE_NAME(null, "node-name");
 
     final String shortName;
     final String longName;
@@ -50,17 +52,19 @@ class CommandLineParser {
     }
   }
 
+  private final String config;
   private final Path configurationRepo;
   private final boolean configConsistencyMode;
-  private final String config;
+  private final String nodeName;
 
   CommandLineParser(List<String> args) throws ParseException {
     CommandLine commandLine = new DefaultParser().parse(createOptions(), args.toArray(new String[0]));
 
+    this.config = commandLine.getOptionValue(CONFIG.longName());
     this.configurationRepo = commandLine.hasOption(CONFIG_REPO.shortName()) ?
         Paths.get(commandLine.getOptionValue(CONFIG_REPO.shortName())) : null;
     this.configConsistencyMode = commandLine.hasOption(CONFIG_CONSISTENCY.longName());
-    this.config = commandLine.getOptionValue(CONFIG.longName());
+    this.nodeName = commandLine.getOptionValue(NODE_NAME.longName());
 
     if (this.configConsistencyMode && this.config == null) {
       throw new RuntimeException(CONFIG.longName() + " must be specified when " + CONFIG_CONSISTENCY.longName() + " is used");
@@ -71,6 +75,10 @@ class CommandLineParser {
     }
   }
 
+  public String getConfig() {
+    return config;
+  }
+
   Path getConfigurationRepo() {
     return configurationRepo;
   }
@@ -79,8 +87,8 @@ class CommandLineParser {
     return configConsistencyMode;
   }
 
-  public String getConfig() {
-    return config;
+  public String getNodeName() {
+    return nodeName;
   }
 
   static String getConfigurationParamsDescription() {
@@ -116,6 +124,15 @@ class CommandLineParser {
         Option.builder(CONFIG_CONSISTENCY.shortName())
             .longOpt(CONFIG_CONSISTENCY.longName())
             .desc("Starts the node in config consistency mode (optional)")
+            .build()
+    );
+
+    options.addOption(
+        Option.builder(NODE_NAME.shortName())
+            .longOpt(NODE_NAME.longName())
+            .hasArg()
+            .argName("node-name")
+            .desc("Node name (required)")
             .build()
     );
 

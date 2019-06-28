@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.diagnostic;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,6 @@ import static java.util.Objects.requireNonNull;
 
 
 public class DynamicConfigServiceImpl implements DynamicConfigService {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
 
   private volatile Cluster cluster;
@@ -44,13 +44,27 @@ public class DynamicConfigServiceImpl implements DynamicConfigService {
   @Override
   public void setTopology(Cluster cluster) {
     this.cluster = requireNonNull(cluster);
-    LOGGER.debug("Set pending topology to: {}", cluster);
+    LOGGER.info("Set pending topology to: {}", cluster);
   }
 
   @Override
   public void prepareActivation(Cluster validatedTopology) {
-    LOGGER.debug("Preparing activation of Node with validated topology: {}", validatedTopology);
-    //TODO [DYNAMIC-CONFIG]: TO BE COMPLETED: DO WE NEED SOME PARAMETERS AND RETURN SOMETHING ?
-    throw new UnsupportedOperationException("TODO: TO BE COMPLETED: DO WE NEED SOME PARAMETERS AND RETURN SOMETHING ?");
+    Node node = validatedTopology.getStripes()
+        .stream()
+        .flatMap(stripe -> stripe.getNodes().stream())
+        .filter(node1 -> node1.getNodeHostname().equals(me.getNodeHostname()) && node1.getNodePort() == me.getNodePort())
+        .findFirst()
+        .orElseThrow(() -> {
+          String message = String.format(
+              "No match found for host: %s and port: %s in cluster topology: %s",
+              me.getNodeHostname(),
+              me.getNodePort(),
+              validatedTopology
+          );
+          return new IllegalArgumentException(message);
+        });
+
+    LOGGER.info("Preparing activation of Node with validated topology: {}", validatedTopology);
+    NomadBootstrapper.getNomadServerManager().upgradeForWrite(node.getNodeName(), node.getStripeName());
   }
 }

@@ -41,6 +41,7 @@ public class Node implements Cloneable {
   private Measure<TimeUnit> clientLeaseDuration;
   private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
   private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
+  private String stripeName;
   private String clusterName;
 
   public String getNodeName() {
@@ -121,6 +122,10 @@ public class Node implements Cloneable {
 
   public Map<String, Path> getDataDirs() {
     return Collections.unmodifiableMap(dataDirs);
+  }
+
+  public String getStripeName() {
+    return stripeName;
   }
 
   public String getClusterName() {
@@ -272,6 +277,11 @@ public class Node implements Cloneable {
     return this;
   }
 
+  public Node setStripeName(String stripeName) {
+    this.stripeName = stripeName;
+    return this;
+  }
+
   public Node setClusterName(String clusterName) {
     this.clusterName = clusterName;
     return this;
@@ -307,7 +317,9 @@ public class Node implements Cloneable {
         .setSecurityAuthc(securityAuthc)
         .setSecurityDir(securityDir)
         .setSecuritySslTls(securitySslTls)
-        .setSecurityWhitelist(securityWhitelist);
+        .setSecurityWhitelist(securityWhitelist)
+        .setStripeName(stripeName)
+        .setClusterName(clusterName);
   }
 
   @Override
@@ -335,12 +347,15 @@ public class Node implements Cloneable {
         Objects.equals(clientLeaseDuration, node.clientLeaseDuration) &&
         Objects.equals(offheapResources, node.offheapResources) &&
         Objects.equals(dataDirs, node.dataDirs) &&
+        Objects.equals(stripeName, node.stripeName) &&
         Objects.equals(clusterName, node.clusterName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeConfigDir, nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls, securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs, clusterName);
+    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeConfigDir,
+        nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls, securityWhitelist,
+        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs, stripeName, clusterName);
   }
 
   @Override
@@ -366,6 +381,7 @@ public class Node implements Cloneable {
         ", clientLeaseDuration=" + clientLeaseDuration +
         ", offheapResources=" + offheapResources +
         ", dataDirs=" + dataDirs +
+        ", stripeName='" + stripeName + '\'' +
         ", clusterName='" + clusterName + '\'' +
         '}';
   }

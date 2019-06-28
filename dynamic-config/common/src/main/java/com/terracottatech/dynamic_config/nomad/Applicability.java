@@ -69,11 +69,10 @@ public class Applicability {
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("Applicability{");
-    sb.append("type=").append(type);
-    sb.append(", nodeName='").append(nodeName).append('\'');
-    sb.append(", stripeName='").append(stripeName).append('\'');
-    sb.append('}');
-    return sb.toString();
+    return "Applicability{" +
+        "type=" + type +
+        ", nodeName='" + nodeName + '\'' +
+        ", stripeName='" + stripeName + '\'' +
+        '}';
   }
 }

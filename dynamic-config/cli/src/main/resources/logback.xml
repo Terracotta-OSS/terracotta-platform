@@ -30,7 +30,7 @@
     <appender-ref ref="STDOUT-DETAIL"/>
   </root>
 
-  <logger name="com.terracottatech.dynamic_config.cli" level="INFO" additivity="false">
+  <logger name="com.terracottatech.dynamic_config" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
 </configuration>

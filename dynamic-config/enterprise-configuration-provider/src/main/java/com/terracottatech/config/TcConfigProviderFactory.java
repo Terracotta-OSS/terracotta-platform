@@ -4,19 +4,12 @@
  */
 package com.terracottatech.config;
 
-import com.terracotta.config.ConfigurationException;
-import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
-
 class TcConfigProviderFactory {
-  static TcConfigProvider init(CommandLineParser commandLineParser) throws ConfigurationException {
+  static TcConfigProvider init(CommandLineParser commandLineParser) {
     if (commandLineParser.isConfigConsistencyMode()) {
       return new TcConfigFileProvider(commandLineParser.getConfig());
     } else {
-      try {
-        return new NomadRootTcConfigProvider(commandLineParser.getConfigurationRepo());
-      } catch (NomadConfigurationException e) {
-        throw new ConfigurationException("Exception while initializing Nomad Server", e);
-      }
+      return new NomadRootTcConfigProvider(commandLineParser.getConfigurationRepo());
     }
   }
 }

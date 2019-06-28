@@ -8,6 +8,4 @@ import org.terracotta.config.TcConfiguration;
 
 public interface TcConfigProvider {
   TcConfiguration provide() throws Exception;
-
-  default void close() {}
 }

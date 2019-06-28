@@ -10,31 +10,29 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class CommandRepository {
-  private final Map<String, Command> commandMap = new LinkedHashMap<>();
+  private static final Map<String, Command> commandMap = new LinkedHashMap<>();
 
-  public void addAll(Command... commands) {
-    for (Command command : commands) {
-      String name = Metadata.getName(command);
-      if (commandMap.putIfAbsent(name, command) != null) {
-        throw new AssertionError("Found duplicate command: " + name);
-      }
-    }
+  private CommandRepository() {}
+
+  public static void addAll(Set<Command> commands) {
+    commands.forEach(command -> commandMap.put(Metadata.getName(command), command));
   }
 
-  public Collection<Command> getCommands() {
+  public static Collection<Command> getCommands() {
     return Collections.unmodifiableCollection(commandMap.values());
   }
 
-  public Command getCommand(String name) {
+  public static Command getCommand(String name) {
     if (!commandMap.containsKey(name)) {
       throw new IllegalArgumentException("Command not found: " + name);
     }
     return commandMap.get(name);
   }
 
-  public void inject(Object... services) {
+  public static void inject(Object... services) {
     commandMap.values().forEach(command -> Injector.inject(command, services));
   }
 }

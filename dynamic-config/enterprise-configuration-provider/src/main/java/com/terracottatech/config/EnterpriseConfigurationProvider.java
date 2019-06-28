@@ -9,13 +9,16 @@ import com.tc.config.DefaultConfigurationProvider;
 import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
-import org.terracotta.config.TcConfiguration;
-
+import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.util.ConfigUtils;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.config.TcConfiguration;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @OverrideService("com.tc.config.DefaultConfigurationProvider")
@@ -32,10 +35,22 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
       if (commandLineParser == null) return;
 
       tcConfigProvider = TcConfigProviderFactory.init(commandLineParser);
+      bootstrapNomad(commandLineParser);
       configuration = getConfiguration(commandLineParser);
     } catch (Exception e) {
       throw new ConfigurationException("Unable to initialize EnterpriseConfigurationProvider with " + configurationParams, e);
     }
+  }
+
+  private void bootstrapNomad(CommandLineParser cliParser) {
+    Path configurationRepo;
+    if (cliParser.getConfigurationRepo() == null) {
+      configurationRepo = Paths.get(ConfigUtils.getSubstitutedConfigDir(null));
+    } else {
+      configurationRepo = cliParser.getConfigurationRepo();
+    }
+    LOGGER.info("Bootstrapping nomad system with root: {}", configurationRepo);
+    NomadBootstrapper.bootstrap(configurationRepo, cliParser.getNodeName());
   }
 
   private CommandLineParser getCommandLineParser(List<String> configurationParams) throws ParseException, ConfigurationException {
@@ -71,6 +86,6 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
 
   @Override
   public void close() {
-    tcConfigProvider.close();
+    // Do nothing
   }
 }

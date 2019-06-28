@@ -4,12 +4,19 @@
  */
 package com.terracottatech.nomad.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.UUID;
 
 public class RollbackMessage extends MutativeMessage {
   private final UUID changeUuid;
 
-  public RollbackMessage(long expectedMutativeMessageCount, String mutationHost, String mutationUser, UUID changeUuid) {
+  @JsonCreator
+  public RollbackMessage(@JsonProperty("expectedMutativeMessageCount") long expectedMutativeMessageCount,
+                         @JsonProperty("mutationHost") String mutationHost,
+                         @JsonProperty("mutationUser") String mutationUser,
+                         @JsonProperty("changeUuid") UUID changeUuid) {
     super(expectedMutativeMessageCount, mutationHost, mutationUser);
     this.changeUuid = changeUuid;
   }

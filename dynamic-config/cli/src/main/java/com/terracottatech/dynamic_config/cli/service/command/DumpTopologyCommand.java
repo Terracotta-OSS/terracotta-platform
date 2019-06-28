@@ -46,11 +46,7 @@ public class DumpTopologyCommand extends Command {
   }
 
   @Override
-  public void validate() {
-    if (node == null) {
-      throw new IllegalArgumentException("Missing node.");
-    }
-  }
+  public void validate() {}
 
   @Override
   public final void run() {
@@ -61,7 +57,7 @@ public class DumpTopologyCommand extends Command {
       } else {
         try {
           Files.write(outputPath, Json.toPrettyJson(topology).getBytes(StandardCharsets.UTF_8), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-          LOGGER.info("Output saved to '{}'\n", outputPath);
+          LOGGER.info("Output saved to '{}'", outputPath);
         } catch (IOException e) {
           throw new UncheckedIOException(e);
         }

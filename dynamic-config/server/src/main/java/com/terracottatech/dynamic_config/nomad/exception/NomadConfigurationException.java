@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.nomad.exception;
 
-public class NomadConfigurationException extends Exception {
+public class NomadConfigurationException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 

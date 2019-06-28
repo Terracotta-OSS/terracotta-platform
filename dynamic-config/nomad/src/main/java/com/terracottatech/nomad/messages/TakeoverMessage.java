@@ -4,8 +4,14 @@
  */
 package com.terracottatech.nomad.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class TakeoverMessage extends MutativeMessage {
-  public TakeoverMessage(long expectedMutativeMessageCount, String mutationHost, String mutationUser) {
+  @JsonCreator
+  public TakeoverMessage(@JsonProperty("expectedMutativeMessageCount") long expectedMutativeMessageCount,
+                         @JsonProperty("mutationHost") String mutationHost,
+                         @JsonProperty("mutationUser") String mutationUser) {
     super(expectedMutativeMessageCount, mutationHost, mutationUser);
   }
 }

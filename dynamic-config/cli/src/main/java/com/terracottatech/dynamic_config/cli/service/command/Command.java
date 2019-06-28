@@ -18,10 +18,6 @@ public abstract class Command implements Runnable {
     return help;
   }
 
-  public void setHelp(boolean help) {
-    this.help = help;
-  }
-
   /**
    * Run extra global validation after each parameter has been parsed, converted, injected and validated
    */

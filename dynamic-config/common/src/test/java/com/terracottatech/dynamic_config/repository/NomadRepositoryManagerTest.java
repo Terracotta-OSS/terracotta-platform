@@ -70,7 +70,7 @@ public class NomadRepositoryManagerTest {
     doNothing().when(spyRepoManager).createNomadSubDirectories();
 
     doReturn(NONE).when(spyRepoManager).getRepositoryDepth();
-    spyRepoManager.createIfAbsent();
+    spyRepoManager.createDirectories();
     verify(spyRepoManager, times(1)).createNomadRoot();
     verify(spyRepoManager, times(1)).createNomadSubDirectories();
   }
@@ -88,7 +88,7 @@ public class NomadRepositoryManagerTest {
     doNothing().when(spyRepoManager).createNomadSubDirectories();
 
     doReturn(FULL).when(spyRepoManager).getRepositoryDepth();
-    spyRepoManager.createIfAbsent();
+    spyRepoManager.createDirectories();
     verify(spyRepoManager, times(0)).createNomadRoot();
     verify(spyRepoManager, times(0)).createNomadSubDirectories();
   }
@@ -106,7 +106,7 @@ public class NomadRepositoryManagerTest {
     doNothing().when(spyRepoManager).createNomadSubDirectories();
 
     doReturn(ROOT_ONLY).when(spyRepoManager).getRepositoryDepth();
-    spyRepoManager.createIfAbsent();
+    spyRepoManager.createDirectories();
     verify(spyRepoManager, times(0)).createNomadRoot();
     verify(spyRepoManager, times(1)).createNomadSubDirectories();
   }
@@ -218,7 +218,7 @@ public class NomadRepositoryManagerTest {
     NomadRepositoryManager spyRepoManager = spy(repoManager);
 
     doReturn(FULL).when(spyRepoManager).getRepositoryDepth();
-    doReturn("node1").when(spyRepoManager).extractNodeName();
+    doReturn(Optional.of("node1")).when(spyRepoManager).extractNodeName();
 
     Optional<String> nodeNameOpt = spyRepoManager.getNodeName();
     assertThat(nodeNameOpt, is(notNullValue()));
@@ -236,18 +236,16 @@ public class NomadRepositoryManagerTest {
     NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
 
-    exception.expect(MalformedRepositoryException.class);
-    spyRepoManager.extractNodeName();
+    assertThat(spyRepoManager.extractNodeName(), is(Optional.empty()));
 
     Path configFilePath = config.resolve("cluster-config.3.node1.xml");
     Files.createFile(configFilePath);
-    exception.expect(MalformedRepositoryException.class);
-    spyRepoManager.extractNodeName();
+    assertThat(spyRepoManager.extractNodeName(), is(Optional.empty()));
 
     Files.delete(configFilePath);
     configFilePath = config.resolve("cluster-config.node1.3.xml");
     Files.createFile(configFilePath);
-    String nodeName = spyRepoManager.extractNodeName();
+    String nodeName = spyRepoManager.extractNodeName().get();
     assertThat(nodeName, is("node1"));
 
     configFilePath = config.resolve("cluster-config.node1.4.xml");
@@ -257,8 +255,7 @@ public class NomadRepositoryManagerTest {
 
     configFilePath = config.resolve("cluster-config.node2.4.xml");
     Files.createFile(configFilePath);
-    exception.expect(MalformedRepositoryException.class);
-    spyRepoManager.extractNodeName();
+    assertThat(spyRepoManager.extractNodeName(), is(Optional.empty()));
 
     Files.delete(configFilePath);
     configFilePath = config.resolve("cluster-config.3.node1.xml");

@@ -4,6 +4,9 @@
  */
 package com.terracottatech.nomad.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class AcceptRejectResponse {
   private final boolean accepted;
   private final RejectionReason rejectionReason;
@@ -23,7 +26,12 @@ public class AcceptRejectResponse {
     return new AcceptRejectResponse(false, rejectionReason, rejectionMessage, lastMutationHost, lastMutationUser);
   }
 
-  private AcceptRejectResponse(boolean accepted, RejectionReason rejectionReason, String rejectionMessage, String lastMutationHost, String lastMutationUser) {
+  @JsonCreator
+  private AcceptRejectResponse(@JsonProperty("accepted") boolean accepted,
+                               @JsonProperty("rejectionReason") RejectionReason rejectionReason,
+                               @JsonProperty("rejectionMessage") String rejectionMessage,
+                               @JsonProperty("lastMutationHost") String lastMutationHost,
+                               @JsonProperty("lastMutationUser") String lastMutationUser) {
     this.accepted = accepted;
     this.rejectionReason = rejectionReason;
     this.rejectionMessage = rejectionMessage;

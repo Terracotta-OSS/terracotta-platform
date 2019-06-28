@@ -7,8 +7,6 @@ package com.terracottatech.dynamic_config.util;
 
 import com.terracottatech.dynamic_config.Constants;
 import com.terracottatech.dynamic_config.model.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.config.util.ParameterSubstitutor;
 
 import javax.xml.bind.DatatypeConverter;
@@ -20,12 +18,9 @@ import java.util.UUID;
 
 
 public class ConfigUtils {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigUtils.class);
-
   public static Path createTempTcConfig(Node node) {
     try {
       Path configPath = Files.createTempFile("tc-config", ".xml");
-
       String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
           "   <plugins>\n" +
           getDataDirectoryConfig(node) +

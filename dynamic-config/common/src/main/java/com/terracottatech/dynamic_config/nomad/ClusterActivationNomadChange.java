@@ -13,8 +13,6 @@ import java.util.Objects;
 import static java.util.Objects.requireNonNull;
 
 /**
- * TODO [DYNAMIC-CONFIG]: DO WE NEED THIS NOMAD CHANGE ?
- * <p>
  * Nomad change that supports the initial setup of the config repository
  *
  * @author Mathieu Carbou
@@ -58,5 +56,14 @@ public class ClusterActivationNomadChange extends FilteredNomadChange {
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), clusterName, getCluster());
+  }
+
+  @Override
+  public String toString() {
+    return "ClusterActivationNomadChange{" +
+        "clusterName='" + clusterName + '\'' +
+        ", cluster=" + cluster +
+        ", applicability=" + applicability +
+        '}';
   }
 }

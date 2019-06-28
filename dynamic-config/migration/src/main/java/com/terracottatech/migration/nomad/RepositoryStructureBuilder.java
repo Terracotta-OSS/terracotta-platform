@@ -81,7 +81,7 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
 
   private NomadServer createServer(Path nomadRoot, String nodeName) throws SanskritException, NomadException {
     NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot);
-    nomadRepositoryManager.createIfAbsent();
+    nomadRepositoryManager.createDirectories();
 
     ChangeApplicator changeApplicator = new ChangeApplicator() {
       @Override

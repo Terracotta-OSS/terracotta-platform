@@ -8,6 +8,7 @@ import com.beust.jcommander.ParameterException;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.dynamic_config.cli.service.command.ActivateCommand;
 import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DumpTopologyCommand;
@@ -16,6 +17,9 @@ import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAd
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashSet;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -36,35 +40,40 @@ public class ConfigTool {
         } else {
           LOGGER.error(errorMessage);
         }
+      } else {
+        LOGGER.error("Error: {}", Arrays.toString(e.getStackTrace()));
       }
       System.exit(1);
     }
   }
 
-  private void start(String[] args) {
-    CommandRepository commandRepository = new CommandRepository();
-
-    // register commands
-    commandRepository.addAll(
-        MAIN,
-        new AttachCommand(),
-        new DetachCommand(),
-        new DumpTopologyCommand()
+  private void start(String... args) {
+    LOGGER.debug("Registering commands with CommandRepository");
+    CommandRepository.addAll(
+        new HashSet<>(
+            Arrays.asList(
+                MAIN,
+                new ActivateCommand(),
+                new AttachCommand(),
+                new DetachCommand(),
+                new DumpTopologyCommand()
+            )
+        )
     );
 
-    // parse command line
-    CustomJCommander jCommander = parseArguments(args, commandRepository);
+    LOGGER.debug("Parsing command-line arguments");
+    CustomJCommander jCommander = parseArguments(args);
 
     // Process arguments like '-v'
     MAIN.run();
 
     // create services
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getRequestTimeout(), MILLISECONDS, MAIN.getSecurityRootDirectory());
-    MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, MAIN.getConnectionTimeout(), MILLISECONDS, new ConcurrencySizing());
-    NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider, MAIN.getConnectionTimeout(), MILLISECONDS);
+    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getRequestTimeoutMillis(), MILLISECONDS, MAIN.getSecurityRootDirectory());
+    MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS, new ConcurrencySizing());
+    NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS);
 
-    // inject services
-    commandRepository.inject(diagnosticServiceProvider, connectionFactory, nodeAddressDiscovery);
+    LOGGER.debug("Injecting services in CommandRepository");
+    CommandRepository.inject(diagnosticServiceProvider, connectionFactory, nodeAddressDiscovery);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help
@@ -84,8 +93,8 @@ public class ConfigTool {
     });
   }
 
-  private CustomJCommander parseArguments(String[] args, CommandRepository commandRepository) {
-    CustomJCommander jCommander = new CustomJCommander(MAIN, commandRepository);
+  private CustomJCommander parseArguments(String[] args) {
+    CustomJCommander jCommander = new CustomJCommander(MAIN);
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {

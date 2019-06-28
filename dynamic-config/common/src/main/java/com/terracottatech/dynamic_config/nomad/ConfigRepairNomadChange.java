@@ -47,4 +47,11 @@ public class ConfigRepairNomadChange implements NomadChange {
   public int hashCode() {
     return Objects.hash(getConfiguration());
   }
+
+  @Override
+  public String toString() {
+    return "ConfigRepairNomadChange{" +
+        "configuration='" + configuration + '\'' +
+        '}';
+  }
 }

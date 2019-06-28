@@ -87,6 +87,17 @@ public class SettingNomadChange extends FilteredNomadChange {
     return Objects.hash(super.hashCode(), getCmd(), getName(), getValue());
   }
 
+  @Override
+  public String toString() {
+    return "SettingNomadChange{" +
+        "cmd=" + cmd +
+        ", configType=" + configType +
+        ", name='" + name + '\'' +
+        ", value='" + value + '\'' +
+        ", applicability=" + applicability +
+        '}';
+  }
+
   public static SettingNomadChange set(Applicability applicability, Type type, String name, String value) {
     return new SettingNomadChange(applicability, Cmd.SET, type, name, value);
   }

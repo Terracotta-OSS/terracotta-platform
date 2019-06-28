@@ -17,16 +17,10 @@ import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
-import static com.terracottatech.dynamic_config.repository.NodeNameExtractor.extractFromConfig;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_EXT;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_PREFIX;
 
 public class UpgradableNomadServerFactory {
-  public static UpgradableNomadServer createServer(NomadRepositoryManager repositoryManager,
-                                                   ChangeApplicator changeApplicator) throws SanskritException, NomadException {
-    return createServer(repositoryManager, changeApplicator, extractFromConfig(repositoryManager.getConfigurationPath()));
-  }
-
   public static UpgradableNomadServer createServer(NomadRepositoryManager repositoryManager, ChangeApplicator changeApplicator,
                                                    String nodeName) throws SanskritException, NomadException {
     return new NomadServerImpl(

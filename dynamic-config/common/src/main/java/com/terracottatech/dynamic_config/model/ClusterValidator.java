@@ -2,17 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.validation;
-
-import com.terracottatech.dynamic_config.exception.MalformedClusterConfigException;
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Node;
+package com.terracottatech.dynamic_config.model;
 
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ClusterConfigValidator {
+public class ClusterValidator {
   public static void validate(Cluster cluster) {
     validateSecurity(cluster);
     validateClientSettings(cluster);

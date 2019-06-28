@@ -41,6 +41,5 @@ public interface DynamicConfigService {
    * consistency. This method will activate the Nomad system so that we can write a first config
    * repository version
    */
-  //TODO: TO BE COMPLETED: DO WE NEED SOME PARAMETERS AND RETURN SOMETHING ?
   void prepareActivation(Cluster validatedTopology);
 }

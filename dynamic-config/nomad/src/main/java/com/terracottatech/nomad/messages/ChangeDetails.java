@@ -4,6 +4,8 @@
  */
 package com.terracottatech.nomad.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeRequestState;
 
@@ -18,15 +20,14 @@ public class ChangeDetails {
   private final String creationHost;
   private final String creationUser;
 
-  public ChangeDetails(
-      UUID changeUuid,
-      ChangeRequestState state,
-      long version,
-      NomadChange operation,
-      String result,
-      String creationHost,
-      String creationUser
-  ) {
+  @JsonCreator
+  public ChangeDetails(@JsonProperty("changeUuid") UUID changeUuid,
+                       @JsonProperty("state") ChangeRequestState state,
+                       @JsonProperty("version") long version,
+                       @JsonProperty("operation") NomadChange operation,
+                       @JsonProperty("result") String result,
+                       @JsonProperty("creationHost") String creationHost,
+                       @JsonProperty("creationUser") String creationUser) {
     this.changeUuid = changeUuid;
     this.state = state;
     this.version = version;

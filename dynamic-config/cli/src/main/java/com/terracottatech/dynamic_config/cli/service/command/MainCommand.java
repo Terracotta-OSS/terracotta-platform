@@ -13,17 +13,18 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.LongConverter;
 import org.slf4j.LoggerFactory;
 
-@Parameters(commandNames = "main")
+@Parameters(commandNames = MainCommand.NAME)
 public class MainCommand extends Command {
+  public static final String NAME = "main";
 
   @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode")
   private boolean verbose = false;
 
   @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout in milliseconds", converter = LongConverter.class)
-  private long requestTimeout = 10_000;
+  private long requestTimeoutMillis = 10_000;
 
   @Parameter(names = {"-t", "--connection-timeout"}, description = "Connection timeout in milliseconds", converter = LongConverter.class)
-  private long connectionTimeout = 30_0000;
+  private long connectionTimeoutMillis = 30_0000;
 
   @Parameter(names = {"-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
@@ -52,12 +53,12 @@ public class MainCommand extends Command {
     return verbose;
   }
 
-  public long getRequestTimeout() {
-    return requestTimeout;
+  public long getRequestTimeoutMillis() {
+    return requestTimeoutMillis;
   }
 
-  public long getConnectionTimeout() {
-    return connectionTimeout;
+  public long getConnectionTimeoutMillis() {
+    return connectionTimeoutMillis;
   }
 
   public String getSecurityRootDirectory() {
@@ -68,12 +69,12 @@ public class MainCommand extends Command {
     this.verbose = verbose;
   }
 
-  public void setRequestTimeout(long requestTimeout) {
-    this.requestTimeout = requestTimeout;
+  public void setRequestTimeoutMillis(long requestTimeout) {
+    this.requestTimeoutMillis = requestTimeout;
   }
 
-  public void setConnectionTimeout(long connectionTimeout) {
-    this.connectionTimeout = connectionTimeout;
+  public void setConnectionTimeoutMillis(long connectionTimeout) {
+    this.connectionTimeoutMillis = connectionTimeout;
   }
 
   public void setSecurityRootDirectory(String securityRootDirectory) {

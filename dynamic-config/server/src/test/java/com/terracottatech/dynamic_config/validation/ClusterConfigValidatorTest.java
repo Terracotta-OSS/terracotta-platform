@@ -4,8 +4,9 @@
  */
 package com.terracottatech.dynamic_config.validation;
 
-import com.terracottatech.dynamic_config.exception.MalformedClusterConfigException;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.ClusterValidator;
+import com.terracottatech.dynamic_config.model.MalformedClusterConfigException;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import org.junit.Rule;
@@ -167,7 +168,7 @@ public class ClusterConfigValidatorTest {
     setNodeProperties(node1);
     setNodeProperties(node2);
 
-    ClusterConfigValidator.validate(createCluster(node1, node2));
+    ClusterValidator.validate(createCluster(node1, node2));
   }
 
   private void setNodeProperties(Node node) {
@@ -203,6 +204,6 @@ public class ClusterConfigValidatorTest {
   private void testThrowsWithMessage(Node node1, Node node2, String message) {
     exception.expect(MalformedClusterConfigException.class);
     exception.expectMessage(message);
-    ClusterConfigValidator.validate(createCluster(node1, node2));
+    ClusterValidator.validate(createCluster(node1, node2));
   }
 }

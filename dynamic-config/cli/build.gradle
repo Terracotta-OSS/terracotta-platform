@@ -8,6 +8,7 @@ apply plugin: TcDeploy
 dependencies {
   compile project(':diagnostic-client')
   compile project(':dynamic-config-common')
+  compile project(':licensing-parser')
 
   compile "com.beust:jcommander:$jcommanderVersion"
   compile "ch.qos.logback:logback-classic:$logbackVersion"
