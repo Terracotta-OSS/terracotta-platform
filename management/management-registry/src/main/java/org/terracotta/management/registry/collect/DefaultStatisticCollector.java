@@ -126,7 +126,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
       if (!scheduledExecutorService.isShutdown()) {
         running = true;
         try {
-          task = scheduledExecutorService.scheduleWithFixedDelay(runnable, intervalMs, intervalMs, TimeUnit.MILLISECONDS);
+          task = scheduledExecutorService.scheduleWithFixedDelay(runnable, 0L, intervalMs, TimeUnit.MILLISECONDS);
         } catch (RejectedExecutionException e) {
           running = false;
           throw e;
