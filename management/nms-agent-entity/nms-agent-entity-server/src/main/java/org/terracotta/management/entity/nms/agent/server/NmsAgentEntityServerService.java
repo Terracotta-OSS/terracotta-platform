@@ -30,6 +30,8 @@ import org.terracotta.voltron.proxy.SerializationCodec;
 import org.terracotta.voltron.proxy.server.Messenger;
 import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
 
+import static java.util.regex.Pattern.compile;
+
 /**
  * @author Mathieu Carbou
  */
@@ -41,7 +43,7 @@ public class NmsAgentEntityServerService extends ProxyServerEntityService<Void, 
   public NmsAgentEntityServerService() {
     //TODO: MATHIEU - PERF: https://github.com/Terracotta-OSS/terracotta-platform/issues/92
     super(NmsAgent.class, Void.class, new Class<?>[]{Message.class}, null, ReconnectData.class, null);
-    setCodec(new SerializationCodec());
+    setCodec(new SerializationCodec(compile("^(?:org\\.ehcache\\.shadow|com\\.terracottatech\\.shadow)\\.(org\\.terracotta\\.statistics\\..*)$")));
   }
 
   @Override

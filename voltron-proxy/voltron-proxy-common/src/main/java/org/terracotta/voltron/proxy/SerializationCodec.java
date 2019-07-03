@@ -15,16 +15,38 @@
  */
 package org.terracotta.voltron.proxy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static java.lang.Class.forName;
 
 /**
  * @author Alex Snaps
  */
 public class SerializationCodec implements Codec {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(SerializationCodec.class);
+
+  private final Pattern shadingPattern;
+
+  public SerializationCodec() {
+    this.shadingPattern = null;
+  }
+
+  public SerializationCodec(Pattern shadingPattern) {
+    this.shadingPattern = Objects.requireNonNull(shadingPattern);
+  }
 
   @Override
   public byte[] encode(final Class<?> type, final Object value) {
@@ -90,7 +112,28 @@ public class SerializationCodec implements Codec {
     }
     ByteArrayInputStream bin = new ByteArrayInputStream(buffer, offset, len);
     try {
-      ObjectInputStream ois = new ObjectInputStream(bin);
+      ObjectInputStream ois = new ObjectInputStream(bin) {
+
+        @Override
+        protected ObjectStreamClass readClassDescriptor() throws IOException, ClassNotFoundException {
+          ObjectStreamClass descriptor = super.readClassDescriptor();
+          if (shadingPattern == null) {
+            return descriptor;
+          } else {
+            Matcher matcher = shadingPattern.matcher(descriptor.getName());
+            if (matcher.matches()) {
+              try {
+                resolveClass(descriptor);
+              } catch (ClassNotFoundException e) {
+                Class<?> replacement = forName(matcher.group(1));
+                ObjectStreamClass substitution = ObjectStreamClass.lookupAny(replacement);
+                return checkForCompatibility(descriptor, substitution);
+              }
+            }
+            return descriptor;
+          }
+        }
+      };
       try {
         return ois.readObject();
       } catch (ClassNotFoundException e) {
@@ -109,4 +152,15 @@ public class SerializationCodec implements Codec {
     }
   }
 
+  private static ObjectStreamClass checkForCompatibility(ObjectStreamClass descriptor, ObjectStreamClass substitution) throws InvalidClassException {
+    if (descriptor.getSerialVersionUID() != substitution.getSerialVersionUID()) {
+      throw new InvalidClassException(substitution.getName(),
+              "substitute class incompatible: " +
+                      "stream classdesc serialVersionUID = " + descriptor.getSerialVersionUID() +
+                      ", substitute class serialVersionUID = " + substitution.getSerialVersionUID());
+    } else {
+      LOGGER.debug("Shading Auto-Substitution: {} -> {}", descriptor, substitution);
+      return substitution;
+    }
+  }
 }
