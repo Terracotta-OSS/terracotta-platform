@@ -30,6 +30,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-common-api</artifactId>
       <scope>provided</scope>
@@ -43,6 +47,12 @@
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

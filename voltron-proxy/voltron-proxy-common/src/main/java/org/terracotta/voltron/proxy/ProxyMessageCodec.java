@@ -21,7 +21,6 @@ import org.terracotta.entity.EntityUserException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.EnumMap;
 import java.util.Map;
@@ -77,7 +76,7 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
   }
 
   @Override
-  public byte[] encodeResponse(ProxyEntityResponse r) {
+  public byte[] encodeResponse(ProxyEntityResponse r) throws MessageCodecException {
     if (r == null) {
       return new byte[0];
     }
@@ -89,8 +88,8 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
       output.writeByte(messageType == MessageType.ERROR ? 0 : getMessageTypeIdentifier(r));
       output.write(codec.encode(r.getResponseType(), r.getResponse()));
       output.close();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    } catch (Exception e) {
+      throw new MessageCodecException("Error encoding ProxyEntityResponse", e);
     }
     return byteOut.toByteArray();
   }
@@ -100,10 +99,14 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
     if (buffer.length == 0) {
       return null;
     }
-    MessageType messageType = MessageType.values()[buffer[0]];
-    Class<?> responseType = messageType == MessageType.ERROR ? EntityUserException.class : getResponseType(messageType, buffer[1]);
-    Object o = codec.decode(responseType, buffer, 2, buffer.length - 2);
-    return ProxyEntityResponse.response(messageType, responseType, o);
+    try {
+      MessageType messageType = MessageType.values()[buffer[0]];
+      Class<?> responseType = messageType == MessageType.ERROR ? EntityUserException.class : getResponseType(messageType, buffer[1]);
+      Object o = codec.decode(responseType, buffer, 2, buffer.length - 2);
+      return ProxyEntityResponse.response(messageType, responseType, o);
+    } catch (Exception e) {
+      throw new MessageCodecException("Error decoding ProxyEntityResponse", e);
+    }
   }
 
   @Override
@@ -133,16 +136,20 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
 
       output.close();
       return byteOut.toByteArray();
-    } catch (IOException ex) {
+    } catch (Exception ex) {
       throw new MessageCodecException("Error encoding ProxyEntityMessage", ex);
     }
   }
 
   @Override
-  public ProxyEntityMessage decodeMessage(final byte[] buffer) {
-    MessageType messageType = MessageType.values()[buffer[0]];
-    MethodDescriptor method = getMethod(messageType, buffer[1]);
-    return new ProxyEntityMessage(method, codec.decode(method.getParameterTypes(), buffer, 2, buffer.length - 2), messageType);
+  public ProxyEntityMessage decodeMessage(final byte[] buffer) throws MessageCodecException {
+    try {
+      MessageType messageType = MessageType.values()[buffer[0]];
+      MethodDescriptor method = getMethod(messageType, buffer[1]);
+      return new ProxyEntityMessage(method, codec.decode(method.getParameterTypes(), buffer, 2, buffer.length - 2), messageType);
+    } catch (Exception ex) {
+      throw new MessageCodecException("Error decoding ProxyEntityMessage", ex);
+    }
   }
 
   private MethodDescriptor getMethod(MessageType messageType, Byte b) {
