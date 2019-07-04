@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.terracottatech.dynamic_config.Constants.PARAM_INTERNAL_SEP;
 import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
@@ -88,9 +89,10 @@ public class DefaultSettings {
     }
 
     if (node.getDataDirs().isEmpty()) {
-      String[] split = Constants.DEFAULT_DATA_DIR.split(Constants.PARAM_INTERNAL_SEP);
-      node.setDataDir(split[0], Paths.get(split[1]));
-      defaultOptions.put(CommonOptions.DATA_DIRS, Constants.DEFAULT_DATA_DIR);
+      final String defaultDataDir = Constants.DEFAULT_DATA_DIR;
+      int firstColon = defaultDataDir.indexOf(PARAM_INTERNAL_SEP);
+      node.setDataDir(defaultDataDir.substring(0, firstColon), Paths.get(defaultDataDir.substring(firstColon + 1)));
+      defaultOptions.put(CommonOptions.DATA_DIRS, defaultDataDir);
     }
 
     if (node.getNodeBindAddress() == null) {

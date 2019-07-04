@@ -4,10 +4,9 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.Constants;
 import com.terracottatech.dynamic_config.config.CommonOptions;
-import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 
@@ -16,6 +15,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
+
+import static com.terracottatech.dynamic_config.Constants.MULTI_VALUE_SEP;
+import static com.terracottatech.dynamic_config.Constants.PARAM_INTERNAL_SEP;
 
 /**
  * Sets pre-validated parameters to their corresponding values in {@code Node} object.
@@ -43,13 +45,13 @@ class NodeParameterSetter {
     PARAM_ACTION_MAP.put(CommonOptions.CLIENT_RECONNECT_WINDOW, (node, clientReconnectWindow) -> node.setClientReconnectWindow(Measure.parse(clientReconnectWindow, TimeUnit.class)));
     PARAM_ACTION_MAP.put(CommonOptions.CLIENT_LEASE_DURATION, (node, clientLeaseDuration) -> node.setClientLeaseDuration(Measure.parse(clientLeaseDuration, TimeUnit.class)));
     PARAM_ACTION_MAP.put(CommonOptions.CLUSTER_NAME, Node::setClusterName);
-    PARAM_ACTION_MAP.put(CommonOptions.OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(Constants.MULTI_VALUE_SEP)).forEach(ofr -> {
-      String[] split = ofr.split(Constants.PARAM_INTERNAL_SEP);
+    PARAM_ACTION_MAP.put(CommonOptions.OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(ofr -> {
+      String[] split = ofr.split(PARAM_INTERNAL_SEP);
       node.setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));
     }));
-    PARAM_ACTION_MAP.put(CommonOptions.DATA_DIRS, (node, value) -> Arrays.asList(value.split(Constants.MULTI_VALUE_SEP)).forEach(dir -> {
-      String[] split = dir.split(Constants.PARAM_INTERNAL_SEP);
-      node.setDataDir(split[0], Paths.get(split[1]));
+    PARAM_ACTION_MAP.put(CommonOptions.DATA_DIRS, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(dir -> {
+      int firstColon = dir.indexOf(PARAM_INTERNAL_SEP);
+      node.setDataDir(dir.substring(0, firstColon), Paths.get(dir.substring(firstColon + 1)));
     }));
   }
 
