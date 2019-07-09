@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.model.cluster;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -25,7 +24,6 @@ import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -186,25 +184,6 @@ public final class ClientIdentifier implements Serializable {
     }
 
     return hostname;
-  }
-
-  static String generateNewUUID() {
-    UUID j = UUID.randomUUID();
-    byte[] data = new byte[16];
-    long msb = j.getMostSignificantBits();
-    long lsb = j.getLeastSignificantBits();
-    for (int i = 0; i < 8; i++) {
-      data[i] = (byte) (msb & 0xff);
-      msb >>>= 8;
-    }
-    for (int i = 8; i < 16; i++) {
-      data[i] = (byte) (lsb & 0xff);
-      lsb >>>= 8;
-    }
-    return DatatypeConverter.printBase64Binary(data)
-        // java-8 and otehr - compatible B64 url decoder using - and _ instead of + and /
-        // padding can be ignored to shorter the UUID
-        .replace('+', '-').replace('/', '_').replace("=", "");
   }
 
   static long discoverPID() {
