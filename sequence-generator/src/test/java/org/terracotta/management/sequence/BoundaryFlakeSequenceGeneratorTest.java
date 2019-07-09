@@ -20,13 +20,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.lang.Long.toHexString;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -58,15 +59,21 @@ public class BoundaryFlakeSequenceGeneratorTest {
     assertEquals(nodeId, sequence.getNodeId());
     assertEquals(instanceId | seq, sequence.getSequenceId());
 
-    ByteBuffer buffer = ByteBuffer.allocate(24);
-    buffer.putLong(now);
-    buffer.put(mac);
-    buffer.put((byte) ((pid >>> 8) & 0XFF));
-    buffer.put((byte) (pid & 0XFF));
-    buffer.putLong(instanceId | seq);
-
-    assertEquals(DatatypeConverter.printHexBinary(buffer.array()), sequence.toHexString());
+    StringBuilder expectedHex = new StringBuilder();
+    expectedHex.append(pad(16, '0', toHexString(now)));
+    for (byte b : mac) {
+      expectedHex.append(pad(2, '0', toHexString(b & 0xff)));
+    }
+    expectedHex.append(pad(4, '0', toHexString(pid & 0xffff)));
+    expectedHex.append(pad(16, '0', toHexString(instanceId | seq)));
+    assertEquals(expectedHex.toString(), sequence.toHexString());
     assertEquals(sequence, BoundaryFlakeSequence.fromHexString(sequence.toHexString()));
+  }
+
+  private static String pad(int length, char character, String string) {
+    char[] padding = new char[length - string.length()];
+    Arrays.fill(padding, character);
+    return new String(padding) + string;
   }
 
   @Test
