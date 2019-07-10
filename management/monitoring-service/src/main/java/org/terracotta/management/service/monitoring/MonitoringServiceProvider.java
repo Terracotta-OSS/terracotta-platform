@@ -112,14 +112,14 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
     // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
     if (SharedEntityManagementRegistry.class == serviceType) {
-      LOGGER.trace("[{}] getService({})", consumerID, SharedEntityManagementRegistry.class.getSimpleName());
+      LOGGER.info("[{}] getService({})", consumerID, SharedEntityManagementRegistry.class.getSimpleName());
       return serviceType.cast(sharedManagementRegistry);
     }
 
     // get or creates a client-side monitoring service
     if (ClientMonitoringService.class == serviceType) {
       if (configuration instanceof ClientMonitoringServiceConfiguration) {
-        LOGGER.trace("[{}] getService({})", consumerID, ClientMonitoringService.class.getSimpleName());
+        LOGGER.info("[{}] getService({})", consumerID, ClientMonitoringService.class.getSimpleName());
         ClientMonitoringServiceConfiguration clientMonitoringServiceConfiguration = (ClientMonitoringServiceConfiguration) configuration;
         DefaultClientMonitoringService clientMonitoringService = new DefaultClientMonitoringService(
             consumerID,
@@ -135,7 +135,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     // get or creates a monitoring accessor service (for tms)
     if (ManagementService.class == serviceType) {
       if (configuration instanceof ManagementServiceConfiguration) {
-        LOGGER.trace("[{}] getService({})", consumerID, ManagementService.class.getSimpleName());
+        LOGGER.info("[{}] getService({})", consumerID, ManagementService.class.getSimpleName());
         DefaultManagementService managementService = new DefaultManagementService(consumerID, topologyService, firingService);
         return serviceType.cast(managementService);
       } else {
@@ -149,7 +149,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         AbstractManagementRegistryConfiguration managementRegistryConfiguration = (AbstractManagementRegistryConfiguration) configuration;
         boolean activeEntity = managementRegistryConfiguration.isActive();
 
-        LOGGER.trace("[{}] getService({}) isActive={}, config={}", consumerID, EntityManagementRegistry.class.getSimpleName(), activeEntity, configuration.getClass().getSimpleName());
+        LOGGER.info("[{}] getService({}) isActive={}, config={}", consumerID, EntityManagementRegistry.class.getSimpleName(), activeEntity, configuration.getClass().getSimpleName());
 
         // create an active or passive monitoring service
         IMonitoringProducer monitoringProducer = managementRegistryConfiguration.getMonitoringProducer();

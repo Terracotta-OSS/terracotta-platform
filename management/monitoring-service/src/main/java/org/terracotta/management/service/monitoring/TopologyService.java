@@ -385,6 +385,7 @@ class TopologyService implements PlatformListener {
       LOGGER.trace("[{}] willSetClientManagementRegistry({}, {})", consumerId, clientDescriptor, newRegistry);
       client.setManagementRegistry(newRegistry);
       if (!hadRegistry) {
+        LOGGER.info("[{}] New management registry received from client {}", consumerId, clientDescriptor);
         firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_REGISTRY_AVAILABLE.name()));
       }
     });

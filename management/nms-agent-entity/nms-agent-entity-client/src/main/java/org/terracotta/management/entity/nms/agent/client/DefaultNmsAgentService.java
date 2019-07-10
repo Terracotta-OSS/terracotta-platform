@@ -68,7 +68,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   private long timeoutMs = 5000;
   private Executor managementCallExecutor = Runnable::run;
   private ManagementProvider<?> diagnosticProvider = new DiagnosticProvider(DiagnosticUtility.class);
-  private BiConsumer<Operation, Throwable> onOperationError = (op, err) -> LOGGER.trace("Failed to call NmsAgent entity: {}", err.getMessage(), err);
+  private BiConsumer<Operation, Throwable> onOperationError = (op, err) -> LOGGER.trace("Failed to call management entity. Message will be lost. Error: {}", err.getMessage(), err);
 
   private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(CAPABILITY_NAME, Object.class) {
     @Override
@@ -112,10 +112,14 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   @Override
   public Object onReconnect() {
     if (isManagementRegistryBridged()) {
-      LOGGER.trace("onReconnect()");
       ManagementRegistry registry = getRegistry();
       Collection<? extends Capability> capabilities = registry == null ? Collections.<Capability>emptyList() : registry.getCapabilities();
       Context context = registry == null ? Context.empty() : Context.create(registry.getContextContainer().getName(), registry.getContextContainer().getValue());
+      if (registry == null) {
+        LOGGER.info("Reconnecting current client with tags: " + Arrays.toString(previouslyExposedTags));
+      } else {
+        LOGGER.info("Reconnecting current client with existing management registry and tags: " + Arrays.toString(previouslyExposedTags));
+      }
       return new ReconnectData(
           previouslyExposedTags,
           registry == null ? null : registry.getContextContainer(),
@@ -128,7 +132,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   @Override
   public void onDisconnectUnexpectedly() {
-    LOGGER.trace("onDisconnectUnexpectedly()");
+    LOGGER.info("Management entity will be flushed following an unexpected disconnection");
     flushEntity();
   }
 
@@ -137,7 +141,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   @Override
   public synchronized void close() {
     if (!closed) {
-      LOGGER.trace("close()");
+      LOGGER.info("Closing management agent service");
       ManagementRegistry registry = getRegistry();
       // disable bridging
       if (registry != null) {
@@ -264,7 +268,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   @Override
   public void sendStates() {
-    LOGGER.trace("sendStates()");
+    LOGGER.info("Sending management registry and tags to server");
     refreshManagementRegistry();
     if (previouslyExposedTags != null) {
       setTags(previouslyExposedTags);
@@ -321,10 +325,10 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        flushEntity();
+        // do not flush entity: these exception do not mean that the connection is broken
         onOperationError.accept(() -> runOperation(op), e.getCause());
       } catch (TimeoutException | RuntimeException e) {
-        flushEntity();
+        // do not flush entity: these exception do not mean that the connection is broken
         onOperationError.accept(() -> runOperation(op), e);
       }
     }
@@ -343,7 +347,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
     }
 
     // ask for one
-    LOGGER.trace("getEntity()");
+    LOGGER.info("Creating new management agent entity");
     entity = Objects.requireNonNull(entitySupplier.get());
     entity.registerMessageListener(Message.class, this);
     entity.setEndpointListener(this);
