@@ -13,15 +13,25 @@ public class XmlConfiguration {
     ClusterConfiguration clusterConfiguration = new ClusterConfiguration(cluster);
 
     StripeConfiguration stripeConfiguration = clusterConfiguration.get(stripeName);
-
     if (stripeConfiguration == null) {
-      throw new IllegalArgumentException("Stripe with name `" + stripeName + "` is not present in the cluster config");
+      throw new IllegalArgumentException(
+          String.format(
+              "Stripe with name: %s is not present in the cluster config: %s",
+              stripeName,
+              clusterConfiguration
+          )
+      );
     }
 
     ServerConfiguration serverConfiguration = stripeConfiguration.get(nodeName);
-
     if (serverConfiguration == null) {
-      throw new IllegalArgumentException("Node with name `" + nodeName + "` is not present in the cluster config");
+      throw new IllegalArgumentException(
+          String.format(
+              "Node with name: %s is not present in the cluster config: %s",
+              nodeName,
+              clusterConfiguration
+          )
+      );
     }
 
     this.serverConfiguration = serverConfiguration;

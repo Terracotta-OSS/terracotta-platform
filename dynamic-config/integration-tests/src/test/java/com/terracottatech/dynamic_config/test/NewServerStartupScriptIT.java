@@ -51,7 +51,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleNodeConfigFile() throws Exception {
     Path configurationFile = configFilePath();
-    startServer("--config-file", configurationFile.toString());
+    startServer("--config-file", configurationFile.toString(), "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
@@ -59,14 +59,14 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleNodeConfigFileWithHostPort() throws Exception {
     String port = String.valueOf(ports.getPort());
     Path configurationFile = configFilePath("", port);
-    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port);
+    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
-  public void testFailedStartupConfigFile_nonExistentFile() {
+  public void testFailedStartupConfigFile_nonExistentFile() throws Exception {
     Path configurationFile = Paths.get(".").resolve("blah");
-    startServer("--config-file", configurationFile.toString());
+    startServer("--config-file", configurationFile.toString(), "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("FileNotFoundException"));
   }
 
@@ -74,7 +74,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupConfigFile_invalidPort() throws Exception {
     String port = String.valueOf(ports.getPort());
     Path configurationFile = configFilePath("_invalid1", port);
-    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port);
+    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
   }
 
@@ -82,7 +82,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupConfigFile_invalidSecurity() throws Exception {
     String port = String.valueOf(ports.getPort());
     Path configurationFile = configFilePath("_invalid2", port);
-    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port);
+    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
@@ -94,32 +94,32 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidAuthc() {
-    startServer("--security-authc=blah");
+  public void testFailedStartupCliParams_invalidAuthc() throws Exception {
+    startServer("--security-authc=blah", "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidHostname() {
-    startServer("--node-hostname=:::");
+  public void testFailedStartupCliParams_invalidHostname() throws Exception {
+    startServer("--node-hostname=:::", "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidFailoverPriority() {
-    startServer("--failover-priority=blah");
+  public void testFailedStartupCliParams_invalidFailoverPriority() throws Exception {
+    startServer("--failover-priority=blah", "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("failover-priority should be one of: [availability, consistency]"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidSecurity() {
-    startServer("--security-audit-log-dir", "audit-dir");
+  public void testFailedStartupCliParams_invalidSecurity() throws Exception {
+    startServer("--security-audit-log-dir", "audit-dir", "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
   @Test
-  public void testSuccessfulStartupCliParams() {
-    startServer("-p", String.valueOf(ports.getPort()));
+  public void testSuccessfulStartupCliParams() throws Exception {
+    startServer("-p", String.valueOf(ports.getPort()), "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 

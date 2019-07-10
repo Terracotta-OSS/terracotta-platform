@@ -21,11 +21,11 @@ public class NomadManager {
     this.clientFactory = clientFactory;
   }
 
-  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change) {
-    LOGGER.info("Attempting to make co-ordinated configuration change: {}", change);
+  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change, boolean isVerbose) {
+    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", change, connectionServers);
 
     try (CloseableNomadClient client = clientFactory.createClient(connectionServers)) {
-      ChangeResultReceiver results = new LoggingChangeResultReceiver();
+      ChangeResultReceiver results = isVerbose ? new LoggingChangeResultReceiver() : new NoopChangeResultReceiver();
       client.tryApplyChange(results, change);
     }
   }

@@ -4,24 +4,25 @@
  */
 package com.terracottatech.dynamic_config.diagnostic;
 
+import com.tc.server.TCServerMain;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.monitoring.PlatformService;
 
 import java.net.InetSocketAddress;
 
 import static java.util.Objects.requireNonNull;
 
-
-public class DynamicConfigServiceImpl implements DynamicConfigService {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
+public class TopologyServiceImpl implements TopologyService {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TopologyServiceImpl.class);
 
   private volatile Cluster cluster;
   private volatile Node me;
 
-  public DynamicConfigServiceImpl(Cluster cluster, Node me) {
+  public TopologyServiceImpl(Cluster cluster, Node me) {
     this.cluster = requireNonNull(cluster);
     this.me = requireNonNull(me);
   }
@@ -34,6 +35,12 @@ public class DynamicConfigServiceImpl implements DynamicConfigService {
   @Override
   public InetSocketAddress getThisNodeAddress() {
     return me.getNodeAddress();
+  }
+
+  @Override
+  public void restart() {
+    LOGGER.info("Executing restart on node: {} in stripe: {}", me.getNodeName(), me.getStripeName());
+    TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
   }
 
   @Override

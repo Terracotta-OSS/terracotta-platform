@@ -16,17 +16,20 @@ import static com.terracottatech.dynamic_config.repository.NomadRepositoryManage
 import static java.util.Objects.requireNonNull;
 
 public class NomadRepositoryManager {
-  private static final String SANSKRIT = "sanskrit";
   private static final String CONFIG = "config";
+  private static final String LICENSE = "license";
+  private static final String SANSKRIT = "sanskrit";
 
   private final Path nomadRoot;
-  private final Path sanskritPath;
   private final Path configPath;
+  private final Path licensePath;
+  private final Path sanskritPath;
 
   public NomadRepositoryManager(Path nomadRoot) {
-    this.nomadRoot = requireNonNull(nomadRoot);
-    this.sanskritPath = nomadRoot.resolve(SANSKRIT);
+    this.nomadRoot = requireNonNull(nomadRoot).toAbsolutePath().normalize();
     this.configPath = nomadRoot.resolve(CONFIG);
+    this.licensePath = nomadRoot.resolve(LICENSE);
+    this.sanskritPath = nomadRoot.resolve(SANSKRIT);
   }
 
   public Optional<String> getNodeName() {
@@ -56,6 +59,10 @@ public class NomadRepositoryManager {
     return configPath;
   }
 
+  public Path getLicensePath() {
+    return licensePath;
+  }
+
   public Path getSanskritPath() {
     return sanskritPath;
   }
@@ -66,19 +73,20 @@ public class NomadRepositoryManager {
 
   RepositoryDepth getRepositoryDepth() {
     boolean nomadRootExists = checkDirectoryExists(nomadRoot);
-    boolean sanskritPathExists = checkDirectoryExists(sanskritPath);
     boolean configPathExists = checkDirectoryExists(configPath);
+    boolean licensePathExists = checkDirectoryExists(licensePath);
+    boolean sanskritPathExists = checkDirectoryExists(sanskritPath);
 
-    if (nomadRootExists && sanskritPathExists && configPathExists) {
+    if (nomadRootExists && sanskritPathExists && configPathExists && licensePathExists) {
       return FULL;
     }
-    if (nomadRootExists && !sanskritPathExists && !configPathExists) {
+    if (nomadRootExists && !sanskritPathExists && !configPathExists && !licensePathExists) {
       return ROOT_ONLY;
     }
-    if (!nomadRootExists && !sanskritPathExists && !configPathExists) {
+    if (!nomadRootExists && !sanskritPathExists && !configPathExists && !licensePathExists) {
       return NONE;
     }
-    throw new MalformedRepositoryException("Repository is partially formed. A valid repository should contain '" + SANSKRIT + "' and '" + CONFIG + "' directories");
+    throw new MalformedRepositoryException("Repository is partially formed. A valid repository should contain '" + CONFIG + "', '" + LICENSE + "', and '" + SANSKRIT + "' directories");
   }
 
   boolean checkDirectoryExists(Path path) {
@@ -91,8 +99,9 @@ public class NomadRepositoryManager {
 
   void createNomadSubDirectories() {
     try {
-      Files.createDirectories(sanskritPath);
       Files.createDirectories(configPath);
+      Files.createDirectories(licensePath);
+      Files.createDirectories(sanskritPath);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }

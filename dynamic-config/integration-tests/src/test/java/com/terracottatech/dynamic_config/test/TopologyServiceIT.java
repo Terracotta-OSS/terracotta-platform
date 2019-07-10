@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -28,16 +28,16 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-public class DynamicConfigServiceIT extends BaseStartupIT {
+public class TopologyServiceIT extends BaseStartupIT {
 
   @Before
   public void setUp() throws Exception {
-    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), "--config-file", configFilePath().toString()));
+    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), "--config-file", configFilePath().toString(), "-c", temporaryFolder.newFolder().getAbsolutePath()));
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
-  public void test_getPendingTopology() throws Exception {
+  public void  test_getPendingTopology() throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         getServerAddress(),
         getClass().getSimpleName(),
@@ -45,7 +45,7 @@ public class DynamicConfigServiceIT extends BaseStartupIT {
         5, SECONDS,
         null)) {
 
-      DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
+      TopologyService proxy = diagnosticService.getProxy(TopologyService.class);
       Cluster pendingTopology = proxy.getTopology();
 
       // keep for debug please

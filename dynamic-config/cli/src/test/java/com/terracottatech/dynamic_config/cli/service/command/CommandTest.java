@@ -10,7 +10,7 @@ import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -35,11 +35,11 @@ public abstract class CommandTest<C extends Command> {
   protected MultiDiagnosticServiceConnectionFactory connectionFactory;
 
   private final Map<InetSocketAddress, DiagnosticService> diagnosticServices = new HashMap<>();
-  private final Map<InetSocketAddress, DynamicConfigService> dynamicConfigServices = new HashMap<>();
+  private final Map<InetSocketAddress, TopologyService> dynamicConfigServices = new HashMap<>();
   private final Consumer<InetSocketAddress> perNodeMockCreator = addr -> {
-    dynamicConfigServices.putIfAbsent(addr, mock(DynamicConfigService.class));
+    dynamicConfigServices.putIfAbsent(addr, mock(TopologyService.class));
     diagnosticServices.putIfAbsent(addr, mock(DiagnosticService.class));
-    when(diagnosticServices.get(addr).getProxy(DynamicConfigService.class)).thenReturn(dynamicConfigServices.get(addr));
+    when(diagnosticServices.get(addr).getProxy(TopologyService.class)).thenReturn(dynamicConfigServices.get(addr));
   };
 
   @Before
@@ -64,12 +64,12 @@ public abstract class CommandTest<C extends Command> {
     return diagnosticServiceMock(InetSocketAddress.createUnresolved(host, port));
   }
 
-  DynamicConfigService dynamicConfigServiceMock(InetSocketAddress address) {
+  TopologyService dynamicConfigServiceMock(InetSocketAddress address) {
     perNodeMockCreator.accept(address);
     return dynamicConfigServices.get(address);
   }
 
-  DynamicConfigService dynamicConfigServiceMock(String host, int port) {
+  TopologyService dynamicConfigServiceMock(String host, int port) {
     return dynamicConfigServiceMock(InetSocketAddress.createUnresolved(host, port));
   }
 

@@ -28,6 +28,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -69,7 +70,7 @@ public class BaseStartupIT {
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
     Awaitility.await()
         .pollInterval(iterative(duration -> duration.multiply(2)).with().startDuration(Duration.TWO_HUNDRED_MILLISECONDS))
-        .atMost(Duration.ONE_MINUTE)
+        .atMost(new Duration(30, TimeUnit.SECONDS))
         .until(callable, matcher);
   }
 

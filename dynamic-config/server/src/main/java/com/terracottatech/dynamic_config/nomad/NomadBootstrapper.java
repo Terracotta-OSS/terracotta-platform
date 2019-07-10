@@ -5,9 +5,10 @@
 
 package com.terracottatech.dynamic_config.nomad;
 
-import com.terracottatech.diagnostic.common.Constants;
+import com.terracottatech.diagnostic.common.DiagnosticConstants;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
+import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.nomad.processor.ApplicabilityNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadChangeProcessor;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.terracottatech.dynamic_config.Constants.LICENSE_FILE_NAME;
 import static java.util.Objects.requireNonNull;
 
 public class NomadBootstrapper {
@@ -42,6 +44,7 @@ public class NomadBootstrapper {
     if (BOOTSTRAPPED.compareAndSet(false, true)) {
       nomadServerManager = new NomadServerManager();
       nomadRepositoryManager = nomadServerManager.init(requireNonNull(nomadRoot), nodeName);
+      DynamicConfigConstants.setLicensePath(nomadRepositoryManager.getLicensePath().resolve(LICENSE_FILE_NAME));
     }
   }
 
@@ -80,8 +83,7 @@ public class NomadBootstrapper {
 
     void registerMBean() {
       DiagnosticServicesRegistration<NomadServer> registration = DiagnosticServices.register(NomadServer.class, nomadServer);
-      registration.registerMBean(Constants.MBEAN_NOMAD);
-      LOGGER.info("Registered {} MBean", Constants.MBEAN_NOMAD);
+      registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
     }
 
     /**

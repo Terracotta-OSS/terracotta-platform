@@ -4,12 +4,11 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
-import org.w3c.dom.Element;
-
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.topology.config.xmlobjects.ObjectFactory;
+import org.w3c.dom.Element;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,14 +17,14 @@ import java.util.List;
 import java.util.Map;
 
 public class ClusterConfiguration {
-  private final Map<String, StripeConfiguration> clusterConfiguration = new HashMap<>();
+  private final Map<String, StripeConfiguration> stripeNameConfigInfo = new HashMap<>();
   private final String clusterName;
 
   ClusterConfiguration(Cluster cluster) {
     List<Stripe> stripes = cluster.getStripes();
     for (int i = 0; i < stripes.size(); i++) {
       String stripeName = "stripe-" + (i + 1);
-      clusterConfiguration.put(stripeName, new StripeConfiguration(stripeName, stripes.get(i)));
+      stripeNameConfigInfo.put(stripeName, new StripeConfiguration(stripeName, stripes.get(i)));
     }
     this.clusterName = getClusterName(cluster);
   }
@@ -36,7 +35,7 @@ public class ClusterConfiguration {
     com.terracottatech.topology.config.xmlobjects.Cluster cluster = factory.createCluster();
     cluster.setName(clusterName);
 
-    for (Map.Entry<String, StripeConfiguration> entry : clusterConfiguration.entrySet()) {
+    for (Map.Entry<String, StripeConfiguration> entry : stripeNameConfigInfo.entrySet()) {
       cluster.getStripes().add(entry.getValue().getClusterConfigStripe(factory));
     }
 
@@ -44,7 +43,7 @@ public class ClusterConfiguration {
   }
 
   StripeConfiguration get(String stripeName) {
-    return clusterConfiguration.get(stripeName);
+    return stripeNameConfigInfo.get(stripeName);
   }
 
   private static String getClusterName(Cluster cluster) {
@@ -65,5 +64,13 @@ public class ClusterConfiguration {
     }
 
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return "ClusterConfiguration{" +
+        "stripeNameConfigInfo=" + stripeNameConfigInfo +
+        ", clusterName='" + clusterName + '\'' +
+        '}';
   }
 }

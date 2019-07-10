@@ -11,7 +11,7 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceCon
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.utilities.Json;
 import org.slf4j.Logger;
@@ -51,12 +51,12 @@ public class DumpTopologyCommand extends Command {
   @Override
   public final void run() {
     try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(Collections.singletonList(node))) {
-      Cluster topology = connections.getDiagnosticService(node).get().getProxy(DynamicConfigService.class).getTopology();
+      Cluster topology = connections.getDiagnosticService(node).get().getProxy(TopologyService.class).getTopology();
       if (outputPath == null) {
         LOGGER.info("Topology from '{}':\n{}", node, Json.toPrettyJson(topology));
       } else {
         try {
-          Files.write(outputPath, Json.toPrettyJson(topology).getBytes(StandardCharsets.UTF_8), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+          Files.write(outputPath, Json.toPrettyJson(topology).getBytes(StandardCharsets.UTF_8));
           LOGGER.info("Output saved to '{}'", outputPath);
         } catch (IOException e) {
           throw new UncheckedIOException(e);

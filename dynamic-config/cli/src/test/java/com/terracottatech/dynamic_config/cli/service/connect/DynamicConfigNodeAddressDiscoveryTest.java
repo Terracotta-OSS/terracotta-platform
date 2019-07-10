@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.cli.service.connect;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.utilities.Tuple2;
 import org.hamcrest.Matchers;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 public class DynamicConfigNodeAddressDiscoveryTest {
 
   @Mock public DiagnosticService diagnosticService;
-  @Mock public DynamicConfigService dynamicConfigService;
+  @Mock public TopologyService topologyService;
   @Mock public Cluster cluster;
 
   @Test
@@ -52,9 +52,9 @@ public class DynamicConfigNodeAddressDiscoveryTest {
       }
     }, 60, TimeUnit.SECONDS);
 
-    when(diagnosticService.getProxy(DynamicConfigService.class)).thenReturn(dynamicConfigService);
-    when(dynamicConfigService.getTopology()).thenReturn(cluster);
-    when(dynamicConfigService.getThisNodeAddress()).thenReturn(InetSocketAddress.createUnresolved("localhost", 9410));
+    when(diagnosticService.getProxy(TopologyService.class)).thenReturn(topologyService);
+    when(topologyService.getTopology()).thenReturn(cluster);
+    when(topologyService.getThisNodeAddress()).thenReturn(InetSocketAddress.createUnresolved("localhost", 9410));
     when(cluster.getNodeAddresses()).thenReturn(Arrays.asList(
         InetSocketAddress.createUnresolved("localhost", 9410),
         InetSocketAddress.createUnresolved("1.2.3.4", 9411),

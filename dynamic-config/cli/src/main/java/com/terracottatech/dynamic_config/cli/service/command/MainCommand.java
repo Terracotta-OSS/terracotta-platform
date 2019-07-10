@@ -36,7 +36,7 @@ public class MainCommand extends Command {
       rootLogger.setLevel(Level.DEBUG);
       Appender<ILoggingEvent> detailAppender = rootLogger.getAppender("STDOUT-DETAIL");
 
-      Logger configToolLogger = (Logger) LoggerFactory.getLogger("com.terracottatech.dynamic_config.cli");
+      Logger configToolLogger = (Logger) LoggerFactory.getLogger("com.terracottatech.dynamic_config");
       configToolLogger.setLevel(Level.DEBUG);
       //Detach the STDOUT appender which logs in a minimal pattern and attached STDOUT-DETAIL appender
       configToolLogger.detachAppender("STDOUT");

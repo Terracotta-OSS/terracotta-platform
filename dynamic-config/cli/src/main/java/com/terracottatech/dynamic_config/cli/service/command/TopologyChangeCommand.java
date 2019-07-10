@@ -11,7 +11,7 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceCon
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.TypeConverter;
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.Json;
@@ -146,15 +146,15 @@ public abstract class TopologyChangeCommand extends Command {
 
       // get the target node / cluster
       Target dest = connections.getDiagnosticService(discovered.t1)
-          .map(ds -> ds.getProxy(DynamicConfigService.class))
+          .map(ds -> ds.getProxy(TopologyService.class))
           .map(dcs -> new Target(discovered.t1, dcs.getTopology()))
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
       Collection<Node> src = sources.stream()
           .map(addr -> connections.getDiagnosticService(addr)
-              .map(ds -> ds.getProxy(DynamicConfigService.class))
-              .map(DynamicConfigService::getThisNode)
+              .map(ds -> ds.getProxy(TopologyService.class))
+              .map(TopologyService::getThisNode)
               .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + addr)))
           .collect(toList());
 
@@ -173,7 +173,7 @@ public abstract class TopologyChangeCommand extends Command {
       // push the updated topology to all the addresses
       result.getNodeAddresses().stream()
           .map(endpoint -> connections.getDiagnosticService(endpoint).get())
-          .map(ds -> ds.getProxy(DynamicConfigService.class))
+          .map(ds -> ds.getProxy(TopologyService.class))
           .forEach(dcs -> dcs.setTopology(result));
     }
     logger.info("Command successful!\n");
@@ -187,7 +187,7 @@ public abstract class TopologyChangeCommand extends Command {
 
   static class Target {
 
-    // the node address from DynamicConfigService
+    // the node address from TopologyService
     private final InetSocketAddress nodeAddress;
 
     // the cluster topology this node has

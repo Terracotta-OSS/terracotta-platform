@@ -8,8 +8,10 @@ import com.tc.server.TCServerMain;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.dynamic_config.Constants;
 import com.terracottatech.dynamic_config.config.Options;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigServiceImpl;
+import com.terracottatech.dynamic_config.diagnostic.LicensingService;
+import com.terracottatech.dynamic_config.diagnostic.LicensingServiceImpl;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyServiceImpl;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.repository.NodeNameExtractor;
@@ -59,7 +61,7 @@ public class NodeManager {
   private void attemptStartupWithCliParams() {
     Cluster cluster = ClusterManager.createCluster(paramValueMap);
     Node node = cluster.getStripes().get(0).getNodes().iterator().next(); // Cluster object will have only 1 node, just get that
-    registerMBean(cluster, node);
+    registerServices(cluster, node);
     startNodeUsingTempConfig(node);
   }
 
@@ -69,7 +71,7 @@ public class NodeManager {
       LOGGER.info("Reading cluster config properties file from: {}", configFile);
       Cluster cluster = ClusterManager.createCluster(configFile);
       Node node = getMatchingNodeFromConfigFile(cluster, specifiedOptions);
-      registerMBean(cluster, node);
+      registerServices(cluster, node);
       startNodeUsingTempConfig(node);
     }
   }
@@ -79,16 +81,21 @@ public class NodeManager {
     startNode("-r", node.getNodeConfigDir().toString(), "--config-consistency", "--config", configPath.toAbsolutePath().toString(), "--node-name", node.getNodeName());
   }
 
-  private void registerMBean(Cluster cluster, Node node) {
-    DynamicConfigServiceImpl serviceImplementation = new DynamicConfigServiceImpl(cluster, node);
-    DiagnosticServices.register(DynamicConfigService.class, serviceImplementation);
-    LOGGER.info("Registered DynamicConfigServiceImpl with DiagnosticServices");
+  private void registerServices(Cluster cluster, Node node) {
+    TopologyServiceImpl topologyService = new TopologyServiceImpl(cluster, node);
+    DiagnosticServices.register(TopologyService.class, topologyService);
+    LOGGER.info("Registered TopologyServiceImpl with DiagnosticServices");
+
+    LicensingServiceImpl licensingService = new LicensingServiceImpl();
+    DiagnosticServices.register(LicensingService.class, licensingService);
+    LOGGER.info("Registered LicensingServiceImpl with DiagnosticServices");
   }
 
   private void attemptStartupWithConfigRepo(String substitutedConfigDir) {
     Optional<String> nodeNameOptional = NodeNameExtractor.extractFromConfigOptional(Paths.get(substitutedConfigDir));
     if (nodeNameOptional.isPresent()) {
       LOGGER.info("Found config repository at: {}", nodeNameOptional.get());
+      //TODO [DYNAMIC-CONFIG]: Invoke registerServices(cluster, node) here once cluster and node can be found
       startNode("-r", substitutedConfigDir, "-n", nodeNameOptional.get(), "--node-name", nodeNameOptional.get());
     }
   }

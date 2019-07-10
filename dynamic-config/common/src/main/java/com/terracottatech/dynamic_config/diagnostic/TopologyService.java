@@ -12,7 +12,7 @@ import java.net.InetSocketAddress;
 /**
  * @author Mathieu Carbou
  */
-public interface DynamicConfigService {
+public interface TopologyService {
 
   /**
    * @return this node information
@@ -20,6 +20,8 @@ public interface DynamicConfigService {
   Node getThisNode();
 
   InetSocketAddress getThisNodeAddress();
+
+  void restart();
 
   /**
    * @return The topology in memory that is currently being built before activation of the cluster.

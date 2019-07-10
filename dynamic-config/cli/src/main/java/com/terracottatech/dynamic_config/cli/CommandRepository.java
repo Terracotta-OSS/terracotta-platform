@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli;
 
 import com.terracottatech.dynamic_config.cli.service.command.Command;
+import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,10 @@ public class CommandRepository {
       throw new IllegalArgumentException("Command not found: " + name);
     }
     return commandMap.get(name);
+  }
+
+  public static MainCommand getMainCommand() {
+    return (MainCommand) getCommand("main");
   }
 
   public static void inject(Object... services) {

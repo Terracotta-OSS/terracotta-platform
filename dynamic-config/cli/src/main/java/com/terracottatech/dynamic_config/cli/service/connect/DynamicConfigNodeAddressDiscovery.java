@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.cli.service.connect;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.utilities.Tuple2;
 
@@ -35,9 +35,9 @@ public class DynamicConfigNodeAddressDiscovery implements NodeAddressDiscovery {
   @Override
   public Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(aNode, connectTimeout, connectTimeoutUnit)) {
-      DynamicConfigService dynamicConfigService = requireNonNull(diagnosticService.getProxy(DynamicConfigService.class));
-      InetSocketAddress thisNodeAddress = requireNonNull(dynamicConfigService.getThisNodeAddress());
-      Cluster cluster = requireNonNull(dynamicConfigService.getTopology());
+      TopologyService topologyService = requireNonNull(diagnosticService.getProxy(TopologyService.class));
+      InetSocketAddress thisNodeAddress = requireNonNull(topologyService.getThisNodeAddress());
+      Cluster cluster = requireNonNull(topologyService.getTopology());
       return tuple2(thisNodeAddress, cluster.getNodeAddresses());
     } catch (Exception e) {
       throw new NodeAddressDiscoveryException(e);

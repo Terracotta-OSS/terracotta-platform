@@ -24,4 +24,6 @@ public class Constants {
 
   public static final String MULTI_VALUE_SEP = ",";
   public static final String PARAM_INTERNAL_SEP = ":";
+
+  public static final String LICENSE_FILE_NAME = "license.xml";
 }
