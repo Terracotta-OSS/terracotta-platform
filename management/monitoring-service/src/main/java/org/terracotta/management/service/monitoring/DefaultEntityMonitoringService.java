@@ -46,7 +46,7 @@ class DefaultEntityMonitoringService implements EntityMonitoringService {
 
   static final String RELIABLE_CHANNEL_KEY = "management";
   static final String UNRELIABLE_CHANNEL_KEY = "management/statistics";
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultEntityMonitoringService.class);
 
   private final IMonitoringProducer monitoringProducer;
@@ -120,7 +120,7 @@ class DefaultEntityMonitoringService implements EntityMonitoringService {
   }
 
   public void init() {
-    LOGGER.trace("[{}] init()", getConsumerId());
+    LOGGER.info("[{}] Initializing entity monitoring service", getConsumerId());
     monitoringProducer.addNode(new String[0], RELIABLE_CHANNEL_KEY, null);
     Stream.of(REGISTRY, MANAGEMENT_ANSWER, NOTIFICATION)
         .forEach(type -> monitoringProducer.addNode(new String[]{RELIABLE_CHANNEL_KEY}, type.name(), null));

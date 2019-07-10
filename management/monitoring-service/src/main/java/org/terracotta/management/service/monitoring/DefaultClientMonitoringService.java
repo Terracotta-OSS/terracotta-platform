@@ -153,7 +153,7 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
 
   @Override
   public void close() {
-    LOGGER.trace("[{}] close()", this.consumerId);
+    LOGGER.info("[{}] Closing", this.consumerId);
     clear();
     topologyService.removeTopologyEventListener(this);
     firingService.removeClientMonitoringService(this);

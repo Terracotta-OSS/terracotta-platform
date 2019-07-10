@@ -201,7 +201,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
 
   @Override
   public void close() {
-    LOGGER.trace("[{}] close()", this.consumerId);
+    LOGGER.info("[{}] Closing management service", this.consumerId);
     managementCallRequests.clear();
     topologyService.removeTopologyEventListener(this);
     firingService.removeManagementService(this);

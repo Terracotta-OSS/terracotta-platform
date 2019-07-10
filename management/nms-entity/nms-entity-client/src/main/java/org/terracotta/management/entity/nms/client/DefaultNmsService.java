@@ -60,7 +60,7 @@ public class DefaultNmsService implements NmsService, Closeable {
   }
 
   public DefaultNmsService(final NmsEntity entity, BlockingQueue<Optional<Message>> incomingMessageQueue) {
-    this(entity, incomingMessageQueue, message -> LOGGER.trace("Queue is full - Message lost: ", message));
+    this(entity, incomingMessageQueue, message -> LOGGER.warn("Queue is full - Message lost: ", message));
   }
 
   public DefaultNmsService(final NmsEntity entity, BlockingQueue<Optional<Message>> incomingMessageQueue, Consumer<Message> sink) {

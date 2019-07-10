@@ -121,7 +121,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
     }
 
     if (!running) {
-      LOGGER.trace("startStatisticCollector({}, {})", interval, unit);
+      LOGGER.info("Starting collecting statistics each {} {}", interval, unit);
       intervalMs = itv;
       if (!scheduledExecutorService.isShutdown()) {
         running = true;
@@ -139,7 +139,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
   public synchronized void stopStatisticCollector() {
     if (running) {
       running = false;
-      LOGGER.trace("stopStatisticCollector()");
+      LOGGER.info("Stopping collecting statistics");
       ScheduledFuture<?> task = this.task;
       if (task != null) {
         task.cancel(false);

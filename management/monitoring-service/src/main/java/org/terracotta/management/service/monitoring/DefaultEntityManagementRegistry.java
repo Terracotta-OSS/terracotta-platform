@@ -177,9 +177,9 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public void refresh() {
-    LOGGER.trace("[{}] refresh() active={}", consumerId, monitoringService.isActiveEntityService());
+    LOGGER.info("[{}] Updating {} entity management registry", consumerId, monitoringService.isActiveEntityService() ? "active" : "passive");
     Collection<? extends Capability> capabilities = getCapabilities();
-    Capability[] capabilitiesArray = capabilities.toArray(new Capability[capabilities.size()]);
+    Capability[] capabilitiesArray = capabilities.toArray(new Capability[0]);
     // confirm with server team, this call won't throw because monitoringProducer.addNode() won't throw.
     monitoringService.exposeManagementRegistry(getContextContainer(), capabilitiesArray);
   }
@@ -204,7 +204,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
   public void close() {
     if (!closed) {
       closed = true;
-      LOGGER.trace("[{}] close() active={}", consumerId, monitoringService.isActiveEntityService());
+      LOGGER.info("[{}] Closing {} entity management registry", consumerId, monitoringService.isActiveEntityService() ? "active" : "passive");
       managementProviders.forEach(ManagementProvider::close);
       managementProviders.clear();
       onClose.complete(null);
