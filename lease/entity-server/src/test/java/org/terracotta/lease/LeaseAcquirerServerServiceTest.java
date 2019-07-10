@@ -20,6 +20,7 @@ import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.hamcrest.MockitoHamcrest;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -30,16 +31,15 @@ import org.terracotta.lease.service.LeaseService;
 import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 
-import java.util.Collections;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
 
 public class LeaseAcquirerServerServiceTest {
   @Test
@@ -81,8 +81,8 @@ public class LeaseAcquirerServerServiceTest {
 
     ArgumentCaptor<LeaseServiceConfiguration> configurationCaptor = ArgumentCaptor.forClass(LeaseServiceConfiguration.class);
     when(serviceRegistry.getService(configurationCaptor.capture())).thenReturn(leaseService);
-    when(serviceRegistry.getService(argThat(serviceType(ClientCommunicator.class)))).thenReturn(clientCommunicator);
-    when(serviceRegistry.getService(argThat(serviceType(IEntityMessenger.class)))).thenReturn(entityMessenger);
+    doReturn(clientCommunicator).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(ClientCommunicator.class)));
+    doReturn(entityMessenger).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(IEntityMessenger.class)));
 
     LeaseAcquirerServerService serverService = new LeaseAcquirerServerService();
     ActiveLeaseAcquirer activeEntity = (ActiveLeaseAcquirer) serverService.createActiveEntity(serviceRegistry, new byte[0]);
@@ -110,4 +110,5 @@ public class LeaseAcquirerServerServiceTest {
       return serviceConfiguration.getServiceType();
     }
   }
+
 }

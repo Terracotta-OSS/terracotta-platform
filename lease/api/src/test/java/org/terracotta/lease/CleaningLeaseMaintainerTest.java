@@ -16,10 +16,11 @@
 package org.terracotta.lease;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
 
 import java.io.Closeable;
@@ -47,6 +48,10 @@ public class CleaningLeaseMaintainerTest {
   @Mock
   private Lease lease;
 
+  @Before
+  public void before() {
+    when(delegate.getCurrentLease()).thenReturn(lease);
+  }
   @After
   public void after() {
     verifyNoMoreInteractions(delegate, connection, thread1, thread2);
@@ -54,7 +59,6 @@ public class CleaningLeaseMaintainerTest {
 
   @Test
   public void delegatesGetCurrentLease() {
-    when(delegate.getCurrentLease()).thenReturn(lease);
     CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
     assertEquals(lease, cleaner.getCurrentLease());
     verify(delegate).getCurrentLease();
@@ -62,7 +66,6 @@ public class CleaningLeaseMaintainerTest {
 
   @Test
   public void delegatesWaitForLease() throws Exception {
-    when(delegate.getCurrentLease()).thenReturn(lease);
     CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
     cleaner.waitForLease();
     verify(delegate).waitForLease();
@@ -70,7 +73,6 @@ public class CleaningLeaseMaintainerTest {
 
   @Test
   public void delegatesWaitForLeaseTimeout() throws Exception {
-    when(delegate.getCurrentLease()).thenReturn(lease);
     CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
     cleaner.waitForLease(10, TimeUnit.SECONDS);
     verify(delegate).waitForLease(10, TimeUnit.SECONDS);
@@ -78,7 +80,6 @@ public class CleaningLeaseMaintainerTest {
 
   @Test
   public void closeClosesDelegateAndInterruptsThreads() throws Exception {
-    when(delegate.getCurrentLease()).thenReturn(lease);
     CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
     cleaner.close();
     verify(delegate).close();
@@ -88,7 +89,6 @@ public class CleaningLeaseMaintainerTest {
 
   @Test
   public void destroyClosesConnectionAndInterruptsThreads() throws Exception {
-    when(delegate.getCurrentLease()).thenReturn(lease);
     CleaningLeaseMaintainer cleaner = new CleaningLeaseMaintainer(delegate, connection, thread1, thread2);
     cleaner.destroy();
     verify(connection).close();

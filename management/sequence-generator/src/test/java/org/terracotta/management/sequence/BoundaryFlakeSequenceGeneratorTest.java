@@ -95,8 +95,8 @@ public class BoundaryFlakeSequenceGeneratorTest {
         new File("target/classes").toURI().toURL(),
         new File("target/test-classes").toURI().toURL(),
     };
-    URLClassLoader cl1 = new URLClassLoader(cp, ClassLoader.getSystemClassLoader().getParent());
-    URLClassLoader cl2 = new URLClassLoader(cp, ClassLoader.getSystemClassLoader().getParent());
+    URLClassLoader cl1 = new URLClassLoader(cp, this.getClass().getClassLoader());
+    URLClassLoader cl2 = new URLClassLoader(cp, this.getClass().getClassLoader());
 
     Callable<String> runner1 = (Callable<String>) cl1.loadClass("org.terracotta.management.sequence.Runner").newInstance();
     Callable<String> runner2 = (Callable<String>) cl2.loadClass("org.terracotta.management.sequence.Runner").newInstance();
