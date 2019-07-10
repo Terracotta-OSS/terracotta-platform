@@ -118,7 +118,7 @@ public class ActivateCommand extends Command {
     } catch (ConditionTimeoutException e) {
       throw new RuntimeException(
           String.format(
-              "All nodes in cluster: %s did not come back up as Actives or Passives in: %s%s",
+              "All nodes in cluster: %s did not come back up as Actives or Passives in: %s %s",
               cluster.getNodeAddresses(),
               maxDuration.getValue(),
               maxDuration.getTimeUnit()

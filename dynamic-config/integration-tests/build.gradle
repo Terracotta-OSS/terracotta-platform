@@ -11,6 +11,9 @@ dependencies {
   testCompile project(':dynamic-config-migration')
   testCompile project(':dynamic-config-cli')
   testCompile project(':galvan-support-ee')
+  testCompile project(':terracotta-store-clustered-client')
+
+  testCompile "org.terracotta.management.dist:mnm-nms-agent:$terracottaPlatformVersion"
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   testCompile "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
   testCompile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
@@ -46,5 +49,26 @@ test {
 
   testLogging {
     events 'started'
+  }
+}
+
+// Helping out IDE
+plugins.withType(IdeaPlugin) {
+  sourceSets {
+    test {
+      compileClasspath += (findProject(':terracotta-common-client').configurations.compileOnly
+          + findProject(':terracotta-ehcache-client').configurations.compileOnly
+          + findProject(':terracotta-store-clustered-client').configurations.compileOnly
+          + findProject(':multi-stripe:enterprise-voter').configurations.compileOnly)
+    }
+  }
+}
+
+eclipse {
+  classpath {
+    plusConfigurations += [ findProject(':terracotta-common-client').configurations.compileOnly,
+                            findProject(':terracotta-ehcache-client').configurations.compileOnly,
+                            findProject(':terracotta-store-clustered-client').configurations.compileOnly,
+                            findProject(':multi-stripe:enterprise-voter').configurations.compileOnly ]
   }
 }

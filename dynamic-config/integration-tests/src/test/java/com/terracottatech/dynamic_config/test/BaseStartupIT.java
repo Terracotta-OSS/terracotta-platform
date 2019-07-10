@@ -36,13 +36,13 @@ import static java.nio.file.Files.walkFileTree;
 import static org.awaitility.pollinterval.IterativePollInterval.iterative;
 
 public class BaseStartupIT {
-
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
-  @Rule public final PortLockingRule ports = new PortLockingRule(4);
+  @Rule public final PortLockingRule ports = new PortLockingRule(NODE_COUNT);
 
-  protected final Collection<NodeProcess> nodeProcesses = new ArrayList<>(ports.getPorts().length);
+  static final int NODE_COUNT = 4;
+  final Collection<NodeProcess> nodeProcesses = new ArrayList<>(ports.getPorts().length);
 
   @After
   public void tearDown() {
@@ -65,6 +65,10 @@ public class BaseStartupIT {
     Path newPath = temporaryFolder.newFile().toPath();
     Files.write(newPath, replacedContents.getBytes(StandardCharsets.UTF_8));
     return newPath;
+  }
+
+  Path licensePath() throws Exception {
+    return Paths.get(NewServerStartupScriptIT.class.getResource("/license.xml").toURI());
   }
 
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
