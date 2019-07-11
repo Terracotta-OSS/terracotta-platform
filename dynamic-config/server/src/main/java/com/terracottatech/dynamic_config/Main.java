@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config;
 
-import com.terracottatech.dynamic_config.config.Options;
+import com.terracottatech.dynamic_config.parsing.Options;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

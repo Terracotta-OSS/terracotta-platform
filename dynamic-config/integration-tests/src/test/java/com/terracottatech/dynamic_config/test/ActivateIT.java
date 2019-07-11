@@ -38,14 +38,15 @@ public class ActivateIT extends BaseStartupIT {
   public void setUp() {
     int[] ports = this.ports.getPorts();
     // Ensure that there are even number of ports before we start the test
-    assertThat(NODE_COUNT, greaterThanOrEqualTo(2));
-    assertThat(NODE_COUNT % 2, is(0));
+    assertThat(ports.length, greaterThanOrEqualTo(2));
+    assertThat(ports.length % 2, is(0));
 
-    for (int i = 0; i < NODE_COUNT; i += 2) {
+    for (int i = 0, loopCount = 1; i < ports.length; i += 2, loopCount++) {
       int port = ports[i];
       int groupPort = ports[i + 1];
       nodeProcesses.add(NodeProcess.startNode(
           Kit.getOrCreatePath(),
+          "--node-name", "node-" + loopCount,
           "--node-hostname", "localhost",
           "--node-port", String.valueOf(port),
           "--node-group-port", String.valueOf(groupPort),
@@ -62,15 +63,92 @@ public class ActivateIT extends BaseStartupIT {
   }
 
   @Test
-  public void testSingleStripeActivation() throws Exception {
+  public void testWrongParams_1() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("attach", "-d", "127.0.0.1:" + ports[0], "-s", "127.0.0.1:" + ports[2]);
+    systemExit.expectSystemExit();
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Cluster name should be provided when node is specified")));
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-l", licensePath());
+  }
+
+  @Test
+  public void testWrongParams_2() throws Exception {
+    int[] ports = this.ports.getPorts();
+    systemExit.expectSystemExit();
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Either node or config properties file should be specified, not both")));
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-f", "dummy.properties", "-l", licensePath());
+  }
+
+  @Test
+  public void testWrongParams_3() throws Exception {
+    systemExit.expectSystemExit();
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Cluster name should not be provided when config properties file is specified")));
+    ConfigTool.main("activate", "-n", "tc-cluster", "-f", "dummy.properties", "-l", licensePath());
+  }
+
+  @Test
+  public void testWrongParams_4() throws Exception {
+    systemExit.expectSystemExit();
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("One of node or config properties file must be specified")));
+    ConfigTool.main("activate", "-l", licensePath());
+  }
+
+  @Test
+  public void testSingleNodeActivation() throws Exception {
+    int[] ports = this.ports.getPorts();
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath());
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("All cluster nodes: [localhost:" + ports[0] + "] came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    createDatasetAndPerformAssertions(ports);
+  }
+
+  @Test
+  public void testSingleNodeActivationWithConfigFile() throws Exception {
+    int[] ports = this.ports.getPorts();
+    ConfigTool.main("activate", "-f", configFilePath("/config-property-files/single-stripe.properties"), "-l", licensePath());
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("All cluster nodes: [localhost:" + ports[0] + "] came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    createDatasetAndPerformAssertions(ports);
+  }
+
+  @Test
+  public void testMultiNodeSingleStripeActivation() throws Exception {
+    int[] ports = this.ports.getPorts();
+    ConfigTool.main("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();
-    ConfigTool.main("activate", "-s", "127.0.0.1:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+
+    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    createDatasetAndPerformAssertions(ports);
+  }
+
+  @Test
+  public void testMultiNodeSingleStripeActivationWithConfigFile() throws Exception {
+    int[] ports = this.ports.getPorts();
+    ConfigTool.main(
+        "-r", String.valueOf(TIMEOUT),
+        "activate", "-f", configFilePath("/config-property-files/single-stripe_multi-node.properties"),
+        "-l", licensePath()
+    );
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+
+    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -79,21 +157,43 @@ public class ActivateIT extends BaseStartupIT {
   @Test
   public void testMultiStripeActivation() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("attach", "-t", "stripe", "-d", "127.0.0.1:" + ports[0], "-s", "127.0.0.1:" + ports[2]);
+    ConfigTool.main("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();
-    ConfigTool.main("activate", "-s", "127.0.0.1:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath());
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
     ));
+
+    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    createDatasetAndPerformAssertions(ports);
+  }
+
+  @Test
+  public void testMultiStripeActivationWithConfigFile() throws Exception {
+    int[] ports = this.ports.getPorts();
+    ConfigTool.main(
+        "-r", String.valueOf(TIMEOUT),
+        "activate", "-f", configFilePath("/config-property-files/multi-stripe.properties"),
+        "-l", licensePath()
+    );
+    waitedAssert(out::getLog, stringContainsInOrder(
+        Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
+    ));
+
+    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
   }
 
   private void createDatasetAndPerformAssertions(int[] ports) throws Exception {
-    Set<InetSocketAddress> node = Collections.singleton(InetSocketAddress.createUnresolved("127.0.0.1", ports[0]));
+    Set<InetSocketAddress> node = Collections.singleton(InetSocketAddress.createUnresolved("localhost", ports[0]));
     try (DatasetManager datasetManager = DatasetManager.clustered(node).build()) {
       DatasetConfiguration offheapResource = datasetManager.datasetConfiguration().offheap("main").build();
       final String datasetName = "dataset";

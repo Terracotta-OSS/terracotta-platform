@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.terracottatech.dynamic_config.Constants.LICENSE_FILE_NAME;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.LICENSE_FILE_NAME;
 
 public class LicensingServiceImpl implements LicensingService {
   private static final Logger LOGGER = LoggerFactory.getLogger(LicensingServiceImpl.class);

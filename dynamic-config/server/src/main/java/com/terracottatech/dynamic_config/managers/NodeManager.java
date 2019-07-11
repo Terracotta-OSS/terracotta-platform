@@ -6,17 +6,17 @@ package com.terracottatech.dynamic_config.managers;
 
 import com.tc.server.TCServerMain;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
-import com.terracottatech.dynamic_config.Constants;
-import com.terracottatech.dynamic_config.config.Options;
+import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.diagnostic.LicensingServiceImpl;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyServiceImpl;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.util.ConfigUtils;
+import com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils;
+import com.terracottatech.dynamic_config.parsing.Options;
 import com.terracottatech.dynamic_config.repository.NodeNameExtractor;
-import com.terracottatech.dynamic_config.util.ConfigUtils;
-import com.terracottatech.dynamic_config.util.ConsoleParamsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.util.ParameterSubstitutor;
@@ -29,9 +29,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_HOSTNAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_PORT;
-import static com.terracottatech.dynamic_config.util.ConfigUtils.getSubstitutedConfigDir;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.util.ConfigUtils.getSubstitutedConfigDir;
 
 public class NodeManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeManager.class);
@@ -95,7 +95,7 @@ public class NodeManager {
     Optional<String> nodeNameOptional = NodeNameExtractor.extractFromConfigOptional(Paths.get(substitutedConfigDir));
     if (nodeNameOptional.isPresent()) {
       LOGGER.info("Found config repository at: {}", nodeNameOptional.get());
-      //TODO [DYNAMIC-CONFIG]: Invoke registerServices(cluster, node) here once cluster and node can be found
+      //TODO [DYNAMIC-CONFIG]: Invoke registerServices(cluster, node) here once cluster and node can be found via TDB-4594
       startNode("-r", substitutedConfigDir, "-n", nodeNameOptional.get(), "--node-name", nodeNameOptional.get());
     }
   }
@@ -104,8 +104,8 @@ public class NodeManager {
     boolean isHostnameSpecified = specifiedOptions.contains(ConsoleParamsUtils.addDash(NODE_HOSTNAME)) || specifiedOptions.contains(ConsoleParamsUtils.addDashDash(NODE_HOSTNAME));
     boolean isPortSpecified = specifiedOptions.contains(ConsoleParamsUtils.addDash(NODE_PORT)) || specifiedOptions.contains(ConsoleParamsUtils.addDashDash(NODE_PORT));
 
-    String substitutedHost = ParameterSubstitutor.substitute(isHostnameSpecified ? options.getNodeHostname() : Constants.DEFAULT_HOSTNAME);
-    String port = isPortSpecified ? options.getNodePort() : Constants.DEFAULT_PORT;
+    String substitutedHost = ParameterSubstitutor.substitute(isHostnameSpecified ? options.getNodeHostname() : DynamicConfigConstants.DEFAULT_HOSTNAME);
+    String port = isPortSpecified ? options.getNodePort() : DynamicConfigConstants.DEFAULT_PORT;
 
     List<Node> allNodes = cluster.getStripes().stream()
         .flatMap(stripe -> stripe.getNodes().stream())

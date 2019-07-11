@@ -4,13 +4,12 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.parsing.ConfigFileParser;
 import org.junit.Test;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.ElementSelectors;
-
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.parsing.ConfigFileParser;
 
 import java.io.File;
 import java.net.URI;

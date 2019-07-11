@@ -52,9 +52,6 @@ public class SettingNomadChange extends FilteredNomadChange {
     return cmd == Cmd.SET ? name + "=" + value : name;
   }
 
-  //TODO [DYNAMIC-CONFIG]: The setting name contains the value of the key defined in the APi doc. Example: offheap-resources.foo
-  //The name will be validated on client-side by the CLI so when it arrives on server we can parse it to determine where the change applies.
-  //=> See whether we need an enum besides that or or if we can reuse some parsing logic somewhere to be able to determine the type of change (which handler to forward this to)
   public String getName() {
     return name;
   }

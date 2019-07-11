@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.config.CommonOptions;
+import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.Measure;

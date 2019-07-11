@@ -11,6 +11,7 @@ import org.awaitility.Duration;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Rule;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
@@ -39,9 +40,10 @@ public class BaseStartupIT {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
-  @Rule public final PortLockingRule ports = new PortLockingRule(NODE_COUNT);
+  @Rule public final PortLockingRule ports = new PortLockingRule(4);
+  @Rule public final ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
-  static final int NODE_COUNT = 4;
+  static final int TIMEOUT = 30000;
   final Collection<NodeProcess> nodeProcesses = new ArrayList<>(ports.getPorts().length);
 
   @After
@@ -53,36 +55,37 @@ public class BaseStartupIT {
     return InetSocketAddress.createUnresolved("localhost", ports.getPort());
   }
 
-  Path configFilePath() throws Exception {
-    return configFilePath("", String.valueOf(ports.getPort()));
-  }
-
-  Path configFilePath(String suffix, String port) throws Exception {
-    String resourceName = "/config-property-files/single-stripe" + suffix + ".properties";
-    Path original = Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
+  String configFilePath(String configFile) throws Exception {
+    Path original = Paths.get(NewServerStartupScriptIT.class.getResource(configFile).toURI());
     String contents = new String(Files.readAllBytes(original));
-    String replacedContents = contents.replaceAll(Pattern.quote("${PORT}"), port);
+    int[] ports = this.ports.getPorts();
+    for (int i = 0, loopCounter = 1; i < ports.length; i += 2, loopCounter++) {
+      contents = contents
+          .replaceAll(Pattern.quote("${PORT-" + loopCounter + "}"), String.valueOf(ports[i]))
+          .replaceAll(Pattern.quote("${GROUP-PORT-" + loopCounter + "}"), String.valueOf(ports[i + 1]));
+    }
+
     Path newPath = temporaryFolder.newFile().toPath();
-    Files.write(newPath, replacedContents.getBytes(StandardCharsets.UTF_8));
-    return newPath;
+    Files.write(newPath, contents.getBytes(StandardCharsets.UTF_8));
+    return newPath.toString();
   }
 
-  Path licensePath() throws Exception {
-    return Paths.get(NewServerStartupScriptIT.class.getResource("/license.xml").toURI());
+  String licensePath() throws Exception {
+    return Paths.get(NewServerStartupScriptIT.class.getResource("/license.xml").toURI()).toString();
   }
 
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
     Awaitility.await()
         .pollInterval(iterative(duration -> duration.multiply(2)).with().startDuration(Duration.TWO_HUNDRED_MILLISECONDS))
-        .atMost(new Duration(30, TimeUnit.SECONDS))
+        .atMost(new Duration(TIMEOUT, TimeUnit.MILLISECONDS))
         .until(callable, matcher);
   }
 
-  Path configRepoPath(Function<String, Path> nomadRootFunction) throws Exception {
+  String configRepoPath(Function<String, Path> nomadRootFunction) throws Exception {
     Path configurationRepoPath = nomadRootFunction.apply("config-repositories");
     Path temporaryPath = temporaryFolder.newFolder().toPath();
     copyDirectory(configurationRepoPath, temporaryPath);
-    return temporaryPath;
+    return temporaryPath.toString();
   }
 
   Function<String, Path> singleStripeSingleNodeNomadRoot(String stripeName, String nodeName) {

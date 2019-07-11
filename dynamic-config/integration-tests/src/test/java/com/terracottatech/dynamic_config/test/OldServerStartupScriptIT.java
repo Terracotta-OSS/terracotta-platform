@@ -20,8 +20,8 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     String stripeName = "stripe1";
     String nodeName = "testServer1";
-    Path configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
-    startServer("-r", configurationRepo.toString(), "-n", nodeName, "--node-name", nodeName);
+    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
+    startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -29,8 +29,8 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     String stripeName = "stripe1";
     String nodeName = "testServer2";
-    Path configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
-    startServer("-r", configurationRepo.toString(), "-n", nodeName, "--node-name", nodeName);
+    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
+    startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -38,8 +38,8 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithMultiStripeRepo() throws Exception {
     String stripeName = "stripe2";
     String nodeName = "testServer2";
-    Path configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
-    startServer("-r", configurationRepo.toString(), "-n", nodeName, "--node-name", nodeName);
+    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
+    startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 

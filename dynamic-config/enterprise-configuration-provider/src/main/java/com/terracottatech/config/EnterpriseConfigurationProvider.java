@@ -10,7 +10,7 @@ import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
-import com.terracottatech.dynamic_config.util.ConfigUtils;
+import com.terracottatech.dynamic_config.model.util.ConfigUtils;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.slf4j.Logger;

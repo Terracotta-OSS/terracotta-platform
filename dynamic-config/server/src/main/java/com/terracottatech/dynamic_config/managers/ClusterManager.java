@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.managers;
 
 
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.parsing.ConfigFileParser;
+import com.terracottatech.dynamic_config.model.parsing.ConfigFileParser;
 import com.terracottatech.dynamic_config.parsing.ConsoleParamsParser;
 
 import java.io.File;

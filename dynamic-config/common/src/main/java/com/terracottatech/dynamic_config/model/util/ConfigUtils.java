@@ -3,9 +3,9 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-package com.terracottatech.dynamic_config.util;
+package com.terracottatech.dynamic_config.model.util;
 
-import com.terracottatech.dynamic_config.Constants;
+import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.Node;
 import org.terracotta.config.util.ParameterSubstitutor;
 
@@ -98,7 +98,7 @@ public class ConfigUtils {
   }
 
   public static String getSubstitutedConfigDir(String nodeConfigDir) {
-    String specifiedOrDefaultConfigDir = nodeConfigDir == null ? Constants.DEFAULT_CONFIG_DIR : nodeConfigDir;
+    String specifiedOrDefaultConfigDir = nodeConfigDir == null ? DynamicConfigConstants.DEFAULT_CONFIG_DIR : nodeConfigDir;
     return ParameterSubstitutor.substitute(specifiedOrDefaultConfigDir);
   }
 

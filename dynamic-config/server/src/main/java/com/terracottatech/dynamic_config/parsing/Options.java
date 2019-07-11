@@ -2,15 +2,14 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.config;
+package com.terracottatech.dynamic_config.parsing;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.terracottatech.dynamic_config.Constants;
+import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.managers.NodeManager;
-import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -19,29 +18,29 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.config.CommonOptions.CLUSTER_NAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.DATA_DIRS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BACKUP_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_CONFIG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_GROUP_PORT;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_HOSTNAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_LOG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_METADATA_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_NAME;
-import static com.terracottatech.dynamic_config.config.CommonOptions.NODE_PORT;
-import static com.terracottatech.dynamic_config.config.CommonOptions.OFFHEAP_RESOURCES;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUDIT_LOG_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_AUTHC;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_DIR;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_SSL_TLS;
-import static com.terracottatech.dynamic_config.config.CommonOptions.SECURITY_WHITELIST;
-import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.addDashDash;
-import static com.terracottatech.dynamic_config.util.ConsoleParamsUtils.stripDashDash;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_DIRS;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BACKUP_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_METADATA_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_NAME;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.OFFHEAP_RESOURCES;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_AUDIT_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_AUTHC;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_SSL_TLS;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils.addDashDash;
+import static com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils.stripDashDash;
 
 @Parameters(separators = "=")
 public class Options {
@@ -129,7 +128,7 @@ public class Options {
 
   private Map<String, String> buildParamValueMap(CustomJCommander jCommander, Set<String> specifiedOptions) {
     Predicate<ParameterDescription> isSpecified =
-        pd -> Arrays.stream(pd.getNames().split(Constants.MULTI_VALUE_SEP))
+        pd -> Arrays.stream(pd.getNames().split(DynamicConfigConstants.MULTI_VALUE_SEP))
             .map(String::trim)
             .anyMatch(specifiedOptions::contains);
     return jCommander.getParameters()

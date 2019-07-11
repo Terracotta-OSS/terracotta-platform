@@ -8,7 +8,6 @@ import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Test;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.containsString;
@@ -18,8 +17,8 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     String stripeName = "stripe1";
     String nodeName = "testServer1";
-    Path configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
-    startServer("--node-config-dir", configurationRepo.toString());
+    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
+    startServer("--node-config-dir", configurationRepo);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -27,8 +26,8 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     String stripeName = "stripe1";
     String nodeName = "testServer2";
-    Path configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
-    startServer("--node-config-dir", configurationRepo.toString());
+    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
+    startServer("--node-config-dir", configurationRepo);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -36,8 +35,8 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithMultiStripeRepo() throws Exception {
     String stripeName = "stripe2";
     String nodeName = "testServer1";
-    Path configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
-    startServer("--node-config-dir", configurationRepo.toString());
+    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
+    startServer("--node-config-dir", configurationRepo);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -50,46 +49,46 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
 
   @Test
   public void testStartingWithSingleNodeConfigFile() throws Exception {
-    Path configurationFile = configFilePath();
-    startServer("--config-file", configurationFile.toString(), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
+    startServer("--config-file", configurationFile, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFileWithHostPort() throws Exception {
     String port = String.valueOf(ports.getPort());
-    Path configurationFile = configFilePath("", port);
-    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile, "-s", "localhost", "-p", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testFailedStartupConfigFile_nonExistentFile() throws Exception {
-    Path configurationFile = Paths.get(".").resolve("blah");
-    startServer("--config-file", configurationFile.toString(), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    String configurationFile = Paths.get(".").resolve("blah").toString();
+    startServer("--config-file", configurationFile, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("FileNotFoundException"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidPort() throws Exception {
     String port = String.valueOf(ports.getPort());
-    Path configurationFile = configFilePath("_invalid1", port);
-    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    String configurationFile = configFilePath("/config-property-files/single-stripe_invalid1.properties");
+    startServer("--config-file", configurationFile, "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidSecurity() throws Exception {
     String port = String.valueOf(ports.getPort());
-    Path configurationFile = configFilePath("_invalid2", port);
-    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    String configurationFile = configFilePath("/config-property-files/single-stripe_invalid2.properties");
+    startServer("--config-file", configurationFile, "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidCliParams() throws Exception {
-    Path configurationFile = configFilePath();
-    startServer("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
+    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
+    startServer("--config-file", configurationFile, "--node-bind-address", "::1");
     waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--node-hostname', '--node-port', and '--node-config-dir' parameters"));
   }
 

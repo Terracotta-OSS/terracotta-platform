@@ -32,7 +32,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.terracottatech.dynamic_config.Constants.LICENSE_FILE_NAME;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.LICENSE_FILE_NAME;
 import static java.util.Objects.requireNonNull;
 
 public class NomadBootstrapper {

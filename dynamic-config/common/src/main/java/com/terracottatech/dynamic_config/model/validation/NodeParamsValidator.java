@@ -2,12 +2,12 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.validation;
+package com.terracottatech.dynamic_config.model.validation;
 
-import com.terracottatech.dynamic_config.Constants;
-import com.terracottatech.dynamic_config.config.AcceptableSettingUnits;
-import com.terracottatech.dynamic_config.config.AcceptableSettingValues;
-import com.terracottatech.dynamic_config.config.CommonOptions;
+import com.terracottatech.dynamic_config.DynamicConfigConstants;
+import com.terracottatech.dynamic_config.model.config.AcceptableSettingUnits;
+import com.terracottatech.dynamic_config.model.config.AcceptableSettingValues;
+import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -37,7 +37,7 @@ public class NodeParamsValidator {
       return;
     }
 
-    final String[] split = value.split(Constants.PARAM_INTERNAL_SEP);
+    final String[] split = value.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
     Set<String> acceptableValues = AcceptableSettingValues.get(CommonOptions.FAILOVER_PRIORITY);
     if (split.length > 2) {
       throw new IllegalArgumentException(param + " should be one of: " + acceptableValues);
@@ -192,9 +192,9 @@ public class NodeParamsValidator {
       return;
     }
 
-    final String[] offheapResources = value.split(Constants.MULTI_VALUE_SEP);
+    final String[] offheapResources = value.split(DynamicConfigConstants.MULTI_VALUE_SEP);
     for (String offheapResource : offheapResources) {
-      final String[] nameQuantity = offheapResource.split(Constants.PARAM_INTERNAL_SEP);
+      final String[] nameQuantity = offheapResource.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
       if (nameQuantity.length != 2) {
         throw new IllegalArgumentException(param + " should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
       }

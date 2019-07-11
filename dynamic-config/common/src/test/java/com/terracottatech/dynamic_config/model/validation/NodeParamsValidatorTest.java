@@ -2,10 +2,10 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.validation;
+package com.terracottatech.dynamic_config.model.validation;
 
-import com.terracottatech.dynamic_config.config.AcceptableSettingValues;
-import com.terracottatech.dynamic_config.config.CommonOptions;
+import com.terracottatech.dynamic_config.model.config.AcceptableSettingValues;
+import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
