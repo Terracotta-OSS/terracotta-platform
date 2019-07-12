@@ -98,11 +98,6 @@ public class ActivateCommand extends Command {
       cluster = ConfigFileParser.parse(configPropertiesFile.toFile());
       LOGGER.debug("Config property file parsing and cluster topology validation successful");
       clusterName = cluster.getStripes().get(0).getNodes().iterator().next().getClusterName();
-
-      // Topology update is needed only when activation is done using config properties file. In the case of activation
-      // with node address, attach command must have done it already.
-      updateClusterTopology(cluster);
-      LOGGER.debug("Cluster topology update successful");
     }
 
     updateClusterAndStripeNames(cluster);
@@ -211,11 +206,6 @@ public class ActivateCommand extends Command {
 
     NomadManager nomadManager = new NomadManager(new NomadClientFactory(connectionFactory, new ConcurrencySizing(), new NomadEnvironment(), requestTimeout));
     nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(clusterName, cluster), isVerbose);
-  }
-
-  private void updateClusterTopology(Cluster cluster) {
-    LOGGER.debug("Contacting all cluster nodes: {} to update cluster topology", cluster.getNodeAddresses());
-    getTopologyServiceStream(cluster).forEach(dcs -> dcs.setTopology(cluster));
   }
 
   private Stream<TopologyService> getTopologyServiceStream(Cluster cluster) {
