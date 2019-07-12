@@ -9,9 +9,7 @@ dependencies {
   compile project(':utilities')
   compile project(':nomad')
   compile project(':dynamic-config-change')
-
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-  compile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"

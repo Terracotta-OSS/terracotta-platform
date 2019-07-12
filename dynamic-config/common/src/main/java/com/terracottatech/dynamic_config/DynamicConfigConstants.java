@@ -7,8 +7,8 @@ package com.terracottatech.dynamic_config;
 
 import java.nio.file.Path;
 
+import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
 import static java.io.File.separator;
-import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class DynamicConfigConstants {
   public static final String DEFAULT_PORT = "9410";

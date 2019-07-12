@@ -7,7 +7,6 @@ package com.terracottatech.dynamic_config.model.util;
 
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.Node;
-import org.terracotta.config.util.ParameterSubstitutor;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
