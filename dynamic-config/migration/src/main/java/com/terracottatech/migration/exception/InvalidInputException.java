@@ -4,14 +4,14 @@
  */
 package com.terracottatech.migration.exception;
 
-import com.terracottatech.migration.util.Pair;
+import com.terracottatech.utilities.Tuple2;
 
 public class InvalidInputException extends MigrationException {
 
   private static final long serialVersionUID = 1L;
 
   @SafeVarargs
-  public InvalidInputException(ErrorCode errorCode, final String s, Pair<String, String>... params) {
+  public InvalidInputException(ErrorCode errorCode, final String s, Tuple2<String, String>... params) {
     super(errorCode, s, params);
   }
 }

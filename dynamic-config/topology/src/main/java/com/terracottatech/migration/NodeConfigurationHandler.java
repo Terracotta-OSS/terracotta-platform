@@ -4,9 +4,8 @@
  */
 package com.terracottatech.migration;
 
+import com.terracottatech.utilities.Tuple2;
 import org.w3c.dom.Node;
-
-import com.terracottatech.migration.util.Pair;
 
 import java.util.Map;
 
@@ -14,5 +13,5 @@ public interface NodeConfigurationHandler {
   /*
   Interface for handlers which need to process a map containing configuration for a set of nodes
    */
-  void process(Map<Pair<String, String>, Node> nodeNameNodeConfigMap);
+  void process(Map<Tuple2<String, String>, Node> nodeNameNodeConfigMap);
 }

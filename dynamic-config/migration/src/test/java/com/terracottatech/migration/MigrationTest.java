@@ -4,6 +4,7 @@
  */
 package com.terracottatech.migration;
 
+import com.terracottatech.utilities.Tuple2;
 import org.junit.Test;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -14,7 +15,6 @@ import com.terracottatech.migration.exception.ErrorParamKey;
 import com.terracottatech.migration.exception.InvalidInputConfigurationContentException;
 import com.terracottatech.migration.exception.InvalidInputException;
 import com.terracottatech.migration.helper.ReflectionHelper;
-import com.terracottatech.migration.util.Pair;
 import com.terracottatech.migration.validators.ValidationWrapper;
 
 import java.nio.file.Path;
@@ -155,7 +155,7 @@ public class MigrationTest {
     Node clonedRootNodeForServer1 = mock(Node.class);
     Node clonedRootNodeForServer2 = mock(Node.class);
     List<String> serverList = Arrays.asList("server1", "server2");
-    Map<Pair<String, String>, Node> serverNodeMap = new HashMap<>();
+    Map<Tuple2<String, String>, Node> serverNodeMap = new HashMap<>();
     String stripeName = "Stripe1";
     Path path = mock(Path.class);
     MigrationImpl spiedMigration = spy(migration);
@@ -168,8 +168,8 @@ public class MigrationTest {
     spiedMigration.createServerConfigMapFunction(serverNodeMap, stripeName, path);
     assertThat(serverNodeMap.size(), is(2));
     serverNodeMap.forEach((serverName, clonedNode) -> {
-      assertThat(serverList.contains(serverName.getAnother()), is(true));
-      if ("server1".equals(serverName.getAnother())) {
+      assertThat(serverList.contains(serverName.getT2()), is(true));
+      if ("server1".equals(serverName.getT2())) {
         assertThat((clonedRootNodeForServer1 == clonedNode), is(true));
       } else {
         assertThat((clonedRootNodeForServer2 == clonedNode), is(true));
@@ -198,14 +198,14 @@ public class MigrationTest {
 
   @Test
   public void testValidatePluginConfigurations() {
-    List<Pair<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
+    List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
     MigrationImpl migration = new MigrationImpl();
     Path path = mock(Path.class);
     Element element = mock(Element.class);
     Map<Path, Node> param = new HashMap<>();
     param.put(path, element);
     ValidationWrapper validator = mock(ValidationWrapper.class);
-    Pair<Map<Path, Node>, ValidationWrapper> paramValidator = new Pair<>(param, validator);
+    Tuple2<Map<Path, Node>, ValidationWrapper> paramValidator = Tuple2.tuple2(param, validator);
     validatorsWithParams.add(paramValidator);
     doNothing().when(validator).check(param);
     migration.validatePluginConfigurations(validatorsWithParams);
@@ -213,14 +213,14 @@ public class MigrationTest {
 
   @Test(expected = InvalidInputConfigurationContentException.class)
   public void testValidatePluginConfigurationsExceptionThrown() {
-    List<Pair<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
+    List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
     MigrationImpl migration = new MigrationImpl();
     Path path = mock(Path.class);
     Element element = mock(Element.class);
     Map<Path, Node> param = new HashMap<>();
     param.put(path, element);
     ValidationWrapper validator = mock(ValidationWrapper.class);
-    Pair<Map<Path, Node>, ValidationWrapper> paramValidator = new Pair<>(param, validator);
+    Tuple2<Map<Path, Node>, ValidationWrapper> paramValidator = Tuple2.tuple2(param, validator);
     validatorsWithParams.add(paramValidator);
     doThrow(new InvalidInputConfigurationContentException(ErrorCode.UNKNOWN_ERROR, "Blah")).when(validator)
         .check(param);
@@ -611,11 +611,11 @@ public class MigrationTest {
 
     String stripe = "stripe";
 
-    Map<Pair<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
 
-    hostConfigMapNode.put(new Pair<>(stripe, server1), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server2), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server3), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
 
     List<String> servers = new ArrayList<>();
     servers.add(server1);
@@ -639,7 +639,7 @@ public class MigrationTest {
           .get(ErrorParamKey.SERVERS_IN_COMMAND.toString())
           .containsAll(hostConfigMapNode.keySet()
               .stream()
-              .map(pair -> pair.getAnother())
+              .map(pair -> pair.getT2())
               .collect(Collectors.toSet())), is(true));
     }
   }
@@ -655,10 +655,10 @@ public class MigrationTest {
 
     String stripe = "stripe";
 
-    Map<Pair<String, String>, Node> hostConfigMapNode = new HashMap<>();
-    hostConfigMapNode.put(new Pair<>(stripe, server1), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server2), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server3), mock(Node.class));
+    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
 
     List<String> servers = new ArrayList<>();
     servers.add(server1);
@@ -687,11 +687,11 @@ public class MigrationTest {
 
     String stripe = "stripe1";
 
-    Map<Pair<String, String>, Node> hostConfigMapNode = new HashMap<>();
-    hostConfigMapNode.put(new Pair<>(stripe, server1), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server2), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server3), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server4), mock(Node.class));
+    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server4), mock(Node.class));
 
     List<String> servers = new ArrayList<>();
     servers.add(server1);
@@ -712,10 +712,10 @@ public class MigrationTest {
 
     String stripe = "stripe";
 
-    Map<Pair<String, String>, Node> hostConfigMapNode = new HashMap<>();
-    hostConfigMapNode.put(new Pair<>(stripe, server1), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server2), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server3), mock(Node.class));
+    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
 
     List<String> servers = new ArrayList<>();
     servers.add(server1);
@@ -737,9 +737,9 @@ public class MigrationTest {
 
     String stripe = "stripe-1";
 
-    Map<Pair<String, String>, Node> hostConfigMapNode = new HashMap<>();
-    hostConfigMapNode.put(new Pair<>(stripe, server1), mock(Node.class));
-    hostConfigMapNode.put(new Pair<>(stripe, server3), mock(Node.class));
+    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
+    hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
 
     List<String> servers = new ArrayList<>();
     servers.add(server2);

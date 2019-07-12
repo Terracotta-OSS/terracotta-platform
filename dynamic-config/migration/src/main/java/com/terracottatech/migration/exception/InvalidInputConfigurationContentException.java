@@ -4,13 +4,13 @@
  */
 package com.terracottatech.migration.exception;
 
-import com.terracottatech.migration.util.Pair;
+import com.terracottatech.utilities.Tuple2;
 
 public class InvalidInputConfigurationContentException extends InvalidInputException {
   private static final long serialVersionUID = 1L;
 
   @SafeVarargs
-  public InvalidInputConfigurationContentException(ErrorCode errorCode, final String s, Pair<String, String>... params) {
+  public InvalidInputConfigurationContentException(ErrorCode errorCode, final String s, Tuple2<String, String>... params) {
     super(errorCode, s, params);
   }
 }

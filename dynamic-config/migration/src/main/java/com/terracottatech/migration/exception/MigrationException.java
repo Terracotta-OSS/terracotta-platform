@@ -4,7 +4,7 @@
  */
 package com.terracottatech.migration.exception;
 
-import com.terracottatech.migration.util.Pair;
+import com.terracottatech.utilities.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,21 +22,21 @@ public class MigrationException extends RuntimeException {
   private final ErrorCode errorCode;
 
   @SafeVarargs
-  public MigrationException(ErrorCode errorCode, final String s, Pair<String, String>... params) {
+  public MigrationException(ErrorCode errorCode, final String s, Tuple2<String, String>... params) {
     super(s);
     this.errorCode = errorCode;
     if (params != null) {
       @SuppressWarnings("varargs")
-      Stream<Pair<String, String>> paramStream = Arrays.stream(params);
+      Stream<Tuple2<String, String>> paramStream = Arrays.stream(params);
       paramStream.forEach(param -> {
-        parameters.compute(param.getOne(), (key, value) -> {
+        parameters.compute(param.getT1(), (key, value) -> {
           List<String> retValue;
           if (value == null) {
             retValue = new ArrayList<>();
           } else {
             retValue = value;
           }
-          retValue.add(param.getAnother());
+          retValue.add(param.getT2());
           return retValue;
         });
       });

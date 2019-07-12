@@ -4,9 +4,9 @@
  */
 package com.terracottatech.topology.config;
 
-import com.terracottatech.migration.util.Pair;
 import com.terracottatech.migration.util.XmlUtility;
 import com.terracottatech.topology.config.parser.SchemaProvider;
+import com.terracottatech.utilities.Tuple2;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -21,11 +21,11 @@ public class ClusteredConfigBuilder {
   private static final String PLUGINS_NODE_NAME = "plugins";
   private static final String CONFIG_NODE_NAME = "config";
 
-  private final Map<Pair<String, String>, Node> serverNameRootNodeMap;
-  private final Map<Pair<String, String>, Node> hostClonedConfigMap;
+  private final Map<Tuple2<String, String>, Node> serverNameRootNodeMap;
+  private final Map<Tuple2<String, String>, Node> hostClonedConfigMap;
   private final Map<String, List<String>> stripeServerListMap;
 
-  public ClusteredConfigBuilder(final Map<Pair<String, String>, Node> serverNameRootNodeMap, final Map<String, List<String>> stripeServerListMap) {
+  public ClusteredConfigBuilder(final Map<Tuple2<String, String>, Node> serverNameRootNodeMap, final Map<String, List<String>> stripeServerListMap) {
     this.serverNameRootNodeMap = serverNameRootNodeMap;
     this.stripeServerListMap = stripeServerListMap;
     this.hostClonedConfigMap = new HashMap<>();
@@ -40,7 +40,7 @@ public class ClusteredConfigBuilder {
     );
   }
 
-  private void createEntireCluster(String clusterName, Map.Entry<Pair<String, String>, Node> hostConfigMapNodeEntry) {
+  private void createEntireCluster(String clusterName, Map.Entry<Tuple2<String, String>, Node> hostConfigMapNodeEntry) {
 
     Node clusterNode = createClusterElement(clusterName, hostConfigMapNodeEntry.getValue());
     List<Node> stripes = createStripeElementsForOneServer(hostConfigMapNodeEntry.getValue());
@@ -85,7 +85,7 @@ public class ClusteredConfigBuilder {
     return clusterElement;
   }
 
-  private Node createStripeElement(String stripeName, List<String> serverNames, Node rootNode, Map<Pair<String, String>, Node> hostClonedConfigMap) {
+  private Node createStripeElement(String stripeName, List<String> serverNames, Node rootNode, Map<Tuple2<String, String>, Node> hostClonedConfigMap) {
     Node stripeElement = createNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:stripe");
 
     Node stripeNameElement = createSimpleTextNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:name", stripeName);
@@ -94,7 +94,7 @@ public class ClusteredConfigBuilder {
     serverNames.forEach(serverName -> {
       Node memberElement = createNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:node");
       Node serverConfigElementName = createSimpleTextNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:name", serverName);
-      Pair<String, String> stripeHost = new Pair<>(stripeName, serverName);
+      Tuple2<String, String> stripeHost = Tuple2.tuple2(stripeName, serverName);
       Node serverConfigElement = createServerElement(rootNode, hostClonedConfigMap.get(stripeHost));
       memberElement.appendChild(serverConfigElementName);
       memberElement.appendChild(serverConfigElement);

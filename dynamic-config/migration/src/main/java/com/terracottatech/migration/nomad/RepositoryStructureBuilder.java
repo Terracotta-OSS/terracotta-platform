@@ -10,7 +10,6 @@ import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.migration.NodeConfigurationHandler;
 import com.terracottatech.migration.exception.MigrationException;
-import com.terracottatech.migration.util.Pair;
 import com.terracottatech.migration.util.XmlUtility;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
@@ -22,6 +21,7 @@ import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.persistence.sanskrit.SanskritException;
+import com.terracottatech.utilities.Tuple2;
 import org.w3c.dom.Node;
 
 import java.nio.file.Path;
@@ -42,11 +42,11 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
   }
 
   @Override
-  public void process(final Map<Pair<String, String>, Node> nodeNameNodeConfigMap) {
+  public void process(final Map<Tuple2<String, String>, Node> nodeNameNodeConfigMap) {
     nodeNameNodeConfigMap.forEach((stripeNameServerName, doc) -> {
       try {
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
-        NomadServer nomadServer = getNomadServer(stripeNameServerName.getOne(), stripeNameServerName.getAnother());
+        NomadServer nomadServer = getNomadServer(stripeNameServerName.getT1(), stripeNameServerName.getT2());
         DiscoverResponse discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;

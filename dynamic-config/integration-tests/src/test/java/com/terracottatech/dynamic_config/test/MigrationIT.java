@@ -6,13 +6,13 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
 import com.terracottatech.migration.MigrationImpl;
-import com.terracottatech.migration.util.Pair;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.topology.config.xmlobjects.Cluster;
 import com.terracottatech.topology.config.xmlobjects.Node;
 import com.terracottatech.topology.config.xmlobjects.ServerConfig;
 import com.terracottatech.topology.config.xmlobjects.Stripe;
+import com.terracottatech.utilities.Tuple2;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -668,38 +668,38 @@ public class MigrationIT {
     assertThat(stripe1.getName(), is(CoreMatchers.not(stripe2.getName())));
 
     List<Node> nodes1 = stripe1.getNodes();
-    Set<Pair<String, String>> uniqueMembers = new HashSet<>();
+    Set<Tuple2<String, String>> uniqueMembers = new HashSet<>();
     ServerConfig serverConfig1;
     ServerConfig serverConfig2;
     ServerConfig serverConfig3;
     ServerConfig serverConfig4;
     ServerConfig serverConfig5;
-    Map<Pair<String, String>, ServerConfig> serverConfigMap1 = new HashMap<>();
+    Map<Tuple2<String, String>, ServerConfig> serverConfigMap1 = new HashMap<>();
 
     if (stripe1.getName().equals("stripe1")) {
       assertThat(nodes1.size(), is(2));
       assertThat(nodes1.get(0).getName(), isOneOf("testServer1", "testServer2"));
       assertThat(nodes1.get(1).getName(), isOneOf("testServer1", "testServer2"));
-      uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(0).getName()));
-      uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(1).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe1.getName(), nodes1.get(0).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe1.getName(), nodes1.get(1).getName()));
       serverConfig1 = nodes1.get(0).getServerConfig();
       serverConfig2 = nodes1.get(1).getServerConfig();
-      serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes1.get(0).getName()), serverConfig1);
-      serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes1.get(1).getName()), serverConfig2);
+      serverConfigMap1.put(Tuple2.tuple2(stripe1.getName(), nodes1.get(0).getName()), serverConfig1);
+      serverConfigMap1.put(Tuple2.tuple2(stripe1.getName(), nodes1.get(1).getName()), serverConfig2);
     } else {
       assertThat(nodes1.size(), is(3));
       assertThat(nodes1.get(0).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
       assertThat(nodes1.get(1).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
       assertThat(nodes1.get(2).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
-      uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(0).getName()));
-      uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(1).getName()));
-      uniqueMembers.add(new Pair<>(stripe1.getName(), nodes1.get(2).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe1.getName(), nodes1.get(0).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe1.getName(), nodes1.get(1).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe1.getName(), nodes1.get(2).getName()));
       serverConfig3 = nodes1.get(0).getServerConfig();
       serverConfig4 = nodes1.get(1).getServerConfig();
       serverConfig5 = nodes1.get(2).getServerConfig();
-      serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes1.get(0).getName()), serverConfig3);
-      serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes1.get(1).getName()), serverConfig4);
-      serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes1.get(2).getName()), serverConfig5);
+      serverConfigMap1.put(Tuple2.tuple2(stripe1.getName(), nodes1.get(0).getName()), serverConfig3);
+      serverConfigMap1.put(Tuple2.tuple2(stripe1.getName(), nodes1.get(1).getName()), serverConfig4);
+      serverConfigMap1.put(Tuple2.tuple2(stripe1.getName(), nodes1.get(2).getName()), serverConfig5);
     }
 
     List<Node> nodes2 = stripe2.getNodes();
@@ -708,22 +708,22 @@ public class MigrationIT {
       assertThat(nodes2.size(), is(2));
       assertThat(nodes2.get(0).getName(), isOneOf("testServer1", "testServer2"));
       assertThat(nodes2.get(1).getName(), isOneOf("testServer1", "testServer2"));
-      uniqueMembers.add(new Pair<>(stripe2.getName(), nodes1.get(0).getName()));
-      uniqueMembers.add(new Pair<>(stripe2.getName(), nodes1.get(1).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe2.getName(), nodes1.get(0).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe2.getName(), nodes1.get(1).getName()));
       serverConfig1 = nodes2.get(0).getServerConfig();
       serverConfig2 = nodes2.get(1).getServerConfig();
-      serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes2.get(0).getName()), serverConfig1);
-      serverConfigMap1.put(new Pair<>(stripe1.getName(), nodes2.get(1).getName()), serverConfig2);
+      serverConfigMap1.put(Tuple2.tuple2(stripe1.getName(), nodes2.get(0).getName()), serverConfig1);
+      serverConfigMap1.put(Tuple2.tuple2(stripe1.getName(), nodes2.get(1).getName()), serverConfig2);
     } else {
       assertThat(nodes2.size(), is(2));
       assertThat(nodes2.get(0).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
       assertThat(nodes2.get(1).getName(), isOneOf("testServer2", "testServer3", "testServer1"));
-      uniqueMembers.add(new Pair<>(stripe2.getName(), nodes2.get(0).getName()));
-      uniqueMembers.add(new Pair<>(stripe2.getName(), nodes2.get(1).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe2.getName(), nodes2.get(0).getName()));
+      uniqueMembers.add(Tuple2.tuple2(stripe2.getName(), nodes2.get(1).getName()));
       serverConfig3 = nodes2.get(0).getServerConfig();
       serverConfig4 = nodes2.get(1).getServerConfig();
-      serverConfigMap1.put(new Pair<>(stripe2.getName(), nodes2.get(0).getName()), serverConfig3);
-      serverConfigMap1.put(new Pair<>(stripe2.getName(), nodes2.get(1).getName()), serverConfig4);
+      serverConfigMap1.put(Tuple2.tuple2(stripe2.getName(), nodes2.get(0).getName()), serverConfig3);
+      serverConfigMap1.put(Tuple2.tuple2(stripe2.getName(), nodes2.get(1).getName()), serverConfig4);
     }
 
     assertThat(uniqueMembers.size(), is(4));
@@ -740,24 +740,24 @@ public class MigrationIT {
       assertThat(clusterTcConfig1.getServers().getServer(), notNullValue());
       List<Server> severList1 = clusterTcConfig1.getServers().getServer();
 
-      if (stripeServerNamePair.getOne().equals("stripe1") &&
-          (stripeServerNamePair.getAnother().equals("testServer1")
-              || stripeServerNamePair.getAnother().equals("testServer2"))) {
+      if (stripeServerNamePair.getT1().equals("stripe1") &&
+          (stripeServerNamePair.getT2().equals("testServer1")
+              || stripeServerNamePair.getT2().equals("testServer2"))) {
 
         assertThat(severList1.size(), is(2));
         severList1.forEach(server -> {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer1", "testServer2"));
-          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne(), internalName, server);
+          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getT1(), internalName, server);
         });
-      } else if (stripeServerNamePair.getOne().equals("stripe2") &&
-          (stripeServerNamePair.getAnother().equals("testServer2") || stripeServerNamePair.getAnother().equals("testServer1"))) {
+      } else if (stripeServerNamePair.getT1().equals("stripe2") &&
+          (stripeServerNamePair.getT2().equals("testServer2") || stripeServerNamePair.getT2().equals("testServer1"))) {
 
         assertThat(severList1.size(), is(2));
         severList1.forEach(server -> {
           String internalName = server.getName();
           assertThat(internalName, isOneOf("testServer2", "testServer1"));
-          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getOne(), internalName, server);
+          validateMultiStripeSingleFileDuplicateServerNameForStripeServers(stripeServerNamePair.getT1(), internalName, server);
         });
       } else {
         fail("Wrong servers in Stripes");
