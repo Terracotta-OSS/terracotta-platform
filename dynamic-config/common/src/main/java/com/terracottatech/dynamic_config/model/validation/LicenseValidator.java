@@ -2,9 +2,8 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.cli.service.util;
+package com.terracottatech.dynamic_config.model.validation;
 
-import com.tc.util.Conversion;
 import com.terracottatech.License;
 import com.terracottatech.LicenseException;
 import com.terracottatech.dynamic_config.model.Cluster;
@@ -21,11 +20,15 @@ public class LicenseValidator {
   public static void validateLicense(Cluster cluster, String licenseFilePath) {
     License license = parse(licenseFilePath);
     long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(DefaultLicenseParser.CAPABILITY_OFFHEAP);
-    long totalOffHeapInMB = cluster.getStripes().stream()
-        .flatMap(stripe -> stripe.getNodes().stream())
-        .flatMap(node -> node.getOffheapResources().values().stream())
-        .mapToLong(Measure::getQuantity)
-        .sum() / Conversion.MemorySizeUnits.MEGA.asBytes();
+    long totalOffHeapInMB =
+        bytesToMegaBytes(
+            cluster.getStripes()
+                .stream()
+                .flatMap(stripe -> stripe.getNodes().stream())
+                .flatMap(node -> node.getOffheapResources().values().stream())
+                .mapToLong(Measure::getQuantity)
+                .sum()
+        );
 
     if (totalOffHeapInMB > licenseOffHeapLimitInMB) {
       throw new IllegalArgumentException("Cluster offheap resource is not within the limit of the license." +
@@ -36,12 +39,12 @@ public class LicenseValidator {
     Optional<Measure<MemoryUnit>> configWithHigherOffheap = cluster.getStripes().stream()
         .flatMap(stripe -> stripe.getNodes().stream())
         .flatMap(node -> node.getOffheapResources().values().stream())
-        .filter(measure -> getConfigValueInMB(measure) > perStripeOffHeapSizeInMB)
+        .filter(measure -> bytesToMegaBytes(measure.getQuantity()) > perStripeOffHeapSizeInMB)
         .findAny();
 
     if (configWithHigherOffheap.isPresent()) {
       throw new IllegalArgumentException("Stripe offheap resource is not within the per-stripe limit" +
-          " of the license. Provided: " + getConfigValueInMB(configWithHigherOffheap.get()) + " MB," +
+          " of the license. Provided: " + bytesToMegaBytes(configWithHigherOffheap.get().getQuantity()) + " MB," +
           " but license allows: " + perStripeOffHeapSizeInMB + " MB only");
     }
   }
@@ -54,7 +57,7 @@ public class LicenseValidator {
     }
   }
 
-  private static long getConfigValueInMB(Measure<MemoryUnit> measure) {
-    return measure.getQuantity() / Conversion.MemorySizeUnits.MEGA.asBytes();
+  private static long bytesToMegaBytes(long quantity) {
+    return MemoryUnit.MB.convert(quantity, MemoryUnit.B);
   }
 }

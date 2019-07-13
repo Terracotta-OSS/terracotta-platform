@@ -15,18 +15,31 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.util.ConfigUtils;
 import com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils;
+import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
+import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
+import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
 import com.terracottatech.dynamic_config.parsing.Options;
 import com.terracottatech.dynamic_config.repository.NodeNameExtractor;
+import com.terracottatech.nomad.messages.CommitMessage;
+import com.terracottatech.nomad.messages.PrepareMessage;
+import com.terracottatech.nomad.server.NomadException;
+import com.terracottatech.nomad.server.UpgradableNomadServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.util.ParameterSubstitutor;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
@@ -39,6 +52,9 @@ public class NodeManager {
   private final Options options;
   private final Set<String> specifiedOptions;
   private final Map<String, String> paramValueMap;
+  private String licenseFile;
+  private String clusterName;
+  private LicensingServiceImpl licensingService;
 
   public NodeManager(Options options, Set<String> specifiedOptions, Map<String, String> paramValueMap) {
     this.options = options;
@@ -48,12 +64,7 @@ public class NodeManager {
 
   public void startNode() {
     String substitutedConfigDir = getSubstitutedConfigDir(options.getNodeConfigDir());
-
-    LOGGER.info("Attempting node startup using config repository");
     attemptStartupWithConfigRepo(substitutedConfigDir);
-    LOGGER.info("Config repository not found at: {}", substitutedConfigDir);
-
-    LOGGER.info("Attempting node startup in UNCONFIGURED state");
     attemptStartupWithConfigFile();
     attemptStartupWithCliParams();
   }
@@ -71,22 +82,102 @@ public class NodeManager {
       LOGGER.info("Reading cluster config properties file from: {}", configFile);
       Cluster cluster = ClusterManager.createCluster(configFile);
       Node node = getMatchingNodeFromConfigFile(cluster, specifiedOptions);
-      registerServices(cluster, node);
-      startNodeUsingTempConfig(node);
+      if (specifiedOptions.contains("--license-file")) {
+        licenseFile = paramValueMap.get("license-file");
+        clusterName = cluster.getStripes().get(0).getNodes().iterator().next().getClusterName();
+
+        updateStripeNames(cluster);
+        LOGGER.debug("Setting stripe name successful");
+
+        registerServices(cluster, node);
+
+        makeNomadWritable(node);
+        LOGGER.debug("Setting nomad writable successful");
+
+        runNomadChange(cluster);
+        LOGGER.debug("Nomad change run successful");
+
+        installLicense(cluster);
+        LOGGER.info("License installation successful");
+
+        attemptStartupWithConfigRepo(node.getNodeConfigDir().toString());
+      } else {
+        registerServices(cluster, node);
+        startNodeUsingTempConfig(node);
+      }
     }
   }
 
+  private void updateStripeNames(Cluster cluster) {
+    AtomicInteger stripeIndex = new AtomicInteger();
+    cluster.getStripes()
+        .stream()
+        .flatMap(stripe -> {
+          stripeIndex.incrementAndGet();
+          return stripe.getNodes().stream();
+        })
+        .forEach(node -> node.setStripeName("stripe-" + stripeIndex.get()));
+  }
+
+  private void makeNomadWritable(Node node) {
+    NomadBootstrapper.bootstrap(node.getNodeConfigDir(), node.getNodeName());
+    NomadBootstrapper.getNomadServerManager().upgradeForWrite(node.getNodeName(), "stripe-1");
+  }
+
+  private void runNomadChange(Cluster cluster) {
+    UpgradableNomadServer nomadServer = NomadBootstrapper.getNomadServerManager().getNomadServer();
+    NomadEnvironment nomadEnvironment = new NomadEnvironment();
+    ClusterActivationNomadChange change = new ClusterActivationNomadChange(clusterName, cluster);
+    PrepareMessage prepareMessage = new PrepareMessage(
+        1,
+        nomadEnvironment.getHost(),
+        nomadEnvironment.getUser(),
+        UUID.randomUUID(),
+        1,
+        change
+    );
+    CommitMessage commitMessage = new CommitMessage(
+        2,
+        nomadEnvironment.getHost(),
+        nomadEnvironment.getUser(),
+        UUID.randomUUID()
+    );
+    try {
+      //TODO [DYNAMIC-CONFIG]: Consider the failure scenarios here, and rollback the change accordingly
+      nomadServer.discover();
+      nomadServer.prepare(prepareMessage);
+      nomadServer.commit(commitMessage);
+    } catch (NomadException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void installLicense(Cluster cluster) {
+    LicenseValidator.validateLicense(cluster, licenseFile);
+    LOGGER.debug("License validation successful");
+
+    String validatedLicense;
+    try {
+      validatedLicense = Files.readAllLines(Paths.get(licenseFile)).stream().collect(Collectors.joining(System.lineSeparator()));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
+    licensingService.installLicense(validatedLicense);
+  }
+
   private void startNodeUsingTempConfig(Node node) {
+    LOGGER.info("Attempting node startup in UNCONFIGURED state");
     Path configPath = ConfigUtils.createTempTcConfig(node);
     startNode("-r", node.getNodeConfigDir().toString(), "--config-consistency", "--config", configPath.toAbsolutePath().toString(), "--node-name", node.getNodeName());
   }
 
   private void registerServices(Cluster cluster, Node node) {
-    TopologyServiceImpl topologyService = new TopologyServiceImpl(cluster, node);
+    TopologyService topologyService = new TopologyServiceImpl(cluster, node);
     DiagnosticServices.register(TopologyService.class, topologyService);
     LOGGER.info("Registered TopologyServiceImpl with DiagnosticServices");
 
-    LicensingServiceImpl licensingService = new LicensingServiceImpl();
+    licensingService = new LicensingServiceImpl();
     DiagnosticServices.register(LicensingService.class, licensingService);
     LOGGER.info("Registered LicensingServiceImpl with DiagnosticServices");
   }

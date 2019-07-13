@@ -60,6 +60,11 @@ public class NomadBootstrapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerManager.class);
 
     private volatile UpgradableNomadServer nomadServer;
+
+    public UpgradableNomadServer getNomadServer() {
+      return nomadServer;
+    }
+
     private final NomadEnvironment nomadEnvironment = new NomadEnvironment();
 
     /**

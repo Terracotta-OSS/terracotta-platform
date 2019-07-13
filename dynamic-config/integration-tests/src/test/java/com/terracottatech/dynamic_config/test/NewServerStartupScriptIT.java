@@ -89,7 +89,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupConfigFile_invalidCliParams() throws Exception {
     String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
     startServer("--config-file", configurationFile, "--node-bind-address", "::1");
-    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--node-hostname', '--node-port', and '--node-config-dir' parameters"));
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--node-hostname', '--node-port', and '--node-config-dir' parameters"));
   }
 
   @Test

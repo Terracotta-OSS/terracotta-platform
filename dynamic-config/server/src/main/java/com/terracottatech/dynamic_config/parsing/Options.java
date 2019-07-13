@@ -68,7 +68,7 @@ public class Options {
   @Parameter(names = {"-m", "--" + NODE_METADATA_DIR})
   private String nodeMetadataDir;
 
-  @Parameter(names = {"-l", "--" + NODE_LOG_DIR})
+  @Parameter(names = {"-L", "--" + NODE_LOG_DIR})
   private String nodeLogDir;
 
   @Parameter(names = {"-b", "--" + NODE_BACKUP_DIR})
@@ -110,6 +110,9 @@ public class Options {
   @Parameter(names = {"-f", "--config-file"})
   private String configFile;
 
+  @Parameter(names = {"-l", "--license-file"})
+  private String licenseFile;
+
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
 
@@ -144,11 +147,13 @@ public class Options {
 
     Set<String> filteredOptions = new HashSet<>(specifiedOptions);
     filteredOptions.remove("-f");
+    filteredOptions.remove("-l");
     filteredOptions.remove("-s");
     filteredOptions.remove("-p");
     filteredOptions.remove("-c");
 
     filteredOptions.remove("--config-file");
+    filteredOptions.remove("--license-file");
     filteredOptions.remove(addDashDash(NODE_HOSTNAME));
     filteredOptions.remove(addDashDash(NODE_PORT));
     filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
@@ -156,7 +161,8 @@ public class Options {
     if (filteredOptions.size() != 0) {
       throw new ParameterException(
           String.format(
-              "'--config-file' parameter can only be used with '%s', '%s', and '%s' parameters",
+              "'--config-file' parameter can only be used with '%s', '%s', '%s', and '%s' parameters",
+              "--license-file",
               addDashDash(NODE_HOSTNAME),
               addDashDash(NODE_PORT),
               addDashDash(NODE_CONFIG_DIR)
@@ -251,5 +257,9 @@ public class Options {
 
   public String getConfigFile() {
     return configFile;
+  }
+
+  public String getLicenseFile() {
+    return licenseFile;
   }
 }

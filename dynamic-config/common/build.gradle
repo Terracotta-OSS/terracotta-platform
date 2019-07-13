@@ -8,6 +8,7 @@ apply plugin: TcDeploy
 dependencies {
   compile project(':utilities')
   compile project(':nomad')
+  compile project(':licensing-parser')
   compile project(':dynamic-config-change')
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
