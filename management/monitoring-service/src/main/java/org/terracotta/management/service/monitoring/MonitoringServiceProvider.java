@@ -86,8 +86,16 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public void addStateTo(StateDumpCollector dump) {
     TopologyService topologyService = this.topologyService;
-    if (topologyService != null) {
+
+    if (topologyService == null) {
+      dump.addState("status", "The TopologyService was not loaded.");
+      return;
+    }
+
+    if (topologyService.isCurrentServerActive()) {
       dump.addState("cluster", topologyService.getClusterCopy().toMap());
+    } else {
+      dump.addState("status", "This is a passive server, so it is unaware of connected clients and other stripe members.");
     }
   }
 

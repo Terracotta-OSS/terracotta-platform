@@ -43,6 +43,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
   private final ClientIdentifier clientIdentifier;
   private final Collection<String> tags = new LinkedHashSet<>();
   private String hostName;
+  private String version;
 
   private Client(ClientIdentifier clientIdentifier) {
     super(clientIdentifier.getClientId());
@@ -78,6 +79,15 @@ public final class Client extends AbstractManageableNode<Cluster> {
 
   public String getHostAddress() {
     return clientIdentifier.getHostAddress();
+  }
+
+  public Client setVersion(String version) {
+    this.version = version;
+    return this;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public String getHostName() {
@@ -220,6 +230,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     if (!connections.equals(client.connections)) return false;
     if (!clientIdentifier.equals(client.clientIdentifier)) return false;
     if (!tags.equals(client.tags)) return false;
+    if (version != null ? !version.equals(client.version) : client.version != null) return false;
     return hostName != null ? hostName.equals(client.hostName) : client.hostName == null;
   }
 
@@ -229,6 +240,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     result = 31 * result + connections.hashCode();
     result = 31 * result + clientIdentifier.hashCode();
     result = 31 * result + tags.hashCode();
+    result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
     return result;
   }
@@ -243,7 +255,8 @@ public final class Client extends AbstractManageableNode<Cluster> {
     map.put("vmId", getVmId());
     map.put("clientId", getClientId());
     map.put("hostName", getHostName());
-    map.put("tags", tags);
+    map.put("tags", getTags());
+    map.put("version", version != null ? version : "UNKNOWN");
     map.put("connections", connectionStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Connection::toMap).collect(Collectors.toList()));
     map.put("managementRegistry", getManagementRegistry().map(ManagementRegistry::toMap).orElse(null));
     return map;
