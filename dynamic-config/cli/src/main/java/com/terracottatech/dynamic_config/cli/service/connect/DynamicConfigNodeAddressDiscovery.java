@@ -12,7 +12,6 @@ import com.terracottatech.utilities.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 import static com.terracottatech.utilities.Tuple2.tuple2;
 import static java.util.Objects.requireNonNull;
@@ -23,18 +22,14 @@ import static java.util.Objects.requireNonNull;
 public class DynamicConfigNodeAddressDiscovery implements NodeAddressDiscovery {
 
   private final DiagnosticServiceProvider diagnosticServiceProvider;
-  private final long connectTimeout;
-  private final TimeUnit connectTimeoutUnit;
 
-  public DynamicConfigNodeAddressDiscovery(DiagnosticServiceProvider diagnosticServiceProvider, long connectTimeout, TimeUnit connectTimeoutUnit) {
+  public DynamicConfigNodeAddressDiscovery(DiagnosticServiceProvider diagnosticServiceProvider) {
     this.diagnosticServiceProvider = requireNonNull(diagnosticServiceProvider);
-    this.connectTimeout = connectTimeout;
-    this.connectTimeoutUnit = requireNonNull(connectTimeoutUnit);
   }
 
   @Override
   public Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException {
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(aNode, connectTimeout, connectTimeoutUnit)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(aNode)) {
       TopologyService topologyService = requireNonNull(diagnosticService.getProxy(TopologyService.class));
       InetSocketAddress thisNodeAddress = requireNonNull(topologyService.getThisNodeAddress());
       Cluster cluster = requireNonNull(topologyService.getTopology());

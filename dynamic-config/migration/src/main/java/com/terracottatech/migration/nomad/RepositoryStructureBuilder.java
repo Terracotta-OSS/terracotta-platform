@@ -42,11 +42,11 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
   }
 
   @Override
-  public void process(final Map<Tuple2<String, String>, Node> nodeNameNodeConfigMap) {
-    nodeNameNodeConfigMap.forEach((stripeNameServerName, doc) -> {
+  public void process(final Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap) {
+    nodeNameNodeConfigMap.forEach((stripeIdServerName, doc) -> {
       try {
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
-        NomadServer nomadServer = getNomadServer(stripeNameServerName.getT1(), stripeNameServerName.getT2());
+        NomadServer nomadServer = getNomadServer(stripeIdServerName.getT1(), stripeIdServerName.getT2());
         DiscoverResponse discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
@@ -74,8 +74,8 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
     return createServer(nomadRoot, nodeName);
   }
 
-  protected NomadServer getNomadServer(String stripeName, String nodeName) throws Exception {
-    Path nomadRoot = outputFolderPath.resolve(stripeName + "_" + nodeName);
+  protected NomadServer getNomadServer(int stripeId, String nodeName) throws Exception {
+    Path nomadRoot = outputFolderPath.resolve("stripe" + stripeId + "_" + nodeName);
     return createServer(nomadRoot, nodeName);
   }
 

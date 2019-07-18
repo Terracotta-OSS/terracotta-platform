@@ -48,9 +48,9 @@ public class NomadServerManagerTest {
 
   @Test
   public void testCreateConfigController() {
-    ConfigController configController = spyNomadManager.createConfigController("node0", "stripe1");
+    ConfigController configController = spyNomadManager.createConfigController("node0", 1);
     assertThat(configController.getNodeName(), is("node0"));
-    assertThat(configController.getStripeName(), is("stripe1"));
+    assertThat(configController.getStripeId(), is(1));
   }
 
   @Test
@@ -97,12 +97,12 @@ public class NomadServerManagerTest {
     spyNomadManager.init(nomadRoot, "node-1");
     verify(spyNomadManager, times(1)).createServer(repositoryStructureManager, "node-1");
 
-    String nodeName = "node0";
-    String stripeName = "stripe1";
+    String nodeName = "node-0";
+    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(nodeName, stripeName);
+    spyNomadManager.upgradeForWrite(nodeName, stripeId);
     verify(upgradableNomadServer, times(1)).setChangeApplicator(any(ChangeApplicator.class));
   }
 
@@ -215,11 +215,11 @@ public class NomadServerManagerTest {
     spyNomadManager.init(nomadRoot, "node-1");
 
     String nodeName = "node0";
-    String stripeName = "stripe1";
+    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(nodeName, stripeName);
+    spyNomadManager.upgradeForWrite(nodeName, stripeId);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
@@ -267,11 +267,11 @@ public class NomadServerManagerTest {
     spyNomadManager.init(nomadRoot, "node-1");
 
     String nodeName = "node0";
-    String stripeName = "stripe1";
+    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(nodeName, stripeName);
+    spyNomadManager.upgradeForWrite(nodeName, stripeId);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
@@ -303,11 +303,11 @@ public class NomadServerManagerTest {
     spyNomadManager.init(nomadRoot, "node-1");
 
     String nodeName = "node0";
-    String stripeName = "stripe1";
+    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(nodeName, stripeName);
+    spyNomadManager.upgradeForWrite(nodeName, stripeId);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
@@ -336,11 +336,11 @@ public class NomadServerManagerTest {
     spyNomadManager.init(nomadRoot, "node-1");
 
     String nodeName = "node0";
-    String stripeName = "stripe1";
+    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(nodeName, stripeName);
+    spyNomadManager.upgradeForWrite(nodeName, stripeId);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();

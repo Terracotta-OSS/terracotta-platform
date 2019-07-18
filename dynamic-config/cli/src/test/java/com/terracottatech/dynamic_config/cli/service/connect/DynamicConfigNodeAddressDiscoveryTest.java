@@ -45,12 +45,12 @@ public class DynamicConfigNodeAddressDiscoveryTest {
 
   @Test
   public void test_discover() {
-    DynamicConfigNodeAddressDiscovery discovery = new DynamicConfigNodeAddressDiscovery(new DiagnosticServiceProvider("foo", 1, TimeUnit.SECONDS, null) {
+    DynamicConfigNodeAddressDiscovery discovery = new DynamicConfigNodeAddressDiscovery(new DiagnosticServiceProvider("foo", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS, null) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
         return diagnosticService;
       }
-    }, 60, TimeUnit.SECONDS);
+    });
 
     when(diagnosticService.getProxy(TopologyService.class)).thenReturn(topologyService);
     when(topologyService.getTopology()).thenReturn(cluster);
@@ -84,13 +84,13 @@ public class DynamicConfigNodeAddressDiscoveryTest {
         new EntityNotProvidedException("cname", "ename"),
         new EntityVersionMismatchException("cname", "ename", 1, 2)
     ).forEach(ex -> assertThat(
-        () -> new DynamicConfigNodeAddressDiscovery(fetchThrowing(ex), 60, TimeUnit.SECONDS).discover(InetSocketAddress.createUnresolved("1.2.3.4", 9410)),
+        () -> new DynamicConfigNodeAddressDiscovery(fetchThrowing(ex)).discover(InetSocketAddress.createUnresolved("1.2.3.4", 9410)),
         is(throwing(instanceOf(NodeAddressDiscoveryException.class)).andCause(is(ex)))
     ));
   }
 
   private DiagnosticServiceProvider fetchThrowing(Throwable throwable) {
-    return new DiagnosticServiceProvider("foo", 1, TimeUnit.SECONDS, null) {
+    return new DiagnosticServiceProvider("foo", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS, null) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
         forceThrow(throwable);

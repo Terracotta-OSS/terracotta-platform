@@ -24,8 +24,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Collections;
 
 @Parameters(commandNames = "dump-topology", commandDescription = "Dump the cluster topology")
 @Usage("dump-topology -s HOST[:PORT] -o OUTPUT_FILE")
@@ -50,7 +48,7 @@ public class DumpTopologyCommand extends Command {
 
   @Override
   public final void run() {
-    try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(Collections.singletonList(node))) {
+    try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(node)) {
       Cluster topology = connections.getDiagnosticService(node).get().getProxy(TopologyService.class).getTopology();
       if (outputPath == null) {
         LOGGER.info("Topology from '{}':\n{}", node, Json.toPrettyJson(topology));

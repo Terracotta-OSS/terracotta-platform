@@ -6,12 +6,18 @@ package com.terracottatech.dynamic_config.model.util;
 
 
 public class ConfigFileParamsUtils {
-  public static String getStripe(String key) {
-    return splitKey(key)[0] + splitKey(key)[1];
+  public static int getStripeId(String key) {
+    if (!"stripe".equals(splitKey(key)[0])) {
+      throw new IllegalArgumentException("Invalid key: " + key);
+    }
+    return Integer.parseInt(splitKey(key)[1]);
   }
 
-  public static String getNode(String key) {
-    return splitKey(key)[2] + splitKey(key)[3];
+  public static String getNodeName(String key) {
+    if (!"node".equals(splitKey(key)[2])) {
+      throw new IllegalArgumentException("Invalid key: " + key);
+    }
+    return "node-" + splitKey(key)[3];
   }
 
   public static String getProperty(String key) {

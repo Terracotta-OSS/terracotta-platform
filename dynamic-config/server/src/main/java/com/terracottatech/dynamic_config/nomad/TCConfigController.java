@@ -44,8 +44,8 @@ public class TCConfigController implements ConfigController {
   }
 
   @Override
-  public String getStripeName() {
-    return "stripe1";
+  public int getStripeId() {
+    return 1;
   }
 
   @Override

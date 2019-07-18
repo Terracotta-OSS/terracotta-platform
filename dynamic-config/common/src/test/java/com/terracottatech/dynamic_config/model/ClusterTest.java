@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -32,7 +33,6 @@ public class ClusterTest {
   private final Node node1 = new Node()
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
-      .setClusterName("c")
       .setDataDir("data", Paths.get("data"))
       .setFailoverPriority("availability")
       .setNodeBackupDir(Paths.get("backup"))
@@ -61,7 +61,7 @@ public class ClusterTest {
       .setNodeConfigDir(Paths.get("/config/node2"));
 
   Stripe stripe1 = new Stripe(node1);
-  Cluster cluster = new Cluster(stripe1);
+  Cluster cluster = new Cluster("c", stripe1);
 
   @Test
   public void test_isEmpty() {
@@ -136,5 +136,37 @@ public class ClusterTest {
     assertThat(node2.getOffheapResources(), hasKey("off"));
     assertThat(node2.getOffheapResources(), not(hasKey("foo")));
     assertThat(node2.getOffheapResources(), not(hasKey("bar")));
+  }
+
+  @Test
+  public void test_getSingleNode() {
+    assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
+
+    stripe1.attachNode(node2);
+    assertThat(() -> cluster.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
+
+    // back to normal
+    stripe1.detachNode(node2.getNodeAddress());
+    assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
+
+    cluster.attachStripe(new Stripe(node2));
+    assertThat(() -> cluster.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
+
+    // back to normal
+    cluster.detachNode(node2.getNodeAddress());
+    assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
+
+    // empty
+    stripe1.detachNode(node1.getNodeAddress());
+    assertThat(cluster.getSingleNode().isPresent(), is(false));
+  }
+
+  @Test
+  public void test_getStripeId() {
+    assertThat(cluster.getStripeId(node1).get(), is(equalTo(1)));
+    assertThat(cluster.getStripeId(node2).isPresent(), is(false));
+
+    cluster.attachStripe(new Stripe(node2));
+    assertThat(cluster.getStripeId(node2).get(), is(2));
   }
 }

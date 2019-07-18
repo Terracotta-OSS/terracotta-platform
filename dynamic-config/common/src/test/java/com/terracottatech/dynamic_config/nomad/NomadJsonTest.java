@@ -5,8 +5,6 @@
 package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.terracottatech.dynamic_config.ConfigChangeHandler;
-import com.terracottatech.dynamic_config.ConfigChangeHandler.Type;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -18,7 +16,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 
 import static com.terracottatech.dynamic_config.ConfigChangeHandler.Type.OFFHEAP;
 import static org.hamcrest.Matchers.equalTo;
@@ -33,14 +30,14 @@ public class NomadJsonTest {
   @Test
   public void test_ser_deser() throws IOException {
     NomadChange[] changes = {
-        new ClusterActivationNomadChange("myClusterName", new Cluster(new Stripe(new Node()
+        new ClusterActivationNomadChange(new Cluster("myClusterName", new Stripe(new Node()
             .setNodeName("foo")
             .setClientReconnectWindow(60, TimeUnit.SECONDS).setOffheapResource("foo", 1, MemoryUnit.GB)))),
         new ConfigMigrationNomadChange("xml config"),
         new ConfigRepairNomadChange("xml config"),
-        SettingNomadChange.set(Applicability.node("stripe1", "node1"), OFFHEAP, "foo", "2GB"),
+        SettingNomadChange.set(Applicability.node(1, "node1"), OFFHEAP, "foo", "2GB"),
         new MultipleNomadChanges(
-            SettingNomadChange.set(Applicability.node("stripe1", "node1"), OFFHEAP, "foo", "2GB"),
+            SettingNomadChange.set(Applicability.node(1, "node1"), OFFHEAP, "foo", "2GB"),
             SettingNomadChange.set(Applicability.cluster(), OFFHEAP, "bar", "512MB")
         )
     };

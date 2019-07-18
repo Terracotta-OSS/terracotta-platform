@@ -9,7 +9,7 @@ import com.terracottatech.utilities.MemoryUnit;
 
 public interface ConfigController {
 
-  String getStripeName();
+  int getStripeId();
 
   String getNodeName();
 

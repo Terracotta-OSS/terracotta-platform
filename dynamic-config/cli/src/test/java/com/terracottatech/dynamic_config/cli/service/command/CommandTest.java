@@ -44,14 +44,14 @@ public abstract class CommandTest<C extends Command> {
 
   @Before
   public void setUp() throws Exception {
-    diagnosticServiceProvider = new DiagnosticServiceProvider(getClass().getSimpleName(), 5, TimeUnit.SECONDS, null) {
+    diagnosticServiceProvider = new DiagnosticServiceProvider(getClass().getSimpleName(), 5, TimeUnit.SECONDS, 5, TimeUnit.SECONDS, null) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
         perNodeMockCreator.accept(address);
         return diagnosticServices.get(address);
       }
     };
-    nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider, 5, TimeUnit.SECONDS);
+    nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
     connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, 5, TimeUnit.SECONDS, new ConcurrencySizing());
   }
 

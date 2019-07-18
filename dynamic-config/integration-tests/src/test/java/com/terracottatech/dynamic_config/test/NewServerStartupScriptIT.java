@@ -15,27 +15,27 @@ import static org.hamcrest.Matchers.containsString;
 public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
-    String stripeName = "stripe1";
+    int stripeId = 1;
     String nodeName = "testServer1";
-    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
+    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeId, nodeName));
     startServer("--node-config-dir", configurationRepo);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
-    String stripeName = "stripe1";
+    int stripeId = 1;
     String nodeName = "testServer2";
-    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
+    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeId, nodeName));
     startServer("--node-config-dir", configurationRepo);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
-    String stripeName = "stripe2";
+    int stripeId = 2;
     String nodeName = "testServer1";
-    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
+    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeId, nodeName));
     startServer("--node-config-dir", configurationRepo);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
@@ -89,7 +89,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupConfigFile_invalidCliParams() throws Exception {
     String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
     startServer("--config-file", configurationFile, "--node-bind-address", "::1");
-    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--node-hostname', '--node-port', and '--node-config-dir' parameters"));
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port', and '--node-config-dir' parameters"));
   }
 
   @Test

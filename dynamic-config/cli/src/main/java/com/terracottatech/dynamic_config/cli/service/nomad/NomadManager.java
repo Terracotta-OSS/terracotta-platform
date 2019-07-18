@@ -16,12 +16,14 @@ public class NomadManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);
 
   private final NomadClientFactory clientFactory;
+  private final boolean isVerbose;
 
-  public NomadManager(NomadClientFactory clientFactory) {
+  public NomadManager(NomadClientFactory clientFactory, boolean isVerbose) {
     this.clientFactory = clientFactory;
+    this.isVerbose = isVerbose;
   }
 
-  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change, boolean isVerbose) {
+  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change) {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", change, connectionServers);
 
     try (CloseableNomadClient client = clientFactory.createClient(connectionServers)) {

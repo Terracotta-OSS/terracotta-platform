@@ -7,21 +7,22 @@ package com.terracottatech.dynamic_config.nomad;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public class ConfigControllerImpl implements ConfigController {
 
-  private final Supplier<String> stripeNameSupplier;
+  private final IntSupplier stripeIdSupplier;
   private final Supplier<String> nodeNameSupplier;
 
-  public ConfigControllerImpl(Supplier<String> nodeNameSupplier, Supplier<String> stripeNameSupplier) {
+  public ConfigControllerImpl(Supplier<String> nodeNameSupplier, IntSupplier stripeIdSupplier) {
     this.nodeNameSupplier = nodeNameSupplier;
-    this.stripeNameSupplier = stripeNameSupplier;
+    this.stripeIdSupplier = stripeIdSupplier;
   }
 
   @Override
-  public String getStripeName() {
-    return stripeNameSupplier.get();
+  public int getStripeId() {
+    return stripeIdSupplier.getAsInt();
   }
 
   @Override

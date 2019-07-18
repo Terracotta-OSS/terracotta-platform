@@ -1,6 +1,7 @@
 {
   "type": "ClusterActivationNomadChange",
   "cluster": {
+    "name": "myClusterName",
     "stripes": [
       {
         "nodes": [
@@ -28,7 +29,6 @@
       }
     ]
   },
-  "clusterName": "myClusterName",
   "applicability": {
     "type": "CLUSTER"
   },

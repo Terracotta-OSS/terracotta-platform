@@ -2,7 +2,7 @@
   "type": "SettingNomadChange",
   "applicability": {
     "nodeName": "node1",
-    "stripeName": "stripe1",
+    "stripeId": 1,
     "type": "NODE"
   },
   "cmd": "SET",

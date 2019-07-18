@@ -30,7 +30,6 @@ public class StripeTest {
   Node node1 = new Node()
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
-      .setClusterName("c")
       .setDataDir("data", Paths.get("data"))
       .setFailoverPriority("availability")
       .setNodeBackupDir(Paths.get("backup"))

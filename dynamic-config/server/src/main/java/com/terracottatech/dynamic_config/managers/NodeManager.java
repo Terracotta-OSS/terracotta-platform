@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
@@ -53,7 +52,6 @@ public class NodeManager {
   private final Set<String> specifiedOptions;
   private final Map<String, String> paramValueMap;
   private String licenseFile;
-  private String clusterName;
   private LicensingServiceImpl licensingService;
 
   public NodeManager(Options options, Set<String> specifiedOptions, Map<String, String> paramValueMap) {
@@ -80,18 +78,15 @@ public class NodeManager {
     String configFile = options.getConfigFile();
     if (configFile != null) {
       LOGGER.info("Reading cluster config properties file from: {}", configFile);
-      Cluster cluster = ClusterManager.createCluster(configFile);
+      String optionalClusterName = specifiedOptions.contains("--cluster-name") ? paramValueMap.get("cluster-name") : null;
+      Cluster cluster = ClusterManager.createCluster(configFile, optionalClusterName);
       Node node = getMatchingNodeFromConfigFile(cluster, specifiedOptions);
       if (specifiedOptions.contains("--license-file")) {
         licenseFile = paramValueMap.get("license-file");
-        clusterName = cluster.getStripes().get(0).getNodes().iterator().next().getClusterName();
-
-        updateStripeNames(cluster);
-        LOGGER.debug("Setting stripe name successful");
 
         registerServices(cluster, node);
 
-        makeNomadWritable(node);
+        makeNomadWritable(cluster.getStripeId(node).get(), node);
         LOGGER.debug("Setting nomad writable successful");
 
         runNomadChange(cluster);
@@ -108,26 +103,15 @@ public class NodeManager {
     }
   }
 
-  private void updateStripeNames(Cluster cluster) {
-    AtomicInteger stripeIndex = new AtomicInteger();
-    cluster.getStripes()
-        .stream()
-        .flatMap(stripe -> {
-          stripeIndex.incrementAndGet();
-          return stripe.getNodes().stream();
-        })
-        .forEach(node -> node.setStripeName("stripe-" + stripeIndex.get()));
-  }
-
-  private void makeNomadWritable(Node node) {
+  private void makeNomadWritable(int stripeId, Node node) {
     NomadBootstrapper.bootstrap(node.getNodeConfigDir(), node.getNodeName());
-    NomadBootstrapper.getNomadServerManager().upgradeForWrite(node.getNodeName(), "stripe-1");
+    NomadBootstrapper.getNomadServerManager().upgradeForWrite(node.getNodeName(), stripeId);
   }
 
   private void runNomadChange(Cluster cluster) {
     UpgradableNomadServer nomadServer = NomadBootstrapper.getNomadServerManager().getNomadServer();
     NomadEnvironment nomadEnvironment = new NomadEnvironment();
-    ClusterActivationNomadChange change = new ClusterActivationNomadChange(clusterName, cluster);
+    ClusterActivationNomadChange change = new ClusterActivationNomadChange(cluster);
     PrepareMessage prepareMessage = new PrepareMessage(
         1,
         nomadEnvironment.getHost(),
@@ -143,7 +127,7 @@ public class NodeManager {
         UUID.randomUUID()
     );
     try {
-      //TODO [DYNAMIC-CONFIG]: Consider the failure scenarios here, and rollback the change accordingly
+      //TODO [DYNAMIC-CONFIG]: TRACK #6 Consider the failure scenarios here, and rollback the change accordingly
       nomadServer.discover();
       nomadServer.prepare(prepareMessage);
       nomadServer.commit(commitMessage);
@@ -173,7 +157,7 @@ public class NodeManager {
   }
 
   private void registerServices(Cluster cluster, Node node) {
-    TopologyService topologyService = new TopologyServiceImpl(cluster, node);
+    TopologyService topologyService = new TopologyServiceImpl(cluster, node, false);
     DiagnosticServices.register(TopologyService.class, topologyService);
     LOGGER.info("Registered TopologyServiceImpl with DiagnosticServices");
 

@@ -18,27 +18,27 @@ import static org.hamcrest.Matchers.containsString;
 public class OldServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
-    String stripeName = "stripe1";
+    int stripeId = 1;
     String nodeName = "testServer1";
-    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeName, nodeName));
+    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeId, nodeName));
     startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
-    String stripeName = "stripe1";
+    int stripeId = 1;
     String nodeName = "testServer2";
-    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeName, nodeName));
+    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeId, nodeName));
     startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
-    String stripeName = "stripe2";
-    String nodeName = "testServer2";
-    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeName, nodeName));
+    int stripeId = 2;
+    String nodeName = "testServer1";
+    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeId, nodeName));
     startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }

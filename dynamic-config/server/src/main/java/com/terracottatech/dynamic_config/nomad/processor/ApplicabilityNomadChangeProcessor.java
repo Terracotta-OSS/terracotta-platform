@@ -43,9 +43,9 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
       case CLUSTER:
         return true;
       case STRIPE:
-        return configController.getStripeName().equals(applicability.getStripeName());
+        return configController.getStripeId() == applicability.getStripeId();
       case NODE:
-        return configController.getStripeName().equals(applicability.getStripeName())
+        return configController.getStripeId() == applicability.getStripeId()
             && configController.getNodeName().equals(applicability.getNodeName());
       default:
         throw new AssertionError("Unknown applicability: " + applicability);

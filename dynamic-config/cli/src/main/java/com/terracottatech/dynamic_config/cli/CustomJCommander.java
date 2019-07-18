@@ -22,16 +22,19 @@ import static java.util.function.Predicate.isEqual;
  * Class containing overridden usage methods from JCommander.
  */
 public class CustomJCommander extends JCommander {
-  public CustomJCommander(Command command) {
+  private final CommandRepository commandRepository;
+
+  public CustomJCommander(CommandRepository commandRepository, Command command) {
     super(command);
-    CommandRepository.getCommands()
+    this.commandRepository = commandRepository;
+    commandRepository.getCommands()
         .stream()
         .filter(isEqual(command).negate())
         .forEach(cmd -> addCommand(Metadata.getName(cmd), cmd));
   }
 
   public Optional<Command> getAskedCommand() {
-    return Optional.ofNullable(getParsedCommand()).map(CommandRepository::getCommand);
+    return Optional.ofNullable(getParsedCommand()).map(commandRepository::getCommand);
   }
 
   public void printUsage() {
@@ -49,7 +52,7 @@ public class CustomJCommander extends JCommander {
     if (description != null) {
       out.append(indent).append(description).append("\n");
     }
-    appendUsage(CommandRepository.getCommand(commandName), out, indent);
+    appendUsage(commandRepository.getCommand(commandName), out, indent);
     appendOptions(jc, out, indent);
   }
 
@@ -75,7 +78,7 @@ public class CustomJCommander extends JCommander {
         if (p == null || !p.hidden()) {
           String description = getCommandDescription(name);
           out.append(indent).append("    ").append(name).append("      ").append(description).append("\n");
-          appendUsage(CommandRepository.getCommand(name), out, indent + "    ");
+          appendUsage(commandRepository.getCommand(name), out, indent + "    ");
 
           // Options for this command
           JCommander jc = command.getValue();

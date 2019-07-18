@@ -12,13 +12,13 @@ import static org.junit.Assert.assertThat;
 public class ConfigControllerImplTest {
   @Test
   public void testGetNodeName() {
-    ConfigControllerImpl configController = new ConfigControllerImpl(() -> "node0", () -> "stripe1");
+    ConfigControllerImpl configController = new ConfigControllerImpl(() -> "node0", () -> 1);
     assertThat(configController.getNodeName(), is("node0"));
   }
 
   @Test
-  public void testGetStripeName() {
-    ConfigControllerImpl configController = new ConfigControllerImpl(() -> "node0", () -> "stripe1");
-    assertThat(configController.getStripeName(), is("stripe1"));
+  public void testGetStripeId() {
+    ConfigControllerImpl configController = new ConfigControllerImpl(() -> "node0", () -> 1);
+    assertThat(configController.getStripeId(), is(1));
   }
 }

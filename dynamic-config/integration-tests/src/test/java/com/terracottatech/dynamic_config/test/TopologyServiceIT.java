@@ -33,6 +33,7 @@ public class TopologyServiceIT extends BaseStartupIT {
   public void setUp() throws Exception {
     nodeProcesses.add(NodeProcess.startNode(
         Kit.getOrCreatePath(),
+        "-N", "tc-cluster",
         "-f", configFilePath("/config-property-files/single-stripe.properties"),
         "-c", temporaryFolder.newFolder().getAbsolutePath()
         )
@@ -55,9 +56,8 @@ public class TopologyServiceIT extends BaseStartupIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingTopology, is(equalTo(new Cluster(new Stripe(new Node()
+      assertThat(pendingTopology, is(equalTo(new Cluster("tc-cluster", new Stripe(new Node()
           .setNodeName("node-1")
-          .setClusterName("tc-cluster")
           .setNodeHostname("localhost")
           .setNodePort(ports.getPorts()[0])
           .setNodeGroupPort(ports.getPorts()[1])

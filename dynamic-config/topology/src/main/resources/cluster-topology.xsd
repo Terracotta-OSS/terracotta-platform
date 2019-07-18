@@ -25,10 +25,7 @@
 
   <xs:complexType name="stripe">
     <xs:sequence>
-      <xs:element name="name" type="tc:non-blank-token" minOccurs="1" maxOccurs="1"/>
-      <xs:sequence>
-        <xs:element name="node" type="cl:node" minOccurs="1" maxOccurs="unbounded"/>
-      </xs:sequence>
+      <xs:element name="node" type="cl:node" minOccurs="1" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
 

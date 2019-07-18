@@ -38,6 +38,11 @@ public interface TopologyService {
   Cluster getTopology();
 
   /**
+   * @return true if this node has been activated (is part of a named cluster that has been licensed)
+   */
+  boolean isActivated();
+
+  /**
    * Changes the in-memory topology to a new one for this node.
    */
   void setTopology(Cluster cluster);

@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 public class Node implements Cloneable {
   private String nodeName;
   private String nodeHostname;
@@ -41,8 +40,6 @@ public class Node implements Cloneable {
   private Measure<TimeUnit> clientLeaseDuration;
   private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
   private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
-  private String stripeName;
-  private String clusterName;
 
   public String getNodeName() {
     return nodeName;
@@ -122,14 +119,6 @@ public class Node implements Cloneable {
 
   public Map<String, Path> getDataDirs() {
     return Collections.unmodifiableMap(dataDirs);
-  }
-
-  public String getStripeName() {
-    return stripeName;
-  }
-
-  public String getClusterName() {
-    return clusterName;
   }
 
   public Node setNodeName(String nodeName) {
@@ -277,16 +266,6 @@ public class Node implements Cloneable {
     return this;
   }
 
-  public Node setStripeName(String stripeName) {
-    this.stripeName = stripeName;
-    return this;
-  }
-
-  public Node setClusterName(String clusterName) {
-    this.clusterName = clusterName;
-    return this;
-  }
-
   @JsonIgnore
   public InetSocketAddress getNodeAddress() {
     return InetSocketAddress.createUnresolved(getNodeHostname(), getNodePort());
@@ -299,7 +278,6 @@ public class Node implements Cloneable {
     return new Node()
         .setClientLeaseDuration(clientLeaseDuration)
         .setClientReconnectWindow(clientReconnectWindow)
-        .setClusterName(clusterName)
         .setDataDirs(dataDirs)
         .setFailoverPriority(failoverPriority)
         .setNodeBackupDir(nodeBackupDir)
@@ -317,9 +295,7 @@ public class Node implements Cloneable {
         .setSecurityAuthc(securityAuthc)
         .setSecurityDir(securityDir)
         .setSecuritySslTls(securitySslTls)
-        .setSecurityWhitelist(securityWhitelist)
-        .setStripeName(stripeName)
-        .setClusterName(clusterName);
+        .setSecurityWhitelist(securityWhitelist);
   }
 
   @Override
@@ -346,16 +322,14 @@ public class Node implements Cloneable {
         Objects.equals(clientReconnectWindow, node.clientReconnectWindow) &&
         Objects.equals(clientLeaseDuration, node.clientLeaseDuration) &&
         Objects.equals(offheapResources, node.offheapResources) &&
-        Objects.equals(dataDirs, node.dataDirs) &&
-        Objects.equals(stripeName, node.stripeName) &&
-        Objects.equals(clusterName, node.clusterName);
+        Objects.equals(dataDirs, node.dataDirs);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeConfigDir,
         nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls, securityWhitelist,
-        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs, stripeName, clusterName);
+        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs);
   }
 
   @Override
@@ -381,8 +355,6 @@ public class Node implements Cloneable {
         ", clientLeaseDuration=" + clientLeaseDuration +
         ", offheapResources=" + offheapResources +
         ", dataDirs=" + dataDirs +
-        ", stripeName='" + stripeName + '\'' +
-        ", clusterName='" + clusterName + '\'' +
         '}';
   }
 

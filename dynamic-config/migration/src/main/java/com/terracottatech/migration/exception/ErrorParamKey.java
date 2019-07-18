@@ -6,7 +6,7 @@ package com.terracottatech.migration.exception;
 
 public enum ErrorParamKey {
   URI,
-  STRIPE_NAME,
+  STRIPE_ID,
   CONFIG_FILE,
   SERVERS_IN_CONFIG_FILES,
   MISMATCHED_SERVERS,

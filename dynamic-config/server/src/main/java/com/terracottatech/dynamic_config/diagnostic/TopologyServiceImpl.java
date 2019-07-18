@@ -7,12 +7,14 @@ package com.terracottatech.dynamic_config.diagnostic;
 import com.tc.server.TCServerMain;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformService;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,10 +23,12 @@ public class TopologyServiceImpl implements TopologyService {
 
   private volatile Cluster cluster;
   private volatile Node me;
+  private final boolean clusterActivated;
 
-  public TopologyServiceImpl(Cluster cluster, Node me) {
+  public TopologyServiceImpl(Cluster cluster, Node me, boolean clusterActivated) {
     this.cluster = requireNonNull(cluster);
     this.me = requireNonNull(me);
+    this.clusterActivated = clusterActivated;
   }
 
   @Override
@@ -39,7 +43,7 @@ public class TopologyServiceImpl implements TopologyService {
 
   @Override
   public void restart() {
-    LOGGER.info("Executing restart on node: {} in stripe: {}", me.getNodeName(), me.getStripeName());
+    LOGGER.info("Executing restart on node: {} in stripe: {}", me.getNodeName(), cluster.getStripeId(me).get());
     TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
   }
 
@@ -49,13 +53,39 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
+  public boolean isActivated() {
+    return clusterActivated;
+  }
+
+  @Override
   public void setTopology(Cluster cluster) {
-    this.cluster = requireNonNull(cluster);
-    LOGGER.info("Set pending topology to: {}", cluster);
+    requireNonNull(cluster);
+
+    if (isActivated()) {
+      throw new UnsupportedOperationException("Unable to change the topology at runtime");
+
+    } else {
+      Optional<Node> me = cluster.getNode(this.me.getNodeAddress());
+      if (me.isPresent()) {
+        // we have updated the topology and I am still part of this cluster
+        LOGGER.info("Set pending topology to: {}", cluster);
+        this.cluster = cluster;
+        this.me = me.get();
+      } else {
+        // We have updated the topology and I am not part anymore of the cluster
+        // So we just reset the cluster object so that this node is alone
+        LOGGER.info("Node {} removed from pending topology: {}", this.me.getNodeAddress(), cluster);
+        this.cluster = new Cluster(new Stripe(this.me));
+      }
+
+    }
   }
 
   @Override
   public void prepareActivation(Cluster validatedTopology) {
+    if (isActivated()) {
+      throw new IllegalStateException("Node is already activated");
+    }
     Node node = validatedTopology.getStripes()
         .stream()
         .flatMap(stripe -> stripe.getNodes().stream())
@@ -72,6 +102,6 @@ public class TopologyServiceImpl implements TopologyService {
         });
 
     LOGGER.info("Preparing activation of Node with validated topology: {}", validatedTopology);
-    NomadBootstrapper.getNomadServerManager().upgradeForWrite(node.getNodeName(), node.getStripeName());
+    NomadBootstrapper.getNomadServerManager().upgradeForWrite(node.getNodeName(), validatedTopology.getStripeId(node).get());
   }
 }

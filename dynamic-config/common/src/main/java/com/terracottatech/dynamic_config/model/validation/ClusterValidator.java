@@ -33,7 +33,6 @@ public class ClusterValidator {
   private static void validateServerSettings(Cluster cluster) {
     validate(cluster, Node::getOffheapResources, "Offheap resources of all nodes should match");
     validate(cluster, node -> node.getDataDirs().keySet(), "Data directory names of all nodes should match");
-    validate(cluster, Node::getClusterName, "All the nodes should belong to the same cluster");
     validate(cluster, Node::getFailoverPriority, "Failover setting of all nodes should match");
   }
 

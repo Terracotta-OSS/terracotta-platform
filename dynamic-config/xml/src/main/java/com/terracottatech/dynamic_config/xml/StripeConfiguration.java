@@ -4,15 +4,14 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
-import com.terracottatech.utilities.Measure;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.utilities.Measure;
+import com.terracottatech.utilities.TimeUnit;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
-
-import com.terracottatech.utilities.TimeUnit;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,11 +20,8 @@ class StripeConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
   private final Map<String, ServerConfiguration> stripeConfiguration;
-  private final String stripeName;
 
-
-  StripeConfiguration(String stripeName, Stripe stripe) {
-    this.stripeName = stripeName;
+  StripeConfiguration(Stripe stripe) {
     Map<String, ServerConfiguration> stripeConfiguration = new HashMap<>();
     Servers servers = createServers(stripe);
     for (Node node : stripe.getNodes()) {
@@ -80,7 +76,6 @@ class StripeConfiguration {
   com.terracottatech.topology.config.xmlobjects.Stripe
   getClusterConfigStripe(com.terracottatech.topology.config.xmlobjects.ObjectFactory factory) {
     com.terracottatech.topology.config.xmlobjects.Stripe stripe = factory.createStripe();
-    stripe.setName(this.stripeName);
 
     for (ServerConfiguration serverConfiguration : stripeConfiguration.values()) {
       com.terracottatech.topology.config.xmlobjects.Node node = serverConfiguration.getClusterConfigNode(factory);

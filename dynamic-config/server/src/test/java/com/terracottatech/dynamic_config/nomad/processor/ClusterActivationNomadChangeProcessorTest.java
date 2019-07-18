@@ -33,13 +33,12 @@ public class ClusterActivationNomadChangeProcessorTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   private static final String NODE_NAME = "node-1";
-  private static final String STRIPE_NAME = "stripe-1";
 
   private ClusterActivationNomadChangeProcessor processor;
 
   @Before
   public void setUp() {
-    ConfigController configController = new ConfigControllerImpl(() -> NODE_NAME, () -> STRIPE_NAME);
+    ConfigController configController = new ConfigControllerImpl(() -> NODE_NAME, () -> 1);
     processor = new ClusterActivationNomadChangeProcessor(configController);
   }
 
@@ -54,9 +53,9 @@ public class ClusterActivationNomadChangeProcessorTest {
     node.setClientReconnectWindow(120, TimeUnit.SECONDS);
 
     Stripe stripe = new Stripe(Collections.singletonList(node));
-    Cluster cluster = new Cluster(Collections.singletonList(stripe));
+    Cluster cluster = new Cluster("cluster", Collections.singletonList(stripe));
 
-    ClusterActivationNomadChange change = new ClusterActivationNomadChange("cluster", cluster);
+    ClusterActivationNomadChange change = new ClusterActivationNomadChange(cluster);
 
     String configWithChange = processor.getConfigWithChange(null, change);
 
@@ -65,7 +64,7 @@ public class ClusterActivationNomadChangeProcessorTest {
 
   @Test
   public void testCanApplyWithNonNullBaseConfig() throws Exception {
-    ClusterActivationNomadChange change = new ClusterActivationNomadChange("cluster", new Cluster());
+    ClusterActivationNomadChange change = new ClusterActivationNomadChange(new Cluster("cluster"));
 
     expectedException.expect(NomadException.class);
     expectedException.expectMessage("must be null");

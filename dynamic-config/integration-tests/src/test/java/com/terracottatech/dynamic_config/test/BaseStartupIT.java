@@ -71,7 +71,7 @@ public class BaseStartupIT {
   }
 
   String licensePath() throws Exception {
-    return Paths.get(NewServerStartupScriptIT.class.getResource("/license.xml").toURI()).toString();
+    return Paths.get(BaseStartupIT.class.getResource("/license.xml").toURI()).toString();
   }
 
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
@@ -88,10 +88,10 @@ public class BaseStartupIT {
     return temporaryPath.toString();
   }
 
-  Function<String, Path> singleStripeSingleNodeNomadRoot(String stripeName, String nodeName) {
+  Function<String, Path> singleStripeSingleNodeNomadRoot(int stripeId, String nodeName) {
     return (prefix) -> {
       try {
-        String resourceName = "/" + prefix + "/single-stripe-single-node/" + stripeName + "_" + nodeName;
+        String resourceName = "/" + prefix + "/single-stripe-single-node/stripe" + stripeId + "_" + nodeName;
         return Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
       } catch (URISyntaxException e) {
         throw new RuntimeException(e);
@@ -99,10 +99,10 @@ public class BaseStartupIT {
     };
   }
 
-  Function<String, Path> singleStripeMultiNodeNomadRoot(String stripeName, String nodeName) {
+  Function<String, Path> singleStripeMultiNodeNomadRoot(int stripeId, String nodeName) {
     return (prefix) -> {
       try {
-        String resourceName = "/" + prefix + "/single-stripe-multi-node/" + stripeName + "_" + nodeName;
+        String resourceName = "/" + prefix + "/single-stripe-multi-node/stripe" + stripeId + "_" + nodeName;
         return Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
       } catch (URISyntaxException e) {
         throw new RuntimeException(e);
@@ -110,10 +110,10 @@ public class BaseStartupIT {
     };
   }
 
-  Function<String, Path> multiStripeNomadRoot(String stripeName, String nodeName) {
+  Function<String, Path> multiStripeNomadRoot(int stripeId, String nodeName) {
     return (prefix) -> {
       try {
-        String resourceName = "/" + prefix + "/multi-stripe/" + stripeName + "_" + nodeName;
+        String resourceName = "/" + prefix + "/multi-stripe/stripe" + stripeId + "_" + nodeName;
         return Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
       } catch (URISyntaxException e) {
         throw new RuntimeException(e);

@@ -25,17 +25,38 @@ import static java.util.stream.Collectors.toList;
 public class Cluster implements Cloneable {
   private final List<Stripe> stripes;
 
+  private String name;
+
   @JsonCreator
-  public Cluster(@JsonProperty("stripes") List<Stripe> stripes) {
+  public Cluster(@JsonProperty("name") String name,
+                 @JsonProperty("stripes") List<Stripe> stripes) {
     this.stripes = new CopyOnWriteArrayList<>(stripes);
+    this.name = name;
+  }
+
+  public Cluster(List<Stripe> stripes) {
+    this(null, stripes);
+  }
+
+  public Cluster(String name, Stripe... stripes) {
+    this(name, Arrays.asList(stripes));
   }
 
   public Cluster(Stripe... stripes) {
-    this(Arrays.asList(stripes));
+    this(null, Arrays.asList(stripes));
   }
 
   public List<Stripe> getStripes() {
     return Collections.unmodifiableList(stripes);
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public Cluster setName(String name) {
+    this.name = name;
+    return this;
   }
 
   @JsonIgnore
@@ -43,24 +64,42 @@ public class Cluster implements Cloneable {
     return getNodeAddresses().isEmpty();
   }
 
+  /**
+   * @return The only node (if available) in the only stripe of this cluster.
+   * @throws IllegalStateException if the cluster has more than 1 stripe or more than 1 node
+   */
+  @JsonIgnore
+  public Optional<Node> getSingleNode() throws IllegalStateException {
+    if (stripes.size() > 1) {
+      throw new IllegalStateException();
+    }
+    Stripe s = stripes.iterator().next();
+    Collection<Node> nodes = s.getNodes();
+    if (nodes.size() > 1) {
+      throw new IllegalStateException();
+    }
+    if (nodes.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(nodes.iterator().next());
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof Cluster)) return false;
     Cluster cluster = (Cluster) o;
-    return stripes.equals(cluster.stripes);
+    return Objects.equals(getStripes(), cluster.getStripes()) && Objects.equals(getName(), cluster.getName());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stripes);
+    return Objects.hash(getStripes(), getName());
   }
 
   @Override
   public String toString() {
-    return "Cluster{" +
-        "stripes=" + stripes +
-        '}';
+    return "Cluster{" + "name='" + name + "', stripes='" + stripes + '}';
   }
 
   public Optional<Stripe> getStripe(InetSocketAddress address) {
@@ -82,7 +121,7 @@ public class Cluster implements Cloneable {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Cluster clone() {
-    return new Cluster(stripes.stream().map(Stripe::clone).collect(toList()));
+    return new Cluster(name, stripes.stream().map(Stripe::clone).collect(toList()));
   }
 
   public Cluster attachStripe(Stripe stripe) {
@@ -123,5 +162,16 @@ public class Cluster implements Cloneable {
         .flatMap(stripe -> stripe.getNodes().stream())
         .filter(node -> node.getNodeAddress().equals(nodeAddress))
         .findFirst();
+  }
+
+  public Optional<Integer> getStripeId(InetSocketAddress address) {
+    return getStripe(address)
+        .map(stripes::indexOf)
+        .filter(idx -> idx >= 0)
+        .map(idx -> idx + 1);
+  }
+
+  public Optional<Integer> getStripeId(Node me) {
+    return getStripeId(me.getNodeAddress());
   }
 }

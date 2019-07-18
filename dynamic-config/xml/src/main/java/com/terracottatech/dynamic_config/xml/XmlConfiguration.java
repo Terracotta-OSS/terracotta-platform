@@ -9,15 +9,15 @@ import com.terracottatech.dynamic_config.model.Cluster;
 public class XmlConfiguration {
   private final ServerConfiguration serverConfiguration;
 
-  public XmlConfiguration(Cluster cluster, String stripeName, String nodeName) {
+  public XmlConfiguration(Cluster cluster, int stripeId, String nodeName) {
     ClusterConfiguration clusterConfiguration = new ClusterConfiguration(cluster);
 
-    StripeConfiguration stripeConfiguration = clusterConfiguration.get(stripeName);
+    StripeConfiguration stripeConfiguration = clusterConfiguration.get(stripeId);
     if (stripeConfiguration == null) {
       throw new IllegalArgumentException(
           String.format(
-              "Stripe with name: %s is not present in the cluster config: %s",
-              stripeName,
+              "Stripe with ID: %s is not present in the cluster config: %s",
+              stripeId,
               clusterConfiguration
           )
       );

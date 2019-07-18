@@ -5,28 +5,24 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.topology.config.xmlobjects.ObjectFactory;
 import org.w3c.dom.Element;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class ClusterConfiguration {
-  private final Map<String, StripeConfiguration> stripeNameConfigInfo = new HashMap<>();
+  private final Map<Integer, StripeConfiguration> stripeIdConfigInfo = new HashMap<>();
   private final String clusterName;
 
   ClusterConfiguration(Cluster cluster) {
     List<Stripe> stripes = cluster.getStripes();
     for (int i = 0; i < stripes.size(); i++) {
-      String stripeName = "stripe-" + (i + 1);
-      stripeNameConfigInfo.put(stripeName, new StripeConfiguration(stripeName, stripes.get(i)));
+      stripeIdConfigInfo.put(i + 1, new StripeConfiguration(stripes.get(i)));
     }
-    this.clusterName = getClusterName(cluster);
+    this.clusterName = cluster.getName();
   }
 
   Element getClusterElement() {
@@ -35,41 +31,21 @@ public class ClusterConfiguration {
     com.terracottatech.topology.config.xmlobjects.Cluster cluster = factory.createCluster();
     cluster.setName(clusterName);
 
-    for (Map.Entry<String, StripeConfiguration> entry : stripeNameConfigInfo.entrySet()) {
+    for (Map.Entry<Integer, StripeConfiguration> entry : stripeIdConfigInfo.entrySet()) {
       cluster.getStripes().add(entry.getValue().getClusterConfigStripe(factory));
     }
 
     return Utils.createElement(factory.createCluster(cluster));
   }
 
-  StripeConfiguration get(String stripeName) {
-    return stripeNameConfigInfo.get(stripeName);
-  }
-
-  private static String getClusterName(Cluster cluster) {
-    if (cluster != null) {
-      List<Stripe> stripes = cluster.getStripes();
-      if (stripes != null) {
-        Stripe stripe = stripes.get(0);
-        if (stripe != null) {
-          Collection<Node> nodes = stripe.getNodes();
-          if (nodes != null) {
-            Iterator<Node> iterator = nodes.iterator();
-            if (iterator.hasNext()) {
-              return iterator.next().getClusterName();
-            }
-          }
-        }
-      }
-    }
-
-    return null;
+  StripeConfiguration get(int stripeId) {
+    return stripeIdConfigInfo.get(stripeId);
   }
 
   @Override
   public String toString() {
     return "ClusterConfiguration{" +
-        "stripeNameConfigInfo=" + stripeNameConfigInfo +
+        "stripeIdConfigInfo=" + stripeIdConfigInfo +
         ", clusterName='" + clusterName + '\'' +
         '}';
   }

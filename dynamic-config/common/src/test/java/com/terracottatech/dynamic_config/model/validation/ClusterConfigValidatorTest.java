@@ -5,9 +5,9 @@
 package com.terracottatech.dynamic_config.model.validation;
 
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.exception.MalformedClusterConfigException;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.exception.MalformedClusterConfigException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -25,16 +25,6 @@ import static com.terracottatech.utilities.TimeUnit.SECONDS;
 public class ClusterConfigValidatorTest {
   @Rule
   public ExpectedException exception = ExpectedException.none();
-
-  @Test
-  public void testMultipleClusterNames() {
-    Node node1 = new Node();
-    Node node2 = new Node();
-    node1.setClusterName("tc-one");
-    node2.setClusterName("tc-two");
-
-    testThrowsWithMessage(node1, node2, "All the nodes should belong to the same cluster");
-  }
 
   @Test
   public void testDifferingClientLeaseDurations() {

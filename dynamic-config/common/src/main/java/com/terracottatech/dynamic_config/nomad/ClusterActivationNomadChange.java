@@ -19,23 +19,17 @@ import static java.util.Objects.requireNonNull;
  */
 public class ClusterActivationNomadChange extends FilteredNomadChange {
 
-  private final String clusterName;
   private final Cluster cluster;
 
   @JsonCreator
-  public ClusterActivationNomadChange(@JsonProperty("clusterName") String clusterName,
-                                      @JsonProperty("cluster") Cluster cluster) {
+  public ClusterActivationNomadChange(@JsonProperty("cluster") Cluster cluster) {
     super(Applicability.cluster());
-    this.clusterName = requireNonNull(clusterName);
     this.cluster = requireNonNull(cluster);
+    requireNonNull(cluster.getName());
   }
 
   public Cluster getCluster() {
     return cluster;
-  }
-
-  public String getClusterName() {
-    return clusterName;
   }
 
   @Override
@@ -49,19 +43,17 @@ public class ClusterActivationNomadChange extends FilteredNomadChange {
     if (!(o instanceof ClusterActivationNomadChange)) return false;
     if (!super.equals(o)) return false;
     ClusterActivationNomadChange that = (ClusterActivationNomadChange) o;
-    return clusterName.equals(that.clusterName) &&
-        getCluster().equals(that.getCluster());
+    return getCluster().equals(that.getCluster());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), clusterName, getCluster());
+    return Objects.hash(super.hashCode(), getCluster());
   }
 
   @Override
   public String toString() {
     return "ClusterActivationNomadChange{" +
-        "clusterName='" + clusterName + '\'' +
         ", cluster=" + cluster +
         ", applicability=" + applicability +
         '}';

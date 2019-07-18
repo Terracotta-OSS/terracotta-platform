@@ -66,7 +66,7 @@ public class MigrationImpl implements Migration {
   private final Map<Path, Node> configFileRootNodeMap = new HashMap<>();
   private final List<String[]> inputParamList = new ArrayList<>();
   private final List<String> allServers = new ArrayList<>();
-  private final Map<String, List<String>> stripeServerNameMap = new HashMap<>();
+  private final Map<Integer, List<String>> stripeServerNameMap = new HashMap<>();
   private final NodeConfigurationHandler repositoryBuilder;
 
   public MigrationImpl(NodeConfigurationHandler nodeConfigurationHandler) {
@@ -82,14 +82,14 @@ public class MigrationImpl implements Migration {
     LOGGER.info("Starting to validate input command parameters");
     validateAndProcessInput(migrationStrings);
     LOGGER.info("Validated command parameters");
-    Map<String, Path> configFilePerStripeMap = new HashMap<>();
-    Map<Tuple2<String, String>, Node> stripeServerConfigNodeMap = new HashMap<>();
+    Map<Integer, Path> configFilePerStripeMap = new HashMap<>();
+    Map<Tuple2<Integer, String>, Node> stripeServerConfigNodeMap = new HashMap<>();
     for (String[] inputStringArray : inputParamList) {
-      String stripeName = inputStringArray[0];
-      configFilePerStripeMap.put(stripeName, Paths.get(inputStringArray[1]));
+      int stripeId = Integer.parseInt(inputStringArray[0]);
+      configFilePerStripeMap.put(stripeId, Paths.get(inputStringArray[1]));
     }
 
-    for (Map.Entry<String, Path> stringPathEntry : configFilePerStripeMap.entrySet()) {
+    for (Map.Entry<Integer, Path> stringPathEntry : configFilePerStripeMap.entrySet()) {
       createServerConfigMapFunction(stripeServerConfigNodeMap, stringPathEntry.getKey(), stringPathEntry.getValue());
     }
     LOGGER.info("Validating contents of the configuration files");
@@ -99,64 +99,64 @@ public class MigrationImpl implements Migration {
   }
 
   protected void validateAndProcessInput(List<String> migrationStrings) {
-    boolean generateStripeName = validateInputAndDecideSyntheticStripeNameGeneration(migrationStrings);
-    Set<String> discoveredStripeNames = new HashSet<>();
+    boolean generateStripeId = validateInputAndDecideSyntheticStripeIdGeneration(migrationStrings);
+    Set<Integer> discoveredStripeIds = new HashSet<>();
     int stripeIndex = 0;
     for (String input : migrationStrings) {
       String[] inputStringArray = input.split(",");
-      String stripeName;
-      if (generateStripeName) {
+      int stripeId;
+      if (generateStripeId) {
         String configFileName = inputStringArray[0];
-        stripeName = "stripe-" + (++stripeIndex);
+        stripeId = ++stripeIndex;
         String[] stripeConfigFile = new String[2];
-        stripeConfigFile[0] = stripeName;
+        stripeConfigFile[0] = String.valueOf(stripeId);
         stripeConfigFile[1] = configFileName;
         inputParamList.add(stripeConfigFile);
       } else {
-        stripeName = inputStringArray[0];
+        stripeId = Integer.parseInt(inputStringArray[0]);
         /*Same stripe name should not be present in comma separated commands
         For example we cannot have command strings like stripe1,tc-config-1.xml stripe1,tc-config-2.xml present.
         */
-        if (discoveredStripeNames.contains(stripeName)) {
+        if (discoveredStripeIds.contains(stripeId)) {
           throw new InvalidInputException(ErrorCode.DUPLICATE_STRIPE_NAME,
-              "Duplicate stripe name " + stripeName + " in input command",
-              Tuple2.tuple2(ErrorParamKey.STRIPE_NAME.name(), stripeName));
+              "Duplicate stripe ID " + stripeId + " in input command",
+              Tuple2.tuple2(ErrorParamKey.STRIPE_ID.name(), String.valueOf(stripeId)));
         }
-        discoveredStripeNames.add(stripeName);
+        discoveredStripeIds.add(stripeId);
         inputParamList.add(inputStringArray);
       }
     }
   }
 
-  private boolean validateInputAndDecideSyntheticStripeNameGeneration(List<String> migrationStrings) {
+  private boolean validateInputAndDecideSyntheticStripeIdGeneration(List<String> migrationStrings) {
     Objects.requireNonNull(migrationStrings, "Null Input String");
-    boolean doNotGenerateStripeName = false;
-    boolean generateStripeName = false;
+    boolean doNotGenerateStripeId = false;
+    boolean generateStripeId = false;
     for (String input : migrationStrings) {
       String[] inputStringArray = input.split(",");
       if (inputStringArray.length != 1 && inputStringArray.length != 2) {
         throw new InvalidInputException(ErrorCode.INVALID_INPUT_PATTERN, "Invalid Input " + input);
       }
       if (inputStringArray.length == 1) {
-        if (doNotGenerateStripeName) {
+        if (doNotGenerateStripeId) {
           throw new InvalidInputException(
               ErrorCode.INVALID_MIXED_INPUT_PATTERN,
               "Invalid Input " + join(" ", migrationStrings)
           );
         }
-        generateStripeName = true;
+        generateStripeId = true;
       }
       if (inputStringArray.length == 2) {
-        if (generateStripeName) {
+        if (generateStripeId) {
           throw new InvalidInputException(
               ErrorCode.INVALID_MIXED_INPUT_PATTERN,
               "Invalid Input " + join(" ", migrationStrings)
           );
         }
-        doNotGenerateStripeName = true;
+        doNotGenerateStripeId = true;
       }
     }
-    return generateStripeName;
+    return generateStripeId;
   }
 
   private void valueValidators() {
@@ -303,17 +303,16 @@ public class MigrationImpl implements Migration {
     return () -> new ValidationWrapper(TCConfigurationParser.getValidator(URI.create(namespace)));
   }
 
-  protected void createServerConfigMapFunction(Map<Tuple2<String, String>
-      , Node> stripeServerConfigMapNode, String stripeName, Path configFilePath) {
+  protected void createServerConfigMapFunction(Map<Tuple2<Integer, String>, Node> stripeServerConfigMapNode, int stripeId, Path configFilePath) {
     try {
       if (regularFile(configFilePath)) {
         Node element = getRootNode(configFilePath);
         configFileRootNodeMap.put(configFilePath, element);
         List<String> serverNames = extractServerNames(element);
-        checkUniqueServerNamesInStripe(serverNames, stripeName, configFilePath);
+        checkUniqueServerNamesInStripe(serverNames, stripeId, configFilePath);
         allServers.addAll(serverNames);
-        serverNames.forEach(s -> stripeServerConfigMapNode.put(Tuple2.tuple2(stripeName, s), getClonedParentDocNode(element)));
-        stripeServerNameMap.put(stripeName, serverNames);
+        serverNames.forEach(s -> stripeServerConfigMapNode.put(Tuple2.tuple2(stripeId, s), getClonedParentDocNode(element)));
+        stripeServerNameMap.put(stripeId, serverNames);
       } else {
         throw new InvalidInputException(
             ErrorCode.INVALID_FILE_TYPE,
@@ -330,7 +329,7 @@ public class MigrationImpl implements Migration {
     }
   }
 
-  private void checkUniqueServerNamesInStripe(List<String> serverNames, String stripeName, Path configFilePath) {
+  private void checkUniqueServerNamesInStripe(List<String> serverNames, int stripeId, Path configFilePath) {
     List<String> serverNamesLocal = new ArrayList<>(serverNames);
     Set<String> distinctServerNames = new HashSet<>(serverNames);
     if (distinctServerNames.size() != serverNames.size()) {
@@ -344,14 +343,14 @@ public class MigrationImpl implements Migration {
               "Duplicate server names %s in configuration file %s for stripe %s",
               join(",", serverNamesLocal),
               configFilePath,
-              stripeName
+              stripeId
           )
       );
     }
   }
 
 
-  private void buildCluster(String clusterName, Map<Tuple2<String, String>, Node> hostConfigMapNode) {
+  private void buildCluster(String clusterName, Map<Tuple2<Integer, String>, Node> hostConfigMapNode) {
     validateProvidedConfiguration(hostConfigMapNode, allServers);
     ClusteredConfigBuilder clusteredConfigBuilder = new ClusteredConfigBuilder(hostConfigMapNode, stripeServerNameMap);
     clusteredConfigBuilder.createEntireCluster(clusterName);
@@ -364,7 +363,7 @@ public class MigrationImpl implements Migration {
   /*
    * Validates if the configuration files provided are indeed part of existing valid cluster
    */
-  protected void validateProvidedConfiguration(Map<Tuple2<String, String>, Node> hostConfigMapNode, List<String> allServers) {
+  protected void validateProvidedConfiguration(Map<Tuple2<Integer, String>, Node> hostConfigMapNode, List<String> allServers) {
     List<String> serversInAllStripesAsInput = hostConfigMapNode.keySet()
         .stream()
         .map(Tuple2::getT2)
@@ -405,7 +404,7 @@ public class MigrationImpl implements Migration {
     }
   }
 
-  protected Collection<String> mismatchedServers(Map<Tuple2<String, String>, Node> hostConfigMapNode, List<String> allServers) {
+  protected Collection<String> mismatchedServers(Map<Tuple2<Integer, String>, Node> hostConfigMapNode, List<String> allServers) {
     return hostConfigMapNode.keySet().stream()
         .map(pair -> {
           String serverName = pair.getT2();

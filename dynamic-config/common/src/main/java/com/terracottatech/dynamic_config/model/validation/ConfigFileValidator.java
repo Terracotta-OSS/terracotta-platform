@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.model.validation;
 
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.exception.MalformedConfigFileException;
-import com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils;
 import com.terracottatech.utilities.Tuple2;
 
 import java.io.File;
@@ -21,6 +20,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getNodeName;
+import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getStripeId;
+import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.splitKey;
 
 public class ConfigFileValidator {
   private static final Set<String> ALL_VALID_OPTIONS = CommonOptions.getAllOptions();
@@ -41,7 +45,7 @@ public class ConfigFileValidator {
   }
 
   private static void ensureCorrectFieldCount(String key, String value, String fileName) {
-    if (ConfigFileParamsUtils.splitKey(key).length != 5) {
+    if (splitKey(key).length != 5) {
       throw new MalformedConfigFileException(
           String.format(
               "Invalid line: %s=%s in config file: %s. Each line must be of the format: stripe.<index>.node.<index>.<property>=value",
@@ -66,7 +70,7 @@ public class ConfigFileValidator {
   }
 
   private static void ensureNoInvalidOptions(String key, String value, String fileName) {
-    final String property = ConfigFileParamsUtils.getProperty(key);
+    final String property = getProperty(key);
     if (!ALL_VALID_OPTIONS.contains(property)) {
       throw new MalformedConfigFileException(
           String.format(
@@ -81,11 +85,11 @@ public class ConfigFileValidator {
   }
 
   private static void invokeNodeParamsValidation(Properties properties) {
-    Map<Tuple2<String, String>, Map<String, String>> nodeParamValueMap = properties.entrySet().stream()
+    Map<Tuple2<Integer, String>, Map<String, String>> nodeParamValueMap = properties.entrySet().stream()
         .collect(
             Collectors.groupingBy(
-                entry -> Tuple2.tuple2(ConfigFileParamsUtils.getStripe(entry.getKey().toString()), ConfigFileParamsUtils.getNode(entry.getKey().toString())),
-                Collectors.toMap(entry -> ConfigFileParamsUtils.getProperty(entry.getKey().toString()), entry -> entry.getValue().toString())
+                entry -> Tuple2.tuple2(getStripeId(entry.getKey().toString()), getNodeName(entry.getKey().toString())),
+                Collectors.toMap(entry -> getProperty(entry.getKey().toString()), entry -> entry.getValue().toString())
             )
         );
     nodeParamValueMap.forEach((nodeIdentifier, map) -> NodeParamsValidator.validate(map));

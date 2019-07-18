@@ -36,12 +36,13 @@ public class ConsoleParamsParserTest {
     Map<String, String> paramValueMap = setProperties();
     Cluster cluster = ConsoleParamsParser.parse(paramValueMap);
 
+    assertThat(cluster.getName(), is("tc-cluster"));
+
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName(), is("node-1"));
-    assertThat(node.getClusterName(), is("tc-cluster"));
     assertThat(node.getNodeHostname(), is("localhost"));
     assertThat(node.getNodePort(), is(19410));
     assertThat(node.getNodeGroupPort(), is(19430));
@@ -74,6 +75,8 @@ public class ConsoleParamsParserTest {
 
   private Map<String, String> setProperties() {
     Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(CommonOptions.CLUSTER_NAME, "tc-cluster");
+
     paramValueMap.put(CommonOptions.NODE_BACKUP_DIR, "backup");
     paramValueMap.put(CommonOptions.NODE_CONFIG_DIR, "config");
     paramValueMap.put(CommonOptions.NODE_LOG_DIR, "logs");
@@ -88,7 +91,6 @@ public class ConsoleParamsParserTest {
     paramValueMap.put(CommonOptions.NODE_BIND_ADDRESS, "10.10.10.10");
     paramValueMap.put(CommonOptions.NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
     paramValueMap.put(CommonOptions.NODE_HOSTNAME, "localhost");
-    paramValueMap.put(CommonOptions.CLUSTER_NAME, "tc-cluster");
     paramValueMap.put(CommonOptions.OFFHEAP_RESOURCES, "main:512MB,second:1GB");
 
     paramValueMap.put(CommonOptions.SECURITY_AUTHC, "ldap");
@@ -105,12 +107,13 @@ public class ConsoleParamsParserTest {
   public void testDefaults() {
     Cluster cluster = ConsoleParamsParser.parse(Collections.emptyMap());
 
+    assertThat(cluster.getName(), is(nullValue()));
+
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName(), startsWith("node-"));
-    assertThat(node.getClusterName(), is(nullValue()));
     assertThat(node.getNodeHostname(), is(substitute("%h")));
     assertThat(node.getNodePort(), is(9410));
     assertThat(node.getNodeGroupPort(), is(9430));

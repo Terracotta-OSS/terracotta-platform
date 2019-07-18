@@ -17,26 +17,26 @@ import static java.util.Objects.requireNonNull;
 public class Applicability {
   private ApplicabilityType type;
   private String nodeName;
-  private String stripeName;
+  private Integer stripeId;
 
   public static Applicability cluster() {
     return new Applicability(CLUSTER, null, null);
   }
 
-  public static Applicability stripe(String stripeName) {
-    return new Applicability(STRIPE, requireNonNull(stripeName), null);
+  public static Applicability stripe(int stripeId) {
+    return new Applicability(STRIPE, stripeId, null);
   }
 
-  public static Applicability node(String stripeName, String nodeName) {
-    return new Applicability(NODE, requireNonNull(stripeName), requireNonNull(nodeName));
+  public static Applicability node(int stripeId, String nodeName) {
+    return new Applicability(NODE, stripeId, requireNonNull(nodeName));
   }
 
   @JsonCreator
   private Applicability(@JsonProperty("type") ApplicabilityType type,
-                        @JsonProperty("stripeName") String stripeName,
+                        @JsonProperty("stripeId") Integer stripeId,
                         @JsonProperty("nodeName") String nodeName) {
     this.type = requireNonNull(type);
-    this.stripeName = stripeName;
+    this.stripeId = stripeId;
     this.nodeName = nodeName;
   }
 
@@ -48,8 +48,8 @@ public class Applicability {
     return nodeName;
   }
 
-  public String getStripeName() {
-    return stripeName;
+  public Integer getStripeId() {
+    return stripeId;
   }
 
   @Override
@@ -59,12 +59,12 @@ public class Applicability {
     Applicability that = (Applicability) o;
     return getType() == that.getType() &&
         Objects.equals(getNodeName(), that.getNodeName()) &&
-        Objects.equals(getStripeName(), that.getStripeName());
+        Objects.equals(getStripeId(), that.getStripeId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getType(), getNodeName(), getStripeName());
+    return Objects.hash(getType(), getNodeName(), getStripeId());
   }
 
   @Override
@@ -72,7 +72,7 @@ public class Applicability {
     return "Applicability{" +
         "type=" + type +
         ", nodeName='" + nodeName + '\'' +
-        ", stripeName='" + stripeName + '\'' +
+        ", stripeId='" + stripeId + '\'' +
         '}';
   }
 }

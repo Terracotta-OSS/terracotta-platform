@@ -4,8 +4,8 @@
  */
 package com.terracottatech.dynamic_config.model.parsing;
 
-import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -44,7 +44,6 @@ class NodeParameterSetter {
     PARAM_ACTION_MAP.put(CommonOptions.FAILOVER_PRIORITY, Node::setFailoverPriority);
     PARAM_ACTION_MAP.put(CommonOptions.CLIENT_RECONNECT_WINDOW, (node, clientReconnectWindow) -> node.setClientReconnectWindow(Measure.parse(clientReconnectWindow, TimeUnit.class)));
     PARAM_ACTION_MAP.put(CommonOptions.CLIENT_LEASE_DURATION, (node, clientLeaseDuration) -> node.setClientLeaseDuration(Measure.parse(clientLeaseDuration, TimeUnit.class)));
-    PARAM_ACTION_MAP.put(CommonOptions.CLUSTER_NAME, Node::setClusterName);
     PARAM_ACTION_MAP.put(CommonOptions.OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(ofr -> {
       String[] split = ofr.split(PARAM_INTERNAL_SEP);
       node.setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));

@@ -13,8 +13,8 @@ import java.io.File;
 import java.util.Map;
 
 public class ClusterManager {
-  static Cluster createCluster(String configFile) {
-    return ConfigFileParser.parse(new File(configFile));
+  static Cluster createCluster(String configFile, String optionalClusterName) {
+    return ConfigFileParser.parse(new File(configFile), optionalClusterName);
   }
 
   static Cluster createCluster(Map<String, String> paramValueMap) {

@@ -22,10 +22,10 @@ public class XmlConfigurationTest {
   @Test
   public void testSingleStripe() throws Exception {
     Cluster cluster =
-        ConfigFileParser.parse(new File(getClass().getResource("/single-stripe-config.properties").toURI()));
+        ConfigFileParser.parse(new File(getClass().getResource("/single-stripe-config.properties").toURI()), "my-cluster");
 
     String actual =
-        new XmlConfiguration(cluster, "stripe-1", "node-1").toString();
+        new XmlConfiguration(cluster, 1, "node-1").toString();
 
     assertXml(actual, "single-stripe-config.xml");
   }
@@ -33,10 +33,10 @@ public class XmlConfigurationTest {
   @Test
   public void testMultiStripe() throws Exception {
     Cluster cluster =
-        ConfigFileParser.parse(new File(getClass().getResource("/multi-stripe-config.properties").toURI()));
+        ConfigFileParser.parse(new File(getClass().getResource("/multi-stripe-config.properties").toURI()), "my-cluster");
 
     String actual =
-        new XmlConfiguration(cluster, "stripe-1", "node-1").toString();
+        new XmlConfiguration(cluster, 1, "node-1").toString();
 
     System.out.println(actual);
     assertXml(actual, "multi-stripe-config.xml");

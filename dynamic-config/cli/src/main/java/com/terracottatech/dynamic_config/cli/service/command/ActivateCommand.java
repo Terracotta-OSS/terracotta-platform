@@ -7,28 +7,21 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
-import com.terracottatech.diagnostic.client.DiagnosticOperationTimeoutException;
-import com.terracottatech.diagnostic.client.DiagnosticService;
-import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.dynamic_config.cli.CommandRepository;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
-import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
-import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
+import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
+import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.parsing.ConfigFileParser;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
+import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
-import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
-import com.terracottatech.tools.detailed.state.LogicalServerState;
-import org.awaitility.Awaitility;
-import org.awaitility.Duration;
-import org.awaitility.core.ConditionTimeoutException;
+import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,12 +31,13 @@ import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate the cluster")
 @Usage("activate <-s HOST[:PORT] | -f CONFIG-PROPERTIES-FILE> -n CLUSTER-NAME -l LICENSE-FILE")
@@ -65,7 +59,14 @@ public class ActivateCommand extends Command {
   @Resource
   public MultiDiagnosticServiceConnectionFactory connectionFactory;
 
+  @Resource
+  public NomadManager nomadManager;
+
+  @Resource
+  public RestartService restartService;
+
   private MultiDiagnosticServiceConnection connection;
+  private Cluster cluster;
 
   @Override
   public void validate() {
@@ -81,141 +82,110 @@ public class ActivateCommand extends Command {
       throw new IllegalArgumentException("Cluster name should be provided when node is specified");
     }
 
-    if (configPropertiesFile != null && clusterName != null) {
-      throw new IllegalArgumentException("Cluster name should not be provided when config properties file is specified");
+    if (configPropertiesFile != null) {
+      // By default the cluster name is the file name of the property file.
+      // But the user can override it by specifying --cluster-name
+      clusterName = ConfigFileParser.getClusterName(configPropertiesFile.toFile(), clusterName);
     }
+
+    // NOTE: clusterName != null now
     LOGGER.debug("Command validation successful");
   }
 
   @Override
   public final void run() {
-    Cluster cluster;
-    if (node != null) {
-      cluster = getInMemoryTopology(node);
-      ClusterValidator.validate(cluster);
-      LOGGER.debug("Cluster topology validation successful");
-    } else {
-      cluster = ConfigFileParser.parse(configPropertiesFile.toFile());
-      LOGGER.debug("Config property file parsing and cluster topology validation successful");
-      clusterName = cluster.getStripes().get(0).getNodes().iterator().next().getClusterName();
+
+    try {
+      cluster = loadCluster();
+      connection = connectionFactory.createConnection(cluster.getNodeAddresses());
+
+      ensureNoActiveNode();
+
+      cluster.setName(clusterName);
+      LOGGER.debug("Setting cluster name successful");
+
+      prepareClusterForActivation();
+      LOGGER.debug("Setting nomad writable successful");
+
+      runNomadChange();
+      LOGGER.debug("Nomad change run successful");
+
+      installLicense();
+      LOGGER.info("License installation successful");
+
+      restartNodes();
+
+    } finally {
+      if (connection != null) {
+        connection.close();
+        connection = null;
+      }
     }
 
-    updateClusterAndStripeNames(cluster);
-    LOGGER.debug("Setting stripe and cluster name successful");
-
-    prepareClusterForActivation(cluster);
-    LOGGER.debug("Setting nomad writable successful");
-
-    runNomadChange(cluster);
-    LOGGER.debug("Nomad change run successful");
-
-    installLicense(cluster);
-    LOGGER.info("License installation successful");
-
-    restartNodes(cluster);
-    ensureSuccessfulRestart(cluster);
-    LOGGER.info("All cluster nodes: {} came back up as Actives or Passives", cluster.getNodeAddresses());
-
-    closeConnection();
     LOGGER.info("Command successful!\n");
   }
 
-  private void ensureSuccessfulRestart(Cluster cluster) {
-    LOGGER.debug("Contacting all cluster nodes: {} for status post restart", cluster.getNodeAddresses());
-
-    Duration maxDuration = new Duration(CommandRepository.getMainCommand().getRequestTimeoutMillis(), TimeUnit.MILLISECONDS);
-    try {
-      Awaitility.await()
-          .pollInterval(Duration.ONE_SECOND)
-          .atMost(maxDuration)
-          .until(isClusterStartupSuccessful(cluster));
-    } catch (ConditionTimeoutException e) {
-      throw new RuntimeException(
-          String.format(
-              "All nodes in cluster: %s did not come back up as Actives or Passives in: %s %s",
-              cluster.getNodeAddresses(),
-              maxDuration.getValue(),
-              maxDuration.getTimeUnit()
-          )
-      );
+  private Cluster loadCluster() {
+    if (node != null) {
+      Cluster cluster = getInMemoryTopology(node);
+      ClusterValidator.validate(cluster);
+      LOGGER.debug("Cluster topology validation successful");
+      return cluster;
+    } else {
+      Cluster cluster = ConfigFileParser.parse(configPropertiesFile.toFile(), clusterName);
+      LOGGER.debug("Config property file parsing and cluster topology validation successful");
+      return cluster;
     }
   }
 
-  private Callable<Boolean> isClusterStartupSuccessful(Cluster cluster) {
-    return () -> cluster.getNodeAddresses()
-        .stream()
-        .map(endpoint -> createOrGetConnection(cluster).getDiagnosticService(endpoint).get())
-        .map(DiagnosticService::getLogicalServerState)
-        .allMatch(state -> state == LogicalServerState.ACTIVE || state == LogicalServerState.PASSIVE);
-  }
-
-  private void restartNodes(Cluster cluster) {
-    LOGGER.debug("Asking all cluster nodes: {} to restart themselves", cluster.getNodeAddresses());
-    getTopologyServiceStream(cluster).forEach(topologyService -> {
-      try {
-        topologyService.restart();
-      } catch (DiagnosticOperationTimeoutException e) {
-        // This operation times out because the nodes have shut down. All good.
-        closeConnection();
+  private void restartNodes() {
+    try {
+      RestartProgress progress = restartService.restart(cluster);
+      Map<InetSocketAddress, Tuple2<String, Throwable>> failures = progress.await();
+      if (failures.isEmpty()) {
+        LOGGER.info("All cluster nodes: {} came back up", cluster.getNodeAddresses());
+      } else {
+        LOGGER.error(
+            "Some cluster nodes failed to restart:\n - ",
+            failures.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue().t1).collect(joining("\n - ")));
       }
-    });
+    } catch (InterruptedException e) {
+      // current main thread has been interrupted by user...
+      Thread.currentThread().interrupt();
+    }
   }
 
-  //TODO [DYNAMIC-CONFIG]: Figure out a way to make this work correctly even for a config properties file where cluster name
-  // is always present. Uncomment this once this and TDB-4594 are fixed
-  private void ensureFirstActivation(Cluster cluster) {
+  private void ensureNoActiveNode() {
     LOGGER.debug("Contacting all cluster nodes: {} to check for first run of activation command", cluster.getNodeAddresses());
-    boolean clusterNameFound = cluster.getStripes()
-        .stream()
-        .flatMap(stripe -> stripe.getNodes().stream())
-        .anyMatch(node1 -> node1.getClusterName() != null);
-    if (clusterNameFound) {
-      throw new RuntimeException("Cluster is already activated");
+    List<InetSocketAddress> activated = getTopologyServiceStream()
+        .filter(t -> t.t2.isActivated())
+        .map(Tuple2::getT1)
+        .collect(toList());
+    if (!activated.isEmpty()) {
+      throw new RuntimeException("Some nodes are already activated: " + activated);
     }
   }
 
   private Cluster getInMemoryTopology(InetSocketAddress node) {
-    try (MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(Collections.singletonList(node))) {
+    try (MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(node)) {
       return connection.getDiagnosticService(node).get().getProxy(TopologyService.class).getTopology();
     }
   }
 
-  private void updateClusterAndStripeNames(Cluster cluster) {
-    AtomicInteger stripeIndex = new AtomicInteger();
-    cluster.getStripes()
-        .stream()
-        .flatMap(stripe -> {
-          stripeIndex.incrementAndGet();
-          return stripe.getNodes().stream();
-        })
-        .forEach(node -> {
-          node.setStripeName("stripe-" + stripeIndex.get());
-          node.setClusterName(clusterName);
-        });
-  }
-
-  private void prepareClusterForActivation(Cluster cluster) {
+  private void prepareClusterForActivation() {
     LOGGER.debug("Contacting all cluster nodes: {} to prepare for activation", cluster.getNodeAddresses());
-    getTopologyServiceStream(cluster).forEach(dcs -> dcs.prepareActivation(cluster));
+    getTopologyServiceStream().map(Tuple2::getT2).forEach(ts -> ts.prepareActivation(cluster));
   }
 
-  private void runNomadChange(Cluster cluster) {
-    MainCommand mainCommand = CommandRepository.getMainCommand();
-    long requestTimeout = mainCommand.getRequestTimeoutMillis();
-    boolean isVerbose = mainCommand.isVerbose();
-
-    NomadManager nomadManager = new NomadManager(new NomadClientFactory(connectionFactory, new ConcurrencySizing(), new NomadEnvironment(), requestTimeout));
-    nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(clusterName, cluster), isVerbose);
+  private void runNomadChange() {
+    nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(cluster));
   }
 
-  private Stream<TopologyService> getTopologyServiceStream(Cluster cluster) {
-    return cluster.getNodeAddresses()
-        .stream()
-        .map(endpoint -> createOrGetConnection(cluster).getDiagnosticService(endpoint).get())
-        .map(ds -> ds.getProxy(TopologyService.class));
+  private Stream<Tuple2<InetSocketAddress, TopologyService>> getTopologyServiceStream() {
+    return connection.map((address, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
   }
 
-  private void installLicense(Cluster cluster) {
+  private void installLicense() {
     LicenseValidator.validateLicense(cluster, licenseFile.toString());
     LOGGER.debug("License validation successful");
 
@@ -229,20 +199,9 @@ public class ActivateCommand extends Command {
     LOGGER.debug("Contacting all cluster nodes: {} to install license", cluster.getNodeAddresses());
     cluster.getNodeAddresses()
         .stream()
-        .map(endpoint -> createOrGetConnection(cluster).getDiagnosticService(endpoint).get())
+        .map(endpoint -> connection.getDiagnosticService(endpoint).get())
         .map(ds -> ds.getProxy(LicensingService.class))
         .forEach(dcs -> dcs.installLicense(validatedLicense));
   }
 
-  private MultiDiagnosticServiceConnection createOrGetConnection(Cluster cluster) {
-    if (connection == null) {
-      connection = connectionFactory.createConnection(cluster.getNodeAddresses());
-    }
-    return connection;
-  }
-
-  private void closeConnection() {
-    connection.close();
-    connection = null;
-  }
 }

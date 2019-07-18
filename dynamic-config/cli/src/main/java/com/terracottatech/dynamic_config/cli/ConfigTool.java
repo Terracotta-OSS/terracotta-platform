@@ -15,6 +15,10 @@ import com.terracottatech.dynamic_config.cli.service.command.DumpTopologyCommand
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
+import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
+import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
+import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
+import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +53,8 @@ public class ConfigTool {
 
   private void start(String... args) {
     LOGGER.debug("Registering commands with CommandRepository");
-    CommandRepository.addAll(
+    CommandRepository commandRepository = new CommandRepository();
+    commandRepository.addAll(
         new HashSet<>(
             Arrays.asList(
                 MAIN,
@@ -62,18 +67,21 @@ public class ConfigTool {
     );
 
     LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander jCommander = parseArguments(args);
+    CustomJCommander jCommander = parseArguments(commandRepository, args);
 
     // Process arguments like '-v'
     MAIN.run();
 
     // create services
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getRequestTimeoutMillis(), MILLISECONDS, MAIN.getSecurityRootDirectory());
-    MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS, new ConcurrencySizing());
-    NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS);
+    ConcurrencySizing concurrencySizing = new ConcurrencySizing();
+    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getConnectionTimeoutMillis(), MILLISECONDS, MAIN.getRequestTimeoutMillis(), MILLISECONDS, MAIN.getSecurityRootDirectory());
+    MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS, concurrencySizing);
+    NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
+    NomadManager nomadManager = new NomadManager(new NomadClientFactory(connectionFactory, concurrencySizing, new NomadEnvironment(), MAIN.getRequestTimeoutMillis()), MAIN.isVerbose());
+    RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, MAIN.getRequestTimeoutMillis());
 
     LOGGER.debug("Injecting services in CommandRepository");
-    CommandRepository.inject(diagnosticServiceProvider, connectionFactory, nodeAddressDiscovery);
+    commandRepository.inject(diagnosticServiceProvider, connectionFactory, nodeAddressDiscovery, nomadManager, restartService);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help
@@ -93,8 +101,8 @@ public class ConfigTool {
     });
   }
 
-  private CustomJCommander parseArguments(String[] args) {
-    CustomJCommander jCommander = new CustomJCommander(MAIN);
+  private CustomJCommander parseArguments(CommandRepository commandRepository, String[] args) {
+    CustomJCommander jCommander = new CustomJCommander(commandRepository, MAIN);
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {

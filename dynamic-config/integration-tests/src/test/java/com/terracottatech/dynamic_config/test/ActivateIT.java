@@ -79,13 +79,6 @@ public class ActivateIT extends BaseStartupIT {
   }
 
   @Test
-  public void testWrongParams_3() throws Exception {
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Cluster name should not be provided when config properties file is specified")));
-    ConfigTool.main("activate", "-n", "tc-cluster", "-f", "dummy.properties", "-l", licensePath());
-  }
-
-  @Test
   public void testWrongParams_4() throws Exception {
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("One of node or config properties file must be specified")));
@@ -99,7 +92,7 @@ public class ActivateIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All cluster nodes: [localhost:" + ports[0] + "] came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("All cluster nodes: [localhost:" + ports[0] + "] came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -108,11 +101,11 @@ public class ActivateIT extends BaseStartupIT {
   @Test
   public void testSingleNodeActivationWithConfigFile() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("activate", "-f", configFilePath("/config-property-files/single-stripe.properties"), "-l", licensePath());
+    ConfigTool.main("activate", "-f", configFilePath("/config-property-files/single-stripe.properties"), "-l", licensePath(), "-n", "my-cluster");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All cluster nodes: [localhost:" + ports[0] + "] came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("All cluster nodes: [localhost:" + ports[0] + "] came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -130,7 +123,7 @@ public class ActivateIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -148,7 +141,7 @@ public class ActivateIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -167,7 +160,7 @@ public class ActivateIT extends BaseStartupIT {
     ));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -186,7 +179,7 @@ public class ActivateIT extends BaseStartupIT {
     ));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up as Actives or Passives"));
+    waitedAssert(out::getLog, containsString("came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);

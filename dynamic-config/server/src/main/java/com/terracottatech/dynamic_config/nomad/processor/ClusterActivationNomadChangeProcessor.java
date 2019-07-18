@@ -28,7 +28,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
     try {
       return new XmlConfiguration(
           change.getCluster(),
-          this.configController.getStripeName(),
+          this.configController.getStripeId(),
           this.configController.getNodeName()
       ).toString();
     } catch (Exception e) {

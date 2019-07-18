@@ -43,7 +43,6 @@
       <cluster xmlns="http://www.terracotta.org/config/cluster" xmlns:ns2="http://www.terracotta.org/config">
         <name>my-cluster</name>
         <stripe>
-          <name>stripe-1</name>
           <node>
             <name>node-1</name>
             <server-config>

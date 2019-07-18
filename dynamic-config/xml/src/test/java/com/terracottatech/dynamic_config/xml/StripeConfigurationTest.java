@@ -4,16 +4,15 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.utilities.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.TcConfig;
-
-import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.utilities.TimeUnit;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,7 +24,7 @@ import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class StripeConfigurationTest {
 
@@ -60,7 +59,7 @@ public class StripeConfigurationTest {
 
     Stripe stripe = new Stripe(nodeList);
 
-    StripeConfiguration stripeConfiguration = new StripeConfiguration("stripe-1", stripe);
+    StripeConfiguration stripeConfiguration = new StripeConfiguration(stripe);
 
     assertThat(stripeConfiguration.get("server-1"), notNullValue());
     assertThat(stripeConfiguration.get("server-2"), notNullValue());

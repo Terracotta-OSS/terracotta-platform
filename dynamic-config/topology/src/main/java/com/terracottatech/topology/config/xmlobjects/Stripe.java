@@ -4,16 +4,12 @@
  */
 package com.terracottatech.topology.config.xmlobjects;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -38,37 +34,12 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "stripe", namespace = "http://www.terracotta.org/config/cluster", propOrder = {
-    "name",
     "nodes"
 })
 public class Stripe {
 
-  @XmlElement(required = true)
-  @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
-  @XmlSchemaType(name = "token")
-  protected String name;
-  @XmlElement(required = true, name="node")
+  @XmlElement(required = true, name = "node")
   protected List<Node> nodes;
-
-  /**
-   * Gets the value of the name property.
-   *
-   * @return possible object is
-   * {@link String }
-   */
-  public String getName() {
-    return name;
-  }
-
-  /**
-   * Sets the value of the name property.
-   *
-   * @param value allowed object is
-   *              {@link String }
-   */
-  public void setName(String value) {
-    this.name = value;
-  }
 
   /**
    * Gets the value of the nodes property.

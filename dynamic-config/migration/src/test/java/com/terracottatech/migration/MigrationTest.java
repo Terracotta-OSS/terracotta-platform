@@ -4,18 +4,17 @@
  */
 package com.terracottatech.migration;
 
-import com.terracottatech.utilities.Tuple2;
-import org.junit.Test;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import com.terracottatech.migration.exception.ErrorCode;
 import com.terracottatech.migration.exception.ErrorParamKey;
 import com.terracottatech.migration.exception.InvalidInputConfigurationContentException;
 import com.terracottatech.migration.exception.InvalidInputException;
 import com.terracottatech.migration.helper.ReflectionHelper;
 import com.terracottatech.migration.validators.ValidationWrapper;
+import com.terracottatech.utilities.Tuple2;
+import org.junit.Test;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -43,12 +42,13 @@ import static org.mockito.Mockito.when;
 public class MigrationTest {
 
   @Test
-  public void testValidateAndProcessInputStripeNameConfigFilePathAreGiven() throws Exception {
+  public void testValidateAndProcessInputStripeIdConfigFilePathAreGiven() throws Exception {
     MigrationImpl migration = new MigrationImpl();
-    List<String> commands = Arrays.asList("stripe1,/opt/repository/tc-config-1.xml",
-        "stripe2,/opt/repository/tc-config-2.xml",
-        "stripe3,/opt/repository/tc-config-3.xml");
-    Set<String> stripeNames = new HashSet<>(Arrays.asList("stripe1", "stripe2", "stripe3"));
+    List<String> commands = Arrays.asList(
+        "1,/opt/repository/tc-config-1.xml",
+        "2,/opt/repository/tc-config-2.xml",
+        "3,/opt/repository/tc-config-3.xml");
+    Set<Integer> stripeIds = new HashSet<>(Arrays.asList(1, 2, 3));
     migration.validateAndProcessInput(commands);
     @SuppressWarnings("rawtypes")
     Optional<List> oneCommaCommandList = ReflectionHelper.getDeclaredField(List.class, "inputParamList", migration);
@@ -58,8 +58,8 @@ public class MigrationTest {
       List retList = oneCommaCommandList.get();
       assertThat(retList.size(), is(commands.size()));
       for (Object obj : retList) {
-        String[] commandArray = (String[])obj;
-        assertThat(stripeNames.contains(commandArray[0]), is(true));
+        String[] commandArray = (String[]) obj;
+        assertThat(stripeIds.contains(Integer.parseInt(commandArray[0])), is(true));
       }
     } else {
       fail("Unexpected!!! oneCommaCommands is null");
@@ -72,7 +72,7 @@ public class MigrationTest {
     List<String> commands = Arrays.asList("/opt/repository/tc-config-1.xml",
         "/opt/repository/tc-config-2.xml",
         "/opt/repository/tc-config-3.xml");
-    Set<String> stripeNames = new HashSet<>(Arrays.asList("stripe-1", "stripe-2", "stripe-3"));
+    Set<Integer> stripeIds = new HashSet<>(Arrays.asList(1, 2, 3));
     migration.validateAndProcessInput(commands);
     @SuppressWarnings("rawtypes")
     Optional<List> oneCommaCommandList = ReflectionHelper.getDeclaredField(List.class, "inputParamList", migration);
@@ -81,8 +81,8 @@ public class MigrationTest {
       List retList = oneCommaCommandList.get();
       assertThat(retList.size(), is(commands.size()));
       for (Object obj : retList) {
-        String[] commandArray = (String[])obj;
-        assertThat(stripeNames.contains(commandArray[0]), is(true));
+        String[] commandArray = (String[]) obj;
+        assertThat(stripeIds.contains(Integer.parseInt(commandArray[0])), is(true));
       }
     } else {
       fail("Unexpected!!! oneCommaCommands is null");
@@ -92,8 +92,9 @@ public class MigrationTest {
   @Test
   public void testValidateAndProcessInputConfigFileWithMixedInput() throws Exception {
     MigrationImpl migration = new MigrationImpl();
-    List<String> commands = Arrays.asList("/opt/repository/tc-config-1.xml",
-        "stripe2,/opt/repository/tc-config-2.xml",
+    List<String> commands = Arrays.asList(
+        "/opt/repository/tc-config-1.xml",
+        "2,/opt/repository/tc-config-2.xml",
         "/opt/repository/tc-config-3.xml");
     try {
       migration.validateAndProcessInput(commands);
@@ -106,26 +107,28 @@ public class MigrationTest {
   @Test
   public void testValidateAndProcessWithDuplicateOneCommaEntries() {
     MigrationImpl migration = new MigrationImpl();
-    List<String> commands = Arrays.asList("stripe1,/opt/repository/tc-config-1.xml",
-        "stripe2,/opt/repository/tc-config-2.xml",
-        "stripe1,/opt/repository/tc-config-3.xml");
+    List<String> commands = Arrays.asList(
+        "1,/opt/repository/tc-config-1.xml",
+        "2,/opt/repository/tc-config-2.xml",
+        "1,/opt/repository/tc-config-3.xml");
     try {
       migration.validateAndProcessInput(commands);
       fail("Expected InvalidInputException");
     } catch (InvalidInputException e) {
       assertThat(ErrorCode.DUPLICATE_STRIPE_NAME, is(e.getErrorCode()));
-      assertThat(e.getParameters().containsKey(ErrorParamKey.STRIPE_NAME.toString()), is(true));
-      assertThat(e.getParameters().get(ErrorParamKey.STRIPE_NAME.toString()).size(), is(1));
-      assertThat(e.getParameters().get(ErrorParamKey.STRIPE_NAME.toString()).contains("stripe1"), is(true));
+      assertThat(e.getParameters().containsKey(ErrorParamKey.STRIPE_ID.toString()), is(true));
+      assertThat(e.getParameters().get(ErrorParamKey.STRIPE_ID.toString()).size(), is(1));
+      assertThat(e.getParameters().get(ErrorParamKey.STRIPE_ID.toString()).contains("1"), is(true));
     }
   }
 
   @Test
   public void testValidateAndProcessWithInvalidBasicEntries() {
     MigrationImpl migration = new MigrationImpl();
-    List<String> commands = Arrays.asList("stripe1,/opt/repository/tc-config-2.xml,Hello",
-        "stripe2,/opt/repository/tc-config-2.xml",
-        "stripe1,/opt/repository/tc-config-3.xml");
+    List<String> commands = Arrays.asList(
+        "1,/opt/repository/tc-config-2.xml,Hello",
+        "2,/opt/repository/tc-config-2.xml",
+        "1,/opt/repository/tc-config-3.xml");
     try {
       migration.validateAndProcessInput(commands);
       fail("Expected InvalidInputException");
@@ -137,9 +140,10 @@ public class MigrationTest {
   @Test
   public void testValidateAndProcessWithInvalidBasicEntriesMoreNumberOfEntries() throws Exception {
     MigrationImpl migration = new MigrationImpl();
-    List<String> commands = Arrays.asList("stripe1, server1, /opt/repository/tc-config-1.xml, invalid",
-        "stripe2,/opt/repository/tc-config-2.xml",
-        "stripe1,/opt/repository/tc-config-3.xml");
+    List<String> commands = Arrays.asList(
+        "1, server1, /opt/repository/tc-config-1.xml, invalid",
+        "2,/opt/repository/tc-config-2.xml",
+        "1,/opt/repository/tc-config-3.xml");
     try {
       migration.validateAndProcessInput(commands);
       fail("Expected InvalidInputException");
@@ -155,8 +159,8 @@ public class MigrationTest {
     Node clonedRootNodeForServer1 = mock(Node.class);
     Node clonedRootNodeForServer2 = mock(Node.class);
     List<String> serverList = Arrays.asList("server1", "server2");
-    Map<Tuple2<String, String>, Node> serverNodeMap = new HashMap<>();
-    String stripeName = "Stripe1";
+    Map<Tuple2<Integer, String>, Node> serverNodeMap = new HashMap<>();
+    int stripeId = 1;
     Path path = mock(Path.class);
     MigrationImpl spiedMigration = spy(migration);
 
@@ -165,7 +169,7 @@ public class MigrationTest {
     doReturn(serverList).when(spiedMigration).extractServerNames(rootNodeForServer1);
     doReturn(clonedRootNodeForServer1, clonedRootNodeForServer2).when(spiedMigration)
         .getClonedParentDocNode(rootNodeForServer1);
-    spiedMigration.createServerConfigMapFunction(serverNodeMap, stripeName, path);
+    spiedMigration.createServerConfigMapFunction(serverNodeMap, stripeId, path);
     assertThat(serverNodeMap.size(), is(2));
     serverNodeMap.forEach((serverName, clonedNode) -> {
       assertThat(serverList.contains(serverName.getT2()), is(true));
@@ -176,14 +180,14 @@ public class MigrationTest {
       }
     });
     @SuppressWarnings("rawtypes")
-    Optional<Map> stripeNameServerNameMapOpt = ReflectionHelper.getField(Map.class
+    Optional<Map> stripeIdServerNameMapOpt = ReflectionHelper.getField(Map.class
         , "stripeServerNameMap", spiedMigration);
-    Map<?, ?> stripeNameServerNameMap = stripeNameServerNameMapOpt.get();
-    assertThat(stripeNameServerNameMap.size(), is(1));
-    stripeNameServerNameMap.forEach((stripe, servers) -> {
-      assertThat(((List)servers).contains("server1"), is(true));
-      assertThat(((List)servers).contains("server2"), is(true));
-      assertThat(stripeName, is(stripe));
+    Map<?, ?> stripeIdServerNameMap = stripeIdServerNameMapOpt.get();
+    assertThat(stripeIdServerNameMap.size(), is(1));
+    stripeIdServerNameMap.forEach((stripe, servers) -> {
+      assertThat(((List) servers).contains("server1"), is(true));
+      assertThat(((List) servers).contains("server2"), is(true));
+      assertThat(stripeId, is(stripe));
     });
     @SuppressWarnings("rawtypes")
     Optional<Map> configFileRootNodeMapOpt = ReflectionHelper.getField(Map.class
@@ -609,9 +613,9 @@ public class MigrationTest {
     String server3 = "server3";
     String server4 = "server4";
 
-    String stripe = "stripe";
+    Integer stripe = 1;
 
-    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    Map<Tuple2<Integer, String>, Node> hostConfigMapNode = new HashMap<>();
 
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
@@ -653,9 +657,9 @@ public class MigrationTest {
     String server3 = "server3";
     String server4 = "server4";
 
-    String stripe = "stripe";
+    Integer stripe = 1;
 
-    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    Map<Tuple2<Integer, String>, Node> hostConfigMapNode = new HashMap<>();
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
@@ -685,9 +689,9 @@ public class MigrationTest {
     String server3 = "server3";
     String server4 = "server4";
 
-    String stripe = "stripe1";
+    Integer stripe = 1;
 
-    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    Map<Tuple2<Integer, String>, Node> hostConfigMapNode = new HashMap<>();
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
@@ -710,9 +714,9 @@ public class MigrationTest {
     String server2 = "server2";
     String server3 = "server3";
 
-    String stripe = "stripe";
+    Integer stripe = 1;
 
-    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    Map<Tuple2<Integer, String>, Node> hostConfigMapNode = new HashMap<>();
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server2), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
@@ -735,9 +739,9 @@ public class MigrationTest {
     String server3 = "server3";
     String server4 = "server4";
 
-    String stripe = "stripe-1";
+    Integer stripe = 1;
 
-    Map<Tuple2<String, String>, Node> hostConfigMapNode = new HashMap<>();
+    Map<Tuple2<Integer, String>, Node> hostConfigMapNode = new HashMap<>();
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server1), mock(Node.class));
     hostConfigMapNode.put(Tuple2.tuple2(stripe, server3), mock(Node.class));
 

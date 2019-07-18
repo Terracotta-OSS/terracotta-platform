@@ -32,7 +32,6 @@
       <cl:cluster xmlns:cl="http://www.terracotta.org/config/cluster">
         <cl:name>testCluster</cl:name>
         <cl:stripe>
-          <cl:name>Stripe1</cl:name>
           <cl:node>
             <cl:name>testServer2</cl:name>
             <cl:server-config>
@@ -117,7 +116,6 @@
           </cl:node>
         </cl:stripe>
         <cl:stripe>
-          <cl:name>Stripe2</cl:name>
           <cl:node>
             <cl:name>testServer0</cl:name>
             <cl:server-config>

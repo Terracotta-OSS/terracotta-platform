@@ -104,13 +104,13 @@ public class Options {
   @Parameter(names = {"-d", "--" + DATA_DIRS})
   private String dataDirs;
 
-  @Parameter(names = {"-N", "--" + CLUSTER_NAME})
+  @Parameter(names = {"-N", "--" + CLUSTER_NAME}, hidden = true)
   private String clusterName;
 
   @Parameter(names = {"-f", "--config-file"})
   private String configFile;
 
-  @Parameter(names = {"-l", "--license-file"})
+  @Parameter(names = {"-l", "--license-file"}, hidden = true)
   private String licenseFile;
 
   @Parameter(names = {"-h", "--help"}, help = true)
@@ -151,18 +151,21 @@ public class Options {
     filteredOptions.remove("-s");
     filteredOptions.remove("-p");
     filteredOptions.remove("-c");
+    filteredOptions.remove("-N");
 
     filteredOptions.remove("--config-file");
     filteredOptions.remove("--license-file");
     filteredOptions.remove(addDashDash(NODE_HOSTNAME));
     filteredOptions.remove(addDashDash(NODE_PORT));
     filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
+    filteredOptions.remove(addDashDash(CLUSTER_NAME));
 
     if (filteredOptions.size() != 0) {
       throw new ParameterException(
           String.format(
-              "'--config-file' parameter can only be used with '%s', '%s', '%s', and '%s' parameters",
+              "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s', and '%s' parameters",
               "--license-file",
+              addDashDash(CLUSTER_NAME),
               addDashDash(NODE_HOSTNAME),
               addDashDash(NODE_PORT),
               addDashDash(NODE_CONFIG_DIR)

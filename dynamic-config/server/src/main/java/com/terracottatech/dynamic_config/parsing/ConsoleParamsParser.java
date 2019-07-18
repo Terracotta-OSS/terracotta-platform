@@ -4,20 +4,17 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.model.config.DefaultSettings;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.config.DefaultSettings;
 import com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils;
 import com.terracottatech.dynamic_config.model.validation.NodeParamsValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.util.ParameterSubstitutor;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -29,10 +26,11 @@ public class ConsoleParamsParser {
   public static Cluster parse(Map<String, String> paramValueMap) {
     NodeParamsValidator.validate(paramValueMap);
     Node node = new Node();
-    paramValueMap.forEach((param, value) -> NodeParameterSetter.set(param, value, node));
+    Cluster cluster = new Cluster(new Stripe(node));
+    paramValueMap.forEach((param, value) -> ParameterSetter.set(param, value, cluster));
     Map<String, String> defaultsAdded = DefaultSettings.fillDefaultsIfNeeded(node);
     printParams(paramValueMap, defaultsAdded);
-    return createCluster(node);
+    return cluster;
   }
 
   private static void printParams(Map<String, String> supplied, Map<String, String> defaulted) {
@@ -57,11 +55,5 @@ public class ConsoleParamsParser {
       suppliedParameters = lineSeparator() + suppliedParameters;
     }
     return suppliedParameters;
-  }
-
-  private static Cluster createCluster(Node node) {
-    List<Stripe> stripes = new ArrayList<>();
-    stripes.add(new Stripe(Collections.singleton(node)));
-    return new Cluster(stripes);
   }
 }
