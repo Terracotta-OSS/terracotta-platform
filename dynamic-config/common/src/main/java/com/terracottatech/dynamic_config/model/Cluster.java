@@ -174,4 +174,9 @@ public class Cluster implements Cloneable {
   public Optional<Integer> getStripeId(Node me) {
     return getStripeId(me.getNodeAddress());
   }
+
+  @JsonIgnore
+  public int getNodeCount() {
+    return stripes.stream().mapToInt(Stripe::getNodeCount).sum();
+  }
 }

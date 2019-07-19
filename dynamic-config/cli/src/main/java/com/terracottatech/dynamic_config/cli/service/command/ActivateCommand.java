@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.terracottatech.utilities.Assertion.assertNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -88,7 +89,7 @@ public class ActivateCommand extends Command {
       clusterName = ConfigFileParser.getClusterName(configPropertiesFile.toFile(), clusterName);
     }
 
-    // NOTE: clusterName != null now
+    assertNonNull(clusterName, "clusterName must not be null");
     LOGGER.debug("Command validation successful");
   }
 

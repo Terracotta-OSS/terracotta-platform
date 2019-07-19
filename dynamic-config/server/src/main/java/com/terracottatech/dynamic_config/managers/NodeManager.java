@@ -42,6 +42,7 @@ import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_P
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
 import static com.terracottatech.dynamic_config.model.util.ConfigUtils.getSubstitutedConfigDir;
+import static com.terracottatech.utilities.Assertion.assertNonNull;
 import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class NodeManager {
@@ -66,14 +67,9 @@ public class NodeManager {
 
   private void attemptStartupWithCliParams() {
     Cluster cluster = ClusterManager.createCluster(paramValueMap);
-    Node node = cluster.getStripes().get(0).getNodes().iterator().next(); // Cluster object will have only 1 node, just get that
-
+    Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
     if (options.getLicenseFile() != null) {
-      String clusterName = options.getClusterName();
-      if (clusterName == null) {
-        throw new RuntimeException("Cluster name is required with license file parameter");
-      }
-      cluster.setName(clusterName);
+      assertNonNull(options.getClusterName(), "clusterName must not be null and must be validated in " + Options.class.getName());
       activateAndStartup(cluster, node);
     } else {
       registerServices(cluster, node);
@@ -87,9 +83,9 @@ public class NodeManager {
       LOGGER.info("Reading cluster config properties file from: {}", configFile);
       Cluster cluster = ClusterManager.createCluster(configFile, options.getClusterName());
       Node node = getMatchingNodeFromConfigFile(cluster);
-
       if (options.getLicenseFile() != null) {
-        if (cluster.getStripes().stream().mapToLong(stripe -> stripe.getNodes().size()).sum() > 1) {
+        if (cluster.getNodeCount() > 1) {
+          //TODO [DYANMIC-CONFIG] TRACK #6: relax this constraint
           throw new RuntimeException("License file option can be used only with a one-node cluster config file");
         }
         activateAndStartup(cluster, node);

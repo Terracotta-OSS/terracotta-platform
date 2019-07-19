@@ -122,4 +122,9 @@ public class Stripe implements Cloneable {
             Stripe::addNode,
             (s1, s2) -> new Stripe().addNodes(s1.getNodes()).addNodes(s2.getNodes()));
   }
+
+  @JsonIgnore
+  public int getNodeCount() {
+    return nodes.size();
+  }
 }

@@ -19,6 +19,7 @@ import java.util.function.BiConsumer;
 
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.MULTI_VALUE_SEP;
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.PARAM_INTERNAL_SEP;
+import static com.terracottatech.utilities.Assertion.assertNonNull;
 
 /**
  * Sets pre-validated parameters to their corresponding values in {@code Node} object.
@@ -58,9 +59,7 @@ class ParameterSetter {
 
   static void set(String param, String value, Cluster cluster) {
     BiConsumer<Cluster, String> action = PARAM_ACTION_MAP.get(param);
-    if (action == null) {
-      throw new AssertionError("Unrecognized param: " + param);
-    }
+    assertNonNull(action, "Unrecognized param: " + param);
     action.accept(cluster, value);
   }
 

@@ -125,7 +125,7 @@ public class Options {
     }
 
     specifiedOptions = jCommander.getUserSpecifiedOptions();
-    validateOptionsForConfigFile();
+    validateOptions();
 
     Map<String, String> paramValueMap = buildParamValueMap(jCommander);
     NodeManager nodeManager = new NodeManager(this, paramValueMap);
@@ -150,42 +150,49 @@ public class Options {
         .filter(isSpecified)
         .filter(pd -> {
           String longestName = pd.getLongestName();
-          return !longestName.equals("--license-file") && !longestName.equals("--config-file") && !longestName.equals(addDashDash(CLUSTER_NAME));
+          return !longestName.equals("--license-file") && !longestName.equals("--config-file");
         })
         .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
   }
 
-  private void validateOptionsForConfigFile() {
+  private void validateOptions() {
     if (configFile == null) {
-      return;
-    }
+      // when using CLI parameters
 
-    Set<String> filteredOptions = new HashSet<>(specifiedOptions);
-    filteredOptions.remove("-f");
-    filteredOptions.remove("-l");
-    filteredOptions.remove("-s");
-    filteredOptions.remove("-p");
-    filteredOptions.remove("-c");
-    filteredOptions.remove("-N");
+      if (licenseFile != null && clusterName == null) {
+        throw new ParameterException("'--license-file' parameter must be used with '" + CLUSTER_NAME + "' parameter");
+      }
 
-    filteredOptions.remove("--config-file");
-    filteredOptions.remove("--license-file");
-    filteredOptions.remove(addDashDash(NODE_HOSTNAME));
-    filteredOptions.remove(addDashDash(NODE_PORT));
-    filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
-    filteredOptions.remove(addDashDash(CLUSTER_NAME));
+    } else {
+      // when using config file
 
-    if (filteredOptions.size() != 0) {
-      throw new ParameterException(
-          String.format(
-              "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s', and '%s' parameters",
-              "--license-file",
-              addDashDash(CLUSTER_NAME),
-              addDashDash(NODE_HOSTNAME),
-              addDashDash(NODE_PORT),
-              addDashDash(NODE_CONFIG_DIR)
-          )
-      );
+      Set<String> filteredOptions = new HashSet<>(specifiedOptions);
+      filteredOptions.remove("-f");
+      filteredOptions.remove("-l");
+      filteredOptions.remove("-s");
+      filteredOptions.remove("-p");
+      filteredOptions.remove("-c");
+      filteredOptions.remove("-N");
+
+      filteredOptions.remove("--config-file");
+      filteredOptions.remove("--license-file");
+      filteredOptions.remove(addDashDash(NODE_HOSTNAME));
+      filteredOptions.remove(addDashDash(NODE_PORT));
+      filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
+      filteredOptions.remove(addDashDash(CLUSTER_NAME));
+
+      if (filteredOptions.size() != 0) {
+        throw new ParameterException(
+            String.format(
+                "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s', and '%s' parameters",
+                "--license-file",
+                addDashDash(CLUSTER_NAME),
+                addDashDash(NODE_HOSTNAME),
+                addDashDash(NODE_PORT),
+                addDashDash(NODE_CONFIG_DIR)
+            )
+        );
+      }
     }
   }
 

@@ -152,7 +152,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testFailedStartupCliParamsWithLicense_noClusterName() throws Exception {
     startServer("-p", String.valueOf(ports.getPort()), "-l", licensePath(), "-c", temporaryFolder.newFolder().getAbsolutePath());
-    waitedAssert(out::getLog, containsString("Cluster name is required with license file parameter"));
+    waitedAssert(out::getLog, containsString("'--license-file' parameter must be used with 'cluster-name' parameter"));
   }
 
   private void startServer(String... cli) {
