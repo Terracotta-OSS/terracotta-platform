@@ -52,6 +52,8 @@ public class CustomJCommander extends JCommander {
     if (sorted.size() > 0) {
       out.append(indent).append("Options:\n");
       for (ParameterDescription pd : sorted) {
+        if (pd.getParameter().hidden()) continue;
+
         WrappedParameter parameter = pd.getParameter();
         out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "");
         String defaultValue = DefaultSettings.getDefaultValueFor(ConsoleParamsUtils.stripDashDash(pd.getLongestName()));
