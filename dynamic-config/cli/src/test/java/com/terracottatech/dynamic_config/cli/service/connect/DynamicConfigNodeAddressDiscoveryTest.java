@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static com.terracottatech.utilities.Exceptions.rethrow;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -93,19 +94,11 @@ public class DynamicConfigNodeAddressDiscoveryTest {
     return new DiagnosticServiceProvider("foo", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS, null) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
-        forceThrow(throwable);
+        rethrow(throwable);
         fail();
         return diagnosticService;
       }
     };
   }
 
-  @SuppressWarnings("unchecked")
-  private static <E extends Throwable> void forceThrow(Throwable throwable) throws E {
-    // this is a trick to allow testing with checked exception ConnectionException, EntityNotFoundException, EntityNotProvidedException, EntityVersionMismatchException
-    // plus also runtime exception without having to overload the method
-    // See here for more information:
-    // https://stackoverflow.com/questions/11942946/how-to-throw-an-exception-when-your-method-signature-doesnt-allow-to-throw-exce
-    throw (E) throwable;
-  }
 }
