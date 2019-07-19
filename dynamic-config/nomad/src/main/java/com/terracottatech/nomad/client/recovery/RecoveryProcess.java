@@ -11,10 +11,10 @@ import com.terracottatech.nomad.client.NomadDecider;
 import com.terracottatech.nomad.client.NomadMessageSender;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 
-import java.util.Set;
+import java.util.Collection;
 
 public class RecoveryProcess extends NomadClientProcess<Void> {
-  public RecoveryProcess(Set<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+  public RecoveryProcess(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 

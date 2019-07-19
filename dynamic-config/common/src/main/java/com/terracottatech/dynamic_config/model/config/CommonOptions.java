@@ -7,8 +7,10 @@ package com.terracottatech.dynamic_config.model.config;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.TreeSet;
+
+import static java.util.stream.Collectors.toCollection;
 
 /**
  * Contains options common to CLI and config properties file.
@@ -36,7 +38,7 @@ public class CommonOptions {
   public static final String DATA_DIRS = "data-dirs";
   public static final String CLUSTER_NAME = "cluster-name";
 
-  public static Set<String> getAllOptions() {
+  public static Collection<String> getAllOptions() {
     return Arrays.stream(CommonOptions.class.getDeclaredFields())
         .filter(CommonOptions::getConstants)
         .map(field -> {
@@ -46,7 +48,7 @@ public class CommonOptions {
             throw new IllegalStateException(e);
           }
         })
-        .collect(Collectors.toSet());
+        .collect(toCollection(TreeSet::new));
   }
 
   private static boolean getConstants(Field field) {

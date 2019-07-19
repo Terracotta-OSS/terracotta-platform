@@ -8,11 +8,11 @@ import com.terracottatech.nomad.client.AsyncCaller;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadMessageSender;
 
-import java.util.Set;
+import java.util.Collection;
 import java.util.UUID;
 
 public class ChangeMessageSender extends NomadMessageSender {
-  public ChangeMessageSender(Set<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+  public ChangeMessageSender(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 

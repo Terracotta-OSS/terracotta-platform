@@ -8,7 +8,7 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.exception.MalformedClusterConfigException;
 
-import java.util.Set;
+import java.util.Collection;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,8 +37,7 @@ public class ClusterValidator {
   }
 
   private static void validate(Cluster cluster, Function<? super Node, Object> function, String errorMsg) {
-    Set<Object> settings = cluster.getStripes().stream()
-        .flatMap(stripe -> stripe.getNodes().stream())
+    Collection<Object> settings = cluster.getNodes().stream()
         .map(function)
         .collect(Collectors.toSet());
     if (settings.size() != 1) {

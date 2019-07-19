@@ -9,15 +9,15 @@ import com.terracottatech.nomad.client.results.CommitRollbackResultsReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.results.MuxAllResultsReceiver;
 
-import java.util.Set;
+import java.util.Collection;
 
 public abstract class NomadClientProcess<T> {
-  protected final Set<NamedNomadServer> servers;
+  protected final Collection<NamedNomadServer> servers;
   protected final String host;
   protected final String user;
   protected final AsyncCaller asyncCaller;
 
-  public NomadClientProcess(Set<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadClientProcess(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
     this.servers = servers;
     this.host = host;
     this.user = user;

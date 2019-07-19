@@ -24,11 +24,12 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
 
 /**
@@ -134,7 +135,7 @@ public abstract class TopologyChangeCommand extends Command {
     }
 
     // create a list of addresses to connect to
-    Collection<InetSocketAddress> addresses = concat(discovered.t2.stream(), sources.stream()).collect(toSet());
+    Collection<InetSocketAddress> addresses = concat(sources.stream(), discovered.t2.stream()).collect(toCollection(LinkedHashSet::new));
     if (logger.isDebugEnabled()) {
       logger.debug("Connecting to nodes: {}...", nodeAddresses(addresses));
     }

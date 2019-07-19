@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -110,7 +109,7 @@ public class Cluster implements Cloneable {
 
   @JsonIgnore
   public Collection<InetSocketAddress> getNodeAddresses() {
-    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getNodeAddress).collect(Collectors.toSet());
+    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getNodeAddress).collect(toList());
   }
 
   public boolean containsNode(InetSocketAddress address) {
@@ -178,5 +177,10 @@ public class Cluster implements Cloneable {
   @JsonIgnore
   public int getNodeCount() {
     return stripes.stream().mapToInt(Stripe::getNodeCount).sum();
+  }
+
+  @JsonIgnore
+  public Collection<Node> getNodes() {
+    return stripes.stream().flatMap(s -> s.getNodes().stream()).collect(toList());
   }
 }

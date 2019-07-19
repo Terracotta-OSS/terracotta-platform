@@ -16,9 +16,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getNodeName;
@@ -27,7 +27,7 @@ import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils
 import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.splitKey;
 
 public class ConfigFileValidator {
-  private static final Set<String> ALL_VALID_OPTIONS = CommonOptions.getAllOptions();
+  private static final Collection<String> ALL_VALID_OPTIONS = CommonOptions.getAllOptions();
 
   public static Properties validate(File file) {
     Properties properties = loadProperties(file);

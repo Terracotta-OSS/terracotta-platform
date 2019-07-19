@@ -11,11 +11,11 @@ import com.terracottatech.nomad.client.recovery.RecoveryProcess;
 import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
 
 import java.time.Duration;
-import java.util.Set;
+import java.util.Collection;
 import java.util.function.Consumer;
 
 public class NomadClient {
-  private final Set<NamedNomadServer> servers;
+  private final Collection<NamedNomadServer> servers;
   private final String host;
   private final String user;
   private volatile int concurrency;
@@ -26,7 +26,7 @@ public class NomadClient {
    * @param host the name of the local machine
    * @param user the name of the user the current process is running as
    */
-  public NomadClient(Set<NamedNomadServer> servers, String host, String user) {
+  public NomadClient(Collection<NamedNomadServer> servers, String host, String user) {
     if (servers.isEmpty()) {
       throw new IllegalArgumentException("There must be at least one server");
     }

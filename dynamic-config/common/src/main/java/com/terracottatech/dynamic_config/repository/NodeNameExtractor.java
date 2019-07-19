@@ -7,8 +7,9 @@ package com.terracottatech.dynamic_config.repository;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,6 +19,7 @@ import static com.terracottatech.dynamic_config.repository.RepositoryConstants.F
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_PREFIX;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_SUFFIX;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toCollection;
 
 public class NodeNameExtractor {
   public static Optional<String> extractFromConfigOptional(Path nomadRoot) {
@@ -33,9 +35,9 @@ public class NodeNameExtractor {
   public static String extractFromConfig(Path nomadRoot) {
     Path configPath = requireNonNull(nomadRoot).resolve("config");
     try (Stream<Path> stream = Files.list(configPath)) {
-      Set<String> distinctFileNames = stream.map(path -> path.getFileName().toString())
+      Collection<String> distinctFileNames = stream.map(path -> path.getFileName().toString())
           .filter(fileName -> fileName.matches(CONFIG_REPO_FILENAME_REGEX))
-          .collect(Collectors.toSet());
+          .collect(toCollection(TreeSet::new));
 
       if (distinctFileNames.isEmpty()) {
         String format = FILENAME_PREFIX + ".<node-name>.<version>." + FILENAME_EXT;
@@ -47,7 +49,7 @@ public class NodeNameExtractor {
             )
         );
       } else {
-        Set<String> nodeNames = distinctFileNames.stream().map(NodeNameExtractor::extractInternal).collect(Collectors.toSet());
+        Collection<String> nodeNames = distinctFileNames.stream().map(NodeNameExtractor::extractInternal).collect(Collectors.toCollection(TreeSet::new));
         if (nodeNames.size() > 1) {
           throw new MalformedRepositoryException("Found multiple configuration files corresponding to the following different node names: " + nodeNames);
         }

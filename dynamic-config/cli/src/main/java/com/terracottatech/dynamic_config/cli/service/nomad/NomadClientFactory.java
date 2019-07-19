@@ -15,8 +15,8 @@ import com.terracottatech.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public class NomadClientFactory {
 
@@ -40,9 +40,9 @@ public class NomadClientFactory {
 
     MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(hostPortList);
 
-    Set<NamedNomadServer> servers = connection.getEndpoints().stream()
+    Collection<NamedNomadServer> servers = connection.getEndpoints().stream()
         .map(endpoint -> createNamedNomadServer(endpoint, connection.getDiagnosticService(endpoint).get()))
-        .collect(Collectors.toSet());
+        .collect(toList());
 
     NomadClient client = new NomadClient(servers, host, user);
     int concurrency = concurrencySizing.getThreadCount(servers.size());

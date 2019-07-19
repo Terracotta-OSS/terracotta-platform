@@ -19,6 +19,7 @@ import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class NomadMessageSender implements AllResultsReceiver {
   protected final Set<String> preparedServers = ConcurrentHashMap.newKeySet();
   protected volatile UUID changeUuid;
 
-  public NomadMessageSender(Set<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadMessageSender(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
     this.host = host;
     this.user = user;
     this.serverMap = servers.stream().collect(Collectors.toMap(NamedNomadServer::getName, s -> s));
