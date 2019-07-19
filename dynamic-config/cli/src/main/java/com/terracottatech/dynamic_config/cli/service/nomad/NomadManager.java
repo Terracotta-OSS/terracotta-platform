@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.service.nomad;
 
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
+import com.terracottatech.nomad.client.change.DelegatingChangeResultReceiver;
 import com.terracottatech.nomad.client.change.NomadChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,14 @@ public class NomadManager {
   public NomadManager(NomadClientFactory clientFactory, boolean isVerbose) {
     this.clientFactory = clientFactory;
     this.isVerbose = isVerbose;
+  }
+
+  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change, ChangeResultReceiver results) {
+    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", change, connectionServers);
+
+    try (CloseableNomadClient client = clientFactory.createClient(connectionServers)) {
+      client.tryApplyChange(isVerbose ? new DelegatingChangeResultReceiver(new LoggingChangeResultReceiver(), results) : results, change);
+    }
   }
 
   public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change) {

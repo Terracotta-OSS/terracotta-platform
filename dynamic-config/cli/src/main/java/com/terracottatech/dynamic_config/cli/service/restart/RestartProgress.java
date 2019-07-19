@@ -13,5 +13,5 @@ import java.util.Map;
  * @author Mathieu Carbou
  */
 public interface RestartProgress {
-  Map<InetSocketAddress, Tuple2<String, Throwable>> await() throws InterruptedException;
+  Map<InetSocketAddress, Tuple2<String, Exception>> await() throws InterruptedException;
 }

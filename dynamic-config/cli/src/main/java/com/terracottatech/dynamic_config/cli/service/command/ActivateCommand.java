@@ -11,6 +11,7 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceCon
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
+import com.terracottatech.dynamic_config.cli.service.nomad.NomadFailureRecorder;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
@@ -31,14 +32,15 @@ import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.terracottatech.utilities.Assertion.assertNonNull;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toCollection;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate the cluster")
 @Usage("activate <-s HOST[:PORT] | -f CONFIG-PROPERTIES-FILE> -n CLUSTER-NAME -l LICENSE-FILE")
@@ -69,6 +71,46 @@ public class ActivateCommand extends Command {
   private MultiDiagnosticServiceConnection connection;
   private Cluster cluster;
 
+  public Cluster getCluster() {
+    return cluster;
+  }
+
+  public ActivateCommand setNode(InetSocketAddress node) {
+    this.node = node;
+    return this;
+  }
+
+  public ActivateCommand setConfigPropertiesFile(Path configPropertiesFile) {
+    this.configPropertiesFile = configPropertiesFile;
+    return this;
+  }
+
+  public ActivateCommand setClusterName(String clusterName) {
+    this.clusterName = clusterName;
+    return this;
+  }
+
+  public ActivateCommand setLicenseFile(Path licenseFile) {
+    this.licenseFile = licenseFile;
+    return this;
+  }
+
+  public InetSocketAddress getNode() {
+    return node;
+  }
+
+  public Path getConfigPropertiesFile() {
+    return configPropertiesFile;
+  }
+
+  public String getClusterName() {
+    return clusterName;
+  }
+
+  public Path getLicenseFile() {
+    return licenseFile;
+  }
+
   @Override
   public void validate() {
     if (node == null && configPropertiesFile == null) {
@@ -89,7 +131,11 @@ public class ActivateCommand extends Command {
       clusterName = ConfigFileParser.getClusterName(configPropertiesFile.toFile(), clusterName);
     }
 
+    assertNonNull(licenseFile, "licenseFile must not be null");
     assertNonNull(clusterName, "clusterName must not be null");
+    assertNonNull(connectionFactory, "connectionFactory must not be null");
+    assertNonNull(nomadManager, "nomadManager must not be null");
+    assertNonNull(restartService, "restartService must not be null");
     LOGGER.debug("Command validation successful");
   }
 
@@ -142,7 +188,7 @@ public class ActivateCommand extends Command {
   private void restartNodes() {
     try {
       RestartProgress progress = restartService.restart(cluster);
-      Map<InetSocketAddress, Tuple2<String, Throwable>> failures = progress.await();
+      Map<InetSocketAddress, Tuple2<String, Exception>> failures = progress.await();
       if (failures.isEmpty()) {
         LOGGER.info("All cluster nodes: {} came back up", cluster.getNodeAddresses());
       } else {
@@ -157,12 +203,13 @@ public class ActivateCommand extends Command {
 
   private void ensureNoActiveNode() {
     LOGGER.debug("Contacting all cluster nodes: {} to check for first run of activation command", cluster.getNodeAddresses());
-    List<InetSocketAddress> activated = getTopologyServiceStream()
+    Collection<String> activated = getTopologyServiceStream()
         .filter(t -> t.t2.isActivated())
         .map(Tuple2::getT1)
-        .collect(toList());
+        .map(InetSocketAddress::toString)
+        .collect(toCollection(TreeSet::new));
     if (!activated.isEmpty()) {
-      throw new RuntimeException("Some nodes are already activated: " + activated);
+      throw new IllegalStateException("Some nodes are already activated: " + String.join(", ", activated));
     }
   }
 
@@ -178,7 +225,9 @@ public class ActivateCommand extends Command {
   }
 
   private void runNomadChange() {
-    nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(cluster));
+    NomadFailureRecorder failures = new NomadFailureRecorder();
+    nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(cluster), failures);
+    failures.reThrow();
   }
 
   private Stream<Tuple2<InetSocketAddress, TopologyService>> getTopologyServiceStream() {
@@ -186,7 +235,7 @@ public class ActivateCommand extends Command {
   }
 
   private void installLicense() {
-    LicenseValidator.validateLicense(cluster, licenseFile.toString());
+    LicenseValidator.validateLicense(cluster, licenseFile.toAbsolutePath().toString());
     LOGGER.debug("License validation successful");
 
     String validatedLicense;

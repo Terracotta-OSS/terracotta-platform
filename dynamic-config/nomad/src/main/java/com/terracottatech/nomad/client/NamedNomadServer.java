@@ -13,13 +13,15 @@ import com.terracottatech.nomad.messages.TakeoverMessage;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 
+import static java.util.Objects.requireNonNull;
+
 public class NamedNomadServer implements NomadServer {
   private final String name;
   private final NomadServer server;
 
   public NamedNomadServer(String name, NomadServer server) {
-    this.name = name;
-    this.server = server;
+    this.name = requireNonNull(name);
+    this.server = requireNonNull(server);
   }
 
   public String getName() {

@@ -10,12 +10,14 @@ import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.awaitility.core.ConditionTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.connection.ConnectionException;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -26,9 +28,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
+import static com.terracottatech.tools.detailed.state.LogicalServerState.STARTING;
+import static com.terracottatech.tools.detailed.state.LogicalServerState.UNINITIALIZED;
+import static com.terracottatech.tools.detailed.state.LogicalServerState.UNKNOWN;
+import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
 import static com.terracottatech.utilities.Tuple2.tuple2;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * @author Mathieu Carbou
@@ -52,7 +58,7 @@ public class RestartService {
     LOGGER.info("Asking all cluster nodes: {} to restart themselves", addresses);
 
     ExecutorService executor = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, "diagnostics-restart"));
-    Map<InetSocketAddress, Tuple2<String, Throwable>> failures = new ConcurrentHashMap<>();
+    Map<InetSocketAddress, Tuple2<String, Exception>> failures = new ConcurrentHashMap<>();
 
     CompletableFuture<Void> all = CompletableFuture.allOf(addresses.stream()
         .map(addr -> CompletableFuture.runAsync(() -> {
@@ -61,10 +67,9 @@ public class RestartService {
             diagnosticService.getProxy(TopologyService.class).restart();
           } catch (DiagnosticOperationTimeoutException e) {
             // This operation times out (DiagnosticOperationTimeoutException) because the nodes have shut down. All good.
-            // Or we cancel the call, interrupts, etc..
           } catch (Exception e) {
             // report the failure in the completable future
-            Tuple2<String, Throwable> err = tuple2("Asking node " + addr + " to restart failed: " + e.getMessage(), e);
+            Tuple2<String, Exception> err = tuple2("Failed asking node " + addr + " to restart: " + e.getMessage(), e);
             LOGGER.debug(err.t1, e);
             failures.put(addr, err);
           }
@@ -74,14 +79,14 @@ public class RestartService {
               LOGGER.debug("Waiting for node {} to restart", addr);
               Awaitility.await()
                   .pollInterval(Duration.ONE_SECOND)
-                  .atMost(requestTimeoutMillis, TimeUnit.MILLISECONDS)
+                  .atMost(requestTimeoutMillis, MILLISECONDS)
                   .until(nodeRestarted(addr));
             } catch (ConditionTimeoutException e) {
-              Tuple2<String, Throwable> err = tuple2("Waiting for node " + addr + " timed out after " + requestTimeoutMillis + "ms", null);
+              Tuple2<String, Exception> err = tuple2("Waiting for node " + addr + " to restart timed out after " + requestTimeoutMillis + "ms", null);
               LOGGER.debug(err.t1);
               failures.put(addr, err);
-            } catch (Throwable e) {
-              Tuple2<String, Throwable> err = tuple2("Waiting for node " + addr + " to restart failed: " + e.getMessage(), e);
+            } catch (Exception e) {
+              Tuple2<String, Exception> err = tuple2("Failed waiting for node " + addr + " to restart: " + e.getMessage(), e);
               LOGGER.debug(err.t1, e);
               failures.put(addr, err);
             }
@@ -106,7 +111,7 @@ public class RestartService {
       } finally {
         executor.shutdownNow();
         try {
-          executor.awaitTermination(requestTimeoutMillis, TimeUnit.MILLISECONDS);
+          executor.awaitTermination(requestTimeoutMillis, MILLISECONDS);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         }
@@ -118,11 +123,15 @@ public class RestartService {
     return () -> {
       LOGGER.debug("Checking if node {} has restarted", addr);
       try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
-        diagnosticService.getLogicalServerState();
-        return true;
+        // STARTING is the state used when starting node in diagnostic mode
+        LogicalServerState state = diagnosticService.getLogicalServerState();
+        // Note: STARTING is the state used when a server is blocked starting in diagnostic mode
+        return state != null && state != UNREACHABLE && state != UNKNOWN && state != STARTING && state != UNINITIALIZED;
+      } catch (ConnectionException e) {
+        LOGGER.debug("Node {} didn't restarted yet: {}", e.getMessage(), e);
+        return false;
       } catch (Exception e) {
-        // report the failure in the completable future
-        LOGGER.debug("Node {} didn't restarted: {}", e.getMessage(), e);
+        LOGGER.debug("Unable to query status for node {}: {}", e.getMessage(), e);
         return false;
       }
     };

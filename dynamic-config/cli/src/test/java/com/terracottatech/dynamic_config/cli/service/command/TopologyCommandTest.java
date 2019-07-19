@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.terracottatech.dynamic_config.cli.Metadata;
+import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -21,7 +22,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-public abstract class TopologyCommandTest<C extends TopologyChangeCommand> extends CommandTest<C> {
+public abstract class TopologyCommandTest<C extends TopologyChangeCommand> extends BaseTest {
 
   @Test
   public void test_defaults() {
@@ -73,7 +74,6 @@ public abstract class TopologyCommandTest<C extends TopologyChangeCommand> exten
         .validate();
   }
 
-  @Override
   protected final C newCommand() {
     return inject(newTopologyCommand(), nodeAddressDiscovery, connectionFactory);
   }
