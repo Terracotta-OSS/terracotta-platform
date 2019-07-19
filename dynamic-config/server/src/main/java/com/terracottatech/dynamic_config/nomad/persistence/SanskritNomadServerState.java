@@ -104,12 +104,12 @@ public class SanskritNomadServerState implements NomadServerState {
       ChangeRequestState state = ChangeRequestState.valueOf(child.getString(CHANGE_STATE));
       long version = child.getLong(CHANGE_VERSION);
       NomadChange change = child.getExternal(CHANGE_OPERATION, NomadChange.class);
-      String expectedChangeResultHash = child.getString(CHANGE_RESULT_HASH);
+      String foundChangeResultHash = child.getString(CHANGE_RESULT_HASH);
       String creationHost = child.getString(CHANGE_CREATION_HOST);
       String creationUser = child.getString(CHANGE_CREATION_USER);
 
       String newConfiguration = configStorage.getConfig(version);
-      checkHash(changeUuid, newConfiguration, expectedChangeResultHash);
+      checkHash(changeUuid, newConfiguration, foundChangeResultHash);
 
       return new ChangeRequest(state, version, change, newConfiguration, creationHost, creationUser);
     } catch (ConfigStorageException e) {
@@ -117,10 +117,10 @@ public class SanskritNomadServerState implements NomadServerState {
     }
   }
 
-  private void checkHash(UUID changeUuid, String newConfiguration, String expectedChangeResultHash) throws NomadException {
+  private void checkHash(UUID changeUuid, String newConfiguration, String foundChangeResultHash) throws NomadException {
     String actualChangeResultHash = HashUtils.generateHash(newConfiguration);
-    if (!actualChangeResultHash.equals(expectedChangeResultHash)) {
-      throw new NomadException("Bad hash for change: " + changeUuid + " expected: " + expectedChangeResultHash + " actual: " + actualChangeResultHash);
+    if (!actualChangeResultHash.equals(foundChangeResultHash)) {
+      throw new NomadException("Bad hash for change: " + changeUuid + " found: " + foundChangeResultHash + " actual: " + actualChangeResultHash);
     }
   }
 

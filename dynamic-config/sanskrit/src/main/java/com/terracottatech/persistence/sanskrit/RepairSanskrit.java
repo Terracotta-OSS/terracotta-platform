@@ -23,7 +23,7 @@ import static java.util.Objects.requireNonNull;
 public class RepairSanskrit {
 
   private final Path input;
-  private final Path ouput;
+  private final Path output;
   private final ObjectMapper objectMapper;
   private boolean replace;
 
@@ -32,20 +32,20 @@ public class RepairSanskrit {
     this.replace = true;
   }
 
-  public RepairSanskrit(Path input, Path ouput, ObjectMapper objectMapper) {
+  public RepairSanskrit(Path input, Path output, ObjectMapper objectMapper) {
     if (!Files.exists(input)) {
       throw new IllegalArgumentException(input.toString());
     }
-    if (!Files.exists(ouput)) {
+    if (!Files.exists(output)) {
       try {
-        Files.createDirectories(ouput);
+        Files.createDirectories(output);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
     } else {
       try {
-        if (Files.list(ouput).findAny().isPresent()) {
-          throw new IllegalArgumentException(ouput.toString());
+        if (Files.list(output).findAny().isPresent()) {
+          throw new IllegalArgumentException(output.toString());
         }
       } catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -54,19 +54,19 @@ public class RepairSanskrit {
 
     this.objectMapper = objectMapper;
     this.input = input;
-    this.ouput = ouput;
+    this.output = output;
   }
 
   public Path getInput() {
     return input;
   }
 
-  public Path getOuput() {
-    return ouput;
+  public Path getOutput() {
+    return output;
   }
 
   public void repairHashes() {
-    try (SanskritImpl output = new SanskritImpl(new FileBasedFilesystemDirectory(this.ouput), objectMapper);
+    try (SanskritImpl output = new SanskritImpl(new FileBasedFilesystemDirectory(this.output), objectMapper);
          SanskritImpl input = new SanskritImpl(new FileBasedFilesystemDirectory(this.input), objectMapper) {
            @Override
            String checkHash(String timestamp, String json, String hash) {
@@ -89,14 +89,14 @@ public class RepairSanskrit {
     }
     if (replace) {
       try {
-        Files.list(ouput).forEach(file -> {
+        Files.list(output).forEach(file -> {
           try {
             Files.move(file, input.resolve(file.getFileName()), REPLACE_EXISTING);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
         });
-        Files.delete(ouput);
+        Files.delete(output);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
