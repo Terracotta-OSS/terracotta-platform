@@ -7,7 +7,6 @@ package com.terracottatech.dynamic_config.model.parsing;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.config.DefaultSettings;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
 import com.terracottatech.utilities.Tuple2;
@@ -56,7 +55,7 @@ public class ConfigFileParser {
       NodeParameterSetter.set(getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
     });
 
-    uniqueServerToNodeMapping.values().forEach(DefaultSettings::fillDefaultsIfNeeded);
+    uniqueServerToNodeMapping.values().forEach(Node::fillDefaults);
     ClusterValidator.validate(cluster);
     return cluster;
   }

@@ -7,7 +7,6 @@ package com.terracottatech.dynamic_config.parsing;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.config.DefaultSettings;
 import com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils;
 import com.terracottatech.dynamic_config.model.validation.NodeParamsValidator;
 import org.slf4j.Logger;
@@ -16,6 +15,7 @@ import org.terracotta.config.util.ParameterSubstitutor;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
@@ -28,7 +28,8 @@ public class ConsoleParamsParser {
     Node node = new Node();
     Cluster cluster = new Cluster(new Stripe(node));
     paramValueMap.forEach((param, value) -> ParameterSetter.set(param, value, cluster));
-    Map<String, String> defaultsAdded = DefaultSettings.fillDefaultsIfNeeded(node);
+    Map<String, String> defaultsAdded = new TreeMap<>();
+    node.fillDefaults(defaultsAdded::put);
     printParams(paramValueMap, defaultsAdded);
     return cluster;
   }

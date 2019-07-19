@@ -5,6 +5,9 @@
 package com.terracottatech.dynamic_config.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.terracottatech.dynamic_config.DynamicConfigConstants;
+import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.model.util.ConfigUtils;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -12,12 +15,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 public class Node implements Cloneable {
   private String nodeName;
@@ -397,4 +402,116 @@ public class Node implements Cloneable {
 
     return thisCopy;
   }
+
+  public Node fillDefaults(BiConsumer<String, String> filledPropertyConsumer) {
+    if (getNodeName() == null) {
+      String generateNodeName = ConfigUtils.generateNodeName();
+      setNodeName(generateNodeName);
+      filledPropertyConsumer.accept(CommonOptions.NODE_NAME, generateNodeName);
+    }
+
+    if (getNodeHostname() == null) {
+      setNodeHostname(DynamicConfigConstants.DEFAULT_HOSTNAME);
+      filledPropertyConsumer.accept(CommonOptions.NODE_HOSTNAME, DynamicConfigConstants.DEFAULT_HOSTNAME);
+    }
+
+    if (getNodePort() == 0) {
+      setNodePort(Integer.parseInt(DynamicConfigConstants.DEFAULT_PORT));
+      filledPropertyConsumer.accept(CommonOptions.NODE_PORT, DynamicConfigConstants.DEFAULT_PORT);
+    }
+
+    if (getNodeGroupPort() == 0) {
+      setNodeGroupPort(Integer.parseInt(DynamicConfigConstants.DEFAULT_GROUP_PORT));
+      filledPropertyConsumer.accept(CommonOptions.NODE_GROUP_PORT, DynamicConfigConstants.DEFAULT_GROUP_PORT);
+    }
+
+    if (getOffheapResources().isEmpty()) {
+      String[] split = DynamicConfigConstants.DEFAULT_OFFHEAP_RESOURCE.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
+      setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));
+      filledPropertyConsumer.accept(CommonOptions.OFFHEAP_RESOURCES, DynamicConfigConstants.DEFAULT_OFFHEAP_RESOURCE);
+    }
+
+    if (getDataDirs().isEmpty()) {
+      final String defaultDataDir = DynamicConfigConstants.DEFAULT_DATA_DIR;
+      int firstColon = defaultDataDir.indexOf(DynamicConfigConstants.PARAM_INTERNAL_SEP);
+      setDataDir(defaultDataDir.substring(0, firstColon), Paths.get(defaultDataDir.substring(firstColon + 1)));
+      filledPropertyConsumer.accept(CommonOptions.DATA_DIRS, defaultDataDir);
+    }
+
+    if (getNodeBindAddress() == null) {
+      setNodeBindAddress(DynamicConfigConstants.DEFAULT_BIND_ADDRESS);
+      filledPropertyConsumer.accept(CommonOptions.NODE_BIND_ADDRESS, DynamicConfigConstants.DEFAULT_BIND_ADDRESS);
+    }
+
+    if (getNodeGroupBindAddress() == null) {
+      setNodeGroupBindAddress(DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS);
+      filledPropertyConsumer.accept(CommonOptions.NODE_GROUP_BIND_ADDRESS, DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS);
+    }
+
+    if (getNodeConfigDir() == null) {
+      setNodeConfigDir(Paths.get(DynamicConfigConstants.DEFAULT_CONFIG_DIR));
+      filledPropertyConsumer.accept(CommonOptions.NODE_CONFIG_DIR, DynamicConfigConstants.DEFAULT_CONFIG_DIR);
+    }
+
+    if (getNodeLogDir() == null) {
+      setNodeLogDir(Paths.get(DynamicConfigConstants.DEFAULT_LOG_DIR));
+      filledPropertyConsumer.accept(CommonOptions.NODE_LOG_DIR, DynamicConfigConstants.DEFAULT_LOG_DIR);
+    }
+
+    if (getNodeMetadataDir() == null) {
+      setNodeMetadataDir(Paths.get(DynamicConfigConstants.DEFAULT_METADATA_DIR));
+      filledPropertyConsumer.accept(CommonOptions.NODE_METADATA_DIR, DynamicConfigConstants.DEFAULT_METADATA_DIR);
+    }
+
+    if (getFailoverPriority() == null) {
+      setFailoverPriority(DynamicConfigConstants.DEFAULT_FAILOVER_PRIORITY);
+      filledPropertyConsumer.accept(CommonOptions.FAILOVER_PRIORITY, DynamicConfigConstants.DEFAULT_FAILOVER_PRIORITY);
+    }
+
+    if (getClientReconnectWindow() == null) {
+      setClientReconnectWindow(Measure.parse(DynamicConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW, TimeUnit.class));
+      filledPropertyConsumer.accept(CommonOptions.CLIENT_RECONNECT_WINDOW, DynamicConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW);
+    }
+
+    if (getClientLeaseDuration() == null) {
+      setClientLeaseDuration(Measure.parse(DynamicConfigConstants.DEFAULT_CLIENT_LEASE_DURATION, TimeUnit.class));
+      filledPropertyConsumer.accept(CommonOptions.CLIENT_LEASE_DURATION, DynamicConfigConstants.DEFAULT_CLIENT_LEASE_DURATION);
+    }
+
+    return this;
+  }
+
+  public Node fillDefaults() {
+    return fillDefaults((s, s2) -> {
+    });
+  }
+
+  public static Node newDefaultNode() {
+    return new Node().fillDefaults();
+  }
+
+  public static Node newDefaultNode(String hostname) {
+    return newDefaultNode()
+        .setNodeHostname(hostname);
+  }
+
+  public static Node newDefaultNode(String name, String hostname) {
+    return newDefaultNode()
+        .setNodeName(name)
+        .setNodeHostname(hostname);
+  }
+
+  public static Node newDefaultNode(String hostname, int port) {
+    return newDefaultNode()
+        .setNodePort(port)
+        .setNodeHostname(hostname);
+  }
+
+  public static Node newDefaultNode(String name, String hostname, int port) {
+    return newDefaultNode()
+        .setNodeName(name)
+        .setNodePort(port)
+        .setNodeHostname(hostname);
+  }
+
 }
