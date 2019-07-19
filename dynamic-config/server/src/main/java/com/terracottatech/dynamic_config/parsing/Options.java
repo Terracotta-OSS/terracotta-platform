@@ -116,31 +116,46 @@ public class Options {
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
 
+  private Set<String> specifiedOptions;
+
   public void process(CustomJCommander jCommander) {
     if (help) {
       jCommander.usage();
       return;
     }
 
-    Set<String> userSpecifiedOptions = jCommander.getUserSpecifiedOptions();
-    validateOptionsForConfigFile(userSpecifiedOptions);
-    Map<String, String> paramValueMap = buildParamValueMap(jCommander, userSpecifiedOptions);
-    NodeManager nodeManager = new NodeManager(this, userSpecifiedOptions, paramValueMap);
+    specifiedOptions = jCommander.getUserSpecifiedOptions();
+    validateOptionsForConfigFile();
+
+    Map<String, String> paramValueMap = buildParamValueMap(jCommander);
+    NodeManager nodeManager = new NodeManager(this, paramValueMap);
     nodeManager.startNode();
   }
 
-  private Map<String, String> buildParamValueMap(CustomJCommander jCommander, Set<String> specifiedOptions) {
+  /**
+   * Constructs a {@code Map} containing only the parameters relevant to {@code Node} object with longest parameter name
+   * as the key and user-specified-value as the value.
+   *
+   * @param jCommander jCommander instance
+   * @return the constructed map
+   */
+  private Map<String, String> buildParamValueMap(CustomJCommander jCommander) {
     Predicate<ParameterDescription> isSpecified =
         pd -> Arrays.stream(pd.getNames().split(DynamicConfigConstants.MULTI_VALUE_SEP))
             .map(String::trim)
             .anyMatch(specifiedOptions::contains);
+
     return jCommander.getParameters()
         .stream()
         .filter(isSpecified)
+        .filter(pd -> {
+          String longestName = pd.getLongestName();
+          return !longestName.equals("--license-file") && !longestName.equals("--config-file") && !longestName.equals(addDashDash(CLUSTER_NAME));
+        })
         .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
   }
 
-  private void validateOptionsForConfigFile(Set<String> specifiedOptions) {
+  private void validateOptionsForConfigFile() {
     if (configFile == null) {
       return;
     }

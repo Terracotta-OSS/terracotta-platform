@@ -8,7 +8,6 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.config.DefaultSettings;
-import com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
 import com.terracottatech.utilities.Tuple2;
@@ -23,6 +22,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getNodeName;
+import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getProperty;
 import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getStripeId;
 
 public class ConfigFileParser {
@@ -52,11 +52,8 @@ public class ConfigFileParser {
 
     Cluster cluster = new Cluster(clusterName, stripes);
     properties.forEach((key, value) -> {
-      if (value.toString().isEmpty()) {
-        return;
-      }
       Tuple2<Integer, String> nodeIdentifier = Tuple2.tuple2(getStripeId(key.toString()), getNodeName(key.toString()));
-      NodeParameterSetter.set(ConfigFileParamsUtils.getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
+      NodeParameterSetter.set(getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
     });
 
     uniqueServerToNodeMapping.values().forEach(DefaultSettings::fillDefaultsIfNeeded);

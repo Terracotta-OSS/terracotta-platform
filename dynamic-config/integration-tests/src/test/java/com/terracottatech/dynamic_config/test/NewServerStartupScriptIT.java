@@ -63,6 +63,27 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
+  public void testStartingWithSingleNodeConfigFileAndLicense() throws Exception {
+    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile, "-l", licensePath(), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+  }
+
+  @Test
+  public void testStartingWithSingleNodeConfigFileLicenseAndClusterName() throws Exception {
+    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile, "-l", licensePath(), "-N", "tc-cluster", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+  }
+
+  @Test
+  public void testFailedStartupWithMultiNodeConfigFileAndLicense() throws Exception {
+    String configurationFile = configFilePath("/config-property-files/multi-stripe.properties");
+    startServer("-f", configurationFile, "-l", licensePath(), "-s", "localhost", "-p", String.valueOf(ports.getPorts()[0]), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    waitedAssert(out::getLog, containsString("License file option can be used only with a one-node cluster config file"));
+  }
+
+  @Test
   public void testFailedStartupConfigFile_nonExistentFile() throws Exception {
     String configurationFile = Paths.get(".").resolve("blah").toString();
     startServer("--config-file", configurationFile, "-c", temporaryFolder.newFolder().getAbsolutePath());
@@ -120,6 +141,18 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testSuccessfulStartupCliParams() throws Exception {
     startServer("-p", String.valueOf(ports.getPort()), "-c", temporaryFolder.newFolder().getAbsolutePath());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
+  }
+
+  @Test
+  public void testSuccessfulStartupCliParamsWithLicense() throws Exception {
+    startServer("-p", String.valueOf(ports.getPort()), "-l", licensePath(), "-N", "tc-cluster", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+  }
+
+  @Test
+  public void testFailedStartupCliParamsWithLicense_noClusterName() throws Exception {
+    startServer("-p", String.valueOf(ports.getPort()), "-l", licensePath(), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    waitedAssert(out::getLog, containsString("Cluster name is required with license file parameter"));
   }
 
   private void startServer(String... cli) {
