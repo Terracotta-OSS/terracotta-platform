@@ -146,13 +146,12 @@ public class ActivateCommand extends Command {
       if (failures.isEmpty()) {
         LOGGER.info("All cluster nodes: {} came back up", cluster.getNodeAddresses());
       } else {
-        LOGGER.error(
-            "Some cluster nodes failed to restart:\n - ",
-            failures.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue().t1).collect(joining("\n - ")));
+        throw new IllegalStateException("Some cluster nodes have failed to restart:\n - "
+            + failures.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue().t1).collect(joining("\n - ")));
       }
     } catch (InterruptedException e) {
-      // current main thread has been interrupted by user...
       Thread.currentThread().interrupt();
+      throw new RuntimeException("Restart has been interrupted");
     }
   }
 
