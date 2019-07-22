@@ -4,7 +4,9 @@
  */
 package com.terracottatech.dynamic_config.model.exception;
 
-public class MalformedConfigFileException extends RuntimeException {
+import com.terracottatech.utilities.ValidationException;
+
+public class MalformedConfigFileException extends ValidationException {
   private static final long serialVersionUID = 1L;
 
   public MalformedConfigFileException(String message) {

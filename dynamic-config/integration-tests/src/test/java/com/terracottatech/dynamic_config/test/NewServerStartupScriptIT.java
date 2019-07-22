@@ -6,14 +6,20 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
-import static java.util.stream.Stream.concat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
@@ -38,7 +44,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
-  public void testStartingWithNonExistentRepo() throws Exception {
+  public void testStartingWithNonExistentRepo() {
     startServer(1, 1, "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
@@ -73,6 +79,23 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
+  public void testStartingWithConfigFileContainingSubstitutionParams() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_substitution_params.properties");
+    startServer("--config-file", configurationFile.toString());
+
+    waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
+    assertThat(getTopology("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%h")));
+  }
+
+  @Test
+  public void testStartingWithConfigFileContainingSubstitutionParamsAndLicense() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_substitution_params.properties");
+    startServer("--config-file", configurationFile.toString(), "--license-file", licensePath().toString());
+
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+  }
+
+  @Test
   public void testFailedStartupWithMultiNodeConfigFileAndLicense() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/multi-stripe.properties");
     startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "-s", "localhost", "-p", String.valueOf(ports.getPorts()[0]));
@@ -80,10 +103,10 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_nonExistentFile() throws Exception {
+  public void testFailedStartupConfigFile_nonExistentFile() {
     Path configurationFile = Paths.get(".").resolve("blah");
     startServer("--config-file", configurationFile.toString());
-    waitedAssert(out::getLog, containsString("FileNotFoundException"));
+    waitedAssert(out::getLog, containsString("Failed to read config file"));
   }
 
   @Test
@@ -110,48 +133,102 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidAuthc() throws Exception {
+  public void testFailedStartupConfigFile_invalidCliParams_2() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile.toString(), "-c", configRepositoryPath().toString());
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname' and '--node-port' parameters"));
+  }
+
+  @Test
+  public void testFailedStartupCliParams_invalidAuthc() {
     startServer("--security-authc=blah", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidHostname() throws Exception {
+  public void testFailedStartupCliParams_invalidHostname() {
     startServer("--node-hostname=:::", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidFailoverPriority() throws Exception {
+  public void testFailedStartupCliParams_invalidFailoverPriority() {
     startServer("--failover-priority=blah", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("failover-priority should be one of: [availability, consistency]"));
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidSecurity() throws Exception {
+  public void testFailedStartupCliParams_invalidSecurity() {
     startServer("--security-audit-log-dir", "audit-dir", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
   @Test
-  public void testSuccessfulStartupCliParams() throws Exception {
+  public void testSuccessfulStartupCliParams() {
     startServer(1, 1, "-p", String.valueOf(ports.getPort()), "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
+  public void testSuccessfulStartupCliParamsContainingSubstitutionParams() throws Exception {
+    startServer(
+        1, 1,
+        "--node-port", String.valueOf(ports.getPort()),
+        "--node-config-dir", configRepositoryPath().toString(),
+        "--node-hostname", "%c"
+    );
+    waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
+    assertThat(getTopology("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%c")));
+  }
+
+  @Test
+  //TODO [DYNAMIC-CONFIG]: Un-ignore this test once this bug is fixed in parser
+  @Ignore("TCConfigurationParser doesn't substitute tsa-port bind value")
+  public void testSuccessfulStartupCliParamsContainingSubstitutionParamsAndLicense() throws Exception {
+    startServer(
+        1, 1,
+        "--node-port", String.valueOf(ports.getPort()),
+        "--node-config-dir", configRepositoryPath().toString(),
+        "--node-hostname", "%h",
+        "--node-bind-address", "%i",
+        "--license-file", licensePath().toString(),
+        "--cluster-name", "tc-cluster"
+    );
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+  }
+
+  @Test
+  public void testSuccessfulStartupCliParamsContainingSubstitutionParamsAndLicense_2() throws Exception {
+    startServer(
+        1, 1,
+        "--node-port", String.valueOf(ports.getPort()),
+        "--node-config-dir", configRepositoryPath().toString(),
+        "--node-hostname", "%c",
+        "--license-file", licensePath().toString(),
+        "--cluster-name", "tc-cluster"
+    );
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+  }
+
+  @Test
   public void testSuccessfulStartupCliParamsWithLicense() throws Exception {
-    startServer(1, 1,
-        "-p", String.valueOf(ports.getPort()),
-        "-l", licensePath().toString(),
-        "-N", "tc-cluster",
-        "-c", configRepositoryPath().toString());
+    startServer(
+        1, 1,
+        "--node-port", String.valueOf(ports.getPort()),
+        "--license-file", licensePath().toString(),
+        "--cluster-name", "tc-cluster",
+        "--node-config-dir", configRepositoryPath().toString()
+    );
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testFailedStartupCliParamsWithLicense_noClusterName() throws Exception {
-    startServer("-p", String.valueOf(ports.getPort()), "-l", licensePath().toString(), "-c", configRepositoryPath().toString());
+    startServer(
+        "--node-port", String.valueOf(ports.getPort()),
+        "--license-file", licensePath().toString(),
+        "--node-config-dir", configRepositoryPath().toString()
+    );
     waitedAssert(out::getLog, containsString("'--license-file' parameter must be used with 'cluster-name' parameter"));
   }
 
@@ -159,7 +236,12 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupCliParamsWithConfigAndConfigDir() throws Exception {
     String port = String.valueOf(ports.getPort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port, "-c", "foo");
+    startServer(
+        "--config-file", configurationFile.toString(),
+        "--node-hostname", "localhost",
+        "--node-port", port,
+        "--node-config-dir", "foo"
+    );
     waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname' and '--node-port' parameters"));
   }
 
@@ -167,15 +249,26 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), cli));
   }
 
-  private void startServer(int stripeId, int nodeId, String... cli) {
-    String[] args = concat(Stream.of(cli), Stream.of(
+  private void startServer(int stripeId, int nodeId, String... args) {
+    // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
+    Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--node-name", "node-" + nodeId,
         "--node-hostname", "localhost",
         "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
         "--node-backup-dir", "backup/stripe" + stripeId,
         "--node-metadata-dir", "metadata/stripe" + stripeId,
         "--data-dirs", "main:user-data/main/stripe" + stripeId
-    )).toArray(String[]::new);
-    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), args));
+    ));
+    List<String> provided = Arrays.asList(args);
+    if (provided.contains("-n") || provided.contains("--node-name")) {
+      defaultArgs.remove("--node-name");
+      defaultArgs.remove("node-" + nodeId);
+    }
+    if (provided.contains("-s") || provided.contains("--node-hostname")) {
+      defaultArgs.remove("--node-hostname");
+      defaultArgs.remove("localhost");
+    }
+    defaultArgs.addAll(provided);
+    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), defaultArgs.toArray(new String[0])));
   }
 }

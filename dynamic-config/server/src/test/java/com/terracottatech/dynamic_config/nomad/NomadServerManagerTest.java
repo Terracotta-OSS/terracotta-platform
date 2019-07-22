@@ -4,9 +4,9 @@
  */
 package com.terracottatech.dynamic_config.nomad;
 
+import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
-import com.terracottatech.dynamic_config.repository.MalformedRepositoryException;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.ChangeDetails;

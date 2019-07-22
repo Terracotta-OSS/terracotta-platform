@@ -4,6 +4,10 @@
  */
 package com.terracottatech.dynamic_config.test;
 
+import com.terracottatech.diagnostic.client.DiagnosticService;
+import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.dynamic_config.test.util.TmpDir;
 import com.terracottatech.testing.lock.PortLockingRule;
@@ -45,12 +49,15 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.getIpAddress;
 import static java.nio.file.Files.walkFileTree;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
+import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
 import static org.awaitility.pollinterval.IterativePollInterval.iterative;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -124,7 +131,7 @@ public class BaseStartupIT {
 
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
     Awaitility.await()
-        .pollInterval(iterative(duration -> duration.multiply(2)).with().startDuration(Duration.TWO_HUNDRED_MILLISECONDS))
+        .pollInterval(iterative(duration -> duration.plus(FIVE_HUNDRED_MILLISECONDS)).with().startDuration(FIVE_HUNDRED_MILLISECONDS))
         .atMost(new Duration(TIMEOUT, TimeUnit.MILLISECONDS))
         .until(callable, matcher);
   }
@@ -167,6 +174,17 @@ public class BaseStartupIT {
         throw new RuntimeException(e);
       }
     };
+  }
+
+  Cluster getTopology(String host, int port) throws Exception {
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        InetSocketAddress.createUnresolved(host, port),
+        getClass().getSimpleName(),
+        5, SECONDS,
+        5, SECONDS,
+        null)) {
+      return diagnosticService.getProxy(TopologyService.class).getTopology();
+    }
   }
 
   private static void copyDirectory(Path source, Path destination) throws IOException {
@@ -212,17 +230,23 @@ public class BaseStartupIT {
         Paths.get("logs", "stripe" + stripeId),
         Paths.get("repository", "stripe" + stripeId),
         Paths.get("user-data", "main", "stripe" + stripeId),
-        Paths.get("logs", "stripe" + stripeId + "", "node-" + nodeId),
-        Paths.get("metadata", "stripe" + stripeId + "", "node-" + nodeId),
-        Paths.get("metadata", "stripe" + stripeId + "", "node-" + nodeId + "", "platform-data"),
-        Paths.get("metadata", "stripe" + stripeId + "", "node-" + nodeId + "", "platform-data", "entityData"),
-        Paths.get("metadata", "stripe" + stripeId + "", "node-" + nodeId + "", "platform-data", "transactionsData"),
-        Paths.get("repository", "stripe" + stripeId + "", "node-" + nodeId),
-        Paths.get("repository", "stripe" + stripeId + "", "node-" + nodeId + "", "config"),
-        Paths.get("repository", "stripe" + stripeId + "", "node-" + nodeId + "", "license"),
-        Paths.get("repository", "stripe" + stripeId + "", "node-" + nodeId + "", "sanskrit"),
-        Paths.get("repository", "stripe" + stripeId + "", "node-" + nodeId + "", "sanskrit", "tmp"),
-        Paths.get("user-data", "main", "stripe" + stripeId + "", "node-" + nodeId)
+        Paths.get("logs", "stripe" + stripeId, "node-" + nodeId),
+        Paths.get("logs", "stripe" + stripeId, getIpAddress()),
+        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId),
+        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data"),
+        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data", "entityData"),
+        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data", "transactionsData"),
+        Paths.get("metadata", "stripe" + stripeId, getIpAddress()),
+        Paths.get("metadata", "stripe" + stripeId, getIpAddress(), "platform-data"),
+        Paths.get("metadata", "stripe" + stripeId, getIpAddress(), "platform-data", "entityData"),
+        Paths.get("metadata", "stripe" + stripeId, getIpAddress(), "platform-data", "transactionsData"),
+        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId),
+        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "config"),
+        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "license"),
+        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit"),
+        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit", "tmp"),
+        Paths.get("user-data", "main", "stripe" + stripeId, "node-" + nodeId),
+        Paths.get("user-data", "main", "stripe" + stripeId, getIpAddress())
     )).flatMap(identity())).flatMap(identity());
     List<Path> expected = concat(s1, s2).collect(toList());
     List<Path> unexpected = Files.walk(getBaseDir())

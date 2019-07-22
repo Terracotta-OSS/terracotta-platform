@@ -157,7 +157,7 @@ public class ClusterConfigValidatorTest {
     setNodeProperties(node1);
     setNodeProperties(node2);
 
-    ClusterValidator.validate(createCluster(node1, node2));
+    new ClusterValidator(createCluster(node1, node2)).validate();
   }
 
   private void setNodeProperties(Node node) {
@@ -193,6 +193,6 @@ public class ClusterConfigValidatorTest {
   private void testThrowsWithMessage(Node node1, Node node2, String message) {
     exception.expect(MalformedClusterConfigException.class);
     exception.expectMessage(message);
-    ClusterValidator.validate(createCluster(node1, node2));
+    new ClusterValidator(createCluster(node1, node2)).validate();
   }
 }

@@ -8,23 +8,29 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils;
-import com.terracottatech.dynamic_config.model.validation.NodeParamsValidator;
+import com.terracottatech.utilities.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.util.ParameterSubstitutor;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
-public class ConsoleParamsParser {
+public class ConsoleParamsParser implements Parser<Cluster> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsParser.class);
+  private final HashMap<String, String> paramValueMap;
 
-  public static Cluster parse(Map<String, String> paramValueMap) {
-    NodeParamsValidator.validate(paramValueMap);
+  public ConsoleParamsParser(Map<String, String> paramValueMap) {
+    this.paramValueMap = new HashMap<>(paramValueMap);
+  }
+
+  @Override
+  public Cluster parse() {
     Node node = new Node();
     Cluster cluster = new Cluster(new Stripe(node));
     paramValueMap.forEach((param, value) -> ParameterSetter.set(param, value, cluster));
@@ -34,7 +40,7 @@ public class ConsoleParamsParser {
     return cluster;
   }
 
-  private static void printParams(Map<String, String> supplied, Map<String, String> defaulted) {
+  private void printParams(Map<String, String> supplied, Map<String, String> defaulted) {
     LOGGER.info(
         String.format(
             "%sRead the following parameters: %s%sAdded the following defaults: %s",
@@ -46,9 +52,9 @@ public class ConsoleParamsParser {
     );
   }
 
-  private static String toDisplayParams(Map<String, String> supplied) {
+  private String toDisplayParams(Map<String, String> supplied) {
     String suppliedParameters = supplied.entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
-        .map(entry -> ConsoleParamsUtils.addDashDash(entry.getKey()) + "=" + ParameterSubstitutor.substitute(entry.getValue()))
+        .map(entry -> ConsoleParamsUtils.addDashDash(entry.getKey()) + "=" + substitute(entry.getValue()))
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {
       suppliedParameters = "[]";

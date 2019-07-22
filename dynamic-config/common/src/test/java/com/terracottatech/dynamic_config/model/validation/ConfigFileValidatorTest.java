@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.model.validation;
 
 import com.terracottatech.dynamic_config.model.exception.MalformedConfigFileException;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,37 +16,42 @@ public class ConfigFileValidatorTest {
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
+  private ConfigFileValidator configFileValidator;
+  private Properties properties;
+
+  @Before
+  public void setUp() {
+    properties = new Properties();
+    configFileValidator = new ConfigFileValidator("test-file", properties);
+  }
+
   @Test
   public void testInsufficientKeys() {
-    Properties properties = new Properties();
     properties.put("one.two.three", "something");
-    testThrowsWithMessage(properties, "Invalid line: one.two.three");
+    testThrowsWithMessage("Invalid line: one.two.three");
   }
 
   @Test
   public void testExtraKeys() {
-    Properties properties = new Properties();
     properties.put("stripe.0.node.0.property.foo", "bar");
-    testThrowsWithMessage(properties, "Invalid line: stripe.0.node.0.property.foo");
+    testThrowsWithMessage("Invalid line: stripe.0.node.0.property.foo");
   }
 
   @Test
   public void testUnknownNodeProperty() {
-    Properties properties = new Properties();
     properties.put("stripe.0.node.0.blah", "something");
-    testThrowsWithMessage(properties, "Unrecognized property: blah");
+    testThrowsWithMessage("Unrecognized property: blah");
   }
 
   @Test
   public void testMissingPropertyValue() {
-    Properties properties = new Properties();
     properties.put("stripe.1.node.1.security-ssl-tls", "");
-    testThrowsWithMessage(properties, "Missing value");
+    testThrowsWithMessage("Missing value");
   }
 
-  private void testThrowsWithMessage(Properties properties, String message) {
+  private void testThrowsWithMessage(String message) {
     exception.expect(MalformedConfigFileException.class);
     exception.expectMessage(message);
-    ConfigFileValidator.validateProperties(properties, "test-file");
+    configFileValidator.validate();
   }
 }

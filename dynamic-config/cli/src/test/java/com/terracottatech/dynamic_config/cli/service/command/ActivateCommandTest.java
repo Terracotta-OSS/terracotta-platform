@@ -117,10 +117,13 @@ public class ActivateCommandTest extends BaseTest {
     when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
 
     assertThat(
-        () -> command()
-            .setConfigPropertiesFile(config)
-            .run(),
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Some nodes are already activated: localhost:9411, localhost:9421")))));
+        () -> {
+          ActivateCommand cmd = command().setConfigPropertiesFile(config);
+          cmd.validate();
+          cmd.run();
+        },
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Some nodes are already activated: localhost:9411, localhost:9421"))))
+    );
   }
 
   @Test

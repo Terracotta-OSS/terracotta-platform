@@ -26,17 +26,23 @@ class StripeConfiguration {
 
   StripeConfiguration(Stripe stripe, Supplier<Path> baseDir) {
     this.baseDir = baseDir;
-    Map<String, ServerConfiguration> stripeConfiguration = new HashMap<>();
-    Servers servers = createServers(stripe);
-    for (Node node : stripe.getNodes()) {
-      stripeConfiguration.put(node.getNodeName(), new ServerConfiguration(node, servers, baseDir));
-    }
-
-    this.stripeConfiguration = stripeConfiguration;
+    this.stripeConfiguration = createStripeConfig(stripe, baseDir);
   }
 
   ServerConfiguration get(String serverName) {
     return stripeConfiguration.get(serverName);
+  }
+
+  private Map<String, ServerConfiguration> createStripeConfig(Stripe stripe, Supplier<Path> baseDir) {
+    Map<String, ServerConfiguration> stripeConfiguration = new HashMap<>();
+    Servers servers = createServers(stripe);
+    for (Node node : stripe.getNodes()) {
+      ServerConfiguration prevValue = stripeConfiguration.putIfAbsent(node.getNodeName(), new ServerConfiguration(node, servers, baseDir));
+      if (prevValue != null) {
+        throw new IllegalStateException("Duplicate node name: " + node.getNodeName() + " found in stripe: " + stripe);
+      }
+    }
+    return stripeConfiguration;
   }
 
   private Servers createServers(Stripe stripe) {

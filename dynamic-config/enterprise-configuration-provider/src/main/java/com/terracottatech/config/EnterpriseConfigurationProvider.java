@@ -26,27 +26,27 @@ import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_C
 public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(EnterpriseConfigurationProvider.class);
 
+  private CommandLineParser commandLineParser;
   private TcConfigProvider tcConfigProvider;
   private Configuration configuration;
 
   @Override
   public void initialize(List<String> configurationParams) throws ConfigurationException {
     try {
-      CommandLineParser commandLineParser = getCommandLineParser(configurationParams);
+      commandLineParser = getCommandLineParser(configurationParams);
       if (commandLineParser == null) return;
 
       tcConfigProvider = TcConfigProviderFactory.init(commandLineParser);
-      bootstrapNomad(commandLineParser);
-      configuration = getConfiguration(commandLineParser);
+      bootstrapNomad();
+      configuration = createConfiguration();
     } catch (Exception e) {
       throw new ConfigurationException("Unable to initialize EnterpriseConfigurationProvider with " + configurationParams, e);
     }
   }
 
-  private void bootstrapNomad(CommandLineParser cliParser) {
-    Path configurationRepo = cliParser.getConfigurationRepositoryPath().orElse(Paths.get(DEFAULT_CONFIG_DIR));
-    LOGGER.info("Bootstrapping nomad system with root: {}", configurationRepo);
-    NomadBootstrapper.bootstrap(configurationRepo, cliParser.getNodeName());
+  private void bootstrapNomad() {
+    Path configurationRepo = commandLineParser.getConfigurationRepositoryPath().orElse(Paths.get(DEFAULT_CONFIG_DIR));
+    NomadBootstrapper.bootstrap(configurationRepo, commandLineParser.getNodeName());
   }
 
   private CommandLineParser getCommandLineParser(List<String> configurationParams) throws ParseException, ConfigurationException {
@@ -64,7 +64,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
     return commandLineParser;
   }
 
-  private Configuration getConfiguration(CommandLineParser commandLineParser) throws Exception {
+  private Configuration createConfiguration() throws Exception {
     TcConfiguration tcConfiguration = tcConfigProvider.provide();
     LOGGER.info("Startup configuration of the node: \n\n{}", tcConfiguration);
     return new TcConfigurationWrapper(tcConfiguration, commandLineParser.isConfigConsistencyMode());

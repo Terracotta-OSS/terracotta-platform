@@ -5,22 +5,28 @@
 package com.terracottatech.dynamic_config.model.validation;
 
 import com.terracottatech.License;
-import com.terracottatech.LicenseException;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.licensing.DefaultLicenseParser;
 import com.terracottatech.licensing.LicenseParser;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.utilities.Validator;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class LicenseValidator {
-  private static final LicenseParser LICENSE_PARSER = new DefaultLicenseParser();
+public class LicenseValidator implements Validator {
+  private final Cluster cluster;
+  private final Path licenseFilePath;
 
-  public static void validateLicense(Cluster cluster, Path licenseFilePath) {
-    License license = parse(licenseFilePath);
-    long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(DefaultLicenseParser.CAPABILITY_OFFHEAP);
+  public LicenseValidator(Cluster cluster, Path licenseFilePath) {
+    this.cluster = cluster;
+    this.licenseFilePath = licenseFilePath;
+  }
+
+  @Override
+  public void validate() throws IllegalArgumentException {
+    License license = parse();
+    long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(LicenseParser.CAPABILITY_OFFHEAP);
     long totalOffHeapInMB =
         bytesToMegaBytes(
             cluster.getStripes()
@@ -50,12 +56,8 @@ public class LicenseValidator {
     }
   }
 
-  private static License parse(Path licenseFilePath) {
-    try {
-      return LICENSE_PARSER.parse(licenseFilePath.toString());
-    } catch (LicenseException e) {
-      throw new IllegalArgumentException(e);
-    }
+  private License parse() {
+    return new LicenseParser(licenseFilePath).parse();
   }
 
   private static long bytesToMegaBytes(long quantity) {

@@ -38,7 +38,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
 
   @Test
   public void testStartingWithConsistencyMode() throws Exception {
-    startServer("--config", createTcConfig().toString(), "--config-consistency", "-r", configRepositoryPath().toString());
+    startServer("--config", createTcConfig().toString(), "--config-consistency", "-r", configRepositoryPath().toString(), "--node-name", "node-1");
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 

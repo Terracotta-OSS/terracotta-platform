@@ -7,36 +7,44 @@ package com.terracottatech.dynamic_config.model.validation;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.exception.MalformedClusterConfigException;
+import com.terracottatech.utilities.Validator;
 
 import java.util.Collection;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ClusterValidator {
-  public static void validate(Cluster cluster) {
-    validateSecurity(cluster);
-    validateClientSettings(cluster);
-    validateServerSettings(cluster);
+public class ClusterValidator implements Validator {
+  private final Cluster cluster;
+
+  public ClusterValidator(Cluster cluster) {
+    this.cluster = cluster;
   }
 
-  private static void validateSecurity(Cluster cluster) {
-    validate(cluster, Node::getSecurityAuthc, "Authentication setting of all nodes should match");
-    validate(cluster, Node::isSecuritySslTls, "SSL/TLS setting of all nodes should match");
-    validate(cluster, Node::isSecurityWhitelist, "Whitelist setting of all nodes should match");
+  @Override
+  public void validate() throws MalformedClusterConfigException {
+    validateSecurity();
+    validateClientSettings();
+    validateServerSettings();
   }
 
-  private static void validateClientSettings(Cluster cluster) {
-    validate(cluster, Node::getClientLeaseDuration, "Client lease duration of all nodes should match");
-    validate(cluster, Node::getClientReconnectWindow, "Client reconnect window of all nodes should match");
+  private void validateSecurity() {
+    validate(Node::getSecurityAuthc, "Authentication setting of all nodes should match");
+    validate(Node::isSecuritySslTls, "SSL/TLS setting of all nodes should match");
+    validate(Node::isSecurityWhitelist, "Whitelist setting of all nodes should match");
   }
 
-  private static void validateServerSettings(Cluster cluster) {
-    validate(cluster, Node::getOffheapResources, "Offheap resources of all nodes should match");
-    validate(cluster, node -> node.getDataDirs().keySet(), "Data directory names of all nodes should match");
-    validate(cluster, Node::getFailoverPriority, "Failover setting of all nodes should match");
+  private void validateClientSettings() {
+    validate(Node::getClientLeaseDuration, "Client lease duration of all nodes should match");
+    validate(Node::getClientReconnectWindow, "Client reconnect window of all nodes should match");
   }
 
-  private static void validate(Cluster cluster, Function<? super Node, Object> function, String errorMsg) {
+  private void validateServerSettings() {
+    validate(Node::getOffheapResources, "Offheap resources of all nodes should match");
+    validate(node -> node.getDataDirs().keySet(), "Data directory names of all nodes should match");
+    validate(Node::getFailoverPriority, "Failover setting of all nodes should match");
+  }
+
+  private void validate(Function<? super Node, Object> function, String errorMsg) {
     Collection<Object> settings = cluster.getNodes().stream()
         .map(function)
         .collect(Collectors.toSet());

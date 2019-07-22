@@ -8,17 +8,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.PathConverter;
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.diagnostic.LicensingService;
-import com.terracottatech.dynamic_config.managers.NodeManager;
+import com.terracottatech.dynamic_config.startup.NodeProcessor;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -112,11 +108,11 @@ public class Options {
   @Parameter(names = {"-N", "--" + CLUSTER_NAME}, hidden = true)
   private String clusterName;
 
-  @Parameter(names = {"-f", "--config-file"}, converter = PathConverter.class)
-  private Path configFile;
+  @Parameter(names = {"-f", "--config-file"})
+  private String configFile;
 
-  @Parameter(names = {"-l", "--license-file"}, hidden = true, converter = PathConverter.class)
-  private Path licenseFile;
+  @Parameter(names = {"-l", "--license-file"}, hidden = true)
+  private String licenseFile;
 
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
@@ -131,12 +127,10 @@ public class Options {
 
     // get specified options but remove the ones ot related to functional stuff
     specifiedOptions = jCommander.getUserSpecifiedOptions();
-
     validateOptions();
 
-    Map<String, String> paramValueMap = buildParamValueMap(jCommander);
-    NodeManager nodeManager = new NodeManager(this, paramValueMap, licensingService);
-    nodeManager.startNode();
+    NodeProcessor nodeProcessor = new NodeProcessor(this, buildParamValueMap(jCommander), licensingService);
+    nodeProcessor.process();
   }
 
   /**
@@ -224,8 +218,8 @@ public class Options {
     return nodeGroupBindAddress;
   }
 
-  public Optional<String> getNodeConfigDir() {
-    return Optional.ofNullable(nodeConfigDir);
+  public String getNodeConfigDir() {
+    return nodeConfigDir;
   }
 
   public String getNodeMetadataDir() {
@@ -284,11 +278,11 @@ public class Options {
     return clusterName;
   }
 
-  public Path getConfigFile() {
+  public String getConfigFile() {
     return configFile;
   }
 
-  public Path getLicenseFile() {
+  public String getLicenseFile() {
     return licenseFile;
   }
 }

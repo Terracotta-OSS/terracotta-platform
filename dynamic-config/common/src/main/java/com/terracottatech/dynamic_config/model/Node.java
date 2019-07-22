@@ -7,12 +7,12 @@ package com.terracottatech.dynamic_config.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
-import com.terracottatech.dynamic_config.model.util.ConfigUtils;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.xml.bind.DatatypeConverter;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
@@ -405,7 +406,7 @@ public class Node implements Cloneable {
 
   public Node fillDefaults(BiConsumer<String, String> filledPropertyConsumer) {
     if (getNodeName() == null) {
-      String generateNodeName = ConfigUtils.generateNodeName();
+      String generateNodeName = generateNodeName();
       setNodeName(generateNodeName);
       filledPropertyConsumer.accept(CommonOptions.NODE_NAME, generateNodeName);
     }
@@ -514,4 +515,25 @@ public class Node implements Cloneable {
         .setNodeHostname(hostname);
   }
 
+  private static String generateNodeName() {
+    UUID uuid = UUID.randomUUID();
+    byte[] data = new byte[16];
+    long msb = uuid.getMostSignificantBits();
+    long lsb = uuid.getLeastSignificantBits();
+    for (int i = 0; i < 8; i++) {
+      data[i] = (byte) (msb & 0xff);
+      msb >>>= 8;
+    }
+    for (int i = 8; i < 16; i++) {
+      data[i] = (byte) (lsb & 0xff);
+      lsb >>>= 8;
+    }
+
+    return "node-" + DatatypeConverter.printBase64Binary(data)
+        // java-8 and other - compatible B64 url decoder use - and _ instead of + and /
+        // padding can be ignored to shorten the UUID
+        .replace('+', '-')
+        .replace('/', '_')
+        .replace("=", "");
+  }
 }

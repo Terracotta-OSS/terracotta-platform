@@ -18,8 +18,10 @@ import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.parsing.ConfigFileParser;
+import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
+import com.terracottatech.dynamic_config.model.util.PropertiesFileLoader;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
+import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
 import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.utilities.Tuple2;
@@ -34,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -69,6 +72,7 @@ public class ActivateCommand extends Command {
   public RestartService restartService;
 
   private MultiDiagnosticServiceConnection connection;
+  private ConfigFileContainer configFileContainer;
   private Cluster cluster;
 
   public Cluster getCluster() {
@@ -126,9 +130,12 @@ public class ActivateCommand extends Command {
     }
 
     if (configPropertiesFile != null) {
-      // By default the cluster name is the file name of the property file.
-      // But the user can override it by specifying --cluster-name
-      clusterName = ConfigFileParser.getClusterName(configPropertiesFile.toFile(), clusterName);
+      String fileName = configPropertiesFile.toFile().getName(); //Path::getFileName can return null, which trips spotBugs
+      Properties properties = new PropertiesFileLoader(configPropertiesFile).loadProperties();
+      ConfigFileValidator configFileValidator = new ConfigFileValidator(fileName, properties);
+      configFileValidator.validate();
+      configFileContainer = new ConfigFileContainer(fileName, properties, clusterName);
+      clusterName = configFileContainer.getClusterName();
     }
 
     assertNonNull(licenseFile, "licenseFile must not be null");
@@ -141,7 +148,6 @@ public class ActivateCommand extends Command {
 
   @Override
   public final void run() {
-
     try {
       cluster = loadCluster();
       connection = connectionFactory.createConnection(cluster.getNodeAddresses());
@@ -173,16 +179,15 @@ public class ActivateCommand extends Command {
   }
 
   private Cluster loadCluster() {
+    Cluster cluster;
     if (node != null) {
-      Cluster cluster = getInMemoryTopology(node);
-      ClusterValidator.validate(cluster);
+      cluster = getValidatedInMemoryTopology(node);
       LOGGER.debug("Cluster topology validation successful");
-      return cluster;
     } else {
-      Cluster cluster = ConfigFileParser.parse(configPropertiesFile.toFile(), clusterName);
+      cluster = configFileContainer.createCluster();
       LOGGER.debug("Config property file parsing and cluster topology validation successful");
-      return cluster;
     }
+    return cluster;
   }
 
   private void restartNodes() {
@@ -192,8 +197,11 @@ public class ActivateCommand extends Command {
       if (failures.isEmpty()) {
         LOGGER.info("All cluster nodes: {} came back up", cluster.getNodeAddresses());
       } else {
-        throw new IllegalStateException("Some cluster nodes have failed to restart:\n - "
-            + failures.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue().t1).collect(joining("\n - ")));
+        String failedNodes = failures.entrySet()
+            .stream()
+            .map(e -> e.getKey() + ": " + e.getValue().t1)
+            .collect(joining("\n - "));
+        throw new IllegalStateException("Some cluster nodes failed to restart:\n - " + failedNodes);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -213,9 +221,11 @@ public class ActivateCommand extends Command {
     }
   }
 
-  private Cluster getInMemoryTopology(InetSocketAddress node) {
+  private Cluster getValidatedInMemoryTopology(InetSocketAddress node) {
     try (MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(node)) {
-      return connection.getDiagnosticService(node).get().getProxy(TopologyService.class).getTopology();
+      Cluster topology = connection.getDiagnosticService(node).get().getProxy(TopologyService.class).getTopology();
+      new ClusterValidator(topology).validate();
+      return topology;
     }
   }
 
@@ -235,7 +245,7 @@ public class ActivateCommand extends Command {
   }
 
   private void installLicense() {
-    LicenseValidator.validateLicense(cluster, licenseFile);
+    new LicenseValidator(cluster, licenseFile).validate();
     LOGGER.debug("License validation successful");
 
     String validatedLicense;

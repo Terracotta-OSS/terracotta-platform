@@ -27,7 +27,7 @@ public class Main {
       DiagnosticServices.register(LicensingService.class, licensingService);
 
       command.process(jCommander, licensingService);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.error(e.getMessage(), e);
       } else {

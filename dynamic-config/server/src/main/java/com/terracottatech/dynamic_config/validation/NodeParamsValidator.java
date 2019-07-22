@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.model.validation;
+package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.config.AcceptableSettingUnits;
@@ -11,26 +11,37 @@ import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
+import com.terracottatech.utilities.Validator;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.containsSubstitutionParams;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;
 
-public class NodeParamsValidator {
-  public static void validate(Map<String, String> paramValueMap) {
-    validateOffheap(paramValueMap);
-    validatePorts(paramValueMap);
-    validateNodeHostname(paramValueMap);
-    validateBindAddresses(paramValueMap);
-    validateFailoverPriority(paramValueMap);
-    validateSecurity(paramValueMap);
-    validateClientSettings(paramValueMap);
+public class NodeParamsValidator implements Validator {
+  private final Map<String, String> paramValueMap;
+
+  public NodeParamsValidator(Map<String, String> paramValueMap) {
+    this.paramValueMap = new HashMap<>(paramValueMap);
   }
 
-  private static void validateFailoverPriority(Map<String, String> paramValueMap) {
+  @Override
+  public void validate() throws IllegalArgumentException {
+    validateOffheap();
+    validatePorts();
+    validateNodeName();
+    validateNodeHostname();
+    validateBindAddresses();
+    validateFailoverPriority();
+    validateSecurity();
+    validateClientSettings();
+  }
+
+  private void validateFailoverPriority() {
     String param = CommonOptions.FAILOVER_PRIORITY;
     String value = paramValueMap.get(param);
     if (value == null) {
@@ -69,14 +80,14 @@ public class NodeParamsValidator {
     }
   }
 
-  private static void validateSecurity(Map<String, String> paramValueMap) {
-    validateBooleanSetting(paramValueMap, CommonOptions.SECURITY_SSL_TLS);
-    validateBooleanSetting(paramValueMap, CommonOptions.SECURITY_WHITELIST);
-    validateSecurityAuthc(paramValueMap);
-    validateSecurityDir(paramValueMap);
+  private void validateSecurity() {
+    validateBooleanSetting(CommonOptions.SECURITY_SSL_TLS);
+    validateBooleanSetting(CommonOptions.SECURITY_WHITELIST);
+    validateSecurityAuthc();
+    validateSecurityDir();
   }
 
-  private static void validateBooleanSetting(Map<String, String> paramValueMap, String param) {
+  private void validateBooleanSetting(String param) {
     String setting = paramValueMap.get(param);
     Set<String> acceptableValues = AcceptableSettingValues.get(param);
     if (setting != null && !acceptableValues.contains(setting)) {
@@ -84,7 +95,7 @@ public class NodeParamsValidator {
     }
   }
 
-  private static void validateSecurityDir(Map<String, String> paramValueMap) {
+  private void validateSecurityDir() {
     String authc = paramValueMap.get(CommonOptions.SECURITY_AUTHC);
     String securityDir = paramValueMap.get(CommonOptions.SECURITY_DIR);
     String audirLogDir = paramValueMap.get(CommonOptions.SECURITY_AUDIT_LOG_DIR);
@@ -101,7 +112,7 @@ public class NodeParamsValidator {
     }
   }
 
-  private static void validateSecurityAuthc(Map<String, String> paramValueMap) {
+  private void validateSecurityAuthc() {
     String param = CommonOptions.SECURITY_AUTHC;
     String value = paramValueMap.get(param);
     if (value == null) {
@@ -119,12 +130,12 @@ public class NodeParamsValidator {
     }
   }
 
-  private static void validateClientSettings(Map<String, String> paramValueMap) {
-    validateClientSetting(paramValueMap, CommonOptions.CLIENT_LEASE_DURATION);
-    validateClientSetting(paramValueMap, CommonOptions.CLIENT_RECONNECT_WINDOW);
+  private void validateClientSettings() {
+    validateClientSetting(CommonOptions.CLIENT_LEASE_DURATION);
+    validateClientSetting(CommonOptions.CLIENT_RECONNECT_WINDOW);
   }
 
-  private static void validateClientSetting(Map<String, String> paramValueMap, String setting) {
+  private void validateClientSetting(String setting) {
     String value = paramValueMap.get(setting);
     if (value == null) {
       return;
@@ -134,14 +145,14 @@ public class NodeParamsValidator {
     Measure.parse(value, TimeUnit.class, null, acceptableUnits);
   }
 
-  private static void validateBindAddresses(Map<String, String> paramValueMap) {
-    validateBindAddress(paramValueMap, CommonOptions.NODE_BIND_ADDRESS);
-    validateBindAddress(paramValueMap, CommonOptions.NODE_GROUP_BIND_ADDRESS);
+  private void validateBindAddresses() {
+    validateBindAddress(CommonOptions.NODE_BIND_ADDRESS);
+    validateBindAddress(CommonOptions.NODE_GROUP_BIND_ADDRESS);
   }
 
-  private static void validateBindAddress(Map<String, String> paramValueMap, String setting) {
+  private void validateBindAddress(String setting) {
     String value = paramValueMap.get(setting);
-    if (value == null) {
+    if (value == null || containsSubstitutionParams(value)) {
       return;
     }
 
@@ -150,10 +161,10 @@ public class NodeParamsValidator {
     }
   }
 
-  private static void validateNodeHostname(Map<String, String> paramValueMap) {
+  private void validateNodeHostname() {
     String param = CommonOptions.NODE_HOSTNAME;
     String value = paramValueMap.get(param);
-    if (value == null) {
+    if (value == null || containsSubstitutionParams(value)) {
       return;
     }
 
@@ -162,12 +173,24 @@ public class NodeParamsValidator {
     }
   }
 
-  private static void validatePorts(Map<String, String> paramValueMap) {
-    validatePort(paramValueMap, CommonOptions.NODE_PORT);
-    validatePort(paramValueMap, CommonOptions.NODE_GROUP_PORT);
+  private void validateNodeName() {
+    String param = CommonOptions.NODE_NAME;
+    String value = paramValueMap.get(param);
+    if (value == null) {
+      return;
+    }
+
+    if (containsSubstitutionParams(value)) {
+      throw new IllegalArgumentException("<node-name> specified in " + param + "=<name> cannot contain substitution parameters");
+    }
   }
 
-  private static void validatePort(Map<String, String> paramValueMap, String setting) {
+  private void validatePorts() {
+    validatePort(CommonOptions.NODE_PORT);
+    validatePort(CommonOptions.NODE_GROUP_PORT);
+  }
+
+  private void validatePort(String setting) {
     String value = paramValueMap.get(setting);
     if (value == null) {
       return;
@@ -185,10 +208,10 @@ public class NodeParamsValidator {
     }
   }
 
-  private static void validateOffheap(Map<String, String> paramValueMap) {
+  private void validateOffheap() {
     final String param = CommonOptions.OFFHEAP_RESOURCES;
     String value = paramValueMap.get(param);
-    if (value == null) {
+    if (value == null || containsSubstitutionParams(value)) {
       return;
     }
 

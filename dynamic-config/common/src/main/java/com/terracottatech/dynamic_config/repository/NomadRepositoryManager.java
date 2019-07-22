@@ -4,6 +4,8 @@
  */
 package com.terracottatech.dynamic_config.repository;
 
+import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.FULL;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
@@ -45,7 +48,7 @@ public class NomadRepositoryManager {
     if (repositoryDepth == NONE || repositoryDepth == ROOT_ONLY) {
       return Optional.empty();
     }
-    return findNodeName();
+    return findNodeName(nomadRoot);
   }
 
   public void createDirectories() {
@@ -75,10 +78,6 @@ public class NomadRepositoryManager {
     return sanskritPath;
   }
 
-  Optional<String> findNodeName() {
-    return findNodeName(nomadRoot);
-  }
-
   RepositoryDepth getRepositoryDepth() {
     boolean nomadRootExists = checkDirectoryExists(nomadRoot);
     boolean configPathExists = checkDirectoryExists(configPath);
@@ -98,7 +97,7 @@ public class NomadRepositoryManager {
   }
 
   boolean checkDirectoryExists(Path path) {
-    boolean dirExists = Files.exists(path);
+    boolean dirExists = Files.exists(substitute(path));
     if (dirExists && !Files.isDirectory(path)) {
       throw new MalformedRepositoryException(path.getFileName() + " is not a directory");
     }
@@ -107,9 +106,9 @@ public class NomadRepositoryManager {
 
   void createNomadSubDirectories() {
     try {
-      Files.createDirectories(configPath);
-      Files.createDirectories(licensePath);
-      Files.createDirectories(sanskritPath);
+      Files.createDirectories(substitute(configPath));
+      Files.createDirectories(substitute(licensePath));
+      Files.createDirectories(substitute(sanskritPath));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -117,7 +116,7 @@ public class NomadRepositoryManager {
 
   void createNomadRoot() {
     try {
-      Files.createDirectories(nomadRoot);
+      Files.createDirectories(substitute(nomadRoot));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -130,7 +129,7 @@ public class NomadRepositoryManager {
   }
 
   public static Optional<String> findNodeName(Path nomadRoot) {
-    File configPath = requireNonNull(nomadRoot).resolve("config").toFile();
+    File configPath = substitute(requireNonNull(nomadRoot)).resolve("config").toFile();
     if (!configPath.exists()) {
       return Optional.empty();
     }

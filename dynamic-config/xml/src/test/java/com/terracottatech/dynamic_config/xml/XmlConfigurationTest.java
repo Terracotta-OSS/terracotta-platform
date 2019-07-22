@@ -5,16 +5,20 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.parsing.ConfigFileParser;
+import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
 import org.junit.Test;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.ElementSelectors;
+import org.xmlunit.matchers.CompareMatcher;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Properties;
 
 import static org.junit.Assert.assertThat;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
@@ -22,36 +26,35 @@ import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 public class XmlConfigurationTest {
   @Test
   public void testSingleStripe() throws Exception {
-    Cluster cluster =
-        ConfigFileParser.parse(new File(getClass().getResource("/single-stripe-config.properties").toURI()), "my-cluster");
+    String fileName = "single-stripe-config.properties";
+    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster").createCluster();
 
-    String actual =
-        new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
-
+    String actual = new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
     assertXml(actual, "single-stripe-config.xml");
   }
 
   @Test
   public void testMultiStripe() throws Exception {
-    Cluster cluster =
-        ConfigFileParser.parse(new File(getClass().getResource("/multi-stripe-config.properties").toURI()), "my-cluster");
+    String fileName = "multi-stripe-config.properties";
+    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster").createCluster();
 
-    String actual =
-        new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
-
-    System.out.println(actual);
+    String actual = new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
     assertXml(actual, "multi-stripe-config.xml");
   }
 
   private void assertXml(String actual, String expectedConfigResource) throws URISyntaxException {
     URI expectedConfigUrl = getClass().getResource("/" + expectedConfigResource).toURI();
-    assertThat(
-        Input.from(actual),
-        isSimilarTo(Input.from(expectedConfigUrl)).ignoreComments()
-            .ignoreWhitespace()
-            .withNodeMatcher(
-                new DefaultNodeMatcher(ElementSelectors.byNameAndText)
-            )
-    );
+    CompareMatcher matcher = isSimilarTo(Input.from(expectedConfigUrl))
+        .ignoreComments()
+        .ignoreWhitespace()
+        .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byNameAndText));
+    assertThat(Input.from(actual), matcher);
+  }
+
+  private Properties loadProperties(String fileName) throws IOException, URISyntaxException {
+    InputStream inputStream = Files.newInputStream(Paths.get(getClass().getResource("/" + fileName).toURI()));
+    Properties properties = new Properties();
+    properties.load(inputStream);
+    return properties;
   }
 }

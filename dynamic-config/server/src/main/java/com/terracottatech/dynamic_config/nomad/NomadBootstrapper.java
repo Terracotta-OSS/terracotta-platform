@@ -33,18 +33,24 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.LICENSE_FILE_NAME;
+import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
 import static java.util.Objects.requireNonNull;
 
 public class NomadBootstrapper {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NomadBootstrapper.class);
   private static volatile NomadServerManager nomadServerManager;
   private static volatile NomadRepositoryManager nomadRepositoryManager;
   private static final AtomicBoolean BOOTSTRAPPED = new AtomicBoolean();
 
   public static void bootstrap(Path nomadRoot, String nodeName) {
+    requireNonNull(nomadRoot);
+    requireNonNull(nodeName);
+
     if (BOOTSTRAPPED.compareAndSet(false, true)) {
       nomadServerManager = new NomadServerManager();
-      nomadRepositoryManager = nomadServerManager.init(requireNonNull(nomadRoot), nodeName);
+      nomadRepositoryManager = nomadServerManager.init(nomadRoot, nodeName);
       DynamicConfigConstants.setLicensePath(nomadRepositoryManager.getLicensePath().resolve(LICENSE_FILE_NAME));
+      LOGGER.info("Bootstrapped nomad system with root: {}", substitute(nomadRoot));
     }
   }
 
@@ -71,11 +77,12 @@ public class NomadBootstrapper {
      * Initializes the Nomad system
      *
      * @param nomadRoot Configuration repository root
+     * @param nodeName Node name
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
     NomadRepositoryManager init(Path nomadRoot, String nodeName) throws NomadConfigurationException {
       try {
-        NomadRepositoryManager repositoryManager = createNomadRepositoryManager(requireNonNull(nomadRoot));
+        NomadRepositoryManager repositoryManager = createNomadRepositoryManager(nomadRoot);
         repositoryManager.createDirectories();
         nomadServer = createServer(repositoryManager, nodeName);
         registerMBean();
@@ -94,8 +101,8 @@ public class NomadBootstrapper {
     /**
      * Makes Nomad server capable of write operations.
      *
-     * @param nodeName Name of the running node
-     * @param stripeId ID of the stripe where the node belongs
+     * @param nodeName Name of the running node, non-null
+     * @param stripeId ID of the stripe where the node belongs, should be greater than 1
      */
     public void upgradeForWrite(String nodeName, int stripeId) {
       ConfigController configController = createConfigController(nodeName, stripeId);
@@ -177,6 +184,11 @@ public class NomadBootstrapper {
     }
 
     ConfigController createConfigController(String nodeName, int stripeId) {
+      requireNonNull(nodeName);
+      if (stripeId < 1) {
+        throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
+      }
+
       return new ConfigControllerImpl(() -> nodeName, () -> stripeId);
     }
 

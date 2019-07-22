@@ -12,19 +12,29 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 // Copy of org.terracotta.config.util.ParameterSubstitutor to avoid a client-side dependency on tc-config-parser
 public class ParameterSubstitutor {
   private static String uniqueTempDirectory = null;
 
-  public static Path substitute(Path path) {
-    return Paths.get(substitute(path.toString()));
+  public static boolean containsSubstitutionParams(String source) {
+    return !Objects.equals(substitute(source), source);
+  }
+
+  public static boolean containsSubstitutionParams(Path source) {
+    return !Objects.equals(substitute(source), source);
+  }
+
+  public static Path substitute(Path source) {
+    if (source == null) return null;
+    return Paths.get(substitute(source.toString()));
   }
 
   public static String substitute(String source) {
     if (source == null) return null;
 
-    StringBuffer out = new StringBuffer();
+    StringBuilder out = new StringBuilder();
     char[] sourceChars = source.toCharArray();
 
     for (int i = 0; i < sourceChars.length; ++i) {

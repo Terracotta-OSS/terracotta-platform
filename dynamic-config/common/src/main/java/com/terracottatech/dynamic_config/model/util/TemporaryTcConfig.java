@@ -7,25 +7,30 @@ package com.terracottatech.dynamic_config.model.util;
 
 import com.terracottatech.dynamic_config.model.Node;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.UUID;
 
 import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
 
-public class ConfigUtils {
+public class TemporaryTcConfig {
+  private final Node node;
+  private final Path root;
 
-  public static Path createTempTcConfig(Node node, Path root) {
+  public TemporaryTcConfig(Node node, Path root) {
+    this.node = node;
+    this.root = root;
+  }
+
+  public Path createTempTcConfigFile() {
     try {
       Path temporaryTcConfigXml = Files.createTempFile(substitute(root), "tc-config-tmp.", ".xml");
       String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
-          "   <plugins>\n" +
-          getDataDirectoryConfig(node, root) +
-          getSecurityConfig(node, root) +
-          "   </plugins>\n" +
+          "    <plugins>\n" +
+          getDataDirectoryConfig() +
+          getSecurityConfig() +
+          "    </plugins>\n" +
           "    <servers>\n" +
           "        <server host=\"${HOSTNAME}\" name=\"${NAME}\" bind=\"${BIND}\">\n" +
           "            <logs>${LOGS}</logs>\n" +
@@ -37,12 +42,12 @@ public class ConfigUtils {
           "</tc-config>";
 
       String configuration = defaultConfig
-          .replace("${HOSTNAME}", substitute(node.getNodeHostname()))
-          .replace("${NAME}", substitute(node.getNodeName()))
-          .replace("${BIND}", substitute(node.getNodeBindAddress()))
+          .replace("${HOSTNAME}", node.getNodeHostname())
+          .replace("${NAME}", node.getNodeName())
+          .replace("${BIND}", node.getNodeBindAddress())
           .replace("${PORT}", String.valueOf(node.getNodePort()))
-          .replace("${LOGS}", resolve(node.getNodeLogDir(), root).toString())
-          .replace("${GROUP-BIND}", substitute(node.getNodeGroupBindAddress()))
+          .replace("${LOGS}", node.getNodeLogDir().toString())
+          .replace("${GROUP-BIND}", node.getNodeGroupBindAddress())
           .replace("${GROUP-PORT}", String.valueOf(node.getNodeGroupPort()))
           .replace("${RECONNECT_WINDOW}", String.valueOf((int) (node.getClientReconnectWindow().getUnit().toSeconds(node.getClientReconnectWindow().getQuantity()))));
 
@@ -54,7 +59,7 @@ public class ConfigUtils {
     }
   }
 
-  private static String getSecurityConfig(Node node, Path root) {
+  private String getSecurityConfig() {
     StringBuilder sb = new StringBuilder();
 
     if (node.getSecurityDir() != null) {
@@ -88,12 +93,12 @@ public class ConfigUtils {
     return sb.toString();
   }
 
-  private static String getDataDirectoryConfig(Node node, Path root) {
-    String dataDirectoryConfig = "     <config xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n" +
-        "     <data:data-directories>\n" +
-        "         <data:directory name=\"data\" use-for-platform=\"true\">${DATA_DIR}</data:directory>\n" +
-        "     </data:data-directories>\n" +
-        "     </config>\n";
+  private String getDataDirectoryConfig() {
+    String dataDirectoryConfig = "    <config xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n" +
+        "    <data:data-directories>\n" +
+        "        <data:directory name=\"data\" use-for-platform=\"true\">${DATA_DIR}</data:directory>\n" +
+        "    </data:data-directories>\n" +
+        "    </config>\n";
 
     return dataDirectoryConfig.replace("${DATA_DIR}", resolve(node.getNodeMetadataDir(), root).toString());
   }
@@ -102,28 +107,6 @@ public class ConfigUtils {
     // 'root' is the directory (by default %(user.dir)) used to rebase the path in case they are relative.
     // If when resolving p, the path is absolute, then no need to rebase using the root.
     Path real = substitute(p);
-    return real.isAbsolute() ? p : root.resolve(p);
-  }
-
-  public static String generateNodeName() {
-    UUID uuid = UUID.randomUUID();
-    byte[] data = new byte[16];
-    long msb = uuid.getMostSignificantBits();
-    long lsb = uuid.getLeastSignificantBits();
-    for (int i = 0; i < 8; i++) {
-      data[i] = (byte) (msb & 0xff);
-      msb >>>= 8;
-    }
-    for (int i = 8; i < 16; i++) {
-      data[i] = (byte) (lsb & 0xff);
-      lsb >>>= 8;
-    }
-
-    return "node-" + DatatypeConverter.printBase64Binary(data)
-        // java-8 and other - compatible B64 url decoder use - and _ instead of + and /
-        // padding can be ignored to shorten the UUID
-        .replace('+', '-')
-        .replace('/', '_')
-        .replace("=", "");
+    return real.isAbsolute() ? real : root.resolve(p);
   }
 }

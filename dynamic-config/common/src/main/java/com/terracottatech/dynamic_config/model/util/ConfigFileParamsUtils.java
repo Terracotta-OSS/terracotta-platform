@@ -13,7 +13,7 @@ public class ConfigFileParamsUtils {
     return Integer.parseInt(splitKey(key)[1]);
   }
 
-  public static String getNodeName(String key) {
+  public static String getNodeId(String key) {
     if (!"node".equals(splitKey(key)[2])) {
       throw new IllegalArgumentException("Invalid key: " + key);
     }

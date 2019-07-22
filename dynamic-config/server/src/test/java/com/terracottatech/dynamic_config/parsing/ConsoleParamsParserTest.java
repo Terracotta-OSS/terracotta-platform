@@ -4,9 +4,9 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.utilities.Measure;
 import org.junit.Test;
 
@@ -27,17 +27,58 @@ import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.config.util.ParameterSubstitutor.substitute;
-
 
 public class ConsoleParamsParserTest {
   @Test
+  public void testDefaults() {
+    Cluster cluster = new ConsoleParamsParser(Collections.emptyMap()).parse();
+    assertThat(cluster.getName(), is(nullValue()));
+    assertThat(cluster.getStripes().size(), is(1));
+    assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
+
+    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
+    assertThat(node.getNodeName(), startsWith("node-"));
+    assertThat(node.getNodeHostname(), is("%h"));
+    assertThat(node.getNodePort(), is(9410));
+    assertThat(node.getNodeGroupPort(), is(9430));
+    assertThat(node.getNodeBindAddress(), is("0.0.0.0"));
+    assertThat(node.getNodeGroupBindAddress(), is("0.0.0.0"));
+    assertThat(node.getOffheapResources(), hasEntry("main", Measure.of(512L, MB)));
+
+    assertThat(node.getNodeBackupDir(), is(nullValue()));
+    assertThat(node.getNodeConfigDir().toString(), is("%H" + separator + "terracotta" + separator + "repository"));
+    assertThat(node.getNodeLogDir().toString(), is("%H" + separator + "terracotta" + separator + "logs"));
+    assertThat(node.getNodeMetadataDir().toString(), is("%H" + separator + "terracotta" + separator + "metadata"));
+    assertThat(node.getSecurityDir(), is(nullValue()));
+    assertThat(node.getSecurityAuditLogDir(), is(nullValue()));
+    assertThat(node.getDataDirs(), hasEntry("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main")));
+
+    assertFalse(node.isSecurityWhitelist());
+    assertFalse(node.isSecuritySslTls());
+    assertThat(node.getSecurityAuthc(), is(nullValue()));
+
+    assertThat(node.getFailoverPriority(), is("availability"));
+    assertThat(node.getClientReconnectWindow(), is(Measure.of(120L, SECONDS)));
+    assertThat(node.getClientLeaseDuration(), is(Measure.of(20L, SECONDS)));
+  }
+
+  @Test
+  public void testParametersInInput() {
+    Cluster cluster = new ConsoleParamsParser(setPropertiesWithParameters()).parse();
+    assertThat(cluster.getName(), is(nullValue()));
+    assertThat(cluster.getStripes().size(), is(1));
+    assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
+
+    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
+    assertThat(node.getNodeHostname(), is("%h"));
+    assertThat(node.getNodeBindAddress(), is("%i"));
+  }
+
+  @Test
   public void testAllOptions() {
     Map<String, String> paramValueMap = setProperties();
-    Cluster cluster = ConsoleParamsParser.parse(paramValueMap);
-
+    Cluster cluster = new ConsoleParamsParser(paramValueMap).parse();
     assertThat(cluster.getName(), is("tc-cluster"));
-
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
@@ -103,38 +144,10 @@ public class ConsoleParamsParserTest {
     return paramValueMap;
   }
 
-  @Test
-  public void testDefaults() {
-    Cluster cluster = ConsoleParamsParser.parse(Collections.emptyMap());
-
-    assertThat(cluster.getName(), is(nullValue()));
-
-    assertThat(cluster.getStripes().size(), is(1));
-    assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
-
-    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeName(), startsWith("node-"));
-    assertThat(node.getNodeHostname(), is(substitute("%h")));
-    assertThat(node.getNodePort(), is(9410));
-    assertThat(node.getNodeGroupPort(), is(9430));
-    assertThat(node.getNodeBindAddress(), is("0.0.0.0"));
-    assertThat(node.getNodeGroupBindAddress(), is("0.0.0.0"));
-    assertThat(node.getOffheapResources(), hasEntry("main", Measure.of(512L, MB)));
-
-    assertThat(node.getNodeBackupDir(), is(nullValue()));
-    assertThat(node.getNodeConfigDir().toString(), is(substitute("%H" + separator + "terracotta" + separator + "repository")));
-    assertThat(node.getNodeLogDir().toString(), is(substitute("%H" + separator + "terracotta" + separator + "logs")));
-    assertThat(node.getNodeMetadataDir().toString(), is(substitute("%H" + separator + "terracotta" + separator + "metadata")));
-    assertThat(node.getSecurityDir(), is(nullValue()));
-    assertThat(node.getSecurityAuditLogDir(), is(nullValue()));
-    assertThat(node.getDataDirs(), hasEntry("main", Paths.get(substitute("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"))));
-
-    assertFalse(node.isSecurityWhitelist());
-    assertFalse(node.isSecuritySslTls());
-    assertThat(node.getSecurityAuthc(), is(nullValue()));
-
-    assertThat(node.getFailoverPriority(), is("availability"));
-    assertThat(node.getClientReconnectWindow(), is(Measure.of(120L, SECONDS)));
-    assertThat(node.getClientLeaseDuration(), is(Measure.of(20L, SECONDS)));
+  private Map<String, String> setPropertiesWithParameters() {
+    Map<String, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(CommonOptions.NODE_BIND_ADDRESS, "%i");
+    paramValueMap.put(CommonOptions.NODE_HOSTNAME, "%h");
+    return paramValueMap;
   }
 }

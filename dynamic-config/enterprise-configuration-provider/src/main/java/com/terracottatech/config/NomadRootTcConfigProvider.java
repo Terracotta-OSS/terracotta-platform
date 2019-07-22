@@ -12,16 +12,19 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
+import static java.util.Objects.requireNonNull;
+
 public class NomadRootTcConfigProvider implements TcConfigProvider {
   private final Path nomadRoot;
 
   NomadRootTcConfigProvider(Path configurationRepo) {
-    this.nomadRoot = configurationRepo;
+    this.nomadRoot = requireNonNull(configurationRepo);
   }
 
   @Override
   public TcConfiguration provide() throws Exception {
     String configuration = NomadBootstrapper.getNomadServerManager().getConfiguration();
+    // TCConfigurationParser substitutes values for platform parameters, so anything known to platform needn't be substituted before this
     return TCConfigurationParser.parse(
         new ByteArrayInputStream(configuration.getBytes(StandardCharsets.UTF_8)),
         null,
