@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -83,6 +84,10 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_nodes_to_stripe() {
+    TopologyService topologyService10 = topologyServiceMock("localhost", 9410);
+    TopologyService topologyService11 = topologyServiceMock("localhost", 9411);
+    TopologyService topologyService12 = topologyServiceMock("localhost", 9412);
+
     newCommand()
         .setType(TopologyChangeCommand.Type.NODE)
         .setDestination("127.0.0.1", 9410)
@@ -90,9 +95,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(topologyServiceMock("localhost", 9410)).setTopology(newCluster.capture());
-    verify(topologyServiceMock("localhost", 9411)).setTopology(newCluster.capture());
-    verify(topologyServiceMock("localhost", 9412)).setTopology(newCluster.capture());
+    verify(topologyService10).setTopology(newCluster.capture());
+    verify(topologyService11).setTopology(newCluster.capture());
+    verify(topologyService12).setTopology(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(3));
@@ -107,6 +112,10 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe() {
+    TopologyService topologyService10 = topologyServiceMock("localhost", 9410);
+    TopologyService topologyService11 = topologyServiceMock("localhost", 9411);
+    TopologyService topologyService12 = topologyServiceMock("localhost", 9412);
+
     newCommand()
         .setType(TopologyChangeCommand.Type.STRIPE)
         .setDestination("127.0.0.1", 9410)
@@ -114,9 +123,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(topologyServiceMock("localhost", 9410)).setTopology(newCluster.capture());
-    verify(topologyServiceMock("localhost", 9411)).setTopology(newCluster.capture());
-    verify(topologyServiceMock("localhost", 9412)).setTopology(newCluster.capture());
+    verify(topologyService10).setTopology(newCluster.capture());
+    verify(topologyService11).setTopology(newCluster.capture());
+    verify(topologyService12).setTopology(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(3));

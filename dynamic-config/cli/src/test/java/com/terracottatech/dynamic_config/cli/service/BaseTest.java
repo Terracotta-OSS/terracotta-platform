@@ -17,15 +17,13 @@ import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
 import com.terracottatech.nomad.server.NomadServer;
+import com.terracottatech.utilities.cache.Cache;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mockito.Mockito.mock;
@@ -45,31 +43,42 @@ public abstract class BaseTest {
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
   protected long timeoutMillis = 2_000;
 
-  private final Map<InetSocketAddress, DiagnosticService> diagnosticServices = new HashMap<>();
-  private final Map<InetSocketAddress, TopologyService> topologyServices = new HashMap<>();
-  private final Map<InetSocketAddress, NomadServer> nomadServers = new HashMap<>();
-  private final Map<InetSocketAddress, LicensingService> licensingServices = new HashMap<>();
+  private final Cache<InetSocketAddress, DiagnosticService> diagnosticServices = Cache.<InetSocketAddress, DiagnosticService>create()
+      .withLoader(addr -> mock(DiagnosticService.class, addr.toString()))
+      .build();
 
-  private final Consumer<InetSocketAddress> perNodeMockCreator = addr -> {
-    diagnosticServices.putIfAbsent(addr, mock(DiagnosticService.class, addr.toString()));
-    if (topologyServices.putIfAbsent(addr, mock(TopologyService.class, addr.toString())) == null) {
-      when(diagnosticServices.get(addr).getProxy(TopologyService.class)).thenReturn(topologyServices.get(addr));
-    }
-    if (nomadServers.putIfAbsent(addr, mock(NomadServer.class, addr.toString())) == null) {
-      when(diagnosticServices.get(addr).getProxy(NomadServer.class)).thenReturn(nomadServers.get(addr));
-    }
-    if (licensingServices.putIfAbsent(addr, mock(LicensingService.class, addr.toString())) == null) {
-      when(diagnosticServices.get(addr).getProxy(LicensingService.class)).thenReturn(licensingServices.get(addr));
-    }
-  };
+  private final Cache<InetSocketAddress, TopologyService> topologyServices = Cache.<InetSocketAddress, TopologyService>create()
+      .withLoader(addr -> {
+        TopologyService topologyService = mock(TopologyService.class, addr.toString());
+        DiagnosticService diagnosticService = diagnosticServices.get(addr);
+        when(diagnosticService.getProxy(TopologyService.class)).thenReturn(topologyService);
+        return topologyService;
+      })
+      .build();
 
+  private final Cache<InetSocketAddress, NomadServer> nomadServers = Cache.<InetSocketAddress, NomadServer>create()
+      .withLoader(addr -> {
+        NomadServer nomadServer = mock(NomadServer.class, addr.toString());
+        DiagnosticService diagnosticService = diagnosticServices.get(addr);
+        when(diagnosticService.getProxy(NomadServer.class)).thenReturn(nomadServer);
+        return nomadServer;
+      })
+      .build();
+
+  private final Cache<InetSocketAddress, LicensingService> licensingServices = Cache.<InetSocketAddress, LicensingService>create()
+      .withLoader(addr -> {
+        LicensingService licensingService = mock(LicensingService.class, addr.toString());
+        DiagnosticService diagnosticService = diagnosticServices.get(addr);
+        when(diagnosticService.getProxy(LicensingService.class)).thenReturn(licensingService);
+        return licensingService;
+      })
+      .build();
 
   @Before
   public void setUp() throws Exception {
     diagnosticServiceProvider = new DiagnosticServiceProvider(getClass().getSimpleName(), 5, TimeUnit.SECONDS, 5, TimeUnit.SECONDS, null) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
-        perNodeMockCreator.accept(address);
         return diagnosticServices.get(address);
       }
     };
@@ -79,17 +88,11 @@ public abstract class BaseTest {
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeoutMillis);
   }
 
-  protected DiagnosticService diagnosticServiceMock(InetSocketAddress address) {
-    perNodeMockCreator.accept(address);
-    return diagnosticServices.get(address);
-  }
-
   protected DiagnosticService diagnosticServiceMock(String host, int port) {
-    return diagnosticServiceMock(InetSocketAddress.createUnresolved(host, port));
+    return diagnosticServices.get(InetSocketAddress.createUnresolved(host, port));
   }
 
   protected TopologyService topologyServiceMock(InetSocketAddress address) {
-    perNodeMockCreator.accept(address);
     return topologyServices.get(address);
   }
 

@@ -4,9 +4,11 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
-import com.terracottatech.dynamic_config.cli.Injector;
+import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.cli.service.NomadTestHelper;
+import com.terracottatech.dynamic_config.diagnostic.LicensingService;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.nomad.messages.CommitMessage;
@@ -23,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.IntStream;
 
+import static com.terracottatech.dynamic_config.cli.Injector.inject;
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.accept;
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.reject;
@@ -35,6 +38,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -215,14 +219,17 @@ public class ActivateCommandTest extends BaseTest {
 
   private void doRunAndVerify(String clusterName, ActivateCommand command) {
     IntStream.of(ports).forEach(rethrow(port -> {
-      when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
-
+      TopologyService topologyService = topologyServiceMock("localhost", port);
       NomadServer mock = nomadServerMock("localhost", port);
+      LicensingService licensingService = licensingServiceMock("localhost", port);
+      DiagnosticService diagnosticService = diagnosticServiceMock("localhost", port);
+
+      doNothing().when(licensingService).installLicense(any(String.class));
+      when(topologyService.isActivated()).thenReturn(false);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenReturn(accept());
-
-      when(diagnosticServiceMock("localhost", port).getLogicalServerState()).thenReturn(PASSIVE);
+      when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE);
     }));
 
     command.validate();
@@ -242,7 +249,7 @@ public class ActivateCommandTest extends BaseTest {
   private ActivateCommand command() {
     ActivateCommand command = new ActivateCommand()
         .setLicenseFile(license);
-    Injector.inject(command, connectionFactory, nomadManager, restartService);
+    inject(command, connectionFactory, nomadManager, restartService);
     return command;
   }
 

@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.service.restart;
 
 import com.terracottatech.diagnostic.client.DiagnosticOperationTimeoutException;
+import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
@@ -35,6 +36,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -170,12 +172,24 @@ public class RestartServiceTest extends BaseTest {
   }
 
   private void mockSuccessfulServerRestart() {
-    when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(ACTIVE);
-    when(diagnosticServiceMock("localhost", 9412).getLogicalServerState()).thenReturn(PASSIVE);
-    when(diagnosticServiceMock("localhost", 9413).getLogicalServerState()).thenReturn(PASSIVE);
-    when(diagnosticServiceMock("localhost", 9421).getLogicalServerState()).thenReturn(ACTIVE);
-    when(diagnosticServiceMock("localhost", 9422).getLogicalServerState()).thenReturn(PASSIVE);
-    when(diagnosticServiceMock("localhost", 9423).getLogicalServerState()).thenReturn(PASSIVE);
+    DiagnosticService diagnosticService11 = diagnosticServiceMock("localhost", 9411);
+    DiagnosticService diagnosticService12 = diagnosticServiceMock("localhost", 9412);
+    DiagnosticService diagnosticService13 = diagnosticServiceMock("localhost", 9413);
+    DiagnosticService diagnosticService21 = diagnosticServiceMock("localhost", 9421);
+    DiagnosticService diagnosticService22 = diagnosticServiceMock("localhost", 9422);
+    DiagnosticService diagnosticService23 = diagnosticServiceMock("localhost", 9423);
+
+    when(diagnosticService11.getLogicalServerState()).thenReturn(ACTIVE);
+    when(diagnosticService12.getLogicalServerState()).thenReturn(PASSIVE);
+    when(diagnosticService13.getLogicalServerState()).thenReturn(PASSIVE);
+    when(diagnosticService21.getLogicalServerState()).thenReturn(ACTIVE);
+    when(diagnosticService22.getLogicalServerState()).thenReturn(PASSIVE);
+    when(diagnosticService23.getLogicalServerState()).thenReturn(PASSIVE);
+
+    IntStream.of(PORTS).forEach(port -> {
+      TopologyService topologyService = topologyServiceMock("localhost", port);
+      doNothing().when(topologyService).restart();
+    });
   }
 
 }
