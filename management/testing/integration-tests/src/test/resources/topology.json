@@ -483,6 +483,7 @@
       "vmId": "0@127.0.0.1",
       "clientId": "0@127.0.0.1:TopologyIT:<uuid>",
       "hostName": "<hostname>",
+      "clientReportedAddress": "UNKNOWN",
       "tags": [],
       "version": "<version>",
       "connections": [
@@ -511,6 +512,7 @@
       "vmId": "0@127.0.0.1",
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
       "hostName": "<hostname>",
+      "clientReportedAddress": "UNKNOWN",
       "tags": [
         "caches",
         "pet-clinic"
@@ -707,6 +709,7 @@
       "vmId": "0@127.0.0.1",
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
       "hostName": "<hostname>",
+      "clientReportedAddress": "UNKNOWN",
       "tags": [
         "caches",
         "pet-clinic"

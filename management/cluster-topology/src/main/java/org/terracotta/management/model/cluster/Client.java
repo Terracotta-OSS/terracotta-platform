@@ -43,7 +43,8 @@ public final class Client extends AbstractManageableNode<Cluster> {
   private final ClientIdentifier clientIdentifier;
   private final Collection<String> tags = new LinkedHashSet<>();
   private String hostName;
-  private String version;
+  private String clientReportedAddress = "UNKNOWN";
+  private String version = "UNKNOWN";
 
   private Client(ClientIdentifier clientIdentifier) {
     super(clientIdentifier.getClientId());
@@ -88,6 +89,14 @@ public final class Client extends AbstractManageableNode<Cluster> {
 
   public String getVersion() {
     return version;
+  }
+  
+  public String getClientAddress() {
+    return clientReportedAddress;
+  }
+  
+  public void setClientAddress(String address) {
+    this.clientReportedAddress = address;
   }
 
   public String getHostName() {
@@ -231,6 +240,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     if (!clientIdentifier.equals(client.clientIdentifier)) return false;
     if (!tags.equals(client.tags)) return false;
     if (version != null ? !version.equals(client.version) : client.version != null) return false;
+    if (clientReportedAddress != null ? !clientReportedAddress.equals(client.clientReportedAddress) : client.clientReportedAddress != null) return false;
     return hostName != null ? hostName.equals(client.hostName) : client.hostName == null;
   }
 
@@ -241,6 +251,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     result = 31 * result + clientIdentifier.hashCode();
     result = 31 * result + tags.hashCode();
     result = 31 * result + (version != null ? version.hashCode() : 0);
+    result = 31 * result + (clientReportedAddress != null ? clientReportedAddress.hashCode() : 0);
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
     return result;
   }
@@ -255,6 +266,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     map.put("vmId", getVmId());
     map.put("clientId", getClientId());
     map.put("hostName", getHostName());
+    map.put("clientReportedAddress", this.clientReportedAddress != null ? this.clientReportedAddress : "UNKNOWN");
     map.put("tags", getTags());
     map.put("version", version != null ? version : "UNKNOWN");
     map.put("connections", connectionStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Connection::toMap).collect(Collectors.toList()));

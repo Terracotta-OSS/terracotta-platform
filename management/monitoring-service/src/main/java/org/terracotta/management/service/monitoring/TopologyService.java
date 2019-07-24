@@ -251,22 +251,43 @@ class TopologyService implements PlatformListener {
           Client client = Client.create(clientIdentifier)
               .setHostName(platformConnectedClient.remoteAddress.getHostName());
 
-          try {
-            Field f = platformConnectedClient.getClass().getDeclaredField("version");
-            f.setAccessible(true);
-            Object versionObj = f.get(platformConnectedClient);
-            if (versionObj != null) {
-              client.setVersion(versionObj.toString());
-            }
-          } catch (NoSuchFieldException | IllegalAccessException e) {
-            //
-          }
-
           cluster.addClient(client);
 
           if (client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint))) {
             firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
           }
+        });
+  }
+
+  @Override
+  public void clientVersion(PlatformConnectedClient platformClient, String version) {
+    LOGGER.trace("{} client version({})", platformClient, version);
+
+    stripe.getServerByName(currentActive.getServerName())
+        .ifPresent(server -> {
+
+          ClientIdentifier clientIdentifier = toClientIdentifier(platformClient);
+          cluster.getClient(clientIdentifier)
+              .ifPresent(client -> {
+                client.setVersion(version);
+                firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_META_UPDATED.name()));
+              });
+        });
+  }
+
+  @Override
+  public void clientAddress(PlatformConnectedClient platformClient, String address) {
+    LOGGER.trace("{} client address({})", platformClient, address);
+
+    stripe.getServerByName(currentActive.getServerName())
+        .ifPresent(server -> {
+
+          ClientIdentifier clientIdentifier = toClientIdentifier(platformClient);
+          cluster.getClient(clientIdentifier)
+              .ifPresent(client -> {
+                client.setClientAddress(address);
+                firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_META_UPDATED.name()));
+              });
         });
   }
 

@@ -40,6 +40,7 @@
     "vmId" : "111@127.0.0.1",
     "clientId" : "111@127.0.0.1:name:uuid-1",
     "hostName" : "localhost",
+    "clientReportedAddress" : "localhost:65432",
     "tags" : [ ],
     "version" : "1.2.0",
     "connections" : [ {

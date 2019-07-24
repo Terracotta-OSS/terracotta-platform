@@ -109,6 +109,7 @@
     "vmId" : "12345@127.0.0.1",
     "clientId" : "12345@127.0.0.1:ehcache:uid",
     "hostName" : null,
+    "clientReportedAddress" : "UNKNOWN",
     "tags" : [ ],
     "version" : "UNKNOWN",
     "connections" : [ {

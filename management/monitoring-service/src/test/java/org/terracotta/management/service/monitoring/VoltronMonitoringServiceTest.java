@@ -61,7 +61,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -69,6 +68,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import org.skyscreamer.jsonassert.JSONAssert;
 import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.RELIABLE_CHANNEL_KEY;
 import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.UNRELIABLE_CHANNEL_KEY;
 import static org.terracotta.management.service.monitoring.ManagementMessage.Type.NOTIFICATION;
@@ -137,8 +137,13 @@ public class VoltronMonitoringServiceTest {
     activePlatformListener.addNode(active, PLATFORM_PATH, CLIENTS_ROOT_NAME, null);
 
     // simulate a client connection
-    activePlatformListener.addNode(active, CLIENTS_PATH, "client-1", new PlatformConnectedClient("uuid-1", "name", InetAddress.getByName("localhost"), 1234, InetAddress.getByName("localhost"), 5678, 111, "1.2.0"));
-
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-1", new PlatformConnectedClient("uuid-1", "name", InetAddress.getByName("localhost"), 1234, InetAddress.getByName("localhost"), 5678, 111));
+    // simulate version update
+    String[] clientNodePath = Arrays.copyOf(CLIENTS_PATH, CLIENTS_PATH.length + 1);
+    clientNodePath[CLIENTS_PATH.length] = "client-1";
+    activePlatformListener.addNode(active, clientNodePath, "version", "1.2.0");
+    // simulate address from client update
+    activePlatformListener.addNode(active, clientNodePath, "address", "localhost:65432");
     // simulate an entity creation
     activePlatformListener.addNode(active, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, true));
 
@@ -177,12 +182,18 @@ public class VoltronMonitoringServiceTest {
 
   @Test
   public void test_add_new_client() throws Exception {
-    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222, "1.2.0"));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
+    // simulate version update
+    String[] clientNodePath = Arrays.copyOf(CLIENTS_PATH, CLIENTS_PATH.length + 1);
+    clientNodePath[CLIENTS_PATH.length] = "client-2";
+    activePlatformListener.addNode(active, clientNodePath, "version", "1.2.0");
+    // simulate address from client update
+    activePlatformListener.addNode(active, clientNodePath, "address", "localhost:65432");
     assertTopologyEquals("cluster-2.json");
 
     List<Message> messages = messages();
-    assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION")));
-    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED")));
+    assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION","NOTIFICATION","NOTIFICATION")));
+    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED","CLIENT_META_UPDATED","CLIENT_META_UPDATED")));
   }
 
   @Test
@@ -389,7 +400,7 @@ public class VoltronMonitoringServiceTest {
   public void test_management_call() throws Exception {
     activePlatformListener.addNode(active, FETCHED_PATH, "fetch-1-1", new PlatformClientFetchedEntity("client-1", "entity-1", new FakeDesc("1-1")));
 
-    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222, "1.2.0"));
+    activePlatformListener.addNode(active, CLIENTS_PATH, "client-2", new PlatformConnectedClient("uuid-2", "name", InetAddress.getByName("localhost"), 1235, InetAddress.getByName("localhost"), 5679, 222));
     activePlatformListener.addNode(active, FETCHED_PATH, "fetch-2-1", new PlatformClientFetchedEntity("client-2", "entity-1", new FakeDesc("2-1")));
 
     clientMonitoringService.exposeManagementRegistry(
@@ -422,7 +433,9 @@ public class VoltronMonitoringServiceTest {
     cluster.serverStream().forEach(server -> {
       server.setUpTimeSec(0);
     });
-    assertEquals(new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8"), mapper.writeValueAsString(cluster.toMap()));
+    String expected = new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8");
+    String sampled = mapper.writeValueAsString(cluster.toMap());
+    JSONAssert.assertEquals(expected, sampled, true);
   }
 
   private List<Message> messages() {
