@@ -17,13 +17,11 @@ package org.terracotta.management.integration.tests;
 
 import org.junit.Test;
 import org.terracotta.management.model.cluster.Cluster;
-import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Mathieu Carbou
@@ -36,7 +34,7 @@ public class TopologyIT extends AbstractSingleTest {
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology.json").toString();
-    assertEquals(expected, actual);
+    JSONAssert.assertEquals(expected, actual, true);
   }
 
   @Test
@@ -68,7 +66,7 @@ public class TopologyIT extends AbstractSingleTest {
     String actual = removeRandomValues(currentJson);
     String expected = readJson("notifications.json").toString();
 
-    assertEquals(expected, actual);
+    JSONAssert.assertEquals(expected, actual, true);
   }
 
 }

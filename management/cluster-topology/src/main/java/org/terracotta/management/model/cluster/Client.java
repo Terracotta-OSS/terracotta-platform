@@ -20,6 +20,7 @@ import org.terracotta.management.model.context.Context;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +44,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
   private final ClientIdentifier clientIdentifier;
   private final Collection<String> tags = new LinkedHashSet<>();
   private String hostName;
+  private final Map<String, String> properties = new LinkedHashMap<>();
 
   private Client(ClientIdentifier clientIdentifier) {
     super(clientIdentifier.getClientId());
@@ -78,6 +80,23 @@ public final class Client extends AbstractManageableNode<Cluster> {
 
   public String getHostAddress() {
     return clientIdentifier.getHostAddress();
+  }
+
+  public Client addProperty(String key, String value) {
+    properties.put(key, value);
+    return this;
+  }
+
+  public String getProperty(String key) {
+    return properties.get(key);
+  }
+  
+  public boolean hasProperty(String key) {
+    return properties.containsKey(key);
+  }
+  
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
   public String getHostName() {
@@ -220,6 +239,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     if (!connections.equals(client.connections)) return false;
     if (!clientIdentifier.equals(client.clientIdentifier)) return false;
     if (!tags.equals(client.tags)) return false;
+    if (!properties.equals(client.properties)) return false;
     return hostName != null ? hostName.equals(client.hostName) : client.hostName == null;
   }
 
@@ -229,6 +249,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     result = 31 * result + connections.hashCode();
     result = 31 * result + clientIdentifier.hashCode();
     result = 31 * result + tags.hashCode();
+    result = 31 * result + properties.hashCode();
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
     return result;
   }
@@ -243,7 +264,8 @@ public final class Client extends AbstractManageableNode<Cluster> {
     map.put("vmId", getVmId());
     map.put("clientId", getClientId());
     map.put("hostName", getHostName());
-    map.put("tags", tags);
+    map.put("tags", getTags());
+    map.put("properties", getProperties());
     map.put("connections", connectionStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Connection::toMap).collect(Collectors.toList()));
     map.put("managementRegistry", getManagementRegistry().map(ManagementRegistry::toMap).orElse(null));
     return map;

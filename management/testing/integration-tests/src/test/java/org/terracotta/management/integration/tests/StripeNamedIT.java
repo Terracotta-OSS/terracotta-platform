@@ -39,6 +39,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Mathieu Carbou
@@ -64,7 +65,7 @@ public class StripeNamedIT extends AbstractSingleTest {
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology-renamed.json").toString();
 
-    assertEquals(expected, actual);
+    JSONAssert.assertEquals(expected, actual, true);
 
     // clear previous notifs
     nmsService.readMessages();
