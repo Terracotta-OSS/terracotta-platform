@@ -34,9 +34,11 @@
     "vmId" : "111@127.0.0.1",
     "clientId" : "111@127.0.0.1:name:uuid-1",
     "hostName" : "localhost",
-    "clientReportedAddress" : "localhost:65432",
     "tags" : [ ],
-    "version" : "1.2.0",
+    "properties" : {
+        "clientReportedAddress" : "localhost:65432",
+        "version" : "1.2.0"
+    },
     "connections" : [ {
       "id" : "uuid-1:SINGLE:server-1:127.0.0.1:5678",
       "logicalConnectionUid" : "uuid-1",
@@ -58,9 +60,11 @@
     "vmId" : "222@127.0.0.1",
     "clientId" : "222@127.0.0.1:name:uuid-2",
     "hostName" : "localhost",
-    "clientReportedAddress" : "localhost:65432",
     "tags" : [ ],
-    "version" : "1.2.0",
+    "properties" : {
+        "clientReportedAddress" : "localhost:65432",
+        "version" : "1.2.0"
+    },
     "connections" : [ {
       "id" : "uuid-2:SINGLE:server-1:127.0.0.1:5679",
       "logicalConnectionUid" : "uuid-2",

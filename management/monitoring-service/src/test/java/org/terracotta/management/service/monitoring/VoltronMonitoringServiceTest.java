@@ -143,7 +143,7 @@ public class VoltronMonitoringServiceTest {
     clientNodePath[CLIENTS_PATH.length] = "client-1";
     activePlatformListener.addNode(active, clientNodePath, "version", "1.2.0");
     // simulate address from client update
-    activePlatformListener.addNode(active, clientNodePath, "address", "localhost:65432");
+    activePlatformListener.addNode(active, clientNodePath, "clientReportedAddress", "localhost:65432");
     // simulate an entity creation
     activePlatformListener.addNode(active, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 1, true));
 
@@ -188,12 +188,12 @@ public class VoltronMonitoringServiceTest {
     clientNodePath[CLIENTS_PATH.length] = "client-2";
     activePlatformListener.addNode(active, clientNodePath, "version", "1.2.0");
     // simulate address from client update
-    activePlatformListener.addNode(active, clientNodePath, "address", "localhost:65432");
+    activePlatformListener.addNode(active, clientNodePath, "clientReportedAddress", "localhost:65432");
     assertTopologyEquals("cluster-2.json");
 
     List<Message> messages = messages();
     assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION","NOTIFICATION","NOTIFICATION")));
-    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED","CLIENT_META_UPDATED","CLIENT_META_UPDATED")));
+    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED","CLIENT_PROPERTY_ADDED","CLIENT_PROPERTY_ADDED")));
   }
 
   @Test

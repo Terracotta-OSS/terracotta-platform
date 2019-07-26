@@ -45,6 +45,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -260,8 +261,8 @@ class TopologyService implements PlatformListener {
   }
 
   @Override
-  public void clientVersion(PlatformConnectedClient platformClient, String version) {
-    LOGGER.trace("{} client version({})", platformClient, version);
+  public synchronized void clientAddProperty(PlatformConnectedClient platformClient, String key, String value) {
+    LOGGER.trace("[0] client property added ({}, key:{}, value:{})", platformClient, key, value);
 
     stripe.getServerByName(currentActive.getServerName())
         .ifPresent(server -> {
@@ -269,24 +270,8 @@ class TopologyService implements PlatformListener {
           ClientIdentifier clientIdentifier = toClientIdentifier(platformClient);
           cluster.getClient(clientIdentifier)
               .ifPresent(client -> {
-                client.setVersion(version);
-                firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_META_UPDATED.name()));
-              });
-        });
-  }
-
-  @Override
-  public void clientAddress(PlatformConnectedClient platformClient, String address) {
-    LOGGER.trace("{} client address({})", platformClient, address);
-
-    stripe.getServerByName(currentActive.getServerName())
-        .ifPresent(server -> {
-
-          ClientIdentifier clientIdentifier = toClientIdentifier(platformClient);
-          cluster.getClient(clientIdentifier)
-              .ifPresent(client -> {
-                client.setClientAddress(address);
-                firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_META_UPDATED.name()));
+                client.addProperty(key, value);
+                firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_PROPERTY_ADDED.name(), Collections.singletonMap(key, value)));
               });
         });
   }

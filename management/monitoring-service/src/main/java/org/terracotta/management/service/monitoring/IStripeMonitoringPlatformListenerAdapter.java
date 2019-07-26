@@ -118,11 +118,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
             clients.put(name, (PlatformConnectedClient) value);
             delegate.clientConnected(currentActive, (PlatformConnectedClient) value);
           } else {
-            if (name.equals("version")) {
-              delegate.clientVersion(clients.get(parents[parents.length-1]), value.toString());
-            } else if (name.equals("address")) {
-              delegate.clientAddress(clients.get(parents[parents.length-1]), value.toString());
-            }
+            delegate.clientAddProperty(clients.get(parents[parents.length-1]), name, value.toString());
           }
           return true;
         }

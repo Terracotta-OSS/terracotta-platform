@@ -50,8 +50,5 @@ interface PlatformListener {
 
   void clientUnfetch(PlatformConnectedClient client, PlatformEntity entity, ClientDescriptor clientDescriptor);
   
-  void clientVersion(PlatformConnectedClient client, String version);
-  
-  void clientAddress(PlatformConnectedClient client, String address);
-
+  void clientAddProperty(PlatformConnectedClient client, String key, String value);
 }

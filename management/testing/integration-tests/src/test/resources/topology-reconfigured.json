@@ -483,9 +483,8 @@
       "vmId": "0@127.0.0.1",
       "clientId": "0@127.0.0.1:ReconfigureEntityIT:<uuid>",
       "hostName": "<hostname>",
-      "clientReportedAddress": "UNKNOWN",
       "tags": [],
-      "version": "<version>",
+      "properties" : {  },
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
@@ -512,12 +511,11 @@
       "vmId": "0@127.0.0.1",
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
       "hostName": "<hostname>",
-      "clientReportedAddress": "UNKNOWN",
       "tags": [
         "caches",
         "pet-clinic"
       ],
-      "version": "<version>",
+      "properties" : {  },
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
@@ -709,12 +707,11 @@
       "vmId": "0@127.0.0.1",
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
       "hostName": "<hostname>",
-      "clientReportedAddress": "UNKNOWN",
       "tags": [
         "caches",
         "pet-clinic"
       ],
-      "version": "<version>",
+      "properties" : {  },
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
