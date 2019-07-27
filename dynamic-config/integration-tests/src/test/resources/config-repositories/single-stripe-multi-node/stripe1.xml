@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
   Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
   Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
@@ -7,32 +6,34 @@
 
 <tc-config xmlns="http://www.terracotta.org/config"
            xmlns:ohr="http://www.terracotta.org/config/offheap-resource"
-           xmlns:data="http://www.terracottatech.com/config/data-roots">
+           xmlns:data="http://www.terracottatech.com/config/data-roots"
+           xmlns:persistence="http://www.terracottatech.com/config/platform-persistence">
   <plugins>
     <config>
-      <ohr:offheap-resources>
-        <ohr:resource name="main" unit="MB">512</ohr:resource>
-      </ohr:offheap-resources>
-    </config>
-
-    <config>
       <data:data-directories>
-        <data:directory name="data" use-for-platform="true">%(user.dir)/metadata/stripe1</data:directory>
+        <data:directory name="root1">%(user.dir)/metadata/stripe1</data:directory>
       </data:data-directories>
     </config>
-
-    <service xmlns:security="http://www.terracottatech.com/config/security">
-      <security:security>
-        <security:security-root-directory>%(user.dir)/security/stripe1</security:security-root-directory>
-        <security:ssl-tls/>
-        <security:whitelist/>
-      </security:security>
+    <service>
+      <persistence:platform-persistence data-directory-id="root1"/>
     </service>
+    <config>
+      <ohr:offheap-resources>
+        <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+      </ohr:offheap-resources>
+    </config>
   </plugins>
-
+  <tc-properties/>
   <servers>
     <server host="localhost" name="node-1">
       <logs>%(user.dir)/logs/stripe1/node-1</logs>
+      <tsa-port>9410</tsa-port>
+      <tsa-group-port>9430</tsa-group-port>
+    </server>
+    <server host="localhost" name="node-2">
+      <logs>%(user.dir)/logs/stripe1/node-2</logs>
+      <tsa-port>9510</tsa-port>
+      <tsa-group-port>9530</tsa-group-port>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>

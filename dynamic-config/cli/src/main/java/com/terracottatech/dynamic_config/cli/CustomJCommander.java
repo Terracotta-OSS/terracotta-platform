@@ -91,7 +91,7 @@ public class CustomJCommander extends JCommander {
 
   private void appendUsage(Command command, StringBuilder out, String indent) {
     out.append(indent).append("Usage:\n");
-    out.append(indent).append("    ").append(Metadata.getUsage(command).replaceAll("\n", "\n    " + indent)).append("\n");
+    out.append(indent).append("    ").append(Metadata.getUsage(command).replace("\n", "\n    " + indent)).append("\n");
   }
 
   private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {

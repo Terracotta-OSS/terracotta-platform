@@ -11,7 +11,7 @@
   <plugins>
     <config>
       <ohr:data-directories>
-        <ohr:directory name="root1">%(user.dir)/user-data/main/stripe2</ohr:directory>
+        <ohr:directory name="root1">%(user.dir)/metadata/stripe2</ohr:directory>
       </ohr:data-directories>
     </config>
     <service>

@@ -30,8 +30,6 @@ import static org.junit.Assert.assertThat;
 public class TopologyServiceIT extends BaseStartupIT {
   @Before
   public void setUp() throws Exception {
-    super.setUp();
-
     nodeProcesses.add(NodeProcess.startNode(
         Kit.getOrCreatePath(),
         getBaseDir(),
@@ -61,18 +59,18 @@ public class TopologyServiceIT extends BaseStartupIT {
           .setNodeName("node-1")
           .setNodeHostname("localhost")
           .setNodePort(ports.getPorts()[0])
-          .setNodeGroupPort(ports.getPorts()[1])
+          .setNodeGroupPort(ports.getPorts()[0] + 10)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
           .setNodeConfigDir(pendingTopology.getSingleNode().get().getNodeConfigDir())
-          .setNodeMetadataDir(Paths.get("metadata"))
-          .setNodeLogDir(Paths.get("logs/node-1"))
-          .setNodeBackupDir(Paths.get("backup"))
+          .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
+          .setNodeLogDir(Paths.get("logs", "stripe1", "node-1"))
+          .setNodeBackupDir(Paths.get("backup", "stripe1"))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority("availability")
           .setOffheapResource("main", 512, MB)
-          .setDataDir("main", Paths.get("user-data/main"))
+          .setDataDir("main", Paths.get("user-data", "main", "stripe1"))
       )))));
     }
   }

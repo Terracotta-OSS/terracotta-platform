@@ -17,14 +17,14 @@
 
     <config>
       <data:data-directories>
-        <data:directory name="data" use-for-platform="true">build/data1</data:directory>
+        <data:directory name="data" use-for-platform="true">%(user.dir)/user-data/main/stripe1</data:directory>
       </data:data-directories>
     </config>
   </plugins>
 
   <servers>
-    <server host="localhost" name="testServer1">
-      <logs>logs1</logs>
+    <server host="localhost" name="node-1">
+      <logs>%(user.dir)/logs/stripe1/node-1</logs>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>

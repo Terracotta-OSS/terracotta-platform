@@ -7,7 +7,7 @@
     </config>
     <config>
       <data:data-directories>
-        <data:directory name="data" use-for-platform="true">%(user.dir)/metadata</data:directory>
+        <data:directory name="data" use-for-platform="true">%(user.dir)/metadata/stripe1</data:directory>
       </data:data-directories>
     </config>
     <config>
@@ -26,13 +26,13 @@
                   </config>
                   <config>
                     <data:data-directories>
-                      <data:directory name="data" use-for-platform="true">%(user.dir)/metadata</data:directory>
+                      <data:directory name="data" use-for-platform="true">%(user.dir)/metadata/stripe1</data:directory>
                     </data:data-directories>
                   </config>
                 </plugins>
                 <servers>
                   <server bind="0.0.0.0" host="localhost" name="node-1">
-                    <logs>%(user.dir)/logs/node-1</logs>
+                    <logs>%(user.dir)/logs/stripe1/node-1</logs>
                   </server>
                   <client-reconnect-window>120</client-reconnect-window>
                 </servers>
@@ -48,7 +48,7 @@
   </plugins>
   <servers>
     <server bind="0.0.0.0" host="localhost" name="node-1">
-      <logs>%(user.dir)/logs/node-1</logs>
+      <logs>%(user.dir)/logs/stripe1/node-1</logs>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>

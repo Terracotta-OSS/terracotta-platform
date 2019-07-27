@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
@@ -35,31 +34,19 @@ public class ActivateIT extends BaseStartupIT {
   public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
-
-    int[] ports = this.ports.getPorts();
-    // Ensure that there are even number of ports before we start the test
-    assertThat(ports.length, greaterThanOrEqualTo(2));
-    assertThat(ports.length % 2, is(0));
-
-    for (int i = 0, loopCount = 1; i < ports.length; i += 2, loopCount++) {
-      int port = ports[i];
-      int groupPort = ports[i + 1];
-      nodeProcesses.add(NodeProcess.startNode(
-          Kit.getOrCreatePath(),
-          getBaseDir(),
-          "--node-name", "node-" + loopCount,
-          "--node-hostname", "localhost",
-          "--node-port", String.valueOf(port),
-          "--node-group-port", String.valueOf(groupPort),
-          "--node-log-dir", "logs/node-" + loopCount,
-          "--node-backup-dir", "backup",
-          "--node-metadata-dir", "metadata",
-          "--node-config-dir", "repository/node-" + loopCount,
-          "--data-dirs", "main:user-data/main")
-      );
-    }
+  public void setUp() {
+    forEachNode((stripeId, nodeId, port) -> nodeProcesses.add(NodeProcess.startNode(
+        Kit.getOrCreatePath(),
+        getBaseDir(),
+        "--node-name", "node-" + nodeId,
+        "--node-hostname", "localhost",
+        "--node-port", String.valueOf(port),
+        "--node-group-port", String.valueOf(port + 10),
+        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
+        "--node-backup-dir", "backup/stripe" + stripeId,
+        "--node-metadata-dir", "metadata/stripe" + stripeId,
+        "--node-config-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
+        "--data-dirs", "main:user-data/main/stripe" + stripeId)));
 
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
@@ -118,7 +105,7 @@ public class ActivateIT extends BaseStartupIT {
   @Test
   public void testMultiNodeSingleStripeActivation() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
+    ConfigTool.main("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();

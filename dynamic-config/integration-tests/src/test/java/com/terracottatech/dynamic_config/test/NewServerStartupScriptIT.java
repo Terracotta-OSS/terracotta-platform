@@ -18,28 +18,28 @@ import static org.hamcrest.Matchers.containsString;
 public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
-    Path configurationRepo = copyServerConfigFiles(singleStripeSingleNode(1, "node-1"));
+    Path configurationRepo = copyServerConfigFiles(1, 1, this::singleStripeSingleNode);
     startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
-    Path configurationRepo = copyServerConfigFiles(singleStripeMultiNode(1, "node-2"));
+    Path configurationRepo = copyServerConfigFiles(1, 2, this::singleStripeMultiNode);
     startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
-    Path configurationRepo = copyServerConfigFiles(multiStripe(2, "node-1"));
+    Path configurationRepo = copyServerConfigFiles(2, 1, this::multiStripe);
     startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithNonExistentRepo() throws Exception {
-    startServer(1, "-c", configRepositoryPath().toString());
+    startServer(1, 1, "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
@@ -135,13 +135,13 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
 
   @Test
   public void testSuccessfulStartupCliParams() throws Exception {
-    startServer(1, "-p", String.valueOf(ports.getPort()), "-c", configRepositoryPath().toString());
+    startServer(1, 1, "-p", String.valueOf(ports.getPort()), "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testSuccessfulStartupCliParamsWithLicense() throws Exception {
-    startServer(1,
+    startServer(1, 1,
         "-p", String.valueOf(ports.getPort()),
         "-l", licensePath().toString(),
         "-N", "tc-cluster",
@@ -167,14 +167,14 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), cli));
   }
 
-  private void startServer(int idx, String... cli) {
+  private void startServer(int stripeId, int nodeId, String... cli) {
     String[] args = concat(Stream.of(cli), Stream.of(
-        "--node-name", "node-" + idx,
+        "--node-name", "node-" + nodeId,
         "--node-hostname", "localhost",
-        "--node-log-dir", "logs/node-" + idx,
-        "--node-backup-dir", "backup",
-        "--node-metadata-dir", "metadata",
-        "--data-dirs", "main:user-data/main"
+        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
+        "--node-backup-dir", "backup/stripe" + stripeId,
+        "--node-metadata-dir", "metadata/stripe" + stripeId,
+        "--data-dirs", "main:user-data/main/stripe" + stripeId
     )).toArray(String[]::new);
     nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), args));
   }

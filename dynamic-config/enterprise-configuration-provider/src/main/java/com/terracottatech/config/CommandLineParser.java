@@ -63,7 +63,7 @@ class CommandLineParser {
 
     this.config = commandLine.getOptionValue(CONFIG.longName());
     this.configurationRepo = commandLine.hasOption(CONFIG_REPO.shortName()) ?
-        Paths.get(commandLine.getOptionValue(CONFIG_REPO.shortName())) : null;
+        Paths.get(commandLine.getOptionValue(CONFIG_REPO.shortName())).toAbsolutePath() : null;
     this.configConsistencyMode = commandLine.hasOption(CONFIG_CONSISTENCY.longName());
     this.nodeName = commandLine.getOptionValue(NODE_NAME.longName());
 
