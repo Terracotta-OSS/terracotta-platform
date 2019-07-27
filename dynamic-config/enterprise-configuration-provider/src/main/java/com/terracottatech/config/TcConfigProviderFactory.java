@@ -6,10 +6,8 @@ package com.terracottatech.config;
 
 class TcConfigProviderFactory {
   static TcConfigProvider init(CommandLineParser commandLineParser) {
-    if (commandLineParser.isConfigConsistencyMode()) {
-      return new TcConfigFileProvider(commandLineParser.getConfig());
-    } else {
-      return new NomadRootTcConfigProvider(commandLineParser.getConfigurationRepo());
-    }
+    return commandLineParser.getConfigurationRepositoryPath()
+        .<TcConfigProvider>map(NomadRootTcConfigProvider::new)
+        .orElseGet(() -> new TcConfigFileProvider(commandLineParser.getConfig()));
   }
 }

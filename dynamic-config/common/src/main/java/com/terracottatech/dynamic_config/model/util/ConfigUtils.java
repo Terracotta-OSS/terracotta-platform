@@ -5,7 +5,6 @@
 
 package com.terracottatech.dynamic_config.model.util;
 
-import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.Node;
 
 import javax.xml.bind.DatatypeConverter;
@@ -15,15 +14,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
+
 
 public class ConfigUtils {
-  public static Path createTempTcConfig(Node node) {
+
+  public static Path createTempTcConfig(Node node, Path root) {
     try {
-      Path configPath = Files.createTempFile("tc-config", ".xml");
+      Path temporaryTcConfigXml = Files.createTempFile(substitute(root), "tc-config-tmp.", ".xml");
       String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
           "   <plugins>\n" +
-          getDataDirectoryConfig(node) +
-          getSecurityConfig(node) +
+          getDataDirectoryConfig(node, root) +
+          getSecurityConfig(node, root) +
           "   </plugins>\n" +
           "    <servers>\n" +
           "        <server host=\"${HOSTNAME}\" name=\"${NAME}\" bind=\"${BIND}\">\n" +
@@ -40,19 +42,20 @@ public class ConfigUtils {
           .replace("${NAME}", node.getNodeName())
           .replace("${BIND}", node.getNodeBindAddress())
           .replace("${PORT}", String.valueOf(node.getNodePort()))
-          .replace("${LOGS}", node.getNodeLogDir().toString())
+          .replace("${LOGS}", root.resolve(node.getNodeLogDir()).toString())
           .replace("${GROUP-BIND}", node.getNodeGroupBindAddress())
           .replace("${GROUP-PORT}", String.valueOf(node.getNodeGroupPort()))
-          .replace("${RECONNECT_WINDOW}", String.valueOf((int)(node.getClientReconnectWindow().getUnit().toSeconds(node.getClientReconnectWindow().getQuantity()))));
+          .replace("${RECONNECT_WINDOW}", String.valueOf((int) (node.getClientReconnectWindow().getUnit().toSeconds(node.getClientReconnectWindow().getQuantity()))));
 
-      Files.write(configPath, configuration.getBytes(StandardCharsets.UTF_8));
-      return configPath;
+      Files.write(temporaryTcConfigXml, configuration.getBytes(StandardCharsets.UTF_8));
+      temporaryTcConfigXml.toFile().deleteOnExit();
+      return temporaryTcConfigXml;
     } catch (IOException e) {
       throw new RuntimeException("Unable to create temp file for storing the configuration", e);
     }
   }
 
-  private static String getSecurityConfig(Node node) {
+  private static String getSecurityConfig(Node node, Path root) {
     StringBuilder sb = new StringBuilder();
 
     if (node.getSecurityDir() != null) {
@@ -60,10 +63,10 @@ public class ConfigUtils {
       sb.append("<security xmlns=\"http://www.terracottatech.com/config/security\">");
 
       if (node.getSecurityAuditLogDir() != null) {
-        sb.append("<audit-directory>").append(node.getSecurityAuditLogDir()).append("</audit-directory>");
+        sb.append("<audit-directory>").append(root.resolve(node.getSecurityAuditLogDir())).append("</audit-directory>");
       }
 
-      sb.append("<security-root-directory>").append(node.getSecurityDir()).append("</security-root-directory>");
+      sb.append("<security-root-directory>").append(root.resolve(node.getSecurityDir())).append("</security-root-directory>");
 
       if (node.isSecuritySslTls()) {
         sb.append("<ssl-tls/>");
@@ -86,19 +89,14 @@ public class ConfigUtils {
     return sb.toString();
   }
 
-  private static String getDataDirectoryConfig(Node node) {
+  private static String getDataDirectoryConfig(Node node, Path root) {
     String dataDirectoryConfig = "     <config xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n" +
-                                 "     <data:data-directories>\n" +
-                                 "         <data:directory name=\"data\" use-for-platform=\"true\">${DATA_DIR}</data:directory>\n" +
-                                 "     </data:data-directories>\n" +
-                                 "     </config>\n";
+        "     <data:data-directories>\n" +
+        "         <data:directory name=\"data\" use-for-platform=\"true\">${DATA_DIR}</data:directory>\n" +
+        "     </data:data-directories>\n" +
+        "     </config>\n";
 
-    return dataDirectoryConfig.replace("${DATA_DIR}", node.getNodeMetadataDir().toString());
-  }
-
-  public static String getSubstitutedConfigDir(String nodeConfigDir) {
-    String specifiedOrDefaultConfigDir = nodeConfigDir == null ? DynamicConfigConstants.DEFAULT_CONFIG_DIR : nodeConfigDir;
-    return ParameterSubstitutor.substitute(specifiedOrDefaultConfigDir);
+    return dataDirectoryConfig.replace("${DATA_DIR}", root.resolve(node.getNodeMetadataDir()).toString());
   }
 
   public static String generateNodeName() {

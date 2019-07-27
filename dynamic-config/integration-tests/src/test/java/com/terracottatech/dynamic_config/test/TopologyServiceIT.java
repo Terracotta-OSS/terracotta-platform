@@ -14,7 +14,6 @@ import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Before;
 import org.junit.Test;
-import org.terracotta.config.util.ParameterSubstitutor;
 
 import java.nio.file.Paths;
 
@@ -31,11 +30,13 @@ import static org.junit.Assert.assertThat;
 public class TopologyServiceIT extends BaseStartupIT {
   @Before
   public void setUp() throws Exception {
+    super.setUp();
+
     nodeProcesses.add(NodeProcess.startNode(
         Kit.getOrCreatePath(),
+        getBaseDir(),
         "-N", "tc-cluster",
-        "-f", configFilePath("/config-property-files/single-stripe.properties"),
-        "-c", temporaryFolder.newFolder().getAbsolutePath()
+        "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
         )
     );
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
@@ -63,15 +64,15 @@ public class TopologyServiceIT extends BaseStartupIT {
           .setNodeGroupPort(ports.getPorts()[1])
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
-          .setNodeConfigDir(Paths.get("build/config-1"))
-          .setNodeMetadataDir(Paths.get("build/metadata-1"))
-          .setNodeLogDir(Paths.get("build/logs-1"))
-          .setNodeBackupDir(Paths.get("build/backup-1"))
+          .setNodeConfigDir(pendingTopology.getSingleNode().get().getNodeConfigDir())
+          .setNodeMetadataDir(Paths.get("metadata"))
+          .setNodeLogDir(Paths.get("logs/node-1"))
+          .setNodeBackupDir(Paths.get("backup"))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority("availability")
           .setOffheapResource("main", 512, MB)
-          .setDataDir("main", Paths.get(ParameterSubstitutor.substitute("%H/terracotta/user-data/main")))
+          .setDataDir("main", Paths.get("user-data/main"))
       )))));
     }
   }

@@ -4,18 +4,19 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
+import com.terracottatech.data.config.DataRootMapping;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.terracottatech.data.config.DataRootMapping;
-
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -24,6 +25,8 @@ public class DataDirectoriesElementTest {
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  Supplier<Path> basedir = () -> Paths.get("");
 
   @Test
   public void testCreateDataDirectories() throws IOException {
@@ -36,7 +39,7 @@ public class DataDirectoriesElementTest {
     dataRootMap.put("data-root-2", dataRoot2);
 
     com.terracottatech.data.config.DataDirectories dataDirectories =
-        new DataDirectories(dataRootMap, metadataRoot).createDataDirectories();
+        new DataDirectories(dataRootMap, metadataRoot, basedir).createDataDirectories();
 
     Map<String, Pair> expected = new HashMap<>();
     expected.put("data-root-1", new Pair(dataRoot1.toString(), false));
@@ -63,7 +66,7 @@ public class DataDirectoriesElementTest {
     dataRootMap.put("data-root-2", dataRoot2);
 
     com.terracottatech.data.config.DataDirectories dataDirectories =
-        new DataDirectories(dataRootMap, dataRoot1).createDataDirectories();
+        new DataDirectories(dataRootMap, dataRoot1, basedir).createDataDirectories();
 
     Map<String, Pair> expected = new HashMap<>();
     expected.put("data-root-1", new Pair(dataRoot1.toString(), true));
@@ -92,9 +95,9 @@ public class DataDirectoriesElementTest {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      final Pair pair = (Pair)o;
+      final Pair pair = (Pair) o;
       return isPlatformRoot == pair.isPlatformRoot &&
-             Objects.equals(path, pair.path);
+          Objects.equals(path, pair.path);
     }
 
     @Override

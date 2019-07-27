@@ -17,6 +17,7 @@ import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import static com.terracottatech.config.CommandLineParser.Opt.CONFIG;
 import static com.terracottatech.config.CommandLineParser.Opt.CONFIG_CONSISTENCY;
@@ -79,8 +80,8 @@ class CommandLineParser {
     return config;
   }
 
-  Path getConfigurationRepo() {
-    return configurationRepo;
+  Optional<Path> getConfigurationRepositoryPath() {
+    return Optional.ofNullable(configurationRepo);
   }
 
   boolean isConfigConsistencyMode() {

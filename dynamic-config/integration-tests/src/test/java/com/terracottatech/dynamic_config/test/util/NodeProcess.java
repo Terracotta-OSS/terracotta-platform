@@ -62,23 +62,23 @@ public class NodeProcess implements Closeable {
 
   }
 
-  public static NodeProcess startNode(Path kitInstallationPath, String... cli) {
+  public static NodeProcess startNode(Path kitInstallationPath, Path workingDir, String... cli) {
     Path script = kitInstallationPath
         .resolve("server")
         .resolve("bin")
         .resolve("start-node." + (Env.isWindows() ? "bat" : "sh"));
-    return start(script, cli);
+    return start(script, workingDir, cli);
   }
 
-  public static NodeProcess startTcServer(Path kitInstallationPath, String... cli) {
+  public static NodeProcess startTcServer(Path kitInstallationPath, Path workingDir, String... cli) {
     Path script = kitInstallationPath
         .resolve("server")
         .resolve("bin")
         .resolve("start-tc-server." + (Env.isWindows() ? "bat" : "sh"));
-    return start(script, cli);
+    return start(script, workingDir, cli);
   }
 
-  private static NodeProcess start(Path scriptPath, String... args) {
+  private static NodeProcess start(Path scriptPath, Path workingDir, String... args) {
     if (!Files.exists(scriptPath)) {
       throw new IllegalArgumentException("Terracotta server start script does not exist: " + scriptPath);
     }
@@ -92,6 +92,7 @@ public class NodeProcess implements Closeable {
     eventMap.put("PID is", "PID");
 
     AnyProcess process = AnyProcess.newBuilder()
+        .workingDir(workingDir.toFile())
         .command(concat(of(scriptPath.toString()), of(args)).toArray(String[]::new))
         .pipeStdout(new SimpleEventingStream(serverBus, eventMap, System.out))
         .pipeStderr()

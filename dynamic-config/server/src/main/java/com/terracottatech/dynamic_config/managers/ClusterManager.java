@@ -9,12 +9,12 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.parsing.ConfigFileParser;
 import com.terracottatech.dynamic_config.parsing.ConsoleParamsParser;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Map;
 
 public class ClusterManager {
-  static Cluster createCluster(String configFile, String optionalClusterName) {
-    return ConfigFileParser.parse(new File(configFile), optionalClusterName);
+  static Cluster createCluster(Path configFile, String optionalClusterName) {
+    return ConfigFileParser.parse(configFile.toFile(), optionalClusterName);
   }
 
   static Cluster createCluster(Map<String, String> paramValueMap) {

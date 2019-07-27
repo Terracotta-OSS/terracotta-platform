@@ -16,17 +16,21 @@ import org.terracotta.config.TcConfig;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class StripeConfigurationTest {
+
+  Supplier<Path> basedir = () -> Paths.get("");
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -59,7 +63,7 @@ public class StripeConfigurationTest {
 
     Stripe stripe = new Stripe(nodeList);
 
-    StripeConfiguration stripeConfiguration = new StripeConfiguration(stripe);
+    StripeConfiguration stripeConfiguration = new StripeConfiguration(stripe, basedir);
 
     assertThat(stripeConfiguration.get("server-1"), notNullValue());
     assertThat(stripeConfiguration.get("server-2"), notNullValue());

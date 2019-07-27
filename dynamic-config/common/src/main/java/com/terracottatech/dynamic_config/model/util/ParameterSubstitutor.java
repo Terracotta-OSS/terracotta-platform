@@ -8,12 +8,18 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 // Copy of org.terracotta.config.util.ParameterSubstitutor to avoid a client-side dependency on tc-config-parser
 public class ParameterSubstitutor {
   private static String uniqueTempDirectory = null;
+
+  public static Path substitute(Path path) {
+    return Paths.get(substitute(path.toString()));
+  }
 
   public static String substitute(String source) {
     if (source == null) return null;

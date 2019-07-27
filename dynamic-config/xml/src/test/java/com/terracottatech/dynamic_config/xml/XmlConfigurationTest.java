@@ -14,6 +14,7 @@ import org.xmlunit.diff.ElementSelectors;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertThat;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
@@ -25,7 +26,7 @@ public class XmlConfigurationTest {
         ConfigFileParser.parse(new File(getClass().getResource("/single-stripe-config.properties").toURI()), "my-cluster");
 
     String actual =
-        new XmlConfiguration(cluster, 1, "node-1").toString();
+        new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
 
     assertXml(actual, "single-stripe-config.xml");
   }
@@ -36,7 +37,7 @@ public class XmlConfigurationTest {
         ConfigFileParser.parse(new File(getClass().getResource("/multi-stripe-config.properties").toURI()), "my-cluster");
 
     String actual =
-        new XmlConfiguration(cluster, 1, "node-1").toString();
+        new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
 
     System.out.println(actual);
     assertXml(actual, "multi-stripe-config.xml");
@@ -47,10 +48,10 @@ public class XmlConfigurationTest {
     assertThat(
         Input.from(actual),
         isSimilarTo(Input.from(expectedConfigUrl)).ignoreComments()
-                                                  .ignoreWhitespace()
-                                                  .withNodeMatcher(
-                                                      new DefaultNodeMatcher(ElementSelectors.byNameAndText)
-                                                  )
+            .ignoreWhitespace()
+            .withNodeMatcher(
+                new DefaultNodeMatcher(ElementSelectors.byNameAndText)
+            )
     );
   }
 }

@@ -9,6 +9,8 @@ import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.dynamic_config.xml.XmlConfiguration;
 import com.terracottatech.nomad.server.NomadException;
 
+import java.nio.file.Paths;
+
 import static java.util.Objects.requireNonNull;
 
 public class ClusterActivationNomadChangeProcessor implements NomadChangeProcessor<ClusterActivationNomadChange> {
@@ -22,14 +24,15 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
   @Override
   public String getConfigWithChange(String baseConfig, ClusterActivationNomadChange change) throws NomadException {
     if (baseConfig != null) {
-      throw new NomadException("baseConfig must be null");
+      throw new NomadException("Existing config must be null. Found: " + baseConfig);
     }
 
     try {
       return new XmlConfiguration(
           change.getCluster(),
           this.configController.getStripeId(),
-          this.configController.getNodeName()
+          this.configController.getNodeName(),
+          () -> Paths.get("%(user.dir)")
       ).toString();
     } catch (Exception e) {
       throw new NomadException("Caught exception while converting cluster config to xml", e);

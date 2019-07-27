@@ -94,7 +94,7 @@ public class NomadBootstrapper {
     /**
      * Makes Nomad server capable of write operations.
      *
-     * @param nodeName   Name of the running node
+     * @param nodeName Name of the running node
      * @param stripeId ID of the stripe where the node belongs
      */
     public void upgradeForWrite(String nodeName, int stripeId) {

@@ -9,18 +9,20 @@ import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.topology.config.xmlobjects.ObjectFactory;
 import org.w3c.dom.Element;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class ClusterConfiguration {
   private final Map<Integer, StripeConfiguration> stripeIdConfigInfo = new HashMap<>();
   private final String clusterName;
 
-  ClusterConfiguration(Cluster cluster) {
+  ClusterConfiguration(Cluster cluster, Supplier<Path> baseDir) {
     List<Stripe> stripes = cluster.getStripes();
     for (int i = 0; i < stripes.size(); i++) {
-      stripeIdConfigInfo.put(i + 1, new StripeConfiguration(stripes.get(i)));
+      stripeIdConfigInfo.put(i + 1, new StripeConfiguration(stripes.get(i), baseDir));
     }
     this.clusterName = cluster.getName();
   }

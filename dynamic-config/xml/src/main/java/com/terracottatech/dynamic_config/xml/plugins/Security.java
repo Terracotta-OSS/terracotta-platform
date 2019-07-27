@@ -11,14 +11,18 @@ import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.xml.Utils;
 
 import javax.xml.bind.JAXBElement;
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public class Security {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
   private final Node node;
+  private final Supplier<Path> baseDir;
 
-  public Security(Node node) {
+  public Security(Node node, Supplier<Path> baseDir) {
     this.node = node;
+    this.baseDir = baseDir;
   }
 
   public Element toElement() {
@@ -32,10 +36,10 @@ public class Security {
   com.terracottatech.config.security.Security createSecurity() {
     com.terracottatech.config.security.Security security = FACTORY.createSecurity();
 
-    security.setSecurityRootDirectory(node.getSecurityDir().toString());
+    security.setSecurityRootDirectory(baseDir.get().resolve(node.getSecurityDir()).toString());
 
     if (node.getSecurityAuditLogDir() != null) {
-      security.setAuditDirectory(node.getSecurityAuditLogDir().toString());
+      security.setAuditDirectory(baseDir.get().resolve(node.getSecurityAuditLogDir()).toString());
     }
 
     if (node.isSecuritySslTls()) {

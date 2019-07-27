@@ -10,7 +10,6 @@ import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
-import com.terracottatech.dynamic_config.model.util.ConfigUtils;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.slf4j.Logger;
@@ -20,6 +19,8 @@ import org.terracotta.config.TcConfiguration;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_CONFIG_DIR;
 
 @OverrideService("com.tc.config.DefaultConfigurationProvider")
 public class EnterpriseConfigurationProvider implements ConfigurationProvider {
@@ -43,12 +44,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   }
 
   private void bootstrapNomad(CommandLineParser cliParser) {
-    Path configurationRepo;
-    if (cliParser.getConfigurationRepo() == null) {
-      configurationRepo = Paths.get(ConfigUtils.getSubstitutedConfigDir(null));
-    } else {
-      configurationRepo = cliParser.getConfigurationRepo();
-    }
+    Path configurationRepo = cliParser.getConfigurationRepositoryPath().orElse(Paths.get(DEFAULT_CONFIG_DIR));
     LOGGER.info("Bootstrapping nomad system with root: {}", configurationRepo);
     NomadBootstrapper.bootstrap(configurationRepo, cliParser.getNodeName());
   }

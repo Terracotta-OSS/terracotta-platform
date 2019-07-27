@@ -7,7 +7,7 @@
     </config>
     <config>
       <data:data-directories>
-        <data:directory name="data" use-for-platform="true">build/data1</data:directory>
+        <data:directory name="data" use-for-platform="true">%(user.dir)/metadata</data:directory>
       </data:data-directories>
     </config>
     <config>
@@ -15,7 +15,7 @@
         <cl:name>testCluster</cl:name>
         <cl:stripe>
           <cl:node>
-            <cl:name>testServer1</cl:name>
+            <cl:name>node-1</cl:name>
             <cl:server-config>
               <tc-config>
                 <plugins>
@@ -26,13 +26,13 @@
                   </config>
                   <config>
                     <data:data-directories>
-                      <data:directory name="data" use-for-platform="true">build/data1</data:directory>
+                      <data:directory name="data" use-for-platform="true">%(user.dir)/metadata</data:directory>
                     </data:data-directories>
                   </config>
                 </plugins>
                 <servers>
-                  <server bind="0.0.0.0" host="localhost" name="testServer1">
-                    <logs>logs1</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-1">
+                    <logs>%(user.dir)/logs/node-1</logs>
                   </server>
                   <client-reconnect-window>120</client-reconnect-window>
                 </servers>
@@ -47,8 +47,8 @@
     </config>
   </plugins>
   <servers>
-    <server bind="0.0.0.0" host="localhost" name="testServer1">
-      <logs>logs1</logs>
+    <server bind="0.0.0.0" host="localhost" name="node-1">
+      <logs>%(user.dir)/logs/node-1</logs>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>

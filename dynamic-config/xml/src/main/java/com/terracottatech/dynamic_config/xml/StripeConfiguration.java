@@ -13,19 +13,23 @@ import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 class StripeConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
   private final Map<String, ServerConfiguration> stripeConfiguration;
+  private final Supplier<Path> baseDir;
 
-  StripeConfiguration(Stripe stripe) {
+  StripeConfiguration(Stripe stripe, Supplier<Path> baseDir) {
+    this.baseDir = baseDir;
     Map<String, ServerConfiguration> stripeConfiguration = new HashMap<>();
     Servers servers = createServers(stripe);
     for (Node node : stripe.getNodes()) {
-      stripeConfiguration.put(node.getNodeName(), new ServerConfiguration(node, servers));
+      stripeConfiguration.put(node.getNodeName(), new ServerConfiguration(node, servers, baseDir));
     }
 
     this.stripeConfiguration = stripeConfiguration;
@@ -35,7 +39,7 @@ class StripeConfiguration {
     return stripeConfiguration.get(serverName);
   }
 
-  private static Servers createServers(Stripe stripe) {
+  private Servers createServers(Stripe stripe) {
     Servers servers = FACTORY.createServers();
 
     int reconnectWindow = -1;
@@ -43,7 +47,7 @@ class StripeConfiguration {
       servers.getServer().add(createServer(node));
       if (reconnectWindow == -1) {
         Measure<TimeUnit> clientReconnectWindow = node.getClientReconnectWindow();
-        reconnectWindow = (int)clientReconnectWindow.getUnit().toSeconds(clientReconnectWindow.getQuantity());
+        reconnectWindow = (int) clientReconnectWindow.getUnit().toSeconds(clientReconnectWindow.getQuantity());
       }
     }
 
@@ -52,12 +56,12 @@ class StripeConfiguration {
     return servers;
   }
 
-  private static Server createServer(Node node) {
+  private Server createServer(Node node) {
     Server server = FACTORY.createServer();
 
     server.setName(node.getNodeName());
     server.setHost(node.getNodeHostname());
-    server.setLogs(node.getNodeLogDir().toString());
+    server.setLogs(baseDir.get().resolve(node.getNodeLogDir()).toString());
     server.setBind(node.getNodeBindAddress());
 
     BindPort tsaPort = FACTORY.createBindPort();

@@ -19,16 +19,21 @@ import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.*;
 
 public class ServerConfigurationTest {
+
+  Supplier<Path> basedir = () -> Paths.get("");
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -46,7 +51,7 @@ public class ServerConfigurationTest {
 
     Servers servers = new Servers();
 
-    ServerConfiguration serverConfiguration = new ServerConfiguration(node, servers);
+    ServerConfiguration serverConfiguration = new ServerConfiguration(node, servers, basedir);
 
     TcConfig tcConfig = serverConfiguration.getTcConfig();
 

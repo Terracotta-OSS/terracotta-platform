@@ -11,7 +11,7 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceCon
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
-import com.terracottatech.dynamic_config.cli.service.nomad.NomadFailureRecorder;
+import com.terracottatech.dynamic_config.nomad.NomadFailureRecorder;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
@@ -146,7 +146,7 @@ public class ActivateCommand extends Command {
       cluster = loadCluster();
       connection = connectionFactory.createConnection(cluster.getNodeAddresses());
 
-      ensureNoActiveNode();
+      ensureNoActivatedNode();
 
       cluster.setName(clusterName);
       LOGGER.debug("Setting cluster name successful");
@@ -201,7 +201,7 @@ public class ActivateCommand extends Command {
     }
   }
 
-  private void ensureNoActiveNode() {
+  private void ensureNoActivatedNode() {
     LOGGER.debug("Contacting all cluster nodes: {} to check for first run of activation command", cluster.getNodeAddresses());
     Collection<String> activated = getTopologyServiceStream()
         .filter(t -> t.t2.isActivated())
@@ -235,7 +235,7 @@ public class ActivateCommand extends Command {
   }
 
   private void installLicense() {
-    LicenseValidator.validateLicense(cluster, licenseFile.toAbsolutePath().toString());
+    LicenseValidator.validateLicense(cluster, licenseFile);
     LOGGER.debug("License validation successful");
 
     String validatedLicense;

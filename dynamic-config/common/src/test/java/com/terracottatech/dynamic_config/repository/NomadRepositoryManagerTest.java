@@ -17,9 +17,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.FULL;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
+import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.findNodeName;
+import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -109,7 +114,7 @@ public class NomadRepositoryManagerTest {
     doReturn(true).when(spyRepoManager).checkDirectoryExists(licenseDirPath);
     doReturn(true).when(spyRepoManager).checkDirectoryExists(sanskritDirPath);
 
-    NomadRepositoryManager.RepositoryDepth repoDepth = spyRepoManager.getRepositoryDepth();
+    RepositoryDepth repoDepth = spyRepoManager.getRepositoryDepth();
     assertThat(repoDepth, is(FULL));
 
     doReturn(false).when(spyRepoManager).checkDirectoryExists(nomadRoot);
@@ -194,7 +199,7 @@ public class NomadRepositoryManagerTest {
     NomadRepositoryManager spyRepoManager = spy(repoManager);
 
     doReturn(FULL).when(spyRepoManager).getRepositoryDepth();
-    doReturn(Optional.of("node1")).when(spyRepoManager).extractNodeName();
+    doReturn(Optional.of("node1")).when(spyRepoManager).getNodeName();
 
     Optional<String> nodeNameOpt = spyRepoManager.getNodeName();
     assertThat(nodeNameOpt, is(notNullValue()));
@@ -209,34 +214,33 @@ public class NomadRepositoryManagerTest {
     Path config = nomadRoot.resolve("config");
     Files.createDirectory(config);
 
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
-    NomadRepositoryManager spyRepoManager = spy(repoManager);
-
-    assertThat(spyRepoManager.extractNodeName(), is(Optional.empty()));
+    assertThat(findNodeName(nomadRoot), is(Optional.empty()));
 
     Path configFilePath = config.resolve("cluster-config.3.node1.xml");
     Files.createFile(configFilePath);
-    assertThat(spyRepoManager.extractNodeName(), is(Optional.empty()));
+    assertThat(findNodeName(nomadRoot), is(Optional.empty()));
 
     Files.delete(configFilePath);
     configFilePath = config.resolve("cluster-config.node1.3.xml");
     Files.createFile(configFilePath);
-    String nodeName = spyRepoManager.extractNodeName().get();
+    String nodeName = findNodeName(nomadRoot).get();
     assertThat(nodeName, is("node1"));
 
     configFilePath = config.resolve("cluster-config.node1.4.xml");
     Files.createFile(configFilePath);
-    spyRepoManager.extractNodeName();
+    findNodeName(nomadRoot);
     assertThat(nodeName, is("node1"));
 
     configFilePath = config.resolve("cluster-config.node2.4.xml");
     Files.createFile(configFilePath);
-    assertThat(spyRepoManager.extractNodeName(), is(Optional.empty()));
+    assertThat(
+        () -> findNodeName(nomadRoot),
+        is(throwing(instanceOf(MalformedRepositoryException.class)).andMessage(is(equalTo("Found configuration files for different nodes (node2, node1) in " + config)))));
 
     Files.delete(configFilePath);
     configFilePath = config.resolve("cluster-config.3.node1.xml");
     Files.createFile(configFilePath);
-    spyRepoManager.extractNodeName();
+    findNodeName(nomadRoot);
     assertThat(nodeName, is("node1"));
   }
 }

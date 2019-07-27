@@ -30,15 +30,21 @@ public class AttachDetachCommandIT extends BaseStartupIT {
   @Rule public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
   @Before
-  public void setUp() {
-    IntStream.of(ports.getPorts())
-        .mapToObj(port -> NodeProcess.startNode(Kit.getOrCreatePath(),
+  public void setUp() throws Exception {
+    super.setUp();
+    int[] ports = this.ports.getPorts();
+
+    IntStream.range(0, ports.length)
+        .mapToObj(i -> NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(),
+            "--node-name", "node-" + (i + 1),
             "--node-hostname", "localhost",
-            "--node-port", String.valueOf(port),
-            "--node-log-dir", "build/logs-" + port,
-            "--node-backup-dir", "build/backup-" + port,
-            "--node-metadata-dir", "build/metadata-" + port,
-            "--node-config-dir", "build/config-" + port))
+            "--node-port", String.valueOf(ports[i]),
+            "--node-log-dir", "logs/node-" + (i + 1),
+            "--node-backup-dir", "backup",
+            "--node-metadata-dir", "metadata",
+            "--node-config-dir", "repository/node-" + (i + 1),
+            "--data-dirs", "main:user-data/main"
+        ))
         .forEach(nodeProcesses::add);
     waitedAssert(out::getLog, stringContainsInOrder(Arrays.asList(
         "Started the server in diagnostic mode\n",

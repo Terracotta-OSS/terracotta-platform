@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.diagnostic;
 
 public interface LicensingService {
-  void installLicense(String licenseContents);
+  void installLicense(String licenseContent);
 
-  void updateLicense(String licenseContents);
+  void updateLicense(String licenseContent);
 }

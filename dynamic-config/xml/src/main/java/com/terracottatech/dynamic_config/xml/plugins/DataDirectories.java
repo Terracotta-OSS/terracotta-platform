@@ -4,17 +4,15 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
-import org.w3c.dom.Element;
-
-
 import com.terracottatech.data.config.DataRootMapping;
 import com.terracottatech.data.config.ObjectFactory;
 import com.terracottatech.dynamic_config.xml.Utils;
-
-import java.nio.file.Path;
-import java.util.Map;
+import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXBElement;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class DataDirectories {
   private static final ObjectFactory FACTORY = new ObjectFactory();
@@ -22,10 +20,12 @@ public class DataDirectories {
 
   private final Map<String, Path> dataDirs;
   private final Path nodeMetadataDir;
+  private final Supplier<Path> baseDir;
 
-  public DataDirectories(Map<String, Path> dataDirs, Path nodeMetadataDir) {
+  public DataDirectories(Map<String, Path> dataDirs, Path nodeMetadataDir, Supplier<Path> baseDir) {
     this.dataDirs = dataDirs;
     this.nodeMetadataDir = nodeMetadataDir;
+    this.baseDir = baseDir;
   }
 
   public Element toElement() {
@@ -47,14 +47,13 @@ public class DataDirectories {
             metadataRootFound = true;
             isPlatformRoot = true;
           }
-          dataDirectories.getDirectory().add(createDataRootMapping(entry.getKey(), entry.getValue()
-                                                                                        .toString(), isPlatformRoot));
+          dataDirectories.getDirectory().add(createDataRootMapping(entry.getKey(), baseDir.get().resolve(entry.getValue()).toString(), isPlatformRoot));
         }
       }
 
       if (nodeMetadataDir != null && !metadataRootFound) {
         dataDirectories.getDirectory()
-                       .add(createDataRootMapping(META_DATA_ROOT_NAME, nodeMetadataDir.toString(), true));
+            .add(createDataRootMapping(META_DATA_ROOT_NAME, baseDir.get().resolve(nodeMetadataDir).toString(), true));
       }
 
       return dataDirectories;

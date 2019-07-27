@@ -4,24 +4,27 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
+import com.terracottatech.dynamic_config.model.Node;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.terracottatech.dynamic_config.model.Node;
-
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.function.Supplier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class SecurityTest {
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  Supplier<Path> basedir = () -> Paths.get("");
 
   @Test
   public void testBasic() throws IOException {
@@ -34,7 +37,7 @@ public class SecurityTest {
     node.setSecurityAuthc("file");
     node.setSecurityAuditLogDir(auditPath);
 
-    com.terracottatech.config.security.Security actual = new Security(node).createSecurity();
+    com.terracottatech.config.security.Security actual = new Security(node, basedir).createSecurity();
 
     assertThat(actual, notNullValue());
     assertThat(actual.getAuditDirectory(), is(auditPath.toString()));
@@ -52,7 +55,7 @@ public class SecurityTest {
     node.setSecurityDir(securityPath);
     node.setSecurityAuditLogDir(null);
 
-    com.terracottatech.config.security.Security actual = new Security(node).createSecurity();
+    com.terracottatech.config.security.Security actual = new Security(node, basedir).createSecurity();
 
     assertThat(actual, notNullValue());
     assertThat(actual.getAuditDirectory(), nullValue());
@@ -65,7 +68,7 @@ public class SecurityTest {
     node.setSecurityDir(securityPath);
     node.setSecurityWhitelist(false);
 
-    com.terracottatech.config.security.Security actual = new Security(node).createSecurity();
+    com.terracottatech.config.security.Security actual = new Security(node, basedir).createSecurity();
 
     assertThat(actual, notNullValue());
     assertThat(actual.getWhitelist(), nullValue());
@@ -78,7 +81,7 @@ public class SecurityTest {
     node.setSecurityDir(securityPath);
     node.setSecuritySslTls(false);
 
-    com.terracottatech.config.security.Security actual = new Security(node).createSecurity();
+    com.terracottatech.config.security.Security actual = new Security(node, basedir).createSecurity();
 
     assertThat(actual, notNullValue());
     assertThat(actual.getSslTls(), nullValue());
@@ -91,7 +94,7 @@ public class SecurityTest {
     node.setSecurityDir(securityPath);
     node.setSecurityAuthc(null);
 
-    com.terracottatech.config.security.Security actual = new Security(node).createSecurity();
+    com.terracottatech.config.security.Security actual = new Security(node, basedir).createSecurity();
 
     assertThat(actual, notNullValue());
     assertThat(actual.getAuthentication(), nullValue());
@@ -104,7 +107,7 @@ public class SecurityTest {
     node.setSecurityDir(securityPath);
     node.setSecurityAuthc("certificate");
 
-    com.terracottatech.config.security.Security actual = new Security(node).createSecurity();
+    com.terracottatech.config.security.Security actual = new Security(node, basedir).createSecurity();
 
     assertThat(actual, notNullValue());
     assertThat(actual.getAuthentication(), notNullValue());
@@ -118,7 +121,7 @@ public class SecurityTest {
     node.setSecurityDir(securityPath);
     node.setSecurityAuthc("ldap");
 
-    com.terracottatech.config.security.Security actual = new Security(node).createSecurity();
+    com.terracottatech.config.security.Security actual = new Security(node, basedir).createSecurity();
 
     assertThat(actual, notNullValue());
     assertThat(actual.getAuthentication(), notNullValue());

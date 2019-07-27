@@ -2,12 +2,12 @@
   <plugins>
     <config>
       <ohr:data-directories>
-        <ohr:directory name="root1" use-for-platform="false">build/data2</ohr:directory>
+        <ohr:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe2</ohr:directory>
       </ohr:data-directories>
     </config>
     <service>
       <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-        <backup-location path="build/backup2"/>
+        <backup-location path="%(user.dir)/backup/stripe2"/>
       </backup-restore>
     </service>
     <service>
@@ -23,18 +23,18 @@
         <cl:name>testCluster</cl:name>
         <cl:stripe>
           <cl:node>
-            <cl:name>testServer1</cl:name>
+            <cl:name>node-1</cl:name>
             <cl:server-config>
               <tc-config xmlns:data="http://www.terracottatech.com/config/data-roots" xmlns:ohr="http://www.terracotta.org/config/offheap-resource">
                 <plugins>
                   <config>
                     <data:data-directories>
-                      <data:directory name="root1" use-for-platform="false">build/data1</data:directory>
+                      <data:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</data:directory>
                     </data:data-directories>
                   </config>
                   <service>
                     <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-                      <backup-location path="build/backup1"/>
+                      <backup-location path="%(user.dir)/backup/stripe1"/>
                     </backup-restore>
                   </service>
                   <service>
@@ -48,13 +48,13 @@
                 </plugins>
                 <tc-properties/>
                 <servers>
-                  <server bind="0.0.0.0" host="localhost" name="testServer1">
-                    <logs>logs1</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-1">
+                    <logs>%(user.dir)/logs/stripe1/node-1</logs>
                     <tsa-port>9410</tsa-port>
                     <tsa-group-port>9430</tsa-group-port>
                   </server>
-                  <server bind="0.0.0.0" host="localhost" name="testServer2">
-                    <logs>logs2</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-2">
+                    <logs>%(user.dir)/logs/stripe1/node-2</logs>
                     <tsa-port>9510</tsa-port>
                     <tsa-group-port>9530</tsa-group-port>
                   </server>
@@ -67,18 +67,18 @@
             </cl:server-config>
           </cl:node>
           <cl:node>
-            <cl:name>testServer2</cl:name>
+            <cl:name>node-2</cl:name>
             <cl:server-config>
               <tc-config xmlns:data="http://www.terracottatech.com/config/data-roots" xmlns:ohr="http://www.terracotta.org/config/offheap-resource">
                 <plugins>
                   <config>
                     <data:data-directories>
-                      <data:directory name="root1" use-for-platform="false">build/data1</data:directory>
+                      <data:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</data:directory>
                     </data:data-directories>
                   </config>
                   <service>
                     <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-                      <backup-location path="build/backup1"/>
+                      <backup-location path="%(user.dir)/backup/stripe1"/>
                     </backup-restore>
                   </service>
                   <service>
@@ -92,13 +92,13 @@
                 </plugins>
                 <tc-properties/>
                 <servers>
-                  <server bind="0.0.0.0" host="localhost" name="testServer1">
-                    <logs>logs1</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-1">
+                    <logs>%(user.dir)/logs/stripe1/node-1</logs>
                     <tsa-port>9410</tsa-port>
                     <tsa-group-port>9430</tsa-group-port>
                   </server>
-                  <server bind="0.0.0.0" host="localhost" name="testServer2">
-                    <logs>logs2</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-2">
+                    <logs>%(user.dir)/logs/stripe1/node-2</logs>
                     <tsa-port>9510</tsa-port>
                     <tsa-group-port>9530</tsa-group-port>
                   </server>
@@ -113,18 +113,18 @@
         </cl:stripe>
         <cl:stripe>
           <cl:node>
-            <cl:name>testServer1</cl:name>
+            <cl:name>node-1</cl:name>
             <cl:server-config>
               <tc-config>
                 <plugins>
                   <config>
                     <ohr:data-directories>
-                      <ohr:directory name="root1" use-for-platform="false">build/data2</ohr:directory>
+                      <ohr:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe2</ohr:directory>
                     </ohr:data-directories>
                   </config>
                   <service>
                     <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-                      <backup-location path="build/backup2"/>
+                      <backup-location path="%(user.dir)/backup/stripe2"/>
                     </backup-restore>
                   </service>
                   <service>
@@ -138,13 +138,13 @@
                 </plugins>
                 <tc-properties/>
                 <servers>
-                  <server bind="0.0.0.0" host="localhost" name="testServer1">
-                    <logs>logs1</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-1">
+                    <logs>%(user.dir)/logs/stripe2/node-1</logs>
                     <tsa-port>9610</tsa-port>
                     <tsa-group-port>9630</tsa-group-port>
                   </server>
-                  <server bind="0.0.0.0" host="localhost" name="testServer2">
-                    <logs>logs2</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-2">
+                    <logs>%(user.dir)/logs/stripe2/node-2</logs>
                     <tsa-port>9710</tsa-port>
                     <tsa-group-port>9730</tsa-group-port>
                   </server>
@@ -157,18 +157,18 @@
             </cl:server-config>
           </cl:node>
           <cl:node>
-            <cl:name>testServer2</cl:name>
+            <cl:name>node-2</cl:name>
             <cl:server-config>
               <tc-config>
                 <plugins>
                   <config>
                     <ohr:data-directories>
-                      <ohr:directory name="root1" use-for-platform="false">build/data2</ohr:directory>
+                      <ohr:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe2</ohr:directory>
                     </ohr:data-directories>
                   </config>
                   <service>
                     <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-                      <backup-location path="build/backup2"/>
+                      <backup-location path="%(user.dir)/backup/stripe2"/>
                     </backup-restore>
                   </service>
                   <service>
@@ -182,13 +182,13 @@
                 </plugins>
                 <tc-properties/>
                 <servers>
-                  <server bind="0.0.0.0" host="localhost" name="testServer1">
-                    <logs>logs1</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-1">
+                    <logs>%(user.dir)/logs/stripe2/node-1</logs>
                     <tsa-port>9610</tsa-port>
                     <tsa-group-port>9630</tsa-group-port>
                   </server>
-                  <server bind="0.0.0.0" host="localhost" name="testServer2">
-                    <logs>logs2</logs>
+                  <server bind="0.0.0.0" host="localhost" name="node-2">
+                    <logs>%(user.dir)/logs/stripe2/node-2</logs>
                     <tsa-port>9710</tsa-port>
                     <tsa-group-port>9730</tsa-group-port>
                   </server>
@@ -206,13 +206,13 @@
   </plugins>
   <tc-properties/>
   <servers>
-    <server bind="0.0.0.0" host="localhost" name="testServer1">
-      <logs>logs1</logs>
+    <server bind="0.0.0.0" host="localhost" name="node-1">
+      <logs>%(user.dir)/logs/stripe2/node-1</logs>
       <tsa-port>9610</tsa-port>
       <tsa-group-port>9630</tsa-group-port>
     </server>
-    <server bind="0.0.0.0" host="localhost" name="testServer2">
-      <logs>logs2</logs>
+    <server bind="0.0.0.0" host="localhost" name="node-2">
+      <logs>%(user.dir)/logs/stripe2/node-2</logs>
       <tsa-port>9710</tsa-port>
       <tsa-group-port>9730</tsa-group-port>
     </server>

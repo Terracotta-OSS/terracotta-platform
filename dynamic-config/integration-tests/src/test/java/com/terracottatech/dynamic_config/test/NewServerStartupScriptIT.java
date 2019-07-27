@@ -8,154 +8,174 @@ import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Test;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
+import static java.util.stream.Stream.concat;
 import static org.hamcrest.Matchers.containsString;
 
 public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
-    int stripeId = 1;
-    String nodeName = "testServer1";
-    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeId, nodeName));
-    startServer("--node-config-dir", configurationRepo);
+    Path configurationRepo = copyServerConfigFiles(singleStripeSingleNode(1, "node-1"));
+    startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
-    int stripeId = 1;
-    String nodeName = "testServer2";
-    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeId, nodeName));
-    startServer("--node-config-dir", configurationRepo);
+    Path configurationRepo = copyServerConfigFiles(singleStripeMultiNode(1, "node-2"));
+    startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
-    int stripeId = 2;
-    String nodeName = "testServer1";
-    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeId, nodeName));
-    startServer("--node-config-dir", configurationRepo);
+    Path configurationRepo = copyServerConfigFiles(multiStripe(2, "node-1"));
+    startServer("--node-config-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithNonExistentRepo() throws Exception {
-    String configurationRepo = temporaryFolder.newFolder().getAbsolutePath();
-    startServer("-c", configurationRepo);
+    startServer(1, "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFile() throws Exception {
-    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
-    startServer("--config-file", configurationFile, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startServer("--config-file", configurationFile.toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFileWithHostPort() throws Exception {
     String port = String.valueOf(ports.getPort());
-    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile, "-s", "localhost", "-p", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port);
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFileAndLicense() throws Exception {
-    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile, "-l", licensePath(), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile.toString(), "-l", licensePath().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFileLicenseAndClusterName() throws Exception {
-    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile, "-l", licensePath(), "-N", "tc-cluster", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "-N", "tc-cluster");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testFailedStartupWithMultiNodeConfigFileAndLicense() throws Exception {
-    String configurationFile = configFilePath("/config-property-files/multi-stripe.properties");
-    startServer("-f", configurationFile, "-l", licensePath(), "-s", "localhost", "-p", String.valueOf(ports.getPorts()[0]), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = copyConfigProperty("/config-property-files/multi-stripe.properties");
+    startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "-s", "localhost", "-p", String.valueOf(ports.getPorts()[0]));
     waitedAssert(out::getLog, containsString("License file option can be used only with a one-node cluster config file"));
   }
 
   @Test
   public void testFailedStartupConfigFile_nonExistentFile() throws Exception {
-    String configurationFile = Paths.get(".").resolve("blah").toString();
-    startServer("--config-file", configurationFile, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = Paths.get(".").resolve("blah");
+    startServer("--config-file", configurationFile.toString());
     waitedAssert(out::getLog, containsString("FileNotFoundException"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidPort() throws Exception {
     String port = String.valueOf(ports.getPort());
-    String configurationFile = configFilePath("/config-property-files/single-stripe_invalid1.properties");
-    startServer("--config-file", configurationFile, "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid1.properties");
+    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port);
     waitedAssert(out::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidSecurity() throws Exception {
     String port = String.valueOf(ports.getPort());
-    String configurationFile = configFilePath("/config-property-files/single-stripe_invalid2.properties");
-    startServer("--config-file", configurationFile, "--node-hostname", "localhost", "--node-port", port, "-c", temporaryFolder.newFolder().getAbsolutePath());
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid2.properties");
+    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port);
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidCliParams() throws Exception {
-    String configurationFile = configFilePath("/config-property-files/single-stripe.properties");
-    startServer("--config-file", configurationFile, "--node-bind-address", "::1");
-    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port', and '--node-config-dir' parameters"));
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startServer("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname' and '--node-port' parameters"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidAuthc() throws Exception {
-    startServer("--security-authc=blah", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    startServer("--security-authc=blah", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidHostname() throws Exception {
-    startServer("--node-hostname=:::", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    startServer("--node-hostname=:::", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() throws Exception {
-    startServer("--failover-priority=blah", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    startServer("--failover-priority=blah", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("failover-priority should be one of: [availability, consistency]"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidSecurity() throws Exception {
-    startServer("--security-audit-log-dir", "audit-dir", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    startServer("--security-audit-log-dir", "audit-dir", "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
   @Test
   public void testSuccessfulStartupCliParams() throws Exception {
-    startServer("-p", String.valueOf(ports.getPort()), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    startServer(1, "-p", String.valueOf(ports.getPort()), "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testSuccessfulStartupCliParamsWithLicense() throws Exception {
-    startServer("-p", String.valueOf(ports.getPort()), "-l", licensePath(), "-N", "tc-cluster", "-c", temporaryFolder.newFolder().getAbsolutePath());
+    startServer(1,
+        "-p", String.valueOf(ports.getPort()),
+        "-l", licensePath().toString(),
+        "-N", "tc-cluster",
+        "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testFailedStartupCliParamsWithLicense_noClusterName() throws Exception {
-    startServer("-p", String.valueOf(ports.getPort()), "-l", licensePath(), "-c", temporaryFolder.newFolder().getAbsolutePath());
+    startServer("-p", String.valueOf(ports.getPort()), "-l", licensePath().toString(), "-c", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("'--license-file' parameter must be used with 'cluster-name' parameter"));
   }
 
+  @Test
+  public void testFailedStartupCliParamsWithConfigAndConfigDir() throws Exception {
+    String port = String.valueOf(ports.getPort());
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port, "-c", "foo");
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname' and '--node-port' parameters"));
+  }
+
   private void startServer(String... cli) {
-    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), cli));
+    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), cli));
+  }
+
+  private void startServer(int idx, String... cli) {
+    String[] args = concat(Stream.of(cli), Stream.of(
+        "--node-name", "node-" + idx,
+        "--node-hostname", "localhost",
+        "--node-log-dir", "logs/node-" + idx,
+        "--node-backup-dir", "backup",
+        "--node-metadata-dir", "metadata",
+        "--data-dirs", "main:user-data/main"
+    )).toArray(String[]::new);
+    nodeProcesses.add(NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), args));
   }
 }

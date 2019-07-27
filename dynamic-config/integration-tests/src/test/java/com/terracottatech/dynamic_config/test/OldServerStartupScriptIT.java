@@ -20,7 +20,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     int stripeId = 1;
     String nodeName = "testServer1";
-    String configurationRepo = configRepoPath(singleStripeSingleNodeNomadRoot(stripeId, nodeName));
+    String configurationRepo = copyServerConfigFiles(singleStripeSingleNode(stripeId, nodeName)).toString();
     startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
@@ -29,7 +29,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     int stripeId = 1;
     String nodeName = "testServer2";
-    String configurationRepo = configRepoPath(singleStripeMultiNodeNomadRoot(stripeId, nodeName));
+    String configurationRepo = copyServerConfigFiles(singleStripeMultiNode(stripeId, nodeName)).toString();
     startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
@@ -38,26 +38,26 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithMultiStripeRepo() throws Exception {
     int stripeId = 2;
     String nodeName = "testServer1";
-    String configurationRepo = configRepoPath(multiStripeNomadRoot(stripeId, nodeName));
+    String configurationRepo = copyServerConfigFiles(multiStripe(stripeId, nodeName)).toString();
     startServer("-r", configurationRepo, "-n", nodeName, "--node-name", nodeName);
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithConsistencyMode() throws Exception {
-    startServer("--config", getConfigurationPath(), "--config-consistency");
+    startServer("--config", createTcConfig().toString(), "--config-consistency", "-r", configRepositoryPath().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testStartingWithTcConfig() throws Exception {
-    startServer("-f", getConfigurationPath());
+    startServer("-f", createTcConfig().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
-  private String getConfigurationPath() throws Exception {
-    Path serverConfigurationPath = temporaryFolder.newFolder().toPath().resolve("server-config.xml").toAbsolutePath();
-    String dataRootLocation = temporaryFolder.newFolder().getAbsolutePath();
+  private Path createTcConfig() throws Exception {
+    Path tcConfigPath = getBaseDir().resolve("server-config.xml").toAbsolutePath();
+    Path metadataPath = getBaseDir().resolve("metadata");
 
     String serverConfiguration = "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n" +
         "\n" +
@@ -80,14 +80,14 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     int[] ports = this.ports.getPorts();
     serverConfiguration = serverConfiguration.replaceAll(Pattern.quote("${TSA_PORT}"), String.valueOf(ports[0]))
         .replaceAll(Pattern.quote("${GROUP_PORT}"), String.valueOf(ports[1]))
-        .replaceAll(Pattern.quote("${DATA_ROOT}"), dataRootLocation);
+        .replaceAll(Pattern.quote("${DATA_ROOT}"), metadataPath.toString());
 
-    write(serverConfigurationPath, serverConfiguration.getBytes(UTF_8));
-    return serverConfigurationPath.toAbsolutePath().toString();
+    write(tcConfigPath, serverConfiguration.getBytes(UTF_8));
+    return tcConfigPath;
   }
 
   private void startServer(String... cli) {
-    nodeProcesses.add(NodeProcess.startTcServer(Kit.getOrCreatePath(), cli));
+    nodeProcesses.add(NodeProcess.startTcServer(Kit.getOrCreatePath(), getBaseDir(), cli));
   }
 
 }

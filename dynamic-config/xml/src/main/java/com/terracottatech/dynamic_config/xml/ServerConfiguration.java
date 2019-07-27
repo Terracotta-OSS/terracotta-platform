@@ -4,7 +4,13 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.xml.plugins.BackupRestore;
+import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
+import com.terracottatech.dynamic_config.xml.plugins.Lease;
+import com.terracottatech.dynamic_config.xml.plugins.OffheapResources;
+import com.terracottatech.dynamic_config.xml.plugins.Security;
+import com.terracottatech.topology.config.xmlobjects.ServerConfig;
 import org.terracotta.config.Config;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
@@ -16,25 +22,21 @@ import org.terracotta.config.TcConfig;
 import org.terracotta.config.Voter;
 import org.w3c.dom.Element;
 
-import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
-import com.terracottatech.dynamic_config.xml.plugins.Lease;
-import com.terracottatech.dynamic_config.xml.plugins.OffheapResources;
-import com.terracottatech.dynamic_config.xml.plugins.Security;
-import com.terracottatech.topology.config.xmlobjects.ServerConfig;
-
-import java.io.StringWriter;
-
 import javax.xml.bind.JAXB;
+import java.io.StringWriter;
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public class ServerConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
   private final String serverName;
+  private final Supplier<Path> baseDir;
   private final TcConfig tcConfig;
 
-  ServerConfiguration(Node node, Servers servers) {
+  ServerConfiguration(Node node, Servers servers, Supplier<Path> baseDir) {
     this.serverName = node.getNodeName();
+    this.baseDir = baseDir;
     this.tcConfig = createTcConfig(node, servers);
   }
 
@@ -50,7 +52,7 @@ public class ServerConfiguration {
     return sw.toString();
   }
 
-  private static TcConfig createTcConfig(Node node, Servers servers) {
+  private TcConfig createTcConfig(Node node, Servers servers) {
     TcConfig tcConfig = FACTORY.createTcConfig();
 
     tcConfig.setServers(servers);
@@ -89,33 +91,33 @@ public class ServerConfiguration {
     services.getConfigOrService().add(leaseService);
   }
 
-  private static void addSecurityConfig(Node node, Services services) {
+  private void addSecurityConfig(Node node, Services services) {
     if (node.getSecurityDir() == null) {
       return;
     }
 
     Service securityConfig = FACTORY.createService();
-    securityConfig.setServiceContent(new Security(node).toElement());
+    securityConfig.setServiceContent(new Security(node, baseDir).toElement());
     services.getConfigOrService().add(securityConfig);
   }
 
-  private static void addBackupConfig(Node node, Services services) {
+  private void addBackupConfig(Node node, Services services) {
     if (node.getNodeBackupDir() == null) {
       return;
     }
 
     Service backupConfig = FACTORY.createService();
-    backupConfig.setServiceContent(new BackupRestore(node.getNodeBackupDir()).toElement());
+    backupConfig.setServiceContent(new BackupRestore(baseDir.get().resolve(node.getNodeBackupDir())).toElement());
     services.getConfigOrService().add(backupConfig);
   }
 
-  private static void addDataDirectories(Node node, Services services) {
+  private void addDataDirectories(Node node, Services services) {
     if (node.getDataDirs() == null && node.getNodeMetadataDir() == null) {
       return;
     }
 
     Config dataRootConfig = FACTORY.createConfig();
-    dataRootConfig.setConfigContent(new DataDirectories(node.getDataDirs(), node.getNodeMetadataDir()).toElement());
+    dataRootConfig.setConfigContent(new DataDirectories(node.getDataDirs(), node.getNodeMetadataDir(), baseDir).toElement());
     services.getConfigOrService().add(dataRootConfig);
   }
 

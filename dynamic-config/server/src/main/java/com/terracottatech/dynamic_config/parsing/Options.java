@@ -8,12 +8,17 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.PathConverter;
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
+import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.managers.NodeManager;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -107,28 +112,30 @@ public class Options {
   @Parameter(names = {"-N", "--" + CLUSTER_NAME}, hidden = true)
   private String clusterName;
 
-  @Parameter(names = {"-f", "--config-file"})
-  private String configFile;
+  @Parameter(names = {"-f", "--config-file"}, converter = PathConverter.class)
+  private Path configFile;
 
-  @Parameter(names = {"-l", "--license-file"}, hidden = true)
-  private String licenseFile;
+  @Parameter(names = {"-l", "--license-file"}, hidden = true, converter = PathConverter.class)
+  private Path licenseFile;
 
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
 
   private Set<String> specifiedOptions;
 
-  public void process(CustomJCommander jCommander) {
+  public void process(CustomJCommander jCommander, LicensingService licensingService) {
     if (help) {
       jCommander.usage();
       return;
     }
 
+    // get specified options but remove the ones ot related to functional stuff
     specifiedOptions = jCommander.getUserSpecifiedOptions();
+
     validateOptions();
 
     Map<String, String> paramValueMap = buildParamValueMap(jCommander);
-    NodeManager nodeManager = new NodeManager(this, paramValueMap);
+    NodeManager nodeManager = new NodeManager(this, paramValueMap, licensingService);
     nodeManager.startNode();
   }
 
@@ -171,25 +178,22 @@ public class Options {
       filteredOptions.remove("-l");
       filteredOptions.remove("-s");
       filteredOptions.remove("-p");
-      filteredOptions.remove("-c");
       filteredOptions.remove("-N");
 
       filteredOptions.remove("--config-file");
       filteredOptions.remove("--license-file");
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
       filteredOptions.remove(addDashDash(NODE_PORT));
-      filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
       filteredOptions.remove(addDashDash(CLUSTER_NAME));
 
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
             String.format(
-                "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s', and '%s' parameters",
+                "'--config-file' parameter can only be used with '%s', '%s', '%s' and '%s' parameters",
                 "--license-file",
                 addDashDash(CLUSTER_NAME),
                 addDashDash(NODE_HOSTNAME),
-                addDashDash(NODE_PORT),
-                addDashDash(NODE_CONFIG_DIR)
+                addDashDash(NODE_PORT)
             )
         );
       }
@@ -220,8 +224,8 @@ public class Options {
     return nodeGroupBindAddress;
   }
 
-  public String getNodeConfigDir() {
-    return nodeConfigDir;
+  public Optional<String> getNodeConfigDir() {
+    return Optional.ofNullable(nodeConfigDir);
   }
 
   public String getNodeMetadataDir() {
@@ -280,11 +284,11 @@ public class Options {
     return clusterName;
   }
 
-  public String getConfigFile() {
+  public Path getConfigFile() {
     return configFile;
   }
 
-  public String getLicenseFile() {
+  public Path getLicenseFile() {
     return licenseFile;
   }
 }

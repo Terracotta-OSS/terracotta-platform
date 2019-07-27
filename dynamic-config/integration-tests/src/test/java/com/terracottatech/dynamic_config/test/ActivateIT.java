@@ -35,7 +35,9 @@ public class ActivateIT extends BaseStartupIT {
   public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
+    super.setUp();
+
     int[] ports = this.ports.getPorts();
     // Ensure that there are even number of ports before we start the test
     assertThat(ports.length, greaterThanOrEqualTo(2));
@@ -46,14 +48,16 @@ public class ActivateIT extends BaseStartupIT {
       int groupPort = ports[i + 1];
       nodeProcesses.add(NodeProcess.startNode(
           Kit.getOrCreatePath(),
+          getBaseDir(),
           "--node-name", "node-" + loopCount,
           "--node-hostname", "localhost",
           "--node-port", String.valueOf(port),
           "--node-group-port", String.valueOf(groupPort),
-          "--node-log-dir", "build/logs-" + port,
-          "--node-backup-dir", "build/backup-" + port,
-          "--node-metadata-dir", "build/metadata-" + port,
-          "--node-config-dir", "build/config-" + port)
+          "--node-log-dir", "logs/node-" + loopCount,
+          "--node-backup-dir", "backup",
+          "--node-metadata-dir", "metadata",
+          "--node-config-dir", "repository/node-" + loopCount,
+          "--data-dirs", "main:user-data/main")
       );
     }
 
@@ -67,7 +71,7 @@ public class ActivateIT extends BaseStartupIT {
     int[] ports = this.ports.getPorts();
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Cluster name should be provided when node is specified")));
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-l", licensePath());
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-l", licensePath().toString());
   }
 
   @Test
@@ -75,20 +79,20 @@ public class ActivateIT extends BaseStartupIT {
     int[] ports = this.ports.getPorts();
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Either node or config properties file should be specified, not both")));
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-f", "dummy.properties", "-l", licensePath());
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-f", "dummy.properties", "-l", licensePath().toString());
   }
 
   @Test
   public void testWrongParams_4() throws Exception {
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("One of node or config properties file must be specified")));
-    ConfigTool.main("activate", "-l", licensePath());
+    ConfigTool.main("activate", "-l", licensePath().toString());
   }
 
   @Test
   public void testSingleNodeActivation() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath());
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
@@ -101,7 +105,7 @@ public class ActivateIT extends BaseStartupIT {
   @Test
   public void testSingleNodeActivationWithConfigFile() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("activate", "-f", configFilePath("/config-property-files/single-stripe.properties"), "-l", licensePath(), "-n", "my-cluster");
+    ConfigTool.main("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-l", licensePath().toString(), "-n", "my-cluster");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
@@ -118,7 +122,7 @@ public class ActivateIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath());
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
@@ -134,8 +138,9 @@ public class ActivateIT extends BaseStartupIT {
     int[] ports = this.ports.getPorts();
     ConfigTool.main(
         "-r", String.valueOf(TIMEOUT),
-        "activate", "-f", configFilePath("/config-property-files/single-stripe_multi-node.properties"),
-        "-l", licensePath()
+        "activate",
+        "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString(),
+        "-l", licensePath().toString()
     );
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
@@ -154,7 +159,7 @@ public class ActivateIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath());
+    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
     ));
@@ -171,8 +176,9 @@ public class ActivateIT extends BaseStartupIT {
     int[] ports = this.ports.getPorts();
     ConfigTool.main(
         "-r", String.valueOf(TIMEOUT),
-        "activate", "-f", configFilePath("/config-property-files/multi-stripe.properties"),
-        "-l", licensePath()
+        "activate",
+        "-f", copyConfigProperty("/config-property-files/multi-stripe.properties").toString(),
+        "-l", licensePath().toString()
     );
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")

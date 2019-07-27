@@ -4,12 +4,6 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
-
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -17,12 +11,17 @@ import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.dynamic_config.nomad.ConfigControllerImpl;
 import com.terracottatech.nomad.server.NomadException;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class ClusterActivationNomadChangeProcessorTest {
 
@@ -67,7 +66,7 @@ public class ClusterActivationNomadChangeProcessorTest {
     ClusterActivationNomadChange change = new ClusterActivationNomadChange(new Cluster("cluster"));
 
     expectedException.expect(NomadException.class);
-    expectedException.expectMessage("must be null");
+    expectedException.expectMessage("Existing config must be null. Found: baseConfig");
 
     processor.getConfigWithChange("baseConfig", change);
   }

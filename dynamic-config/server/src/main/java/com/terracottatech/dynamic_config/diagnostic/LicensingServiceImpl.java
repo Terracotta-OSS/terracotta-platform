@@ -20,14 +20,14 @@ public class LicensingServiceImpl implements LicensingService {
   private static final Logger LOGGER = LoggerFactory.getLogger(LicensingServiceImpl.class);
 
   @Override
-  public void installLicense(String licenseContents) {
+  public void installLicense(String licenseContent) {
     Path licenseDir = NomadBootstrapper.getNomadRepositoryManager().getLicensePath();
     if (licenseDir == null) {
       throw new IllegalStateException("Nomad license path should not be null at this stage");
     }
 
     try {
-      Files.write(licenseDir.resolve(LICENSE_FILE_NAME), licenseContents.getBytes(StandardCharsets.UTF_8));
+      Files.write(licenseDir.resolve(LICENSE_FILE_NAME), licenseContent.getBytes(StandardCharsets.UTF_8));
       LOGGER.info("License file: {} successfully copied to: {}", LICENSE_FILE_NAME, licenseDir);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -35,7 +35,8 @@ public class LicensingServiceImpl implements LicensingService {
   }
 
   @Override
-  public void updateLicense(String licenseContents) {
+  public void updateLicense(String licenseContent) {
+    //TODO [DYNAMIC-CONFIG]: TRACK #2 : SUPPORT LICENSE UPDATE
     throw new UnsupportedOperationException("TODO Implement me!");
   }
 }

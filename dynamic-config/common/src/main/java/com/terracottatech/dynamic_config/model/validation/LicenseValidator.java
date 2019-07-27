@@ -12,12 +12,13 @@ import com.terracottatech.licensing.LicenseParser;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 
+import java.nio.file.Path;
 import java.util.Optional;
 
 public class LicenseValidator {
   private static final LicenseParser LICENSE_PARSER = new DefaultLicenseParser();
 
-  public static void validateLicense(Cluster cluster, String licenseFilePath) {
+  public static void validateLicense(Cluster cluster, Path licenseFilePath) {
     License license = parse(licenseFilePath);
     long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(DefaultLicenseParser.CAPABILITY_OFFHEAP);
     long totalOffHeapInMB =
@@ -49,9 +50,9 @@ public class LicenseValidator {
     }
   }
 
-  private static License parse(String licenseFilePath) {
+  private static License parse(Path licenseFilePath) {
     try {
-      return LICENSE_PARSER.parse(licenseFilePath);
+      return LICENSE_PARSER.parse(licenseFilePath.toString());
     } catch (LicenseException e) {
       throw new IllegalArgumentException(e);
     }
