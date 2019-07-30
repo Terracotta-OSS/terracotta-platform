@@ -15,6 +15,8 @@
  */
 package org.terracotta.voltron.proxy.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -39,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +50,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Alex Snaps
  */
 class VoltronProxyInvocationHandler implements InvocationHandler {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(VoltronProxyInvocationHandler.class);
 
   private static final Method close;
   private static final Method registerMessageListener;
@@ -82,12 +87,21 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         @SuppressWarnings("unchecked")
         @Override
         public void handleMessage(ProxyEntityResponse response) {
-          handler.execute(() -> {
-            final Class<?> aClass = response.getResponseType();
-            for (MessageListener messageListener : listeners.get(aClass)) {
-              messageListener.onMessage(response.getResponse());
-            }
-          });
+          try {
+            handler.execute(() -> {
+              final Class<?> aClass = response.getResponseType();
+              try {
+                for (MessageListener messageListener : listeners.get(aClass)) {
+                  messageListener.onMessage(response.getResponse());
+                }
+              } catch (Exception e) {
+                LOGGER.warn("Error handling incoming server message {}: {}", aClass, e.getMessage(), e);
+              }
+            });
+          } catch (RejectedExecutionException e) {
+            // do nothing: this is normal in case the executor is closed
+            // and we can forget the message because the caller wants to close anyway
+          }
         }
 
         @Override
