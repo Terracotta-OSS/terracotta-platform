@@ -15,13 +15,15 @@
  */
 package org.terracotta.voltron.proxy.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.MessageType;
@@ -39,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +50,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Alex Snaps
  */
 class VoltronProxyInvocationHandler implements InvocationHandler {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(VoltronProxyInvocationHandler.class);
 
   private static final Method close;
   private static final Method registerMessageListener;
@@ -67,16 +72,14 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
   private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
 
   private volatile EndpointListener endpointListener;
-  
+
   VoltronProxyInvocationHandler(final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, Collection<Class<?>> events, final Codec codec) {
     this.entityClientEndpoint = entityClientEndpoint;
-    handler = Executors.newSingleThreadExecutor(r->{
-      return new Thread(r, "Message Handler for " + entityClientEndpoint);
-    });
-    this.listeners = new ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<MessageListener>>();
+    handler = Executors.newSingleThreadExecutor(r -> new Thread(r, "Message Handler for " + entityClientEndpoint));
+    this.listeners = new ConcurrentHashMap<>();
     if (events.size() > 0) {
       for (Class<?> aClass : events) {
-        listeners.put(aClass, new CopyOnWriteArrayList<MessageListener>());
+        listeners.put(aClass, new CopyOnWriteArrayList<>());
       }
 
       entityClientEndpoint.setDelegate(new EndpointDelegate<ProxyEntityResponse>() {
@@ -84,12 +87,21 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         @SuppressWarnings("unchecked")
         @Override
         public void handleMessage(ProxyEntityResponse response) {
-          handler.execute(()->{
-          final Class<?> aClass = response.getResponseType();
-          for (MessageListener messageListener : listeners.get(aClass)) {
-            messageListener.onMessage(response.getResponse());
+          try {
+            handler.execute(() -> {
+              final Class<?> aClass = response.getResponseType();
+              try {
+                for (MessageListener messageListener : listeners.get(aClass)) {
+                  messageListener.onMessage(response.getResponse());
+                }
+              } catch (Exception e) {
+                LOGGER.warn("Error handling incoming server message {}: {}", aClass, e.getMessage(), e);
+              }
+            });
+          } catch (RejectedExecutionException e) {
+            // do nothing: this is normal in case the executor is closed
+            // and we can forget the message because the caller wants to close anyway
           }
-          });
         }
 
         @Override
@@ -204,9 +216,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     public Object get() throws InterruptedException, ExecutionException {
       try {
         return getResponse(future.get());
-      } catch (EntityException e) {
-        throw new ExecutionException(e);
-      } catch (EntityUserException e) {
+      } catch (EntityException | EntityUserException e) {
         throw new ExecutionException(e);
       }
     }
@@ -215,9 +225,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       try {
         return getResponse(future.getWithTimeout(timeout, unit));
-      } catch (EntityException e) {
-        throw new ExecutionException(e);
-      } catch (EntityUserException e) {
+      } catch (EntityException | EntityUserException e) {
         throw new ExecutionException(e);
       }
     }
