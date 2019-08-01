@@ -13,7 +13,7 @@ public class XmlConfiguration {
   private final ServerConfiguration serverConfiguration;
 
   public XmlConfiguration(Cluster cluster, int stripeId, String nodeName, Supplier<Path> baseDir) {
-    ClusterConfiguration clusterConfiguration = new ClusterConfiguration(cluster, baseDir);
+    ClusterConfiguration clusterConfiguration = new ClusterConfiguration(cluster, stripeId, baseDir);
 
     StripeConfiguration stripeConfiguration = clusterConfiguration.get(stripeId);
     if (stripeConfiguration == null) {

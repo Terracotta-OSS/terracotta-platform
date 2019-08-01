@@ -18,8 +18,10 @@ import java.util.function.Supplier;
 public class ClusterConfiguration {
   private final Map<Integer, StripeConfiguration> stripeIdConfigInfo = new HashMap<>();
   private final String clusterName;
+  private final int stripeId;
 
-  ClusterConfiguration(Cluster cluster, Supplier<Path> baseDir) {
+  ClusterConfiguration(Cluster cluster, int stripeId, Supplier<Path> baseDir) {
+    this.stripeId = stripeId;
     List<Stripe> stripes = cluster.getStripes();
     for (int i = 0; i < stripes.size(); i++) {
       stripeIdConfigInfo.put(i + 1, new StripeConfiguration(stripes.get(i), baseDir));
@@ -32,6 +34,7 @@ public class ClusterConfiguration {
 
     com.terracottatech.topology.config.xmlobjects.Cluster cluster = factory.createCluster();
     cluster.setName(clusterName);
+    cluster.setCurrentStripeId(stripeId);
 
     for (Map.Entry<Integer, StripeConfiguration> entry : stripeIdConfigInfo.entrySet()) {
       cluster.getStripes().add(entry.getValue().getClusterConfigStripe(factory));

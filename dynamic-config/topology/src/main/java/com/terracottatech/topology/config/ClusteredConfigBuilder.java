@@ -8,6 +8,7 @@ import com.terracottatech.migration.util.XmlUtility;
 import com.terracottatech.topology.config.parser.SchemaProvider;
 import com.terracottatech.utilities.Tuple2;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import java.util.ArrayList;
@@ -42,7 +43,8 @@ public class ClusteredConfigBuilder {
 
   private void createEntireCluster(String clusterName, Map.Entry<Tuple2<Integer, String>, Node> hostConfigMapNodeEntry) {
 
-    Node clusterNode = createClusterElement(clusterName, hostConfigMapNodeEntry.getValue());
+    int stripeId = hostConfigMapNodeEntry.getKey().t1;
+    Node clusterNode = createClusterElement(clusterName, stripeId, hostConfigMapNodeEntry.getValue());
     List<Node> stripes = createStripeElementsForOneServer(hostConfigMapNodeEntry.getValue());
 
     stripes.forEach(clusterNode::appendChild);
@@ -78,8 +80,9 @@ public class ClusteredConfigBuilder {
     return serverConfigElement;
   }
 
-  private Node createClusterElement(String clusterName, Node rootNode) {
-    Node clusterElement = createNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:cluster");
+  private Node createClusterElement(String clusterName, int currentStripeId, Node rootNode) {
+    Element clusterElement = createNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:cluster");
+    clusterElement.setAttribute("currentStripeId", String.valueOf(currentStripeId));
     Node clusterNameElement = createSimpleTextNode(rootNode, TERRACOTTA_CLUSTER_CONFIG_NAMESPACE, "cl:name", clusterName);
     clusterElement.appendChild(clusterNameElement);
     return clusterElement;
@@ -109,7 +112,7 @@ public class ClusteredConfigBuilder {
     return retList;
   }
 
-  private static Node createNode(Node documentRoot, String nameSpace, String nodeName) {
+  private static Element createNode(Node documentRoot, String nameSpace, String nodeName) {
     return XmlUtility.createNode(documentRoot, nameSpace, nodeName);
   }
 

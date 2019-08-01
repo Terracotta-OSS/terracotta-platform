@@ -14,7 +14,7 @@
       </ohr:offheap-resources>
     </config>
     <config>
-      <cl:cluster xmlns:cl="http://www.terracotta.org/config/cluster">
+      <cl:cluster currentStripeId="1" xmlns:cl="http://www.terracotta.org/config/cluster">
         <cl:name>testCluster</cl:name>
         <cl:stripe>
           <cl:node>

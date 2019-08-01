@@ -323,7 +323,7 @@ public class MigrationImpl implements Migration {
     } catch (MigrationException e) {
       throw e;
     } catch (Exception e) {
-      String errorMessage = "Unexpected error while migrating the configuration files";
+      String errorMessage = "Unexpected error while migrating the configuration files: " + e.getMessage();
       LOGGER.error(errorMessage, e);
       throw new MigrationException(UNKNOWN_ERROR, errorMessage);
     }

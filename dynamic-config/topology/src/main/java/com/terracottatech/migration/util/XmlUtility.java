@@ -10,6 +10,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,12 +22,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 public class XmlUtility {
 
@@ -57,13 +56,13 @@ public class XmlUtility {
   }
 
   public static Node createSimpleTextNode(Node documentRoot, String nameSpace, String nodeName, String nodeText) {
-    Element element = ((Document)documentRoot).createElementNS(nameSpace, nodeName);
+    Element element = ((Document) documentRoot).createElementNS(nameSpace, nodeName);
     element.setTextContent(nodeText);
     return element;
   }
 
-  public static Node createNode(Node documentRoot, String nameSpace, String nodeName) {
-    return ((Document)documentRoot).createElementNS(nameSpace, nodeName);
+  public static Element createNode(Node documentRoot, String nameSpace, String nodeName) {
+    return ((Document) documentRoot).createElementNS(nameSpace, nodeName);
   }
 
   public static Node getClonedParentDocFromRootNode(Node rootNode) {

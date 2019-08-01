@@ -4,16 +4,16 @@
  */
 package com.terracottatech.topology.config.xmlobjects;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -45,6 +45,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 })
 public class Cluster {
 
+  @XmlAttribute(name = "currentStripeId", required = true)
+  protected Integer currentStripeId;
   @XmlElement(required = true)
   @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
   @XmlSchemaType(name = "token")
@@ -68,6 +70,14 @@ public class Cluster {
    */
   public void setName(String value) {
     this.name = value;
+  }
+
+  public Integer getCurrentStripeId() {
+    return currentStripeId;
+  }
+
+  public void setCurrentStripeId(Integer currentStripeId) {
+    this.currentStripeId = currentStripeId;
   }
 
   /**
