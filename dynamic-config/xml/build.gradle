@@ -7,7 +7,7 @@ dependencies {
   compile project(':dynamic-config-common')
   compile project(':data-root-config')
   compile project(':backup-and-restore-server')
-  compile project(':topology')
+  compile project(':dynamic-config-topology')
   compile project(':security-platform-server')
   compile project(':utilities')
 

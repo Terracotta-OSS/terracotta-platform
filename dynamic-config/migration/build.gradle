@@ -10,7 +10,7 @@ dependencies {
   compile project(':backup-and-restore-server')
   compile project(':frs-platform-persistence')
   compile project(':security-platform-server')
-  compile project(':topology')
+  compile project(':dynamic-config-topology')
   compile project(':dynamic-config-server-common')
 
   compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
