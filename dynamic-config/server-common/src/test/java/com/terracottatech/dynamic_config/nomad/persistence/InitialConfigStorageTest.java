@@ -19,8 +19,6 @@ public class InitialConfigStorageTest {
   @Mock
   private ConfigStorage underlying;
 
-  private String serverName = "node0";
-
   @Test
   public void getInitialVersion() throws Exception {
     InitialConfigStorage storage = new InitialConfigStorage(underlying);

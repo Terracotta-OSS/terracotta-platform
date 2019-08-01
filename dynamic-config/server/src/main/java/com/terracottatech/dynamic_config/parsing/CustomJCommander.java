@@ -7,8 +7,6 @@ package com.terracottatech.dynamic_config.parsing;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.WrappedParameter;
-import com.terracottatech.dynamic_config.model.config.DefaultSettings;
-import com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils;
 
 import java.util.Arrays;
 import java.util.Collections;

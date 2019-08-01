@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.nomad.persistence;
 
-import com.terracottatech.dynamic_config.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.nomad.Applicability;
 import com.terracottatech.dynamic_config.nomad.NomadJson;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
@@ -25,7 +24,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.UUID;
 
-import static com.tc.util.Assert.assertTrue;
 import static com.terracottatech.dynamic_config.ConfigChangeHandler.Type.OFFHEAP;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -35,6 +33,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

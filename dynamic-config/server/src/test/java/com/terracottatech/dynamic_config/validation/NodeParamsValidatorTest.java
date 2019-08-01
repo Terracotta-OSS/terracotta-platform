@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.validation;
 
-import com.terracottatech.dynamic_config.model.config.AcceptableSettingValues;
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import org.junit.Rule;
 import org.junit.Test;

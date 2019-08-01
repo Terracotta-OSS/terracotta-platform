@@ -40,8 +40,8 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECUR
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_WHITELIST;
-import static com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils.addDashDash;
-import static com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils.stripDashDash;
+import static com.terracottatech.dynamic_config.parsing.ConsoleParamsUtils.addDashDash;
+import static com.terracottatech.dynamic_config.parsing.ConsoleParamsUtils.stripDashDash;
 
 @Parameters(separators = "=")
 public class Options {

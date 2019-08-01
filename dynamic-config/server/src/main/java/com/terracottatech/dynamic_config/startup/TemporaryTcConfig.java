@@ -3,7 +3,7 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-package com.terracottatech.dynamic_config.model.util;
+package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Node;
 
@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 
 public class TemporaryTcConfig {
   private final Node node;

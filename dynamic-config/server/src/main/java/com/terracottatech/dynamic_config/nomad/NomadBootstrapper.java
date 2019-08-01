@@ -33,7 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.LICENSE_FILE_NAME;
-import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static java.util.Objects.requireNonNull;
 
 public class NomadBootstrapper {

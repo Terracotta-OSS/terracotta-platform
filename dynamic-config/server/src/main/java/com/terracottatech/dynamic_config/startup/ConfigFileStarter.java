@@ -20,7 +20,7 @@ import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_H
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_PORT;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
-import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static java.util.Objects.requireNonNull;
 
 public class ConfigFileStarter extends NodeStarter {

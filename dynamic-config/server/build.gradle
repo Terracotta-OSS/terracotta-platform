@@ -4,11 +4,10 @@
  */
 
 dependencies {
-  compile project(':dynamic-config-common')
   compile project(':diagnostic-server')
-  compile project(':sanskrit')
   compile project(':dynamic-config-xml')
   compile project(':dynamic-config-change')
+  compile project(':dynamic-config-server-common')
 
   compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
   compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"

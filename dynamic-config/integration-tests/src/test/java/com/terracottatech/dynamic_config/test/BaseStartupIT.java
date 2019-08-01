@@ -49,7 +49,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.getIpAddress;
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.getIpAddress;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;

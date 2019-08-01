@@ -7,7 +7,6 @@ package com.terracottatech.dynamic_config.parsing;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.util.ConsoleParamsUtils;
 import com.terracottatech.utilities.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

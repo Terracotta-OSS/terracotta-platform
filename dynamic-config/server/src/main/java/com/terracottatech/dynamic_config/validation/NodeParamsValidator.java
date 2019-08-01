@@ -5,8 +5,6 @@
 package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
-import com.terracottatech.dynamic_config.model.config.AcceptableSettingUnits;
-import com.terracottatech.dynamic_config.model.config.AcceptableSettingValues;
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
@@ -17,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.containsSubstitutionParams;
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.containsSubstitutionParams;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;

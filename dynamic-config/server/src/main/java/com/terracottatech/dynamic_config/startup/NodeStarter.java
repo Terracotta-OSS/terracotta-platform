@@ -11,7 +11,6 @@ import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyServiceImpl;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.util.TemporaryTcConfig;
 import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
@@ -30,8 +29,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_CONFIG_DIR;
-import static com.terracottatech.dynamic_config.model.util.ParameterSubstitutor.substitute;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.findNodeName;
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static java.util.Collections.singleton;
 
 abstract class NodeStarter {

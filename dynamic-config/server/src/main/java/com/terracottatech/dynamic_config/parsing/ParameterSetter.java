@@ -41,8 +41,8 @@ class ParameterSetter {
     PARAM_ACTION_MAP.put(CommonOptions.SECURITY_DIR, toNode((node, value) -> node.setSecurityDir(Paths.get(value))));
     PARAM_ACTION_MAP.put(CommonOptions.SECURITY_AUDIT_LOG_DIR, toNode((node, value) -> node.setSecurityAuditLogDir(Paths.get(value))));
     PARAM_ACTION_MAP.put(CommonOptions.SECURITY_AUTHC, toNode(Node::setSecurityAuthc));
-    PARAM_ACTION_MAP.put(CommonOptions.SECURITY_SSL_TLS, toNode((node, value) -> node.setSecuritySslTls(Boolean.valueOf(value))));
-    PARAM_ACTION_MAP.put(CommonOptions.SECURITY_WHITELIST, toNode((node, value) -> node.setSecurityWhitelist(Boolean.valueOf(value))));
+    PARAM_ACTION_MAP.put(CommonOptions.SECURITY_SSL_TLS, toNode((node, value) -> node.setSecuritySslTls(Boolean.parseBoolean(value))));
+    PARAM_ACTION_MAP.put(CommonOptions.SECURITY_WHITELIST, toNode((node, value) -> node.setSecurityWhitelist(Boolean.parseBoolean(value))));
     PARAM_ACTION_MAP.put(CommonOptions.FAILOVER_PRIORITY, toNode(Node::setFailoverPriority));
     PARAM_ACTION_MAP.put(CommonOptions.CLIENT_RECONNECT_WINDOW, toNode((node, clientReconnectWindow) -> node.setClientReconnectWindow(Measure.parse(clientReconnectWindow, TimeUnit.class))));
     PARAM_ACTION_MAP.put(CommonOptions.CLIENT_LEASE_DURATION, toNode((node, clientLeaseDuration) -> node.setClientLeaseDuration(Measure.parse(clientLeaseDuration, TimeUnit.class))));

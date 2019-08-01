@@ -11,7 +11,7 @@ dependencies {
   compile project(':frs-platform-persistence')
   compile project(':security-platform-server')
   compile project(':topology')
-  compile project(':dynamic-config-server')
+  compile project(':dynamic-config-server-common')
 
   compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
   compileOnly "org.terracotta:offheap-resource:$terracottaPlatformVersion"
@@ -20,7 +20,5 @@ dependencies {
   compileOnly "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
-  testCompile("org.mockito:mockito-core:$mockitoVersion") {
-    exclude group: 'net.bytebuddy'
-  }
+  testCompile "org.mockito:mockito-core:$mockitoVersion"
 }
