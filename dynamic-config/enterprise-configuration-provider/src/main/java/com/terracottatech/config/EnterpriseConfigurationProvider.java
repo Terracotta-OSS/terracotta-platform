@@ -27,7 +27,6 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(EnterpriseConfigurationProvider.class);
 
   private CommandLineParser commandLineParser;
-  private TcConfigProvider tcConfigProvider;
   private Configuration configuration;
 
   @Override
@@ -36,8 +35,8 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
       commandLineParser = getCommandLineParser(configurationParams);
       if (commandLineParser == null) return;
 
-      tcConfigProvider = TcConfigProviderFactory.init(commandLineParser);
       bootstrapNomad();
+
       configuration = createConfiguration();
     } catch (Exception e) {
       throw new ConfigurationException("Unable to initialize EnterpriseConfigurationProvider with " + configurationParams, e);
@@ -65,6 +64,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   }
 
   private Configuration createConfiguration() throws Exception {
+    TcConfigProvider tcConfigProvider = TcConfigProviderFactory.init(commandLineParser);
     TcConfiguration tcConfiguration = tcConfigProvider.provide();
     LOGGER.info("Startup configuration of the node: \n\n{}", tcConfiguration);
     return new TcConfigurationWrapper(tcConfiguration, commandLineParser.isConfigConsistencyMode());
