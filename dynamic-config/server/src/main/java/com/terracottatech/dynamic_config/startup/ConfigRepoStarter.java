@@ -4,28 +4,27 @@
  */
 package com.terracottatech.dynamic_config.startup;
 
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.Options;
 
 import java.nio.file.Path;
 
-import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.findNodeName;
-
-public class ConfigRepoStarter extends NodeStarter {
+public class ConfigRepoStarter implements NodeStarter {
   private final Options options;
   private final NodeStarter nextStarter;
+  private final StartupManager startupManager;
 
-  ConfigRepoStarter(Options options, NodeStarter nextStarter) {
+  ConfigRepoStarter(Options options, StartupManager startupManager, NodeStarter nextStarter) {
     this.options = options;
     this.nextStarter = nextStarter;
+    this.startupManager = startupManager;
   }
 
   @Override
-  public void startNode(Cluster cluster, Node node) {
-    Path nonNullConfigDir = getOrDefaultConfigDir(options.getNodeConfigDir());
-    findNodeName(nonNullConfigDir).ifPresent(nodeName -> startUsingConfigRepo(nonNullConfigDir, nodeName));
+  public void startNode() {
+    Path nonNullConfigDir = startupManager.getOrDefaultConfigDir(options.getNodeConfigDir());
+    startupManager.findNodeName(nonNullConfigDir).ifPresent(nodeName -> startupManager.startUsingConfigRepo(nonNullConfigDir, nodeName));
 
-    nextStarter.startNode(cluster, node);
+    // Couldn't start node - pass the responsibility to the next starter
+    nextStarter.startNode();
   }
 }

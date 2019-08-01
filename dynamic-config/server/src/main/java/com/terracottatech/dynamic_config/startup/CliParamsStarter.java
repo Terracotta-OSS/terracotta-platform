@@ -8,35 +8,45 @@ import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-import static com.terracottatech.utilities.Assertion.assertNonNull;
+import static java.util.Objects.requireNonNull;
 
-public class CliParamsStarter extends NodeStarter {
+public class CliParamsStarter implements NodeStarter {
+  private static final Logger LOGGER = LoggerFactory.getLogger(CliParamsStarter.class);
+
   private final Options options;
   private final Map<String, String> paramValueMap;
+  private final ClusterCreator clusterCreator;
   private final LicensingService licensingService;
+  private final StartupManager startupManager;
 
-  CliParamsStarter(Options options, Map<String, String> paramValueMap, LicensingService licensingService) {
+  CliParamsStarter(Options options, Map<String, String> paramValueMap, LicensingService licensingService,
+                   ClusterCreator clusterCreator, StartupManager startupManager) {
     this.options = options;
     this.paramValueMap = paramValueMap;
+    this.clusterCreator = clusterCreator;
     this.licensingService = licensingService;
+    this.startupManager = startupManager;
   }
 
   @Override
-  public void startNode(Cluster cluster, Node node) {
-    logger.info("Starting node from command-line parameters");
-    cluster = ClusterCreator.createCluster(paramValueMap);
-    node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
+  public void startNode() {
+    LOGGER.info("Starting node from command-line parameters");
+    Cluster cluster = clusterCreator.create(paramValueMap);
+    Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {
-      assertNonNull(options.getClusterName(), "clusterName must not be null and must be validated in " + Options.class.getName());
-      startPreactivated(cluster, node, licensingService, options.getLicenseFile());
+      requireNonNull(options.getClusterName(), "Cluster name is required with license file");
+      startupManager.startPreactivated(cluster, node, licensingService, options.getLicenseFile());
     } else {
-      startUnconfigured(cluster, node);
+      startupManager.startUnconfigured(cluster, node);
     }
+
     // If we're here, we've failed in our attempts to start the node
-    throw new AssertionError("Tried all methods of starting the node. Giving up!");
+    throw new AssertionError("Exhausted all methods of starting the node. Giving up!");
   }
 }

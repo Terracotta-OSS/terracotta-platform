@@ -22,6 +22,9 @@ dependencies {
 
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
+    exclude group: 'junit'
+  }
   testCompile("org.mockito:mockito-core:$mockitoVersion") {
     exclude group: 'net.bytebuddy'
   }

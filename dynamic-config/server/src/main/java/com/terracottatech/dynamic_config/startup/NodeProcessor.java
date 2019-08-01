@@ -13,18 +13,23 @@ public class NodeProcessor {
   private final Options options;
   private final Map<String, String> paramValueMap;
   private final LicensingService licensingService;
+  private final StartupManager startupManager;
+  private final ClusterCreator clusterCreator;
 
-  public NodeProcessor(Options options, Map<String, String> paramValueMap, LicensingService licensingService) {
+  public NodeProcessor(Options options, Map<String, String> paramValueMap, LicensingService licensingService,
+                       ClusterCreator clusterCreator, StartupManager startupManager) {
     this.options = options;
     this.paramValueMap = paramValueMap;
     this.licensingService = licensingService;
+    this.clusterCreator = clusterCreator;
+    this.startupManager = startupManager;
   }
 
   public void process() {
     // Each NodeStarter either handles the startup itself or hands over to the next NodeStarter, following the chain-of-responsibility pattern
-    NodeStarter third = new CliParamsStarter(options, paramValueMap, licensingService);
-    NodeStarter second = new ConfigFileStarter(options, licensingService, third);
-    NodeStarter first = new ConfigRepoStarter(options, second);
-    first.startNode(null, null);
+    NodeStarter third = new CliParamsStarter(options, paramValueMap, licensingService, clusterCreator, startupManager);
+    NodeStarter second = new ConfigFileStarter(options, licensingService, clusterCreator, startupManager, third);
+    NodeStarter first = new ConfigRepoStarter(options, startupManager, second);
+    first.startNode();
   }
 }

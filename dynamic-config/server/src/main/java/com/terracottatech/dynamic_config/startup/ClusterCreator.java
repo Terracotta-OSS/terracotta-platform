@@ -22,8 +22,8 @@ import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils
 import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getProperty;
 import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getStripeId;
 
-class ClusterCreator {
-  static Cluster createCluster(Path configFile, String optionalClusterName) {
+public class ClusterCreator {
+  Cluster create(Path configFile, String optionalClusterName) {
     // Load the properties and validate the config file
     Properties properties = new PropertiesFileLoader(configFile).loadProperties();
     String fileName = configFile.toFile().getName(); //Path::getFileName can return null, which trips spotBugs
@@ -37,13 +37,13 @@ class ClusterCreator {
     return cluster;
   }
 
-  static Cluster createCluster(Map<String, String> paramValueMap) {
+  Cluster create(Map<String, String> paramValueMap) {
     NodeParamsValidator nodeParamsValidator = new NodeParamsValidator(paramValueMap);
     nodeParamsValidator.validate();
     return new ConsoleParamsParser(paramValueMap).parse();
   }
 
-  private static void validateNodeParams(Properties properties) {
+  private void validateNodeParams(Properties properties) {
     properties.entrySet()
         .stream()
         .collect(
