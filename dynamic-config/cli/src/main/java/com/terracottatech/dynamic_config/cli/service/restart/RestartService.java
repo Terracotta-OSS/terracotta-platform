@@ -12,22 +12,20 @@ import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
-import org.awaitility.Awaitility;
-import org.awaitility.Duration;
-import org.awaitility.core.ConditionTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionException;
+import org.terracotta.lease.connection.TimeBudget;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
 import static com.terracottatech.tools.detailed.state.LogicalServerState.STARTING;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNINITIALIZED;
@@ -76,18 +74,10 @@ public class RestartService {
         }, executor).thenRun(() -> {
           if (!failures.containsKey(addr)) {
             try {
-              LOGGER.debug("Waiting for node {} to restart", addr);
-              Awaitility.await()
-                  .pollInterval(Duration.ONE_SECOND)
-                  .atMost(requestTimeoutMillis, MILLISECONDS)
-                  .until(nodeRestarted(addr));
-            } catch (ConditionTimeoutException e) {
-              Tuple2<String, Exception> err = tuple2("Waiting for node " + addr + " to restart timed out after " + requestTimeoutMillis + "ms", null);
+              awaitRestart(addr);
+            } catch (TimeoutException e) {
+              Tuple2<String, Exception> err = tuple2(e.getMessage(), null);
               LOGGER.debug(err.t1);
-              failures.put(addr, err);
-            } catch (Exception e) {
-              Tuple2<String, Exception> err = tuple2("Failed waiting for node " + addr + " to restart: " + e.getMessage(), e);
-              LOGGER.debug(err.t1, e);
               failures.put(addr, err);
             }
           }
@@ -119,22 +109,32 @@ public class RestartService {
     };
   }
 
-  private Callable<Boolean> nodeRestarted(InetSocketAddress addr) {
-    return () -> {
-      LOGGER.debug("Checking if node {} has restarted", addr);
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
-        // STARTING is the state used when starting node in diagnostic mode
-        LogicalServerState state = diagnosticService.getLogicalServerState();
-        // Note: STARTING is the state used when a server is blocked starting in diagnostic mode
-        return state != null && state != UNREACHABLE && state != UNKNOWN && state != STARTING && state != UNINITIALIZED;
-      } catch (ConnectionException e) {
-        LOGGER.debug("Node {} didn't restarted yet: {}", e.getMessage(), e);
-        return false;
-      } catch (Exception e) {
-        LOGGER.debug("Unable to query status for node {}: {}", e.getMessage(), e);
-        return false;
-      }
-    };
+  private void awaitRestart(InetSocketAddress addr) throws TimeoutException {
+    LOGGER.debug("Waiting for node {} to restart", addr);
+    TimeBudget timeBudget = new TimeBudget(requestTimeoutMillis, MILLISECONDS);
+    boolean restarted = false;
+    while (!restarted && timeBudget.remaining(MILLISECONDS) > 0) {
+      restarted = nodeRestarted(addr);
+    }
+    if (!restarted) {
+      throw new TimeoutException("Waiting for node " + addr + " to restart timed out after " + requestTimeoutMillis + "ms");
+    }
+  }
+
+  private boolean nodeRestarted(InetSocketAddress addr) {
+    LOGGER.debug("Checking if node {} has restarted", addr);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
+      // STARTING is the state used when starting node in diagnostic mode
+      LogicalServerState state = diagnosticService.getLogicalServerState();
+      // Note: STARTING is the state used when a server is blocked starting in diagnostic mode
+      return state != null && state != UNREACHABLE && state != UNKNOWN && state != STARTING && state != UNINITIALIZED;
+    } catch (ConnectionException e) {
+      LOGGER.debug("Node {} didn't restarted yet: {}", e.getMessage(), e);
+      return false;
+    } catch (Exception e) {
+      LOGGER.debug("Unable to query status for node {}: {}", e.getMessage(), e);
+      return false;
+    }
   }
 
 }
