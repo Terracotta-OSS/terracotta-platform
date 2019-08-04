@@ -73,14 +73,7 @@ public class Cluster implements Cloneable {
       throw new IllegalStateException();
     }
     Stripe s = stripes.iterator().next();
-    Collection<Node> nodes = s.getNodes();
-    if (nodes.size() > 1) {
-      throw new IllegalStateException();
-    }
-    if (nodes.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(nodes.iterator().next());
+    return s.getSingleNode();
   }
 
   @Override

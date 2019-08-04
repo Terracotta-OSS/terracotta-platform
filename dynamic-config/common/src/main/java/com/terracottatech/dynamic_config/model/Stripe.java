@@ -57,6 +57,17 @@ public class Stripe implements Cloneable {
         '}';
   }
 
+  @JsonIgnore
+  public Optional<Node> getSingleNode() throws IllegalStateException {
+    if (nodes.size() > 1) {
+      throw new IllegalStateException();
+    }
+    if (nodes.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(nodes.iterator().next());
+  }
+
   public Optional<Node> getNode(InetSocketAddress address) {
     return nodes.stream().filter(node -> node.getNodeAddress().equals(address)).findFirst();
   }
