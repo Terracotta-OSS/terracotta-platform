@@ -10,22 +10,22 @@ import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.util.UUID;
 
-public interface NomadStateChange {
-  NomadStateChange setInitialized();
+public interface NomadStateChange<T> {
+  NomadStateChange<T> setInitialized();
 
-  NomadStateChange setMode(NomadServerMode mode);
+  NomadStateChange<T> setMode(NomadServerMode mode);
 
-  NomadStateChange setLatestChangeUuid(UUID changeUuid);
+  NomadStateChange<T> setLatestChangeUuid(UUID changeUuid);
 
-  NomadStateChange setCurrentVersion(long versionNumber);
+  NomadStateChange<T> setCurrentVersion(long versionNumber);
 
-  NomadStateChange setHighestVersion(long versionNumber);
+  NomadStateChange<T> setHighestVersion(long versionNumber);
 
-  NomadStateChange setLastMutationHost(String lastMutationHost);
+  NomadStateChange<T> setLastMutationHost(String lastMutationHost);
 
-  NomadStateChange setLastMutationUser(String lastMutationUser);
+  NomadStateChange<T> setLastMutationUser(String lastMutationUser);
 
-  NomadStateChange createChange(UUID changeUuid, ChangeRequest changeRequest);
+  NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest);
 
-  NomadStateChange updateChangeRequestState(UUID changeUuid, ChangeRequestState newState);
+  NomadStateChange<T> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState);
 }

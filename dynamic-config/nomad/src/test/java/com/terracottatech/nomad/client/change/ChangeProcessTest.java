@@ -41,13 +41,14 @@ import static org.mockito.Mockito.when;
 
 public class ChangeProcessTest extends NomadClientProcessTest {
   @Mock
-  private ChangeResultReceiver results;
+  private ChangeResultReceiver<String> results;
 
   @After
   public void after() {
     verifyNoMoreInteractions(results);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void makeChange() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -78,6 +79,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(CONSISTENT);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void discoverFail() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -93,6 +95,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void discoverAlreadyPrepared() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
     when(server2.discover()).thenReturn(discovery(PREPARED));
@@ -108,6 +111,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void discoverInconsistentCluster() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
@@ -127,6 +131,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void discoverOtherClient() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED, 1L), discovery(COMMITTED, 2L));
@@ -145,6 +150,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void prepareFail() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -173,6 +179,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(CONSISTENT);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void prepareFailRollbackFail() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -201,6 +208,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(MAY_NEED_RECOVERY);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void prepareFailRollbackOtherClient() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -229,6 +237,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(MAY_NEED_RECOVERY);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void prepareOtherClient() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -257,6 +266,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(CONSISTENT);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void prepareChangeUnacceptable() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -285,6 +295,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(CONSISTENT);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void commitFail() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -315,6 +326,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(MAY_NEED_RECOVERY);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void commitOtherClient() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -345,6 +357,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(MAY_NEED_RECOVERY);
   }
 
+  @SuppressWarnings("unchecked")
   @Test(timeout = 10_000L)
   public void timeout() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
@@ -360,12 +373,12 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   }
 
   private void runTest() {
-    NomadClient client = new NomadClient(servers, "host", "user");
+    NomadClient<String> client = new NomadClient<>(servers, "host", "user");
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
   }
 
   private void runTest(long timeout) {
-    NomadClient client = new NomadClient(servers, "host", "user");
+    NomadClient<String> client = new NomadClient<>(servers, "host", "user");
     client.setTimeoutMillis(timeout);
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
   }

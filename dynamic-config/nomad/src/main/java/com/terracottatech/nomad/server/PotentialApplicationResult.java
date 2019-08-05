@@ -4,20 +4,20 @@
  */
 package com.terracottatech.nomad.server;
 
-public class PotentialApplicationResult {
+public class PotentialApplicationResult<T> {
   private final boolean allowed;
-  private final String newConfiguration;
+  private final T newConfiguration;
   private final String rejectionReason;
 
-  public static PotentialApplicationResult allow(String newConfiguration) {
-    return new PotentialApplicationResult(true, newConfiguration, null);
+  public static <T> PotentialApplicationResult<T> allow(T newConfiguration) {
+    return new PotentialApplicationResult<>(true, newConfiguration, null);
   }
 
-  public static PotentialApplicationResult reject(String reason) {
-    return new PotentialApplicationResult(false, null, reason);
+  public static <T> PotentialApplicationResult<T> reject(String reason) {
+    return new PotentialApplicationResult<>(false, null, reason);
   }
 
-  private PotentialApplicationResult(boolean allowed, String newConfiguration, String rejectionReason) {
+  private PotentialApplicationResult(boolean allowed, T newConfiguration, String rejectionReason) {
     this.allowed = allowed;
     this.newConfiguration = newConfiguration;
     this.rejectionReason = rejectionReason;
@@ -27,7 +27,7 @@ public class PotentialApplicationResult {
     return allowed;
   }
 
-  public String getNewConfiguration() {
+  public T getNewConfiguration() {
     return newConfiguration;
   }
 

@@ -22,18 +22,18 @@ import static com.terracottatech.nomad.server.state.StateKeys.LATEST_CHANGE_UUID
 import static com.terracottatech.nomad.server.state.StateKeys.MODE;
 import static com.terracottatech.nomad.server.state.StateKeys.MUTATIVE_MESSAGE_COUNT;
 
-public class MemoryNomadServerState implements NomadServerState {
+public class MemoryNomadServerState<T> implements NomadServerState<T> {
   private Map<String, Object> state = new HashMap<>();
 
   @Override
   @SuppressWarnings("unchecked")
-  public NomadStateChange newStateChange() {
-    return new MemoryNomadStateChange(k -> (Map<String, Object>) state.get(k));
+  public NomadStateChange<T> newStateChange() {
+    return new MemoryNomadStateChange<T>(k -> (Map<String, Object>) state.get(k));
   }
 
   @Override
-  public void applyStateChange(NomadStateChange change) {
-    MemoryNomadStateChange memoryChange = (MemoryNomadStateChange) change;
+  public void applyStateChange(NomadStateChange<T> change) {
+    MemoryNomadStateChange<T> memoryChange = (MemoryNomadStateChange<T>) change;
 
     Map<String, Object> updateMap = memoryChange.getUpdateMap();
 
@@ -47,14 +47,15 @@ public class MemoryNomadServerState implements NomadServerState {
     state.putAll(updateMap);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public String getCurrentCommittedChangeResult() {
+  public T getCurrentCommittedChangeResult() {
     long currentVersion = getCurrentVersion();
     if (currentVersion == 0L) {
       return null;
     }
 
-    return (String) state.get(Long.toString(currentVersion));
+    return (T) state.get(Long.toString(currentVersion));
   }
 
   @Override
@@ -105,7 +106,7 @@ public class MemoryNomadServerState implements NomadServerState {
 
   @Override
   @SuppressWarnings("unchecked")
-  public ChangeRequest getChangeRequest(UUID changeUuid) {
+  public ChangeRequest<T> getChangeRequest(UUID changeUuid) {
     Map<String, Object> changeRequestState = (Map<String, Object>) state.get(changeUuid.toString());
 
     if (changeRequestState == null) {
@@ -118,8 +119,8 @@ public class MemoryNomadServerState implements NomadServerState {
     String creationHost = (String) changeRequestState.get(StateKeys.CREATION_HOST);
     String creationUser = (String) changeRequestState.get(StateKeys.CREATION_USER);
 
-    String changeResult = (String) state.get(Long.toString(version));
+    T changeResult = (T) state.get(Long.toString(version));
 
-    return new ChangeRequest(requestState, version, change, changeResult, creationHost, creationUser);
+    return new ChangeRequest<>(requestState, version, change, changeResult, creationHost, creationUser);
   }
 }

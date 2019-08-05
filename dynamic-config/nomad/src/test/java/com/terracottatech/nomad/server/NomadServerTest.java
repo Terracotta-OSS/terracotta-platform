@@ -39,16 +39,16 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class NomadServerTest {
   @Mock
-  private ChangeApplicator changeApplicator;
+  private ChangeApplicator<String> changeApplicator;
 
-  private NomadServerState state;
-  private NomadServer server;
+  private NomadServerState<String> state;
+  private NomadServer<String> server;
 
   @Before
   public void before() throws Exception {
-    state = new MemoryNomadServerState();
+    state = new MemoryNomadServerState<>();
     assertFalse(state.isInitialized());
-    server = new NomadServerImpl(state, changeApplicator);
+    server = new NomadServerImpl<>(state, changeApplicator);
   }
 
   @After
@@ -63,7 +63,7 @@ public class NomadServerTest {
 
   @Test
   public void doubleInitialization() throws Exception {
-    new NomadServerImpl(state, changeApplicator);
+    new NomadServerImpl<>(state, changeApplicator);
     assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null);
   }
 
@@ -71,7 +71,7 @@ public class NomadServerTest {
   public void prepare() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -93,7 +93,7 @@ public class NomadServerTest {
   public void commit() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -123,7 +123,7 @@ public class NomadServerTest {
   public void rollback() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -152,7 +152,7 @@ public class NomadServerTest {
   public void takeover() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -178,7 +178,7 @@ public class NomadServerTest {
 
   @Test
   public void plainTakeover() throws Exception {
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     AcceptRejectResponse response = server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount(),
@@ -192,7 +192,7 @@ public class NomadServerTest {
 
   @Test
   public void deadPrepare() throws Exception {
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount(),
@@ -227,7 +227,7 @@ public class NomadServerTest {
   public void deadCommit() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -262,7 +262,7 @@ public class NomadServerTest {
   public void deadRollback() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -297,7 +297,7 @@ public class NomadServerTest {
   public void deadTakeover() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -331,7 +331,7 @@ public class NomadServerTest {
   public void prepareUnacceptableChange() throws Exception {
     when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject("fail"));
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
 
@@ -375,7 +375,7 @@ public class NomadServerTest {
     assertEquals(highestVersion, state.getHighestVersion());
 
     if (latestChangeUuid != null) {
-      ChangeRequest changeRequest = state.getChangeRequest(latestChangeUuid);
+      ChangeRequest<String> changeRequest = state.getChangeRequest(latestChangeUuid);
       assertEquals(changeState, changeRequest.getState());
       assertEquals(changeVersion, (Long) changeRequest.getVersion());
       assertEquals(changeOperation, ((SimpleNomadChange) changeRequest.getChange()).getChange());
@@ -385,7 +385,7 @@ public class NomadServerTest {
       assertEquals(changeSummary, changeRequest.getChange().getSummary());
     }
 
-    DiscoverResponse discoverResponse = server.discover();
+    DiscoverResponse<String> discoverResponse = server.discover();
     assertEquals(mode, discoverResponse.getMode());
     assertEquals(mutativeMessageCount, discoverResponse.getMutativeMessageCount());
     assertEquals(lastMutationHost, discoverResponse.getLastMutationHost());
@@ -393,7 +393,7 @@ public class NomadServerTest {
     assertEquals(currentVersion, discoverResponse.getCurrentVersion());
     assertEquals(highestVersion, discoverResponse.getHighestVersion());
 
-    ChangeDetails latestChange = discoverResponse.getLatestChange();
+    ChangeDetails<String> latestChange = discoverResponse.getLatestChange();
     if (latestChangeUuid == null) {
       assertNull(latestChange);
     } else {

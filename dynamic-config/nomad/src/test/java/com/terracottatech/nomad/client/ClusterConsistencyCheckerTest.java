@@ -24,7 +24,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterConsistencyCheckerTest {
   @Mock
-  private DiscoverResultsReceiver results;
+  private DiscoverResultsReceiver<String> results;
+
+  private ClusterConsistencyChecker<String> consistencyChecker = new ClusterConsistencyChecker<>();
 
   @After
   public void after() {
@@ -33,8 +35,6 @@ public class ClusterConsistencyCheckerTest {
 
   @Test
   public void allCommitForSameUuid() {
-    ClusterConsistencyChecker consistencyChecker = new ClusterConsistencyChecker();
-
     UUID uuid = UUID.randomUUID();
 
     consistencyChecker.discovered("server1", discovery(COMMITTED, uuid));
@@ -47,8 +47,6 @@ public class ClusterConsistencyCheckerTest {
 
   @Test
   public void allRollbackForSameUuid() {
-    ClusterConsistencyChecker consistencyChecker = new ClusterConsistencyChecker();
-
     UUID uuid = UUID.randomUUID();
 
     consistencyChecker.discovered("server1", discovery(ROLLED_BACK, uuid));
@@ -59,8 +57,6 @@ public class ClusterConsistencyCheckerTest {
 
   @Test
   public void inconsistentCluster() {
-    ClusterConsistencyChecker consistencyChecker = new ClusterConsistencyChecker();
-
     UUID uuid = UUID.randomUUID();
 
     consistencyChecker.discovered("server1", discovery(COMMITTED, uuid));
@@ -73,8 +69,6 @@ public class ClusterConsistencyCheckerTest {
 
   @Test
   public void differentUuids() {
-    ClusterConsistencyChecker consistencyChecker = new ClusterConsistencyChecker();
-
     consistencyChecker.discovered("server1", discovery(COMMITTED));
     consistencyChecker.discovered("server2", discovery(ROLLED_BACK));
 
@@ -83,8 +77,6 @@ public class ClusterConsistencyCheckerTest {
 
   @Test
   public void multipleInconsistencies() {
-    ClusterConsistencyChecker consistencyChecker = new ClusterConsistencyChecker();
-
     UUID uuid1 = UUID.randomUUID();
     UUID uuid2 = UUID.randomUUID();
 

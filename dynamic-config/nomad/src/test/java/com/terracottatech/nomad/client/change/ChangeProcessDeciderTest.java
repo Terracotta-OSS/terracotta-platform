@@ -25,11 +25,12 @@ import static org.mockito.Mockito.verify;
 @RunWith(MockitoJUnitRunner.class)
 public class ChangeProcessDeciderTest {
   @Mock
-  private AllResultsReceiver results;
+  private AllResultsReceiver<String> results;
+
+  ChangeProcessDecider<String> decider = new ChangeProcessDecider<>();
 
   @Test
   public void discoverSuccess() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -42,7 +43,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void discoverFail() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -56,7 +56,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void discoverPrepared() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -74,7 +73,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void secondDiscoverSuccess() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -91,7 +89,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void secondDiscoverOtherClient() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -109,7 +106,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void secondDiscoverFail() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -127,7 +123,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareSuccess() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -148,7 +143,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareSuccessCommitSuccess() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -174,7 +168,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareSuccessCommitFail() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -200,7 +193,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareSuccessCommitOtherClient() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -226,7 +218,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareFail() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -247,7 +238,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareFailRollbackSuccess() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -272,7 +262,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareFailRollbackFail() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -297,7 +286,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareFailRollbackOtherClient() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -322,7 +310,6 @@ public class ChangeProcessDeciderTest {
 
   @Test
   public void prepareOtherClient() {
-    ChangeProcessDecider decider = new ChangeProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();

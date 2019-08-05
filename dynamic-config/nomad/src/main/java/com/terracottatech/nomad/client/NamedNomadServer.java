@@ -15,11 +15,11 @@ import com.terracottatech.nomad.server.NomadServer;
 
 import static java.util.Objects.requireNonNull;
 
-public class NamedNomadServer implements NomadServer {
+public class NamedNomadServer<T> implements NomadServer<T> {
   private final String name;
-  private final NomadServer server;
+  private final NomadServer<T> server;
 
-  public NamedNomadServer(String name, NomadServer server) {
+  public NamedNomadServer(String name, NomadServer<T> server) {
     this.name = requireNonNull(name);
     this.server = requireNonNull(server);
   }
@@ -29,7 +29,7 @@ public class NamedNomadServer implements NomadServer {
   }
 
   @Override
-  public DiscoverResponse discover() throws NomadException {
+  public DiscoverResponse<T> discover() throws NomadException {
     return server.discover();
   }
 

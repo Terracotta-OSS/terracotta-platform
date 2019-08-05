@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
-public class MemoryNomadStateChange implements NomadStateChange {
+public class MemoryNomadStateChange<T> implements NomadStateChange<T> {
   private final Function<String, Map<String, Object>> changeLoader;
   private Map<String, Object> changes = new HashMap<>();
 
@@ -26,49 +26,49 @@ public class MemoryNomadStateChange implements NomadStateChange {
   }
 
   @Override
-  public NomadStateChange setInitialized() {
+  public NomadStateChange<T> setInitialized() {
     changes.put(StateKeys.INITIALIZED, "true");
     return this;
   }
 
   @Override
-  public NomadStateChange setMode(NomadServerMode mode) {
+  public NomadStateChange<T> setMode(NomadServerMode mode) {
     changes.put(StateKeys.MODE, mode.toString());
     return this;
   }
 
   @Override
-  public NomadStateChange setLatestChangeUuid(UUID changeUuid) {
+  public NomadStateChange<T> setLatestChangeUuid(UUID changeUuid) {
     changes.put(StateKeys.LATEST_CHANGE_UUID, changeUuid.toString());
     return this;
   }
 
   @Override
-  public NomadStateChange setCurrentVersion(long versionNumber) {
+  public NomadStateChange<T> setCurrentVersion(long versionNumber) {
     changes.put(StateKeys.CURRENT_VERSION, versionNumber);
     return this;
   }
 
   @Override
-  public NomadStateChange setHighestVersion(long versionNumber) {
+  public NomadStateChange<T> setHighestVersion(long versionNumber) {
     changes.put(StateKeys.HIGHEST_VERSION, versionNumber);
     return this;
   }
 
   @Override
-  public NomadStateChange setLastMutationHost(String lastMutationHost) {
+  public NomadStateChange<T> setLastMutationHost(String lastMutationHost) {
     changes.put(StateKeys.LAST_MUTATION_HOST, lastMutationHost);
     return this;
   }
 
   @Override
-  public NomadStateChange setLastMutationUser(String lastMutationUser) {
+  public NomadStateChange<T> setLastMutationUser(String lastMutationUser) {
     changes.put(StateKeys.LAST_MUTATION_USER, lastMutationUser);
     return this;
   }
 
   @Override
-  public NomadStateChange createChange(UUID changeUuid, ChangeRequest changeRequest) {
+  public NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest) {
     long version = changeRequest.getVersion();
 
     Map<String, Object> changeRequestState = new HashMap<>();
@@ -85,7 +85,7 @@ public class MemoryNomadStateChange implements NomadStateChange {
   }
 
   @Override
-  public NomadStateChange updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) {
+  public NomadStateChange<T> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) {
     String changeKey = changeUuid.toString();
     Map<String, Object> changeRequestState = changeLoader.apply(changeKey);
 

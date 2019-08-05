@@ -6,7 +6,7 @@ package com.terracottatech.nomad.client;
 
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 
-public interface NomadDecider extends AllResultsReceiver {
+public interface NomadDecider<T> extends AllResultsReceiver<T> {
   boolean isDiscoverSuccessful();
 
   boolean isWholeClusterAccepting();

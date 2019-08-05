@@ -11,10 +11,10 @@ import com.terracottatech.nomad.messages.DiscoverResponse;
 import java.util.Set;
 import java.util.UUID;
 
-public class ChangeAllResultsReceiverAdapter implements AllResultsReceiver {
-  private final ChangeResultReceiver changeResultReceiver;
+public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T> {
+  private final ChangeResultReceiver<T> changeResultReceiver;
 
-  public ChangeAllResultsReceiverAdapter(ChangeResultReceiver changeResultReceiver) {
+  public ChangeAllResultsReceiverAdapter(ChangeResultReceiver<T> changeResultReceiver) {
     this.changeResultReceiver = changeResultReceiver;
   }
 
@@ -24,7 +24,7 @@ public class ChangeAllResultsReceiverAdapter implements AllResultsReceiver {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
     changeResultReceiver.discovered(server, discovery);
   }
 

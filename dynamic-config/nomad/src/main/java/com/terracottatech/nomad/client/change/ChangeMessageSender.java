@@ -11,8 +11,8 @@ import com.terracottatech.nomad.client.NomadMessageSender;
 import java.util.Collection;
 import java.util.UUID;
 
-public class ChangeMessageSender extends NomadMessageSender {
-  public ChangeMessageSender(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+public class ChangeMessageSender<T> extends NomadMessageSender<T> {
+  public ChangeMessageSender(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 

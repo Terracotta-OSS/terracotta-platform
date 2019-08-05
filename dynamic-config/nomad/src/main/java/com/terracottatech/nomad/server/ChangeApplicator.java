@@ -6,8 +6,8 @@ package com.terracottatech.nomad.server;
 
 import com.terracottatech.nomad.client.change.NomadChange;
 
-public interface ChangeApplicator {
-  PotentialApplicationResult canApply(String existing, NomadChange change);
+public interface ChangeApplicator<T> {
+  PotentialApplicationResult<T> canApply(T existing, NomadChange change);
 
   void apply(NomadChange change) throws NomadException;
 }

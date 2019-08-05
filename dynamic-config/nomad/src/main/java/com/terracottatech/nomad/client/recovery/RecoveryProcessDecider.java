@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 
-public class RecoveryProcessDecider extends BaseNomadDecider {
+public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
   private final Set<UUID> latestChangeUuids = ConcurrentHashMap.newKeySet();
   private volatile boolean rolledBack;
 
@@ -25,7 +25,7 @@ public class RecoveryProcessDecider extends BaseNomadDecider {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
     super.discovered(server, discovery);
 
     UUID latestChangeUuid = getLatestChangeUuid(discovery);
@@ -37,8 +37,8 @@ public class RecoveryProcessDecider extends BaseNomadDecider {
     }
   }
 
-  private UUID getLatestChangeUuid(DiscoverResponse discovery) {
-    ChangeDetails latestChange = discovery.getLatestChange();
+  private UUID getLatestChangeUuid(DiscoverResponse<T> discovery) {
+    ChangeDetails<T> latestChange = discovery.getLatestChange();
 
     if (latestChange == null) {
       return null;
@@ -47,8 +47,8 @@ public class RecoveryProcessDecider extends BaseNomadDecider {
     return latestChange.getChangeUuid();
   }
 
-  private ChangeRequestState getLatestChangeState(DiscoverResponse discovery) {
-    ChangeDetails latestChange = discovery.getLatestChange();
+  private ChangeRequestState getLatestChangeState(DiscoverResponse<T> discovery) {
+    ChangeDetails<T> latestChange = discovery.getLatestChange();
 
     if (latestChange == null) {
       return null;

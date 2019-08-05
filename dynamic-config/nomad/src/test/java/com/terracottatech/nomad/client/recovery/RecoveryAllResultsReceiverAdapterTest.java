@@ -7,9 +7,10 @@ package com.terracottatech.nomad.client.recovery;
 import com.terracottatech.nomad.client.AllResultsReceiverAdapterTest;
 import org.junit.Test;
 
-public class RecoveryAllResultsReceiverAdapterTest extends AllResultsReceiverAdapterTest<RecoveryResultReceiver, RecoveryAllResultsReceiverAdapter> {
+public class RecoveryAllResultsReceiverAdapterTest extends AllResultsReceiverAdapterTest<RecoveryResultReceiver<String>, RecoveryAllResultsReceiverAdapter<String>> {
+  @SuppressWarnings("unchecked")
   @Test
   public void checkAllMethodsDelegateCorrectly() throws Exception {
-    runTest(RecoveryResultReceiver.class, RecoveryAllResultsReceiverAdapter.class);
+    runTest((Class<RecoveryResultReceiver<String>>) (Class<?>) RecoveryResultReceiver.class, (Class<RecoveryAllResultsReceiverAdapter<String>>) (Class<?>) RecoveryAllResultsReceiverAdapter.class);
   }
 }

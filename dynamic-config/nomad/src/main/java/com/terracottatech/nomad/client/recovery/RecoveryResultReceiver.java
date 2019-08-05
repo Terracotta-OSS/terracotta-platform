@@ -8,5 +8,5 @@ import com.terracottatech.nomad.client.results.CommitRollbackResultsReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.results.TakeoverResultsReceiver;
 
-public interface RecoveryResultReceiver extends DiscoverResultsReceiver, TakeoverResultsReceiver, CommitRollbackResultsReceiver {
+public interface RecoveryResultReceiver<T> extends DiscoverResultsReceiver<T>, TakeoverResultsReceiver, CommitRollbackResultsReceiver {
 }

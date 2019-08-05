@@ -9,5 +9,5 @@ import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.results.PrepareResultsReceiver;
 import com.terracottatech.nomad.client.results.ServerPreparedResultsReceiver;
 
-public interface ChangeResultReceiver extends DiscoverResultsReceiver, ServerPreparedResultsReceiver, PrepareResultsReceiver, CommitRollbackResultsReceiver {
+public interface ChangeResultReceiver<T> extends DiscoverResultsReceiver<T>, ServerPreparedResultsReceiver, PrepareResultsReceiver, CommitRollbackResultsReceiver {
 }

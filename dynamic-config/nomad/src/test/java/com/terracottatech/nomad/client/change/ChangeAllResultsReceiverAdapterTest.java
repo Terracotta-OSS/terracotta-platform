@@ -7,9 +7,10 @@ package com.terracottatech.nomad.client.change;
 import com.terracottatech.nomad.client.AllResultsReceiverAdapterTest;
 import org.junit.Test;
 
-public class ChangeAllResultsReceiverAdapterTest extends AllResultsReceiverAdapterTest<ChangeResultReceiver, ChangeAllResultsReceiverAdapter> {
+public class ChangeAllResultsReceiverAdapterTest extends AllResultsReceiverAdapterTest<ChangeResultReceiver<String>, ChangeAllResultsReceiverAdapter<String>> {
+  @SuppressWarnings("unchecked")
   @Test
   public void checkAllMethodsDelegateCorrectly() throws Exception {
-    runTest(ChangeResultReceiver.class, ChangeAllResultsReceiverAdapter.class);
+    runTest((Class<ChangeResultReceiver<String>>) (Class<?>) ChangeResultReceiver.class, (Class<ChangeAllResultsReceiverAdapter<String>>) (Class<?>) ChangeAllResultsReceiverAdapter.class);
   }
 }

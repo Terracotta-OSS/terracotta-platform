@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 
 public class RecoveryProcessTest extends NomadClientProcessTest {
   @Mock
-  protected RecoveryResultReceiver results;
+  protected RecoveryResultReceiver<String> results;
 
   @After
   public void after() {
@@ -45,6 +45,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void partialCommit() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
@@ -74,6 +75,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void partialPrepare() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
     when(server1.takeover(any(TakeoverMessage.class))).thenReturn(accept());
@@ -102,6 +104,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void alreadyConsistent() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
@@ -121,6 +124,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void discoverFail() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
     when(server2.discover()).thenThrow(NomadException.class);
@@ -135,6 +139,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void discoverInconsistentCluster() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
@@ -155,6 +160,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void discoverOtherClient() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED, 1L), discovery(COMMITTED, 2L));
     when(server2.discover()).thenReturn(discovery(COMMITTED));
@@ -173,6 +179,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void takeoverFail() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
     when(server1.takeover(any(TakeoverMessage.class))).thenReturn(accept());
@@ -197,6 +204,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void takeoverOtherClient() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
     when(server1.takeover(any(TakeoverMessage.class))).thenReturn(accept());
@@ -221,6 +229,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void commitFail() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
@@ -250,6 +259,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void commitOtherClient() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
@@ -279,6 +289,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void rollbackFail() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
     when(server1.takeover(any(TakeoverMessage.class))).thenReturn(accept());
@@ -307,6 +318,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void rollbackOtherClient() throws Exception {
     when(server1.discover()).thenReturn(discovery(COMMITTED));
     when(server1.takeover(any(TakeoverMessage.class))).thenReturn(accept());
@@ -335,7 +347,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   private void runTest() {
-    NomadClient client = new NomadClient(servers, "host", "user");
+    NomadClient<String> client = new NomadClient<>(servers, "host", "user");
     client.tryRecovery(results);
   }
 }

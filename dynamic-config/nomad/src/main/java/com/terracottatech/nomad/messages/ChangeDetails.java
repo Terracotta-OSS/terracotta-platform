@@ -6,17 +6,19 @@ package com.terracottatech.nomad.messages;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeRequestState;
 
 import java.util.UUID;
 
-public class ChangeDetails {
+public class ChangeDetails<T> {
   private final UUID changeUuid;
   private final ChangeRequestState state;
   private final long version;
   private final NomadChange operation;
-  private final String result;
+  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+  private final T result;
   private final String creationHost;
   private final String creationUser;
 
@@ -25,7 +27,7 @@ public class ChangeDetails {
                        @JsonProperty("state") ChangeRequestState state,
                        @JsonProperty("version") long version,
                        @JsonProperty("operation") NomadChange operation,
-                       @JsonProperty("result") String result,
+                       @JsonProperty("result") T result,
                        @JsonProperty("creationHost") String creationHost,
                        @JsonProperty("creationUser") String creationUser) {
     this.changeUuid = changeUuid;
@@ -53,7 +55,7 @@ public class ChangeDetails {
     return operation;
   }
 
-  public String getResult() {
+  public T getResult() {
     return result;
   }
 

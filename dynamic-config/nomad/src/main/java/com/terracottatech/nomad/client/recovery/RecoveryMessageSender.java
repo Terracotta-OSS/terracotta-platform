@@ -12,13 +12,13 @@ import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.util.Collection;
 
-public class RecoveryMessageSender extends NomadMessageSender {
-  public RecoveryMessageSender(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+public class RecoveryMessageSender<T> extends NomadMessageSender<T> {
+  public RecoveryMessageSender(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
     super.discovered(server, discovery);
 
     if (discovery.getMode() == NomadServerMode.PREPARED) {

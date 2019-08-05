@@ -16,11 +16,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClusterConsistencyChecker implements AllResultsReceiver {
+public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
   private final Map<UUID, Set<String>> commits = new ConcurrentHashMap<>();
   private final Map<UUID, Set<String>> rollbacks = new ConcurrentHashMap<>();
 
-  public void checkClusterConsistency(DiscoverResultsReceiver results) {
+  public void checkClusterConsistency(DiscoverResultsReceiver<T> results) {
     HashSet<UUID> inconsistentUUIDs = new HashSet<>(commits.keySet());
     inconsistentUUIDs.retainAll(rollbacks.keySet());
 
@@ -30,8 +30,8 @@ public class ClusterConsistencyChecker implements AllResultsReceiver {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
-    ChangeDetails latestChange = discovery.getLatestChange();
+  public void discovered(String server, DiscoverResponse<T> discovery) {
+    ChangeDetails<T> latestChange = discovery.getLatestChange();
 
     if (latestChange != null) {
       UUID latestChangeUuid = latestChange.getChangeUuid();

@@ -11,6 +11,6 @@ import java.util.Collections;
 public class NomadClientTest {
   @Test(expected = IllegalArgumentException.class)
   public void mustSpecifyServers() {
-    new NomadClient(Collections.emptySet(), "host", "user");
+    new NomadClient<>(Collections.emptySet(), "host", "user");
   }
 }

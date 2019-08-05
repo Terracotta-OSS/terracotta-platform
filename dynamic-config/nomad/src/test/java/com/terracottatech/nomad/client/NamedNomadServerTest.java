@@ -23,10 +23,10 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class NamedNomadServerTest {
   @Mock
-  private NomadServer server;
+  private NomadServer<String> server;
 
   @Mock
-  private DiscoverResponse discovery;
+  private DiscoverResponse<String> discovery;
 
   @Mock
   private AcceptRejectResponse acceptRejectResponse;
@@ -45,7 +45,7 @@ public class NamedNomadServerTest {
 
   @Test
   public void getName() {
-    NamedNomadServer namedServer = new NamedNomadServer("name", server);
+    NamedNomadServer<String> namedServer = new NamedNomadServer<>("name", server);
     assertEquals("name", namedServer.getName());
   }
 
@@ -53,7 +53,7 @@ public class NamedNomadServerTest {
   public void delegateDiscover() throws Exception {
     when(server.discover()).thenReturn(discovery);
 
-    NamedNomadServer namedServer = new NamedNomadServer("name", server);
+    NamedNomadServer<String> namedServer = new NamedNomadServer<>("name", server);
     assertEquals(discovery, namedServer.discover());
   }
 
@@ -61,7 +61,7 @@ public class NamedNomadServerTest {
   public void delegatePrepare() throws Exception {
     when(server.prepare(prepareMessage)).thenReturn(acceptRejectResponse);
 
-    NamedNomadServer namedServer = new NamedNomadServer("name", server);
+    NamedNomadServer<String> namedServer = new NamedNomadServer<>("name", server);
     assertEquals(acceptRejectResponse, namedServer.prepare(prepareMessage));
     verify(server).prepare(prepareMessage);
   }
@@ -70,7 +70,7 @@ public class NamedNomadServerTest {
   public void delegateTakeover() throws Exception {
     when(server.takeover(takeoverMessage)).thenReturn(acceptRejectResponse);
 
-    NamedNomadServer namedServer = new NamedNomadServer("name", server);
+    NamedNomadServer<String> namedServer = new NamedNomadServer<>("name", server);
     assertEquals(acceptRejectResponse, namedServer.takeover(takeoverMessage));
     verify(server).takeover(takeoverMessage);
   }
@@ -79,7 +79,7 @@ public class NamedNomadServerTest {
   public void delegateCommit() throws Exception {
     when(server.commit(commitMessage)).thenReturn(acceptRejectResponse);
 
-    NamedNomadServer namedServer = new NamedNomadServer("name", server);
+    NamedNomadServer<String> namedServer = new NamedNomadServer<>("name", server);
     assertEquals(acceptRejectResponse, namedServer.commit(commitMessage));
     verify(server).commit(commitMessage);
   }
@@ -88,7 +88,7 @@ public class NamedNomadServerTest {
   public void delegateRollback() throws Exception {
     when(server.rollback(rollbackMessage)).thenReturn(acceptRejectResponse);
 
-    NamedNomadServer namedServer = new NamedNomadServer("name", server);
+    NamedNomadServer<String> namedServer = new NamedNomadServer<>("name", server);
     assertEquals(acceptRejectResponse, namedServer.rollback(rollbackMessage));
     verify(server).rollback(rollbackMessage);
   }

@@ -10,7 +10,7 @@ import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.util.UUID;
 
-public interface NomadServerState {
+public interface NomadServerState<T> {
   boolean isInitialized();
 
   NomadServerMode getMode();
@@ -27,11 +27,11 @@ public interface NomadServerState {
 
   long getHighestVersion();
 
-  ChangeRequest getChangeRequest(UUID changeUuid) throws NomadException;
+  ChangeRequest<T> getChangeRequest(UUID changeUuid) throws NomadException;
 
-  NomadStateChange newStateChange();
+  NomadStateChange<T> newStateChange();
 
-  void applyStateChange(NomadStateChange change) throws NomadException;
+  void applyStateChange(NomadStateChange<T> change) throws NomadException;
 
-  String getCurrentCommittedChangeResult() throws NomadException;
+  T getCurrentCommittedChangeResult() throws NomadException;
 }

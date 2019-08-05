@@ -4,6 +4,6 @@
  */
 package com.terracottatech.nomad.server;
 
-public interface UpgradableNomadServer extends NomadServer {
-  void setChangeApplicator(ChangeApplicator changeApplicator);
+public interface UpgradableNomadServer<T> extends NomadServer<T> {
+  void setChangeApplicator(ChangeApplicator<T> changeApplicator);
 }

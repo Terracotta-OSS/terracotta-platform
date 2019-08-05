@@ -4,17 +4,19 @@
  */
 package com.terracottatech.nomad.server;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.terracottatech.nomad.client.change.NomadChange;
 
-public class ChangeRequest {
+public class ChangeRequest<T> {
   private final ChangeRequestState state;
   private final long version;
   private final NomadChange change;
-  private final String changeResult;
+  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+  private final T changeResult;
   private final String creationHost;
   private final String creationUser;
 
-  public ChangeRequest(ChangeRequestState state, long version, NomadChange change, String changeResult, String creationHost, String creationUser) {
+  public ChangeRequest(ChangeRequestState state, long version, NomadChange change, T changeResult, String creationHost, String creationUser) {
     this.state = state;
     this.version = version;
     this.change = change;
@@ -35,7 +37,7 @@ public class ChangeRequest {
     return change;
   }
 
-  public String getChangeResult() {
+  public T getChangeResult() {
     return changeResult;
   }
 

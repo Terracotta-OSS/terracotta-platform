@@ -4,6 +4,6 @@
  */
 package com.terracottatech.nomad.client.results;
 
-public interface AllResultsReceiver extends DiscoverResultsReceiver, ServerPreparedResultsReceiver, PrepareResultsReceiver, TakeoverResultsReceiver, CommitRollbackResultsReceiver {
-  default void setResults(AllResultsReceiver results) {}
+public interface AllResultsReceiver<T> extends DiscoverResultsReceiver<T>, ServerPreparedResultsReceiver, PrepareResultsReceiver, TakeoverResultsReceiver, CommitRollbackResultsReceiver {
+  default void setResults(AllResultsReceiver<T> results) {}
 }

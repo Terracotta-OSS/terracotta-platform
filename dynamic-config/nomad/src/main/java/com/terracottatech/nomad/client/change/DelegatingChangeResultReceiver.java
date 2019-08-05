@@ -7,7 +7,6 @@ package com.terracottatech.nomad.client.change;
 import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
@@ -15,203 +14,199 @@ import java.util.UUID;
 /**
  * @author Mathieu Carbou
  */
-public class DelegatingChangeResultReceiver implements ChangeResultReceiver {
+public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
 
-  private final Collection<ChangeResultReceiver> changeResultReceivers;
+  private final Collection<ChangeResultReceiver<T>> changeResultReceivers;
 
-  public DelegatingChangeResultReceiver(Collection<ChangeResultReceiver> changeResultReceivers) {
+  public DelegatingChangeResultReceiver(Collection<ChangeResultReceiver<T>> changeResultReceivers) {
     this.changeResultReceivers = changeResultReceivers;
-  }
-
-  public DelegatingChangeResultReceiver(ChangeResultReceiver... changeResultReceivers) {
-    this.changeResultReceivers = Arrays.asList(changeResultReceivers);
   }
 
   @Override
   public void startDiscovery(Set<String> servers) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.startDiscovery(servers);
     }
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discovered(server, discovery);
     }
   }
 
   @Override
   public void discoverFail(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverFail(server);
     }
   }
 
   @Override
   public void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
     }
   }
 
   @Override
   public void endDiscovery() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.endDiscovery();
     }
   }
 
   @Override
   public void startSecondDiscovery() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.startSecondDiscovery();
     }
   }
 
   @Override
   public void discoverRepeated(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverRepeated(server);
     }
   }
 
   @Override
   public void discoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
   public void endSecondDiscovery() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.endSecondDiscovery();
     }
   }
 
   @Override
   public void discoverAlreadyPrepared(String server, UUID changeUuid, String creationHost, String creationUser) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverAlreadyPrepared(server, changeUuid, creationHost, creationUser);
     }
   }
 
   @Override
   public void startPrepare(UUID newChangeUuid) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.startPrepare(newChangeUuid);
     }
   }
 
   @Override
   public void prepared(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepared(server);
     }
   }
 
   @Override
   public void prepareFail(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareFail(server);
     }
   }
 
   @Override
   public void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
   public void prepareChangeUnacceptable(String server, String rejectionReason) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareChangeUnacceptable(server, rejectionReason);
     }
   }
 
   @Override
   public void endPrepare() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.endPrepare();
     }
   }
 
   @Override
   public void startCommit() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.startCommit();
     }
   }
 
   @Override
   public void committed(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.committed(server);
     }
   }
 
   @Override
   public void commitFail(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.commitFail(server);
     }
   }
 
   @Override
   public void commitOtherClient(String server, String lastMutationHost, String lastMutationUser) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.commitOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
   public void endCommit() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.endCommit();
     }
   }
 
   @Override
   public void startRollback() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.startRollback();
     }
   }
 
   @Override
   public void rolledBack(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rolledBack(server);
     }
   }
 
   @Override
   public void rollbackFail(String server) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rollbackFail(server);
     }
   }
 
   @Override
   public void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rollbackOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
   public void endRollback() {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.endRollback();
     }
   }
 
   @Override
   public void done(Consistency consistency) {
-    for (ChangeResultReceiver changeResultReceiver : changeResultReceivers) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.done(consistency);
     }
   }

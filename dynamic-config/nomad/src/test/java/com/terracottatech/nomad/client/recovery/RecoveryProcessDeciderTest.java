@@ -24,11 +24,12 @@ import static org.junit.Assert.assertTrue;
 @RunWith(MockitoJUnitRunner.class)
 public class RecoveryProcessDeciderTest {
   @Mock
-  private AllResultsReceiver results;
+  private AllResultsReceiver<String> results;
+
+  RecoveryProcessDecider<String> decider = new RecoveryProcessDecider<>();
 
   @Test
   public void discoverSuccess() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -41,7 +42,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void discoverFail() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -55,7 +55,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void discoverPrepared() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -68,7 +67,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void secondDiscoverSuccessConsistent() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -86,7 +84,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void secondDiscoverSuccessRecoveryNeeded() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -104,7 +101,7 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void secondDiscoverOtherClient() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
+
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -122,7 +119,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void secondDiscoverFail() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -140,7 +136,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessCommit() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -162,7 +157,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessRollback() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -182,7 +176,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverFail() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -204,7 +197,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverOtherClient() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -226,7 +218,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessCommitSuccess() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -252,7 +243,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessCommitFail() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -278,7 +268,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessCommitOtherClient() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     UUID uuid = UUID.randomUUID();
@@ -304,7 +293,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessRollbackSuccess() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -328,7 +316,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessRollbackFail() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));
@@ -352,7 +339,6 @@ public class RecoveryProcessDeciderTest {
 
   @Test
   public void takeoverSuccessRollbackOtherClient() {
-    RecoveryProcessDecider decider = new RecoveryProcessDecider();
     decider.setResults(results);
 
     decider.startDiscovery(setOf("server1", "server2"));

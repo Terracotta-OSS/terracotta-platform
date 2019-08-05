@@ -11,8 +11,8 @@ import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
 
-public interface NomadServer {
-  DiscoverResponse discover() throws NomadException;
+public interface NomadServer<T> {
+  DiscoverResponse<T> discover() throws NomadException;
 
   AcceptRejectResponse prepare(PrepareMessage message) throws NomadException;
 

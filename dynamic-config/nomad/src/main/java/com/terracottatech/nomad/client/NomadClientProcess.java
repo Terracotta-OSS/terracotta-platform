@@ -9,26 +9,29 @@ import com.terracottatech.nomad.client.results.CommitRollbackResultsReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.results.MuxAllResultsReceiver;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
-public abstract class NomadClientProcess<T> {
-  protected final Collection<NamedNomadServer> servers;
+public abstract class NomadClientProcess<C, R> {
+  protected final Collection<NamedNomadServer<R>> servers;
   protected final String host;
   protected final String user;
   protected final AsyncCaller asyncCaller;
 
-  public NomadClientProcess(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadClientProcess(Collection<NamedNomadServer<R>> servers, String host, String user, AsyncCaller asyncCaller) {
     this.servers = servers;
     this.host = host;
     this.user = user;
     this.asyncCaller = asyncCaller;
   }
 
-  protected abstract boolean act(AllResultsReceiver results, NomadDecider decider, NomadMessageSender messageSender, T data);
+  protected abstract boolean act(AllResultsReceiver<R> results, NomadDecider<R> decider, NomadMessageSender<R> messageSender, C data);
 
-  protected void runProcess(AllResultsReceiver results, NomadDecider decider, NomadMessageSender messageSender, T data) {
-    ClusterConsistencyChecker consistencyChecker = new ClusterConsistencyChecker();
-    results = wrap(results, decider, messageSender, consistencyChecker);
+  @SuppressWarnings("unchecked")
+  protected void runProcess(AllResultsReceiver<R> results, NomadDecider<R> decider, NomadMessageSender<R> messageSender, C data) {
+    ClusterConsistencyChecker<R> consistencyChecker = new ClusterConsistencyChecker<>();
+    results = wrap(Arrays.asList(results, decider, messageSender, consistencyChecker));
 
     if (!doubleDiscovery(results, decider, messageSender, consistencyChecker)) {
       results.done(decider.getConsistency());
@@ -43,17 +46,17 @@ public abstract class NomadClientProcess<T> {
     commitOrRollback(results, decider, messageSender);
   }
 
-  private AllResultsReceiver wrap(AllResultsReceiver... resultsReceivers) {
-    AllResultsReceiver muxResults = new MuxAllResultsReceiver(resultsReceivers);
+  private AllResultsReceiver<R> wrap(List<AllResultsReceiver<R>> resultsReceivers) {
+    AllResultsReceiver<R> muxResults = new MuxAllResultsReceiver<>(resultsReceivers);
 
-    for (AllResultsReceiver resultsReceiver : resultsReceivers) {
+    for (AllResultsReceiver<R> resultsReceiver : resultsReceivers) {
       resultsReceiver.setResults(muxResults);
     }
 
     return muxResults;
   }
 
-  private boolean doubleDiscovery(DiscoverResultsReceiver results, NomadDecider decider, NomadMessageSender messageSender, ClusterConsistencyChecker consistencyChecker) {
+  private boolean doubleDiscovery(DiscoverResultsReceiver<R> results, NomadDecider<R> decider, NomadMessageSender<R> messageSender, ClusterConsistencyChecker<R> consistencyChecker) {
     messageSender.sendDiscovers(results);
 
     if (!decider.isDiscoverSuccessful()) {
@@ -71,7 +74,7 @@ public abstract class NomadClientProcess<T> {
     return decider.isDiscoverSuccessful();
   }
 
-  private void commitOrRollback(CommitRollbackResultsReceiver results, NomadDecider decider, NomadMessageSender messageSender) {
+  private void commitOrRollback(CommitRollbackResultsReceiver results, NomadDecider<R> decider, NomadMessageSender<R> messageSender) {
     if (decider.shouldDoCommit()) {
       messageSender.sendCommits(results);
     } else {

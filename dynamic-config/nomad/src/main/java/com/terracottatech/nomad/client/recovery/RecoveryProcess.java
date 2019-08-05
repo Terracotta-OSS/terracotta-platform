@@ -13,22 +13,22 @@ import com.terracottatech.nomad.client.results.AllResultsReceiver;
 
 import java.util.Collection;
 
-public class RecoveryProcess extends NomadClientProcess<Void> {
-  public RecoveryProcess(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+public class RecoveryProcess<T> extends NomadClientProcess<Void, T> {
+  public RecoveryProcess(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 
-  public void recover(RecoveryResultReceiver results) {
+  public void recover(RecoveryResultReceiver<T> results) {
     runProcess(
-        new RecoveryAllResultsReceiverAdapter(results),
-        new RecoveryProcessDecider(),
-        new RecoveryMessageSender(servers, host, user, asyncCaller),
+        new RecoveryAllResultsReceiverAdapter<>(results),
+        new RecoveryProcessDecider<>(),
+        new RecoveryMessageSender<>(servers, host, user, asyncCaller),
         null
     );
   }
 
   @Override
-  protected boolean act(AllResultsReceiver results, NomadDecider decider, NomadMessageSender messageSender, Void data) {
+  protected boolean act(AllResultsReceiver<T> results, NomadDecider<T> decider, NomadMessageSender<T> messageSender, Void data) {
     if (decider.isWholeClusterAccepting()) {
       return false;
     }

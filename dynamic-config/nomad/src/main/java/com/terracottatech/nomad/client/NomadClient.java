@@ -14,8 +14,8 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-public class NomadClient {
-  private final Collection<NamedNomadServer> servers;
+public class NomadClient<T> {
+  private final Collection<NamedNomadServer<T>> servers;
   private final String host;
   private final String user;
   private volatile int concurrency;
@@ -26,7 +26,7 @@ public class NomadClient {
    * @param host the name of the local machine
    * @param user the name of the user the current process is running as
    */
-  public NomadClient(Collection<NamedNomadServer> servers, String host, String user) {
+  public NomadClient(Collection<NamedNomadServer<T>> servers, String host, String user) {
     if (servers.isEmpty()) {
       throw new IllegalArgumentException("There must be at least one server");
     }
@@ -45,16 +45,16 @@ public class NomadClient {
     this.timeout = Duration.ofMillis(timeout);
   }
 
-  public void tryApplyChange(ChangeResultReceiver results, NomadChange change) {
+  public void tryApplyChange(ChangeResultReceiver<T> results, NomadChange change) {
     withAsyncCaller(asyncCaller -> {
-      ChangeProcess changeProcess = new ChangeProcess(servers, host, user, asyncCaller);
+      ChangeProcess<T> changeProcess = new ChangeProcess<>(servers, host, user, asyncCaller);
       changeProcess.applyChange(results, change);
     });
   }
 
-  public void tryRecovery(RecoveryResultReceiver results) {
+  public void tryRecovery(RecoveryResultReceiver<T> results) {
     withAsyncCaller(asyncCaller -> {
-      RecoveryProcess recoveryProcess = new RecoveryProcess(servers, host, user, asyncCaller);
+      RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user, asyncCaller);
       recoveryProcess.recover(results);
     });
   }

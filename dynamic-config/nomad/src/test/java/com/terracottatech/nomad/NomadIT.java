@@ -50,44 +50,45 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class NomadIT {
   @Mock
-  private ChangeResultReceiver changeResults;
+  private ChangeResultReceiver<String> changeResults;
 
   @Mock
-  private RecoveryResultReceiver recoveryResults;
+  private RecoveryResultReceiver<String> recoveryResults;
 
   @Mock
-  private ChangeApplicator changeApplicator1;
+  private ChangeApplicator<String> changeApplicator1;
 
   @Mock
-  private ChangeApplicator changeApplicator2;
+  private ChangeApplicator<String> changeApplicator2;
 
   @Mock
-  private ChangeApplicator changeApplicator3;
+  private ChangeApplicator<String> changeApplicator3;
 
-  private NomadServerState serverState1;
-  private Set<NamedNomadServer> servers;
-  private NomadClient client;
+  private NomadServerState<String> serverState1;
+  private Set<NamedNomadServer<String>> servers;
+  private NomadClient<String> client;
   private boolean assertNoMoreInteractions = true;
 
   @Before
+  @SuppressWarnings("unchecked")
   public void before() throws Exception {
-    serverState1 = new MemoryNomadServerState();
-    NomadServerState serverState2 = new MemoryNomadServerState();
-    NomadServerState serverState3 = new MemoryNomadServerState();
-    NomadServerImpl serverImpl1 = new NomadServerImpl(serverState1);
-    NomadServerImpl serverImpl2 = new NomadServerImpl(serverState2);
-    NomadServerImpl serverImpl3 = new NomadServerImpl(serverState3);
+    serverState1 = new MemoryNomadServerState<>();
+    NomadServerState<String> serverState2 = new MemoryNomadServerState<>();
+    NomadServerState<String> serverState3 = new MemoryNomadServerState<>();
+    NomadServerImpl<String> serverImpl1 = new NomadServerImpl<>(serverState1);
+    NomadServerImpl<String> serverImpl2 = new NomadServerImpl<>(serverState2);
+    NomadServerImpl<String> serverImpl3 = new NomadServerImpl<>(serverState3);
 
     serverImpl1.setChangeApplicator(changeApplicator1);
     serverImpl2.setChangeApplicator(changeApplicator2);
     serverImpl3.setChangeApplicator(changeApplicator3);
 
-    NamedNomadServer server1 = new NamedNomadServer("server1", serverImpl1);
-    NamedNomadServer server2 = new NamedNomadServer("server2", serverImpl2);
-    NamedNomadServer server3 = new NamedNomadServer("server3", serverImpl3);
+    NamedNomadServer<String> server1 = new NamedNomadServer<>("server1", serverImpl1);
+    NamedNomadServer<String> server2 = new NamedNomadServer<>("server2", serverImpl2);
+    NamedNomadServer<String> server3 = new NamedNomadServer<>("server3", serverImpl3);
 
     servers = setOf(server1, server2, server3);
-    client = new NomadClient(servers, "host", "user");
+    client = new NomadClient<>(servers, "host", "user");
   }
 
   @After
@@ -101,6 +102,7 @@ public class NomadIT {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void applyChange() throws Exception {
     when(changeApplicator1.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
@@ -172,6 +174,7 @@ public class NomadIT {
     assertNoMoreInteractions = false;
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void rejectChange() {
     when(changeApplicator1.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
@@ -209,9 +212,10 @@ public class NomadIT {
     assertEquals("user", serverState1.getLastMutationUser());
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void recovery() throws Exception {
-    InterceptionServer interceptionServer = interceptServer("server1");
+    InterceptionServer<String> interceptionServer = interceptServer("server1");
     interceptionServer.setAllowCommit(false);
 
     when(changeApplicator1.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
@@ -274,15 +278,15 @@ public class NomadIT {
     verify(recoveryResults).done(CONSISTENT);
   }
 
-  private InterceptionServer interceptServer(String serverName) {
-    List<NamedNomadServer> serverList = new ArrayList<>(servers);
+  private InterceptionServer<String> interceptServer(String serverName) {
+    List<NamedNomadServer<String>> serverList = new ArrayList<>(servers);
     servers.clear();
 
-    InterceptionServer interceptionServer = null;
-    for (NamedNomadServer server : serverList) {
+    InterceptionServer<String> interceptionServer = null;
+    for (NamedNomadServer<String> server : serverList) {
       if (server.getName().equals(serverName)) {
-        interceptionServer = new InterceptionServer(server);
-        servers.add(new NamedNomadServer(serverName, interceptionServer));
+        interceptionServer = new InterceptionServer<>(server);
+        servers.add(new NamedNomadServer<>(serverName, interceptionServer));
       } else {
         servers.add(server);
       }
@@ -291,11 +295,11 @@ public class NomadIT {
     return interceptionServer;
   }
 
-  private static class InterceptionServer implements NomadServer {
-    private final NomadServer underlying;
+  private static class InterceptionServer<T> implements NomadServer<T> {
+    private final NomadServer<T> underlying;
     private volatile boolean allowCommit = true;
 
-    public InterceptionServer(NomadServer underlying) {
+    public InterceptionServer(NomadServer<T> underlying) {
       this.underlying = underlying;
     }
 
@@ -304,7 +308,7 @@ public class NomadIT {
     }
 
     @Override
-    public DiscoverResponse discover() throws NomadException {
+    public DiscoverResponse<T> discover() throws NomadException {
       return underlying.discover();
     }
 

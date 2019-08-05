@@ -14,22 +14,22 @@ import com.terracottatech.nomad.client.results.AllResultsReceiver;
 import java.util.Collection;
 import java.util.UUID;
 
-public class ChangeProcess extends NomadClientProcess<NomadChange> {
-  public ChangeProcess(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+public class ChangeProcess<T> extends NomadClientProcess<NomadChange, T> {
+  public ChangeProcess(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 
-  public void applyChange(ChangeResultReceiver results, NomadChange change) {
+  public void applyChange(ChangeResultReceiver<T> results, NomadChange change) {
     runProcess(
-        new ChangeAllResultsReceiverAdapter(results),
-        new ChangeProcessDecider(),
-        new ChangeMessageSender(servers, host, user, asyncCaller),
+        new ChangeAllResultsReceiverAdapter<>(results),
+        new ChangeProcessDecider<>(),
+        new ChangeMessageSender<>(servers, host, user, asyncCaller),
         change
     );
   }
 
   @Override
-  protected boolean act(AllResultsReceiver results, NomadDecider decider, NomadMessageSender messageSender, NomadChange change) {
+  protected boolean act(AllResultsReceiver<T> results, NomadDecider<T> decider, NomadMessageSender<T> messageSender, NomadChange change) {
     UUID changeUuid = UUID.randomUUID();
     messageSender.sendPrepares(results, changeUuid, change);
     return true;

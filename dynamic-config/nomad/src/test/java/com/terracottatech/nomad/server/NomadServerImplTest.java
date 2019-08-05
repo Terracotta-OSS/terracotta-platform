@@ -4,22 +4,22 @@
  */
 package com.terracottatech.nomad.server;
 
+import com.terracottatech.nomad.server.state.NomadServerState;
 import org.junit.Test;
 
-import com.terracottatech.nomad.server.state.NomadServerState;
-
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.junit.Assert.fail;
 
 public class NomadServerImplTest {
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testSetChangeApplicatorAlreadySet() throws Exception {
-    NomadServerState serverState = mock(NomadServerState.class);
+    NomadServerState<String> serverState = mock(NomadServerState.class);
     when(serverState.isInitialized()).thenReturn(true);
-    NomadServerImpl nomadServer = new NomadServerImpl(serverState);
-    ChangeApplicator changeApplicator = mock(ChangeApplicator.class);
+    NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
+    ChangeApplicator<String> changeApplicator = mock(ChangeApplicator.class);
     nomadServer.setChangeApplicator(changeApplicator);
     try {
       nomadServer.setChangeApplicator(changeApplicator);
@@ -30,11 +30,12 @@ public class NomadServerImplTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test(expected = NullPointerException.class)
   public void testSetNullChangeApplicator() throws Exception {
-    NomadServerState serverState = mock(NomadServerState.class);
+    NomadServerState<String> serverState = mock(NomadServerState.class);
     when(serverState.isInitialized()).thenReturn(true);
-    NomadServerImpl nomadServer = new NomadServerImpl(serverState);
+    NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
     nomadServer.setChangeApplicator(null);
   }
 }

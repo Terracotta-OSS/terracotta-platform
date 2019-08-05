@@ -17,18 +17,18 @@ import java.util.stream.Stream;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class NomadClientProcessTest {
   @Mock
-  protected NomadServer server1;
+  protected NomadServer<String> server1;
 
   @Mock
-  protected NomadServer server2;
+  protected NomadServer<String> server2;
 
-  protected Set<NamedNomadServer> servers;
+  protected Set<NamedNomadServer<String>> servers;
 
   @Before
   public void before() {
     servers = Stream.of(
-        new NamedNomadServer("server1", server1),
-        new NamedNomadServer("server2", server2)
+        new NamedNomadServer<>("server1", server1),
+        new NamedNomadServer<>("server2", server2)
     ).collect(Collectors.toSet());
   }
 }

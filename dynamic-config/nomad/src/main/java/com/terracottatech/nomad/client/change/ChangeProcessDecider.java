@@ -14,11 +14,11 @@ import java.util.UUID;
 
 import static com.terracottatech.nomad.server.NomadServerMode.PREPARED;
 
-public class ChangeProcessDecider extends BaseNomadDecider {
-  private volatile AllResultsReceiver results;
+public class ChangeProcessDecider<T> extends BaseNomadDecider<T> {
+  private volatile AllResultsReceiver<T> results;
 
   @Override
-  public void setResults(AllResultsReceiver results) {
+  public void setResults(AllResultsReceiver<T> results) {
     this.results = results;
   }
 
@@ -33,14 +33,14 @@ public class ChangeProcessDecider extends BaseNomadDecider {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
     super.discovered(server, discovery);
 
     NomadServerMode mode = discovery.getMode();
 
     if (mode == PREPARED) {
       // latestChange cannot be null if the server is PREPARED
-      ChangeDetails latestChange = discovery.getLatestChange();
+      ChangeDetails<T> latestChange = discovery.getLatestChange();
       UUID changeUuid = latestChange.getChangeUuid();
       String creationHost = latestChange.getCreationHost();
       String creationUser = latestChange.getCreationUser();

@@ -30,8 +30,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-public class NomadMessageSender implements AllResultsReceiver {
-  private final Map<String, NamedNomadServer> serverMap;
+public class NomadMessageSender<T> implements AllResultsReceiver<T> {
+  private final Map<String, NamedNomadServer<T>> serverMap;
   private final String host;
   private final String user;
   private final AsyncCaller asyncCaller;
@@ -42,7 +42,7 @@ public class NomadMessageSender implements AllResultsReceiver {
   protected final Set<String> preparedServers = ConcurrentHashMap.newKeySet();
   protected volatile UUID changeUuid;
 
-  public NomadMessageSender(Collection<NamedNomadServer> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadMessageSender(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     this.host = host;
     this.user = user;
     this.serverMap = servers.stream().collect(Collectors.toMap(NamedNomadServer::getName, s -> s));
@@ -50,13 +50,13 @@ public class NomadMessageSender implements AllResultsReceiver {
     this.asyncCaller = asyncCaller;
   }
 
-  public void sendDiscovers(DiscoverResultsReceiver results) {
+  public void sendDiscovers(DiscoverResultsReceiver<T> results) {
     results.startDiscovery(servers);
 
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
     for (String serverName : servers) {
-      NamedNomadServer server = serverMap.get(serverName);
+      NamedNomadServer<T> server = serverMap.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
           server::discover,
@@ -70,13 +70,13 @@ public class NomadMessageSender implements AllResultsReceiver {
     results.endDiscovery();
   }
 
-  public void sendSecondDiscovers(DiscoverResultsReceiver results) {
+  public void sendSecondDiscovers(DiscoverResultsReceiver<T> results) {
     results.startSecondDiscovery();
 
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
     for (String serverName : servers) {
-      NamedNomadServer server = serverMap.get(serverName);
+      NamedNomadServer<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -108,7 +108,7 @@ public class NomadMessageSender implements AllResultsReceiver {
     long newVersionNumber = maxVersionNumber.get() + 1;
 
     for (String serverName : servers) {
-      NamedNomadServer server = serverMap.get(serverName);
+      NamedNomadServer<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -160,7 +160,7 @@ public class NomadMessageSender implements AllResultsReceiver {
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
     for (String serverName : preparedServers) {
-      NamedNomadServer server = serverMap.get(serverName);
+      NamedNomadServer<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -207,7 +207,7 @@ public class NomadMessageSender implements AllResultsReceiver {
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
     for (String serverName : preparedServers) {
-      NamedNomadServer server = serverMap.get(serverName);
+      NamedNomadServer<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -254,7 +254,7 @@ public class NomadMessageSender implements AllResultsReceiver {
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
     for (String serverName : servers) {
-      NamedNomadServer server = serverMap.get(serverName);
+      NamedNomadServer<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -307,7 +307,7 @@ public class NomadMessageSender implements AllResultsReceiver {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
     long expectedMutativeMessageCount = discovery.getMutativeMessageCount();
     long highestVersionNumber = discovery.getHighestVersion();
 

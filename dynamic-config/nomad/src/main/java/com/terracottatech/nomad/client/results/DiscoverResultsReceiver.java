@@ -9,10 +9,10 @@ import com.terracottatech.nomad.messages.DiscoverResponse;
 import java.util.Set;
 import java.util.UUID;
 
-public interface DiscoverResultsReceiver {
+public interface DiscoverResultsReceiver<T> {
   default void startDiscovery(Set<String> servers) {}
 
-  default void discovered(String server, DiscoverResponse discovery) {};
+  default void discovered(String server, DiscoverResponse<T> discovery) {};
 
   default void discoverFail(String server) {}
 

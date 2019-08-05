@@ -17,7 +17,7 @@ import static com.terracottatech.nomad.client.Consistency.UNKNOWN_BUT_NO_CHANGE;
 import static com.terracottatech.nomad.client.Consistency.UNRECOVERABLY_INCONSISTENT;
 import static com.terracottatech.nomad.server.NomadServerMode.PREPARED;
 
-public abstract class BaseNomadDecider implements NomadDecider, AllResultsReceiver {
+public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResultsReceiver<T> {
   private volatile boolean discoverFail;
   private volatile boolean discoveryInconsistentCluster;
   private volatile boolean preparedServer;
@@ -67,7 +67,7 @@ public abstract class BaseNomadDecider implements NomadDecider, AllResultsReceiv
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
     NomadServerMode mode = discovery.getMode();
     if (mode == PREPARED) {
       preparedServer = true;
