@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class FileConfigStorage implements ConfigStorage {
+public class FileConfigStorage implements ConfigStorage<String> {
   private final Path root;
   private final Function<Long, String> filenameGenerator;
 

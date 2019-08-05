@@ -51,7 +51,7 @@ public class ConfigRepositoryGenerator {
     }
     output.mkdirs();
 
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
@@ -68,7 +68,7 @@ public class ConfigRepositoryGenerator {
     }
     output.mkdirs();
 
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 
@@ -84,7 +84,7 @@ public class ConfigRepositoryGenerator {
     }
     output.mkdirs();
 
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
 

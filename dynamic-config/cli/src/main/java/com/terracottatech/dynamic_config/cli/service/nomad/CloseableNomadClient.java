@@ -9,16 +9,16 @@ import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.NomadChange;
 
-public class CloseableNomadClient implements AutoCloseable {
-  private final NomadClient client;
+public class CloseableNomadClient<T> implements AutoCloseable {
+  private final NomadClient<T> client;
   private final MultiDiagnosticServiceConnection connection;
 
-  public CloseableNomadClient(NomadClient client, MultiDiagnosticServiceConnection connection) {
+  public CloseableNomadClient(NomadClient<T> client, MultiDiagnosticServiceConnection connection) {
     this.client = client;
     this.connection = connection;
   }
 
-  public void tryApplyChange(ChangeResultReceiver results, NomadChange change) {
+  public void tryApplyChange(ChangeResultReceiver<T> results, NomadChange change) {
     client.tryApplyChange(results, change);
   }
 

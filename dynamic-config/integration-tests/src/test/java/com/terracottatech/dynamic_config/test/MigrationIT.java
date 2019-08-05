@@ -54,7 +54,7 @@ public class MigrationIT {
 
   @Test
   public void testSingleStripeSingleFile() throws Exception {
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
 
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
@@ -78,8 +78,8 @@ public class MigrationIT {
       }
     });
 
-    NomadServer nomadServer = serverMap.get("stripe1_node-1");
-    DiscoverResponse discoverResponse = nomadServer.discover();
+    NomadServer<String> nomadServer = serverMap.get("stripe1_node-1");
+    DiscoverResponse<String> discoverResponse = nomadServer.discover();
 
     String convertedConfigContent = discoverResponse.getLatestChange().getResult();
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
@@ -153,7 +153,7 @@ public class MigrationIT {
 
   @Test
   public void testSingleStripeSingleFileNoStripeId() throws Exception {
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
@@ -176,8 +176,8 @@ public class MigrationIT {
       }
     });
 
-    NomadServer nomadServer = serverMap.get("stripe1_node-1");
-    DiscoverResponse discoverResponse = nomadServer.discover();
+    NomadServer<String> nomadServer = serverMap.get("stripe1_node-1");
+    DiscoverResponse<String> discoverResponse = nomadServer.discover();
 
     String convertedConfigContent = discoverResponse.getLatestChange().getResult();
 
@@ -254,7 +254,7 @@ public class MigrationIT {
 
   @Test
   public void testSingleStripeSingleFileWithSecurity() throws Exception {
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
@@ -279,8 +279,8 @@ public class MigrationIT {
     });
 
 
-    NomadServer nomadServer = serverMap.get("stripe1_node-1");
-    DiscoverResponse discoverResponse = nomadServer.discover();
+    NomadServer<String> nomadServer = serverMap.get("stripe1_node-1");
+    DiscoverResponse<String> discoverResponse = nomadServer.discover();
     String convertedConfigContent = discoverResponse.getLatestChange().getResult();
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
@@ -354,7 +354,7 @@ public class MigrationIT {
 
   @Test
   public void testMultiStripeSingleFileForStripe() throws Exception {
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
@@ -382,20 +382,20 @@ public class MigrationIT {
       }
     });
 
-    NomadServer nomadServer1 = serverMap.get("stripe1_node-1");
-    DiscoverResponse discoverResponse1 = nomadServer1.discover();
+    NomadServer<String> nomadServer1 = serverMap.get("stripe1_node-1");
+    DiscoverResponse<String> discoverResponse1 = nomadServer1.discover();
     String convertedConfigContent1 = discoverResponse1.getLatestChange().getResult();
 
-    NomadServer nomadServer2 = serverMap.get("stripe1_node-2");
-    DiscoverResponse discoverResponse2 = nomadServer2.discover();
+    NomadServer<String> nomadServer2 = serverMap.get("stripe1_node-2");
+    DiscoverResponse<String> discoverResponse2 = nomadServer2.discover();
     String convertedConfigContent2 = discoverResponse2.getLatestChange().getResult();
 
-    NomadServer nomadServer3 = serverMap.get("stripe2_node-3");
-    DiscoverResponse discoverResponse3 = nomadServer3.discover();
+    NomadServer<String> nomadServer3 = serverMap.get("stripe2_node-3");
+    DiscoverResponse<String> discoverResponse3 = nomadServer3.discover();
     String convertedConfigContent3 = discoverResponse3.getLatestChange().getResult();
 
-    NomadServer nomadServer4 = serverMap.get("stripe2_node-4");
-    DiscoverResponse discoverResponse4 = nomadServer4.discover();
+    NomadServer<String> nomadServer4 = serverMap.get("stripe2_node-4");
+    DiscoverResponse<String> discoverResponse4 = nomadServer4.discover();
     String convertedConfigContent4 = discoverResponse4.getLatestChange().getResult();
 
     Map<String, String> serverNameConvertedConfigContentsMap = new HashMap<>();
@@ -411,7 +411,7 @@ public class MigrationIT {
 
   @Test
   public void testMultiStripeSingleFileDuplicateServerNameForStripe() throws Exception {
-    Map<String, NomadServer> serverMap = new HashMap<>();
+    Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor);
@@ -439,20 +439,20 @@ public class MigrationIT {
       }
     });
 
-    NomadServer nomadServer1 = serverMap.get("stripe1_node-1");
-    DiscoverResponse discoverResponse1 = nomadServer1.discover();
+    NomadServer<String> nomadServer1 = serverMap.get("stripe1_node-1");
+    DiscoverResponse<String> discoverResponse1 = nomadServer1.discover();
     String convertedConfigContent1 = discoverResponse1.getLatestChange().getResult();
 
-    NomadServer nomadServer2 = serverMap.get("stripe1_node-2");
-    DiscoverResponse discoverResponse2 = nomadServer2.discover();
+    NomadServer<String> nomadServer2 = serverMap.get("stripe1_node-2");
+    DiscoverResponse<String> discoverResponse2 = nomadServer2.discover();
     String convertedConfigContent2 = discoverResponse2.getLatestChange().getResult();
 
-    NomadServer nomadServer3 = serverMap.get("stripe2_node-2");
-    DiscoverResponse discoverResponse3 = nomadServer3.discover();
+    NomadServer<String> nomadServer3 = serverMap.get("stripe2_node-2");
+    DiscoverResponse<String> discoverResponse3 = nomadServer3.discover();
     String convertedConfigContent3 = discoverResponse3.getLatestChange().getResult();
 
-    NomadServer nomadServer5 = serverMap.get("stripe2_node-1");
-    DiscoverResponse discoverResponse5 = nomadServer5.discover();
+    NomadServer<String> nomadServer5 = serverMap.get("stripe2_node-1");
+    DiscoverResponse<String> discoverResponse5 = nomadServer5.discover();
     String convertedConfigContent5 = discoverResponse5.getLatestChange().getResult();
 
     Map<String, String> serverNameConvertedConfigContentsMap = new HashMap<>();

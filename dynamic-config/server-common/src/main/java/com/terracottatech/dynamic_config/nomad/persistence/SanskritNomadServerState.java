@@ -11,7 +11,6 @@ import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServerMode;
 import com.terracottatech.nomad.server.state.NomadServerState;
 import com.terracottatech.nomad.server.state.NomadStateChange;
-import com.terracottatech.persistence.sanskrit.HashUtils;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.SanskritObject;
@@ -33,13 +32,15 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 
-public class SanskritNomadServerState implements NomadServerState {
+public class SanskritNomadServerState<T> implements NomadServerState<T> {
   private final Sanskrit sanskrit;
-  private final ConfigStorage configStorage;
+  private final ConfigStorage<T> configStorage;
+  private final Hash<T> hash;
 
-  public SanskritNomadServerState(Sanskrit sanskrit, ConfigStorage configStorage) {
+  public SanskritNomadServerState(Sanskrit sanskrit, ConfigStorage<T> configStorage, Hash<T> hash) {
     this.sanskrit = sanskrit;
     this.configStorage = configStorage;
+    this.hash = hash;
   }
 
   @Override
@@ -92,7 +93,7 @@ public class SanskritNomadServerState implements NomadServerState {
   }
 
   @Override
-  public ChangeRequest getChangeRequest(UUID changeUuid) throws NomadException {
+  public ChangeRequest<T> getChangeRequest(UUID changeUuid) throws NomadException {
     try {
       String uuidString = changeUuid.toString();
       SanskritObject child = getObject(uuidString);
@@ -108,40 +109,40 @@ public class SanskritNomadServerState implements NomadServerState {
       String creationHost = child.getString(CHANGE_CREATION_HOST);
       String creationUser = child.getString(CHANGE_CREATION_USER);
 
-      String newConfiguration = configStorage.getConfig(version);
-      checkHash(changeUuid, newConfiguration, foundChangeResultHash);
+      T newConfiguration = configStorage.getConfig(version);
+      String newConfigurationhash = hash.computeHash(newConfiguration);
+      checkHash(changeUuid, newConfigurationhash, foundChangeResultHash);
 
-      return new ChangeRequest(state, version, change, newConfiguration, creationHost, creationUser);
+      return new ChangeRequest<>(state, version, change, newConfiguration, creationHost, creationUser);
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }
   }
 
-  private void checkHash(UUID changeUuid, String newConfiguration, String foundChangeResultHash) throws NomadException {
-    String actualChangeResultHash = HashUtils.generateHash(newConfiguration);
+  private void checkHash(UUID changeUuid, String actualChangeResultHash, String foundChangeResultHash) throws NomadException {
     if (!actualChangeResultHash.equals(foundChangeResultHash)) {
       throw new NomadException("Bad hash for change: " + changeUuid + " found: " + foundChangeResultHash + " actual: " + actualChangeResultHash);
     }
   }
 
   @Override
-  public NomadStateChange newStateChange() {
+  public NomadStateChange<T> newStateChange() {
     SanskritChangeBuilder changeBuilder = SanskritChangeBuilder.newChange();
 
     long newMutativeMessageCount = getNewMutativeMessageCount();
     changeBuilder.setLong(MUTATIVE_MESSAGE_COUNT, newMutativeMessageCount);
 
-    return new SanskritNomadStateChange(sanskrit, changeBuilder);
+    return new SanskritNomadStateChange<>(sanskrit, changeBuilder, hash);
   }
 
   @Override
-  public void applyStateChange(NomadStateChange change) throws NomadException {
+  public void applyStateChange(NomadStateChange<T> change) throws NomadException {
     try {
-      SanskritNomadStateChange sanskritChange = (SanskritNomadStateChange) change;
+      SanskritNomadStateChange<T> sanskritChange = (SanskritNomadStateChange<T>) change;
 
       Long version = sanskritChange.getChangeVersion();
       if (version != null) {
-        String changeResult = sanskritChange.getChangeResult();
+        T changeResult = sanskritChange.getChangeResult();
         configStorage.saveConfig(version, changeResult);
       }
 
@@ -152,7 +153,7 @@ public class SanskritNomadServerState implements NomadServerState {
   }
 
   @Override
-  public String getCurrentCommittedChangeResult() throws NomadException {
+  public T getCurrentCommittedChangeResult() throws NomadException {
     long currentVersion = getCurrentVersion();
 
     try {

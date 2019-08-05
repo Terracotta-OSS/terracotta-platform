@@ -8,7 +8,6 @@ import com.terracottatech.nomad.server.ChangeRequest;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 import com.terracottatech.nomad.server.state.NomadStateChange;
-import com.terracottatech.persistence.sanskrit.HashUtils;
 import com.terracottatech.persistence.sanskrit.MutableSanskritObject;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
@@ -31,64 +30,66 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
 
-public class SanskritNomadStateChange implements NomadStateChange {
+public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   private final Sanskrit sanskrit;
   private final SanskritChangeBuilder changeBuilder;
+  private final Hash<T> hash;
   private volatile Long changeVersion;
-  private volatile String changeResult;
+  private volatile T changeResult;
 
-  public SanskritNomadStateChange(Sanskrit sanskrit, SanskritChangeBuilder changeBuilder) {
+  public SanskritNomadStateChange(Sanskrit sanskrit, SanskritChangeBuilder changeBuilder, Hash<T> hash) {
     this.sanskrit = sanskrit;
     this.changeBuilder = changeBuilder;
+    this.hash = hash;
   }
 
   @Override
-  public NomadStateChange setInitialized() {
+  public NomadStateChange<T> setInitialized() {
     setMode(NomadServerMode.ACCEPTING);
     return this;
   }
 
   @Override
-  public NomadStateChange setMode(NomadServerMode mode) {
+  public NomadStateChange<T> setMode(NomadServerMode mode) {
     changeBuilder.setString(MODE, mode.name());
     return this;
   }
 
   @Override
-  public NomadStateChange setLatestChangeUuid(UUID changeUuid) {
+  public NomadStateChange<T> setLatestChangeUuid(UUID changeUuid) {
     changeBuilder.setString(LATEST_CHANGE_UUID, changeUuid.toString());
     return this;
   }
 
   @Override
-  public NomadStateChange setCurrentVersion(long versionNumber) {
+  public NomadStateChange<T> setCurrentVersion(long versionNumber) {
     changeBuilder.setLong(CURRENT_VERSION, versionNumber);
     return this;
   }
 
   @Override
-  public NomadStateChange setHighestVersion(long versionNumber) {
+  public NomadStateChange<T> setHighestVersion(long versionNumber) {
     changeBuilder.setLong(HIGHEST_VERSION, versionNumber);
     return this;
   }
 
   @Override
-  public NomadStateChange setLastMutationHost(String lastMutationHost) {
+  public NomadStateChange<T> setLastMutationHost(String lastMutationHost) {
     changeBuilder.setString(LAST_MUTATION_HOST, lastMutationHost);
     return this;
   }
 
   @Override
-  public NomadStateChange setLastMutationUser(String lastMutationUser) {
+  public NomadStateChange<T> setLastMutationUser(String lastMutationUser) {
     changeBuilder.setString(LAST_MUTATION_USER, lastMutationUser);
     return this;
   }
 
   @Override
-  public NomadStateChange createChange(UUID changeUuid, ChangeRequest changeRequest) {
+  public NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest) {
     changeVersion = changeRequest.getVersion();
     changeResult = changeRequest.getChangeResult();
-    String resultHash = HashUtils.generateHash(changeResult);
+    String resultHash = hash.computeHash(changeResult);
 
     MutableSanskritObject child = sanskrit.newMutableSanskritObject();
     child.setString(CHANGE_STATE, changeRequest.getState().name());
@@ -104,7 +105,7 @@ public class SanskritNomadStateChange implements NomadStateChange {
   }
 
   @Override
-  public NomadStateChange updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) {
+  public NomadStateChange<T> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) {
     String uuidString = changeUuid.toString();
     SanskritObject existing = getObject(uuidString);
     MutableSanskritObject updated = sanskrit.newMutableSanskritObject();
@@ -123,7 +124,7 @@ public class SanskritNomadStateChange implements NomadStateChange {
     return changeVersion;
   }
 
-  public String getChangeResult() {
+  public T getChangeResult() {
     return changeResult;
   }
 

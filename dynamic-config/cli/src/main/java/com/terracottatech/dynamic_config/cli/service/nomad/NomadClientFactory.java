@@ -8,7 +8,7 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
+import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.server.NomadServer;
@@ -18,7 +18,7 @@ import java.util.Collection;
 
 import static java.util.stream.Collectors.toList;
 
-public class NomadClientFactory {
+public class NomadClientFactory<T> {
 
   private final MultiDiagnosticServiceConnectionFactory connectionFactory;
   private final NomadEnvironment environment;
@@ -33,28 +33,29 @@ public class NomadClientFactory {
     this.concurrencySizing = concurrencySizing;
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
-  public CloseableNomadClient createClient(Collection<InetSocketAddress> hostPortList) {
+  public CloseableNomadClient<T> createClient(Collection<InetSocketAddress> hostPortList) {
     String host = environment.getHost();
     String user = environment.getUser();
 
     MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(hostPortList);
 
-    Collection<NamedNomadServer> servers = connection.getEndpoints().stream()
-        .map(endpoint -> createNamedNomadServer(endpoint, connection.getDiagnosticService(endpoint).get()))
+    Collection<NamedNomadServer<T>> servers = connection.getEndpoints().stream()
+        .map(endpoint -> this.createNamedNomadServer(endpoint, connection.getDiagnosticService(endpoint)
+            .orElseThrow(() -> new IllegalStateException("DiagnosticService not found for node " + endpoint))))
         .collect(toList());
 
-    NomadClient client = new NomadClient(servers, host, user);
+    NomadClient<T> client = new NomadClient<>(servers, host, user);
     int concurrency = concurrencySizing.getThreadCount(servers.size());
     client.setConcurrency(concurrency);
     client.setTimeoutMillis(requestTimeoutMillis);
 
-    return new CloseableNomadClient(client, connection);
+    return new CloseableNomadClient<>(client, connection);
   }
 
-  private NamedNomadServer createNamedNomadServer(InetSocketAddress address, DiagnosticService diagnosticService) {
-    NomadServer nomadServerProxy = diagnosticService.getProxy(NomadServer.class);
+  @SuppressWarnings("unchecked")
+  private NamedNomadServer<T> createNamedNomadServer(InetSocketAddress address, DiagnosticService diagnosticService) {
+    NomadServer<T> nomadServerProxy = diagnosticService.getProxy(NomadServer.class);
     // use the <ip>:<port> for the name for nomad because server name as it was before might not be unique across the cluster.
-    return new NamedNomadServer(address.toString(), nomadServerProxy);
+    return new NamedNomadServer<>(address.toString(), nomadServerProxy);
   }
 }

@@ -5,7 +5,7 @@
 package com.terracottatech.migration.nomad;
 
 import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
-import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
+import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.migration.NodeConfigurationHandler;
@@ -46,8 +46,8 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
     nodeNameNodeConfigMap.forEach((stripeIdServerName, doc) -> {
       try {
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
-        NomadServer nomadServer = getNomadServer(stripeIdServerName.getT1(), stripeIdServerName.getT2());
-        DiscoverResponse discoverResponse = nomadServer.discover();
+        NomadServer<String> nomadServer = getNomadServer(stripeIdServerName.getT1(), stripeIdServerName.getT2());
+        DiscoverResponse<String> discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
 
@@ -69,23 +69,23 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
     });
   }
 
-  protected NomadServer getNomadServer(String nodeName) throws Exception {
+  protected NomadServer<String> getNomadServer(String nodeName) throws Exception {
     Path nomadRoot = outputFolderPath.resolve(nodeName);
     return createServer(nomadRoot, nodeName);
   }
 
-  protected NomadServer getNomadServer(int stripeId, String nodeName) throws Exception {
+  protected NomadServer<String> getNomadServer(int stripeId, String nodeName) throws Exception {
     Path nomadRoot = outputFolderPath.resolve("stripe" + stripeId + "_" + nodeName);
     return createServer(nomadRoot, nodeName);
   }
 
-  private NomadServer createServer(Path nomadRoot, String nodeName) throws SanskritException, NomadException {
+  private NomadServer<String> createServer(Path nomadRoot, String nodeName) throws SanskritException, NomadException {
     NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot);
     nomadRepositoryManager.createDirectories();
 
-    ChangeApplicator changeApplicator = new ChangeApplicator() {
+    ChangeApplicator<String> changeApplicator = new ChangeApplicator<String>() {
       @Override
-      public PotentialApplicationResult canApply(final String existing, final NomadChange change) {
+      public PotentialApplicationResult<String> canApply(final String existing, final NomadChange change) {
         return PotentialApplicationResult.allow(((ConfigMigrationNomadChange) change).getConfiguration());
       }
 

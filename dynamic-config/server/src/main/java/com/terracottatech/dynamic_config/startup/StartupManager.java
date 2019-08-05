@@ -14,7 +14,7 @@ import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
-import com.terracottatech.dynamic_config.nomad.NomadFailureRecorder;
+import com.terracottatech.nomad.client.results.NomadFailureRecorder;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
@@ -144,13 +144,13 @@ public class StartupManager {
 
   private void runNomadChange(Cluster cluster, Node node) {
     String nomadServerName = substitute(node.getNodeAddress().toString());
-    UpgradableNomadServer nomadServer = NomadBootstrapper.getNomadServerManager().getNomadServer();
-    NomadClient nomadClient = new NomadClient(
-        singleton(new NamedNomadServer(nomadServerName, nomadServer)),
+    UpgradableNomadServer<String> nomadServer = NomadBootstrapper.getNomadServerManager().getNomadServer();
+    NomadClient<String> nomadClient = new NomadClient<>(
+        singleton(new NamedNomadServer<>(nomadServerName, nomadServer)),
         substitute(node.getNodeHostname()),
         "SYSTEM"
     );
-    NomadFailureRecorder failureRecorder = new NomadFailureRecorder();
+    NomadFailureRecorder<String> failureRecorder = new NomadFailureRecorder<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrow();
   }

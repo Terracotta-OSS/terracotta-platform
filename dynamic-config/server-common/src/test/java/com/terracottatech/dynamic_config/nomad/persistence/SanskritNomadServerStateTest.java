@@ -9,6 +9,7 @@ import com.terracottatech.dynamic_config.nomad.NomadJson;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeRequest;
+import com.terracottatech.persistence.sanskrit.HashUtils;
 import com.terracottatech.persistence.sanskrit.MutableSanskritObject;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritObject;
@@ -43,17 +44,17 @@ public class SanskritNomadServerStateTest {
   private Sanskrit sanskrit;
 
   @Mock
-  private ConfigStorage configStorage;
+  private ConfigStorage<String> configStorage;
 
   @Captor
   private ArgumentCaptor<SanskritChange> sanskritChangeCaptor;
 
-  private SanskritNomadServerState state;
+  private SanskritNomadServerState<String> state;
 
   @Before
   public void before() {
     when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(NomadJson.buildObjectMapper()));
-    state = new SanskritNomadServerState(sanskrit, configStorage);
+    state = new SanskritNomadServerState<>(sanskrit, configStorage, HashUtils::generateHash);
   }
 
   @Test
@@ -123,7 +124,7 @@ public class SanskritNomadServerStateTest {
     when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
     when(configStorage.getConfig(1L)).thenReturn("config");
 
-    ChangeRequest changeRequest = state.getChangeRequest(uuid);
+    ChangeRequest<String> changeRequest = state.getChangeRequest(uuid);
     SettingNomadChange change = (SettingNomadChange) changeRequest.getChange();
 
     assertEquals(ROLLED_BACK, changeRequest.getState());
@@ -151,7 +152,7 @@ public class SanskritNomadServerStateTest {
 
     SettingNomadChange settingNomadChange = SettingNomadChange.set(Applicability.cluster(), OFFHEAP, "primary-server-resource", "2GB");
 
-    ChangeRequest changeRequest = new ChangeRequest(
+    ChangeRequest<String> changeRequest = new ChangeRequest<>(
         COMMITTED,
         4L,
         settingNomadChange,

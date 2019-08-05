@@ -18,17 +18,17 @@ import static org.mockito.Mockito.verify;
 @RunWith(MockitoJUnitRunner.class)
 public class CloseableNomadClientTest {
   @Mock
-  private NomadClient nomadClient;
+  private NomadClient<String> nomadClient;
 
   @Mock
   private MultiDiagnosticServiceConnection connection;
 
   @Mock
-  private ChangeResultReceiver results;
+  private ChangeResultReceiver<String> results;
 
   @Test
   public void delegatesAndCloses() {
-    try (CloseableNomadClient client = new CloseableNomadClient(nomadClient, connection)) {
+    try (CloseableNomadClient<String> client = new CloseableNomadClient<>(nomadClient, connection)) {
       client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
     }
 

@@ -11,7 +11,6 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceCon
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
-import com.terracottatech.dynamic_config.nomad.NomadFailureRecorder;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
@@ -24,6 +23,7 @@ import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
 import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
+import com.terracottatech.nomad.client.results.NomadFailureRecorder;
 import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,7 @@ public class ActivateCommand extends Command {
   public MultiDiagnosticServiceConnectionFactory connectionFactory;
 
   @Resource
-  public NomadManager nomadManager;
+  public NomadManager<String> nomadManager;
 
   @Resource
   public RestartService restartService;
@@ -235,7 +235,7 @@ public class ActivateCommand extends Command {
   }
 
   private void runNomadChange() {
-    NomadFailureRecorder failures = new NomadFailureRecorder();
+    NomadFailureRecorder<String> failures = new NomadFailureRecorder<>();
     nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(cluster), failures);
     failures.reThrow();
   }

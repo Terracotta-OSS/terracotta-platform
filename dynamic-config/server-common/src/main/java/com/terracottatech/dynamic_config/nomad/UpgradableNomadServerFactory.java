@@ -12,6 +12,7 @@ import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServerImpl;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
+import com.terracottatech.persistence.sanskrit.HashUtils;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
@@ -20,20 +21,22 @@ import static com.terracottatech.dynamic_config.repository.RepositoryConstants.F
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_PREFIX;
 
 public class UpgradableNomadServerFactory {
-  public static UpgradableNomadServer createServer(NomadRepositoryManager repositoryManager, ChangeApplicator changeApplicator,
-                                                   String nodeName) throws SanskritException, NomadException {
-    return new NomadServerImpl(
-        new SanskritNomadServerState(
+  public static UpgradableNomadServer<String> createServer(NomadRepositoryManager repositoryManager,
+                                                           ChangeApplicator<String> changeApplicator,
+                                                           String nodeName) throws SanskritException, NomadException {
+    return new NomadServerImpl<>(
+        new SanskritNomadServerState<>(
             Sanskrit.init(
                 new FileBasedFilesystemDirectory(repositoryManager.getSanskritPath()),
                 NomadJson.buildObjectMapper()
             ),
-            new InitialConfigStorage(
+            new InitialConfigStorage<>(
                 new FileConfigStorage(
                     repositoryManager.getConfigurationPath(),
                     version -> FILENAME_PREFIX + "." + nodeName + "." + version + "." + FILENAME_EXT
                 )
-            )
+            ),
+            HashUtils::generateHash
         ),
         changeApplicator
     );

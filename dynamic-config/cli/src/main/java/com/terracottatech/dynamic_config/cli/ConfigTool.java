@@ -18,7 +18,7 @@ import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscover
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
-import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
+import com.terracottatech.nomad.NomadEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public class ConfigTool {
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getConnectionTimeoutMillis(), MILLISECONDS, MAIN.getRequestTimeoutMillis(), MILLISECONDS, MAIN.getSecurityRootDirectory());
     MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS, concurrencySizing);
     NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
-    NomadManager nomadManager = new NomadManager(new NomadClientFactory(connectionFactory, concurrencySizing, new NomadEnvironment(), MAIN.getRequestTimeoutMillis()), MAIN.isVerbose());
+    NomadManager<String> nomadManager = new NomadManager<>(new NomadClientFactory<>(connectionFactory, concurrencySizing, new NomadEnvironment(), MAIN.getRequestTimeoutMillis()), MAIN.isVerbose());
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, MAIN.getRequestTimeoutMillis());
 
     LOGGER.debug("Injecting services in CommandRepository");

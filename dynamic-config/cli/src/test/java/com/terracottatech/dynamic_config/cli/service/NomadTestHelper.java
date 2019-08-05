@@ -30,27 +30,27 @@ public class NomadTestHelper {
     return (Set<T>) argThat(containsInAnyOrder(values));
   }
 
-  public static DiscoverResponse discovery(ChangeRequestState changeState) {
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState) {
     return discovery(changeState, 1L);
   }
 
-  public static DiscoverResponse discovery(ChangeRequestState changeState, long mutativeMessageCount) {
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount) {
     return discovery(changeState, mutativeMessageCount, UUID.randomUUID());
   }
 
-  public static DiscoverResponse discovery(ChangeRequestState changeState, UUID uuid) {
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID uuid) {
     return discovery(changeState, 1L, uuid);
   }
 
-  public static DiscoverResponse discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid) {
-    return new DiscoverResponse(
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid) {
+    return new DiscoverResponse<>(
         changeState == PREPARED ? NomadServerMode.PREPARED : NomadServerMode.ACCEPTING,
         mutativeMessageCount,
         "testMutationHost",
         "testMutationUser",
         1,
         1,
-        new ChangeDetails(
+        new ChangeDetails<>(
             uuid,
             changeState,
             1,

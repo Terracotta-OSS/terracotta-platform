@@ -8,7 +8,7 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
-import com.terracottatech.dynamic_config.nomad.NomadEnvironment;
+import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.SimpleNomadChange;
 import com.terracottatech.nomad.server.NomadException;
@@ -59,10 +59,10 @@ public class NomadClientFactoryTest {
   private DiagnosticService diagnostics4;
 
   @Mock
-  private ChangeResultReceiver results;
+  private ChangeResultReceiver<String> results;
 
   @Mock
-  private NomadServer nomadServer;
+  private NomadServer<String> nomadServer;
 
   @Captor
   private ArgumentCaptor<Set<String>> serverNamesCaptor;
@@ -92,8 +92,8 @@ public class NomadClientFactoryTest {
 
   @Test
   public void createClient() throws NomadException {
-    NomadClientFactory factory = new NomadClientFactory(connectionFactory, new ConcurrencySizing(), environment, 2_000);
-    CloseableNomadClient client = factory.createClient(hostPortList);
+    NomadClientFactory<String> factory = new NomadClientFactory<>(connectionFactory, new ConcurrencySizing(), environment, 2_000);
+    CloseableNomadClient<String> client = factory.createClient(hostPortList);
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
 
     verify(results).startDiscovery(serverNamesCaptor.capture());
@@ -106,8 +106,8 @@ public class NomadClientFactoryTest {
 
   @Test
   public void close() {
-    NomadClientFactory factory = new NomadClientFactory(connectionFactory, new ConcurrencySizing(), environment, 2_000);
-    CloseableNomadClient client = factory.createClient(hostPortList);
+    NomadClientFactory<String> factory = new NomadClientFactory<>(connectionFactory, new ConcurrencySizing(), environment, 2_000);
+    CloseableNomadClient<String> client = factory.createClient(hostPortList);
 
     verify(connection, never()).close();
     client.close();

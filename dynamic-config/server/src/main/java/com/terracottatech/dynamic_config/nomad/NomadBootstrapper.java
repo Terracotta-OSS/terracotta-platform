@@ -15,6 +15,7 @@ import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadC
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.ChangeDetails;
 import com.terracottatech.nomad.messages.CommitMessage;
@@ -23,6 +24,7 @@ import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
+import com.terracottatech.nomad.server.SingleThreadedNomadServer;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import org.slf4j.Logger;
@@ -65,9 +67,9 @@ public class NomadBootstrapper {
   public static class NomadServerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerManager.class);
 
-    private volatile UpgradableNomadServer nomadServer;
+    private volatile UpgradableNomadServer<String> nomadServer;
 
-    public UpgradableNomadServer getNomadServer() {
+    public UpgradableNomadServer<String> getNomadServer() {
       return nomadServer;
     }
 
@@ -77,7 +79,7 @@ public class NomadBootstrapper {
      * Initializes the Nomad system
      *
      * @param nomadRoot Configuration repository root
-     * @param nodeName Node name
+     * @param nodeName  Node name
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
     NomadRepositoryManager init(Path nomadRoot, String nodeName) throws NomadConfigurationException {
@@ -85,16 +87,16 @@ public class NomadBootstrapper {
         NomadRepositoryManager repositoryManager = createNomadRepositoryManager(nomadRoot);
         repositoryManager.createDirectories();
         nomadServer = createServer(repositoryManager, nodeName);
-        registerMBean();
+        registerDiagnosticService();
         LOGGER.info("Successfully initialized NomadServerManager");
         return repositoryManager;
       } catch (Exception e) {
-        throw new NomadConfigurationException("Exception initializing Nomad Server", e);
+        throw new NomadConfigurationException("Exception initializing Nomad Server: " + e.getMessage(), e);
       }
     }
 
-    void registerMBean() {
-      DiagnosticServicesRegistration<NomadServer> registration = DiagnosticServices.register(NomadServer.class, nomadServer);
+    void registerDiagnosticService() {
+      DiagnosticServicesRegistration<NomadServer<?>> registration = DiagnosticServices.register(NomadServer.class, nomadServer);
       registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
     }
 
@@ -110,7 +112,7 @@ public class NomadBootstrapper {
           .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController));
 
-      ChangeApplicator changeApplicator = new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(configController, nomadChangeProcessor));
+      ChangeApplicator<String> changeApplicator = new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(configController, nomadChangeProcessor));
       nomadServer.setChangeApplicator(changeApplicator);
       LOGGER.info("Successfully completed upgradeForWrite procedure");
     }
@@ -122,7 +124,7 @@ public class NomadBootstrapper {
      * @throws NomadConfigurationException if configuration is unavailable or corrupted
      */
     public String getConfiguration() throws NomadConfigurationException {
-      ChangeDetails latestChange;
+      ChangeDetails<String> latestChange;
       try {
         latestChange = nomadServer.discover().getLatestChange();
       } catch (NomadException e) {
@@ -153,7 +155,7 @@ public class NomadBootstrapper {
     public void repairConfiguration(String configuration, long version) throws NomadConfigurationException {
       try {
         UUID nomadRequestId = UUID.randomUUID();
-        DiscoverResponse discoverResponse = nomadServer.discover();
+        DiscoverResponse<String> discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), nomadRequestId,
             version, new ConfigRepairNomadChange(configuration));
@@ -175,8 +177,8 @@ public class NomadBootstrapper {
       }
     }
 
-    UpgradableNomadServer createServer(NomadRepositoryManager repositoryManager, String nodeName) throws SanskritException, NomadException {
-      return new SingleThreadedNomadServer(UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName));
+    UpgradableNomadServer<String> createServer(NomadRepositoryManager repositoryManager, String nodeName) throws SanskritException, NomadException {
+      return new SingleThreadedNomadServer<>(UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName));
     }
 
     NomadRepositoryManager createNomadRepositoryManager(Path nomadRoot) {

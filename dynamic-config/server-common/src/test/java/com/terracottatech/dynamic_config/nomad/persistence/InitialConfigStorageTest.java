@@ -17,17 +17,17 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class InitialConfigStorageTest {
   @Mock
-  private ConfigStorage underlying;
+  private ConfigStorage<String> underlying;
 
   @Test
   public void getInitialVersion() throws Exception {
-    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
     assertNull(storage.getConfig(0L));
   }
 
   @Test(expected = AssertionError.class)
   public void attemptToSaveInitialVersion() throws Exception {
-    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
     storage.saveConfig(0L, "config");
   }
 
@@ -35,13 +35,13 @@ public class InitialConfigStorageTest {
   public void getOtherVersion() throws Exception {
     when(underlying.getConfig(1L)).thenReturn("config");
 
-    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
     assertEquals("config", storage.getConfig(1L));
   }
 
   @Test
   public void saveOtherVersion() throws Exception {
-    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
     storage.saveConfig(1L, "config");
 
     verify(underlying).saveConfig(1L, "config");

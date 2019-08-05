@@ -4,8 +4,9 @@
  */
 package com.terracottatech.dynamic_config.nomad.persistence;
 
-public interface ConfigStorage<T> {
-  T getConfig(long version) throws ConfigStorageException;
-
-  void saveConfig(long version, T config) throws ConfigStorageException;
+/**
+ * @author Mathieu Carbou
+ */
+public interface Hash<T> {
+  String computeHash(T o);
 }

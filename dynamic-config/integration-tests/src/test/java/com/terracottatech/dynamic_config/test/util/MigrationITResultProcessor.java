@@ -11,23 +11,23 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public class MigrationITResultProcessor extends RepositoryStructureBuilder {
-  final Map<String, NomadServer> serverMap;
+  final Map<String, NomadServer<String>> serverMap;
 
-  public MigrationITResultProcessor(Path outputFolderPath, Map<String, NomadServer> serverMap) {
+  public MigrationITResultProcessor(Path outputFolderPath, Map<String, NomadServer<String>> serverMap) {
     super(outputFolderPath);
     this.serverMap = serverMap;
   }
 
   @Override
-  protected NomadServer getNomadServer(final String nodeName) throws Exception {
-    NomadServer nomadServer = super.getNomadServer(nodeName);
+  protected NomadServer<String> getNomadServer(final String nodeName) throws Exception {
+    NomadServer<String> nomadServer = super.getNomadServer(nodeName);
     serverMap.put(nodeName, nomadServer);
     return nomadServer;
   }
 
   @Override
-  protected NomadServer getNomadServer(final int stripeId, final String nodeName) throws Exception {
-    NomadServer nomadServer = super.getNomadServer(stripeId, nodeName);
+  protected NomadServer<String> getNomadServer(final int stripeId, final String nodeName) throws Exception {
+    NomadServer<String> nomadServer = super.getNomadServer(stripeId, nodeName);
     serverMap.put("stripe" + stripeId + "_" + nodeName, nomadServer);
     return nomadServer;
   }

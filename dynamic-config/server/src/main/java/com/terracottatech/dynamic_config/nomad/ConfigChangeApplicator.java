@@ -19,7 +19,7 @@ import java.util.List;
 import static com.terracottatech.nomad.server.PotentialApplicationResult.allow;
 import static com.terracottatech.nomad.server.PotentialApplicationResult.reject;
 
-public class ConfigChangeApplicator implements ChangeApplicator {
+public class ConfigChangeApplicator implements ChangeApplicator<String> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeApplicator.class);
 
   private final NomadChangeProcessor<NomadChange> commandProcessor;
@@ -29,7 +29,7 @@ public class ConfigChangeApplicator implements ChangeApplicator {
   }
 
   @Override
-  public PotentialApplicationResult canApply(String baseConfig, NomadChange change) {
+  public PotentialApplicationResult<String> canApply(String baseConfig, NomadChange change) {
     // supports multiple changes
     List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
 

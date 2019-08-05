@@ -4,17 +4,17 @@
  */
 package com.terracottatech.dynamic_config.nomad.persistence;
 
-public class InitialConfigStorage implements ConfigStorage {
+public class InitialConfigStorage<T> implements ConfigStorage<T> {
   private static final long INITIAL_VERSION = 0L;
 
-  private final ConfigStorage underlying;
+  private final ConfigStorage<T> underlying;
 
-  public InitialConfigStorage(ConfigStorage underlying) {
+  public InitialConfigStorage(ConfigStorage<T> underlying) {
     this.underlying = underlying;
   }
 
   @Override
-  public String getConfig(long version) throws ConfigStorageException {
+  public T getConfig(long version) throws ConfigStorageException {
     if (version == INITIAL_VERSION) {
       return null;
     }
@@ -23,7 +23,7 @@ public class InitialConfigStorage implements ConfigStorage {
   }
 
   @Override
-  public void saveConfig(long version, String config) throws ConfigStorageException {
+  public void saveConfig(long version, T config) throws ConfigStorageException {
     if (version == INITIAL_VERSION) {
       throw new AssertionError("Invalid version: " + version);
     }

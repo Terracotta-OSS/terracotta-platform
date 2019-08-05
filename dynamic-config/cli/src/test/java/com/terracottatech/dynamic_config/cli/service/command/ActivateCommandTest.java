@@ -134,7 +134,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
-      NomadServer mock = nomadServerMock("localhost", port);
+      NomadServer<String> mock = nomadServerMock("localhost", port);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(reject(RejectionReason.UNACCEPTABLE, "error", "host", "user"));
     }));
@@ -151,7 +151,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
 
-      NomadServer mock = nomadServerMock("localhost", port);
+      NomadServer<String> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
       verify(mock, times(1)).prepare(any(PrepareMessage.class));
       verifyNoMoreInteractions(mock);
@@ -168,7 +168,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
-      NomadServer mock = nomadServerMock("localhost", port);
+      NomadServer<String> mock = nomadServerMock("localhost", port);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenReturn(reject(RejectionReason.UNACCEPTABLE, "error", "host", "user"));
@@ -186,7 +186,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
 
-      NomadServer mock = nomadServerMock("localhost", port);
+      NomadServer<String> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
       verify(mock, times(1)).prepare(any(PrepareMessage.class));
       verify(mock, times(1)).commit(any(CommitMessage.class));
@@ -223,7 +223,7 @@ public class ActivateCommandTest extends BaseTest {
   private void doRunAndVerify(String clusterName, ActivateCommand command) {
     IntStream.of(ports).forEach(rethrow(port -> {
       TopologyService topologyService = topologyServiceMock("localhost", port);
-      NomadServer mock = nomadServerMock("localhost", port);
+      NomadServer<String> mock = nomadServerMock("localhost", port);
       LicensingService licensingService = licensingServiceMock("localhost", port);
       DiagnosticService diagnosticService = diagnosticServiceMock("localhost", port);
 
