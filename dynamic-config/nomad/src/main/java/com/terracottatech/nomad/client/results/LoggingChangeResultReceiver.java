@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.cli.service.nomad;
+package com.terracottatech.nomad.client.results;
 
 import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 import java.util.UUID;
 
-public class LoggingChangeResultReceiver implements ChangeResultReceiver {
+public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(LoggingChangeResultReceiver.class);
 
   @Override
@@ -22,7 +22,7 @@ public class LoggingChangeResultReceiver implements ChangeResultReceiver {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse discovery) {
+  public void discovered(String server, DiscoverResponse<T> discovery) {
     print("Received server state for: " + server);
   }
 

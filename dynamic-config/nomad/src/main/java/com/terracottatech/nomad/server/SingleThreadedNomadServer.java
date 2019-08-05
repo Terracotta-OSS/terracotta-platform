@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.nomad;
+package com.terracottatech.nomad.server;
 
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.CommitMessage;
@@ -16,16 +16,16 @@ import com.terracottatech.nomad.server.UpgradableNomadServer;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-public class SingleThreadedNomadServer implements UpgradableNomadServer {
-  private final UpgradableNomadServer underlying;
+public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
+  private final UpgradableNomadServer<T> underlying;
   private final ReentrantLock lock = new ReentrantLock(true);
 
-  public SingleThreadedNomadServer(UpgradableNomadServer underlying) {
+  public SingleThreadedNomadServer(UpgradableNomadServer<T> underlying) {
     this.underlying = underlying;
   }
 
   @Override
-  public DiscoverResponse discover() throws NomadException {
+  public DiscoverResponse<T> discover() throws NomadException {
     lock.lock();
     try {
       return underlying.discover();
@@ -75,7 +75,7 @@ public class SingleThreadedNomadServer implements UpgradableNomadServer {
   }
 
   @Override
-  public void setChangeApplicator(ChangeApplicator changeApplicator) {
+  public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {
     lock.lock();
     try {
       underlying.setChangeApplicator(changeApplicator);
