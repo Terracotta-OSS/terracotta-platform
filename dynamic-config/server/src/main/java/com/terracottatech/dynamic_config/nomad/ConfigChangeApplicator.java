@@ -42,7 +42,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<String> {
       }
     }
 
-    return allow(baseConfig);
+    return baseConfig == null ? reject("Change rejected: " + change) : allow(baseConfig);
   }
 
   @Override
