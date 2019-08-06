@@ -7,7 +7,6 @@ package com.terracottatech.dynamic_config.nomad;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.terracottatech.dynamic_config.ConfigChangeHandler.Type;
 
 import java.util.Objects;
 
@@ -103,4 +102,19 @@ public class SettingNomadChange extends FilteredNomadChange {
     return new SettingNomadChange(applicability, Cmd.UNSET, type, name, null);
   }
 
+  public enum Type {
+    OFFHEAP("offheap-resources"),
+    DATA_ROOT("data-roots");
+
+    String name;
+
+    Type(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String toString() {
+      return name;
+    }
+  }
 }

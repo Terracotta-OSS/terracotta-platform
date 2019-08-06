@@ -17,7 +17,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URL;
 
-import static com.terracottatech.dynamic_config.ConfigChangeHandler.Type.OFFHEAP;
+import static com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type.OFFHEAP;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;

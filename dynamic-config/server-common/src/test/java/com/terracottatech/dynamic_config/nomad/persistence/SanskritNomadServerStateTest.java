@@ -9,7 +9,6 @@ import com.terracottatech.dynamic_config.nomad.NomadJson;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeRequest;
-import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.persistence.sanskrit.HashUtils;
 import com.terracottatech.persistence.sanskrit.MutableSanskritObject;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
@@ -26,7 +25,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.UUID;
 
-import static com.terracottatech.dynamic_config.ConfigChangeHandler.Type.OFFHEAP;
+import static com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type.OFFHEAP;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 import static com.terracottatech.nomad.server.NomadServerMode.ACCEPTING;

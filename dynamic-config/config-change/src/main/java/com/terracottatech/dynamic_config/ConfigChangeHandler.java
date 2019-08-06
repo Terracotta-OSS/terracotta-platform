@@ -4,28 +4,13 @@
  */
 package com.terracottatech.dynamic_config;
 
+import com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type;
 import org.terracotta.entity.PlatformConfiguration;
 
 /**
  * Handles config changes on the server side
  */
 public interface ConfigChangeHandler {
-
-  enum Type {
-    OFFHEAP("offheap-resources"),
-    DATA_ROOT("data-roots");
-
-    String name;
-
-    Type(String name) {
-      this.name = name;
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
-  }
 
   Type getType();
 

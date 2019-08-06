@@ -5,19 +5,16 @@
 package com.terracottatech.dynamic_config.nomad.processor;
 
 import com.terracottatech.dynamic_config.ConfigChangeHandler;
-import com.terracottatech.dynamic_config.ConfigChangeHandler.Type;
 import com.terracottatech.dynamic_config.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
+import com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type;
 import com.terracottatech.nomad.server.NomadException;
-
 import org.terracotta.entity.PlatformConfiguration;
 
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.ServiceLoader;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Supports the processing of {@link SettingNomadChange} for dynamic configuration
@@ -56,7 +53,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
     getHandler(change.getConfigType()).apply(change.getChange());
   }
 
-  private ConfigChangeHandler getHandler(ConfigChangeHandler.Type type) throws NomadException {
+  private ConfigChangeHandler getHandler(Type type) throws NomadException {
     checkInitialized();
 
     ConfigChangeHandler configChangeHandler = CHANGE_HANDLERS.get(type);
