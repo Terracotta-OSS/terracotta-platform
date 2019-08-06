@@ -6,6 +6,7 @@
 dependencies {
   compile project(':sanskrit')
   compile project(':dynamic-config-common')
+  compile project(':dynamic-config-xml')
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"

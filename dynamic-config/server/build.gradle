@@ -5,7 +5,6 @@
 
 dependencies {
   compile project(':diagnostic-server')
-  compile project(':dynamic-config-xml')
   compile project(':dynamic-config-change')
   compile project(':dynamic-config-server-common')
 

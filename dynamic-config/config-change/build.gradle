@@ -3,8 +3,10 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
+apply plugin: TcDeploy
+
 dependencies {
+  compile project(':dynamic-config-common')
+
   compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
 }
-
-apply plugin: TcDeploy
