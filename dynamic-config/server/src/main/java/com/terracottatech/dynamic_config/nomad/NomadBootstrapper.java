@@ -95,8 +95,9 @@ public class NomadBootstrapper {
       }
     }
 
+    @SuppressWarnings("unchecked")
     void registerDiagnosticService() {
-      DiagnosticServicesRegistration<NomadServer<?>> registration = DiagnosticServices.register(NomadServer.class, nomadServer);
+      DiagnosticServicesRegistration<NomadServer<String>> registration = (DiagnosticServicesRegistration<NomadServer<String>>) (DiagnosticServicesRegistration) DiagnosticServices.register(NomadServer.class, nomadServer);
       registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
     }
 

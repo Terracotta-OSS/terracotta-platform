@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.nomad.persistence;
 /**
  * @author Mathieu Carbou
  */
-public interface Hash<T> {
+@FunctionalInterface
+public interface HashComputer<T> {
   String computeHash(T o);
 }

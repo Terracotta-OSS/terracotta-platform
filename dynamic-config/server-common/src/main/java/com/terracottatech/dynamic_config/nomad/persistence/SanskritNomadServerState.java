@@ -35,12 +35,12 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 public class SanskritNomadServerState<T> implements NomadServerState<T> {
   private final Sanskrit sanskrit;
   private final ConfigStorage<T> configStorage;
-  private final Hash<T> hash;
+  private final HashComputer<T> hashComputer;
 
-  public SanskritNomadServerState(Sanskrit sanskrit, ConfigStorage<T> configStorage, Hash<T> hash) {
+  public SanskritNomadServerState(Sanskrit sanskrit, ConfigStorage<T> configStorage, HashComputer<T> hashComputer) {
     this.sanskrit = sanskrit;
     this.configStorage = configStorage;
-    this.hash = hash;
+    this.hashComputer = hashComputer;
   }
 
   @Override
@@ -110,7 +110,7 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
       String creationUser = child.getString(CHANGE_CREATION_USER);
 
       T newConfiguration = configStorage.getConfig(version);
-      String newConfigurationhash = hash.computeHash(newConfiguration);
+      String newConfigurationhash = hashComputer.computeHash(newConfiguration);
       checkHash(changeUuid, newConfigurationhash, foundChangeResultHash);
 
       return new ChangeRequest<>(state, version, change, newConfiguration, creationHost, creationUser);
@@ -132,7 +132,7 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
     long newMutativeMessageCount = getNewMutativeMessageCount();
     changeBuilder.setLong(MUTATIVE_MESSAGE_COUNT, newMutativeMessageCount);
 
-    return new SanskritNomadStateChange<>(sanskrit, changeBuilder, hash);
+    return new SanskritNomadStateChange<>(sanskrit, changeBuilder, hashComputer);
   }
 
   @Override

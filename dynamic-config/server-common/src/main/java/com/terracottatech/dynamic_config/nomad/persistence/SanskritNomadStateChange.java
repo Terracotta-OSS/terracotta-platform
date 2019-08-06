@@ -33,14 +33,14 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   private final Sanskrit sanskrit;
   private final SanskritChangeBuilder changeBuilder;
-  private final Hash<T> hash;
+  private final HashComputer<T> hashComputer;
   private volatile Long changeVersion;
   private volatile T changeResult;
 
-  public SanskritNomadStateChange(Sanskrit sanskrit, SanskritChangeBuilder changeBuilder, Hash<T> hash) {
+  public SanskritNomadStateChange(Sanskrit sanskrit, SanskritChangeBuilder changeBuilder, HashComputer<T> hashComputer) {
     this.sanskrit = sanskrit;
     this.changeBuilder = changeBuilder;
-    this.hash = hash;
+    this.hashComputer = hashComputer;
   }
 
   @Override
@@ -89,7 +89,7 @@ public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   public NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest) {
     changeVersion = changeRequest.getVersion();
     changeResult = changeRequest.getChangeResult();
-    String resultHash = hash.computeHash(changeResult);
+    String resultHash = hashComputer.computeHash(changeResult);
 
     MutableSanskritObject child = sanskrit.newMutableSanskritObject();
     child.setString(CHANGE_STATE, changeRequest.getState().name());

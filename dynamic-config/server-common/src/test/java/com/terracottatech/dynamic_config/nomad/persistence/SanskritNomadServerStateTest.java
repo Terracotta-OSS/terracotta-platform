@@ -9,6 +9,7 @@ import com.terracottatech.dynamic_config.nomad.NomadJson;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeRequest;
+import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.persistence.sanskrit.HashUtils;
 import com.terracottatech.persistence.sanskrit.MutableSanskritObject;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
@@ -55,6 +56,7 @@ public class SanskritNomadServerStateTest {
   public void before() {
     when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(NomadJson.buildObjectMapper()));
     state = new SanskritNomadServerState<>(sanskrit, configStorage, HashUtils::generateHash);
+
   }
 
   @Test
