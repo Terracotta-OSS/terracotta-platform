@@ -132,7 +132,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     T existing = state.getCurrentCommittedChangeResult();
     NomadChange change = message.getChange();
 
-    PotentialApplicationResult<T> result = changeApplicator.canApply(existing, change);
+    PotentialApplicationResult<T> result = changeApplicator.tryApply(existing, change);
     if (!result.isAllowed()) {
       String rejectionMessage = result.getRejectionReason();
       return reject(UNACCEPTABLE, rejectionMessage);

@@ -43,17 +43,17 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   }
 
   @Override
-  public String getConfigWithChange(String baseConfig, SettingNomadChange change) throws NomadException {
+  public String tryApply(String baseConfig, SettingNomadChange change) throws NomadException {
     try {
-      return getHandler(change.getConfigType()).getConfigWithChange(baseConfig, change.getChange());
+      return getHandler(change.getConfigType()).tryApply(baseConfig, change.getChange());
     } catch (InvalidConfigChangeException e) {
       throw new NomadException(e);
     }
   }
 
   @Override
-  public void applyChange(SettingNomadChange change) throws NomadException {
-    getHandler(change.getConfigType()).applyChange(change.getChange());
+  public void apply(SettingNomadChange change) throws NomadException {
+    getHandler(change.getConfigType()).apply(change.getChange());
   }
 
   private ConfigChangeHandler getHandler(ConfigChangeHandler.Type type) throws NomadException {

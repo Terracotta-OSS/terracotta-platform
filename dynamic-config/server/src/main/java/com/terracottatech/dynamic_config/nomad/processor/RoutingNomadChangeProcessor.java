@@ -24,15 +24,15 @@ public class RoutingNomadChangeProcessor implements NomadChangeProcessor<NomadCh
   }
 
   @Override
-  public String getConfigWithChange(String baseConfig, NomadChange change) throws NomadException {
+  public String tryApply(String baseConfig, NomadChange change) throws NomadException {
     NomadChangeProcessor<NomadChange> processor = getProcessor(change);
-    return processor.getConfigWithChange(baseConfig, change);
+    return processor.tryApply(baseConfig, change);
   }
 
   @Override
-  public void applyChange(NomadChange change) throws NomadException {
+  public void apply(NomadChange change) throws NomadException {
     NomadChangeProcessor<NomadChange> processor = getProcessor(change);
-    processor.applyChange(change);
+    processor.apply(change);
   }
 
   private NomadChangeProcessor<NomadChange> getProcessor(NomadChange change) throws NomadException {

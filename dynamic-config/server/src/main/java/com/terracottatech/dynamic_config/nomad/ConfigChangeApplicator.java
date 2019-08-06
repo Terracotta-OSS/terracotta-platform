@@ -29,13 +29,13 @@ public class ConfigChangeApplicator implements ChangeApplicator<String> {
   }
 
   @Override
-  public PotentialApplicationResult<String> canApply(String baseConfig, NomadChange change) {
+  public PotentialApplicationResult<String> tryApply(String baseConfig, NomadChange change) {
     // supports multiple changes
     List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
 
     for (NomadChange c : changes) {
       try {
-        baseConfig = commandProcessor.getConfigWithChange(baseConfig, c);
+        baseConfig = commandProcessor.tryApply(baseConfig, c);
       } catch (NomadException e) {
         LOGGER.warn(e.getMessage(), e);
         return reject(e.getMessage());
@@ -51,7 +51,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<String> {
     List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
 
     for (NomadChange c : changes) {
-      commandProcessor.applyChange(c);
+      commandProcessor.apply(c);
     }
   }
 

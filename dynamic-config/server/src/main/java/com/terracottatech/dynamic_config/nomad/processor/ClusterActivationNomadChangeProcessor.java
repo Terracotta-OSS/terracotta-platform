@@ -22,7 +22,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
   }
 
   @Override
-  public String getConfigWithChange(String baseConfig, ClusterActivationNomadChange change) throws NomadException {
+  public String tryApply(String baseConfig, ClusterActivationNomadChange change) throws NomadException {
     if (baseConfig != null) {
       throw new NomadException("Existing config must be null. Found: " + baseConfig);
     }
@@ -40,7 +40,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
   }
 
   @Override
-  public void applyChange(ClusterActivationNomadChange change) {
+  public void apply(ClusterActivationNomadChange change) {
     // no-op
   }
 }

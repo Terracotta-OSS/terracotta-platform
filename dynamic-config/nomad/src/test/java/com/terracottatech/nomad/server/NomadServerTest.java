@@ -69,7 +69,7 @@ public class NomadServerTest {
 
   @Test
   public void prepare() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -86,12 +86,12 @@ public class NomadServerTest {
 
     assertTrue(response.isAccepted());
     assertState(PREPARED, 2L, "testhost", "testuser", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost", "testuser", "summary");
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
   @Test
   public void commit() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -115,13 +115,13 @@ public class NomadServerTest {
 
     assertTrue(response.isAccepted());
     assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 1L, 1L, ChangeRequestState.COMMITTED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
     verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
   }
 
   @Test
   public void rollback() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -145,12 +145,12 @@ public class NomadServerTest {
 
     assertTrue(response.isAccepted());
     assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.ROLLED_BACK, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
   @Test
   public void takeover() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -173,7 +173,7 @@ public class NomadServerTest {
 
     assertTrue(response.isAccepted());
     assertState(PREPARED, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
   @Test
@@ -225,7 +225,7 @@ public class NomadServerTest {
 
   @Test
   public void deadCommit() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -255,12 +255,12 @@ public class NomadServerTest {
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
     assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
   @Test
   public void deadRollback() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -290,12 +290,12 @@ public class NomadServerTest {
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
     assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
   @Test
   public void deadTakeover() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -324,12 +324,12 @@ public class NomadServerTest {
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
     assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
   @Test
   public void prepareUnacceptableChange() throws Exception {
-    when(changeApplicator.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject("fail"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject("fail"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 
@@ -346,7 +346,7 @@ public class NomadServerTest {
 
     assertRejection(response, UNACCEPTABLE, "fail", null, null);
     assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null);
-    verify(changeApplicator).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
   private void assertState(

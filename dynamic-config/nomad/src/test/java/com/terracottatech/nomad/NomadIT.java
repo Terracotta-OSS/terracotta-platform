@@ -105,15 +105,15 @@ public class NomadIT {
   @SuppressWarnings("unchecked")
   @Test
   public void applyChange() throws Exception {
-    when(changeApplicator1.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator3.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
 
     client.tryApplyChange(changeResults, new SimpleNomadChange("change", "summary"));
 
-    verify(changeApplicator1).canApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator2).canApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator1).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator2).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator3).tryApply(null, new SimpleNomadChange("change", "summary"));
     verify(changeApplicator1).apply(new SimpleNomadChange("change", "summary"));
     verify(changeApplicator2).apply(new SimpleNomadChange("change", "summary"));
     verify(changeApplicator3).apply(new SimpleNomadChange("change", "summary"));
@@ -148,12 +148,12 @@ public class NomadIT {
 
   @Test
   public void applyMultipleChanges() throws Exception {
-    when(changeApplicator1.canApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator1.canApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
-    when(changeApplicator2.canApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator2.canApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
-    when(changeApplicator3.canApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator3.canApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
+    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
+    when(changeApplicator1.tryApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
+    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
+    when(changeApplicator2.tryApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
+    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
+    when(changeApplicator3.tryApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
 
     client.tryApplyChange(changeResults, new SimpleNomadChange("change1", "summary1"));
     client.tryApplyChange(changeResults, new SimpleNomadChange("change2", "summary2"));
@@ -177,15 +177,15 @@ public class NomadIT {
   @SuppressWarnings("unchecked")
   @Test
   public void rejectChange() {
-    when(changeApplicator1.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject("fail"));
-    when(changeApplicator3.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject("fail"));
+    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
 
     client.tryApplyChange(changeResults, new SimpleNomadChange("change", "summary"));
 
-    verify(changeApplicator1).canApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator2).canApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator1).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator2).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator3).tryApply(null, new SimpleNomadChange("change", "summary"));
     verify(changeResults).startDiscovery(matchSetOf("server1", "server2", "server3"));
     verify(changeResults).discovered(eq("server1"), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq("server2"), any(DiscoverResponse.class));
@@ -218,15 +218,15 @@ public class NomadIT {
     InterceptionServer<String> interceptionServer = interceptServer("server1");
     interceptionServer.setAllowCommit(false);
 
-    when(changeApplicator1.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator3.canApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
 
     client.tryApplyChange(changeResults, new SimpleNomadChange("change", "summary"));
 
-    verify(changeApplicator1).canApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator2).canApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).canApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator1).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator2).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator3).tryApply(null, new SimpleNomadChange("change", "summary"));
     verifyNoMoreInteractions(changeApplicator1);
     verify(changeApplicator2).apply(new SimpleNomadChange("change", "summary"));
     verify(changeApplicator3).apply(new SimpleNomadChange("change", "summary"));

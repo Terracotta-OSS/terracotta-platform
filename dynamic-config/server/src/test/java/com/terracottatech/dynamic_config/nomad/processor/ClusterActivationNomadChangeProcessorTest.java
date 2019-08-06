@@ -56,7 +56,7 @@ public class ClusterActivationNomadChangeProcessorTest {
 
     ClusterActivationNomadChange change = new ClusterActivationNomadChange(cluster);
 
-    String configWithChange = processor.getConfigWithChange(null, change);
+    String configWithChange = processor.tryApply(null, change);
 
     assertThat(configWithChange, notNullValue());
   }
@@ -68,6 +68,6 @@ public class ClusterActivationNomadChangeProcessorTest {
     expectedException.expect(NomadException.class);
     expectedException.expectMessage("Existing config must be null. Found: baseConfig");
 
-    processor.getConfigWithChange("baseConfig", change);
+    processor.tryApply("baseConfig", change);
   }
 }

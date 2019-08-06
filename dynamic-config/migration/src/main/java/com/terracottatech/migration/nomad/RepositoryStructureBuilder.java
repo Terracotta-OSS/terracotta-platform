@@ -85,7 +85,7 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
 
     ChangeApplicator<String> changeApplicator = new ChangeApplicator<String>() {
       @Override
-      public PotentialApplicationResult<String> canApply(final String existing, final NomadChange change) {
+      public PotentialApplicationResult<String> tryApply(final String existing, final NomadChange change) {
         return PotentialApplicationResult.allow(((ConfigMigrationNomadChange) change).getConfiguration());
       }
 

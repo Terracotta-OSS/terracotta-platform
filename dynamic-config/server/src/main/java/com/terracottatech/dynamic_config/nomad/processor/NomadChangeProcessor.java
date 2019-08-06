@@ -8,7 +8,7 @@ import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.NomadException;
 
 public interface NomadChangeProcessor<T extends NomadChange> {
-  String getConfigWithChange(String baseConfig, T change) throws NomadException;
+  String tryApply(String baseConfig, T change) throws NomadException;
 
-  void applyChange(T change) throws NomadException;
+  void apply(T change) throws NomadException;
 }

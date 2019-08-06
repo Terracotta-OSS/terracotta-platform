@@ -23,14 +23,14 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
   }
 
   @Override
-  public String getConfigWithChange(String baseConfig, NomadChange change) throws NomadException {
-    return underlying.getConfigWithChange(baseConfig, change);
+  public String tryApply(String baseConfig, NomadChange change) throws NomadException {
+    return underlying.tryApply(baseConfig, change);
   }
 
   @Override
-  public void applyChange(NomadChange change) throws NomadException {
+  public void apply(NomadChange change) throws NomadException {
     if (applicableToThisServer(change)) {
-      underlying.applyChange(change);
+      underlying.apply(change);
     }
   }
 

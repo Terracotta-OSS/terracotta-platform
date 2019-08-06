@@ -31,7 +31,7 @@ public interface ConfigChangeHandler {
 
   void initialize(PlatformConfiguration platformConfiguration);
 
-  String getConfigWithChange(String baseConfig, String change) throws InvalidConfigChangeException;
+  String tryApply(String baseConfig, String change) throws InvalidConfigChangeException;
 
-  void applyChange(String change);
+  void apply(String change);
 }
