@@ -24,7 +24,7 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
 
   @Override
   public String tryApply(String baseConfig, NomadChange change) throws NomadException {
-    return underlying.tryApply(baseConfig, change);
+    return applicableToThisServer(change) ? underlying.tryApply(baseConfig, change) : baseConfig;
   }
 
   @Override
