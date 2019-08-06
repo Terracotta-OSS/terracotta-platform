@@ -3,4 +3,4 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 @javax.xml.bind.annotation.XmlSchema(namespace = "http://www.terracotta.org/config/cluster", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
-package com.terracottatech.topology.config.xmlobjects;
+package com.terracottatech.dynamic_config.xml.topology.config.xmlobjects;

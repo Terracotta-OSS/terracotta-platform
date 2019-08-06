@@ -3,7 +3,7 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-package com.terracottatech.migration.util;
+package com.terracottatech.migration.xml;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

@@ -2,13 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.topology.config;
+package com.terracottatech.dynamic_config.xml.topology.config;
 
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Cluster;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.w3c.dom.Element;
 
-import com.terracottatech.topology.config.parser.SchemaProvider;
-import com.terracottatech.topology.config.xmlobjects.Cluster;
+import com.terracottatech.dynamic_config.xml.topology.config.parser.SchemaProvider;
 
 import java.io.IOException;
 import java.net.URI;

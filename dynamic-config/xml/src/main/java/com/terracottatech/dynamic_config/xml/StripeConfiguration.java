@@ -83,12 +83,12 @@ class StripeConfiguration {
     return server;
   }
 
-  com.terracottatech.topology.config.xmlobjects.Stripe
-  getClusterConfigStripe(com.terracottatech.topology.config.xmlobjects.ObjectFactory factory) {
-    com.terracottatech.topology.config.xmlobjects.Stripe stripe = factory.createStripe();
+  com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Stripe
+  getClusterConfigStripe(com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory factory) {
+    com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Stripe stripe = factory.createStripe();
 
     for (ServerConfiguration serverConfiguration : stripeConfiguration.values()) {
-      com.terracottatech.topology.config.xmlobjects.Node node = serverConfiguration.getClusterConfigNode(factory);
+      com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Node node = serverConfiguration.getClusterConfigNode(factory);
       stripe.getNodes().add(node);
     }
 

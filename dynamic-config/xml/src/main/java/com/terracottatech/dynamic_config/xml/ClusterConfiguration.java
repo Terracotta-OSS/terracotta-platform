@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.topology.config.xmlobjects.ObjectFactory;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory;
 import org.w3c.dom.Element;
 
 import java.nio.file.Path;
@@ -32,7 +32,7 @@ public class ClusterConfiguration {
   Element getClusterElement() {
     ObjectFactory factory = new ObjectFactory();
 
-    com.terracottatech.topology.config.xmlobjects.Cluster cluster = factory.createCluster();
+    com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Cluster cluster = factory.createCluster();
     cluster.setName(clusterName);
     cluster.setCurrentStripeId(stripeId);
 

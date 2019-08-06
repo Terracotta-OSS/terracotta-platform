@@ -10,7 +10,7 @@ import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.migration.NodeConfigurationHandler;
 import com.terracottatech.migration.exception.MigrationException;
-import com.terracottatech.migration.util.XmlUtility;
+import com.terracottatech.migration.xml.XmlUtility;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.CommitMessage;
