@@ -6,6 +6,8 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.TimeUnit;
 import org.terracotta.config.BindPort;
@@ -83,12 +85,12 @@ class StripeConfiguration {
     return server;
   }
 
-  com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Stripe
+  TcStripe
   getClusterConfigStripe(com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory factory) {
-    com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Stripe stripe = factory.createStripe();
+    TcStripe stripe = factory.createStripe();
 
     for (ServerConfiguration serverConfiguration : stripeConfiguration.values()) {
-      com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Node node = serverConfiguration.getClusterConfigNode(factory);
+      TcNode node = serverConfiguration.getClusterConfigNode(factory);
       stripe.getNodes().add(node);
     }
 

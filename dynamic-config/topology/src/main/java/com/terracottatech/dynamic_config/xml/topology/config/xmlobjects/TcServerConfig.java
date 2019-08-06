@@ -33,7 +33,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "server-config", propOrder = {
 
 })
-public class ServerConfig {
+public class TcServerConfig {
 
   @XmlElement(name = "tc-config", namespace = "http://www.terracotta.org/config", required = true)
   protected TcConfig tcConfig;

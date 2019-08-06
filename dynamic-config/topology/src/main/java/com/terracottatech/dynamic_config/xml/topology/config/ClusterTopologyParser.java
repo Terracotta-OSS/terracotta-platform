@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.xml.topology.config;
 
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Cluster;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.w3c.dom.Element;
 
@@ -33,12 +33,12 @@ public class ClusterTopologyParser implements ExtendedConfigParser {
   }
 
   @Override
-  public Cluster parse(final Element element, final String source) {
-    Cluster cluster;
+  public TcCluster parse(final Element element, final String source) {
+    TcCluster cluster;
     try {
-      JAXBContext jc = JAXBContext.newInstance(Cluster.class.getPackage().getName(), this.getClass().getClassLoader());
+      JAXBContext jc = JAXBContext.newInstance(TcCluster.class.getPackage().getName(), this.getClass().getClassLoader());
       Unmarshaller u = jc.createUnmarshaller();
-      cluster = u.unmarshal(element, Cluster.class).getValue();
+      cluster = u.unmarshal(element, TcCluster.class).getValue();
     } catch (JAXBException e) {
       throw new RuntimeException(e);
     }

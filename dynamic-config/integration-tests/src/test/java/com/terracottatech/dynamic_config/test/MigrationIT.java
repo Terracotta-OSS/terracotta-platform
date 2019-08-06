@@ -6,13 +6,13 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
 import com.terracottatech.dynamic_config.test.util.TmpDir;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
 import com.terracottatech.migration.MigrationImpl;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Cluster;
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Node;
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ServerConfig;
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Stripe;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
 import com.terracottatech.utilities.Tuple2;
 import org.junit.Rule;
 import org.junit.Test;
@@ -85,25 +85,25 @@ public class MigrationIT {
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
-    List<Cluster> clusterList = configuration.getExtendedConfiguration(Cluster.class);
+    List<TcCluster> clusterList = configuration.getExtendedConfiguration(TcCluster.class);
     assertThat(clusterList, notNullValue());
     assertThat(clusterList.size(), is(1));
 
-    Cluster cluster = clusterList.get(0);
+    TcCluster cluster = clusterList.get(0);
     assertThat(cluster, notNullValue());
 
     assertThat(cluster.getName(), is("testCluster"));
-    List<Stripe> stripeList = cluster.getStripes();
+    List<TcStripe> stripeList = cluster.getStripes();
     assertThat(stripeList.size(), is(1));
 
-    Stripe stripe = stripeList.get(0);
+    TcStripe stripe = stripeList.get(0);
     assertThat(stripe, notNullValue());
 
-    List<Node> nodes = stripe.getNodes();
+    List<TcNode> nodes = stripe.getNodes();
     assertThat(nodes.size(), is(1));
     assertThat(nodes.get(0).getName(), is("node-1"));
 
-    ServerConfig serverConfig = nodes.get(0).getServerConfig();
+    TcServerConfig serverConfig = nodes.get(0).getServerConfig();
     assertThat(serverConfig, notNullValue());
 
     TcConfig clusterTcConfig = serverConfig.getTcConfig();
@@ -184,25 +184,25 @@ public class MigrationIT {
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
-    List<Cluster> clusterList = configuration.getExtendedConfiguration(Cluster.class);
+    List<TcCluster> clusterList = configuration.getExtendedConfiguration(TcCluster.class);
     assertThat(clusterList, notNullValue());
     assertThat(clusterList.size(), is(1));
 
-    Cluster cluster = clusterList.get(0);
+    TcCluster cluster = clusterList.get(0);
     assertThat(cluster, notNullValue());
 
     assertThat(cluster.getName(), is("testCluster"));
-    List<Stripe> stripeList = cluster.getStripes();
+    List<TcStripe> stripeList = cluster.getStripes();
     assertThat(stripeList.size(), is(1));
 
-    Stripe stripe = stripeList.get(0);
+    TcStripe stripe = stripeList.get(0);
     assertThat(stripe, notNullValue());
 
-    List<Node> nodes = stripe.getNodes();
+    List<TcNode> nodes = stripe.getNodes();
     assertThat(nodes.size(), is(1));
     assertThat(nodes.get(0).getName(), is("node-1"));
 
-    ServerConfig serverConfig = nodes.get(0).getServerConfig();
+    TcServerConfig serverConfig = nodes.get(0).getServerConfig();
     assertThat(serverConfig, notNullValue());
 
     TcConfig clusterTcConfig = serverConfig.getTcConfig();
@@ -285,25 +285,25 @@ public class MigrationIT {
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
-    List<Cluster> clusterList = configuration.getExtendedConfiguration(Cluster.class);
+    List<TcCluster> clusterList = configuration.getExtendedConfiguration(TcCluster.class);
     assertThat(clusterList, notNullValue());
     assertThat(clusterList.size(), is(1));
 
-    Cluster cluster = clusterList.get(0);
+    TcCluster cluster = clusterList.get(0);
     assertThat(cluster, notNullValue());
 
     assertThat(cluster.getName(), is("testCluster"));
-    List<Stripe> stripeList = cluster.getStripes();
+    List<TcStripe> stripeList = cluster.getStripes();
     assertThat(stripeList.size(), is(1));
 
-    Stripe stripe = stripeList.get(0);
+    TcStripe stripe = stripeList.get(0);
     assertThat(stripe, notNullValue());
 
-    List<Node> nodes = stripe.getNodes();
+    List<TcNode> nodes = stripe.getNodes();
     assertThat(nodes.size(), is(1));
     assertThat(nodes.get(0).getName(), is("node-1"));
 
-    ServerConfig serverConfig = nodes.get(0).getServerConfig();
+    TcServerConfig serverConfig = nodes.get(0).getServerConfig();
     assertThat(serverConfig, notNullValue());
 
     TcConfig clusterTcConfig = serverConfig.getTcConfig();
@@ -495,27 +495,27 @@ public class MigrationIT {
       });
     }
 
-    List<Cluster> clusterList1 = configuration.getExtendedConfiguration(Cluster.class);
+    List<TcCluster> clusterList1 = configuration.getExtendedConfiguration(TcCluster.class);
     assertThat(clusterList1, notNullValue());
     assertThat(clusterList1.size(), is(1));
-    Cluster cluster = clusterList1.get(0);
+    TcCluster cluster = clusterList1.get(0);
     assertThat(cluster, notNullValue());
     assertThat(cluster.getName(), is("testCluster"));
 
-    List<Stripe> stripeList1 = cluster.getStripes();
+    List<TcStripe> stripeList1 = cluster.getStripes();
     assertThat(stripeList1.size(), is(2));
-    Stripe stripe1 = stripeList1.get(0);
+    TcStripe stripe1 = stripeList1.get(0);
     assertThat(stripe1, notNullValue());
-    Stripe stripe2 = stripeList1.get(1);
+    TcStripe stripe2 = stripeList1.get(1);
     assertThat(stripe2, notNullValue());
 
-    List<Node> nodes1 = stripe1.getNodes();
+    List<TcNode> nodes1 = stripe1.getNodes();
     Set<String> uniqueMembers = new HashSet<>();
-    ServerConfig serverConfig1;
-    ServerConfig serverConfig2;
-    ServerConfig serverConfig3;
-    ServerConfig serverConfig4;
-    Map<String, ServerConfig> serverConfigMap1 = new HashMap<>();
+    TcServerConfig serverConfig1;
+    TcServerConfig serverConfig2;
+    TcServerConfig serverConfig3;
+    TcServerConfig serverConfig4;
+    Map<String, TcServerConfig> serverConfigMap1 = new HashMap<>();
 
     assertThat(nodes1.size(), is(2));
     assertThat(nodes1.get(0).getName(), isOneOf("node-1", "node-2"));
@@ -527,7 +527,7 @@ public class MigrationIT {
     serverConfigMap1.put(nodes1.get(0).getName(), serverConfig1);
     serverConfigMap1.put(nodes1.get(1).getName(), serverConfig2);
 
-    List<Node> nodes2 = stripe2.getNodes();
+    List<TcNode> nodes2 = stripe2.getNodes();
     assertThat(nodes2.size(), is(2));
     assertThat(nodes2.get(0).getName(), isOneOf("node-3", "node-4"));
     assertThat(nodes2.get(1).getName(), isOneOf("node-3", "node-4"));
@@ -618,27 +618,27 @@ public class MigrationIT {
       });
     }
 
-    List<Cluster> clusterList1 = configuration.getExtendedConfiguration(Cluster.class);
+    List<TcCluster> clusterList1 = configuration.getExtendedConfiguration(TcCluster.class);
     assertThat(clusterList1, notNullValue());
     assertThat(clusterList1.size(), is(1));
-    Cluster cluster = clusterList1.get(0);
+    TcCluster cluster = clusterList1.get(0);
     assertThat(cluster, notNullValue());
     assertThat(cluster.getName(), is("testCluster"));
-    List<Stripe> stripeList1 = cluster.getStripes();
+    List<TcStripe> stripeList1 = cluster.getStripes();
     assertThat(stripeList1.size(), is(2));
 
-    Stripe stripe1 = stripeList1.get(0);
+    TcStripe stripe1 = stripeList1.get(0);
     assertThat(stripe1, notNullValue());
-    Stripe stripe2 = stripeList1.get(1);
+    TcStripe stripe2 = stripeList1.get(1);
     assertThat(stripe2, notNullValue());
 
-    List<Node> nodes1 = stripe1.getNodes();
+    List<TcNode> nodes1 = stripe1.getNodes();
     Set<Tuple2<Integer, String>> uniqueMembers = new HashSet<>();
-    ServerConfig serverConfig1;
-    ServerConfig serverConfig2;
-    ServerConfig serverConfig3;
-    ServerConfig serverConfig4;
-    Map<Tuple2<Integer, String>, ServerConfig> serverConfigMap1 = new HashMap<>();
+    TcServerConfig serverConfig1;
+    TcServerConfig serverConfig2;
+    TcServerConfig serverConfig3;
+    TcServerConfig serverConfig4;
+    Map<Tuple2<Integer, String>, TcServerConfig> serverConfigMap1 = new HashMap<>();
 
     assertThat(nodes1.size(), is(2));
     assertThat(nodes1.get(0).getName(), isOneOf("node-1", "node-2"));
@@ -650,7 +650,7 @@ public class MigrationIT {
     serverConfigMap1.put(Tuple2.tuple2(1, nodes1.get(0).getName()), serverConfig1);
     serverConfigMap1.put(Tuple2.tuple2(1, nodes1.get(1).getName()), serverConfig2);
 
-    List<Node> nodes2 = stripe2.getNodes();
+    List<TcNode> nodes2 = stripe2.getNodes();
 
     assertThat(nodes2.size(), is(2));
     assertThat(nodes2.get(0).getName(), isOneOf("node-2", "node-3", "node-1"));

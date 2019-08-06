@@ -9,32 +9,32 @@
            elementFormDefault="qualified">
   <xs:import namespace="http://www.terracotta.org/config" schemaLocation="http://www.terracotta.org/terracotta.xsd"/>
 
-  <xs:element name="cluster" substitutionGroup="tc:config-content" type="cl:cluster"/>
+  <xs:element name="cluster" substitutionGroup="tc:config-content" type="cl:TcCluster"/>
 
-  <xs:complexType name="cluster">
+  <xs:complexType name="TcCluster">
     <xs:sequence>
       <xs:element name="name" type="tc:non-blank-token"/>
       <xs:sequence>
-        <xs:element name="stripe" type="cl:stripe" minOccurs="1" maxOccurs="unbounded"/>
+        <xs:element name="stripe" type="cl:TcStripe" minOccurs="1" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:sequence>
     <xs:attribute name="currentStripeId" type="xs:int" use="required"/>
   </xs:complexType>
 
-  <xs:complexType name="stripe">
+  <xs:complexType name="TcStripe">
     <xs:sequence>
-      <xs:element name="node" type="cl:node" minOccurs="1" maxOccurs="unbounded"/>
+      <xs:element name="node" type="cl:TcNode" minOccurs="1" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
 
-  <xs:complexType name="node">
+  <xs:complexType name="TcNode">
     <xs:sequence>
       <xs:element name="name" type="tc:non-blank-token" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="server-config" type="cl:server-config" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="server-config" type="cl:TcServerConfig" minOccurs="1" maxOccurs="1"/>
     </xs:sequence>
   </xs:complexType>
 
-  <xs:complexType name="server-config">
+  <xs:complexType name="TcServerConfig">
     <xs:all>
       <!--
       Contains the configuration for each node of the cluster.

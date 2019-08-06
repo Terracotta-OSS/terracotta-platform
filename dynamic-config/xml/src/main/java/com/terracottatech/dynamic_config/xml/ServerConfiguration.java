@@ -10,7 +10,8 @@ import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
 import com.terracottatech.dynamic_config.xml.plugins.Lease;
 import com.terracottatech.dynamic_config.xml.plugins.OffheapResources;
 import com.terracottatech.dynamic_config.xml.plugins.Security;
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ServerConfig;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import org.terracotta.config.Config;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
@@ -160,11 +161,11 @@ public class ServerConfiguration {
     this.tcConfig.getPlugins().getConfigOrService().add(config);
   }
 
-  com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Node
+  TcNode
   getClusterConfigNode(com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory factory) {
-    com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Node node = factory.createNode();
+    TcNode node = factory.createNode();
     node.setName(this.serverName);
-    ServerConfig serverConfig = factory.createServerConfig();
+    TcServerConfig serverConfig = factory.createServerConfig();
     serverConfig.setTcConfig(this.tcConfig);
     node.setServerConfig(serverConfig);
 

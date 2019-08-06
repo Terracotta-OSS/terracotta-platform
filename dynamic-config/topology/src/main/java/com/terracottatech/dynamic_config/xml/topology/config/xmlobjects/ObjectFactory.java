@@ -35,38 +35,38 @@ public class ObjectFactory {
   }
 
   /**
-   * Create an instance of {@link Cluster }
+   * Create an instance of {@link TcCluster }
    */
-  public Cluster createCluster() {
-    return new Cluster();
+  public TcCluster createCluster() {
+    return new TcCluster();
   }
 
   /**
-   * Create an instance of {@link Stripe }
+   * Create an instance of {@link TcStripe }
    */
-  public Stripe createStripe() {
-    return new Stripe();
+  public TcStripe createStripe() {
+    return new TcStripe();
   }
 
   /**
-   * Create an instance of {@link Node }
+   * Create an instance of {@link TcNode }
    */
-  public Node createNode() {
-    return new Node();
+  public TcNode createNode() {
+    return new TcNode();
   }
 
   /**
-   * Create an instance of {@link ServerConfig }
+   * Create an instance of {@link TcServerConfig }
    */
-  public ServerConfig createServerConfig() {
-    return new ServerConfig();
+  public TcServerConfig createServerConfig() {
+    return new TcServerConfig();
   }
 
   /**
-   * Create an instance of {@link JAXBElement }{@code <}{@link Cluster }{@code >}}
+   * Create an instance of {@link JAXBElement }{@code <}{@link TcCluster }{@code >}}
    */
   @XmlElementDecl(namespace = "http://www.terracotta.org/config/cluster", name = "cluster", substitutionHeadNamespace = "http://www.terracotta.org/config", substitutionHeadName = "config-content")
-  public JAXBElement<Cluster> createCluster(Cluster value) {
-    return new JAXBElement<Cluster>(_Cluster_QNAME, Cluster.class, null, value);
+  public JAXBElement<TcCluster> createCluster(TcCluster value) {
+    return new JAXBElement<TcCluster>(_Cluster_QNAME, TcCluster.class, null, value);
   }
 }

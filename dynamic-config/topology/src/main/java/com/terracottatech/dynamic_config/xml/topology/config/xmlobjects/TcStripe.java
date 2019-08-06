@@ -36,10 +36,10 @@ import java.util.List;
 @XmlType(name = "stripe", namespace = "http://www.terracotta.org/config/cluster", propOrder = {
     "nodes"
 })
-public class Stripe {
+public class TcStripe {
 
   @XmlElement(required = true, name = "node")
-  protected List<Node> nodes;
+  protected List<TcNode> nodes;
 
   /**
    * Gets the value of the nodes property.
@@ -59,9 +59,9 @@ public class Stripe {
    * <p>
    * <p>
    * Objects of the following type(s) are allowed in the list
-   * {@link Node }
+   * {@link TcNode }
    */
-  public List<Node> getNodes() {
+  public List<TcNode> getNodes() {
     if (nodes == null) {
       nodes = new ArrayList<>();
     }

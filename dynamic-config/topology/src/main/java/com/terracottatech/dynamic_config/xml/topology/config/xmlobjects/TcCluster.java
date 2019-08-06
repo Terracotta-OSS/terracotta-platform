@@ -6,25 +6,32 @@ package com.terracottatech.dynamic_config.xml.topology.config.xmlobjects;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
- * <p>Java class for node complex type.
+ * <p>Java class for cluster complex type.
  * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
  * <p>
  * <pre>
- * &lt;complexType name="node"&gt;
+ * &lt;complexType name="cluster"&gt;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;sequence&gt;
  *         &lt;element name="name" type="{http://www.terracotta.org/config}non-blank-token"/&gt;
- *         &lt;element name="server-config" type="{http://www.terracotta.org/config/cluster}server-config"/&gt;
+ *         &lt;sequence&gt;
+ *           &lt;element name="stripe" type="{http://www.terracotta.org/config/cluster}stripe" maxOccurs="unbounded"/&gt;
+ *         &lt;/sequence&gt;
+ *         &lt;sequence&gt;
+ *         &lt;/sequence&gt;
  *       &lt;/sequence&gt;
  *     &lt;/restriction&gt;
  *   &lt;/complexContent&gt;
@@ -32,24 +39,25 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "node", namespace = "http://www.terracotta.org/config/cluster", propOrder = {
+@XmlType(name = "cluster", propOrder = {
     "name",
-    "serverConfig"
+    "stripes"
 })
-public class Node {
+public class TcCluster {
 
+  @XmlAttribute(name = "currentStripeId", required = true)
+  protected Integer currentStripeId;
   @XmlElement(required = true)
   @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
   @XmlSchemaType(name = "token")
   protected String name;
-  @XmlElement(name = "server-config", required = true)
-  protected ServerConfig serverConfig;
+  @XmlElement(required = true, name="stripe")
+  protected List<TcStripe> stripes;
 
   /**
    * Gets the value of the name property.
    *
-   * @return possible object is
-   * {@link String }
+   * @return name for the {@code Cluster}
    */
   public String getName() {
     return name;
@@ -58,31 +66,45 @@ public class Node {
   /**
    * Sets the value of the name property.
    *
-   * @param value allowed object is
-   *              {@link String }
+   * @param value is a {@link String }
    */
   public void setName(String value) {
     this.name = value;
   }
 
-  /**
-   * Gets the value of the serverConfig property.
-   *
-   * @return possible object is
-   * {@link ServerConfig }
-   */
-  public ServerConfig getServerConfig() {
-    return serverConfig;
+  public Integer getCurrentStripeId() {
+    return currentStripeId;
+  }
+
+  public void setCurrentStripeId(Integer currentStripeId) {
+    this.currentStripeId = currentStripeId;
   }
 
   /**
-   * Sets the value of the serverConfig property.
-   *
-   * @param value allowed object is
-   *              {@link ServerConfig }
+   * Gets the value of the stripe property.
+   * <p>
+   * <p>
+   * This accessor method returns a reference to the live list,
+   * not a snapshot. Therefore any modification you make to the
+   * returned list will be present inside the JAXB object.
+   * This is why there is not a <CODE>set</CODE> method for the stripe property.
+   * <p>
+   * <p>
+   * For example, to add a new item, do as follows:
+   * <pre>
+   *    getStripe().add(newItem);
+   * </pre>
+   * <p>
+   * <p>
+   * <p>
+   * Objects of the following type(s) are allowed in the list
+   * {@link TcStripe }
    */
-  public void setServerConfig(ServerConfig value) {
-    this.serverConfig = value;
+  public List<TcStripe> getStripes() {
+    if (stripes == null) {
+      stripes = new ArrayList<>();
+    }
+    return this.stripes;
   }
 
 }
