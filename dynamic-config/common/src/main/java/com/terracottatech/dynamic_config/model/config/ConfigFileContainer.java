@@ -17,9 +17,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getNodeId;
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getProperty;
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getStripeId;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeId;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeId;
 
 public class ConfigFileContainer {
   private final Properties properties;

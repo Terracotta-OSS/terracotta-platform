@@ -23,7 +23,7 @@ public class NodeProcessor {
 
   public void process() {
     // Each NodeStarter either handles the startup itself or hands over to the next NodeStarter, following the chain-of-responsibility pattern
-    NodeStarter third = new CliParamsStarter(options, paramValueMap, clusterCreator, startupManager);
+    NodeStarter third = new ConsoleParamsStarter(options, paramValueMap, clusterCreator, startupManager);
     NodeStarter second = new ConfigFileStarter(options, clusterCreator, startupManager, third);
     NodeStarter first = new ConfigRepoStarter(options, startupManager, second);
     first.startNode();

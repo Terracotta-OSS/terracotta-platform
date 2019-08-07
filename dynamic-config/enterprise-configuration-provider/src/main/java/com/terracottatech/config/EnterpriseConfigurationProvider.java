@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.TcConfiguration;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -26,17 +25,16 @@ import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_C
 public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(EnterpriseConfigurationProvider.class);
 
-  private CommandLineParser commandLineParser;
+  private CommandLineParser cliParser;
   private Configuration configuration;
 
   @Override
   public void initialize(List<String> configurationParams) throws ConfigurationException {
     try {
-      commandLineParser = getCommandLineParser(configurationParams);
-      if (commandLineParser == null) return;
+      cliParser = getCommandLineParser(configurationParams);
+      if (cliParser == null) return;
 
       bootstrapNomad();
-
       configuration = createConfiguration();
     } catch (Exception e) {
       throw new ConfigurationException("Unable to initialize EnterpriseConfigurationProvider with " + configurationParams, e);
@@ -44,8 +42,8 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   }
 
   private void bootstrapNomad() {
-    Path configurationRepo = commandLineParser.getConfigurationRepositoryPath().orElse(Paths.get(DEFAULT_CONFIG_DIR));
-    NomadBootstrapper.bootstrap(configurationRepo, commandLineParser.getNodeName());
+    String configRepository = cliParser.getConfigRepository() == null ? DEFAULT_CONFIG_DIR : cliParser.getConfigRepository();
+    NomadBootstrapper.bootstrap(Paths.get(configRepository), cliParser.getNodeName());
   }
 
   private CommandLineParser getCommandLineParser(List<String> configurationParams) throws ParseException, ConfigurationException {
@@ -64,10 +62,10 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   }
 
   private Configuration createConfiguration() throws Exception {
-    TcConfigProvider tcConfigProvider = TcConfigProviderFactory.init(commandLineParser);
+    TcConfigProvider tcConfigProvider = TcConfigProviderFactory.init(cliParser);
     TcConfiguration tcConfiguration = tcConfigProvider.provide();
     LOGGER.info("Startup configuration of the node: \n\n{}", tcConfiguration);
-    return new TcConfigurationWrapper(tcConfiguration, commandLineParser.isConfigConsistencyMode());
+    return new TcConfigurationWrapper(tcConfiguration, cliParser.isConfigConsistencyMode());
   }
 
   @Override

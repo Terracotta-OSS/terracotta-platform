@@ -14,10 +14,7 @@ import org.apache.commons.cli.UnrecognizedOptionException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 import static com.terracottatech.config.CommandLineParser.Opt.CONFIG;
 import static com.terracottatech.config.CommandLineParser.Opt.CONFIG_CONSISTENCY;
@@ -54,7 +51,7 @@ class CommandLineParser {
   }
 
   private final String config;
-  private final Path configurationRepo;
+  private final String configurationRepo;
   private final boolean configConsistencyMode;
   private final String nodeName;
 
@@ -63,7 +60,7 @@ class CommandLineParser {
 
     this.config = commandLine.getOptionValue(CONFIG.longName());
     this.configurationRepo = commandLine.hasOption(CONFIG_REPO.shortName()) ?
-        Paths.get(commandLine.getOptionValue(CONFIG_REPO.shortName())).toAbsolutePath() : null;
+        commandLine.getOptionValue(CONFIG_REPO.shortName()) : null;
     this.configConsistencyMode = commandLine.hasOption(CONFIG_CONSISTENCY.longName());
     this.nodeName = commandLine.getOptionValue(NODE_NAME.longName());
 
@@ -80,8 +77,8 @@ class CommandLineParser {
     return config;
   }
 
-  Optional<Path> getConfigurationRepositoryPath() {
-    return Optional.ofNullable(configurationRepo);
+  String getConfigRepository() {
+    return configurationRepo;
   }
 
   boolean isConfigConsistencyMode() {

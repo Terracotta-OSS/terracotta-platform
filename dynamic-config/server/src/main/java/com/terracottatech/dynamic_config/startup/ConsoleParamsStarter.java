@@ -14,16 +14,16 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
-public class CliParamsStarter implements NodeStarter {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CliParamsStarter.class);
+public class ConsoleParamsStarter implements NodeStarter {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsStarter.class);
 
   private final Options options;
   private final Map<String, String> paramValueMap;
   private final ClusterCreator clusterCreator;
   private final StartupManager startupManager;
 
-  CliParamsStarter(Options options, Map<String, String> paramValueMap,
-                   ClusterCreator clusterCreator, StartupManager startupManager) {
+  ConsoleParamsStarter(Options options, Map<String, String> paramValueMap, ClusterCreator clusterCreator,
+                       StartupManager startupManager) {
     this.options = options;
     this.paramValueMap = paramValueMap;
     this.clusterCreator = clusterCreator;

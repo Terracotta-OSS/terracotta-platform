@@ -127,8 +127,8 @@ public class StartupManager {
     TCServerMain.main(args);
   }
 
-  Optional<String> findNodeName(Path nonNullConfigDir) {
-    return NomadRepositoryManager.findNodeName(nonNullConfigDir);
+  Optional<String> findNodeName(Path configDir) {
+    return NomadRepositoryManager.findNodeName(configDir);
   }
 
   private TopologyService registerTopologyService(NodeContext nodeContext, boolean clusterActivated, NomadBootstrapper.NomadServerManager nomadServerManager) {

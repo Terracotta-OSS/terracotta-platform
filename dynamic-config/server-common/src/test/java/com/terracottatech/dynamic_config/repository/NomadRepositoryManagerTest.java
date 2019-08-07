@@ -5,17 +5,15 @@
 package com.terracottatech.dynamic_config.repository;
 
 import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth;
@@ -24,6 +22,7 @@ import static com.terracottatech.dynamic_config.repository.NomadRepositoryManage
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.findNodeName;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -34,31 +33,22 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class NomadRepositoryManagerTest {
-  @Rule public ExpectedException exception = ExpectedException.none();
-  @Rule public TemporaryFolder folder = new TemporaryFolder();
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
 
-  @Mock Path nomadRoot;
-  @Mock Path configDirPath;
-  @Mock Path licenseDirPath;
-  @Mock Path sanskritDirPath;
-
-  @Before
-  public void setUp() {
-    MockitoAnnotations.initMocks(this);
-    when(nomadRoot.toAbsolutePath()).thenReturn(nomadRoot);
-    when(nomadRoot.normalize()).thenReturn(nomadRoot);
-    when(nomadRoot.resolve("config")).thenReturn(configDirPath);
-    when(nomadRoot.resolve("license")).thenReturn(licenseDirPath);
-    when(nomadRoot.resolve("sanskrit")).thenReturn(sanskritDirPath);
-  }
+  private Path nomadRoot = Paths.get("nomadRoot").toAbsolutePath();
+  private Path configDirPath = nomadRoot.resolve("config");
+  private Path licenseDirPath = nomadRoot.resolve("license");
+  private Path sanskritDirPath = nomadRoot.resolve("sanskrit");
 
   @Test
   public void testGetConfigurationPath() {
     NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
-    assertThat(repoManager.getConfigurationPath(), is(configDirPath));
+    assertThat(repoManager.getConfigPath(), is(configDirPath));
   }
 
   @Test
@@ -213,8 +203,17 @@ public class NomadRepositoryManagerTest {
     File repository = folder.newFolder();
     Path nomadRoot = repository.toPath();
     Path config = nomadRoot.resolve("config");
-    Files.createDirectory(config);
 
+    // Repository is partially formed at this point
+    Files.createDirectory(config);
+    assertThat(
+        () -> findNodeName(nomadRoot),
+        is(throwing(instanceOf(MalformedRepositoryException.class)).andMessage(is(containsString("Repository is partially formed"))))
+    );
+
+    // Create the full repository now
+    Files.createDirectory(nomadRoot.resolve("license"));
+    Files.createDirectory(nomadRoot.resolve("sanskrit"));
     assertThat(findNodeName(nomadRoot), is(Optional.empty()));
 
     Path configFilePath = config.resolve("cluster-config.3.node1.xml");
@@ -236,7 +235,8 @@ public class NomadRepositoryManagerTest {
     Files.createFile(configFilePath);
     assertThat(
         () -> findNodeName(nomadRoot),
-        is(throwing(instanceOf(MalformedRepositoryException.class)).andMessage(is(equalTo("Found configuration files for different nodes (node2, node1) in " + config)))));
+        is(throwing(instanceOf(MalformedRepositoryException.class)).andMessage(is(equalTo("Found configuration files for the following different nodes: node2, node1 in: " + config))))
+    );
 
     Files.delete(configFilePath);
     configFilePath = config.resolve("cluster-config.3.node1.xml");

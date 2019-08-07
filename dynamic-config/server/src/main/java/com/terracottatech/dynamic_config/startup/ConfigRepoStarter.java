@@ -5,10 +5,16 @@
 package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.parsing.Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
+
 public class ConfigRepoStarter implements NodeStarter {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoStarter.class);
+
   private final Options options;
   private final NodeStarter nextStarter;
   private final StartupManager startupManager;
@@ -24,6 +30,7 @@ public class ConfigRepoStarter implements NodeStarter {
     Path nonNullConfigDir = startupManager.getOrDefaultConfigDir(options.getNodeConfigDir());
     startupManager.findNodeName(nonNullConfigDir).ifPresent(nodeName -> startupManager.startUsingConfigRepo(nonNullConfigDir, nodeName));
 
+    LOGGER.info("Did not find config repository at: " + substitute(nonNullConfigDir));
     // Couldn't start node - pass the responsibility to the next starter
     nextStarter.startNode();
   }

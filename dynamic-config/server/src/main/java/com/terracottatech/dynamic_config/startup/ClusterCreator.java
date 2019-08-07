@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
-import com.terracottatech.dynamic_config.model.util.PropertiesFileLoader;
+import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
 import com.terracottatech.dynamic_config.parsing.ConsoleParamsParser;
@@ -18,9 +18,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getNodeId;
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getProperty;
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getStripeId;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeId;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeId;
 
 public class ClusterCreator {
   Cluster create(Path configFile, String optionalClusterName) {

@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.repository;
 
 import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -16,13 +15,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.FULL;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.CONFIG_REPO_FILENAME_REGEX;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_PREFIX;
 import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_SUFFIX;
-import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -31,24 +30,21 @@ public class NomadRepositoryManager {
   private static final String LICENSE = "license";
   private static final String SANSKRIT = "sanskrit";
 
-  private final Path nomadRoot;
+  private final Path rootPath;
   private final Path configPath;
   private final Path licensePath;
   private final Path sanskritPath;
 
   public NomadRepositoryManager(Path nomadRoot) {
-    this.nomadRoot = requireNonNull(nomadRoot).toAbsolutePath().normalize();
-    this.configPath = nomadRoot.resolve(CONFIG);
-    this.licensePath = nomadRoot.resolve(LICENSE);
-    this.sanskritPath = nomadRoot.resolve(SANSKRIT);
+    // substitute path eagerly as this class needs to interact with the file system for all its functionalities
+    this.rootPath = substitute(requireNonNull(nomadRoot)).toAbsolutePath().normalize();
+    this.configPath = rootPath.resolve(CONFIG);
+    this.licensePath = rootPath.resolve(LICENSE);
+    this.sanskritPath = rootPath.resolve(SANSKRIT);
   }
 
   public Optional<String> getNodeName() {
-    RepositoryDepth repositoryDepth = getRepositoryDepth();
-    if (repositoryDepth == NONE || repositoryDepth == ROOT_ONLY) {
-      return Optional.empty();
-    }
-    return findNodeName(nomadRoot);
+    return findNodeName(rootPath);
   }
 
   public void createDirectories() {
@@ -63,10 +59,10 @@ public class NomadRepositoryManager {
   }
 
   public Path getNomadRoot() {
-    return nomadRoot;
+    return rootPath;
   }
 
-  public Path getConfigurationPath() {
+  public Path getConfigPath() {
     return configPath;
   }
 
@@ -79,7 +75,7 @@ public class NomadRepositoryManager {
   }
 
   RepositoryDepth getRepositoryDepth() {
-    boolean nomadRootExists = checkDirectoryExists(nomadRoot);
+    boolean nomadRootExists = checkDirectoryExists(rootPath);
     boolean configPathExists = checkDirectoryExists(configPath);
     boolean licensePathExists = checkDirectoryExists(licensePath);
     boolean sanskritPathExists = checkDirectoryExists(sanskritPath);
@@ -97,18 +93,18 @@ public class NomadRepositoryManager {
   }
 
   boolean checkDirectoryExists(Path path) {
-    boolean dirExists = Files.exists(substitute(path));
+    boolean dirExists = Files.exists(path);
     if (dirExists && !Files.isDirectory(path)) {
-      throw new MalformedRepositoryException(path.getFileName() + " is not a directory");
+      throw new MalformedRepositoryException(path.getFileName() + " at path: " + path.getParent() + " is not a directory");
     }
     return dirExists;
   }
 
   void createNomadSubDirectories() {
     try {
-      Files.createDirectories(substitute(configPath));
-      Files.createDirectories(substitute(licensePath));
-      Files.createDirectories(substitute(sanskritPath));
+      Files.createDirectories(configPath);
+      Files.createDirectories(licensePath);
+      Files.createDirectories(sanskritPath);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -116,7 +112,7 @@ public class NomadRepositoryManager {
 
   void createNomadRoot() {
     try {
-      Files.createDirectories(substitute(nomadRoot));
+      Files.createDirectories(rootPath);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -128,28 +124,42 @@ public class NomadRepositoryManager {
     NONE
   }
 
+  /**
+   * Returns the node name from a configuration file contained in a fully-formed config repository.
+   *
+   * @param nomadRoot repository root
+   * @return {@code Optional} containing the node name, or an empty {@code Optional} if a node name couldn't be found
+   * @throws MalformedRepositoryException if the repository is malformed
+   * @throws UncheckedIOException         if an {@code IOException} occurs while reading the configuration file
+   */
   public static Optional<String> findNodeName(Path nomadRoot) {
-    File configPath = substitute(requireNonNull(nomadRoot)).resolve("config").toFile();
-    if (!configPath.exists()) {
-      return Optional.empty();
-    }
-    if (!configPath.isDirectory()) {
-      throw new MalformedRepositoryException("Not a directory: " + configPath);
-    }
-    File[] files = configPath.listFiles();
-    if (files == null) {
-      files = new File[0];
-    }
-    Map<String, List<File>> nodeConfigs = Stream.of(files)
-        .filter(file -> file.getName().matches(CONFIG_REPO_FILENAME_REGEX))
-        .collect(groupingBy(file -> file.getName().replaceAll("^" + REGEX_PREFIX, "").replaceAll(REGEX_SUFFIX + "$", "")));
-    if (nodeConfigs.isEmpty()) {
-      return Optional.empty();
-    } else if (nodeConfigs.size() > 1) {
-      throw new MalformedRepositoryException("Found configuration files for different nodes (" + String.join(", ", nodeConfigs.keySet()) + ") in " + configPath);
-    } else {
-      return Optional.of(nodeConfigs.keySet().iterator().next());
-    }
-  }
+    requireNonNull(nomadRoot);
 
+    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot);
+    RepositoryDepth repositoryDepth = nomadRepositoryManager.getRepositoryDepth();
+    if (repositoryDepth == FULL) {
+      try (Stream<Path> pathStream = Files.list(nomadRepositoryManager.getConfigPath())) {
+        Map<String, List<Path>> nodeConfigs = pathStream
+            .filter(file -> file.getFileName().toString().matches(CONFIG_REPO_FILENAME_REGEX))
+            .collect(
+                groupingBy(file -> file.getFileName().toString()
+                    .replaceAll("^" + REGEX_PREFIX, "")
+                    .replaceAll(REGEX_SUFFIX + "$", ""))
+            );
+        if (nodeConfigs.size() > 1) {
+          throw new MalformedRepositoryException(
+              String.format("Found configuration files for the following different nodes: %s in: %s",
+                  String.join(", ", nodeConfigs.keySet()),
+                  nomadRepositoryManager.getConfigPath()
+              )
+          );
+        } else if (nodeConfigs.size() == 1) {
+          return Optional.of(nodeConfigs.keySet().iterator().next());
+        }
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+    return Optional.empty();
+  }
 }

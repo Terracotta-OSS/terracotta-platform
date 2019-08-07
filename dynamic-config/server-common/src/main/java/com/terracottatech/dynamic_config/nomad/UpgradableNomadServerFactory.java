@@ -32,7 +32,7 @@ public class UpgradableNomadServerFactory {
             ),
             new InitialConfigStorage<>(
                 new FileConfigStorage(
-                    repositoryManager.getConfigurationPath(),
+                    repositoryManager.getConfigPath(),
                     version -> FILENAME_PREFIX + "." + nodeName + "." + version + "." + FILENAME_EXT
                 )
             ),

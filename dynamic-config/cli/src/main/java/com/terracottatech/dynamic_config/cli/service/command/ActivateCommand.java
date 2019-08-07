@@ -17,7 +17,7 @@ import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
-import com.terracottatech.dynamic_config.model.util.PropertiesFileLoader;
+import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;

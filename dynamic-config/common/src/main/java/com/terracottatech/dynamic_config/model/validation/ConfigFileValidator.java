@@ -10,8 +10,8 @@ import com.terracottatech.utilities.Validator;
 
 import java.util.Properties;
 
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.getProperty;
-import static com.terracottatech.dynamic_config.model.util.ConfigFileParamsUtils.splitKey;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.splitKey;
 
 public class ConfigFileValidator implements Validator {
   private final String fileName;
