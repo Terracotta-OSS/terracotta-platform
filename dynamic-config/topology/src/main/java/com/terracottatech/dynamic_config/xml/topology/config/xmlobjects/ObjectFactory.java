@@ -13,8 +13,8 @@ import javax.xml.namespace.QName;
 /**
  * This object contains factory methods for each
  * Java content interface and Java element interface
- * generated in the com.terracottatech.topology.config.xmlobjects package.
- * <p>An ObjectFactory allows you to programmatically
+ * generated in the com.terracottatech.dynamic_config.xml.topology.config.xmlobjects package.
+ * <p>An ObjectFactory allows you to programatically
  * construct new instances of the Java representation
  * for XML content. The Java representation of XML
  * content can consist of schema derived interfaces
@@ -29,7 +29,7 @@ public class ObjectFactory {
   private final static QName _Cluster_QNAME = new QName("http://www.terracotta.org/config/cluster", "cluster");
 
   /**
-   * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: com.terracottatech.topology.config.xmlobjects
+   * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: com.terracottatech.dynamic_config.xml.topology.config.xmlobjects
    */
   public ObjectFactory() {
   }
@@ -37,28 +37,28 @@ public class ObjectFactory {
   /**
    * Create an instance of {@link TcCluster }
    */
-  public TcCluster createCluster() {
+  public TcCluster createTcCluster() {
     return new TcCluster();
   }
 
   /**
    * Create an instance of {@link TcStripe }
    */
-  public TcStripe createStripe() {
+  public TcStripe createTcStripe() {
     return new TcStripe();
   }
 
   /**
    * Create an instance of {@link TcNode }
    */
-  public TcNode createNode() {
+  public TcNode createTcNode() {
     return new TcNode();
   }
 
   /**
    * Create an instance of {@link TcServerConfig }
    */
-  public TcServerConfig createServerConfig() {
+  public TcServerConfig createTcServerConfig() {
     return new TcServerConfig();
   }
 

@@ -163,9 +163,9 @@ public class ServerConfiguration {
 
   TcNode
   getClusterConfigNode(com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory factory) {
-    TcNode node = factory.createNode();
+    TcNode node = factory.createTcNode();
     node.setName(this.serverName);
-    TcServerConfig serverConfig = factory.createServerConfig();
+    TcServerConfig serverConfig = factory.createTcServerConfig();
     serverConfig.setTcConfig(this.tcConfig);
     node.setServerConfig(serverConfig);
 

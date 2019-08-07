@@ -14,17 +14,17 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 
 /**
- * <p>Java class for node complex type.
- * <p>
+ * <p>Java class for tc-node complex type.
+ *
  * <p>The following schema fragment specifies the expected content contained within this class.
- * <p>
+ *
  * <pre>
- * &lt;complexType name="node"&gt;
+ * &lt;complexType name="tc-node"&gt;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;sequence&gt;
  *         &lt;element name="name" type="{http://www.terracotta.org/config}non-blank-token"/&gt;
- *         &lt;element name="server-config" type="{http://www.terracotta.org/config/cluster}server-config"/&gt;
+ *         &lt;element name="server-config" type="{http://www.terracotta.org/config/cluster}tc-server-config"/&gt;
  *       &lt;/sequence&gt;
  *     &lt;/restriction&gt;
  *   &lt;/complexContent&gt;
@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "node", namespace = "http://www.terracotta.org/config/cluster", propOrder = {
+@XmlType(name = "tc-node", namespace = "http://www.terracotta.org/config/cluster", propOrder = {
     "name",
     "serverConfig"
 })

@@ -87,7 +87,7 @@ class StripeConfiguration {
 
   TcStripe
   getClusterConfigStripe(com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory factory) {
-    TcStripe stripe = factory.createStripe();
+    TcStripe stripe = factory.createTcStripe();
 
     for (ServerConfiguration serverConfiguration : stripeConfiguration.values()) {
       TcNode node = serverConfiguration.getClusterConfigNode(factory);

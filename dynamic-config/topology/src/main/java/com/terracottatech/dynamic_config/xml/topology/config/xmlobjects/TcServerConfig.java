@@ -13,12 +13,12 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for server-config complex type.
- * <p>
+ * <p>Java class for tc-server-config complex type.
+ *
  * <p>The following schema fragment specifies the expected content contained within this class.
- * <p>
+ *
  * <pre>
- * &lt;complexType name="server-config"&gt;
+ * &lt;complexType name="tc-server-config"&gt;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;all&gt;
@@ -30,7 +30,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "server-config", propOrder = {
+@XmlType(name = "tc-server-config", propOrder = {
 
 })
 public class TcServerConfig {

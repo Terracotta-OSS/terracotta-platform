@@ -21,6 +21,8 @@ import com.terracottatech.security.server.config.SecurityConfigurationParser;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.config.Config;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.Server;
@@ -63,6 +65,7 @@ import static java.util.stream.Collectors.toMap;
  */
 public class TopologyXmlConfig {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(TopologyXmlConfig.class);
   private static final String WILDCARD_IP = "0.0.0.0";
   private static Map<String, ExtendedConfigParser> CONFIG_PARSERS = new HashMap<>();
   private static Map<String, ServiceConfigParser> SERVICE_PARSERS = new HashMap<>();
@@ -90,10 +93,12 @@ public class TopologyXmlConfig {
   }
 
   public static Topology fromXml(String nodeName, String xml) {
+    LOGGER.trace("Parsing:\n{}", xml);
     try {
       TcConfiguration xmlTcConfiguration = CustomTCConfigurationParser.parse(xml);
       TcConfig platformConfiguration = xmlTcConfiguration.getPlatformConfiguration();
       Map<Class<?>, List<Object>> xmlPlugins = parsePlugins(xml, platformConfiguration);
+      LOGGER.trace("Plugins: {}", xmlPlugins);
       TcCluster xmlCluster = (TcCluster) xmlPlugins.get(TcCluster.class).get(0);
       int stripeId = xmlCluster.getCurrentStripeId();
       Cluster cluster = new Cluster(

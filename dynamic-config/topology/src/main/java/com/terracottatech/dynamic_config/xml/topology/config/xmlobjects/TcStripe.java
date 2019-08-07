@@ -13,19 +13,16 @@ import java.util.List;
 
 
 /**
- * <p>Java class for stripe complex type.
- * <p>
+ * <p>Java class for tc-stripe complex type.
+ *
  * <p>The following schema fragment specifies the expected content contained within this class.
- * <p>
+ *
  * <pre>
- * &lt;complexType name="stripe"&gt;
+ * &lt;complexType name="tc-stripe"&gt;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;sequence&gt;
- *         &lt;element name="name" type="{http://www.terracotta.org/config}non-blank-token"/&gt;
- *         &lt;sequence&gt;
- *           &lt;element name="nodes" type="{http://www.terracotta.org/config/cluster}node" maxOccurs="unbounded"/&gt;
- *         &lt;/sequence&gt;
+ *         &lt;element name="node" type="{http://www.terracotta.org/config/cluster}tc-node" maxOccurs="unbounded"/&gt;
  *       &lt;/sequence&gt;
  *     &lt;/restriction&gt;
  *   &lt;/complexContent&gt;
@@ -33,37 +30,37 @@ import java.util.List;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "stripe", namespace = "http://www.terracotta.org/config/cluster", propOrder = {
-    "nodes"
+@XmlType(name = "tc-stripe", propOrder = {
+    "node"
 })
 public class TcStripe {
 
-  @XmlElement(required = true, name = "node")
+  @XmlElement(required = true, name="node")
   protected List<TcNode> nodes;
 
   /**
-   * Gets the value of the nodes property.
-   * <p>
+   * Gets the value of the node property.
+   *
    * <p>
    * This accessor method returns a reference to the live list,
    * not a snapshot. Therefore any modification you make to the
    * returned list will be present inside the JAXB object.
-   * This is why there is not a <CODE>set</CODE> method for the nodes property.
-   * <p>
+   * This is why there is not a <CODE>set</CODE> method for the node property.
+   *
    * <p>
    * For example, to add a new item, do as follows:
    * <pre>
-   *    getNodes().add(newItem);
+   *    getNode().add(newItem);
    * </pre>
-   * <p>
-   * <p>
+   *
+   *
    * <p>
    * Objects of the following type(s) are allowed in the list
    * {@link TcNode }
    */
   public List<TcNode> getNodes() {
     if (nodes == null) {
-      nodes = new ArrayList<>();
+      nodes = new ArrayList<TcNode>();
     }
     return this.nodes;
   }

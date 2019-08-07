@@ -33,7 +33,7 @@ public class ClusterConfiguration {
   Element getClusterElement() {
     ObjectFactory factory = new ObjectFactory();
 
-    TcCluster cluster = factory.createCluster();
+    TcCluster cluster = factory.createTcCluster();
     cluster.setName(clusterName);
     cluster.setCurrentStripeId(stripeId);
 

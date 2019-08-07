@@ -6,17 +6,13 @@ package com.terracottatech.dynamic_config.xml;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.Config;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
-import org.terracotta.config.Service;
 import org.terracotta.config.TCConfigurationSetupException;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
-import org.terracotta.config.service.ConfigValidator;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.entity.ServiceProviderConfiguration;
 import org.w3c.dom.Element;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -37,14 +33,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 
 /**
@@ -56,22 +49,10 @@ public class CustomTCConfigurationParser {
   private static final SchemaFactory XSD_SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
   private static final URL TERRACOTTA_XML_SCHEMA = org.terracotta.config.TCConfigurationParser.class.getResource("/terracotta.xsd");
 
-  private static final Map<URI, ServiceConfigParser> serviceParsers = new HashMap<>();
-  private static final Map<URI, ExtendedConfigParser> configParsers = new HashMap<>();
-
-  private static TcConfiguration parseStream(InputStream in, String source, ClassLoader loader) throws IOException, SAXException {
+  private static TcConfiguration parseStream(InputStream in, String source) throws IOException, SAXException {
     Collection<Source> schemaSources = new ArrayList<>();
 
     schemaSources.add(new StreamSource(TERRACOTTA_XML_SCHEMA.openStream()));
-
-    for (ServiceConfigParser parser : loadServiceConfigurationParserClasses(loader)) {
-      schemaSources.add(parser.getXmlSchema());
-      serviceParsers.put(parser.getNamespace(), parser);
-    }
-    for (ExtendedConfigParser parser : loadConfigurationParserClasses(loader)) {
-      schemaSources.add(parser.getXmlSchema());
-      configParsers.put(parser.getNamespace(), parser);
-    }
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setNamespaceAware(true);
@@ -115,100 +96,41 @@ public class CustomTCConfigurationParser {
         tcConfig.getServers().getServer().add(new Server());
       }
 
-      List<ServiceProviderConfiguration> serviceConfigurations = new ArrayList<>();
-      List<Object> configObjects = new ArrayList<>();
-      if (tcConfig.getPlugins() != null && tcConfig.getPlugins().getConfigOrService() != null) {
-        //now parse the service configuration.
-        for (Object plugin : tcConfig.getPlugins().getConfigOrService()) {
-          if (plugin instanceof Service) {
-            Element element = ((Service) plugin).getServiceContent();
-            URI namespace = URI.create(element.getNamespaceURI());
-            ServiceConfigParser parser = serviceParsers.get(namespace);
-            if (parser == null) {
-              throw new TCConfigurationSetupException("Can't find parser for service " + namespace);
-            }
-            ServiceProviderConfiguration serviceProviderConfiguration = parser.parse(element, source);
-            serviceConfigurations.add(serviceProviderConfiguration);
-          } else if (plugin instanceof Config) {
-            Element element = ((Config) plugin).getConfigContent();
-            URI namespace = URI.create(element.getNamespaceURI());
-            ExtendedConfigParser parser = configParsers.get(namespace);
-            if (parser == null) {
-              throw new TCConfigurationSetupException("Can't find parser for config " + namespace);
-            }
-            Object co = parser.parse(element, source);
-            configObjects.add(co);
-          }
-        }
-      }
-
-      return new TcConfiguration(tcConfig, source, configObjects, serviceConfigurations);
+      return new TcConfiguration(tcConfig, source, Collections.emptyList(), Collections.emptyList());
     } catch (JAXBException e) {
       throw new TCConfigurationSetupException(e);
     }
   }
 
-  private static TcConfiguration convert(InputStream in, String path, ClassLoader loader) throws IOException, SAXException {
+  private static TcConfiguration convert(InputStream in, String path) throws IOException, SAXException {
     byte[] data = new byte[in.available()];
     in.read(data);
     in.close();
     ByteArrayInputStream bais = new ByteArrayInputStream(data);
 
-    return parseStream(bais, path, loader);
+    return parseStream(bais, path);
   }
 
-  public static TcConfiguration parse(File f) throws IOException, SAXException {
-    return parse(f, Thread.currentThread().getContextClassLoader());
-  }
-
-  public static TcConfiguration parse(File file, ClassLoader loader) throws IOException, SAXException {
+  public static TcConfiguration parse(File file) throws IOException, SAXException {
     try (FileInputStream in = new FileInputStream(file)) {
-      return convert(in, file.getParent(), loader);
+      return convert(in, file.getParent());
     }
   }
 
   public static TcConfiguration parse(String xmlText) throws IOException, SAXException {
-    return parse(xmlText, Thread.currentThread().getContextClassLoader());
-  }
-
-  public static TcConfiguration parse(String xmlText, ClassLoader loader) throws IOException, SAXException {
-    return convert(new ByteArrayInputStream(xmlText.getBytes()), null, loader);
+    return convert(new ByteArrayInputStream(xmlText.getBytes()), null);
   }
 
   public static TcConfiguration parse(InputStream stream) throws IOException, SAXException {
-    return parse(stream, Thread.currentThread().getContextClassLoader());
+    return convert(stream, null);
   }
 
-  public static TcConfiguration parse(InputStream stream, ClassLoader loader) throws IOException, SAXException {
-    return convert(stream, null, loader);
-  }
-
-  public static TcConfiguration parse(URL stream) throws IOException, SAXException {
-    return parse(stream, Thread.currentThread().getContextClassLoader());
-  }
-
-  public static TcConfiguration parse(URL url, ClassLoader loader) throws IOException, SAXException {
-    return convert(url.openStream(), url.getPath(), loader);
+  public static TcConfiguration parse(URL url) throws IOException, SAXException {
+    return convert(url.openStream(), url.getPath());
   }
 
   public static TcConfiguration parse(InputStream in, Collection<SAXParseException> errors, String source) throws IOException, SAXException {
-    return parse(in, errors, source, Thread.currentThread().getContextClassLoader());
-  }
-
-  public static TcConfiguration parse(InputStream in, Collection<SAXParseException> errors, String source, ClassLoader loader) throws IOException, SAXException {
-    return parseStream(in, source, loader);
-  }
-
-  public static ConfigValidator getValidator(URI namespace) {
-    ServiceConfigParser parserObject = serviceParsers.get(namespace);
-    if (parserObject != null) {
-      return parserObject.getConfigValidator();
-    }
-    ExtendedConfigParser extendedConfigParser = configParsers.get(namespace);
-    if (extendedConfigParser != null) {
-      return extendedConfigParser.getConfigValidator();
-    }
-    return null;
+    return parseStream(in, source);
   }
 
   private static class CollectingErrorHandler implements ErrorHandler {
@@ -236,11 +158,11 @@ public class CustomTCConfigurationParser {
   }
 
   private static ServiceLoader<ServiceConfigParser> loadServiceConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ServiceConfigParser.class, loader);
+    return ServiceLoader.load(ServiceConfigParser.class);
   }
 
 
   private static ServiceLoader<ExtendedConfigParser> loadConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ExtendedConfigParser.class, loader);
+    return ServiceLoader.load(ExtendedConfigParser.class);
   }
 }

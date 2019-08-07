@@ -5,11 +5,9 @@ import org.gradle.api.JavaVersion
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-/*
-plugins {
-  id 'org.unbroken-dome.xjc' version '1.2.0'
-}
-*/
+//plugins {
+//  id 'org.unbroken-dome.xjc' version '1.2.0'
+//}
 
 apply plugin: TcDeploy
 
@@ -21,13 +19,12 @@ dependencies {
 }
 
 // NOTE: DO NOT DELETE THE FOLLOWING. IT WILL BE USEFUL TO REGENERATE CLASSES IN XMLOBJECTS PACKAGE
-/*
-xjcGenerate {
-  source = fileTree('src/main/resources') { include '*.xsd' }
-  catalogs = fileTree('src/main/catalog') { include '*.cat' }
-  targetPackage = 'com.terracottatech.dynamic_config.xml.topology.config.xmlobjects'
-  extension = true
-}
+//xjcGenerate {
+//  source = fileTree('src/main/resources') { include '*.xsd' }
+//  catalogs = fileTree('src/main/catalog') { include '*.cat' }
+//  targetPackage = 'com.terracottatech.dynamic_config.xml.topology.config.xmlobjects'
+//  extension = true
+//}
 
 javadoc {
   if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0 ) {
@@ -40,4 +37,3 @@ test {
     jvmArgs '--add-modules', 'java.xml.bind'
   }
 }
-*/
