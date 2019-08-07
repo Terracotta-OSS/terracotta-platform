@@ -5,18 +5,23 @@
 
 dependencies {
   compile project(':dynamic-config-common')
+
+  // plugins
   compile project(':data-root-config')
   compile project(':backup-and-restore-server')
   compile project(':dynamic-config-topology')
   compile project(':security-platform-server')
-  compile project(':utilities')
+  compile project(':frs-platform-persistence')
+  compile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
+  compile "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
 
-  compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
+  // normal dependencies
+  compile "org.slf4j:slf4j-api:$slf4jVersion"
+
+  // provided by server
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
-  compileOnly "org.terracotta:offheap-resource:$terracottaPlatformVersion"
-  compileOnly "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
-  
-  testCompile project(':dynamic-config-server')
+  compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
+
   testCompile 'org.xmlunit:xmlunit-core:2.6.0', 'org.xmlunit:xmlunit-matchers:2.6.0'
   testCompile("org.mockito:mockito-core:$mockitoVersion") {
     exclude group: 'net.bytebuddy'

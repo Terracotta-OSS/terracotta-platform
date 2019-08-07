@@ -7,14 +7,10 @@ apply plugin: TcDeploy
 
 dependencies {
 
-  compile project(':backup-and-restore-server')
-  compile project(':frs-platform-persistence')
-  compile project(':security-platform-server')
   compile project(':dynamic-config-server-common')
 
+  // provided by platform
   compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
-  compileOnly "org.terracotta:offheap-resource:$terracottaPlatformVersion"
-  compileOnly "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   compileOnly "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 
