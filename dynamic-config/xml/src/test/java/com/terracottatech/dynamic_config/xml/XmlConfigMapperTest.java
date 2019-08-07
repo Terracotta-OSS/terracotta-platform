@@ -54,7 +54,8 @@ public class XmlConfigMapperTest {
   public void toXml1() {
     String actual = xmlConfig.toXml(nodeContext1)
         .replace(temporaryFolder.getRoot().toString() + "/", "")
-        .replace(temporaryFolder.getRoot().toString() + "\\", "");
+        .replace(temporaryFolder.getRoot().toString() + "\\", "")
+        .replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml1))
         .ignoreComments()
         .ignoreWhitespace()
@@ -71,7 +72,8 @@ public class XmlConfigMapperTest {
   public void toXml2() {
     String actual = xmlConfig.toXml(nodeContext2)
         .replace(temporaryFolder.getRoot().toString() + "/", "")
-        .replace(temporaryFolder.getRoot().toString() + "\\", "");
+        .replace(temporaryFolder.getRoot().toString() + "\\", "")
+        .replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml2))
         .ignoreComments()
         .ignoreWhitespace()
