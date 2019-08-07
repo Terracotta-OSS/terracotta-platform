@@ -16,16 +16,16 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-public class Topology implements Cloneable {
+public class NodeContext implements Cloneable {
 
   private final Cluster cluster;
   private final int stripeId;
   private final String nodeName;
 
   @JsonCreator
-  public Topology(@JsonProperty("cluster") Cluster cluster,
-                  @JsonProperty("stripeId") int stripeId,
-                  @JsonProperty("nodeName") String nodeName) {
+  public NodeContext(@JsonProperty("cluster") Cluster cluster,
+                     @JsonProperty("stripeId") int stripeId,
+                     @JsonProperty("nodeName") String nodeName) {
     this.cluster = requireNonNull(cluster);
     this.stripeId = stripeId;
     this.nodeName = requireNonNull(nodeName);
@@ -33,7 +33,7 @@ public class Topology implements Cloneable {
     getNode();
   }
 
-  public Topology(Cluster cluster, Node node) {
+  public NodeContext(Cluster cluster, Node node) {
     this.cluster = requireNonNull(cluster);
     this.stripeId = cluster.getStripeId(node)
         .orElseThrow(() -> new IllegalArgumentException("Node " + node + " not in cluster " + cluster));
@@ -63,23 +63,24 @@ public class Topology implements Cloneable {
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
-  public Topology clone() {
-    return new Topology(cluster.clone(), stripeId, nodeName);
+  public NodeContext clone() {
+    return new NodeContext(cluster.clone(), stripeId, nodeName);
   }
 
   @Override
   public String toString() {
-    return "Topology{" + "cluster=" + cluster +
+    return "NodeContext{" +
+        "nodeName='" + nodeName + '\'' +
         ", stripeId=" + stripeId +
-        ", nodeName='" + nodeName + '\'' +
+        ", cluster=" + cluster +
         '}';
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Topology)) return false;
-    Topology that = (Topology) o;
+    if (!(o instanceof NodeContext)) return false;
+    NodeContext that = (NodeContext) o;
     return getStripeId() == that.getStripeId() &&
         getCluster().equals(that.getCluster()) &&
         getNodeName().equals(that.getNodeName());

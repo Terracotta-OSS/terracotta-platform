@@ -11,8 +11,8 @@ import com.terracottatech.config.security.Security;
 import com.terracottatech.data.config.DataRootMapping;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.Topology;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
@@ -79,32 +79,31 @@ public class TopologyXmlConfig {
     }
   }
 
-  public static String toXml(Topology topology) {
-    return toXml(Paths.get("%(user.dir)"), topology);
+  public static String toXml(NodeContext nodeContext) {
+    return toXml(Paths.get("%(user.dir)"), nodeContext);
   }
 
-  public static String toXml(Path baseDir, Topology topology) {
+  public static String toXml(Path baseDir, NodeContext nodeContext) {
     return new XmlConfiguration(
-        topology.getCluster(),
-        topology.getStripeId(),
-        topology.getNodeName(),
+        nodeContext.getCluster(),
+        nodeContext.getStripeId(),
+        nodeContext.getNodeName(),
         () -> baseDir
     ).toString();
   }
 
-  public static Topology fromXml(String nodeName, String xml) {
+  public static NodeContext fromXml(String nodeName, String xml) {
     LOGGER.trace("Parsing:\n{}", xml);
     try {
       TcConfiguration xmlTcConfiguration = CustomTCConfigurationParser.parse(xml);
       TcConfig platformConfiguration = xmlTcConfiguration.getPlatformConfiguration();
       Map<Class<?>, List<Object>> xmlPlugins = parsePlugins(xml, platformConfiguration);
-      LOGGER.trace("Plugins: {}", xmlPlugins);
       TcCluster xmlCluster = (TcCluster) xmlPlugins.get(TcCluster.class).get(0);
       int stripeId = xmlCluster.getCurrentStripeId();
       Cluster cluster = new Cluster(
           xmlCluster.getName(),
           xmlCluster.getStripes().stream().map(tcStripe -> TopologyXmlConfig.toStripe(xml, tcStripe)).collect(toList()));
-      return new Topology(cluster, stripeId, nodeName);
+      return new NodeContext(cluster, stripeId, nodeName);
     } catch (IOException e) {
       // should never occur since we parse a string
       throw new UncheckedIOException(e);
@@ -225,12 +224,14 @@ public class TopologyXmlConfig {
   }
 
   private static Map<Class<?>, List<Object>> parsePlugins(String xml, TcConfig tcConfig) {
-    return tcConfig
+    Map<Class<?>, List<Object>> plugins = tcConfig
         .getPlugins()
         .getConfigOrService()
         .stream()
         .flatMap(o -> TopologyXmlConfig.parsePlugin(xml, o))
         .collect(groupingBy(Object::getClass));
+    LOGGER.trace("parsePlugins: {}", plugins);
+    return plugins;
   }
 
   @SuppressWarnings("unchecked")

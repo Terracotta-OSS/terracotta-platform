@@ -50,7 +50,7 @@ public class TopologyServiceIT extends BaseStartupIT {
         null)) {
 
       TopologyService proxy = diagnosticService.getProxy(TopologyService.class);
-      Cluster pendingTopology = proxy.getTopology();
+      Cluster pendingTopology = proxy.getCluster();
 
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));

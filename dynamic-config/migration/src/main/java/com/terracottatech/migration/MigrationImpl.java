@@ -77,7 +77,7 @@ public class MigrationImpl implements Migration {
     this(null);
   }
 
-  public void processInput(String topologyName, List<String> migrationStrings) {
+  public void processInput(String clusterName, List<String> migrationStrings) {
     //Basic validation for inputs
     LOGGER.info("Starting to validate input command parameters");
     validateAndProcessInput(migrationStrings);
@@ -95,7 +95,7 @@ public class MigrationImpl implements Migration {
     LOGGER.info("Validating contents of the configuration files");
     valueValidators();
     LOGGER.info("Building Cluster");
-    buildCluster(topologyName, stripeServerConfigNodeMap);
+    buildCluster(clusterName, stripeServerConfigNodeMap);
   }
 
   protected void validateAndProcessInput(List<String> migrationStrings) {

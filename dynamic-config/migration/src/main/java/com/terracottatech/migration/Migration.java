@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface Migration {
 
-  void processInput(String topologyName, List<String> migrationStrings);
+  void processInput(String clusterName, List<String> migrationStrings);
 }

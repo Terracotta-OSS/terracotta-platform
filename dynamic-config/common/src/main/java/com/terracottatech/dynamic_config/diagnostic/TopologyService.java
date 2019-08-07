@@ -32,12 +32,12 @@ public interface TopologyService {
   void restart();
 
   /**
-   * Returns the in-memory topology for this node. Once the node is activated, it returns the topology equivalent of the
-   * config repository.
+   * Returns the in-memory cluster for this node. Once the node is activated, it returns the cluster equivalent of the
+   * config repository XML versioned files
    *
-   * @return the in-memory topology
+   * @return the in-memory cluster
    */
-  Cluster getTopology();
+  Cluster getCluster();
 
   /**
    * @return true if this node has been activated (is part of a named cluster that has been licensed)
@@ -45,9 +45,9 @@ public interface TopologyService {
   boolean isActivated();
 
   /**
-   * Changes the in-memory topology to a new one for this node.
+   * Changes the in-memory cluster to a new one for this node.
    */
-  void setTopology(Cluster cluster);
+  void setCluster(Cluster cluster);
 
   /**
    * Activates the Nomad system so that we can write a first config repository version

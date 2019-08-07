@@ -54,7 +54,7 @@ public class DynamicConfigNodeAddressDiscoveryTest {
     });
 
     when(diagnosticService.getProxy(TopologyService.class)).thenReturn(topologyService);
-    when(topologyService.getTopology()).thenReturn(cluster);
+    when(topologyService.getCluster()).thenReturn(cluster);
     when(topologyService.getThisNodeAddress()).thenReturn(InetSocketAddress.createUnresolved("localhost", 9410));
     when(cluster.getNodeAddresses()).thenReturn(Arrays.asList(
         InetSocketAddress.createUnresolved("localhost", 9410),

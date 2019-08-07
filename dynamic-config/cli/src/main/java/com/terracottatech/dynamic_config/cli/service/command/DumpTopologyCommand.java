@@ -49,12 +49,12 @@ public class DumpTopologyCommand extends Command {
   @Override
   public final void run() {
     try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(node)) {
-      Cluster topology = connections.getDiagnosticService(node).get().getProxy(TopologyService.class).getTopology();
+      Cluster cluster = connections.getDiagnosticService(node).get().getProxy(TopologyService.class).getCluster();
       if (outputPath == null) {
-        LOGGER.info("Topology from '{}':\n{}", node, Json.toPrettyJson(topology));
+        LOGGER.info("Topology from '{}':\n{}", node, Json.toPrettyJson(cluster));
       } else {
         try {
-          Files.write(outputPath, Json.toPrettyJson(topology).getBytes(StandardCharsets.UTF_8));
+          Files.write(outputPath, Json.toPrettyJson(cluster).getBytes(StandardCharsets.UTF_8));
           LOGGER.info("Output saved to '{}'", outputPath);
         } catch (IOException e) {
           throw new UncheckedIOException(e);

@@ -176,14 +176,14 @@ public class BaseStartupIT {
     };
   }
 
-  Cluster getTopology(String host, int port) throws Exception {
+  Cluster getCluster(String host, int port) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
         5, SECONDS,
         5, SECONDS,
         null)) {
-      return diagnosticService.getProxy(TopologyService.class).getTopology();
+      return diagnosticService.getProxy(TopologyService.class).getCluster();
     }
   }
 

@@ -222,9 +222,9 @@ public class ActivateCommand extends Command {
 
   private Cluster getValidatedInMemoryTopology(InetSocketAddress node) {
     try (MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(node)) {
-      Cluster topology = connection.getDiagnosticService(node).get().getProxy(TopologyService.class).getTopology();
-      new ClusterValidator(topology).validate();
-      return topology;
+      Cluster cluster = connection.getDiagnosticService(node).get().getProxy(TopologyService.class).getCluster();
+      new ClusterValidator(cluster).validate();
+      return cluster;
     }
   }
 

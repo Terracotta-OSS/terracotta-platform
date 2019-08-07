@@ -84,7 +84,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     startServer("--config-file", configurationFile.toString());
 
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-    assertThat(getTopology("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%h")));
+    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%h")));
   }
 
   @Test
@@ -178,7 +178,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
         "--node-hostname", "%c"
     );
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-    assertThat(getTopology("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%c")));
+    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%c")));
   }
 
   @Test

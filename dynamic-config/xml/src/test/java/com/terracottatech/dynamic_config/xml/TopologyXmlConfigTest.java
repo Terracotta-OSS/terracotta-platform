@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
-import com.terracottatech.dynamic_config.model.Topology;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.utilities.Json;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,20 +27,20 @@ import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
  */
 public class TopologyXmlConfigTest {
 
-  private Topology topology1, topology2;
+  private NodeContext nodeContext1, nodeContext2;
   private String xml1, xml2;
 
   @Before
   public void setUp() throws Exception {
-    topology1 = Json.parse(getClass().getResource("/topology1.json"), Topology.class);
+    nodeContext1 = Json.parse(getClass().getResource("/topology1.json"), NodeContext.class);
     xml1 = new String(Files.readAllBytes(Paths.get(getClass().getResource("/topology1.xml").toURI())), StandardCharsets.UTF_8);
-    topology2 = Json.parse(getClass().getResource("/topology2.json"), Topology.class);
+    nodeContext2 = Json.parse(getClass().getResource("/topology2.json"), NodeContext.class);
     xml2 = new String(Files.readAllBytes(Paths.get(getClass().getResource("/topology2.xml").toURI())), StandardCharsets.UTF_8);
   }
 
   @Test
   public void toXml1() {
-    String actual = TopologyXmlConfig.toXml(Paths.get(""), topology1)
+    String actual = TopologyXmlConfig.toXml(Paths.get(""), nodeContext1)
         .replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml1))
         .ignoreComments()
@@ -50,13 +50,13 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void fromXml1() {
-    Topology actual = TopologyXmlConfig.fromXml("node-1", xml1);
-    assertThat(toPrettyJson(actual), actual, is(equalTo(topology1)));
+    NodeContext actual = TopologyXmlConfig.fromXml("node-1", xml1);
+    assertThat(toPrettyJson(actual), actual, is(equalTo(nodeContext1)));
   }
 
   @Test
   public void toXml2() {
-    String actual = TopologyXmlConfig.toXml(Paths.get(""), topology2)
+    String actual = TopologyXmlConfig.toXml(Paths.get(""), nodeContext2)
         .replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml2))
         .ignoreComments()
@@ -66,8 +66,8 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void fromXml2() {
-    Topology actual = TopologyXmlConfig.fromXml("node-1", xml2);
-    assertThat(toPrettyJson(actual), actual, is(equalTo(topology2)));
+    NodeContext actual = TopologyXmlConfig.fromXml("node-1", xml2);
+    assertThat(toPrettyJson(actual), actual, is(equalTo(nodeContext2)));
   }
 
 }

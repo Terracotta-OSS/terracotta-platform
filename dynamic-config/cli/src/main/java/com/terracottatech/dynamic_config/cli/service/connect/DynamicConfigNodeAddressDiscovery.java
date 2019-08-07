@@ -32,7 +32,7 @@ public class DynamicConfigNodeAddressDiscovery implements NodeAddressDiscovery {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(aNode)) {
       TopologyService topologyService = requireNonNull(diagnosticService.getProxy(TopologyService.class));
       InetSocketAddress thisNodeAddress = requireNonNull(topologyService.getThisNodeAddress());
-      Cluster cluster = requireNonNull(topologyService.getTopology());
+      Cluster cluster = requireNonNull(topologyService.getCluster());
       return tuple2(thisNodeAddress, cluster.getNodeAddresses());
     } catch (Exception e) {
       throw new NodeAddressDiscoveryException(e);

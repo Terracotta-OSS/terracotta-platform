@@ -8,8 +8,8 @@ import com.tc.server.TCServerMain;
 import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.Topology;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
@@ -32,13 +32,13 @@ public class TopologyServiceImpl implements TopologyService {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopologyServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
-  private volatile Topology topology;
-  private License license;
+  private volatile NodeContext nodeContext;
+  private volatile License license;
   private final boolean clusterActivated;
   private final NomadServerManager nomadServerManager;
 
-  public TopologyServiceImpl(Topology topology, boolean clusterActivated, NomadServerManager nomadServerManager) {
-    this.topology = requireNonNull(topology);
+  public TopologyServiceImpl(NodeContext nodeContext, boolean clusterActivated, NomadServerManager nomadServerManager) {
+    this.nodeContext = requireNonNull(nodeContext);
     this.clusterActivated = clusterActivated;
     this.nomadServerManager = requireNonNull(nomadServerManager);
     loadLicense();
@@ -46,7 +46,7 @@ public class TopologyServiceImpl implements TopologyService {
 
   @Override
   public Node getThisNode() {
-    return topology.getNode();
+    return nodeContext.getNode();
   }
 
   @Override
@@ -56,13 +56,13 @@ public class TopologyServiceImpl implements TopologyService {
 
   @Override
   public void restart() {
-    LOGGER.info("Executing restart on node: {} in stripe: {}", getThisNode().getNodeName(), topology.getStripeId());
+    LOGGER.info("Executing restart on node: {} in stripe: {}", getThisNode().getNodeName(), nodeContext.getStripeId());
     TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
   }
 
   @Override
-  public synchronized Cluster getTopology() {
-    return topology.getCluster();
+  public synchronized Cluster getCluster() {
+    return nodeContext.getCluster();
   }
 
   @Override
@@ -71,7 +71,7 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public synchronized void setTopology(Cluster cluster) {
+  public void setCluster(Cluster cluster) {
     requireNonNull(cluster);
 
     if (isActivated()) {
@@ -84,24 +84,24 @@ public class TopologyServiceImpl implements TopologyService {
       if (newMe.isPresent()) {
         // we have updated the topology and I am still part of this cluster
         LOGGER.info("Set pending topology to: {}", cluster);
-        this.topology = new Topology(cluster, newMe.get());
+        this.nodeContext = new NodeContext(cluster, newMe.get());
       } else {
         // We have updated the topology and I am not part anymore of the cluster
         // So we just reset the cluster object so that this node is alone
         LOGGER.info("Node {} removed from pending topology: {}", myNodeAddress, cluster);
-        this.topology = new Topology(new Cluster(new Stripe(oldMe)), oldMe);
+        this.nodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe);
       }
 
     }
   }
 
   @Override
-  public void prepareActivation(Cluster validatedTopology) {
+  public void prepareActivation(Cluster validatedCluster) {
     if (isActivated()) {
       throw new IllegalStateException("Node is already activated");
     }
     Node me = getThisNode();
-    Node node = validatedTopology.getStripes()
+    Node node = validatedCluster.getStripes()
         .stream()
         .flatMap(stripe -> stripe.getNodes().stream())
         .filter(node1 -> node1.getNodeHostname().equals(me.getNodeHostname()) && node1.getNodePort() == me.getNodePort())
@@ -111,18 +111,18 @@ public class TopologyServiceImpl implements TopologyService {
               "No match found for host: %s and port: %s in cluster topology: %s",
               me.getNodeHostname(),
               me.getNodePort(),
-              validatedTopology
+              validatedCluster
           );
           return new IllegalArgumentException(message);
         });
 
-    LOGGER.info("Preparing activation of Node with validated topology: {}", validatedTopology);
-    int stripeId = validatedTopology.getStripeId(node).get();
+    LOGGER.info("Preparing activation of Node with validated topology: {}", validatedCluster);
+    int stripeId = validatedCluster.getStripeId(node).get();
     nomadServerManager.upgradeForWrite(stripeId, node.getNodeName());
   }
 
   @Override
-  public void installLicense(String xml) {
+  public synchronized void installLicense(String xml) {
     LOGGER.info("Validating license");
     Path licenseFile = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
 
@@ -137,7 +137,7 @@ public class TopologyServiceImpl implements TopologyService {
       Files.write(tempFile, xml.getBytes(StandardCharsets.UTF_8));
 
       License license = new LicenseParser(tempFile).parse();
-      LicenseValidator licenseValidator = new LicenseValidator(getTopology(), license);
+      LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
       licenseValidator.validate();
 
       LOGGER.info("Installing license");
@@ -166,7 +166,7 @@ public class TopologyServiceImpl implements TopologyService {
     if (Files.exists(licenseFile)) {
       LOGGER.info("Reloading license");
       License license = new LicenseParser(licenseFile).parse();
-      LicenseValidator licenseValidator = new LicenseValidator(getTopology(), license);
+      LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
       licenseValidator.validate();
 
       this.license = license;

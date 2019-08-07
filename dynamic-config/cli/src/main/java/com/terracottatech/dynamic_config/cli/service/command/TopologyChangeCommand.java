@@ -148,7 +148,7 @@ public abstract class TopologyChangeCommand extends Command {
       // get the target node / cluster
       Target dest = connections.getDiagnosticService(discovered.t1)
           .map(ds -> ds.getProxy(TopologyService.class))
-          .map(dcs -> new Target(discovered.t1, dcs.getTopology()))
+          .map(dcs -> new Target(discovered.t1, dcs.getCluster()))
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
@@ -175,7 +175,7 @@ public abstract class TopologyChangeCommand extends Command {
       result.getNodeAddresses().stream()
           .map(endpoint -> connections.getDiagnosticService(endpoint).get())
           .map(ds -> ds.getProxy(TopologyService.class))
-          .forEach(dcs -> dcs.setTopology(result));
+          .forEach(dcs -> dcs.setCluster(result));
     }
     logger.info("Command successful!\n");
   }
