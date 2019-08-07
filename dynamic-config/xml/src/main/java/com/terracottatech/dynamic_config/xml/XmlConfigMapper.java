@@ -64,25 +64,25 @@ import static java.util.stream.Collectors.toMap;
 /**
  * @author Mathieu Carbou
  */
-public class TopologyXmlConfig {
+public class XmlConfigMapper {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TopologyXmlConfig.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(XmlConfigMapper.class);
   private static final String WILDCARD_IP = "0.0.0.0";
   private static Map<String, ExtendedConfigParser> CONFIG_PARSERS = new HashMap<>();
   private static Map<String, ServiceConfigParser> SERVICE_PARSERS = new HashMap<>();
 
   static {
-    for (ExtendedConfigParser parser : ServiceLoader.load(ExtendedConfigParser.class, TopologyXmlConfig.class.getClassLoader())) {
+    for (ExtendedConfigParser parser : ServiceLoader.load(ExtendedConfigParser.class, XmlConfigMapper.class.getClassLoader())) {
       CONFIG_PARSERS.put(parser.getNamespace().toString(), parser);
     }
-    for (ServiceConfigParser parser : ServiceLoader.load(ServiceConfigParser.class, TopologyXmlConfig.class.getClassLoader())) {
+    for (ServiceConfigParser parser : ServiceLoader.load(ServiceConfigParser.class, XmlConfigMapper.class.getClassLoader())) {
       SERVICE_PARSERS.put(parser.getNamespace().toString(), parser);
     }
   }
 
   private final PathResolver pathResolver;
 
-  public TopologyXmlConfig(PathResolver pathResolver) {
+  public XmlConfigMapper(PathResolver pathResolver) {
     this.pathResolver = pathResolver;
   }
 
@@ -95,7 +95,7 @@ public class TopologyXmlConfig {
     ).toString();
   }
 
-  public static NodeContext fromXml(String nodeName, String xml) {
+  public NodeContext fromXml(String nodeName, String xml) {
     LOGGER.trace("Parsing:\n{}", xml);
     try {
       TcConfiguration xmlTcConfiguration = CustomTCConfigurationParser.parse(xml);
@@ -105,7 +105,7 @@ public class TopologyXmlConfig {
       int stripeId = xmlCluster.getCurrentStripeId();
       Cluster cluster = new Cluster(
           xmlCluster.getName(),
-          xmlCluster.getStripes().stream().map(tcStripe -> TopologyXmlConfig.toStripe(xml, tcStripe)).collect(toList()));
+          xmlCluster.getStripes().stream().map(tcStripe -> XmlConfigMapper.toStripe(xml, tcStripe)).collect(toList()));
       return new NodeContext(cluster, stripeId, nodeName);
     } catch (IOException e) {
       // should never occur since we parse a string
@@ -116,7 +116,7 @@ public class TopologyXmlConfig {
   }
 
   private static Stripe toStripe(String xml, TcStripe xmlStripe) {
-    return new Stripe(xmlStripe.getNodes().stream().map(tcNode -> TopologyXmlConfig.toNode(xml, tcNode)).collect(toList()));
+    return new Stripe(xmlStripe.getNodes().stream().map(tcNode -> XmlConfigMapper.toNode(xml, tcNode)).collect(toList()));
   }
 
   private static Node toNode(String xml, TcNode xmlNode) {
@@ -231,7 +231,7 @@ public class TopologyXmlConfig {
         .getPlugins()
         .getConfigOrService()
         .stream()
-        .flatMap(o -> TopologyXmlConfig.parsePlugin(xml, o))
+        .flatMap(o -> XmlConfigMapper.parsePlugin(xml, o))
         .collect(groupingBy(Object::getClass));
     LOGGER.trace("parsePlugins: {}", plugins);
     return plugins;

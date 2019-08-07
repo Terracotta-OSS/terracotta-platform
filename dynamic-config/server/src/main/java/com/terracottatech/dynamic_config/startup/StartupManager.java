@@ -14,7 +14,7 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
-import com.terracottatech.dynamic_config.xml.TopologyXmlConfig;
+import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
@@ -75,7 +75,8 @@ public class StartupManager {
     Path substituted = substitute(nonNullConfigDir);
     logger.info("Starting node {} from config repository: {}", nodeName, substituted);
     NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(substituted, nodeName);
-    NodeContext nodeContext = TopologyXmlConfig.fromXml(nodeName, nomadServerManager.getConfiguration());
+    XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(pathResolver);
+    NodeContext nodeContext = xmlConfigMapper.fromXml(nodeName, nomadServerManager.getConfiguration());
     nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeName);
     registerTopologyService(nodeContext, true, nomadServerManager);
     startServer("-r", nonNullConfigDir.toString(), "-n", nodeName, "--node-name", nodeName);

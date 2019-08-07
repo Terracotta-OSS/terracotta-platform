@@ -30,7 +30,7 @@ import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 /**
  * @author Mathieu Carbou
  */
-public class TopologyXmlConfigTest {
+public class XmlConfigMapperTest {
 
   @Rule
   public TmpDir temporaryFolder = new TmpDir();
@@ -38,12 +38,12 @@ public class TopologyXmlConfigTest {
   private NodeContext nodeContext1, nodeContext2;
   private String xml1, xml2;
   private PathResolver pathResolver;
-  private TopologyXmlConfig xmlConfig;
+  private XmlConfigMapper xmlConfig;
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
     pathResolver = new PathResolver(temporaryFolder.getRoot());
-    xmlConfig = new TopologyXmlConfig(pathResolver);
+    xmlConfig = new XmlConfigMapper(pathResolver);
     nodeContext1 = Json.parse(getClass().getResource("/topology1.json"), NodeContext.class);
     xml1 = new String(Files.readAllBytes(Paths.get(getClass().getResource("/topology1.xml").toURI())), StandardCharsets.UTF_8);
     nodeContext2 = Json.parse(getClass().getResource("/topology2.json"), NodeContext.class);
@@ -63,7 +63,7 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void fromXml1() {
-    NodeContext actual = TopologyXmlConfig.fromXml("node-1", xml1);
+    NodeContext actual = xmlConfig.fromXml("node-1", xml1);
     assertThat(toPrettyJson(actual), actual, is(equalTo(nodeContext1)));
   }
 
@@ -80,7 +80,7 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void fromXml2() {
-    NodeContext actual = TopologyXmlConfig.fromXml("node-1", xml2);
+    NodeContext actual = xmlConfig.fromXml("node-1", xml2);
     assertThat(toPrettyJson(actual), actual, is(equalTo(nodeContext2)));
   }
 
