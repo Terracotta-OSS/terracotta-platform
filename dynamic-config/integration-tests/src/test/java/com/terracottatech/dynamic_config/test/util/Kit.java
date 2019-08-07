@@ -7,8 +7,12 @@ package com.terracottatech.dynamic_config.test.util;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 /**
@@ -57,6 +61,10 @@ public class Kit {
         throw new IllegalStateException("Kit directory not found in " + parent);
       }
       kitPath = children[0].toPath();
+      Path logConfg = Paths.get("src", "test", "resources", "logback-ext.xml");
+      if (Files.exists(logConfg)) {
+        Files.copy(logConfg, kitPath.resolve("server").resolve("lib").resolve("logback-ext.xml"), StandardCopyOption.REPLACE_EXISTING);
+      }
       return kitPath;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -64,6 +72,9 @@ public class Kit {
       throw error;
     } catch (RuntimeException e) {
       error = e;
+      throw error;
+    } catch (IOException e) {
+      error = new UncheckedIOException(e);
       throw error;
     }
   }
