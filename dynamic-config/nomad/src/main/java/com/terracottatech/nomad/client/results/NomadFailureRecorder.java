@@ -46,8 +46,8 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void commitFail(String server) {
-    failures.add("Commit failed for server: " + server);
+  public void commitFail(String server, String reason) {
+    failures.add("Commit failed for server " + server + ": " + reason);
   }
 
   @Override

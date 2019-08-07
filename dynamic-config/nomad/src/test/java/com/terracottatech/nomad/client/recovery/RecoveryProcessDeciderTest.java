@@ -256,7 +256,7 @@ public class RecoveryProcessDeciderTest {
     decider.takeover("server2");
     decider.endPrepare();
     decider.startCommit();
-    decider.commitFail("server2");
+    decider.commitFail("server2", "reason");
     decider.endCommit();
 
     assertTrue(decider.isDiscoverSuccessful());

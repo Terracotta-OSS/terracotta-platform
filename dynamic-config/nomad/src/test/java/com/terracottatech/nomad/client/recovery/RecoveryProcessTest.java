@@ -253,7 +253,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
     verify(results).takeover("server2");
     verify(results).endTakeover();
     verify(results).startCommit();
-    verify(results).commitFail("server2");
+    verify(results).commitFail(eq("server2"), any());
     verify(results).endCommit();
     verify(results).done(MAY_NEED_RECOVERY);
   }

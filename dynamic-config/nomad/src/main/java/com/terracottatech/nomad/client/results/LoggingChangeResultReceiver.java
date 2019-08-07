@@ -107,8 +107,8 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void commitFail(String server) {
-    printError("Server: " + server + " failed when asked to commit the change");
+  public void commitFail(String server, String reason) {
+    printError("Server: " + server + " failed when asked to commit the change: " + reason);
   }
 
   @Override

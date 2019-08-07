@@ -116,7 +116,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void commitFail(String server) {
+  public void commitFail(String server, String reason) {
     commitRollbackFail = true;
   }
 

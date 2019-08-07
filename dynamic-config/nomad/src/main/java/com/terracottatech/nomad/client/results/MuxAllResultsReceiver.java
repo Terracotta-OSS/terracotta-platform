@@ -188,9 +188,9 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void commitFail(String server) {
+  public void commitFail(String server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
-      receiver.commitFail(server);
+      receiver.commitFail(server, reason);
     }
   }
 

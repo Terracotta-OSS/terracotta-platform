@@ -18,6 +18,8 @@ import com.terracottatech.nomad.messages.RejectionReason;
 import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -192,7 +194,11 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> results.commitFail(serverName)
+          e -> {
+            StringWriter stack = new StringWriter();
+            e.printStackTrace(new PrintWriter(stack));
+            results.commitFail(serverName, e.getMessage() + "\n" + stack);
+          }
       ));
     }
 

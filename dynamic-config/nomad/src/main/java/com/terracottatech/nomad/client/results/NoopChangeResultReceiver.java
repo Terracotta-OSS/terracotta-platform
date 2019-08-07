@@ -85,7 +85,7 @@ public class NoopChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void commitFail(String server) {
+  public void commitFail(String server, String reason) {
   }
 
   @Override

@@ -182,7 +182,7 @@ public class ChangeProcessDeciderTest {
     decider.endPrepare();
     decider.startCommit();
     decider.committed("server1");
-    decider.commitFail("server2");
+    decider.commitFail("server2", "reason");
     decider.endCommit();
 
     assertTrue(decider.isDiscoverSuccessful());

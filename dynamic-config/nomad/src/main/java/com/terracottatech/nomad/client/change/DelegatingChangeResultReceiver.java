@@ -149,9 +149,9 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void commitFail(String server) {
+  public void commitFail(String server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
-      changeResultReceiver.commitFail(server);
+      changeResultReceiver.commitFail(server, reason);
     }
   }
 

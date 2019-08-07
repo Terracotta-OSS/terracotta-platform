@@ -134,8 +134,8 @@ public class RecoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver<
   }
 
   @Override
-  public void commitFail(String server) {
-    recoveryResultReceiver.commitFail(server);
+  public void commitFail(String server, String reason) {
+    recoveryResultReceiver.commitFail(server, reason);
   }
 
   @Override

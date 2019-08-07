@@ -134,8 +134,8 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void commitFail(String server) {
-    changeResultReceiver.commitFail(server);
+  public void commitFail(String server, String reason) {
+    changeResultReceiver.commitFail(server, reason);
   }
 
   @Override

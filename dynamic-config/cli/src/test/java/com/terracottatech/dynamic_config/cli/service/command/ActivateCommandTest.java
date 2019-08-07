@@ -32,6 +32,8 @@ import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
 import static com.terracottatech.utilities.fn.IntFn.rethrow;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -177,10 +179,12 @@ public class ActivateCommandTest extends BaseTest {
 
     assertThat(
         command::run,
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Two-Phase commit failed:\n" +
-            " - Commit failed for server: localhost:9411\n" +
-            " - Commit failed for server: localhost:9421\n" +
-            " - Commit failed for server: localhost:9422")))));
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(allOf(
+            containsString("Two-Phase commit failed:"),
+            containsString(" - Commit failed for server localhost:9411: Commit should not return UNACCEPTABLE"),
+            containsString(" - Commit failed for server localhost:9421: Commit should not return UNACCEPTABLE"),
+            containsString(" - Commit failed for server localhost:9422: Commit should not return UNACCEPTABLE")
+        ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
       verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());

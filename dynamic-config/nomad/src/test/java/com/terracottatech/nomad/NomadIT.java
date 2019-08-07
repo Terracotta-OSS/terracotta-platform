@@ -246,7 +246,7 @@ public class NomadIT {
     verify(changeResults).prepared("server3");
     verify(changeResults).endPrepare();
     verify(changeResults).startCommit();
-    verify(changeResults).commitFail("server1");
+    verify(changeResults).commitFail(eq("server1"), any());
     verify(changeResults).committed("server2");
     verify(changeResults).committed("server3");
     verify(changeResults).endCommit();

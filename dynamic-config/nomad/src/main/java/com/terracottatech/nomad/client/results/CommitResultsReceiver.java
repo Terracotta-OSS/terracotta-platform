@@ -9,7 +9,7 @@ public interface CommitResultsReceiver {
 
   default void committed(String server) {}
 
-  default void commitFail(String server) {}
+  default void commitFail(String server, String reason) {}
 
   default void commitOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
 

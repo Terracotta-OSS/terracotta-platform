@@ -320,7 +320,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).prepared("server2");
     verify(results).endPrepare();
     verify(results).startCommit();
-    verify(results).commitFail("server1");
+    verify(results).commitFail(eq("server1"), any());
     verify(results).committed("server2");
     verify(results).endCommit();
     verify(results).done(MAY_NEED_RECOVERY);
