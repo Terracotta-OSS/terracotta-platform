@@ -102,10 +102,10 @@ public class NomadBootstrapper {
     /**
      * Makes Nomad server capable of write operations.
      *
-     * @param nodeName Name of the running node, non-null
      * @param stripeId ID of the stripe where the node belongs, should be greater than 1
+     * @param nodeName Name of the running node, non-null
      */
-    public void upgradeForWrite(String nodeName, int stripeId) {
+    public void upgradeForWrite(int stripeId, String nodeName) {
       ConfigController configController = createConfigController(nodeName, stripeId);
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())

@@ -10,7 +10,7 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.Topology;
-import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
 import org.slf4j.Logger;
@@ -35,15 +35,12 @@ public class TopologyServiceImpl implements TopologyService {
   private volatile Topology topology;
   private License license;
   private final boolean clusterActivated;
-  private final NomadBootstrapper.NomadServerManager nomadServerManager;
+  private final NomadServerManager nomadServerManager;
 
-  public TopologyServiceImpl(Topology topology,
-                             boolean clusterActivated,
-                             NomadBootstrapper.NomadServerManager nomadServerManager) {
+  public TopologyServiceImpl(Topology topology, boolean clusterActivated, NomadServerManager nomadServerManager) {
     this.topology = requireNonNull(topology);
     this.clusterActivated = clusterActivated;
     this.nomadServerManager = requireNonNull(nomadServerManager);
-
     loadLicense();
   }
 
@@ -64,7 +61,7 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public Cluster getTopology() {
+  public synchronized Cluster getTopology() {
     return topology.getCluster();
   }
 
@@ -87,12 +84,12 @@ public class TopologyServiceImpl implements TopologyService {
       if (newMe.isPresent()) {
         // we have updated the topology and I am still part of this cluster
         LOGGER.info("Set pending topology to: {}", cluster);
-        this.topology = new Topology(cluster, topology.getStripeId(), newMe.get().getNodeName());
+        this.topology = new Topology(cluster, newMe.get());
       } else {
         // We have updated the topology and I am not part anymore of the cluster
         // So we just reset the cluster object so that this node is alone
         LOGGER.info("Node {} removed from pending topology: {}", myNodeAddress, cluster);
-        this.topology = new Topology(new Cluster(new Stripe(oldMe)), topology.getStripeId(), oldMe.getNodeName());
+        this.topology = new Topology(new Cluster(new Stripe(oldMe)), oldMe);
       }
 
     }
@@ -120,7 +117,8 @@ public class TopologyServiceImpl implements TopologyService {
         });
 
     LOGGER.info("Preparing activation of Node with validated topology: {}", validatedTopology);
-    nomadServerManager.upgradeForWrite(node.getNodeName(), validatedTopology.getStripeId(node).get());
+    int stripeId = validatedTopology.getStripeId(node).get();
+    nomadServerManager.upgradeForWrite(stripeId, node.getNodeName());
   }
 
   @Override

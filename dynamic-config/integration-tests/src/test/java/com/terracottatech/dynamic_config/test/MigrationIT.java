@@ -5,15 +5,15 @@
 package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
-import com.terracottatech.utilities.junit.TmpDir;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
 import com.terracottatech.migration.MigrationImpl;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
 import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.config.BindPort;

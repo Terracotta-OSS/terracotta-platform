@@ -31,7 +31,7 @@ import java.util.List;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tc-stripe", propOrder = {
-    "node"
+    "nodes"
 })
 public class TcStripe {
 

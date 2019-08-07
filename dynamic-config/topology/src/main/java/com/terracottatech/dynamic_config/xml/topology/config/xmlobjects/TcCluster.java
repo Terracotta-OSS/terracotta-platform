@@ -40,7 +40,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tc-cluster", propOrder = {
     "name",
-    "stripe"
+    "stripes"
 })
 public class TcCluster {
 

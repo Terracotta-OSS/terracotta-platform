@@ -14,7 +14,7 @@
     </layout>
   </appender>
 
-  <logger name="com.terracottatech" level="INFO">
+  <logger name="com.terracottatech.dynamic_config" level="TRACE">
     <appender-ref ref="STDOUT"/>
   </logger>
 </configuration>

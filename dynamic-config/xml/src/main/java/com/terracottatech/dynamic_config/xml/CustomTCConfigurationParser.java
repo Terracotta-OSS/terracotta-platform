@@ -6,13 +6,16 @@ package com.terracottatech.dynamic_config.xml;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
+import org.terracotta.config.TCConfigDefaults;
 import org.terracotta.config.TCConfigurationSetupException;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
+import org.terracotta.config.util.ParameterSubstitutor;
 import org.w3c.dom.Element;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -34,6 +37,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,11 +52,21 @@ public class CustomTCConfigurationParser {
   private static final Logger LOGGER = LoggerFactory.getLogger(org.terracotta.config.TCConfigurationParser.class);
   private static final SchemaFactory XSD_SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
   private static final URL TERRACOTTA_XML_SCHEMA = org.terracotta.config.TCConfigurationParser.class.getResource("/terracotta.xsd");
+  private static final String WILDCARD_IP = "0.0.0.0";
+  private static final int MIN_PORTNUMBER = 0x0FFF;
+  private static final int MAX_PORTNUMBER = 0xFFFF;
 
   private static TcConfiguration parseStream(InputStream in, String source) throws IOException, SAXException {
     Collection<Source> schemaSources = new ArrayList<>();
 
     schemaSources.add(new StreamSource(TERRACOTTA_XML_SCHEMA.openStream()));
+
+    for (ServiceConfigParser parser : loadServiceConfigurationParserClasses()) {
+      schemaSources.add(parser.getXmlSchema());
+    }
+    for (ExtendedConfigParser parser : loadConfigurationParserClasses()) {
+      schemaSources.add(parser.getXmlSchema());
+    }
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setNamespaceAware(true);
@@ -72,11 +86,11 @@ public class CustomTCConfigurationParser {
 
     Collection<SAXParseException> parseErrors = errorHandler.getErrors();
     if (parseErrors.size() != 0) {
-      StringBuffer buf = new StringBuffer("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s).\n");
+      StringBuilder buf = new StringBuilder("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s).\n");
       int i = 1;
       for (SAXParseException parseError : parseErrors) {
-        buf.append(" [" + i + "] Line " + parseError.getLineNumber() + ", column " + parseError.getColumnNumber() + ": " + parseError.getMessage()
-            + "\n");
+        buf.append(" [").append(i).append("] Line ").append(parseError.getLineNumber()).append(", column ")
+            .append(parseError.getColumnNumber()).append(": ").append(parseError.getMessage()).append("\n");
         i++;
       }
       throw new TCConfigurationSetupException(buf.toString());
@@ -96,9 +110,65 @@ public class CustomTCConfigurationParser {
         tcConfig.getServers().getServer().add(new Server());
       }
 
+      applyPlatformDefaults(tcConfig);
+
       return new TcConfiguration(tcConfig, source, Collections.emptyList(), Collections.emptyList());
     } catch (JAXBException e) {
       throw new TCConfigurationSetupException(e);
+    }
+  }
+
+  static void applyPlatformDefaults(TcConfig tcConfig) {
+    for (Server server : tcConfig.getServers().getServer()) {
+      setDefaultBind(server);
+      initializeTsaPort(server);
+      initializeTsaGroupPort(server);
+      initializeNameAndHost(server);
+    }
+  }
+
+  private static void initializeNameAndHost(Server server) {
+    if (server.getHost() == null || server.getHost().trim().length() == 0) {
+      if (server.getName() == null) {
+        server.setHost("%i");
+      } else {
+        server.setHost(server.getName());
+      }
+    }
+    if (server.getName() == null || server.getName().trim().length() == 0) {
+      int tsaPort = server.getTsaPort().getValue();
+      server.setName(server.getHost() + (tsaPort > 0 ? ":" + tsaPort : ""));
+    }
+  }
+
+  private static void initializeTsaGroupPort(Server server) {
+    if (server.getTsaGroupPort() == null) {
+      BindPort l2GrpPort = new BindPort();
+      server.setTsaGroupPort(l2GrpPort);
+      int tempGroupPort = server.getTsaPort().getValue() + TCConfigDefaults.GROUPPORT_OFFSET_FROM_TSAPORT;
+      int defaultGroupPort = ((tempGroupPort <= MAX_PORTNUMBER) ? (tempGroupPort) : (tempGroupPort % MAX_PORTNUMBER) + MIN_PORTNUMBER);
+      l2GrpPort.setValue(defaultGroupPort);
+      l2GrpPort.setBind(server.getBind());
+    } else if (server.getTsaGroupPort().getBind() == null) {
+      server.getTsaGroupPort().setBind(server.getBind());
+    }
+  }
+
+  private static void setDefaultBind(Server s) {
+    if (s.getBind() == null || s.getBind().trim().length() == 0) {
+      s.setBind(WILDCARD_IP);
+    }
+    s.setBind(ParameterSubstitutor.substitute(s.getBind()));
+  }
+
+  private static void initializeTsaPort(Server server) {
+    if (server.getTsaPort() == null) {
+      BindPort tsaPort = new BindPort();
+      tsaPort.setValue(TCConfigDefaults.TSA_PORT);
+      server.setTsaPort(tsaPort);
+    }
+    if (server.getTsaPort().getBind() == null) {
+      server.getTsaPort().setBind(server.getBind());
     }
   }
 
@@ -118,7 +188,7 @@ public class CustomTCConfigurationParser {
   }
 
   public static TcConfiguration parse(String xmlText) throws IOException, SAXException {
-    return convert(new ByteArrayInputStream(xmlText.getBytes()), null);
+    return convert(new ByteArrayInputStream(xmlText.getBytes(StandardCharsets.UTF_8)), null);
   }
 
   public static TcConfiguration parse(InputStream stream) throws IOException, SAXException {
@@ -157,12 +227,12 @@ public class CustomTCConfigurationParser {
     }
   }
 
-  private static ServiceLoader<ServiceConfigParser> loadServiceConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ServiceConfigParser.class);
+  private static ServiceLoader<ServiceConfigParser> loadServiceConfigurationParserClasses() {
+    return ServiceLoader.load(ServiceConfigParser.class, CustomTCConfigurationParser.class.getClassLoader());
   }
 
 
-  private static ServiceLoader<ExtendedConfigParser> loadConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ExtendedConfigParser.class);
+  private static ServiceLoader<ExtendedConfigParser> loadConfigurationParserClasses() {
+    return ServiceLoader.load(ExtendedConfigParser.class, CustomTCConfigurationParser.class.getClassLoader());
   }
 }

@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Objects;
 
@@ -15,7 +16,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-public class Topology {
+public class Topology implements Cloneable {
 
   private final Cluster cluster;
   private final int stripeId;
@@ -59,20 +60,19 @@ public class Topology {
         .orElseThrow(() -> new IllegalStateException("Node " + nodeName + " in stripe " + stripeId + " not found"));
   }
 
-  @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
   @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Topology clone() {
     return new Topology(cluster.clone(), stripeId, nodeName);
   }
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("Topology{");
-    sb.append("cluster=").append(cluster);
-    sb.append(", stripeId=").append(stripeId);
-    sb.append(", nodeName='").append(nodeName).append('\'');
-    sb.append('}');
-    return sb.toString();
+    return "Topology{" + "cluster=" + cluster +
+        ", stripeId=" + stripeId +
+        ", nodeName='" + nodeName + '\'' +
+        '}';
   }
 
   @Override

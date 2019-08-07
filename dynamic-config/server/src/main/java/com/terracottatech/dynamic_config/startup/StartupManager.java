@@ -74,7 +74,7 @@ public class StartupManager {
     logger.info("Starting node {} from config repository: {}", nodeName, substituted);
     NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(substituted, nodeName);
     Topology topology = TopologyXmlConfig.fromXml(nodeName, nomadServerManager.getConfiguration());
-    nomadServerManager.upgradeForWrite(nodeName, topology.getStripeId());
+    nomadServerManager.upgradeForWrite(topology.getStripeId(), nodeName);
     registerTopologyService(topology, true, nomadServerManager);
     startServer("-r", nonNullConfigDir.toString(), "-n", nodeName, "--node-name", nodeName);
   }
@@ -138,7 +138,7 @@ public class StartupManager {
   private void createConfigRepository(Cluster cluster, Node node, NomadBootstrapper.NomadServerManager nomadServerManager) {
     logger.debug("Creating node config repository at: {}", substitute(node.getNodeConfigDir().toAbsolutePath()));
 
-    nomadServerManager.upgradeForWrite(node.getNodeName(), cluster.getStripeId(node).get());
+    nomadServerManager.upgradeForWrite(cluster.getStripeId(node).get(), node.getNodeName());
     logger.debug("Setting nomad writable successful");
 
     String nomadServerName = substitute(node.getNodeAddress().toString());

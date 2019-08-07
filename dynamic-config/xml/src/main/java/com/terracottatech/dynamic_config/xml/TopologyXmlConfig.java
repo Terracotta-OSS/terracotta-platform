@@ -119,6 +119,7 @@ public class TopologyXmlConfig {
 
   private static Node toNode(String xml, TcNode xmlNode) {
     TcConfig xmlTcConfig = xmlNode.getServerConfig().getTcConfig();
+    CustomTCConfigurationParser.applyPlatformDefaults(xmlTcConfig);
     Server xmlServer = xmlTcConfig.getServers().getServer()
         .stream()
         .filter(server -> server.getName().equals(xmlNode.getName()))
