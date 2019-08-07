@@ -11,12 +11,14 @@ import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.dynamic_config.nomad.ConfigControllerImpl;
 import com.terracottatech.nomad.server.NomadException;
+import com.terracottatech.utilities.PathResolver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +40,7 @@ public class ClusterActivationNomadChangeProcessorTest {
   @Before
   public void setUp() {
     ConfigController configController = new ConfigControllerImpl(() -> NODE_NAME, () -> 1);
-    processor = new ClusterActivationNomadChangeProcessor(configController);
+    processor = new ClusterActivationNomadChangeProcessor(configController, new PathResolver(Paths.get("%(user.dir)")));
   }
 
   @Test

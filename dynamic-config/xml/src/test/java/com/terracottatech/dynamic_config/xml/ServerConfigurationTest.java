@@ -4,9 +4,14 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.utilities.PathResolver;
+import com.terracottatech.utilities.TimeUnit;
+import com.terracottatech.utilities.junit.TmpDir;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.terracotta.config.Config;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.Servers;
@@ -14,44 +19,41 @@ import org.terracotta.config.Service;
 import org.terracotta.config.Services;
 import org.terracotta.config.TcConfig;
 
-import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class ServerConfigurationTest {
 
-  Supplier<Path> basedir = () -> Paths.get("");
-
   @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  public TmpDir temporaryFolder = new TmpDir();
+
+  PathResolver pathResolver;
+
+  @Before
+  public void setUp() {
+    pathResolver = new PathResolver(temporaryFolder.getRoot());
+  }
 
   @Test
-  public void testCreation() throws IOException {
+  public void testCreation() {
     Node node = new Node();
     node.setOffheapResource("main", 100, MemoryUnit.MB);
-    node.setNodeBackupDir(temporaryFolder.newFolder().toPath());
-    node.setSecurityDir(temporaryFolder.newFolder().toPath());
+    node.setNodeBackupDir(temporaryFolder.getRoot());
+    node.setSecurityDir(temporaryFolder.getRoot());
     node.setClientLeaseDuration(10, TimeUnit.MINUTES);
-    node.setDataDir("root", temporaryFolder.newFolder().toPath());
-    node.setNodeMetadataDir(temporaryFolder.newFolder().toPath());
+    node.setDataDir("root", temporaryFolder.getRoot());
+    node.setNodeMetadataDir(temporaryFolder.getRoot());
     node.setFailoverPriority("consistency:2");
 
     Servers servers = new Servers();
 
-    ServerConfiguration serverConfiguration = new ServerConfiguration(node, servers, basedir);
+    ServerConfiguration serverConfiguration = new ServerConfiguration(node, servers, pathResolver);
 
     TcConfig tcConfig = serverConfiguration.getTcConfig();
 
@@ -82,9 +84,9 @@ public class ServerConfigurationTest {
 
     for (Object obj : configOrService) {
       if (obj instanceof Config) {
-        actualPlugins.add(((Config)obj).getConfigContent().getTagName());
+        actualPlugins.add(((Config) obj).getConfigContent().getTagName());
       } else {
-        actualPlugins.add(((Service)obj).getServiceContent().getTagName());
+        actualPlugins.add(((Service) obj).getServiceContent().getTagName());
       }
     }
 

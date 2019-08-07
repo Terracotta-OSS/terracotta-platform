@@ -6,6 +6,10 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
+import com.terracottatech.utilities.PathResolver;
+import com.terracottatech.utilities.junit.TmpDir;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
@@ -24,12 +28,23 @@ import static org.junit.Assert.assertThat;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 public class XmlConfigurationTest {
+
+  @Rule
+  public TmpDir temporaryFolder = new TmpDir();
+
+  PathResolver pathResolver;
+
+  @Before
+  public void setUp() {
+    pathResolver = new PathResolver(temporaryFolder.getRoot());
+  }
+
   @Test
   public void testSingleStripe() throws Exception {
     String fileName = "single-stripe-config.properties";
     Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster").createCluster();
 
-    String actual = new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
+    String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "single-stripe-config.xml");
   }
 
@@ -38,11 +53,13 @@ public class XmlConfigurationTest {
     String fileName = "multi-stripe-config.properties";
     Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster").createCluster();
 
-    String actual = new XmlConfiguration(cluster, 1, "node-1", () -> Paths.get("")).toString();
+    String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "multi-stripe-config.xml");
   }
 
   private void assertXml(String actual, String expectedConfigResource) throws URISyntaxException {
+    actual = actual.replace(temporaryFolder.getRoot().toString() + "/", "")
+        .replace(temporaryFolder.getRoot().toString() + "\\", "");
     URI expectedConfigUrl = getClass().getResource("/" + expectedConfigResource).toURI();
     CompareMatcher matcher = isSimilarTo(Input.from(expectedConfigUrl))
         .ignoreComments()

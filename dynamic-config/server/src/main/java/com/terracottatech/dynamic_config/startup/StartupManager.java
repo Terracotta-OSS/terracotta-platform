@@ -18,6 +18,7 @@ import com.terracottatech.dynamic_config.xml.TopologyXmlConfig;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
+import com.terracottatech.utilities.PathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,14 +44,15 @@ import static java.util.Objects.requireNonNull;
 public class StartupManager {
   private static final Logger logger = LoggerFactory.getLogger(StartupManager.class);
 
+  private final PathResolver pathResolver = new PathResolver(Paths.get("%(user.dir)"));
+
   void startUnconfigured(Cluster cluster, Node node) {
     String nodeName = node.getNodeName();
     logger.info("Starting node {} in UNCONFIGURED state", nodeName);
     Path nodeConfigDir = getOrDefaultConfigDir(node.getNodeConfigDir().toString());
     NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeConfigDir, nodeName);
     registerTopologyService(new NodeContext(cluster, node), false, nomadServerManager);
-    Path workDir = Paths.get("%(user.dir)");
-    Path configPath = new TransientTcConfig(node, workDir).createTempTcConfigFile();
+    Path configPath = new TransientTcConfig(node, pathResolver).createTempTcConfigFile();
     startServer("-r", node.getNodeConfigDir().toString(),
         "--config-consistency",
         "--config", configPath.toAbsolutePath().toString(),

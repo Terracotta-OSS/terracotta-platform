@@ -6,23 +6,22 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.TimeUnit;
+import com.terracottatech.utilities.junit.TmpDir;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.TcConfig;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -30,16 +29,21 @@ import static org.junit.Assert.assertThat;
 
 public class StripeConfigurationTest {
 
-  Supplier<Path> basedir = () -> Paths.get("");
-
   @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  public TmpDir temporaryFolder = new TmpDir();
+
+  PathResolver pathResolver;
+
+  @Before
+  public void setUp() {
+    pathResolver = new PathResolver(temporaryFolder.getRoot());
+  }
 
   @Test
-  public void testCreation() throws IOException {
+  public void testCreation() {
     List<Node> nodeList = new ArrayList<>();
     Node node1 = new Node();
-    Path logPath = temporaryFolder.newFolder().toPath();
+    Path logPath = temporaryFolder.getRoot();
     node1.setNodeName("server-1");
     node1.setNodeHostname("localhost");
     node1.setNodeLogDir(logPath);
@@ -63,7 +67,7 @@ public class StripeConfigurationTest {
 
     Stripe stripe = new Stripe(nodeList);
 
-    StripeConfiguration stripeConfiguration = new StripeConfiguration(stripe, basedir);
+    StripeConfiguration stripeConfiguration = new StripeConfiguration(stripe, pathResolver);
 
     assertThat(stripeConfiguration.get("server-1"), notNullValue());
     assertThat(stripeConfiguration.get("server-2"), notNullValue());

@@ -20,6 +20,7 @@ import com.terracottatech.security.authentication.AuthenticationScheme;
 import com.terracottatech.security.server.config.SecurityConfigurationParser;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,16 +80,18 @@ public class TopologyXmlConfig {
     }
   }
 
-  public static String toXml(NodeContext nodeContext) {
-    return toXml(Paths.get("%(user.dir)"), nodeContext);
+  private final PathResolver pathResolver;
+
+  public TopologyXmlConfig(PathResolver pathResolver) {
+    this.pathResolver = pathResolver;
   }
 
-  public static String toXml(Path baseDir, NodeContext nodeContext) {
+  public String toXml(NodeContext nodeContext) {
     return new XmlConfiguration(
         nodeContext.getCluster(),
         nodeContext.getStripeId(),
         nodeContext.getNodeName(),
-        () -> baseDir
+        pathResolver
     ).toString();
   }
 

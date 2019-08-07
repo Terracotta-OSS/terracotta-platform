@@ -26,10 +26,12 @@ import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.SingleThreadedNomadServer;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
 import com.terracottatech.persistence.sanskrit.SanskritException;
+import com.terracottatech.utilities.PathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -69,6 +71,7 @@ public class NomadBootstrapper {
     }
 
     private final NomadEnvironment nomadEnvironment = new NomadEnvironment();
+    private final PathResolver pathResolver = new PathResolver(Paths.get("%(user.dir)"));
 
     /**
      * Initializes the Nomad system
@@ -109,7 +112,7 @@ public class NomadBootstrapper {
       ConfigController configController = createConfigController(nodeName, stripeId);
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())
-          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController));
+          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController, pathResolver));
 
       ChangeApplicator<String> changeApplicator = new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(configController, nomadChangeProcessor));
       nomadServer.setChangeApplicator(changeApplicator);

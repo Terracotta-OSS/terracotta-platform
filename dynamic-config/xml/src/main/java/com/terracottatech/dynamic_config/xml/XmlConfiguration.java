@@ -5,15 +5,13 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
-
-import java.nio.file.Path;
-import java.util.function.Supplier;
+import com.terracottatech.utilities.PathResolver;
 
 public class XmlConfiguration {
   private final ServerConfiguration serverConfiguration;
 
-  public XmlConfiguration(Cluster cluster, int stripeId, String nodeName, Supplier<Path> baseDir) {
-    ClusterConfiguration clusterConfiguration = new ClusterConfiguration(cluster, stripeId, baseDir);
+  public XmlConfiguration(Cluster cluster, int stripeId, String nodeName, PathResolver pathResolver) {
+    ClusterConfiguration clusterConfiguration = new ClusterConfiguration(cluster, stripeId, pathResolver);
 
     StripeConfiguration stripeConfiguration = clusterConfiguration.get(stripeId);
     if (stripeConfiguration == null) {

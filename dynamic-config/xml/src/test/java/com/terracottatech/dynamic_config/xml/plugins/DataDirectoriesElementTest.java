@@ -5,18 +5,17 @@
 package com.terracottatech.dynamic_config.xml.plugins;
 
 import com.terracottatech.data.config.DataRootMapping;
+import com.terracottatech.utilities.PathResolver;
+import com.terracottatech.utilities.junit.TmpDir;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -24,22 +23,27 @@ import static org.junit.Assert.assertThat;
 public class DataDirectoriesElementTest {
 
   @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  public TmpDir temporaryFolder = new TmpDir();
 
-  Supplier<Path> basedir = () -> Paths.get("");
+  PathResolver pathResolver;
+
+  @Before
+  public void setUp() {
+    pathResolver = new PathResolver(temporaryFolder.getRoot());
+  }
 
   @Test
-  public void testCreateDataDirectories() throws IOException {
-    Path dataRoot1 = temporaryFolder.newFolder().toPath();
-    Path dataRoot2 = temporaryFolder.newFolder().toPath();
-    Path metadataRoot = temporaryFolder.newFolder().toPath();
+  public void testCreateDataDirectories() {
+    Path dataRoot1 = temporaryFolder.getRoot().resolve("user-data-1");
+    Path dataRoot2 = temporaryFolder.getRoot().resolve("user-data-2");
+    Path metadataRoot = temporaryFolder.getRoot().resolve("metadata");
 
     Map<String, Path> dataRootMap = new HashMap<>();
     dataRootMap.put("data-root-1", dataRoot1);
     dataRootMap.put("data-root-2", dataRoot2);
 
     com.terracottatech.data.config.DataDirectories dataDirectories =
-        new DataDirectories(dataRootMap, metadataRoot, basedir).createDataDirectories();
+        new DataDirectories(dataRootMap, metadataRoot, pathResolver).createDataDirectories();
 
     Map<String, Pair> expected = new HashMap<>();
     expected.put("data-root-1", new Pair(dataRoot1.toString(), false));
@@ -57,16 +61,16 @@ public class DataDirectoriesElementTest {
   }
 
   @Test
-  public void testCreateDataDirectoriesWithOverlappingMetadataRoot() throws IOException {
-    Path dataRoot1 = temporaryFolder.newFolder().toPath();
-    Path dataRoot2 = temporaryFolder.newFolder().toPath();
+  public void testCreateDataDirectoriesWithOverlappingMetadataRoot() {
+    Path dataRoot1 = temporaryFolder.getRoot().resolve("user-data-1");
+    Path dataRoot2 = temporaryFolder.getRoot().resolve("user-data-2");
 
     Map<String, Path> dataRootMap = new HashMap<>();
     dataRootMap.put("data-root-1", dataRoot1);
     dataRootMap.put("data-root-2", dataRoot2);
 
     com.terracottatech.data.config.DataDirectories dataDirectories =
-        new DataDirectories(dataRootMap, dataRoot1, basedir).createDataDirectories();
+        new DataDirectories(dataRootMap, dataRoot1, pathResolver).createDataDirectories();
 
     Map<String, Pair> expected = new HashMap<>();
     expected.put("data-root-1", new Pair(dataRoot1.toString(), true));
@@ -103,6 +107,15 @@ public class DataDirectoriesElementTest {
     @Override
     public int hashCode() {
       return Objects.hash(path, isPlatformRoot);
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder("Pair{");
+      sb.append("path='").append(path).append('\'');
+      sb.append(", isPlatformRoot=").append(isPlatformRoot);
+      sb.append('}');
+      return sb.toString();
     }
   }
 

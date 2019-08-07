@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.utilities.PathResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,16 +16,16 @@ import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substi
 
 public class TransientTcConfig {
   private final Node node;
-  private final Path root;
+  private final PathResolver pathResolver;
 
-  public TransientTcConfig(Node node, Path root) {
+  public TransientTcConfig(Node node, PathResolver pathResolver) {
     this.node = node;
-    this.root = root;
+    this.pathResolver = pathResolver;
   }
 
   public Path createTempTcConfigFile() {
     try {
-      Path temporaryTcConfigXml = Files.createTempFile(substitute(root), "tc-config-tmp.", ".xml");
+      Path temporaryTcConfigXml = Files.createTempFile(substitute(pathResolver.getBaseDir()), "tc-config-tmp.", ".xml");
       String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
           "    <plugins>\n" +
           getDataDirectoryConfig() +
@@ -66,10 +67,10 @@ public class TransientTcConfig {
       sb.append("<security xmlns=\"http://www.terracottatech.com/config/security\">");
 
       if (node.getSecurityAuditLogDir() != null) {
-        sb.append("<audit-directory>").append(resolve(node.getSecurityAuditLogDir(), root)).append("</audit-directory>");
+        sb.append("<audit-directory>").append(substitute(pathResolver.resolve(node.getSecurityAuditLogDir()))).append("</audit-directory>");
       }
 
-      sb.append("<security-root-directory>").append(resolve(node.getSecurityDir(), root)).append("</security-root-directory>");
+      sb.append("<security-root-directory>").append(substitute(pathResolver.resolve(node.getSecurityDir()))).append("</security-root-directory>");
 
       if (node.isSecuritySslTls()) {
         sb.append("<ssl-tls/>");
@@ -99,13 +100,6 @@ public class TransientTcConfig {
         "    </data:data-directories>\n" +
         "    </config>\n";
 
-    return dataDirectoryConfig.replace("${DATA_DIR}", resolve(node.getNodeMetadataDir(), root).toString());
-  }
-
-  private static Path resolve(Path p, Path root) {
-    // 'root' is the directory (by default %(user.dir)) used to rebase the path in case they are relative.
-    // If when resolving p, the path is absolute, then no need to rebase using the root.
-    Path real = substitute(p);
-    return real.isAbsolute() ? real : root.resolve(p);
+    return dataDirectoryConfig.replace("${DATA_DIR}", substitute(pathResolver.resolve(node.getNodeMetadataDir())).toString());
   }
 }

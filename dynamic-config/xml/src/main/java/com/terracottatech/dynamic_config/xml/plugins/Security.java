@@ -4,25 +4,23 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
-import org.w3c.dom.Element;
-
 import com.terracottatech.config.security.ObjectFactory;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.xml.Utils;
+import com.terracottatech.utilities.PathResolver;
+import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXBElement;
-import java.nio.file.Path;
-import java.util.function.Supplier;
 
 public class Security {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
   private final Node node;
-  private final Supplier<Path> baseDir;
+  private final PathResolver pathResolver;
 
-  public Security(Node node, Supplier<Path> baseDir) {
+  public Security(Node node, PathResolver pathResolver) {
     this.node = node;
-    this.baseDir = baseDir;
+    this.pathResolver = pathResolver;
   }
 
   public Element toElement() {
@@ -36,10 +34,10 @@ public class Security {
   com.terracottatech.config.security.Security createSecurity() {
     com.terracottatech.config.security.Security security = FACTORY.createSecurity();
 
-    security.setSecurityRootDirectory(baseDir.get().resolve(node.getSecurityDir()).toString());
+    security.setSecurityRootDirectory(pathResolver.resolve(node.getSecurityDir()).toString());
 
     if (node.getSecurityAuditLogDir() != null) {
-      security.setAuditDirectory(baseDir.get().resolve(node.getSecurityAuditLogDir()).toString());
+      security.setAuditDirectory(pathResolver.resolve(node.getSecurityAuditLogDir()).toString());
     }
 
     if (node.isSecuritySslTls()) {

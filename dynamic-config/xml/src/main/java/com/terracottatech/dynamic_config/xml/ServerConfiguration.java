@@ -10,8 +10,9 @@ import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
 import com.terracottatech.dynamic_config.xml.plugins.Lease;
 import com.terracottatech.dynamic_config.xml.plugins.OffheapResources;
 import com.terracottatech.dynamic_config.xml.plugins.Security;
-import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
+import com.terracottatech.utilities.PathResolver;
 import org.terracotta.config.Config;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
@@ -25,19 +26,17 @@ import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXB;
 import java.io.StringWriter;
-import java.nio.file.Path;
-import java.util.function.Supplier;
 
 public class ServerConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
   private final String serverName;
-  private final Supplier<Path> baseDir;
+  private final PathResolver pathResolver;
   private final TcConfig tcConfig;
 
-  ServerConfiguration(Node node, Servers servers, Supplier<Path> baseDir) {
+  ServerConfiguration(Node node, Servers servers, PathResolver pathResolver) {
     this.serverName = node.getNodeName();
-    this.baseDir = baseDir;
+    this.pathResolver = pathResolver;
     this.tcConfig = createTcConfig(node, servers);
   }
 
@@ -98,7 +97,7 @@ public class ServerConfiguration {
     }
 
     Service securityConfig = FACTORY.createService();
-    securityConfig.setServiceContent(new Security(node, baseDir).toElement());
+    securityConfig.setServiceContent(new Security(node, pathResolver).toElement());
     services.getConfigOrService().add(securityConfig);
   }
 
@@ -108,7 +107,7 @@ public class ServerConfiguration {
     }
 
     Service backupConfig = FACTORY.createService();
-    backupConfig.setServiceContent(new BackupRestore(baseDir.get().resolve(node.getNodeBackupDir())).toElement());
+    backupConfig.setServiceContent(new BackupRestore(pathResolver.resolve(node.getNodeBackupDir())).toElement());
     services.getConfigOrService().add(backupConfig);
   }
 
@@ -118,7 +117,7 @@ public class ServerConfiguration {
     }
 
     Config dataRootConfig = FACTORY.createConfig();
-    dataRootConfig.setConfigContent(new DataDirectories(node.getDataDirs(), node.getNodeMetadataDir(), baseDir).toElement());
+    dataRootConfig.setConfigContent(new DataDirectories(node.getDataDirs(), node.getNodeMetadataDir(), pathResolver).toElement());
     services.getConfigOrService().add(dataRootConfig);
   }
 

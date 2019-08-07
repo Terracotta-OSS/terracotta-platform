@@ -6,12 +6,17 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.utilities.Json;
+import com.terracottatech.utilities.PathResolver;
+import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.ElementSelectors;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,11 +32,18 @@ import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
  */
 public class TopologyXmlConfigTest {
 
+  @Rule
+  public TmpDir temporaryFolder = new TmpDir();
+
   private NodeContext nodeContext1, nodeContext2;
   private String xml1, xml2;
+  private PathResolver pathResolver;
+  private TopologyXmlConfig xmlConfig;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() throws URISyntaxException, IOException {
+    pathResolver = new PathResolver(temporaryFolder.getRoot());
+    xmlConfig = new TopologyXmlConfig(pathResolver);
     nodeContext1 = Json.parse(getClass().getResource("/topology1.json"), NodeContext.class);
     xml1 = new String(Files.readAllBytes(Paths.get(getClass().getResource("/topology1.xml").toURI())), StandardCharsets.UTF_8);
     nodeContext2 = Json.parse(getClass().getResource("/topology2.json"), NodeContext.class);
@@ -40,8 +52,9 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void toXml1() {
-    String actual = TopologyXmlConfig.toXml(Paths.get(""), nodeContext1)
-        .replace("\\", "/");
+    String actual = xmlConfig.toXml(nodeContext1)
+        .replace(temporaryFolder.getRoot().toString() + "/", "")
+        .replace(temporaryFolder.getRoot().toString() + "\\", "");
     assertThat(actual, actual, isSimilarTo(Input.from(xml1))
         .ignoreComments()
         .ignoreWhitespace()
@@ -56,8 +69,9 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void toXml2() {
-    String actual = TopologyXmlConfig.toXml(Paths.get(""), nodeContext2)
-        .replace("\\", "/");
+    String actual = xmlConfig.toXml(nodeContext2)
+        .replace(temporaryFolder.getRoot().toString() + "/", "")
+        .replace(temporaryFolder.getRoot().toString() + "\\", "");
     assertThat(actual, actual, isSimilarTo(Input.from(xml2))
         .ignoreComments()
         .ignoreWhitespace()

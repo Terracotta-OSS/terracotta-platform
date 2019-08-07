@@ -4,24 +4,24 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
+import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class BackupRestoreTest {
 
   @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  public TmpDir temporaryFolder = new TmpDir();
 
   @Test
-  public void testCreateBackupRestore() throws IOException {
-    Path backupPath = temporaryFolder.newFolder().toPath();
+  public void testCreateBackupRestore() {
+    Path backupPath = temporaryFolder.getRoot();
     com.terracottatech.config.br.BackupRestore backupRestore = new BackupRestore(backupPath).createBackupRestore();
 
     assertThat(backupRestore.getBackupLocation().getPath(), is(backupPath.toString()));

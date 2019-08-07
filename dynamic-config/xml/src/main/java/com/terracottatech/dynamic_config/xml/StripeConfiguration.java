@@ -9,37 +9,36 @@ import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
 import com.terracottatech.utilities.Measure;
+import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.TimeUnit;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 class StripeConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
   private final Map<String, ServerConfiguration> stripeConfiguration;
-  private final Supplier<Path> baseDir;
+  private final PathResolver pathResolver;
 
-  StripeConfiguration(Stripe stripe, Supplier<Path> baseDir) {
-    this.baseDir = baseDir;
-    this.stripeConfiguration = createStripeConfig(stripe, baseDir);
+  StripeConfiguration(Stripe stripe, PathResolver pathResolver) {
+    this.pathResolver = pathResolver;
+    this.stripeConfiguration = createStripeConfig(stripe);
   }
 
   ServerConfiguration get(String serverName) {
     return stripeConfiguration.get(serverName);
   }
 
-  private Map<String, ServerConfiguration> createStripeConfig(Stripe stripe, Supplier<Path> baseDir) {
+  private Map<String, ServerConfiguration> createStripeConfig(Stripe stripe) {
     Map<String, ServerConfiguration> stripeConfiguration = new HashMap<>();
     Servers servers = createServers(stripe);
     for (Node node : stripe.getNodes()) {
-      ServerConfiguration prevValue = stripeConfiguration.putIfAbsent(node.getNodeName(), new ServerConfiguration(node, servers, baseDir));
+      ServerConfiguration prevValue = stripeConfiguration.putIfAbsent(node.getNodeName(), new ServerConfiguration(node, servers, pathResolver));
       if (prevValue != null) {
         throw new IllegalStateException("Duplicate node name: " + node.getNodeName() + " found in stripe: " + stripe);
       }
@@ -69,7 +68,7 @@ class StripeConfiguration {
 
     server.setName(node.getNodeName());
     server.setHost(node.getNodeHostname());
-    server.setLogs(baseDir.get().resolve(node.getNodeLogDir()).toString());
+    server.setLogs(node.getNodeLogDir() == null ? null : pathResolver.resolve(node.getNodeLogDir()).toString());
     server.setBind(node.getNodeBindAddress());
 
     BindPort tsaPort = FACTORY.createBindPort();
