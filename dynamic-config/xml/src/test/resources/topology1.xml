@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+  Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+  -->
+<tc-config xmlns="http://www.terracotta.org/config">
+  <plugins>
+    <config>
+      <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+        <resource name="main" unit="MB">512</resource>
+        <resource name="second" unit="GB">1</resource>
+      </offheap-resources>
+    </config>
+    <service>
+      <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+        <lease-length unit="seconds">50</lease-length>
+      </connection-leasing>
+    </service>
+    <config>
+      <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+        <directory name="main" use-for-platform="false">main</directory>
+        <directory name="second" use-for-platform="false">second</directory>
+        <directory name="meta-data-root" use-for-platform="true">metadata</directory>
+      </data-directories>
+    </config>
+    <service>
+      <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+        <backup-location path="backup"/>
+      </backup-restore>
+    </service>
+    <service>
+      <security xmlns="http://www.terracottatech.com/config/security">
+        <audit-directory>audit</audit-directory>
+        <security-root-directory>security</security-root-directory>
+        <ssl-tls xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</ssl-tls>
+        <authentication>
+          <file xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</file>
+        </authentication>
+        <whitelist xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</whitelist>
+      </security>
+    </service>
+    <config>
+      <cluster currentStripeId="1" xmlns="http://www.terracotta.org/config/cluster" xmlns:ns2="http://www.terracotta.org/config">
+        <name>my-cluster</name>
+        <stripe>
+          <node>
+            <name>node-1</name>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                      <directory name="meta-data-root" use-for-platform="true">metadata</directory>
+                    </data-directories>
+                  </ns2:config>
+                  <ns2:service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="backup"/>
+                    </backup-restore>
+                  </ns2:service>
+                  <ns2:service>
+                    <security xmlns="http://www.terracottatech.com/config/security">
+                      <audit-directory>audit</audit-directory>
+                      <security-root-directory>security</security-root-directory>
+                      <ssl-tls xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</ssl-tls>
+                      <authentication>
+                        <file xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</file>
+                      </authentication>
+                      <whitelist xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</whitelist>
+                    </security>
+                  </ns2:service>
+                </ns2:plugins>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+          <node>
+            <name>node-2</name>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                      <directory name="meta-data-root" use-for-platform="true">metadata</directory>
+                    </data-directories>
+                  </ns2:config>
+                  <ns2:service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="backup"/>
+                    </backup-restore>
+                  </ns2:service>
+                  <ns2:service>
+                    <security xmlns="http://www.terracottatech.com/config/security">
+                      <audit-directory>audit</audit-directory>
+                      <security-root-directory>security</security-root-directory>
+                      <ssl-tls xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</ssl-tls>
+                      <authentication>
+                        <file xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</file>
+                      </authentication>
+                      <whitelist xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</whitelist>
+                    </security>
+                  </ns2:service>
+                </ns2:plugins>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+        </stripe>
+        <stripe>
+          <node>
+            <name>node-1</name>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                      <directory name="meta-data-root" use-for-platform="true">metadata</directory>
+                    </data-directories>
+                  </ns2:config>
+                  <ns2:service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="backup"/>
+                    </backup-restore>
+                  </ns2:service>
+                  <ns2:service>
+                    <security xmlns="http://www.terracottatech.com/config/security">
+                      <audit-directory>audit</audit-directory>
+                      <security-root-directory>security</security-root-directory>
+                      <ssl-tls xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</ssl-tls>
+                      <authentication>
+                        <file xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</file>
+                      </authentication>
+                      <whitelist xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</whitelist>
+                    </security>
+                  </ns2:service>
+                </ns2:plugins>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+          <node>
+            <name>node-2</name>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                      <directory name="meta-data-root" use-for-platform="true">metadata</directory>
+                    </data-directories>
+                  </ns2:config>
+                  <ns2:service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="backup"/>
+                    </backup-restore>
+                  </ns2:service>
+                  <ns2:service>
+                    <security xmlns="http://www.terracottatech.com/config/security">
+                      <audit-directory>audit</audit-directory>
+                      <security-root-directory>security</security-root-directory>
+                      <ssl-tls xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</ssl-tls>
+                      <authentication>
+                        <file xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</file>
+                      </authentication>
+                      <whitelist xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">true</whitelist>
+                    </security>
+                  </ns2:service>
+                </ns2:plugins>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+        </stripe>
+      </cluster>
+    </config>
+  </plugins>
+  <failover-priority>
+    <consistency>
+      <voter count="2"/>
+    </consistency>
+  </failover-priority>
+  <servers>
+    <server host="host1" name="node-1" bind="10.10.10.10">
+      <logs>logs</logs>
+      <tsa-port bind="10.10.10.10">19410</tsa-port>
+      <tsa-group-port bind="10.10.10.10">19430</tsa-group-port>
+    </server>
+    <server host="host2" name="node-2" bind="10.10.10.10">
+      <logs>logs</logs>
+      <tsa-port bind="10.10.10.10">19410</tsa-port>
+      <tsa-group-port bind="10.10.10.10">19430</tsa-group-port>
+    </server>
+    <client-reconnect-window>100</client-reconnect-window>
+  </servers>
+</tc-config>

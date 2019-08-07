@@ -1,0 +1,47 @@
+{
+  "cluster": {
+    "name": "tc-cluster",
+    "stripes": [
+      {
+        "nodes": [
+          {
+            "clientLeaseDuration": {
+              "quantity": 20,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "clientReconnectWindow": {
+              "quantity": 120,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "dataDirs": {
+              "main": "%(user.dir)/user-data/main/stripe1"
+            },
+            "failoverPriority": "availability",
+            "nodeBackupDir": "%(user.dir)/backup/stripe1",
+            "nodeBindAddress": "0.0.0.0",
+            "nodeGroupBindAddress": "0.0.0.0",
+            "nodeGroupPort": 27914,
+            "nodeHostname": "localhost",
+            "nodeLogDir": "%(user.dir)/logs/stripe1/node-1",
+            "nodeMetadataDir": "%(user.dir)/metadata/stripe1",
+            "nodeName": "node-1",
+            "nodePort": 27904,
+            "offheapResources": {
+              "main": {
+                "quantity": 512,
+                "unit": "MB",
+                "type": "MEMORY"
+              }
+            },
+            "securitySslTls": false,
+            "securityWhitelist": false
+          }
+        ]
+      }
+    ]
+  },
+  "nodeName": "node-1",
+  "stripeId": 1
+}
