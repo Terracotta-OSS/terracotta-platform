@@ -13,7 +13,6 @@ import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscover
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
-import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.server.NomadServer;
@@ -65,15 +64,6 @@ public abstract class BaseTest {
       })
       .build();
 
-  private final Cache<InetSocketAddress, LicensingService> licensingServices = Cache.<InetSocketAddress, LicensingService>create()
-      .withLoader(addr -> {
-        LicensingService licensingService = mock(LicensingService.class, addr.toString());
-        DiagnosticService diagnosticService = diagnosticServices.get(addr);
-        when(diagnosticService.getProxy(LicensingService.class)).thenReturn(licensingService);
-        return licensingService;
-      })
-      .build();
-
   @Before
   public void setUp() throws Exception {
     diagnosticServiceProvider = new DiagnosticServiceProvider(getClass().getSimpleName(), 5, TimeUnit.SECONDS, 5, TimeUnit.SECONDS, null) {
@@ -103,9 +93,4 @@ public abstract class BaseTest {
   protected NomadServer<String> nomadServerMock(String host, int port) {
     return nomadServers.get(InetSocketAddress.createUnresolved(host, port));
   }
-
-  protected LicensingService licensingServiceMock(String host, int port) {
-    return licensingServices.get(InetSocketAddress.createUnresolved(host, port));
-  }
-
 }

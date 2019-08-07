@@ -8,9 +8,6 @@ apply plugin: TcDeploy
 dependencies {
   compile project(':utilities')
   compile project(':nomad')
-  compile project(':licensing-parser')
+  compile project(':licensing-common')
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-
-  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
-  testCompile "org.mockito:mockito-core:$mockitoVersion"
 }

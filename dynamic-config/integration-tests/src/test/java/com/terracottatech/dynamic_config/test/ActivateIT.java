@@ -86,7 +86,7 @@ public class ActivateIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("All cluster nodes: [localhost:" + ports[0] + "] came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    createDatasetAndPerformAssertions(ports);
+    createDatasetAndPerformAssertions(ports[0]);
   }
 
   @Test
@@ -178,7 +178,7 @@ public class ActivateIT extends BaseStartupIT {
     createDatasetAndPerformAssertions(ports);
   }
 
-  private void createDatasetAndPerformAssertions(int[] ports) throws Exception {
+  private void createDatasetAndPerformAssertions(int... ports) throws Exception {
     Set<InetSocketAddress> node = Collections.singleton(InetSocketAddress.createUnresolved("localhost", ports[0]));
     try (DatasetManager datasetManager = DatasetManager.clustered(node).build()) {
       DatasetConfiguration offheapResource = datasetManager.datasetConfiguration().offheap("main").build();

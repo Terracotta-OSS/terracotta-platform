@@ -4,10 +4,12 @@
  */
 package com.terracottatech.dynamic_config.diagnostic;
 
+import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
@@ -51,4 +53,13 @@ public interface TopologyService {
    * Activates the Nomad system so that we can write a first config repository version
    */
   void prepareActivation(Cluster validatedTopology);
+
+  /**
+   * Validate and install tthe license
+   *
+   * @param xml license file content
+   */
+  void installLicense(String xml);
+
+  Optional<License> getLicense();
 }

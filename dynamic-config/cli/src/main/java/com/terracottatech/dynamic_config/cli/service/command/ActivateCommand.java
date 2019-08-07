@@ -14,14 +14,12 @@ import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
-import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
 import com.terracottatech.dynamic_config.model.util.PropertiesFileLoader;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
-import com.terracottatech.dynamic_config.model.validation.LicenseValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
 import com.terracottatech.utilities.Tuple2;
@@ -32,13 +30,14 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.terracottatech.utilities.Assertion.assertNonNull;
@@ -245,22 +244,33 @@ public class ActivateCommand extends Command {
   }
 
   private void installLicense() {
-    new LicenseValidator(cluster, licenseFile).validate();
-    LOGGER.debug("License validation successful");
-
-    String validatedLicense;
+    LOGGER.debug("Reading license");
+    String xml;
     try {
-      validatedLicense = Files.readAllLines(licenseFile).stream().collect(Collectors.joining(System.lineSeparator()));
+      xml = new String(Files.readAllBytes(licenseFile), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
 
     LOGGER.debug("Contacting all cluster nodes: {} to install license", cluster.getNodeAddresses());
-    cluster.getNodeAddresses()
-        .stream()
-        .map(endpoint -> connection.getDiagnosticService(endpoint).get())
-        .map(ds -> ds.getProxy(LicensingService.class))
-        .forEach(dcs -> dcs.installLicense(validatedLicense));
+    getTopologyServiceStream()
+        .map(tuple -> {
+          try {
+            tuple.t2.installLicense(xml);
+            return null;
+          } catch (RuntimeException e) {
+            LOGGER.warn("License installation failed on node {}: {}", tuple.t1, e.getMessage());
+            return e;
+          }
+        })
+        .filter(Objects::nonNull)
+        .reduce((result, element) -> {
+          result.addSuppressed(element);
+          return result;
+        })
+        .ifPresent(e -> {
+          throw e;
+        });
   }
 
 }

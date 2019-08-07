@@ -7,6 +7,7 @@ dependencies {
   compile project(':diagnostic-server')
   compile project(':dynamic-config-change')
   compile project(':dynamic-config-server-common')
+  compile project(':licensing-parser')
 
   compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
   compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"
@@ -20,12 +21,8 @@ dependencies {
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
 
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
-  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
     exclude group: 'junit'
-  }
-  testCompile("org.mockito:mockito-core:$mockitoVersion") {
-    exclude group: 'net.bytebuddy'
   }
 }
 

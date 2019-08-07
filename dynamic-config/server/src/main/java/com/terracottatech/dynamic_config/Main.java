@@ -4,9 +4,6 @@
  */
 package com.terracottatech.dynamic_config;
 
-import com.terracottatech.diagnostic.server.DiagnosticServices;
-import com.terracottatech.dynamic_config.diagnostic.LicensingService;
-import com.terracottatech.dynamic_config.diagnostic.LicensingServiceImpl;
 import com.terracottatech.dynamic_config.parsing.CustomJCommander;
 import com.terracottatech.dynamic_config.parsing.Options;
 import org.slf4j.Logger;
@@ -20,13 +17,7 @@ public class Main {
     CustomJCommander jCommander = new CustomJCommander("start-node", command);
     try {
       jCommander.parse(args);
-
-      // services
-      LOGGER.info("Registering LicensingService with DiagnosticServices");
-      LicensingService licensingService = new LicensingServiceImpl();
-      DiagnosticServices.register(LicensingService.class, licensingService);
-
-      command.process(jCommander, licensingService);
+      command.process(jCommander);
     } catch (Throwable e) {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.error(e.getMessage(), e);

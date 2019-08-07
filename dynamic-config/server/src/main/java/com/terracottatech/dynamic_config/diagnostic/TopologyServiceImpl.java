@@ -5,30 +5,47 @@
 package com.terracottatech.dynamic_config.diagnostic;
 
 import com.tc.server.TCServerMain;
+import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.validation.LicenseValidator;
+import com.terracottatech.licensing.LicenseParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformService;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
 public class TopologyServiceImpl implements TopologyService {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopologyServiceImpl.class);
+  private static final String LICENSE_FILE_NAME = "license.xml";
 
   private volatile Cluster cluster;
   private volatile Node me;
+  private License license;
   private final boolean clusterActivated;
+  private final NomadBootstrapper.NomadServerManager nomadServerManager;
 
-  public TopologyServiceImpl(Cluster cluster, Node me, boolean clusterActivated) {
+  public TopologyServiceImpl(Cluster cluster, Node me,
+                             boolean clusterActivated,
+                             NomadBootstrapper.NomadServerManager nomadServerManager) {
     this.cluster = requireNonNull(cluster);
     this.me = requireNonNull(me);
     this.clusterActivated = clusterActivated;
+    this.nomadServerManager = requireNonNull(nomadServerManager);
+
+    loadLicense();
   }
 
   @Override
@@ -102,6 +119,58 @@ public class TopologyServiceImpl implements TopologyService {
         });
 
     LOGGER.info("Preparing activation of Node with validated topology: {}", validatedTopology);
-    NomadBootstrapper.getNomadServerManager().upgradeForWrite(node.getNodeName(), validatedTopology.getStripeId(node).get());
+    nomadServerManager.upgradeForWrite(node.getNodeName(), validatedTopology.getStripeId(node).get());
+  }
+
+  @Override
+  public void installLicense(String xml) {
+    LOGGER.info("Validating license");
+    Path licenseFile = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
+
+    Path tempFile;
+    try {
+      tempFile = Files.createTempFile("terracotta-license-", ".xml");
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
+    try {
+      Files.write(tempFile, xml.getBytes(StandardCharsets.UTF_8));
+
+      License license = new LicenseParser(tempFile).parse();
+      LicenseValidator licenseValidator = new LicenseValidator(getTopology(), license);
+      licenseValidator.validate();
+
+      LOGGER.info("Installing license");
+      Files.move(tempFile, licenseFile, StandardCopyOption.REPLACE_EXISTING);
+      LOGGER.debug("License file: {} successfully copied to: {}", LICENSE_FILE_NAME, nomadServerManager.getRepositoryManager().getLicensePath());
+      LOGGER.info("License installation successful");
+
+      this.license = license;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    } finally {
+      try {
+        Files.deleteIfExists(tempFile);
+      } catch (IOException ignored) {
+      }
+    }
+  }
+
+  @Override
+  public Optional<License> getLicense() {
+    return Optional.ofNullable(license);
+  }
+
+  private void loadLicense() {
+    Path licenseFile = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
+    if (Files.exists(licenseFile)) {
+      LOGGER.info("Reloading license");
+      License license = new LicenseParser(licenseFile).parse();
+      LicenseValidator licenseValidator = new LicenseValidator(getTopology(), license);
+      licenseValidator.validate();
+
+      this.license = license;
+    }
   }
 }

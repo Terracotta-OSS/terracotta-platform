@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.startup;
 
-import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.Options;
@@ -20,15 +19,13 @@ public class ConfigFileStarter implements NodeStarter {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileStarter.class);
 
   private final Options options;
-  private final LicensingService licensingService;
   private final ClusterCreator clusterCreator;
   private final NodeStarter nextStarter;
   private final StartupManager startupManager;
 
-  ConfigFileStarter(Options options, LicensingService licensingService, ClusterCreator clusterCreator,
+  ConfigFileStarter(Options options, ClusterCreator clusterCreator,
                     StartupManager startupManager, NodeStarter nextStarter) {
     this.options = options;
-    this.licensingService = licensingService;
     this.clusterCreator = clusterCreator;
     this.nextStarter = nextStarter;
     this.startupManager = startupManager;
@@ -51,7 +48,7 @@ public class ConfigFileStarter implements NodeStarter {
         //TODO [DYNAMIC-CONFIG] TRACK #6: relax this constraint
         throw new UnsupportedOperationException("License file option can be used only with a one-node cluster config file");
       }
-      startupManager.startPreactivated(cluster, node, licensingService, options.getLicenseFile());
+      startupManager.startPreactivated(cluster, node, options.getLicenseFile());
     } else {
       startupManager.startUnconfigured(cluster, node);
     }

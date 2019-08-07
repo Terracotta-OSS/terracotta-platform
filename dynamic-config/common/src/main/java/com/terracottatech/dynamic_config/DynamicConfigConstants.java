@@ -5,8 +5,6 @@
 
 package com.terracottatech.dynamic_config;
 
-import java.nio.file.Path;
-
 import static java.io.File.separator;
 
 public class DynamicConfigConstants {
@@ -26,16 +24,4 @@ public class DynamicConfigConstants {
 
   public static final String MULTI_VALUE_SEP = ",";
   public static final String PARAM_INTERNAL_SEP = ":";
-
-  public static final String LICENSE_FILE_NAME = "license.xml";
-  // TODO [DYNAMIC-CONFIG]: Remove licensePath, and its associated setter and getter once TDB-4594 is done
-  private static volatile Path licensePath;
-
-  public static void setLicensePath(Path licensePath) {
-    DynamicConfigConstants.licensePath = licensePath;
-  }
-
-  public static Path getLicensePath() {
-    return licensePath;
-  }
 }

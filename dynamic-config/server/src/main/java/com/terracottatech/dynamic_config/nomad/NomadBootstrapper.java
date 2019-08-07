@@ -8,7 +8,6 @@ package com.terracottatech.dynamic_config.nomad;
 import com.terracottatech.diagnostic.common.DiagnosticConstants;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
-import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.nomad.processor.ApplicabilityNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadChangeProcessor;
@@ -34,40 +33,36 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.LICENSE_FILE_NAME;
 import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static java.util.Objects.requireNonNull;
 
 public class NomadBootstrapper {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadBootstrapper.class);
   private static volatile NomadServerManager nomadServerManager;
-  private static volatile NomadRepositoryManager nomadRepositoryManager;
   private static final AtomicBoolean BOOTSTRAPPED = new AtomicBoolean();
 
-  public static void bootstrap(Path nomadRoot, String nodeName) {
+  public static NomadServerManager bootstrap(Path nomadRoot, String nodeName) {
     requireNonNull(nomadRoot);
     requireNonNull(nodeName);
 
     if (BOOTSTRAPPED.compareAndSet(false, true)) {
       nomadServerManager = new NomadServerManager();
-      nomadRepositoryManager = nomadServerManager.init(nomadRoot, nodeName);
-      DynamicConfigConstants.setLicensePath(nomadRepositoryManager.getLicensePath().resolve(LICENSE_FILE_NAME));
+      nomadServerManager.init(nomadRoot, nodeName);
       LOGGER.info("Bootstrapped nomad system with root: {}", substitute(nomadRoot));
     }
+
+    return nomadServerManager;
   }
 
   public static NomadServerManager getNomadServerManager() {
     return nomadServerManager;
   }
 
-  public static NomadRepositoryManager getNomadRepositoryManager() {
-    return nomadRepositoryManager;
-  }
-
   public static class NomadServerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerManager.class);
 
     private volatile UpgradableNomadServer<String> nomadServer;
+    private volatile NomadRepositoryManager repositoryManager;
 
     public UpgradableNomadServer<String> getNomadServer() {
       return nomadServer;
@@ -82,14 +77,13 @@ public class NomadBootstrapper {
      * @param nodeName  Node name
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
-    NomadRepositoryManager init(Path nomadRoot, String nodeName) throws NomadConfigurationException {
+    void init(Path nomadRoot, String nodeName) throws NomadConfigurationException {
       try {
-        NomadRepositoryManager repositoryManager = createNomadRepositoryManager(nomadRoot);
+        repositoryManager = createNomadRepositoryManager(nomadRoot);
         repositoryManager.createDirectories();
         nomadServer = createServer(repositoryManager, nodeName);
         registerDiagnosticService();
         LOGGER.info("Successfully initialized NomadServerManager");
-        return repositoryManager;
       } catch (Exception e) {
         throw new NomadConfigurationException("Exception initializing Nomad Server: " + e.getMessage(), e);
       }
@@ -99,6 +93,10 @@ public class NomadBootstrapper {
     void registerDiagnosticService() {
       DiagnosticServicesRegistration<NomadServer<String>> registration = (DiagnosticServicesRegistration<NomadServer<String>>) (DiagnosticServicesRegistration) DiagnosticServices.register(NomadServer.class, nomadServer);
       registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
+    }
+
+    public NomadRepositoryManager getRepositoryManager() {
+      return repositoryManager;
     }
 
     /**

@@ -21,6 +21,7 @@ dependencies {
   testCompile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
   testCompile "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
   testCompile ("org.awaitility:awaitility:$awaitility")
+  testCompile "ch.qos.logback:logback-classic:$logbackVersion"
   testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
     exclude group: 'junit'
   }

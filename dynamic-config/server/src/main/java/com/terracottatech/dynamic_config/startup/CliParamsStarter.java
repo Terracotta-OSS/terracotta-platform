@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.startup;
 
-import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.Options;
@@ -21,15 +20,13 @@ public class CliParamsStarter implements NodeStarter {
   private final Options options;
   private final Map<String, String> paramValueMap;
   private final ClusterCreator clusterCreator;
-  private final LicensingService licensingService;
   private final StartupManager startupManager;
 
-  CliParamsStarter(Options options, Map<String, String> paramValueMap, LicensingService licensingService,
+  CliParamsStarter(Options options, Map<String, String> paramValueMap,
                    ClusterCreator clusterCreator, StartupManager startupManager) {
     this.options = options;
     this.paramValueMap = paramValueMap;
     this.clusterCreator = clusterCreator;
-    this.licensingService = licensingService;
     this.startupManager = startupManager;
   }
 
@@ -41,7 +38,7 @@ public class CliParamsStarter implements NodeStarter {
 
     if (options.getLicenseFile() != null) {
       requireNonNull(options.getClusterName(), "Cluster name is required with license file");
-      startupManager.startPreactivated(cluster, node, licensingService, options.getLicenseFile());
+      startupManager.startPreactivated(cluster, node, options.getLicenseFile());
     } else {
       startupManager.startUnconfigured(cluster, node);
     }

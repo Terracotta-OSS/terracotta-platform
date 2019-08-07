@@ -7,7 +7,6 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.cli.service.NomadTestHelper;
-import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -224,10 +223,9 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       TopologyService topologyService = topologyServiceMock("localhost", port);
       NomadServer<String> mock = nomadServerMock("localhost", port);
-      LicensingService licensingService = licensingServiceMock("localhost", port);
       DiagnosticService diagnosticService = diagnosticServiceMock("localhost", port);
 
-      doNothing().when(licensingService).installLicense(any(String.class));
+      doNothing().when(topologyService).installLicense(any(String.class));
       when(topologyService.isActivated()).thenReturn(false);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
@@ -242,7 +240,7 @@ public class ActivateCommandTest extends BaseTest {
       verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
       verify(topologyServiceMock("localhost", port), times(1)).restart();
       verify(nomadServerMock("localhost", port), times(2)).discover();
-      verify(licensingServiceMock("localhost", port), times(1)).installLicense(any(String.class));
+      verify(topologyServiceMock("localhost", port), times(1)).installLicense(any(String.class));
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     }));
 

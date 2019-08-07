@@ -2,31 +2,28 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.model.validation;
+package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.licensing.LicenseParser;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.Validator;
 
-import java.nio.file.Path;
 import java.util.Optional;
 
 public class LicenseValidator implements Validator {
   private final Cluster cluster;
-  private final Path licenseFilePath;
+  private final License license;
 
-  public LicenseValidator(Cluster cluster, Path licenseFilePath) {
+  public LicenseValidator(Cluster cluster, License license) {
     this.cluster = cluster;
-    this.licenseFilePath = licenseFilePath;
+    this.license = license;
   }
 
   @Override
   public void validate() throws IllegalArgumentException {
-    License license = parse();
-    long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(LicenseParser.CAPABILITY_OFFHEAP);
+    long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(License.CAPABILITY_OFFHEAP);
     long totalOffHeapInMB =
         bytesToMegaBytes(
             cluster.getStripes()
@@ -54,10 +51,6 @@ public class LicenseValidator implements Validator {
           " of the license. Provided: " + bytesToMegaBytes(configWithHigherOffheap.get().getQuantity()) + " MB," +
           " but license allows: " + perStripeOffHeapSizeInMB + " MB only");
     }
-  }
-
-  private License parse() {
-    return new LicenseParser(licenseFilePath).parse();
   }
 
   private static long bytesToMegaBytes(long quantity) {

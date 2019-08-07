@@ -9,7 +9,6 @@ import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
-import com.terracottatech.dynamic_config.diagnostic.LicensingService;
 import com.terracottatech.dynamic_config.startup.ClusterCreator;
 import com.terracottatech.dynamic_config.startup.NodeProcessor;
 import com.terracottatech.dynamic_config.startup.StartupManager;
@@ -121,7 +120,7 @@ public class Options {
 
   private Set<String> specifiedOptions;
 
-  public void process(CustomJCommander jCommander, LicensingService licensingService) {
+  public void process(CustomJCommander jCommander) {
     if (help) {
       jCommander.usage();
       return;
@@ -131,7 +130,7 @@ public class Options {
     specifiedOptions = jCommander.getUserSpecifiedOptions();
     validateOptions();
 
-    NodeProcessor nodeProcessor = new NodeProcessor(this, buildParamValueMap(jCommander), licensingService, new ClusterCreator(), new StartupManager());
+    NodeProcessor nodeProcessor = new NodeProcessor(this, buildParamValueMap(jCommander), new ClusterCreator(), new StartupManager());
     nodeProcessor.process();
   }
 
