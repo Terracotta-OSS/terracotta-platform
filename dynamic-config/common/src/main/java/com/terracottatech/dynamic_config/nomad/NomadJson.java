@@ -26,7 +26,7 @@ public class NomadJson {
         SettingNomadChange.class,
         MultipleNomadChanges.class,
         SimpleNomadChange.class);
-    return objectMapper;
+    return objectMapper.copy();
   }
 
 }
