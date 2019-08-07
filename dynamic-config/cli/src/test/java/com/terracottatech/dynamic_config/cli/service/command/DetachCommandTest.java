@@ -37,7 +37,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
       .setNodeName("node0")
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache0"))
-      .setNodeConfigDir(Paths.get("/config/node0"));
+      .setNodeRepositoryDir(Paths.get("/config/node0"));
 
   Node node1 = new Node()
       .setNodeHostname("localhost")
@@ -45,7 +45,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
       .setNodeName("node1")
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache1"))
-      .setNodeConfigDir(Paths.get("/config/node1"));
+      .setNodeRepositoryDir(Paths.get("/config/node1"));
 
   Node node2 = new Node()
       .setNodeHostname("localhost")
@@ -53,7 +53,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
       .setNodeName("node2")
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache2"))
-      .setNodeConfigDir(Paths.get("/config/node2"));
+      .setNodeRepositoryDir(Paths.get("/config/node2"));
 
   Cluster cluster = new Cluster(new Stripe(node0), new Stripe(node1, node2));
 

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 public class NodeProcessorTest {
   private static final String LICENSE_FILE = "/path/to/license-file";
   private static final String CONFIG_FILE = "/path/to/config-file";
-  private static final String NODE_CONFIG_DIR = "/path/to/node-config-dir";
+  private static final String NODE_REPOSITORY_DIR = "/path/to/node-repository-dir";
   private static final String CLUSTER_NAME = "tc-cluster";
   private static final String HOST_NAME = "localhost";
   private static final String NODE_NAME = "node-1";
@@ -68,13 +68,13 @@ public class NodeProcessorTest {
 
   @Test
   public void testStartupWithConfigRepo_noParamsPassed_repoExists() {
-    when(startupManager.getOrDefaultConfigDir(null)).thenReturn(Paths.get(NODE_CONFIG_DIR));
-    when(startupManager.findNodeName(Paths.get(NODE_CONFIG_DIR))).thenReturn(Optional.of(NODE_NAME));
+    when(startupManager.getOrDefaultRepositoryDir(null)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(startupManager.findNodeName(Paths.get(NODE_REPOSITORY_DIR))).thenReturn(Optional.of(NODE_NAME));
     doAnswer(invocation -> {
       System.out.println("Node startup with config repo successful");
       System.exit(0);
       return null;
-    }).when(startupManager).startUsingConfigRepo(Paths.get(NODE_CONFIG_DIR), NODE_NAME);
+    }).when(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
@@ -85,14 +85,14 @@ public class NodeProcessorTest {
 
   @Test
   public void testStartupWithConfigRepo_configRepoPassed_repoExists() {
-    when(options.getNodeConfigDir()).thenReturn(NODE_CONFIG_DIR);
-    when(startupManager.getOrDefaultConfigDir(NODE_CONFIG_DIR)).thenReturn(Paths.get(NODE_CONFIG_DIR));
-    when(startupManager.findNodeName(Paths.get(NODE_CONFIG_DIR))).thenReturn(Optional.of(NODE_NAME));
+    when(options.getNodeRepositoryDir()).thenReturn(NODE_REPOSITORY_DIR);
+    when(startupManager.getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(startupManager.findNodeName(Paths.get(NODE_REPOSITORY_DIR))).thenReturn(Optional.of(NODE_NAME));
     doAnswer(invocation -> {
       System.out.println("Node startup with config repo successful");
       System.exit(0);
       return null;
-    }).when(startupManager).startUsingConfigRepo(Paths.get(NODE_CONFIG_DIR), NODE_NAME);
+    }).when(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
@@ -103,8 +103,8 @@ public class NodeProcessorTest {
 
   @Test
   public void testStartupWithConfigFile_nonExistentConfigRepo() {
-    when(startupManager.getOrDefaultConfigDir(NODE_CONFIG_DIR)).thenReturn(Paths.get(NODE_CONFIG_DIR));
-    when(startupManager.findNodeName(Paths.get(NODE_CONFIG_DIR))).thenReturn(Optional.empty());
+    when(startupManager.getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(startupManager.findNodeName(Paths.get(NODE_REPOSITORY_DIR))).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
@@ -195,8 +195,8 @@ public class NodeProcessorTest {
 
   @Test
   public void testStartupWithCliParams_nonExistentConfigRepo() {
-    when(startupManager.getOrDefaultConfigDir(NODE_CONFIG_DIR)).thenReturn(Paths.get(NODE_CONFIG_DIR));
-    when(startupManager.findNodeName(Paths.get(NODE_CONFIG_DIR))).thenReturn(Optional.empty());
+    when(startupManager.getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(startupManager.findNodeName(Paths.get(NODE_REPOSITORY_DIR))).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getClusterName()).thenReturn(CLUSTER_NAME);
     when(clusterCreator.create(paramValueMap)).thenReturn(cluster);

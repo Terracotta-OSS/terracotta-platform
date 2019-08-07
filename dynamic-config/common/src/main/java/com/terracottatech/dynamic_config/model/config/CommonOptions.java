@@ -22,7 +22,7 @@ public class CommonOptions {
   public static final String NODE_GROUP_PORT = "node-group-port";
   public static final String NODE_BIND_ADDRESS = "node-bind-address";
   public static final String NODE_GROUP_BIND_ADDRESS = "node-group-bind-address";
-  public static final String NODE_CONFIG_DIR = "node-config-dir";
+  public static final String NODE_REPOSITORY_DIR = "node-repository-dir";
   public static final String NODE_METADATA_DIR = "node-metadata-dir";
   public static final String NODE_LOG_DIR = "node-log-dir";
   public static final String NODE_BACKUP_DIR = "node-backup-dir";

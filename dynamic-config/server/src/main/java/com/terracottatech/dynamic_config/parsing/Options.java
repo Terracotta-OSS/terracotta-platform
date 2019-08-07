@@ -27,7 +27,7 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BACKUP_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_PORT;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
@@ -64,8 +64,8 @@ public class Options {
   @Parameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS})
   private String nodeGroupBindAddress;
 
-  @Parameter(names = {"-c", "--" + NODE_CONFIG_DIR})
-  private String nodeConfigDir;
+  @Parameter(names = {"-r", "--" + NODE_REPOSITORY_DIR})
+  private String nodeRepositoryDir;
 
   @Parameter(names = {"-m", "--" + NODE_METADATA_DIR})
   private String nodeMetadataDir;
@@ -94,7 +94,7 @@ public class Options {
   @Parameter(names = {"-y", "--" + FAILOVER_PRIORITY})
   private String failoverPriority;
 
-  @Parameter(names = {"-r", "--" + CLIENT_RECONNECT_WINDOW})
+  @Parameter(names = {"-R", "--" + CLIENT_RECONNECT_WINDOW})
   private String clientReconnectWindow;
 
   @Parameter(names = {"-i", "--" + CLIENT_LEASE_DURATION})
@@ -219,8 +219,8 @@ public class Options {
     return nodeGroupBindAddress;
   }
 
-  public String getNodeConfigDir() {
-    return nodeConfigDir;
+  public String getNodeRepositoryDir() {
+    return nodeRepositoryDir;
   }
 
   public String getNodeMetadataDir() {

@@ -19,7 +19,7 @@ import org.terracotta.config.TcConfiguration;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_REPOSITORY_DIR;
 
 @OverrideService("com.tc.config.DefaultConfigurationProvider")
 public class EnterpriseConfigurationProvider implements ConfigurationProvider {
@@ -42,7 +42,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   }
 
   private void bootstrapNomad() {
-    String configRepository = cliParser.getConfigRepository() == null ? DEFAULT_CONFIG_DIR : cliParser.getConfigRepository();
+    String configRepository = cliParser.getConfigRepository() == null ? DEFAULT_REPOSITORY_DIR : cliParser.getConfigRepository();
     NomadBootstrapper.bootstrap(Paths.get(configRepository), cliParser.getNodeName());
   }
 

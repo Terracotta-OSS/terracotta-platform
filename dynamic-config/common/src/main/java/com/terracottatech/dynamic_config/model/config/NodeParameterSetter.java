@@ -31,7 +31,7 @@ class NodeParameterSetter {
     PARAM_ACTION_MAP.put(CommonOptions.NODE_GROUP_PORT, (node, value) -> node.setNodeGroupPort(Integer.parseInt(value)));
     PARAM_ACTION_MAP.put(CommonOptions.NODE_BIND_ADDRESS, Node::setNodeBindAddress);
     PARAM_ACTION_MAP.put(CommonOptions.NODE_GROUP_BIND_ADDRESS, Node::setNodeGroupBindAddress);
-    PARAM_ACTION_MAP.put(CommonOptions.NODE_CONFIG_DIR, (node, value) -> node.setNodeConfigDir(Paths.get(value)));
+    PARAM_ACTION_MAP.put(CommonOptions.NODE_REPOSITORY_DIR, (node, value) -> node.setNodeRepositoryDir(Paths.get(value)));
     PARAM_ACTION_MAP.put(CommonOptions.NODE_METADATA_DIR, (node, value) -> node.setNodeMetadataDir(Paths.get(value)));
     PARAM_ACTION_MAP.put(CommonOptions.NODE_LOG_DIR, (node, value) -> node.setNodeLogDir(Paths.get(value)));
     PARAM_ACTION_MAP.put(CommonOptions.NODE_BACKUP_DIR, (node, value) -> node.setNodeBackupDir(Paths.get(value)));

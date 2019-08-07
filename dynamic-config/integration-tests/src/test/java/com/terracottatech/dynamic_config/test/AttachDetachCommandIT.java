@@ -41,7 +41,7 @@ public class AttachDetachCommandIT extends BaseStartupIT {
             "--node-log-dir", "logs/stripe1/node-" + (i + 1),
             "--node-backup-dir", "backup/stripe1",
             "--node-metadata-dir", "metadata/stripe1",
-            "--node-config-dir", "repository/stripe1/node-" + (i + 1),
+            "--node-repository-dir", "repository/stripe1/node-" + (i + 1),
             "--data-dirs", "main:user-data/main/stripe1"
         ))
         .forEach(nodeProcesses::add);

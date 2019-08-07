@@ -13,7 +13,7 @@ public class DynamicConfigConstants {
   public static final String DEFAULT_BIND_ADDRESS = "0.0.0.0";
   public static final String DEFAULT_GROUP_BIND_ADDRESS = "0.0.0.0";
   public static final String DEFAULT_HOSTNAME = "%h";
-  public static final String DEFAULT_CONFIG_DIR = "%H" + separator + "terracotta" + separator + "repository";
+  public static final String DEFAULT_REPOSITORY_DIR = "%H" + separator + "terracotta" + separator + "repository";
   public static final String DEFAULT_METADATA_DIR = "%H" + separator + "terracotta" + separator + "metadata";
   public static final String DEFAULT_LOG_DIR = "%H" + separator + "terracotta" + separator + "logs";
   public static final String DEFAULT_FAILOVER_PRIORITY = "availability";

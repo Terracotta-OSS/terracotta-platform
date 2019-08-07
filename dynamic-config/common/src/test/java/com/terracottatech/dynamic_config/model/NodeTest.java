@@ -31,7 +31,7 @@ public class NodeTest {
       .setFailoverPriority("availability")
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
-      .setNodeConfigDir(Paths.get("cfg"))
+      .setNodeRepositoryDir(Paths.get("cfg"))
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
       .setNodeHostname("localhost")
@@ -53,7 +53,7 @@ public class NodeTest {
       .setFailoverPriority("availability")
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
-      .setNodeConfigDir(Paths.get("cfg"))
+      .setNodeRepositoryDir(Paths.get("cfg"))
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
       .setNodeHostname("localhost")
@@ -74,7 +74,7 @@ public class NodeTest {
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("data", Paths.get("/data/cache2"))
-      .setNodeConfigDir(Paths.get("/config/node2"));
+      .setNodeRepositoryDir(Paths.get("/config/node2"));
 
   @Test
   public void test_clone() {

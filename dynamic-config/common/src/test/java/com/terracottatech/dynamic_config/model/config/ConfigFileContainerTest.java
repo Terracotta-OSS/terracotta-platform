@@ -60,7 +60,7 @@ public class ConfigFileContainerTest {
     );
 
     assertThat(node.getNodeBackupDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "backup"));
-    assertThat(node.getNodeConfigDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "config"));
+    assertThat(node.getNodeRepositoryDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "repository"));
     assertThat(node.getNodeLogDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "logs"));
     assertThat(node.getNodeMetadataDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "metadata"));
     assertThat(node.getSecurityDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "security"));
@@ -99,7 +99,7 @@ public class ConfigFileContainerTest {
     assertNull(node.getSecurityDir());
     assertNull(node.getSecurityAuditLogDir());
 
-    assertThat(node.getNodeConfigDir(), is(Paths.get("config")));
+    assertThat(node.getNodeRepositoryDir(), is(Paths.get("config")));
     assertThat(node.getNodeMetadataDir(), is(Paths.get("metadata")));
     assertThat(node.getNodeLogDir(), is(Paths.get("%H", "terracotta", "logs"))); // No substitution here
     assertThat(node.getDataDirs(), hasEntry("main", Paths.get("%H", "terracotta", "user-data", "main")));

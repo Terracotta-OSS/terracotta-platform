@@ -6,7 +6,7 @@
           "dataDirs": {
             "cache": "/data/cache0"
           },
-          "nodeConfigDir": "/config/node0",
+          "nodeRepositoryDir": "/config/node0",
           "nodeGroupPort": 0,
           "nodeHostname": "localhost",
           "nodeName": "node0",

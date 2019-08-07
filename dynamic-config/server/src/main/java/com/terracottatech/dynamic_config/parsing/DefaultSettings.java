@@ -15,7 +15,7 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIEN
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_CONFIG_DIR;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_PORT;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
@@ -33,7 +33,7 @@ public class DefaultSettings {
     DEFAULT_SETTING_VALUES.put(NODE_GROUP_PORT, DynamicConfigConstants.DEFAULT_GROUP_PORT);
     DEFAULT_SETTING_VALUES.put(NODE_BIND_ADDRESS, DynamicConfigConstants.DEFAULT_BIND_ADDRESS);
     DEFAULT_SETTING_VALUES.put(NODE_GROUP_BIND_ADDRESS, DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS);
-    DEFAULT_SETTING_VALUES.put(NODE_CONFIG_DIR, DynamicConfigConstants.DEFAULT_CONFIG_DIR);
+    DEFAULT_SETTING_VALUES.put(NODE_REPOSITORY_DIR, DynamicConfigConstants.DEFAULT_REPOSITORY_DIR);
     DEFAULT_SETTING_VALUES.put(NODE_METADATA_DIR, DynamicConfigConstants.DEFAULT_METADATA_DIR);
     DEFAULT_SETTING_VALUES.put(NODE_LOG_DIR, DynamicConfigConstants.DEFAULT_LOG_DIR);
     DEFAULT_SETTING_VALUES.put(FAILOVER_PRIORITY, DynamicConfigConstants.DEFAULT_FAILOVER_PRIORITY);

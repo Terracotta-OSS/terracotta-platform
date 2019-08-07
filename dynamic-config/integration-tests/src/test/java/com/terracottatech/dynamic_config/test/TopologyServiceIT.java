@@ -62,7 +62,7 @@ public class TopologyServiceIT extends BaseStartupIT {
           .setNodeGroupPort(ports.getPorts()[0] + 10)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
-          .setNodeConfigDir(pendingCluster.getSingleNode().get().getNodeConfigDir())
+          .setNodeRepositoryDir(pendingCluster.getSingleNode().get().getNodeRepositoryDir())
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
           .setNodeLogDir(Paths.get("logs", "stripe1", "node-1"))
           .setNodeBackupDir(Paths.get("backup", "stripe1"))

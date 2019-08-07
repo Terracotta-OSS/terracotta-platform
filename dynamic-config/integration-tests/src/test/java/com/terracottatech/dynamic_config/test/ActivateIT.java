@@ -45,7 +45,7 @@ public class ActivateIT extends BaseStartupIT {
         "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
         "--node-backup-dir", "backup/stripe" + stripeId,
         "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-config-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
+        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
         "--data-dirs", "main:user-data/main/stripe" + stripeId)));
 
     waitedAssert(out::getLog, stringContainsInOrder(

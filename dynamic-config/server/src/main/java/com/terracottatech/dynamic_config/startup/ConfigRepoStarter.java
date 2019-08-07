@@ -27,10 +27,10 @@ public class ConfigRepoStarter implements NodeStarter {
 
   @Override
   public void startNode() {
-    Path nonNullConfigDir = startupManager.getOrDefaultConfigDir(options.getNodeConfigDir());
-    startupManager.findNodeName(nonNullConfigDir).ifPresent(nodeName -> startupManager.startUsingConfigRepo(nonNullConfigDir, nodeName));
+    Path repositoryDir = startupManager.getOrDefaultRepositoryDir(options.getNodeRepositoryDir());
+    startupManager.findNodeName(repositoryDir).ifPresent(nodeName -> startupManager.startUsingConfigRepo(repositoryDir, nodeName));
 
-    LOGGER.info("Did not find config repository at: " + substitute(nonNullConfigDir));
+    LOGGER.info("Did not find config repository at: " + substitute(repositoryDir));
     // Couldn't start node - pass the responsibility to the next starter
     nextStarter.startNode();
   }
