@@ -43,14 +43,14 @@ public class NomadBootstrapper {
   private static volatile NomadServerManager nomadServerManager;
   private static final AtomicBoolean BOOTSTRAPPED = new AtomicBoolean();
 
-  public static NomadServerManager bootstrap(Path nomadRoot, String nodeName) {
-    requireNonNull(nomadRoot);
+  public static NomadServerManager bootstrap(Path repositoryPath, String nodeName) {
+    requireNonNull(repositoryPath);
     requireNonNull(nodeName);
 
     if (BOOTSTRAPPED.compareAndSet(false, true)) {
       nomadServerManager = new NomadServerManager();
-      nomadServerManager.init(nomadRoot, nodeName);
-      LOGGER.info("Bootstrapped nomad system with root: {}", substitute(nomadRoot));
+      nomadServerManager.init(repositoryPath, nodeName);
+      LOGGER.info("Bootstrapped nomad system with root: {}", substitute(repositoryPath));
     }
 
     return nomadServerManager;
@@ -76,13 +76,13 @@ public class NomadBootstrapper {
     /**
      * Initializes the Nomad system
      *
-     * @param nomadRoot Configuration repository root
+     * @param repositoryPath Configuration repository root
      * @param nodeName  Node name
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
-    void init(Path nomadRoot, String nodeName) throws NomadConfigurationException {
+    void init(Path repositoryPath, String nodeName) throws NomadConfigurationException {
       try {
-        repositoryManager = createNomadRepositoryManager(nomadRoot);
+        repositoryManager = createNomadRepositoryManager(repositoryPath);
         repositoryManager.createDirectories();
         nomadServer = createServer(repositoryManager, nodeName);
         registerDiagnosticService();
@@ -183,8 +183,8 @@ public class NomadBootstrapper {
       return new SingleThreadedNomadServer<>(UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName));
     }
 
-    NomadRepositoryManager createNomadRepositoryManager(Path nomadRoot) {
-      return new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager createNomadRepositoryManager(Path repositoryPath) {
+      return new NomadRepositoryManager(repositoryPath);
     }
 
     ConfigController createConfigController(String nodeName, int stripeId) {

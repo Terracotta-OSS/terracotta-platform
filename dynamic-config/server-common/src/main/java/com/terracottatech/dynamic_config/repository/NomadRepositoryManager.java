@@ -148,7 +148,7 @@ public class NomadRepositoryManager {
             );
         if (nodeConfigs.size() > 1) {
           throw new MalformedRepositoryException(
-              String.format("Found configuration files for the following different nodes: %s in: %s",
+              String.format("Found versioned cluster config files for the following different nodes: %s in: %s",
                   String.join(", ", nodeConfigs.keySet()),
                   nomadRepositoryManager.getConfigPath()
               )

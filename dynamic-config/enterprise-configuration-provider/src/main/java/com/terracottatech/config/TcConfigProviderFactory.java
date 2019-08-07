@@ -9,7 +9,7 @@ class TcConfigProviderFactory {
     if (commandLineParser.isConfigConsistencyMode()) {
       return new TcConfigFileProvider(commandLineParser.getConfig());
     } else {
-      return new NomadRootTcConfigProvider();
+      return new NomadTcConfigProvider();
     }
   }
 }

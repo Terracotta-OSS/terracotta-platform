@@ -55,14 +55,14 @@ public class NomadServerManagerTest {
 
   @Test
   public void testInitFail() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     Exception exception = mock(NomadException.class);
     doThrow(exception).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     try {
-      spyNomadManager.init(nomadRoot, "node-1");
+      spyNomadManager.init(repositoryPath, "node-1");
       fail("Expected NomadConfigurationException");
     } catch (NomadConfigurationException e) {
       assertThat(e.getCause(), is(notNullValue()));
@@ -71,14 +71,14 @@ public class NomadServerManagerTest {
 
   @Test
   public void testInitFailWithNomadConfigurationException() {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     MalformedRepositoryException exception = new MalformedRepositoryException("Failed to create repository");
     doThrow(exception).when(repositoryStructureManager).createDirectories();
 
     try {
-      spyNomadManager.init(nomadRoot, "node-1");
+      spyNomadManager.init(repositoryPath, "node-1");
       fail("Expected NomadConfigurationException");
     } catch (NomadConfigurationException e) {
       assertThat(e.getCause(), is(exception));
@@ -88,14 +88,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testInitUpgradeAndDestroy() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
     verify(spyNomadManager, times(1)).createServer(repositoryStructureManager, "node-1");
 
     String nodeName = "node-0";
@@ -110,14 +110,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testGetConfigurationWithExceptionInDiscover() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     NomadException exception = mock(NomadException.class);
     doThrow(exception).when(upgradableNomadServer).discover();
@@ -128,14 +128,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testGetConfigurationWithEmptyLatestChange() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     DiscoverResponse<String> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
@@ -147,14 +147,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testGetConfigurationWithNullConfigurationString() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     DiscoverResponse<String> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
@@ -169,14 +169,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testGetConfigurationWithEmptyConfigurationString() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     DiscoverResponse<String> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
@@ -190,14 +190,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testGetConfiguration() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     DiscoverResponse<String> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
@@ -212,14 +212,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfiguration() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     String nodeName = "node0";
     int stripeId = 1;
@@ -265,14 +265,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfigurationWithPrepareFail() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     String nodeName = "node0";
     int stripeId = 1;
@@ -302,14 +302,14 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfigurationWithServerThrowingNomadException() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     String nodeName = "node0";
     int stripeId = 1;
@@ -337,13 +337,13 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfigurationWithCommitFail() throws Exception {
-    Path nomadRoot = mock(Path.class);
+    Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(nomadRoot);
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
     UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
-    spyNomadManager.init(nomadRoot, "node-1");
+    spyNomadManager.init(repositoryPath, "node-1");
 
     String nodeName = "node0";
     int stripeId = 1;

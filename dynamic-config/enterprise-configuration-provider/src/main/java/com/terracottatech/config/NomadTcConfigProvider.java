@@ -8,7 +8,7 @@ import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
 
-public class NomadRootTcConfigProvider implements TcConfigProvider {
+public class NomadTcConfigProvider implements TcConfigProvider {
   @Override
   public TcConfiguration provide() throws Exception {
     String configuration = NomadBootstrapper.getNomadServerManager().getConfiguration();

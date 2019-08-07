@@ -68,12 +68,12 @@ public class RepositoryStructureBuilder {
   }
 
   protected NomadServer<String> getNomadServer(int stripeId, String nodeName) throws Exception {
-    Path nomadRoot = outputFolderPath.resolve("stripe" + stripeId + "_" + nodeName);
-    return createServer(nomadRoot, stripeId, nodeName);
+    Path repositoryPath = outputFolderPath.resolve("stripe" + stripeId + "_" + nodeName);
+    return createServer(repositoryPath, nodeName);
   }
 
-  private NomadServer<String> createServer(Path nomadRoot, int stripeId, String nodeName) throws SanskritException, NomadException {
-    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot);
+  private NomadServer<String> createServer(Path repositoryPath, String nodeName) throws SanskritException, NomadException {
+    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(repositoryPath);
     nomadRepositoryManager.createDirectories();
 
     ChangeApplicator<String> changeApplicator = new ChangeApplicator<String>() {

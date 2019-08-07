@@ -235,7 +235,8 @@ public class NomadRepositoryManagerTest {
     Files.createFile(configFilePath);
     assertThat(
         () -> findNodeName(nomadRoot),
-        is(throwing(instanceOf(MalformedRepositoryException.class)).andMessage(is(equalTo("Found configuration files for the following different nodes: node2, node1 in: " + config))))
+        is(throwing(instanceOf(MalformedRepositoryException.class))
+            .andMessage(is("Found versioned cluster config files for the following different nodes: node2, node1 in: " + config)))
     );
 
     Files.delete(configFilePath);

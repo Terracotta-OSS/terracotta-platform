@@ -13,6 +13,7 @@ import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.nomad.client.NamedNomadServer;
@@ -32,9 +33,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_HOSTNAME;
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_PORT;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
 import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
@@ -48,9 +49,9 @@ public class StartupManager {
 
   void startUnconfigured(Cluster cluster, Node node) {
     String nodeName = node.getNodeName();
-    logger.info("Starting node {} in UNCONFIGURED state", nodeName);
+    logger.info("Starting node: {} in UNCONFIGURED state", nodeName);
     Path noderepositoryDir = getOrDefaultRepositoryDir(node.getNodeRepositoryDir().toString());
-    NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(noderepositoryDir, nodeName);
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(noderepositoryDir, nodeName);
     registerTopologyService(new NodeContext(cluster, node), false, nomadServerManager);
     Path configPath = new TransientTcConfig(node, pathResolver).createTempTcConfigFile();
     startServer(
@@ -63,24 +64,31 @@ public class StartupManager {
 
   void startPreactivated(Cluster cluster, Node node, String licenseFile) {
     String nodeName = node.getNodeName();
-    logger.info("Starting node {} in CONFIGURED state", nodeName);
+    logger.info("Starting node: {} in CONFIGURED state", nodeName);
     Path noderepositoryDir = getOrDefaultRepositoryDir(node.getNodeRepositoryDir().toString());
-    NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(noderepositoryDir, nodeName);
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(noderepositoryDir, nodeName);
     createConfigRepository(cluster, node, nomadServerManager);
     TopologyService topologyService = registerTopologyService(new NodeContext(cluster, node), true, nomadServerManager);
     topologyService.installLicense(read(licenseFile));
-    startServer("-r", noderepositoryDir.toString(), "-n", nodeName, "--node-name", nodeName);
+    startServer(
+        "-r", noderepositoryDir.toString(),
+        "-n", nodeName,
+        "--node-name", nodeName
+    );
   }
 
   void startUsingConfigRepo(Path repositoryDir, String nodeName) {
-    Path substituted = substitute(repositoryDir);
-    logger.info("Starting node {} from config repository: {}", nodeName, substituted);
-    NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(substituted, nodeName);
+    logger.info("Starting node: {} from config repository: {}", nodeName, substitute(repositoryDir));
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(repositoryDir, nodeName);
     XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(pathResolver);
     NodeContext nodeContext = xmlConfigMapper.fromXml(nodeName, nomadServerManager.getConfiguration());
     nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeName);
     registerTopologyService(nodeContext, true, nomadServerManager);
-    startServer("-r", repositoryDir.toString(), "-n", nodeName, "--node-name", nodeName);
+    startServer(
+        "-r", repositoryDir.toString(),
+        "-n", nodeName,
+        "--node-name", nodeName
+    );
   }
 
   Node getMatchingNodeFromConfigFile(String specifiedHostName, String specifiedPort, String specifiedConfigFile, Cluster cluster) {
@@ -132,14 +140,14 @@ public class StartupManager {
     return NomadRepositoryManager.findNodeName(repositoryDir);
   }
 
-  private TopologyService registerTopologyService(NodeContext nodeContext, boolean clusterActivated, NomadBootstrapper.NomadServerManager nomadServerManager) {
+  private TopologyService registerTopologyService(NodeContext nodeContext, boolean clusterActivated, NomadServerManager nomadServerManager) {
     logger.info("Registering TopologyService with DiagnosticServices");
     TopologyService topologyService = new TopologyServiceImpl(nodeContext, clusterActivated, nomadServerManager);
     DiagnosticServices.register(TopologyService.class, topologyService);
     return topologyService;
   }
 
-  private void createConfigRepository(Cluster cluster, Node node, NomadBootstrapper.NomadServerManager nomadServerManager) {
+  private void createConfigRepository(Cluster cluster, Node node, NomadServerManager nomadServerManager) {
     logger.debug("Creating node config repository at: {}", substitute(node.getNodeRepositoryDir().toAbsolutePath()));
 
     nomadServerManager.upgradeForWrite(cluster.getStripeId(node).get(), node.getNodeName());
