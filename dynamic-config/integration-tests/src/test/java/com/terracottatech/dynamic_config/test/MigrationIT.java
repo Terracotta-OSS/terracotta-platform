@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
-import com.terracottatech.dynamic_config.test.util.TmpDir;
+import com.terracottatech.utilities.junit.TmpDir;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;

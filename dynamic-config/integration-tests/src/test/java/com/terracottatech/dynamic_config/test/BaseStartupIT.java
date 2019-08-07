@@ -9,7 +9,7 @@ import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
-import com.terracottatech.dynamic_config.test.util.TmpDir;
+import com.terracottatech.utilities.junit.TmpDir;
 import com.terracottatech.testing.lock.PortLockingRule;
 import com.terracottatech.utilities.PropertyResolver;
 import com.terracottatech.utilities.fn.IntFn.IntTriConsumer;
