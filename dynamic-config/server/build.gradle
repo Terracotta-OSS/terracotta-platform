@@ -21,9 +21,11 @@ dependencies {
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
 
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
     exclude group: 'junit'
   }
+  testCompile("org.mockito:mockito-core:$mockitoVersion")
 }
 
 apply plugin: TcDeploy

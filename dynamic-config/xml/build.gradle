@@ -23,9 +23,7 @@ dependencies {
   compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
 
   testCompile 'org.xmlunit:xmlunit-core:2.6.0', 'org.xmlunit:xmlunit-matchers:2.6.0'
-  testCompile("org.mockito:mockito-core:$mockitoVersion") {
-    exclude group: 'net.bytebuddy'
-  }
+  testCompile("org.mockito:mockito-core:$mockitoVersion")
 }
 
 apply plugin: TcDeploy

@@ -10,4 +10,7 @@ dependencies {
   compile project(':nomad')
   compile project(':licensing-common')
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
+  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  testCompile "org.mockito:mockito-core:$mockitoVersion"
 }

@@ -46,7 +46,7 @@ public class StartupManager {
   void startUnconfigured(Cluster cluster, Node node) {
     String nodeName = node.getNodeName();
     logger.info("Starting node {} in UNCONFIGURED state", nodeName);
-    Path nodeConfigDir = substitute(getOrDefaultConfigDir(node.getNodeConfigDir().toString()));
+    Path nodeConfigDir = getOrDefaultConfigDir(node.getNodeConfigDir().toString());
     NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeConfigDir, nodeName);
     registerTopologyService(new Topology(cluster, node), false, nomadServerManager);
     Path workDir = Paths.get("%(user.dir)");
@@ -61,7 +61,7 @@ public class StartupManager {
   void startPreactivated(Cluster cluster, Node node, String licenseFile) {
     String nodeName = node.getNodeName();
     logger.info("Starting node {} in CONFIGURED state", nodeName);
-    Path nodeConfigDir = substitute(getOrDefaultConfigDir(node.getNodeConfigDir().toString()));
+    Path nodeConfigDir = getOrDefaultConfigDir(node.getNodeConfigDir().toString());
     NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeConfigDir, nodeName);
     createConfigRepository(cluster, node, nomadServerManager);
     TopologyService topologyService = registerTopologyService(new Topology(cluster, node), true, nomadServerManager);

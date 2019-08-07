@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.License;
+import com.terracottatech.licensing.LicenseConstants;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
@@ -23,7 +24,7 @@ public class LicenseValidator implements Validator {
 
   @Override
   public void validate() throws IllegalArgumentException {
-    long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(License.CAPABILITY_OFFHEAP);
+    long licenseOffHeapLimitInMB = license.getCapabilityLimitMap().get(LicenseConstants.CAPABILITY_OFFHEAP);
     long totalOffHeapInMB =
         bytesToMegaBytes(
             cluster.getStripes()

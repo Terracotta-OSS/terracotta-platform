@@ -12,9 +12,7 @@ dependencies {
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
   compileOnly "org.terracotta.internal:configuration-provider:$terracottaCoreVersion"
 
-  testCompile("org.mockito:mockito-core:$mockitoVersion") {
-    exclude group: 'net.bytebuddy'
-  }
+  testCompile("org.mockito:mockito-core:$mockitoVersion")
   testCompile project(':galvan-support-ee')
 }
 
