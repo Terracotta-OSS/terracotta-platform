@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +32,10 @@ public class Stripe implements Cloneable {
 
   public Stripe(Node... nodes) {
     this(Arrays.asList(nodes));
+  }
+
+  public Stripe() {
+    this.nodes = new ArrayList<>();
   }
 
   public Collection<Node> getNodes() {
@@ -137,5 +142,9 @@ public class Stripe implements Cloneable {
   @JsonIgnore
   public int getNodeCount() {
     return nodes.size();
+  }
+
+  public Optional<Node> getNode(String nodeName) {
+    return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findFirst();
   }
 }

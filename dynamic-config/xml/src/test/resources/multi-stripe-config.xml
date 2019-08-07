@@ -40,7 +40,7 @@
       </security>
     </service>
     <config>
-      <cluster xmlns="http://www.terracotta.org/config/cluster" xmlns:ns2="http://www.terracotta.org/config" currentStripeId="1">
+      <cluster currentStripeId="1" xmlns="http://www.terracotta.org/config/cluster" xmlns:ns2="http://www.terracotta.org/config">
         <name>my-cluster</name>
         <stripe>
           <node>

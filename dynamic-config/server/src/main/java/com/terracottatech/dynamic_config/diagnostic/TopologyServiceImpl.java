@@ -9,6 +9,7 @@ import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.Topology;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
@@ -31,17 +32,15 @@ public class TopologyServiceImpl implements TopologyService {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopologyServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
-  private volatile Cluster cluster;
-  private volatile Node me;
+  private volatile Topology topology;
   private License license;
   private final boolean clusterActivated;
   private final NomadBootstrapper.NomadServerManager nomadServerManager;
 
-  public TopologyServiceImpl(Cluster cluster, Node me,
+  public TopologyServiceImpl(Topology topology,
                              boolean clusterActivated,
                              NomadBootstrapper.NomadServerManager nomadServerManager) {
-    this.cluster = requireNonNull(cluster);
-    this.me = requireNonNull(me);
+    this.topology = requireNonNull(topology);
     this.clusterActivated = clusterActivated;
     this.nomadServerManager = requireNonNull(nomadServerManager);
 
@@ -50,23 +49,23 @@ public class TopologyServiceImpl implements TopologyService {
 
   @Override
   public Node getThisNode() {
-    return me;
+    return topology.getNode();
   }
 
   @Override
   public InetSocketAddress getThisNodeAddress() {
-    return me.getNodeAddress();
+    return getThisNode().getNodeAddress();
   }
 
   @Override
   public void restart() {
-    LOGGER.info("Executing restart on node: {} in stripe: {}", me.getNodeName(), cluster.getStripeId(me).get());
+    LOGGER.info("Executing restart on node: {} in stripe: {}", getThisNode().getNodeName(), topology.getStripeId());
     TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
   }
 
   @Override
   public Cluster getTopology() {
-    return cluster;
+    return topology.getCluster();
   }
 
   @Override
@@ -75,24 +74,25 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public void setTopology(Cluster cluster) {
+  public synchronized void setTopology(Cluster cluster) {
     requireNonNull(cluster);
 
     if (isActivated()) {
       throw new UnsupportedOperationException("Unable to change the topology at runtime");
 
     } else {
-      Optional<Node> me = cluster.getNode(this.me.getNodeAddress());
-      if (me.isPresent()) {
+      Node oldMe = getThisNode();
+      InetSocketAddress myNodeAddress = oldMe.getNodeAddress();
+      Optional<Node> newMe = cluster.getNode(myNodeAddress);
+      if (newMe.isPresent()) {
         // we have updated the topology and I am still part of this cluster
         LOGGER.info("Set pending topology to: {}", cluster);
-        this.cluster = cluster;
-        this.me = me.get();
+        this.topology = new Topology(cluster, topology.getStripeId(), newMe.get().getNodeName());
       } else {
         // We have updated the topology and I am not part anymore of the cluster
         // So we just reset the cluster object so that this node is alone
-        LOGGER.info("Node {} removed from pending topology: {}", this.me.getNodeAddress(), cluster);
-        this.cluster = new Cluster(new Stripe(this.me));
+        LOGGER.info("Node {} removed from pending topology: {}", myNodeAddress, cluster);
+        this.topology = new Topology(new Cluster(new Stripe(oldMe)), topology.getStripeId(), oldMe.getNodeName());
       }
 
     }
@@ -103,6 +103,7 @@ public class TopologyServiceImpl implements TopologyService {
     if (isActivated()) {
       throw new IllegalStateException("Node is already activated");
     }
+    Node me = getThisNode();
     Node node = validatedTopology.getStripes()
         .stream()
         .flatMap(stripe -> stripe.getNodes().stream())

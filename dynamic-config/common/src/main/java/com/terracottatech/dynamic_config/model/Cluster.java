@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -47,6 +48,11 @@ public class Cluster implements Cloneable {
 
   public List<Stripe> getStripes() {
     return Collections.unmodifiableList(stripes);
+  }
+
+  public Cluster addStripe(Stripe stripe) {
+    stripes.add(stripe);
+    return this;
   }
 
   public String getName() {
@@ -175,5 +181,17 @@ public class Cluster implements Cloneable {
   @JsonIgnore
   public Collection<Node> getNodes() {
     return stripes.stream().flatMap(s -> s.getNodes().stream()).collect(toList());
+  }
+
+  public Optional<Node> getNode(int stripeId, String nodeName) {
+    return stripes.get(stripeId - 1).getNode(nodeName);
+  }
+
+  public void forEach(BiConsumer<Integer, Node> consumer) {
+    List<Stripe> stripes = getStripes();
+    for (int i = 0; i < stripes.size(); i++) {
+      int stripeId = i + 1;
+      stripes.get(0).getNodes().forEach(node -> consumer.accept(stripeId, node));
+    }
   }
 }
