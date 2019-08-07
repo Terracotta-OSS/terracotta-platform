@@ -40,7 +40,8 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void toXml1() {
-    String actual = TopologyXmlConfig.toXml(Paths.get(""), topology1);
+    String actual = TopologyXmlConfig.toXml(Paths.get(""), topology1)
+        .replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml1))
         .ignoreComments()
         .ignoreWhitespace()
@@ -55,7 +56,8 @@ public class TopologyXmlConfigTest {
 
   @Test
   public void toXml2() {
-    String actual = TopologyXmlConfig.toXml(Paths.get(""), topology2);
+    String actual = TopologyXmlConfig.toXml(Paths.get(""), topology2)
+        .replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml2))
         .ignoreComments()
         .ignoreWhitespace()

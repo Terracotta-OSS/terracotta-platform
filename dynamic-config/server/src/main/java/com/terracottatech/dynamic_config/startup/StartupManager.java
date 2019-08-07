@@ -66,7 +66,7 @@ public class StartupManager {
     createConfigRepository(cluster, node, nomadServerManager);
     TopologyService topologyService = registerTopologyService(new Topology(cluster, node), true, nomadServerManager);
     topologyService.installLicense(read(licenseFile));
-    startServer("-r", node.toString(), "-n", nodeName, "--node-name", nodeName);
+    startServer("-r", nodeConfigDir.toString(), "-n", nodeName, "--node-name", nodeName);
   }
 
   void startUsingConfigRepo(Path nonNullConfigDir, String nodeName) {
