@@ -14,6 +14,7 @@ import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadC
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.ChangeDetails;
@@ -71,13 +72,12 @@ public class NomadBootstrapper {
     }
 
     private final NomadEnvironment nomadEnvironment = new NomadEnvironment();
-    private final PathResolver pathResolver = new PathResolver(Paths.get("%(user.dir)"));
 
     /**
      * Initializes the Nomad system
      *
      * @param repositoryPath Configuration repository root
-     * @param nodeName  Node name
+     * @param nodeName       Node name
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
     void init(Path repositoryPath, String nodeName) throws NomadConfigurationException {
@@ -109,10 +109,18 @@ public class NomadBootstrapper {
      * @param nodeName Name of the running node, non-null
      */
     public void upgradeForWrite(int stripeId, String nodeName) {
+      // This path resolver is used when converting a model to XML.
+      // It makes sure to resolve any relative path to absolute ones based on the working directory.
+      // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
+      // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
+      // the config repository: repository/config.
+      // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
+      // That is why we need to force the resolving within the XML relatively to the user directory.
+      PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
       ConfigController configController = createConfigController(nodeName, stripeId);
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())
-          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController, pathResolver));
+          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController, userDirResolver));
 
       ChangeApplicator<String> changeApplicator = new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(configController, nomadChangeProcessor));
       nomadServer.setChangeApplicator(changeApplicator);

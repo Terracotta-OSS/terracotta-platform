@@ -15,6 +15,7 @@ import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
@@ -45,15 +46,17 @@ import static java.util.Objects.requireNonNull;
 public class StartupManager {
   private static final Logger logger = LoggerFactory.getLogger(StartupManager.class);
 
-  private final PathResolver pathResolver = new PathResolver(Paths.get("%(user.dir)"));
-
   void startUnconfigured(Cluster cluster, Node node) {
     String nodeName = node.getNodeName();
     logger.info("Starting node: {} in UNCONFIGURED state", nodeName);
     Path noderepositoryDir = getOrDefaultRepositoryDir(node.getNodeRepositoryDir().toString());
     NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(noderepositoryDir, nodeName);
     registerTopologyService(new NodeContext(cluster, node), false, nomadServerManager);
-    Path configPath = new TransientTcConfig(node, pathResolver).createTempTcConfigFile();
+    // This resolver will make sure to rebase the relative given path only if the given path is not absolute
+    // and this check happens after doing the substitution.
+    // Note: the returned resolved path is not substituted and contains placeholders from both base directory and given path.
+    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
+    Path configPath = new TransientTcConfig(node, userDirResolver).createTempTcConfigFile();
     startServer(
         "-r", node.getNodeRepositoryDir().toString(),
         "--config-consistency",
@@ -80,7 +83,7 @@ public class StartupManager {
   void startUsingConfigRepo(Path repositoryDir, String nodeName) {
     logger.info("Starting node: {} from config repository: {}", nodeName, substitute(repositoryDir));
     NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(repositoryDir, nodeName);
-    XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(pathResolver);
+    XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(null);
     NodeContext nodeContext = xmlConfigMapper.fromXml(nodeName, nomadServerManager.getConfiguration());
     nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeName);
     registerTopologyService(nodeContext, true, nomadServerManager);

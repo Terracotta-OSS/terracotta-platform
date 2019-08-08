@@ -83,10 +83,14 @@ public class XmlConfigMapper {
   private final PathResolver pathResolver;
 
   public XmlConfigMapper(PathResolver pathResolver) {
+    // allow null values sine path resolver is optional: not used in fromXml()
     this.pathResolver = pathResolver;
   }
 
   public String toXml(NodeContext nodeContext) {
+    if (pathResolver == null) {
+      throw new IllegalStateException("Missing PathResolver");
+    }
     return new XmlConfiguration(
         nodeContext.getCluster(),
         nodeContext.getStripeId(),
