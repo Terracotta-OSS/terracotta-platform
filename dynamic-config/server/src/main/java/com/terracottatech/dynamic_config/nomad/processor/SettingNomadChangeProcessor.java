@@ -42,7 +42,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public String tryApply(String baseConfig, SettingNomadChange change) throws NomadException {
     try {
-      return getHandler(change.getConfigType()).tryApply(baseConfig, change.getChange());
+      return getHandler(change.getConfigType()).tryApply(baseConfig, change);
     } catch (InvalidConfigChangeException e) {
       throw new NomadException(e);
     }
@@ -50,7 +50,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   @Override
   public void apply(SettingNomadChange change) throws NomadException {
-    getHandler(change.getConfigType()).apply(change.getChange());
+    getHandler(change.getConfigType()).apply(change);
   }
 
   private ConfigChangeHandler getHandler(Type type) throws NomadException {

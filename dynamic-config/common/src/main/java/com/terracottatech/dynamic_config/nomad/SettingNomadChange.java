@@ -5,7 +5,6 @@
 package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -44,11 +43,6 @@ public class SettingNomadChange extends FilteredNomadChange {
     return cmd == Cmd.SET ?
         ("set " + configType + "." + name + "=" + value) :
         ("unset " + configType + "." + name);
-  }
-
-  @JsonIgnore
-  public String getChange() {
-    return cmd == Cmd.SET ? name + "=" + value : name;
   }
 
   public String getName() {
