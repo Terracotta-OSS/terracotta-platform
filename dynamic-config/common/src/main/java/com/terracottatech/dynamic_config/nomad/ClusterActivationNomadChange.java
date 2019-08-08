@@ -54,7 +54,7 @@ public class ClusterActivationNomadChange extends FilteredNomadChange {
   @Override
   public String toString() {
     return "ClusterActivationNomadChange{" +
-        ", cluster=" + cluster +
+        "cluster=" + cluster +
         ", applicability=" + applicability +
         '}';
   }
