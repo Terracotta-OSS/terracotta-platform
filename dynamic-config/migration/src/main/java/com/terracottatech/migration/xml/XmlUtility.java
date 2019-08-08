@@ -16,12 +16,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 public class XmlUtility {
 
@@ -36,23 +31,6 @@ public class XmlUtility {
       }
     }
     return retValue == null ? Optional.empty() : Optional.of(retValue);
-  }
-
-  public static Map<String, String> getAttributeValues(Node node, String... attributes) {
-    Set<String> attributeSet = new HashSet<>(Arrays.asList(attributes));
-    Map<String, String> retMap = new HashMap<>();
-    NamedNodeMap attributeMap = node.getAttributes();
-    for (int k = 0; k < attributeMap.getLength(); k++) {
-      Node attribute = attributeMap.item(k);
-      if (attributeSet.contains(attribute.getLocalName())) {
-        retMap.put(attribute.getLocalName(), attribute.getNodeValue());
-      }
-    }
-    return retMap;
-  }
-
-  public static String getValue(Node node) {
-    return node.getTextContent();
   }
 
   public static Node createSimpleTextNode(Node documentRoot, String nameSpace, String nodeName, String nodeText) {
