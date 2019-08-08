@@ -50,19 +50,19 @@ public class TopologyServiceIT extends BaseStartupIT {
         null)) {
 
       TopologyService proxy = diagnosticService.getProxy(TopologyService.class);
-      Cluster pendingTopology = proxy.getCluster();
+      Cluster pendingCluster = proxy.getCluster();
 
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingTopology, is(equalTo(new Cluster("tc-cluster", new Stripe(new Node()
+      assertThat(pendingCluster, is(equalTo(new Cluster("tc-cluster", new Stripe(new Node()
           .setNodeName("node-1")
           .setNodeHostname("localhost")
           .setNodePort(ports.getPorts()[0])
           .setNodeGroupPort(ports.getPorts()[0] + 10)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
-          .setNodeConfigDir(pendingTopology.getSingleNode().get().getNodeConfigDir())
+          .setNodeConfigDir(pendingCluster.getSingleNode().get().getNodeConfigDir())
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
           .setNodeLogDir(Paths.get("logs", "stripe1", "node-1"))
           .setNodeBackupDir(Paths.get("backup", "stripe1"))
