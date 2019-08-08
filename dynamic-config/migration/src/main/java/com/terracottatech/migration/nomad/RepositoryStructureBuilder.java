@@ -5,12 +5,11 @@
 package com.terracottatech.migration.nomad;
 
 import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
-import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
-import com.terracottatech.migration.NodeConfigurationHandler;
 import com.terracottatech.migration.exception.MigrationException;
 import com.terracottatech.migration.xml.XmlUtility;
+import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.CommitMessage;
@@ -30,7 +29,7 @@ import java.util.UUID;
 
 import static com.terracottatech.migration.exception.ErrorCode.UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE;
 
-public class RepositoryStructureBuilder implements NodeConfigurationHandler {
+public class RepositoryStructureBuilder {
   private final Path outputFolderPath;
   private final UUID nomadRequestId;
   private final NomadEnvironment nomadEnvironment;
@@ -41,7 +40,6 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
     this.nomadEnvironment = new NomadEnvironment();
   }
 
-  @Override
   public void process(final Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap) {
     nodeNameNodeConfigMap.forEach((stripeIdServerName, doc) -> {
       try {
@@ -69,17 +67,12 @@ public class RepositoryStructureBuilder implements NodeConfigurationHandler {
     });
   }
 
-  protected NomadServer<String> getNomadServer(String nodeName) throws Exception {
-    Path nomadRoot = outputFolderPath.resolve(nodeName);
-    return createServer(nomadRoot, nodeName);
-  }
-
   protected NomadServer<String> getNomadServer(int stripeId, String nodeName) throws Exception {
     Path nomadRoot = outputFolderPath.resolve("stripe" + stripeId + "_" + nodeName);
-    return createServer(nomadRoot, nodeName);
+    return createServer(nomadRoot, stripeId, nodeName);
   }
 
-  private NomadServer<String> createServer(Path nomadRoot, String nodeName) throws SanskritException, NomadException {
+  private NomadServer<String> createServer(Path nomadRoot, int stripeId, String nodeName) throws SanskritException, NomadException {
     NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot);
     nomadRepositoryManager.createDirectories();
 

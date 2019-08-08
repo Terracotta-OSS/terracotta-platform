@@ -58,7 +58,7 @@ public class MigrationIT {
 
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server.xml").toURI());
     migration.processInput("testCluster", singletonList("1" + "," + inputFilePath));
@@ -156,7 +156,7 @@ public class MigrationIT {
     Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server.xml").toURI());
     migration.processInput("testCluster", singletonList(inputFilePath.toString()));
@@ -257,7 +257,7 @@ public class MigrationIT {
     Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path inputFilePath = Paths.get(MigrationIT.class.getResource("/migration/tc-config-single-server-with-security.xml")
         .toURI());
@@ -357,7 +357,7 @@ public class MigrationIT {
     Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path inputFilePathStripe1 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-1.xml").toURI());
     Path inputFilePathStripe2 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-2.xml").toURI());
@@ -414,7 +414,7 @@ public class MigrationIT {
     Map<String, NomadServer<String>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path inputFilePathStripe1 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-common-server-name-1.xml").toURI());
     Path inputFilePathStripe2 = Paths.get(MigrationIT.class.getResource("/migration/tc-config-common-server-name-2.xml").toURI());

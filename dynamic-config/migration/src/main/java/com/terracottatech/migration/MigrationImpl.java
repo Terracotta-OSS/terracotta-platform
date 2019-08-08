@@ -9,9 +9,10 @@ import com.terracottatech.migration.exception.ErrorParamKey;
 import com.terracottatech.migration.exception.InvalidInputConfigurationContentException;
 import com.terracottatech.migration.exception.InvalidInputException;
 import com.terracottatech.migration.exception.MigrationException;
-import com.terracottatech.migration.xml.XmlUtility;
 import com.terracottatech.migration.validators.ValidationWrapper;
 import com.terracottatech.migration.xml.ClusteredConfigBuilder;
+import com.terracottatech.migration.xml.ConfigurationParser;
+import com.terracottatech.migration.xml.XmlUtility;
 import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.terracottatech.migration.exception.ErrorCode.UNKNOWN_ERROR;
@@ -67,14 +69,15 @@ public class MigrationImpl implements Migration {
   private final List<String[]> inputParamList = new ArrayList<>();
   private final List<String> allServers = new ArrayList<>();
   private final Map<Integer, List<String>> stripeServerNameMap = new HashMap<>();
-  private final NodeConfigurationHandler repositoryBuilder;
+  private final Consumer<Map<Tuple2<Integer, String>, Node>> repositoryBuilder;
 
-  public MigrationImpl(NodeConfigurationHandler nodeConfigurationHandler) {
+  public MigrationImpl(Consumer<Map<Tuple2<Integer, String>, Node>> nodeConfigurationHandler) {
     this.repositoryBuilder = nodeConfigurationHandler;
   }
 
   public MigrationImpl() {
-    this(null);
+    this(o -> {
+    });
   }
 
   public void processInput(String clusterName, List<String> migrationStrings) {
@@ -356,7 +359,7 @@ public class MigrationImpl implements Migration {
     clusteredConfigBuilder.createEntireCluster(clusterName);
 
     if (repositoryBuilder != null) {
-      repositoryBuilder.process(hostConfigMapNode);
+      repositoryBuilder.accept(hostConfigMapNode);
     }
   }
 

@@ -53,7 +53,7 @@ public class ConfigRepositoryGenerator {
 
     Map<String, NomadServer<String>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path stripe1 = Paths.get(ConfigRepositoryGenerator.class.getResource("/config-repositories/multi-stripe/stripe1.xml").toURI());
     Path stripe2 = Paths.get(ConfigRepositoryGenerator.class.getResource("/config-repositories/multi-stripe/stripe2.xml").toURI());
@@ -70,7 +70,7 @@ public class ConfigRepositoryGenerator {
 
     Map<String, NomadServer<String>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path stripe1 = Paths.get(ConfigRepositoryGenerator.class.getResource("/config-repositories/single-stripe-multi-node/stripe1.xml").toURI());
 
@@ -86,7 +86,7 @@ public class ConfigRepositoryGenerator {
 
     Map<String, NomadServer<String>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
-    MigrationImpl migration = new MigrationImpl(resultProcessor);
+    MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
     Path stripe1 = Paths.get(ConfigRepositoryGenerator.class.getResource("/config-repositories/single-stripe-single-node/stripe1.xml").toURI());
 

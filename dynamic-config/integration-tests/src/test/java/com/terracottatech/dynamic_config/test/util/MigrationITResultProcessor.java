@@ -19,13 +19,6 @@ public class MigrationITResultProcessor extends RepositoryStructureBuilder {
   }
 
   @Override
-  protected NomadServer<String> getNomadServer(final String nodeName) throws Exception {
-    NomadServer<String> nomadServer = super.getNomadServer(nodeName);
-    serverMap.put(nodeName, nomadServer);
-    return nomadServer;
-  }
-
-  @Override
   protected NomadServer<String> getNomadServer(final int stripeId, final String nodeName) throws Exception {
     NomadServer<String> nomadServer = super.getNomadServer(stripeId, nodeName);
     serverMap.put("stripe" + stripeId + "_" + nodeName, nomadServer);
