@@ -21,8 +21,6 @@ import org.junit.Rule;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -64,8 +62,6 @@ import static org.junit.Assert.assertThat;
 
 public class BaseStartupIT {
 
-  protected final Logger logger = LoggerFactory.getLogger(getClass());
-
   private static final int STRIPES = 2;
   private static final int NODES_PER_STRIPE = 2;
 
@@ -106,7 +102,6 @@ public class BaseStartupIT {
     try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
       properties.store(writer, "");
     }
-    logger.info("Generated cluster config property:\n - Location: {}\n - Variables: {}\n - Output: {}", dest.toAbsolutePath().normalize(), variables, properties);
     return dest;
   }
 
