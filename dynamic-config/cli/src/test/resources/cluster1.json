@@ -6,7 +6,6 @@
           "dataDirs": {
             "cache": "/data/cache1"
           },
-          "nodeRepositoryDir": "/config/node0",
           "nodeGroupPort": 0,
           "nodeHostname": "localhost",
           "nodeName": "node0",
@@ -25,7 +24,6 @@
           "dataDirs": {
             "cache": "/data/cache2"
           },
-          "nodeRepositoryDir": "/config/node1",
           "nodeGroupPort": 0,
           "nodeHostname": "localhost",
           "nodeName": "node1",
@@ -44,7 +42,6 @@
           "dataDirs": {
             "cache": "/data/cache2"
           },
-          "nodeRepositoryDir": "/config/node2",
           "nodeGroupPort": 0,
           "nodeHostname": "localhost",
           "nodeName": "node2",

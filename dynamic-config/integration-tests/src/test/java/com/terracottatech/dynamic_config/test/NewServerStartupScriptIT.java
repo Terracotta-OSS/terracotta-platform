@@ -52,7 +52,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleNodeConfigFile() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startServer("--config-file", configurationFile.toString());
+    startServer("--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
@@ -60,28 +60,28 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testStartingWithSingleNodeConfigFileWithHostPort() throws Exception {
     String port = String.valueOf(ports.getPort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port);
+    startServer("-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFileAndLicense() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile.toString(), "-l", licensePath().toString());
+    startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFileLicenseAndClusterName() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "-N", "tc-cluster");
+    startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "-N", "tc-cluster", "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithConfigFileContainingSubstitutionParams() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_substitution_params.properties");
-    startServer("--config-file", configurationFile.toString());
+    startServer("--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
 
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
     assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%h")));
@@ -90,7 +90,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithConfigFileContainingSubstitutionParamsAndLicense() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_substitution_params.properties");
-    startServer("--config-file", configurationFile.toString(), "--license-file", licensePath().toString());
+    startServer("--config-file", configurationFile.toString(), "--license-file", licensePath().toString(), "--node-repository-dir", "repository/stripe1/node-1");
 
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
@@ -98,14 +98,14 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testFailedStartupWithMultiNodeConfigFileAndLicense() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/multi-stripe.properties");
-    startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "-s", "localhost", "-p", String.valueOf(ports.getPorts()[0]));
+    startServer("-f", configurationFile.toString(), "-l", licensePath().toString(), "-s", "localhost", "-p", String.valueOf(ports.getPorts()[0]), "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("License file option can be used only with a one-node cluster config file"));
   }
 
   @Test
   public void testFailedStartupConfigFile_nonExistentFile() {
     Path configurationFile = Paths.get(".").resolve("blah");
-    startServer("--config-file", configurationFile.toString());
+    startServer("--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("Failed to read config file"));
   }
 
@@ -113,7 +113,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupConfigFile_invalidPort() throws Exception {
     String port = String.valueOf(ports.getPort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid1.properties");
-    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port);
+    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
   }
 
@@ -121,7 +121,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupConfigFile_invalidSecurity() throws Exception {
     String port = String.valueOf(ports.getPort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid2.properties");
-    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port);
+    startServer("--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
@@ -129,14 +129,14 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   public void testFailedStartupConfigFile_invalidCliParams() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startServer("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
-    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname' and '--node-port' parameters"));
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidCliParams_2() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile.toString(), "-r", configRepositoryPath().toString());
-    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname' and '--node-port' parameters"));
+    startServer("-f", configurationFile.toString(), "-m", configRepositoryPath().toString());
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
   @Test
@@ -192,7 +192,8 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
         "--node-hostname", "%h",
         "--node-bind-address", "%i",
         "--license-file", licensePath().toString(),
-        "--cluster-name", "tc-cluster"
+        "--cluster-name", "tc-cluster",
+        "--node-repository-dir", "%(user.dir)/repository/stripe1/node-1"
     );
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
@@ -240,9 +241,9 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
         "--config-file", configurationFile.toString(),
         "--node-hostname", "localhost",
         "--node-port", port,
-        "--node-repository-dir", "foo"
+        "--node-metadata-dir", "foo"
     );
-    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname' and '--node-port' parameters"));
+    waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
   private void startServer(String... cli) {

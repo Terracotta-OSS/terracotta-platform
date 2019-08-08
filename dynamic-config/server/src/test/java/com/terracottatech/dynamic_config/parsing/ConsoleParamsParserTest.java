@@ -46,7 +46,6 @@ public class ConsoleParamsParserTest {
     assertThat(node.getOffheapResources(), hasEntry("main", Measure.of(512L, MB)));
 
     assertThat(node.getNodeBackupDir(), is(nullValue()));
-    assertThat(node.getNodeRepositoryDir().toString(), is("%H" + separator + "terracotta" + separator + "repository"));
     assertThat(node.getNodeLogDir().toString(), is("%H" + separator + "terracotta" + separator + "logs"));
     assertThat(node.getNodeMetadataDir().toString(), is("%H" + separator + "terracotta" + separator + "metadata"));
     assertThat(node.getSecurityDir(), is(nullValue()));
@@ -95,7 +94,6 @@ public class ConsoleParamsParserTest {
     );
 
     assertThat(node.getNodeBackupDir().toString(), is("backup"));
-    assertThat(node.getNodeRepositoryDir().toString(), is("config"));
     assertThat(node.getNodeLogDir().toString(), is("logs"));
     assertThat(node.getNodeMetadataDir().toString(), is("metadata"));
     assertThat(node.getSecurityDir().toString(), is("security"));
@@ -119,7 +117,6 @@ public class ConsoleParamsParserTest {
     paramValueMap.put(CommonOptions.CLUSTER_NAME, "tc-cluster");
 
     paramValueMap.put(CommonOptions.NODE_BACKUP_DIR, "backup");
-    paramValueMap.put(CommonOptions.NODE_REPOSITORY_DIR, "config");
     paramValueMap.put(CommonOptions.NODE_LOG_DIR, "logs");
     paramValueMap.put(CommonOptions.NODE_METADATA_DIR, "metadata");
     paramValueMap.put(CommonOptions.SECURITY_DIR, "security");

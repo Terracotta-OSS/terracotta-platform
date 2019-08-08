@@ -46,11 +46,11 @@ import static java.util.Objects.requireNonNull;
 public class StartupManager {
   private static final Logger logger = LoggerFactory.getLogger(StartupManager.class);
 
-  void startUnconfigured(Cluster cluster, Node node) {
+  void startUnconfigured(Cluster cluster, Node node, String optionalNodeRepositoryFromCLI) {
     String nodeName = node.getNodeName();
     logger.info("Starting node: {} in UNCONFIGURED state", nodeName);
-    Path noderepositoryDir = getOrDefaultRepositoryDir(node.getNodeRepositoryDir().toString());
-    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(noderepositoryDir, nodeName);
+    Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeRepositoryDir, nodeName);
     registerTopologyService(new NodeContext(cluster, node), false, nomadServerManager);
     // This resolver will make sure to rebase the relative given path only if the given path is not absolute
     // and this check happens after doing the substitution.
@@ -58,23 +58,23 @@ public class StartupManager {
     PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
     Path configPath = new TransientTcConfig(node, userDirResolver).createTempTcConfigFile();
     startServer(
-        "-r", node.getNodeRepositoryDir().toString(),
+        "-r", nodeRepositoryDir.toString(),
         "--config-consistency",
         "--config", configPath.toAbsolutePath().toString(),
         "--node-name", nodeName
     );
   }
 
-  void startPreactivated(Cluster cluster, Node node, String licenseFile) {
+  void startPreactivated(Cluster cluster, Node node, String licenseFile, String optionalNodeRepositoryFromCLI) {
     String nodeName = node.getNodeName();
     logger.info("Starting node: {} in CONFIGURED state", nodeName);
-    Path noderepositoryDir = getOrDefaultRepositoryDir(node.getNodeRepositoryDir().toString());
-    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(noderepositoryDir, nodeName);
-    createConfigRepository(cluster, node, nomadServerManager);
+    Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeRepositoryDir, nodeName);
+    createConfigRepository(cluster, node, nomadServerManager, nodeRepositoryDir);
     TopologyService topologyService = registerTopologyService(new NodeContext(cluster, node), true, nomadServerManager);
     topologyService.installLicense(read(licenseFile));
     startServer(
-        "-r", noderepositoryDir.toString(),
+        "-r", nodeRepositoryDir.toString(),
         "-n", nodeName,
         "--node-name", nodeName
     );
@@ -150,8 +150,9 @@ public class StartupManager {
     return topologyService;
   }
 
-  private void createConfigRepository(Cluster cluster, Node node, NomadServerManager nomadServerManager) {
-    logger.debug("Creating node config repository at: {}", substitute(node.getNodeRepositoryDir().toAbsolutePath()));
+  private void createConfigRepository(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
+    requireNonNull(nodeRepositoryDir);
+    logger.debug("Creating node config repository at: {}", substitute(nodeRepositoryDir.toAbsolutePath()));
 
     nomadServerManager.upgradeForWrite(cluster.getStripeId(node).get(), node.getNodeName());
     logger.debug("Setting nomad writable successful");

@@ -33,6 +33,7 @@ public class TopologyServiceIT extends BaseStartupIT {
     nodeProcesses.add(NodeProcess.startNode(
         Kit.getOrCreatePath(),
         getBaseDir(),
+        "--node-repository-dir", "repository/stripe1/node-1",
         "-N", "tc-cluster",
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
         )
@@ -62,7 +63,6 @@ public class TopologyServiceIT extends BaseStartupIT {
           .setNodeGroupPort(ports.getPorts()[0] + 10)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
-          .setNodeRepositoryDir(pendingCluster.getSingleNode().get().getNodeRepositoryDir())
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
           .setNodeLogDir(Paths.get("logs", "stripe1", "node-1"))
           .setNodeBackupDir(Paths.get("backup", "stripe1"))

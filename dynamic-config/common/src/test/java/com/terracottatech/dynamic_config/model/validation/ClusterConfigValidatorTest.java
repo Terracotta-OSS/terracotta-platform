@@ -175,7 +175,6 @@ public class ClusterConfigValidatorTest {
     node.setNodeBackupDir(Paths.get("backup-" + random.nextInt()));
     node.setNodeMetadataDir(Paths.get("metadata-" + random.nextInt()));
     node.setNodeLogDir(Paths.get("logs-" + random.nextInt()));
-    node.setNodeRepositoryDir(Paths.get("config-" + random.nextInt()));
     node.setNodeName("node-" + random.nextInt());
     node.setNodeHostname("host-" + random.nextInt());
     node.setNodePort(random.nextInt());

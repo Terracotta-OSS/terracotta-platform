@@ -152,7 +152,7 @@ public class Options {
         .filter(isSpecified)
         .filter(pd -> {
           String longestName = pd.getLongestName();
-          return !longestName.equals("--license-file") && !longestName.equals("--config-file");
+          return !longestName.equals("--license-file") && !longestName.equals("--config-file")  && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
         })
         .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
   }
@@ -169,26 +169,30 @@ public class Options {
       // when using config file
 
       Set<String> filteredOptions = new HashSet<>(specifiedOptions);
+      System.out.println(specifiedOptions);
       filteredOptions.remove("-f");
       filteredOptions.remove("-l");
       filteredOptions.remove("-s");
       filteredOptions.remove("-p");
       filteredOptions.remove("-N");
+      filteredOptions.remove("-r");
 
       filteredOptions.remove("--config-file");
       filteredOptions.remove("--license-file");
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
       filteredOptions.remove(addDashDash(NODE_PORT));
       filteredOptions.remove(addDashDash(CLUSTER_NAME));
+      filteredOptions.remove(addDashDash(NODE_REPOSITORY_DIR));
 
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
             String.format(
-                "'--config-file' parameter can only be used with '%s', '%s', '%s' and '%s' parameters",
+                "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 "--license-file",
                 addDashDash(CLUSTER_NAME),
                 addDashDash(NODE_HOSTNAME),
-                addDashDash(NODE_PORT)
+                addDashDash(NODE_PORT),
+                addDashDash(NODE_REPOSITORY_DIR)
             )
         );
       }

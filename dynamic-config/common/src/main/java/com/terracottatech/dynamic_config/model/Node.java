@@ -32,7 +32,6 @@ public class Node implements Cloneable {
   private int nodeGroupPort;
   private String nodeBindAddress;
   private String nodeGroupBindAddress;
-  private Path nodeRepositoryDir;
   private Path nodeMetadataDir;
   private Path nodeLogDir;
   private Path nodeBackupDir;
@@ -69,10 +68,6 @@ public class Node implements Cloneable {
 
   public String getNodeGroupBindAddress() {
     return nodeGroupBindAddress;
-  }
-
-  public Path getNodeRepositoryDir() {
-    return nodeRepositoryDir;
   }
 
   public Path getNodeMetadataDir() {
@@ -154,11 +149,6 @@ public class Node implements Cloneable {
 
   public Node setNodeGroupBindAddress(String nodeGroupBindAddress) {
     this.nodeGroupBindAddress = nodeGroupBindAddress;
-    return this;
-  }
-
-  public Node setNodeRepositoryDir(Path nodeRepositoryDir) {
-    this.nodeRepositoryDir = nodeRepositoryDir;
     return this;
   }
 
@@ -288,7 +278,6 @@ public class Node implements Cloneable {
         .setFailoverPriority(failoverPriority)
         .setNodeBackupDir(nodeBackupDir)
         .setNodeBindAddress(nodeBindAddress)
-        .setNodeRepositoryDir(nodeRepositoryDir)
         .setNodeGroupBindAddress(nodeGroupBindAddress)
         .setNodeGroupPort(nodeGroupPort)
         .setNodeHostname(nodeHostname)
@@ -317,7 +306,6 @@ public class Node implements Cloneable {
         Objects.equals(nodeHostname, node.nodeHostname) &&
         Objects.equals(nodeBindAddress, node.nodeBindAddress) &&
         Objects.equals(nodeGroupBindAddress, node.nodeGroupBindAddress) &&
-        Objects.equals(nodeRepositoryDir, node.nodeRepositoryDir) &&
         Objects.equals(nodeMetadataDir, node.nodeMetadataDir) &&
         Objects.equals(nodeLogDir, node.nodeLogDir) &&
         Objects.equals(nodeBackupDir, node.nodeBackupDir) &&
@@ -333,7 +321,7 @@ public class Node implements Cloneable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeRepositoryDir,
+    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress,
         nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls,
         securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs);
   }
@@ -347,7 +335,6 @@ public class Node implements Cloneable {
         ", nodeGroupPort=" + nodeGroupPort +
         ", nodeBindAddress='" + nodeBindAddress + '\'' +
         ", nodeGroupBindAddress='" + nodeGroupBindAddress + '\'' +
-        ", nodeRepositoryDir='" + nodeRepositoryDir + '\'' +
         ", nodeMetadataDir='" + nodeMetadataDir + '\'' +
         ", nodeLogDir='" + nodeLogDir + '\'' +
         ", nodeBackupDir='" + nodeBackupDir + '\'' +
@@ -447,11 +434,6 @@ public class Node implements Cloneable {
     if (getNodeGroupBindAddress() == null) {
       setNodeGroupBindAddress(DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS);
       filledPropertyConsumer.accept(CommonOptions.NODE_GROUP_BIND_ADDRESS, DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS);
-    }
-
-    if (getNodeRepositoryDir() == null) {
-      setNodeRepositoryDir(Paths.get(DynamicConfigConstants.DEFAULT_REPOSITORY_DIR));
-      filledPropertyConsumer.accept(CommonOptions.NODE_REPOSITORY_DIR, DynamicConfigConstants.DEFAULT_REPOSITORY_DIR);
     }
 
     if (getNodeLogDir() == null) {
