@@ -22,8 +22,6 @@ import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.config.Config;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.Server;
@@ -66,7 +64,6 @@ import static java.util.stream.Collectors.toMap;
  */
 public class XmlConfigMapper {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(XmlConfigMapper.class);
   private static final String WILDCARD_IP = "0.0.0.0";
   private static Map<String, ExtendedConfigParser> CONFIG_PARSERS = new HashMap<>();
   private static Map<String, ServiceConfigParser> SERVICE_PARSERS = new HashMap<>();
@@ -100,7 +97,6 @@ public class XmlConfigMapper {
   }
 
   public NodeContext fromXml(String nodeName, String xml) {
-    LOGGER.trace("Parsing:\n{}", xml);
     try {
       TcConfiguration xmlTcConfiguration = CustomTCConfigurationParser.parse(xml);
       TcConfig platformConfiguration = xmlTcConfiguration.getPlatformConfiguration();
@@ -231,14 +227,12 @@ public class XmlConfigMapper {
   }
 
   private static Map<Class<?>, List<Object>> parsePlugins(String xml, TcConfig tcConfig) {
-    Map<Class<?>, List<Object>> plugins = tcConfig
+    return tcConfig
         .getPlugins()
         .getConfigOrService()
         .stream()
         .flatMap(o -> XmlConfigMapper.parsePlugin(xml, o))
         .collect(groupingBy(Object::getClass));
-    LOGGER.trace("parsePlugins: {}", plugins);
-    return plugins;
   }
 
   @SuppressWarnings("unchecked")
