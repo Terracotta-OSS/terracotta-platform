@@ -91,6 +91,12 @@ public class NodeProcess implements Closeable {
     Map<String, String> eventMap = new HashMap<String, String>();
     eventMap.put("PID is", "PID");
 
+    try {
+      Files.createDirectories(workingDir);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
     AnyProcess process = AnyProcess.newBuilder()
         .workingDir(workingDir.toFile())
         .command(concat(of(scriptPath.toString()), of(args)).toArray(String[]::new))

@@ -8,6 +8,7 @@ import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Test;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -74,6 +75,7 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
         .replace("${TSA_PORT}", String.valueOf(ports[0]))
         .replace("${GROUP_PORT}", String.valueOf(ports[1]));
 
+    Files.createDirectories(getBaseDir());
     write(tcConfigPath, serverConfiguration.getBytes(UTF_8));
     return tcConfigPath;
   }

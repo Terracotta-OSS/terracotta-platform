@@ -9,10 +9,10 @@ import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
-import com.terracottatech.utilities.junit.TmpDir;
 import com.terracottatech.testing.lock.PortLockingRule;
 import com.terracottatech.utilities.PropertyResolver;
 import com.terracottatech.utilities.fn.IntFn.IntTriConsumer;
+import com.terracottatech.utilities.junit.TmpDir;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.hamcrest.Matcher;
@@ -102,6 +102,7 @@ public class BaseStartupIT {
     }
     Properties variables = variables();
     properties = new PropertyResolver(variables).resolveAll(properties);
+    Files.createDirectories(getBaseDir());
     try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
       properties.store(writer, "");
     }
