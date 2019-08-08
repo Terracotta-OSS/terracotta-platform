@@ -38,9 +38,10 @@ class StripeConfiguration {
     Map<String, ServerConfiguration> stripeConfiguration = new HashMap<>();
     Servers servers = createServers(stripe);
     for (Node node : stripe.getNodes()) {
-      ServerConfiguration prevValue = stripeConfiguration.putIfAbsent(node.getNodeName(), new ServerConfiguration(node, servers, pathResolver));
-      if (prevValue != null) {
+      if (stripeConfiguration.containsKey(node.getNodeName())) {
         throw new IllegalStateException("Duplicate node name: " + node.getNodeName() + " found in stripe: " + stripe);
+      } else {
+        stripeConfiguration.put(node.getNodeName(), new ServerConfiguration(node, servers, pathResolver));
       }
     }
     return stripeConfiguration;
