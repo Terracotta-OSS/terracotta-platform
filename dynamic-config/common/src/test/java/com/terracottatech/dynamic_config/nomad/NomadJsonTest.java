@@ -27,14 +27,16 @@ import static org.junit.Assert.assertThat;
  */
 public class NomadJsonTest {
 
+  private Cluster cluster = new Cluster("myClusterName", new Stripe(new Node()
+      .setNodeName("foo")
+      .setClientReconnectWindow(60, TimeUnit.SECONDS).setOffheapResource("foo", 1, MemoryUnit.GB)));
+
   @Test
   public void test_ser_deser() throws IOException {
     NomadChange[] changes = {
-        new ClusterActivationNomadChange(new Cluster("myClusterName", new Stripe(new Node()
-            .setNodeName("foo")
-            .setClientReconnectWindow(60, TimeUnit.SECONDS).setOffheapResource("foo", 1, MemoryUnit.GB)))),
-        new ConfigMigrationNomadChange("xml config"),
-        new ConfigRepairNomadChange("xml config"),
+        new ClusterActivationNomadChange(cluster),
+        new ConfigMigrationNomadChange(cluster),
+        new ConfigRepairNomadChange(cluster),
         SettingNomadChange.set(Applicability.node(1, "node1"), OFFHEAP, "foo", "2GB"),
         new MultipleNomadChanges(
             SettingNomadChange.set(Applicability.node(1, "node1"), OFFHEAP, "foo", "2GB"),

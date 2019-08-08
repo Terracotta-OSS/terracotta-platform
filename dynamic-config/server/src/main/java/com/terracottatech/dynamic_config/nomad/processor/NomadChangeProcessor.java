@@ -4,11 +4,12 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.NomadException;
 
 public interface NomadChangeProcessor<T extends NomadChange> {
-  String tryApply(String baseConfig, T change) throws NomadException;
+  NodeContext tryApply(NodeContext baseConfig, T change) throws NomadException;
 
   void apply(T change) throws NomadException;
 }

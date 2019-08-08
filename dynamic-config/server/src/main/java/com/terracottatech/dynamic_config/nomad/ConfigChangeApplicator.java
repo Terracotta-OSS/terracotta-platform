@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.nomad;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.processor.NomadChangeProcessor;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
 import com.terracottatech.nomad.client.change.NomadChange;
@@ -19,7 +20,7 @@ import java.util.List;
 import static com.terracottatech.nomad.server.PotentialApplicationResult.allow;
 import static com.terracottatech.nomad.server.PotentialApplicationResult.reject;
 
-public class ConfigChangeApplicator implements ChangeApplicator<String> {
+public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeApplicator.class);
 
   private final NomadChangeProcessor<NomadChange> commandProcessor;
@@ -29,7 +30,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<String> {
   }
 
   @Override
-  public PotentialApplicationResult<String> tryApply(String baseConfig, NomadChange change) {
+  public PotentialApplicationResult<NodeContext> tryApply(NodeContext baseConfig, NomadChange change) {
     // supports multiple changes
     List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
 

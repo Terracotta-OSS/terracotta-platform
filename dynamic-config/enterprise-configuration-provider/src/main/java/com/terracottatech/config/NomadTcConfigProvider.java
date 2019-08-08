@@ -4,15 +4,32 @@
  */
 package com.terracottatech.config;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
+import com.terracottatech.utilities.PathResolver;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
+
+import java.nio.file.Paths;
 
 public class NomadTcConfigProvider implements TcConfigProvider {
   @Override
   public TcConfiguration provide() throws Exception {
-    String configuration = NomadBootstrapper.getNomadServerManager().getConfiguration();
+    // Sadly platform does not support anything else from XML to load so we have no choice but to re-generate on fly this XML data
+    NodeContext configuration = NomadBootstrapper.getNomadServerManager().getConfiguration();
+    // This path resolver is used when converting a model to XML.
+    // It makes sure to resolve any relative path to absolute ones based on the working directory.
+    // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
+    // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
+    // the config repository: repository/config.
+    // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
+    // That is why we need to force the resolving within the XML relatively to the user directory.
+    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
+    XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(userDirResolver);
+    String xml = xmlConfigMapper.toXml(configuration);
     // TCConfigurationParser substitutes values for platform parameters, so anything known to platform needn't be substituted before this
-    return TCConfigurationParser.parse(configuration);
+    return TCConfigurationParser.parse(xml);
   }
 }

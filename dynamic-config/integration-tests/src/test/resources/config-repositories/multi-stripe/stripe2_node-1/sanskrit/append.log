@@ -1,54 +1,290 @@
-2019-08-01T20:07:35.493Z
+2019-08-08T20:26:13.892Z
 {
   "mutativeMessageCount" : 1,
   "mode" : "ACCEPTING",
   "currentVersion" : 0,
   "highestVersion" : 0
 }
-ef73c0b205839babad1eecc80515b213ea6e3446
+af22f9426652777c2c0a7510514dae8a1d84c310
 
-2019-08-01T20:07:35.635Z
+2019-08-08T20:26:14.164Z
 {
   "mutativeMessageCount" : 2,
   "mode" : "PREPARED",
-  "latestChangeUuid" : "94f1a803-435f-4a75-b293-46e5c2c21257",
+  "latestChangeUuid" : "69c8fdc5-1b49-4f73-8441-211a35a464e0",
   "highestVersion" : 1,
   "lastMutationHost" : "MCMATC01",
   "lastMutationUser" : "mathieu",
-  "94f1a803-435f-4a75-b293-46e5c2c21257" : {
+  "69c8fdc5-1b49-4f73-8441-211a35a464e0" : {
     "state" : "PREPARED",
     "version" : 1,
     "operation" : {
       "type" : "ConfigMigrationNomadChange",
-      "configuration" : "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:ohr=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr1=\"http://www.terracotta.org/config/offheap-resource\" xmlns:persistence=\"http://www.terracottatech.com/config/platform-persistence\">\n  <plugins>\n    <config>\n      <ohr:data-directories>\n        <ohr:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe2</ohr:directory>\n      </ohr:data-directories>\n    </config>\n    <service>\n      <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n        <backup-location path=\"%(user.dir)/backup/stripe2\"/>\n      </backup-restore>\n    </service>\n    <service>\n      <persistence:platform-persistence data-directory-id=\"root1\"/>\n    </service>\n    <config>\n      <ohr1:offheap-resources>\n        <ohr1:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr1:resource>\n      </ohr1:offheap-resources>\n    </config>\n    <config>\n      <cl:cluster currentStripeId=\"2\" xmlns:cl=\"http://www.terracotta.org/config/cluster\">\n        <cl:name>testCluster</cl:name>\n        <cl:stripe>\n          <cl:node>\n            <cl:name>node-1</cl:name>\n            <cl:server-config>\n              <tc-config xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n                <plugins>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe1</data:directory>\n                    </data:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe1\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe1/node-1</logs>\n                    <tsa-port>9410</tsa-port>\n                    <tsa-group-port>9430</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe1/node-2</logs>\n                    <tsa-port>9510</tsa-port>\n                    <tsa-group-port>9530</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n          <cl:node>\n            <cl:name>node-2</cl:name>\n            <cl:server-config>\n              <tc-config xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n                <plugins>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe1</data:directory>\n                    </data:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe1\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe1/node-1</logs>\n                    <tsa-port>9410</tsa-port>\n                    <tsa-group-port>9430</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe1/node-2</logs>\n                    <tsa-port>9510</tsa-port>\n                    <tsa-group-port>9530</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n        <cl:stripe>\n          <cl:node>\n            <cl:name>node-1</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <ohr:data-directories>\n                      <ohr:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe2</ohr:directory>\n                    </ohr:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe2\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr1:offheap-resources>\n                      <ohr1:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr1:resource>\n                    </ohr1:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe2/node-1</logs>\n                    <tsa-port>9610</tsa-port>\n                    <tsa-group-port>9630</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe2/node-2</logs>\n                    <tsa-port>9710</tsa-port>\n                    <tsa-group-port>9730</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n          <cl:node>\n            <cl:name>node-2</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <ohr:data-directories>\n                      <ohr:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe2</ohr:directory>\n                    </ohr:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe2\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr1:offheap-resources>\n                      <ohr1:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr1:resource>\n                    </ohr1:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe2/node-1</logs>\n                    <tsa-port>9610</tsa-port>\n                    <tsa-group-port>9630</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe2/node-2</logs>\n                    <tsa-port>9710</tsa-port>\n                    <tsa-group-port>9730</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n      </cl:cluster>\n    </config>\n  </plugins>\n  <tc-properties/>\n  <servers>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n      <logs>%(user.dir)/logs/stripe2/node-1</logs>\n      <tsa-port>9610</tsa-port>\n      <tsa-group-port>9630</tsa-group-port>\n    </server>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n      <logs>%(user.dir)/logs/stripe2/node-2</logs>\n      <tsa-port>9710</tsa-port>\n      <tsa-group-port>9730</tsa-group-port>\n    </server>\n    <client-reconnect-window>120</client-reconnect-window>\n  </servers>\n  <failover-priority>\n    <availability/>\n  </failover-priority>\n</tc-config>\n",
+      "cluster" : {
+        "name" : "testCluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe1"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe1",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe1/node-1",
+            "nodeName" : "node-1",
+            "nodePort" : 9410,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          }, {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe1"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe1",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9530,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe1/node-2",
+            "nodeName" : "node-2",
+            "nodePort" : 9510,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          } ]
+        }, {
+          "nodes" : [ {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe2"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe2",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9630,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe2/node-1",
+            "nodeName" : "node-1",
+            "nodePort" : 9610,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          }, {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe2"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe2",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9730,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe2/node-2",
+            "nodeName" : "node-2",
+            "nodePort" : 9710,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          } ]
+        } ]
+      },
+      "applicability" : {
+        "type" : "CLUSTER"
+      },
       "summary" : "Migrating configuration"
     },
-    "changeResultHash" : "68265b2d1194a0e1cd7c4ef6717ac001b030d7f5",
+    "changeResultHash" : "1b830ae6158ce4eb1c2e63f8ee3eea7eefeaa16e",
     "creationHost" : "MCMATC01",
     "creationUser" : "mathieu"
   }
 }
-d09141b6ea10a9253ce2a1a0f3560947643bf91e
+0a71e47d97947de09e17087ed8228676cdbb019d
 
-2019-08-01T20:07:35.697Z
+2019-08-08T20:26:14.350Z
 {
   "mutativeMessageCount" : 3,
   "mode" : "ACCEPTING",
   "currentVersion" : 1,
   "lastMutationHost" : "MCMATC01",
   "lastMutationUser" : "mathieu",
-  "94f1a803-435f-4a75-b293-46e5c2c21257" : {
+  "69c8fdc5-1b49-4f73-8441-211a35a464e0" : {
     "state" : "COMMITTED",
     "version" : 1,
     "operation" : {
       "type" : "ConfigMigrationNomadChange",
-      "configuration" : "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:ohr=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr1=\"http://www.terracotta.org/config/offheap-resource\" xmlns:persistence=\"http://www.terracottatech.com/config/platform-persistence\">\n  <plugins>\n    <config>\n      <ohr:data-directories>\n        <ohr:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe2</ohr:directory>\n      </ohr:data-directories>\n    </config>\n    <service>\n      <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n        <backup-location path=\"%(user.dir)/backup/stripe2\"/>\n      </backup-restore>\n    </service>\n    <service>\n      <persistence:platform-persistence data-directory-id=\"root1\"/>\n    </service>\n    <config>\n      <ohr1:offheap-resources>\n        <ohr1:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr1:resource>\n      </ohr1:offheap-resources>\n    </config>\n    <config>\n      <cl:cluster currentStripeId=\"2\" xmlns:cl=\"http://www.terracotta.org/config/cluster\">\n        <cl:name>testCluster</cl:name>\n        <cl:stripe>\n          <cl:node>\n            <cl:name>node-1</cl:name>\n            <cl:server-config>\n              <tc-config xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n                <plugins>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe1</data:directory>\n                    </data:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe1\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe1/node-1</logs>\n                    <tsa-port>9410</tsa-port>\n                    <tsa-group-port>9430</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe1/node-2</logs>\n                    <tsa-port>9510</tsa-port>\n                    <tsa-group-port>9530</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n          <cl:node>\n            <cl:name>node-2</cl:name>\n            <cl:server-config>\n              <tc-config xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n                <plugins>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe1</data:directory>\n                    </data:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe1\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe1/node-1</logs>\n                    <tsa-port>9410</tsa-port>\n                    <tsa-group-port>9430</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe1/node-2</logs>\n                    <tsa-port>9510</tsa-port>\n                    <tsa-group-port>9530</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n        <cl:stripe>\n          <cl:node>\n            <cl:name>node-1</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <ohr:data-directories>\n                      <ohr:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe2</ohr:directory>\n                    </ohr:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe2\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr1:offheap-resources>\n                      <ohr1:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr1:resource>\n                    </ohr1:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe2/node-1</logs>\n                    <tsa-port>9610</tsa-port>\n                    <tsa-group-port>9630</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe2/node-2</logs>\n                    <tsa-port>9710</tsa-port>\n                    <tsa-group-port>9730</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n          <cl:node>\n            <cl:name>node-2</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <ohr:data-directories>\n                      <ohr:directory name=\"root1\" use-for-platform=\"false\">%(user.dir)/metadata/stripe2</ohr:directory>\n                    </ohr:data-directories>\n                  </config>\n                  <service>\n                    <backup-restore xmlns=\"http://www.terracottatech.com/config/backup-restore\">\n                      <backup-location path=\"%(user.dir)/backup/stripe2\"/>\n                    </backup-restore>\n                  </service>\n                  <service>\n                    <persistence:platform-persistence data-directory-id=\"root1\"/>\n                  </service>\n                  <config>\n                    <ohr1:offheap-resources>\n                      <ohr1:resource name=\"primary-server-resource\" unit=\"MB\">64</ohr1:resource>\n                    </ohr1:offheap-resources>\n                  </config>\n                </plugins>\n                <tc-properties/>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe2/node-1</logs>\n                    <tsa-port>9610</tsa-port>\n                    <tsa-group-port>9630</tsa-group-port>\n                  </server>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n                    <logs>%(user.dir)/logs/stripe2/node-2</logs>\n                    <tsa-port>9710</tsa-port>\n                    <tsa-group-port>9730</tsa-group-port>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n      </cl:cluster>\n    </config>\n  </plugins>\n  <tc-properties/>\n  <servers>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n      <logs>%(user.dir)/logs/stripe2/node-1</logs>\n      <tsa-port>9610</tsa-port>\n      <tsa-group-port>9630</tsa-group-port>\n    </server>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-2\">\n      <logs>%(user.dir)/logs/stripe2/node-2</logs>\n      <tsa-port>9710</tsa-port>\n      <tsa-group-port>9730</tsa-group-port>\n    </server>\n    <client-reconnect-window>120</client-reconnect-window>\n  </servers>\n  <failover-priority>\n    <availability/>\n  </failover-priority>\n</tc-config>\n",
+      "cluster" : {
+        "name" : "testCluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe1"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe1",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe1/node-1",
+            "nodeName" : "node-1",
+            "nodePort" : 9410,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          }, {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe1"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe1",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9530,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe1/node-2",
+            "nodeName" : "node-2",
+            "nodePort" : 9510,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          } ]
+        }, {
+          "nodes" : [ {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe2"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe2",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9630,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe2/node-1",
+            "nodeName" : "node-1",
+            "nodePort" : 9610,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          }, {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : {
+              "root1" : "%(user.dir)/metadata/stripe2"
+            },
+            "failoverPriority" : "availability",
+            "nodeBackupDir" : "%(user.dir)/backup/stripe2",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9730,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe2/node-2",
+            "nodeName" : "node-2",
+            "nodePort" : 9710,
+            "offheapResources" : {
+              "primary-server-resource" : {
+                "quantity" : 64,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          } ]
+        } ]
+      },
+      "applicability" : {
+        "type" : "CLUSTER"
+      },
       "summary" : "Migrating configuration"
     },
-    "changeResultHash" : "68265b2d1194a0e1cd7c4ef6717ac001b030d7f5",
+    "changeResultHash" : "1b830ae6158ce4eb1c2e63f8ee3eea7eefeaa16e",
     "creationHost" : "MCMATC01",
     "creationUser" : "mathieu"
   }
 }
-4d7e0bf788050b08653b29803a6ba17fa9840733
+db975776a70ea1e998d6bff31e2e208ff3a0a25f
 

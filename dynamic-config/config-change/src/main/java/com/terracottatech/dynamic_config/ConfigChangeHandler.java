@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type;
 import org.terracotta.entity.PlatformConfiguration;
@@ -17,7 +18,7 @@ public interface ConfigChangeHandler {
 
   void initialize(PlatformConfiguration platformConfiguration);
 
-  String tryApply(String baseConfig, SettingNomadChange change) throws InvalidConfigChangeException;
+  NodeContext tryApply(NodeContext baseConfig, SettingNomadChange change) throws InvalidConfigChangeException;
 
   void apply(SettingNomadChange change);
 }

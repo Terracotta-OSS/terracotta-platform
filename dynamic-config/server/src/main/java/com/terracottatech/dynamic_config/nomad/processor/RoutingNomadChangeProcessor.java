@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.NomadException;
 
@@ -24,7 +25,7 @@ public class RoutingNomadChangeProcessor implements NomadChangeProcessor<NomadCh
   }
 
   @Override
-  public String tryApply(String baseConfig, NomadChange change) throws NomadException {
+  public NodeContext tryApply(NodeContext baseConfig, NomadChange change) throws NomadException {
     NomadChangeProcessor<NomadChange> processor = getProcessor(change);
     return processor.tryApply(baseConfig, change);
   }

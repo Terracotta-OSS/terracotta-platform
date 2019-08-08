@@ -4,6 +4,9 @@
  */
 package com.terracottatech.dynamic_config.nomad;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.nomad.persistence.DefaultHashComputer;
 import com.terracottatech.dynamic_config.nomad.persistence.FileConfigStorage;
 import com.terracottatech.dynamic_config.nomad.persistence.InitialConfigStorage;
 import com.terracottatech.dynamic_config.nomad.persistence.SanskritNomadServerState;
@@ -12,31 +15,27 @@ import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServerImpl;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
-import com.terracottatech.persistence.sanskrit.HashUtils;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_EXT;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_PREFIX;
-
 public class UpgradableNomadServerFactory {
-  public static UpgradableNomadServer<String> createServer(NomadRepositoryManager repositoryManager,
-                                                           ChangeApplicator<String> changeApplicator,
-                                                           String nodeName) throws SanskritException, NomadException {
+  public static UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
+                                                             ChangeApplicator<NodeContext> changeApplicator,
+                                                             String nodeName) throws SanskritException, NomadException {
+    ObjectMapper objectMapper = NomadJson.buildObjectMapper();
     return new NomadServerImpl<>(
         new SanskritNomadServerState<>(
             Sanskrit.init(
                 new FileBasedFilesystemDirectory(repositoryManager.getSanskritPath()),
-                NomadJson.buildObjectMapper()
+                objectMapper
             ),
             new InitialConfigStorage<>(
                 new FileConfigStorage(
                     repositoryManager.getConfigPath(),
-                    version -> FILENAME_PREFIX + "." + nodeName + "." + version + "." + FILENAME_EXT
-                )
+                    nodeName                )
             ),
-            HashUtils::generateHash
+            new DefaultHashComputer(objectMapper)
         ),
         changeApplicator
     );

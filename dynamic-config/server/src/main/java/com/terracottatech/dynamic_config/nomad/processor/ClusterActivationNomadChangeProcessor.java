@@ -4,40 +4,31 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.nomad.ConfigController;
-import com.terracottatech.dynamic_config.xml.XmlConfiguration;
 import com.terracottatech.nomad.server.NomadException;
-import com.terracottatech.utilities.PathResolver;
 
 import static java.util.Objects.requireNonNull;
 
 public class ClusterActivationNomadChangeProcessor implements NomadChangeProcessor<ClusterActivationNomadChange> {
 
   private final ConfigController configController;
-  private final PathResolver pathResolver;
 
-  public ClusterActivationNomadChangeProcessor(ConfigController configController, PathResolver pathResolver) {
+  public ClusterActivationNomadChangeProcessor(ConfigController configController) {
     this.configController = requireNonNull(configController);
-    this.pathResolver = pathResolver;
   }
 
   @Override
-  public String tryApply(String baseConfig, ClusterActivationNomadChange change) throws NomadException {
+  public NodeContext tryApply(NodeContext baseConfig, ClusterActivationNomadChange change) throws NomadException {
     if (baseConfig != null) {
       throw new NomadException("Existing config must be null. Found: " + baseConfig);
     }
 
-    try {
-      return new XmlConfiguration(
-          change.getCluster(),
-          this.configController.getStripeId(),
-          this.configController.getNodeName(),
-          pathResolver
-      ).toString();
-    } catch (Exception e) {
-      throw new NomadException("Caught exception while converting cluster config to xml", e);
-    }
+    return new NodeContext(
+        change.getCluster(),
+        this.configController.getStripeId(),
+        this.configController.getNodeName());
   }
 
   @Override

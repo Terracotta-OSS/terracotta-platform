@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.Applicability;
 import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.dynamic_config.nomad.FilteredNomadChange;
@@ -23,7 +24,7 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
   }
 
   @Override
-  public String tryApply(String baseConfig, NomadChange change) throws NomadException {
+  public NodeContext tryApply(NodeContext baseConfig, NomadChange change) throws NomadException {
     return applicableToThisServer(change) ? underlying.tryApply(baseConfig, change) : baseConfig;
   }
 

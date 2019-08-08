@@ -6,28 +6,18 @@ package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.terracottatech.nomad.client.change.NomadChange;
-
-import java.util.Objects;
-
-import static java.util.Objects.requireNonNull;
+import com.terracottatech.dynamic_config.model.Cluster;
 
 /**
  * Nomad change that supports repairing configuration
  *
  * @author Mathieu Carbou
  */
-public class ConfigRepairNomadChange implements NomadChange {
-
-  private final String configuration;
+public class ConfigRepairNomadChange extends TopologyNomadChange {
 
   @JsonCreator
-  public ConfigRepairNomadChange(@JsonProperty("configuration") String configuration) {
-    this.configuration = requireNonNull(configuration);
-  }
-
-  public String getConfiguration() {
-    return configuration;
+  public ConfigRepairNomadChange(@JsonProperty("cluster") Cluster cluster) {
+    super(cluster, Applicability.cluster());
   }
 
   @Override
@@ -36,22 +26,10 @@ public class ConfigRepairNomadChange implements NomadChange {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ConfigRepairNomadChange)) return false;
-    ConfigRepairNomadChange that = (ConfigRepairNomadChange) o;
-    return getConfiguration().equals(that.getConfiguration());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(getConfiguration());
-  }
-
-  @Override
   public String toString() {
     return "ConfigRepairNomadChange{" +
-        "configuration='" + configuration + '\'' +
+        "cluster=" + getCluster() +
+        ", applicability=" + getApplicability() +
         '}';
   }
 }

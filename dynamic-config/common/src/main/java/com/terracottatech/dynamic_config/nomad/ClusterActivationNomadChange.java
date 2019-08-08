@@ -8,8 +8,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.terracottatech.dynamic_config.model.Cluster;
 
-import java.util.Objects;
-
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -17,19 +15,12 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-public class ClusterActivationNomadChange extends FilteredNomadChange {
-
-  private final Cluster cluster;
+public class ClusterActivationNomadChange extends TopologyNomadChange {
 
   @JsonCreator
   public ClusterActivationNomadChange(@JsonProperty("cluster") Cluster cluster) {
-    super(Applicability.cluster());
-    this.cluster = requireNonNull(cluster);
+    super(cluster, Applicability.cluster());
     requireNonNull(cluster.getName());
-  }
-
-  public Cluster getCluster() {
-    return cluster;
   }
 
   @Override
@@ -38,24 +29,10 @@ public class ClusterActivationNomadChange extends FilteredNomadChange {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ClusterActivationNomadChange)) return false;
-    if (!super.equals(o)) return false;
-    ClusterActivationNomadChange that = (ClusterActivationNomadChange) o;
-    return getCluster().equals(that.getCluster());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode(), getCluster());
-  }
-
-  @Override
   public String toString() {
     return "ClusterActivationNomadChange{" +
-        "cluster=" + cluster +
-        ", applicability=" + applicability +
+        "cluster=" + getCluster() +
+        ", applicability=" + getApplicability() +
         '}';
   }
 }

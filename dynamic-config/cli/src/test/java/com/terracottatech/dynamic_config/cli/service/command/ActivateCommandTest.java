@@ -10,6 +10,7 @@ import com.terracottatech.dynamic_config.cli.service.NomadTestHelper;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RejectionReason;
@@ -135,7 +136,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
-      NomadServer<String> mock = nomadServerMock("localhost", port);
+      NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(reject(RejectionReason.UNACCEPTABLE, "error", "host", "user"));
     }));
@@ -152,7 +153,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
 
-      NomadServer<String> mock = nomadServerMock("localhost", port);
+      NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
       verify(mock, times(1)).prepare(any(PrepareMessage.class));
       verifyNoMoreInteractions(mock);
@@ -169,7 +170,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
-      NomadServer<String> mock = nomadServerMock("localhost", port);
+      NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenReturn(reject(RejectionReason.UNACCEPTABLE, "error", "host", "user"));
@@ -189,7 +190,7 @@ public class ActivateCommandTest extends BaseTest {
     IntStream.of(ports).forEach(rethrow(port -> {
       verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
 
-      NomadServer<String> mock = nomadServerMock("localhost", port);
+      NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
       verify(mock, times(1)).prepare(any(PrepareMessage.class));
       verify(mock, times(1)).commit(any(CommitMessage.class));
@@ -226,7 +227,7 @@ public class ActivateCommandTest extends BaseTest {
   private void doRunAndVerify(String clusterName, ActivateCommand command) {
     IntStream.of(ports).forEach(rethrow(port -> {
       TopologyService topologyService = topologyServiceMock("localhost", port);
-      NomadServer<String> mock = nomadServerMock("localhost", port);
+      NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       DiagnosticService diagnosticService = diagnosticServiceMock("localhost", port);
 
       doNothing().when(topologyService).installLicense(any(String.class));

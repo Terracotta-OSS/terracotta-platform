@@ -4,6 +4,10 @@
  */
 package com.terracottatech.dynamic_config.nomad;
 
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
@@ -45,6 +49,8 @@ import static org.mockito.Mockito.when;
 public class NomadServerManagerTest {
   @Spy
   NomadServerManager spyNomadManager;
+
+  private NodeContext topology = new NodeContext(new Cluster("foo", new Stripe(new Node().setNodeName("bar"))), 1, "bar");
 
   @Test
   public void testCreateConfigController() {
@@ -91,7 +97,7 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
@@ -113,7 +119,7 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
@@ -131,13 +137,13 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
     spyNomadManager.init(repositoryPath, "node-1");
 
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
+    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
     when(response.getLatestChange()).thenReturn(null);
 
@@ -150,15 +156,15 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
     spyNomadManager.init(repositoryPath, "node-1");
 
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
+    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
-    ChangeDetails<String> changeDetails = mock(ChangeDetails.class);
+    ChangeDetails<NodeContext> changeDetails = mock(ChangeDetails.class);
     when(response.getLatestChange()).thenReturn(changeDetails);
 
     when(changeDetails.getResult()).thenReturn(null);
@@ -168,45 +174,24 @@ public class NomadServerManagerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testGetConfigurationWithEmptyConfigurationString() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
-
-    doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
-
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
-    doReturn(response).when(upgradableNomadServer).discover();
-    ChangeDetails<String> changeDetails = mock(ChangeDetails.class);
-    when(response.getLatestChange()).thenReturn(changeDetails);
-    when(changeDetails.getResult()).thenReturn("");
-
-    assertThat(() -> spyNomadManager.getConfiguration(), is(throwing(instanceOf(NomadConfigurationException.class))));
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
   public void testGetConfiguration() throws Exception {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
     spyNomadManager.init(repositoryPath, "node-1");
 
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
+    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
-    ChangeDetails<String> changeDetails = mock(ChangeDetails.class);
+    ChangeDetails<NodeContext> changeDetails = mock(ChangeDetails.class);
     when(response.getLatestChange()).thenReturn(changeDetails);
-    when(changeDetails.getResult()).thenReturn("Hello");
+    when(changeDetails.getResult()).thenReturn(topology);
 
-    String returnedConfiguration = spyNomadManager.getConfiguration();
-    assertThat(returnedConfiguration, is("Hello"));
+    NodeContext returnedConfiguration = spyNomadManager.getConfiguration();
+    assertThat(returnedConfiguration, is(topology));
   }
 
   @Test
@@ -215,7 +200,7 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
@@ -231,10 +216,10 @@ public class NomadServerManagerTest {
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
+    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
-    String newConfiguration = "Blah";
+    Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
@@ -268,7 +253,7 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
@@ -284,10 +269,10 @@ public class NomadServerManagerTest {
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
+    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
-    String newConfiguration = "Blah";
+    Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
@@ -305,7 +290,7 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
@@ -321,10 +306,10 @@ public class NomadServerManagerTest {
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
+    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
-    String newConfiguration = "Blah";
+    Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
@@ -340,7 +325,7 @@ public class NomadServerManagerTest {
     Path repositoryPath = mock(Path.class);
     NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<String> upgradableNomadServer = mock(UpgradableNomadServer.class);
+    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
 
     spyNomadManager.init(repositoryPath, "node-1");
@@ -355,10 +340,10 @@ public class NomadServerManagerTest {
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<String> response = mock(DiscoverResponse.class);
+    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
-    String newConfiguration = "Blah";
+    Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);

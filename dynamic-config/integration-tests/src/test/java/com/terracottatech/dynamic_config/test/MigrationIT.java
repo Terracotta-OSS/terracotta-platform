@@ -4,7 +4,10 @@
  */
 package com.terracottatech.dynamic_config.test;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
@@ -12,8 +15,11 @@ import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe
 import com.terracottatech.migration.MigrationImpl;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServer;
+import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.Tuple2;
 import com.terracottatech.utilities.junit.TmpDir;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.config.BindPort;
@@ -50,11 +56,32 @@ import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class MigrationIT {
 
-  @Rule public final TmpDir tmpDir = new TmpDir();
+  private static String USER_DIR = System.getProperty("user.dir");
+
+  @Rule
+  public TmpDir tmpDir = new TmpDir();
+
+  private XmlConfigMapper xmlConfigMapper;
+
+  @Before
+  public void setUp() {
+    // Here, this is to simulate the same thing as if we had started a node at a temporary working directory,
+    // so that when we use TCConfigurationParser, the directories get created inside the temporary directory
+    // and not in the current working directory
+    System.setProperty("user.dir", tmpDir.getRoot().toString());
+
+    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
+    xmlConfigMapper = new XmlConfigMapper(userDirResolver);
+  }
+
+  @After
+  public void tearDown() {
+    System.setProperty("user.dir", USER_DIR);
+  }
 
   @Test
   public void testSingleStripeSingleFile() throws Exception {
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
 
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
@@ -78,10 +105,14 @@ public class MigrationIT {
       }
     });
 
-    NomadServer<String> nomadServer = serverMap.get("stripe1_node-1");
-    DiscoverResponse<String> discoverResponse = nomadServer.discover();
+    NomadServer<NodeContext> nomadServer = serverMap.get("stripe1_node-1");
+    DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
 
-    String convertedConfigContent = discoverResponse.getLatestChange().getResult();
+    // load the topology model from nomad
+    NodeContext topology = discoverResponse.getLatestChange().getResult();
+    // convert it back to XML the same way the FileConfigStorage is doing
+    // because the following assertions are done over the parses TC Configuration
+    String convertedConfigContent = xmlConfigMapper.toXml(topology);
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
@@ -153,7 +184,7 @@ public class MigrationIT {
 
   @Test
   public void testSingleStripeSingleFileNoStripeId() throws Exception {
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
@@ -176,11 +207,14 @@ public class MigrationIT {
       }
     });
 
-    NomadServer<String> nomadServer = serverMap.get("stripe1_node-1");
-    DiscoverResponse<String> discoverResponse = nomadServer.discover();
+    NomadServer<NodeContext> nomadServer = serverMap.get("stripe1_node-1");
+    DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
 
-    String convertedConfigContent = discoverResponse.getLatestChange().getResult();
-
+    // load the topology model from nomad
+    NodeContext topology = discoverResponse.getLatestChange().getResult();
+    // convert it back to XML the same way the FileConfigStorage is doing
+    // because the following assertions are done over the parses TC Configuration
+    String convertedConfigContent = xmlConfigMapper.toXml(topology);
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
@@ -254,7 +288,7 @@ public class MigrationIT {
 
   @Test
   public void testSingleStripeSingleFileWithSecurity() throws Exception {
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
@@ -279,9 +313,13 @@ public class MigrationIT {
     });
 
 
-    NomadServer<String> nomadServer = serverMap.get("stripe1_node-1");
-    DiscoverResponse<String> discoverResponse = nomadServer.discover();
-    String convertedConfigContent = discoverResponse.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer = serverMap.get("stripe1_node-1");
+    DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
+    // load the topology model from nomad
+    NodeContext topology = discoverResponse.getLatestChange().getResult();
+    // convert it back to XML the same way the FileConfigStorage is doing
+    // because the following assertions are done over the parses TC Configuration
+    String convertedConfigContent = xmlConfigMapper.toXml(topology);
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
@@ -354,7 +392,7 @@ public class MigrationIT {
 
   @Test
   public void testMultiStripeSingleFileForStripe() throws Exception {
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
@@ -382,36 +420,36 @@ public class MigrationIT {
       }
     });
 
-    NomadServer<String> nomadServer1 = serverMap.get("stripe1_node-1");
-    DiscoverResponse<String> discoverResponse1 = nomadServer1.discover();
-    String convertedConfigContent1 = discoverResponse1.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer1 = serverMap.get("stripe1_node-1");
+    DiscoverResponse<NodeContext> discoverResponse1 = nomadServer1.discover();
+    NodeContext convertedConfigContent1 = discoverResponse1.getLatestChange().getResult();
 
-    NomadServer<String> nomadServer2 = serverMap.get("stripe1_node-2");
-    DiscoverResponse<String> discoverResponse2 = nomadServer2.discover();
-    String convertedConfigContent2 = discoverResponse2.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer2 = serverMap.get("stripe1_node-2");
+    DiscoverResponse<NodeContext> discoverResponse2 = nomadServer2.discover();
+    NodeContext convertedConfigContent2 = discoverResponse2.getLatestChange().getResult();
 
-    NomadServer<String> nomadServer3 = serverMap.get("stripe2_node-3");
-    DiscoverResponse<String> discoverResponse3 = nomadServer3.discover();
-    String convertedConfigContent3 = discoverResponse3.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer3 = serverMap.get("stripe2_node-3");
+    DiscoverResponse<NodeContext> discoverResponse3 = nomadServer3.discover();
+    NodeContext convertedConfigContent3 = discoverResponse3.getLatestChange().getResult();
 
-    NomadServer<String> nomadServer4 = serverMap.get("stripe2_node-4");
-    DiscoverResponse<String> discoverResponse4 = nomadServer4.discover();
-    String convertedConfigContent4 = discoverResponse4.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer4 = serverMap.get("stripe2_node-4");
+    DiscoverResponse<NodeContext> discoverResponse4 = nomadServer4.discover();
+    NodeContext convertedConfigContent4 = discoverResponse4.getLatestChange().getResult();
 
-    Map<String, String> serverNameConvertedConfigContentsMap = new HashMap<>();
+    Map<String, NodeContext> serverNameConvertedConfigContentsMap = new HashMap<>();
     serverNameConvertedConfigContentsMap.put("stripe1_node-1", convertedConfigContent1);
     serverNameConvertedConfigContentsMap.put("stripe1_node-2", convertedConfigContent2);
     serverNameConvertedConfigContentsMap.put("stripe2_node-3", convertedConfigContent3);
     serverNameConvertedConfigContentsMap.put("stripe2_node-4", convertedConfigContent4);
 
-    for (Map.Entry<String, String> entry : serverNameConvertedConfigContentsMap.entrySet()) {
+    for (Map.Entry<String, NodeContext> entry : serverNameConvertedConfigContentsMap.entrySet()) {
       validateMultiStripeSingleFileForStripeInsideClusterResult(entry.getKey(), entry.getValue());
     }
   }
 
   @Test
   public void testMultiStripeSingleFileDuplicateServerNameForStripe() throws Exception {
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(outputFolderPath, serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
@@ -439,43 +477,44 @@ public class MigrationIT {
       }
     });
 
-    NomadServer<String> nomadServer1 = serverMap.get("stripe1_node-1");
-    DiscoverResponse<String> discoverResponse1 = nomadServer1.discover();
-    String convertedConfigContent1 = discoverResponse1.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer1 = serverMap.get("stripe1_node-1");
+    DiscoverResponse<NodeContext> discoverResponse1 = nomadServer1.discover();
+    NodeContext convertedConfigContent1 = discoverResponse1.getLatestChange().getResult();
 
-    NomadServer<String> nomadServer2 = serverMap.get("stripe1_node-2");
-    DiscoverResponse<String> discoverResponse2 = nomadServer2.discover();
-    String convertedConfigContent2 = discoverResponse2.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer2 = serverMap.get("stripe1_node-2");
+    DiscoverResponse<NodeContext> discoverResponse2 = nomadServer2.discover();
+    NodeContext convertedConfigContent2 = discoverResponse2.getLatestChange().getResult();
 
-    NomadServer<String> nomadServer3 = serverMap.get("stripe2_node-2");
-    DiscoverResponse<String> discoverResponse3 = nomadServer3.discover();
-    String convertedConfigContent3 = discoverResponse3.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer3 = serverMap.get("stripe2_node-2");
+    DiscoverResponse<NodeContext> discoverResponse3 = nomadServer3.discover();
+    NodeContext convertedConfigContent3 = discoverResponse3.getLatestChange().getResult();
 
-    NomadServer<String> nomadServer5 = serverMap.get("stripe2_node-1");
-    DiscoverResponse<String> discoverResponse5 = nomadServer5.discover();
-    String convertedConfigContent5 = discoverResponse5.getLatestChange().getResult();
+    NomadServer<NodeContext> nomadServer5 = serverMap.get("stripe2_node-1");
+    DiscoverResponse<NodeContext> discoverResponse5 = nomadServer5.discover();
+    NodeContext convertedConfigContent5 = discoverResponse5.getLatestChange().getResult();
 
-    Map<String, String> serverNameConvertedConfigContentsMap = new HashMap<>();
+    Map<String, NodeContext> serverNameConvertedConfigContentsMap = new HashMap<>();
     serverNameConvertedConfigContentsMap.put("stripe1_node-1", convertedConfigContent1);
     serverNameConvertedConfigContentsMap.put("stripe1_node-2", convertedConfigContent2);
     serverNameConvertedConfigContentsMap.put("stripe2_node-2", convertedConfigContent3);
     serverNameConvertedConfigContentsMap.put("stripe2_node-1", convertedConfigContent5);
 
-    for (Map.Entry<String, String> entry : serverNameConvertedConfigContentsMap.entrySet()) {
+    for (Map.Entry<String, NodeContext> entry : serverNameConvertedConfigContentsMap.entrySet()) {
       validateMultiStripeSingleFileForStripeWithDuplicateServerNameInsideClusterResult(entry.getKey(), entry.getValue());
     }
   }
 
-  private void validateMultiStripeSingleFileForStripeInsideClusterResult(String serverName, String convertedConfigContent1) throws Exception {
+  private void validateMultiStripeSingleFileForStripeInsideClusterResult(String serverName, NodeContext topology) throws Exception {
+    String convertedConfigContent1 = xmlConfigMapper.toXml(topology);
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
     TcConfig tcConfig = configuration.getPlatformConfiguration();
 
-    assertThat(tcConfig.getFailoverPriority(), notNullValue());
-    assertThat(tcConfig.getTcProperties(), notNullValue());
-    assertThat(tcConfig.getServers(), notNullValue());
-    assertThat(tcConfig.getServers().getClientReconnectWindow(), notNullValue());
+    assertThat(convertedConfigContent1, tcConfig.getFailoverPriority(), notNullValue());
+    assertThat(convertedConfigContent1, tcConfig.getTcProperties(), notNullValue());
+    assertThat(convertedConfigContent1, tcConfig.getServers(), notNullValue());
+    assertThat(convertedConfigContent1, tcConfig.getServers().getClientReconnectWindow(), notNullValue());
 
     assertThat(tcConfig.getServers(), notNullValue());
     List<Server> servers = tcConfig.getServers().getServer();
@@ -589,7 +628,10 @@ public class MigrationIT {
   }
 
   private void validateMultiStripeSingleFileForStripeWithDuplicateServerNameInsideClusterResult(
-      String serverName, String convertedConfigContent1) throws Exception {
+      String serverName, NodeContext topology) throws Exception {
+    // convert back to XML the same way the FileConfigStorage is doing
+    // because the following assertions are done over the parses TC Configuration
+    String convertedConfigContent1 = xmlConfigMapper.toXml(topology);
     TcConfiguration configuration = TCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
@@ -703,7 +745,7 @@ public class MigrationIT {
 
       List<Object> servicesOrConfigs = clusterServices.getConfigOrService();
       assertThat(servicesOrConfigs, notNullValue());
-      assertThat(servicesOrConfigs.size(), is(4));
+      assertThat(convertedConfigContent1, servicesOrConfigs.size(), is(4));
 
       servicesOrConfigs.forEach(object -> {
         assertThat((object instanceof Service || object instanceof Config), is(true));

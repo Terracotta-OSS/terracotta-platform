@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.test.util;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.migration.nomad.RepositoryStructureBuilder;
 import com.terracottatech.nomad.server.NomadServer;
 
@@ -11,16 +12,16 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public class MigrationITResultProcessor extends RepositoryStructureBuilder {
-  final Map<String, NomadServer<String>> serverMap;
+  private final Map<String, NomadServer<NodeContext>> serverMap;
 
-  public MigrationITResultProcessor(Path outputFolderPath, Map<String, NomadServer<String>> serverMap) {
+  public MigrationITResultProcessor(Path outputFolderPath, Map<String, NomadServer<NodeContext>> serverMap) {
     super(outputFolderPath);
     this.serverMap = serverMap;
   }
 
   @Override
-  protected NomadServer<String> getNomadServer(final int stripeId, final String nodeName) throws Exception {
-    NomadServer<String> nomadServer = super.getNomadServer(stripeId, nodeName);
+  protected NomadServer<NodeContext> getNomadServer(final int stripeId, final String nodeName) throws Exception {
+    NomadServer<NodeContext> nomadServer = super.getNomadServer(stripeId, nodeName);
     serverMap.put("stripe" + stripeId + "_" + nodeName, nomadServer);
     return nomadServer;
   }

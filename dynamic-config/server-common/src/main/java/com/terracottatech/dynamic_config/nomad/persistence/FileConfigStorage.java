@@ -4,6 +4,11 @@
  */
 package com.terracottatech.dynamic_config.nomad.persistence;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
+import com.terracottatech.utilities.PathResolver;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,37 +16,50 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Function;
+import java.nio.file.Paths;
 
+import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_EXT;
+import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 
-public class FileConfigStorage implements ConfigStorage<String> {
+public class FileConfigStorage implements ConfigStorage<NodeContext> {
   private final Path root;
-  private final Function<Long, String> filenameGenerator;
+  private final String nodeName;
 
-  public FileConfigStorage(Path root, Function<Long, String> filenameGenerator) {
-    this.root = root;
-    this.filenameGenerator = filenameGenerator;
+  // This path resolver is used when converting a model to XML.
+  // It makes sure to resolve any relative path to absolute ones based on the working directory.
+  // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
+  // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
+  // the config repository: repository/config.
+  // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
+  // That is why we need to force the resolving within the XML relatively to the user directory.
+  private final PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
+  private final XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(userDirResolver);
+
+  public FileConfigStorage(Path root, String nodeName) {
+    this.root = requireNonNull(root);
+    this.nodeName = requireNonNull(nodeName);
   }
 
   @Override
-  public String getConfig(long version) throws ConfigStorageException {
+  public NodeContext getConfig(long version) throws ConfigStorageException {
     Path file = toPath(version);
 
     try {
-      byte[] bytes = Files.readAllBytes(file);
-      return new String(bytes, UTF_8);
+      return xmlConfigMapper.fromXml(nodeName, new String(Files.readAllBytes(file), UTF_8));
     } catch (IOException e) {
       throw new ConfigStorageException(e);
     }
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override
-  public void saveConfig(long version, String config) throws ConfigStorageException {
+  public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     File file = toFile(version);
-
+    file.getParentFile().mkdirs();
     try (PrintWriter writer = new PrintWriter(file, UTF_8.name())) {
-      writer.print(config);
+      writer.print(xmlConfigMapper.toXml(config));
     } catch (FileNotFoundException | UnsupportedEncodingException e) {
       throw new ConfigStorageException(e);
     }
@@ -53,7 +71,7 @@ public class FileConfigStorage implements ConfigStorage<String> {
   }
 
   private Path toPath(long version) {
-    String filename = filenameGenerator.apply(version);
+    String filename = FILENAME_PREFIX + "." + nodeName + "." + version + "." + FILENAME_EXT;
     return root.resolve(filename);
   }
 }

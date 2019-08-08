@@ -16,6 +16,7 @@ import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
 import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
@@ -65,7 +66,7 @@ public class ActivateCommand extends Command {
   public MultiDiagnosticServiceConnectionFactory connectionFactory;
 
   @Resource
-  public NomadManager<String> nomadManager;
+  public NomadManager<NodeContext> nomadManager;
 
   @Resource
   public RestartService restartService;
@@ -234,7 +235,7 @@ public class ActivateCommand extends Command {
   }
 
   private void runNomadChange() {
-    NomadFailureRecorder<String> failures = new NomadFailureRecorder<>();
+    NomadFailureRecorder<NodeContext> failures = new NomadFailureRecorder<>();
     nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(cluster), failures);
     failures.reThrow();
   }

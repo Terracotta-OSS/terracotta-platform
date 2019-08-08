@@ -4,9 +4,11 @@
  */
 package com.terracottatech.migration.nomad;
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
 import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.migration.exception.MigrationException;
 import com.terracottatech.migration.xml.XmlUtility;
 import com.terracottatech.nomad.NomadEnvironment;
@@ -20,6 +22,7 @@ import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.persistence.sanskrit.SanskritException;
+import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.Tuple2;
 import org.w3c.dom.Node;
 
@@ -33,8 +36,10 @@ public class RepositoryStructureBuilder {
   private final Path outputFolderPath;
   private final UUID nomadRequestId;
   private final NomadEnvironment nomadEnvironment;
+  private final XmlConfigMapper xmlConfigMapper;
 
   public RepositoryStructureBuilder(Path outputFolderPath) {
+    this.xmlConfigMapper = new XmlConfigMapper(PathResolver.NOOP);
     this.outputFolderPath = outputFolderPath;
     this.nomadRequestId = UUID.randomUUID();
     this.nomadEnvironment = new NomadEnvironment();
@@ -43,14 +48,18 @@ public class RepositoryStructureBuilder {
   public void process(final Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap) {
     nodeNameNodeConfigMap.forEach((stripeIdServerName, doc) -> {
       try {
+        // create the XML from the manipulated DOM elements
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
-        NomadServer<String> nomadServer = getNomadServer(stripeIdServerName.getT1(), stripeIdServerName.getT2());
-        DiscoverResponse<String> discoverResponse = nomadServer.discover();
+        // convert back the XML to a topology model
+        NodeContext nodeContext = xmlConfigMapper.fromXml(stripeIdServerName.t2, xml);
+        // save the topology model into Nomad
+        NomadServer<NodeContext> nomadServer = getNomadServer(stripeIdServerName.getT1(), stripeIdServerName.getT2());
+        DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
 
         PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), nomadRequestId,
-            nextVersionNumber, new ConfigMigrationNomadChange(xml));
+            nextVersionNumber, new ConfigMigrationNomadChange(nodeContext.getCluster()));
         AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
         if (!response.isAccepted()) {
           throw new MigrationException(UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE, "Response code from nomad:" + response.getRejectionReason());
@@ -67,19 +76,23 @@ public class RepositoryStructureBuilder {
     });
   }
 
-  protected NomadServer<String> getNomadServer(int stripeId, String nodeName) throws Exception {
+  protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) throws Exception {
     Path repositoryPath = outputFolderPath.resolve("stripe" + stripeId + "_" + nodeName);
-    return createServer(repositoryPath, nodeName);
+    return createServer(repositoryPath, stripeId, nodeName);
   }
 
-  private NomadServer<String> createServer(Path repositoryPath, String nodeName) throws SanskritException, NomadException {
+  private NomadServer<NodeContext> createServer(Path repositoryPath, int stripeId, String nodeName) throws SanskritException, NomadException {
     NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(repositoryPath);
     nomadRepositoryManager.createDirectories();
 
-    ChangeApplicator<String> changeApplicator = new ChangeApplicator<String>() {
+    ChangeApplicator<NodeContext> changeApplicator = new ChangeApplicator<NodeContext>() {
       @Override
-      public PotentialApplicationResult<String> tryApply(final String existing, final NomadChange change) {
-        return PotentialApplicationResult.allow(((ConfigMigrationNomadChange) change).getConfiguration());
+      public PotentialApplicationResult<NodeContext> tryApply(final NodeContext existing, final NomadChange change) {
+        return PotentialApplicationResult.allow(new NodeContext(
+            ((ConfigMigrationNomadChange) change).getCluster(),
+            stripeId,
+            nodeName
+        ));
       }
 
       @Override

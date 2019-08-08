@@ -8,13 +8,14 @@ package com.terracottatech.dynamic_config.nomad;
 import com.terracottatech.diagnostic.common.DiagnosticConstants;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.nomad.processor.ApplicabilityNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
-import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.ChangeDetails;
@@ -27,12 +28,10 @@ import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.SingleThreadedNomadServer;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
 import com.terracottatech.persistence.sanskrit.SanskritException;
-import com.terracottatech.utilities.PathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -64,10 +63,10 @@ public class NomadBootstrapper {
   public static class NomadServerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerManager.class);
 
-    private volatile UpgradableNomadServer<String> nomadServer;
+    private volatile UpgradableNomadServer<NodeContext> nomadServer;
     private volatile NomadRepositoryManager repositoryManager;
 
-    public UpgradableNomadServer<String> getNomadServer() {
+    public UpgradableNomadServer<NodeContext> getNomadServer() {
       return nomadServer;
     }
 
@@ -109,20 +108,12 @@ public class NomadBootstrapper {
      * @param nodeName Name of the running node, non-null
      */
     public void upgradeForWrite(int stripeId, String nodeName) {
-      // This path resolver is used when converting a model to XML.
-      // It makes sure to resolve any relative path to absolute ones based on the working directory.
-      // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
-      // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
-      // the config repository: repository/config.
-      // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
-      // That is why we need to force the resolving within the XML relatively to the user directory.
-      PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
       ConfigController configController = createConfigController(nodeName, stripeId);
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())
-          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController, userDirResolver));
+          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController));
 
-      ChangeApplicator<String> changeApplicator = new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(configController, nomadChangeProcessor));
+      ChangeApplicator<NodeContext> changeApplicator = new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(configController, nomadChangeProcessor));
       nomadServer.setChangeApplicator(changeApplicator);
       LOGGER.info("Successfully completed upgradeForWrite procedure");
     }
@@ -133,8 +124,8 @@ public class NomadBootstrapper {
      * @return Stored configuration as a String
      * @throws NomadConfigurationException if configuration is unavailable or corrupted
      */
-    public String getConfiguration() throws NomadConfigurationException {
-      ChangeDetails<String> latestChange;
+    public NodeContext getConfiguration() throws NomadConfigurationException {
+      ChangeDetails<NodeContext> latestChange;
       try {
         latestChange = nomadServer.discover().getLatestChange();
       } catch (NomadException e) {
@@ -147,8 +138,8 @@ public class NomadBootstrapper {
         throw new NomadConfigurationException(missingConfigErrorMessage);
       }
 
-      String configuration = latestChange.getResult();
-      if (configuration == null || configuration.isEmpty()) {
+      NodeContext configuration = latestChange.getResult();
+      if (configuration == null) {
         throw new NomadConfigurationException(missingConfigErrorMessage);
       }
       return configuration;
@@ -162,10 +153,10 @@ public class NomadBootstrapper {
      *                      servers.
      * @throws NomadConfigurationException if underlying server fails to override corrupted repository content
      */
-    public void repairConfiguration(String configuration, long version) throws NomadConfigurationException {
+    public void repairConfiguration(Cluster configuration, long version) throws NomadConfigurationException {
       try {
         UUID nomadRequestId = UUID.randomUUID();
-        DiscoverResponse<String> discoverResponse = nomadServer.discover();
+        DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), nomadRequestId,
             version, new ConfigRepairNomadChange(configuration));
@@ -187,7 +178,7 @@ public class NomadBootstrapper {
       }
     }
 
-    UpgradableNomadServer<String> createServer(NomadRepositoryManager repositoryManager, String nodeName) throws SanskritException, NomadException {
+    UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager, String nodeName) throws SanskritException, NomadException {
       return new SingleThreadedNomadServer<>(UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName));
     }
 

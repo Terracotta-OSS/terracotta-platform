@@ -16,7 +16,6 @@ import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
-import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
@@ -83,8 +82,7 @@ public class StartupManager {
   void startUsingConfigRepo(Path repositoryDir, String nodeName) {
     logger.info("Starting node: {} from config repository: {}", nodeName, substitute(repositoryDir));
     NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(repositoryDir, nodeName);
-    XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(PathResolver.NOOP);
-    NodeContext nodeContext = xmlConfigMapper.fromXml(nodeName, nomadServerManager.getConfiguration());
+    NodeContext nodeContext = nomadServerManager.getConfiguration();
     nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeName);
     registerTopologyService(nodeContext, true, nomadServerManager);
     startServer(
@@ -158,12 +156,12 @@ public class StartupManager {
     logger.debug("Setting nomad writable successful");
 
     String nomadServerName = substitute(node.getNodeAddress().toString());
-    NomadClient<String> nomadClient = new NomadClient<>(
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(
         singleton(new NamedNomadServer<>(nomadServerName, nomadServerManager.getNomadServer())),
         substitute(node.getNodeHostname()),
         "SYSTEM"
     );
-    NomadFailureRecorder<String> failureRecorder = new NomadFailureRecorder<>();
+    NomadFailureRecorder<NodeContext> failureRecorder = new NomadFailureRecorder<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrow();
     logger.debug("Nomad change run successful");

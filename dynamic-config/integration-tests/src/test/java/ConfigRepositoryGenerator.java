@@ -3,6 +3,7 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
 import com.terracottatech.migration.MigrationImpl;
 import com.terracottatech.nomad.server.NomadServer;
@@ -51,7 +52,7 @@ public class ConfigRepositoryGenerator {
     }
     output.mkdirs();
 
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
@@ -68,7 +69,7 @@ public class ConfigRepositoryGenerator {
     }
     output.mkdirs();
 
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 
@@ -84,7 +85,7 @@ public class ConfigRepositoryGenerator {
     }
     output.mkdirs();
 
-    Map<String, NomadServer<String>> serverMap = new HashMap<>();
+    Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(output.toPath(), serverMap);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
 

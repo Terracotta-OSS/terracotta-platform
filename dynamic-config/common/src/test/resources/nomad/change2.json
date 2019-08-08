@@ -1,5 +1,36 @@
 {
   "type": "ConfigRepairNomadChange",
-  "configuration": "xml config",
+  "cluster": {
+    "name": "myClusterName",
+    "stripes": [
+      {
+        "nodes": [
+          {
+            "clientReconnectWindow": {
+              "quantity": 60,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "dataDirs": {},
+            "nodeGroupPort": 0,
+            "nodeName": "foo",
+            "nodePort": 0,
+            "offheapResources": {
+              "foo": {
+                "quantity": 1,
+                "unit": "GB",
+                "type": "MEMORY"
+              }
+            },
+            "securitySslTls": false,
+            "securityWhitelist": false
+          }
+        ]
+      }
+    ]
+  },
+  "applicability": {
+    "type": "CLUSTER"
+  },
   "summary": "Repairing configuration"
 }

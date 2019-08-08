@@ -1,54 +1,120 @@
-2019-08-01T20:07:35.845Z
+2019-08-08T20:26:15.554Z
 {
   "mutativeMessageCount" : 1,
   "mode" : "ACCEPTING",
   "currentVersion" : 0,
   "highestVersion" : 0
 }
-094cfa640159d7fda68d9425acb55875bf9ae5c5
+2f43269023ba9bd44c4cf84ee002f1d01da66936
 
-2019-08-01T20:07:35.849Z
+2019-08-08T20:26:15.577Z
 {
   "mutativeMessageCount" : 2,
   "mode" : "PREPARED",
-  "latestChangeUuid" : "2fce1392-6549-456a-a7cc-78fb4587e4d9",
+  "latestChangeUuid" : "0afe4e36-70a0-48a7-b7fe-ad50e0125f35",
   "highestVersion" : 1,
   "lastMutationHost" : "MCMATC01",
   "lastMutationUser" : "mathieu",
-  "2fce1392-6549-456a-a7cc-78fb4587e4d9" : {
+  "0afe4e36-70a0-48a7-b7fe-ad50e0125f35" : {
     "state" : "PREPARED",
     "version" : 1,
     "operation" : {
       "type" : "ConfigMigrationNomadChange",
-      "configuration" : "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n  <plugins>\n    <config>\n      <ohr:offheap-resources>\n        <ohr:resource name=\"main\" unit=\"MB\">512</ohr:resource>\n      </ohr:offheap-resources>\n    </config>\n    <config>\n      <data:data-directories>\n        <data:directory name=\"data\" use-for-platform=\"true\">%(user.dir)/metadata/stripe1</data:directory>\n      </data:data-directories>\n    </config>\n    <config>\n      <cl:cluster currentStripeId=\"1\" xmlns:cl=\"http://www.terracotta.org/config/cluster\">\n        <cl:name>testCluster</cl:name>\n        <cl:stripe>\n          <cl:node>\n            <cl:name>node-1</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"main\" unit=\"MB\">512</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"data\" use-for-platform=\"true\">%(user.dir)/metadata/stripe1</data:directory>\n                    </data:data-directories>\n                  </config>\n                </plugins>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe1/node-1</logs>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n      </cl:cluster>\n    </config>\n  </plugins>\n  <servers>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n      <logs>%(user.dir)/logs/stripe1/node-1</logs>\n    </server>\n    <client-reconnect-window>120</client-reconnect-window>\n  </servers>\n  <failover-priority>\n    <availability/>\n  </failover-priority>\n</tc-config>\n",
+      "cluster" : {
+        "name" : "testCluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : { },
+            "failoverPriority" : "availability",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe1/node-1",
+            "nodeMetadataDir" : "%(user.dir)/metadata/stripe1",
+            "nodeName" : "node-1",
+            "nodePort" : 9410,
+            "offheapResources" : {
+              "main" : {
+                "quantity" : 512,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          } ]
+        } ]
+      },
+      "applicability" : {
+        "type" : "CLUSTER"
+      },
       "summary" : "Migrating configuration"
     },
-    "changeResultHash" : "e963e654b0477257fd7f537508f7f7ec8923a616",
+    "changeResultHash" : "380b07b5cdf6f27caf328300d759a0bc513ded8d",
     "creationHost" : "MCMATC01",
     "creationUser" : "mathieu"
   }
 }
-a234cd083a5e5a3edfb539ab748800da3bb44d99
+438685633fbfa6020fcc3c70d3711dacd4a7755d
 
-2019-08-01T20:07:35.855Z
+2019-08-08T20:26:15.618Z
 {
   "mutativeMessageCount" : 3,
   "mode" : "ACCEPTING",
   "currentVersion" : 1,
   "lastMutationHost" : "MCMATC01",
   "lastMutationUser" : "mathieu",
-  "2fce1392-6549-456a-a7cc-78fb4587e4d9" : {
+  "0afe4e36-70a0-48a7-b7fe-ad50e0125f35" : {
     "state" : "COMMITTED",
     "version" : 1,
     "operation" : {
       "type" : "ConfigMigrationNomadChange",
-      "configuration" : "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:data=\"http://www.terracottatech.com/config/data-roots\" xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n  <plugins>\n    <config>\n      <ohr:offheap-resources>\n        <ohr:resource name=\"main\" unit=\"MB\">512</ohr:resource>\n      </ohr:offheap-resources>\n    </config>\n    <config>\n      <data:data-directories>\n        <data:directory name=\"data\" use-for-platform=\"true\">%(user.dir)/metadata/stripe1</data:directory>\n      </data:data-directories>\n    </config>\n    <config>\n      <cl:cluster currentStripeId=\"1\" xmlns:cl=\"http://www.terracotta.org/config/cluster\">\n        <cl:name>testCluster</cl:name>\n        <cl:stripe>\n          <cl:node>\n            <cl:name>node-1</cl:name>\n            <cl:server-config>\n              <tc-config>\n                <plugins>\n                  <config>\n                    <ohr:offheap-resources>\n                      <ohr:resource name=\"main\" unit=\"MB\">512</ohr:resource>\n                    </ohr:offheap-resources>\n                  </config>\n                  <config>\n                    <data:data-directories>\n                      <data:directory name=\"data\" use-for-platform=\"true\">%(user.dir)/metadata/stripe1</data:directory>\n                    </data:data-directories>\n                  </config>\n                </plugins>\n                <servers>\n                  <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n                    <logs>%(user.dir)/logs/stripe1/node-1</logs>\n                  </server>\n                  <client-reconnect-window>120</client-reconnect-window>\n                </servers>\n                <failover-priority>\n                  <availability/>\n                </failover-priority>\n              </tc-config>\n            </cl:server-config>\n          </cl:node>\n        </cl:stripe>\n      </cl:cluster>\n    </config>\n  </plugins>\n  <servers>\n    <server bind=\"0.0.0.0\" host=\"localhost\" name=\"node-1\">\n      <logs>%(user.dir)/logs/stripe1/node-1</logs>\n    </server>\n    <client-reconnect-window>120</client-reconnect-window>\n  </servers>\n  <failover-priority>\n    <availability/>\n  </failover-priority>\n</tc-config>\n",
+      "cluster" : {
+        "name" : "testCluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "clientReconnectWindow" : {
+              "quantity" : 120,
+              "unit" : "SECONDS",
+              "type" : "TIME"
+            },
+            "dataDirs" : { },
+            "failoverPriority" : "availability",
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "localhost",
+            "nodeLogDir" : "%(user.dir)/logs/stripe1/node-1",
+            "nodeMetadataDir" : "%(user.dir)/metadata/stripe1",
+            "nodeName" : "node-1",
+            "nodePort" : 9410,
+            "offheapResources" : {
+              "main" : {
+                "quantity" : 512,
+                "unit" : "MB",
+                "type" : "MEMORY"
+              }
+            },
+            "securitySslTls" : false,
+            "securityWhitelist" : false
+          } ]
+        } ]
+      },
+      "applicability" : {
+        "type" : "CLUSTER"
+      },
       "summary" : "Migrating configuration"
     },
-    "changeResultHash" : "e963e654b0477257fd7f537508f7f7ec8923a616",
+    "changeResultHash" : "380b07b5cdf6f27caf328300d759a0bc513ded8d",
     "creationHost" : "MCMATC01",
     "creationUser" : "mathieu"
   }
 }
-148ba457f59e0581324fe1f4ee206dd4da398955
+5652bd18531499cefbdf084934b97e06df0a4fe5
 

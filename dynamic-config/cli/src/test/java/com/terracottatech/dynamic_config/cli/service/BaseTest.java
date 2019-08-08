@@ -14,6 +14,7 @@ import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.utilities.cache.Cache;
@@ -37,7 +38,7 @@ public abstract class BaseTest {
   protected NodeAddressDiscovery nodeAddressDiscovery;
   protected DiagnosticServiceProvider diagnosticServiceProvider;
   protected MultiDiagnosticServiceConnectionFactory connectionFactory;
-  protected NomadManager<String> nomadManager;
+  protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
   protected long timeoutMillis = 2_000;
@@ -55,9 +56,9 @@ public abstract class BaseTest {
       })
       .build();
 
-  private final Cache<InetSocketAddress, NomadServer<String>> nomadServers = Cache.<InetSocketAddress, NomadServer<String>>create()
+  private final Cache<InetSocketAddress, NomadServer<NodeContext>> nomadServers = Cache.<InetSocketAddress, NomadServer<NodeContext>>create()
       .withLoader(addr -> {
-        @SuppressWarnings("unchecked") NomadServer<String> nomadServer = mock(NomadServer.class, addr.toString());
+        @SuppressWarnings("unchecked") NomadServer<NodeContext> nomadServer = mock(NomadServer.class, addr.toString());
         DiagnosticService diagnosticService = diagnosticServices.get(addr);
         when(diagnosticService.getProxy(NomadServer.class)).thenReturn(nomadServer);
         return nomadServer;
@@ -90,7 +91,7 @@ public abstract class BaseTest {
     return topologyServiceMock(InetSocketAddress.createUnresolved(host, port));
   }
 
-  protected NomadServer<String> nomadServerMock(String host, int port) {
+  protected NomadServer<NodeContext> nomadServerMock(String host, int port) {
     return nomadServers.get(InetSocketAddress.createUnresolved(host, port));
   }
 }

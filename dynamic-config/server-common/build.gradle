@@ -10,6 +10,11 @@ dependencies {
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"
+  testCompile 'org.xmlunit:xmlunit-core:2.6.0', 'org.xmlunit:xmlunit-matchers:2.6.0'
+
+  // provided by server
+  testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  testCompile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
 }
 
 apply plugin: TcDeploy

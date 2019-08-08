@@ -1,119 +1,108 @@
-<tc-config xmlns="http://www.terracotta.org/config" xmlns:data="http://www.terracottatech.com/config/data-roots" xmlns:ohr="http://www.terracotta.org/config/offheap-resource" xmlns:persistence="http://www.terracottatech.com/config/platform-persistence">
-  <plugins>
-    <config>
-      <data:data-directories>
-        <data:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</data:directory>
-      </data:data-directories>
-    </config>
-    <service>
-      <persistence:platform-persistence data-directory-id="root1"/>
-    </service>
-    <config>
-      <ohr:offheap-resources>
-        <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
-      </ohr:offheap-resources>
-    </config>
-    <config>
-      <cl:cluster currentStripeId="1" xmlns:cl="http://www.terracotta.org/config/cluster">
-        <cl:name>testCluster</cl:name>
-        <cl:stripe>
-          <cl:node>
-            <cl:name>node-1</cl:name>
-            <cl:server-config>
-              <tc-config>
-                <plugins>
-                  <config>
-                    <data:data-directories>
-                      <data:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</data:directory>
-                    </data:data-directories>
-                  </config>
-                  <service>
-                    <persistence:platform-persistence data-directory-id="root1"/>
-                  </service>
-                  <config>
-                    <ohr:offheap-resources>
-                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
-                    </ohr:offheap-resources>
-                  </config>
-                </plugins>
-                <tc-properties/>
-                <servers>
-                  <server bind="0.0.0.0" host="localhost" name="node-1">
-                    <logs>%(user.dir)/logs/stripe1/node-1</logs>
-                    <tsa-port>9410</tsa-port>
-                    <tsa-group-port>9430</tsa-group-port>
-                  </server>
-                  <server bind="0.0.0.0" host="localhost" name="node-2">
-                    <logs>%(user.dir)/logs/stripe1/node-2</logs>
-                    <tsa-port>9510</tsa-port>
-                    <tsa-group-port>9530</tsa-group-port>
-                  </server>
-                  <client-reconnect-window>120</client-reconnect-window>
-                </servers>
-                <failover-priority>
-                  <availability/>
-                </failover-priority>
-              </tc-config>
-            </cl:server-config>
-          </cl:node>
-          <cl:node>
-            <cl:name>node-2</cl:name>
-            <cl:server-config>
-              <tc-config>
-                <plugins>
-                  <config>
-                    <data:data-directories>
-                      <data:directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</data:directory>
-                    </data:data-directories>
-                  </config>
-                  <service>
-                    <persistence:platform-persistence data-directory-id="root1"/>
-                  </service>
-                  <config>
-                    <ohr:offheap-resources>
-                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
-                    </ohr:offheap-resources>
-                  </config>
-                </plugins>
-                <tc-properties/>
-                <servers>
-                  <server bind="0.0.0.0" host="localhost" name="node-1">
-                    <logs>%(user.dir)/logs/stripe1/node-1</logs>
-                    <tsa-port>9410</tsa-port>
-                    <tsa-group-port>9430</tsa-group-port>
-                  </server>
-                  <server bind="0.0.0.0" host="localhost" name="node-2">
-                    <logs>%(user.dir)/logs/stripe1/node-2</logs>
-                    <tsa-port>9510</tsa-port>
-                    <tsa-group-port>9530</tsa-group-port>
-                  </server>
-                  <client-reconnect-window>120</client-reconnect-window>
-                </servers>
-                <failover-priority>
-                  <availability/>
-                </failover-priority>
-              </tc-config>
-            </cl:server-config>
-          </cl:node>
-        </cl:stripe>
-      </cl:cluster>
-    </config>
-  </plugins>
-  <tc-properties/>
-  <servers>
-    <server bind="0.0.0.0" host="localhost" name="node-1">
-      <logs>%(user.dir)/logs/stripe1/node-1</logs>
-      <tsa-port>9410</tsa-port>
-      <tsa-group-port>9430</tsa-group-port>
-    </server>
-    <server bind="0.0.0.0" host="localhost" name="node-2">
-      <logs>%(user.dir)/logs/stripe1/node-2</logs>
-      <tsa-port>9510</tsa-port>
-      <tsa-group-port>9530</tsa-group-port>
-    </server>
-    <client-reconnect-window>120</client-reconnect-window>
-  </servers>
-  <failover-priority>
-    <availability/>
-  </failover-priority>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tc-config xmlns="http://www.terracotta.org/config">
+    <plugins>
+        <config>
+            <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                <resource name="primary-server-resource" unit="MB">64</resource>
+            </offheap-resources>
+        </config>
+        <config>
+            <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</directory>
+            </data-directories>
+        </config>
+        <config>
+            <cluster currentStripeId="1" xmlns="http://www.terracotta.org/config/cluster" xmlns:ns2="http://www.terracotta.org/config">
+                <name>testCluster</name>
+                <stripe>
+                    <node>
+                        <name>node-1</name>
+                        <server-config>
+                            <ns2:tc-config>
+                                <ns2:plugins>
+                                    <ns2:config>
+                                        <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                                            <resource name="primary-server-resource" unit="MB">64</resource>
+                                        </offheap-resources>
+                                    </ns2:config>
+                                    <ns2:config>
+                                        <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                                            <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</directory>
+                                        </data-directories>
+                                    </ns2:config>
+                                </ns2:plugins>
+                                <ns2:failover-priority>
+                                    <ns2:availability/>
+                                </ns2:failover-priority>
+                                <ns2:servers>
+                                    <ns2:server bind="0.0.0.0" host="localhost" name="node-1">
+                                        <ns2:logs>%(user.dir)/logs/stripe1/node-1</ns2:logs>
+                                        <ns2:tsa-port bind="0.0.0.0">9410</ns2:tsa-port>
+                                        <ns2:tsa-group-port bind="0.0.0.0">9430</ns2:tsa-group-port>
+                                    </ns2:server>
+                                    <ns2:server bind="0.0.0.0" host="localhost" name="node-2">
+                                        <ns2:logs>%(user.dir)/logs/stripe1/node-2</ns2:logs>
+                                        <ns2:tsa-port bind="0.0.0.0">9510</ns2:tsa-port>
+                                        <ns2:tsa-group-port bind="0.0.0.0">9530</ns2:tsa-group-port>
+                                    </ns2:server>
+                                    <ns2:client-reconnect-window>120</ns2:client-reconnect-window>
+                                </ns2:servers>
+                            </ns2:tc-config>
+                        </server-config>
+                    </node>
+                    <node>
+                        <name>node-2</name>
+                        <server-config>
+                            <ns2:tc-config>
+                                <ns2:plugins>
+                                    <ns2:config>
+                                        <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                                            <resource name="primary-server-resource" unit="MB">64</resource>
+                                        </offheap-resources>
+                                    </ns2:config>
+                                    <ns2:config>
+                                        <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                                            <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</directory>
+                                        </data-directories>
+                                    </ns2:config>
+                                </ns2:plugins>
+                                <ns2:failover-priority>
+                                    <ns2:availability/>
+                                </ns2:failover-priority>
+                                <ns2:servers>
+                                    <ns2:server bind="0.0.0.0" host="localhost" name="node-1">
+                                        <ns2:logs>%(user.dir)/logs/stripe1/node-1</ns2:logs>
+                                        <ns2:tsa-port bind="0.0.0.0">9410</ns2:tsa-port>
+                                        <ns2:tsa-group-port bind="0.0.0.0">9430</ns2:tsa-group-port>
+                                    </ns2:server>
+                                    <ns2:server bind="0.0.0.0" host="localhost" name="node-2">
+                                        <ns2:logs>%(user.dir)/logs/stripe1/node-2</ns2:logs>
+                                        <ns2:tsa-port bind="0.0.0.0">9510</ns2:tsa-port>
+                                        <ns2:tsa-group-port bind="0.0.0.0">9530</ns2:tsa-group-port>
+                                    </ns2:server>
+                                    <ns2:client-reconnect-window>120</ns2:client-reconnect-window>
+                                </ns2:servers>
+                            </ns2:tc-config>
+                        </server-config>
+                    </node>
+                </stripe>
+            </cluster>
+        </config>
+    </plugins>
+    <failover-priority>
+        <availability></availability>
+    </failover-priority>
+    <servers>
+        <server host="localhost" name="node-1" bind="0.0.0.0">
+            <logs>%(user.dir)/logs/stripe1/node-1</logs>
+            <tsa-port bind="0.0.0.0">9410</tsa-port>
+            <tsa-group-port bind="0.0.0.0">9430</tsa-group-port>
+        </server>
+        <server host="localhost" name="node-2" bind="0.0.0.0">
+            <logs>%(user.dir)/logs/stripe1/node-2</logs>
+            <tsa-port bind="0.0.0.0">9510</tsa-port>
+            <tsa-group-port bind="0.0.0.0">9530</tsa-group-port>
+        </server>
+        <client-reconnect-window>120</client-reconnect-window>
+    </servers>
 </tc-config>
