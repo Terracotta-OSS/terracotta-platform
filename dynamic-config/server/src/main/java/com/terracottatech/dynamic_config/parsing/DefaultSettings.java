@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,10 +40,6 @@ public class DefaultSettings {
     DEFAULT_SETTING_VALUES.put(CLIENT_LEASE_DURATION, DynamicConfigConstants.DEFAULT_CLIENT_LEASE_DURATION);
     DEFAULT_SETTING_VALUES.put(OFFHEAP_RESOURCES, DynamicConfigConstants.DEFAULT_OFFHEAP_RESOURCE);
     DEFAULT_SETTING_VALUES.put(DATA_DIRS, DynamicConfigConstants.DEFAULT_DATA_DIR);
-  }
-
-  public static Map<String, Object> getAll() {
-    return Collections.unmodifiableMap(DEFAULT_SETTING_VALUES);
   }
 
   public static String getDefaultValueFor(String setting) {
