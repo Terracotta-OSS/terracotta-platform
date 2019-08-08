@@ -83,7 +83,7 @@ public class StartupManager {
   void startUsingConfigRepo(Path repositoryDir, String nodeName) {
     logger.info("Starting node: {} from config repository: {}", nodeName, substitute(repositoryDir));
     NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(repositoryDir, nodeName);
-    XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(null);
+    XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(PathResolver.NOOP);
     NodeContext nodeContext = xmlConfigMapper.fromXml(nodeName, nomadServerManager.getConfiguration());
     nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeName);
     registerTopologyService(nodeContext, true, nomadServerManager);

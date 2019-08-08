@@ -80,8 +80,7 @@ public class XmlConfigMapper {
   private final PathResolver pathResolver;
 
   public XmlConfigMapper(PathResolver pathResolver) {
-    // allow null values sine path resolver is optional: not used in fromXml()
-    this.pathResolver = pathResolver;
+    this.pathResolver = requireNonNull(pathResolver);
   }
 
   public String toXml(NodeContext nodeContext) {
