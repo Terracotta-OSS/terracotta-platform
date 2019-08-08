@@ -36,7 +36,13 @@ public class XmlConfiguration {
     }
 
     this.serverConfiguration = serverConfiguration;
-    this.serverConfiguration.addClusterTopology(clusterConfiguration.getClusterElement());
+
+    // create a special version that contains exactly the same relative paths as given by the topology model
+    // this is to be able to keep user input but still be able to have a tc-config file that the servers can use
+    // with all the folders inside pointing to the right location (ie %(user.dir)/...) instead of being relative to
+    // the location of the tc-config file which is inside a repository path sub-folder now
+    ClusterConfiguration unresolvedClusterConfiguration = new ClusterConfiguration(cluster, stripeId, PathResolver.NOOP);
+    this.serverConfiguration.addClusterTopology(unresolvedClusterConfiguration.getClusterElement());
   }
 
   @Override

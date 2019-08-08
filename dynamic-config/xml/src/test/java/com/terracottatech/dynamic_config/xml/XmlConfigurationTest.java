@@ -5,12 +5,15 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
 import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.terracotta.config.util.ParameterSubstitutor;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.ElementSelectors;
@@ -36,7 +39,33 @@ public class XmlConfigurationTest {
 
   @Before
   public void setUp() {
-    pathResolver = new PathResolver(temporaryFolder.getRoot());
+    pathResolver = new PathResolver(
+        Paths.get("%(user.dir)"),
+        path -> path == null ? null : Paths.get(ParameterSubstitutor.substitute(path.toString())));
+  }
+
+  @Test
+  public void testMarshallingRelativePath() throws Exception {
+    Cluster cluster = new Cluster(new Stripe(new Node()
+        .fillDefaults()
+        .setNodeLogDir(Paths.get("log"))
+        .setNodeMetadataDir(Paths.get("metadata"))
+        .setSecurityDir(Paths.get("security"))
+        .setDataDir("main", Paths.get("bar"))
+        .setNodeBackupDir(Paths.get("backup"))
+        .setSecurityAuditLogDir(Paths.get("audit"))
+        .setNodeName("node-1")));
+    String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
+    assertXml(actual, "node-1.xml");
+  }
+
+  @Test
+  public void testMarshallingAbsolutePathWithPlaceHolders() throws Exception {
+    Cluster cluster = new Cluster(new Stripe(new Node()
+        .fillDefaults()
+        .setNodeName("node-2")));
+    String actual = new XmlConfiguration(cluster, 1, "node-2", pathResolver).toString();
+    assertXml(actual, "node-2.xml");
   }
 
   @Test
@@ -58,14 +87,13 @@ public class XmlConfigurationTest {
   }
 
   private void assertXml(String actual, String expectedConfigResource) throws URISyntaxException {
-    actual = actual.replace(temporaryFolder.getRoot().toString() + "/", "")
-        .replace(temporaryFolder.getRoot().toString() + "\\", "");
+    actual = actual.replace("\\", "/");
     URI expectedConfigUrl = getClass().getResource("/" + expectedConfigResource).toURI();
     CompareMatcher matcher = isSimilarTo(Input.from(expectedConfigUrl))
         .ignoreComments()
         .ignoreWhitespace()
         .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byNameAndText));
-    assertThat(Input.from(actual), matcher);
+    assertThat(actual, Input.from(actual), matcher);
   }
 
   private Properties loadProperties(String fileName) throws IOException, URISyntaxException {

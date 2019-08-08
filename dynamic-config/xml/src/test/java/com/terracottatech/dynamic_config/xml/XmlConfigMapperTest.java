@@ -11,6 +11,7 @@ import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.terracotta.config.util.ParameterSubstitutor;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.ElementSelectors;
@@ -42,7 +43,9 @@ public class XmlConfigMapperTest {
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
-    pathResolver = new PathResolver(temporaryFolder.getRoot());
+    pathResolver = new PathResolver(
+        Paths.get("%(user.dir)"),
+        path -> path == null ? null : Paths.get(ParameterSubstitutor.substitute(path.toString())));
     xmlConfig = new XmlConfigMapper(pathResolver);
     nodeContext1 = Json.parse(getClass().getResource("/topology1.json"), NodeContext.class);
     xml1 = new String(Files.readAllBytes(Paths.get(getClass().getResource("/topology1.xml").toURI())), StandardCharsets.UTF_8);
@@ -52,10 +55,7 @@ public class XmlConfigMapperTest {
 
   @Test
   public void toXml1() {
-    String actual = xmlConfig.toXml(nodeContext1)
-        .replace(temporaryFolder.getRoot().toString() + "/", "")
-        .replace(temporaryFolder.getRoot().toString() + "\\", "")
-        .replace("\\", "/");
+    String actual = xmlConfig.toXml(nodeContext1).replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml1))
         .ignoreComments()
         .ignoreWhitespace()
@@ -70,10 +70,7 @@ public class XmlConfigMapperTest {
 
   @Test
   public void toXml2() {
-    String actual = xmlConfig.toXml(nodeContext2)
-        .replace(temporaryFolder.getRoot().toString() + "/", "")
-        .replace(temporaryFolder.getRoot().toString() + "\\", "")
-        .replace("\\", "/");
+    String actual = xmlConfig.toXml(nodeContext2).replace("\\", "/");
     assertThat(actual, actual, isSimilarTo(Input.from(xml2))
         .ignoreComments()
         .ignoreWhitespace()
