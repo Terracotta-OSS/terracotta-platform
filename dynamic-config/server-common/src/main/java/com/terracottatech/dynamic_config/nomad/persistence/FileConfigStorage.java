@@ -8,6 +8,7 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.utilities.PathResolver;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -55,6 +56,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override
+  @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     File file = toFile(version);
     file.getParentFile().mkdirs();
