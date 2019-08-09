@@ -8,6 +8,7 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.testing.lock.PortLockingRule;
 import com.terracottatech.utilities.PropertyResolver;
@@ -21,6 +22,8 @@ import org.junit.Rule;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,7 +31,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.InetSocketAddress;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -42,8 +44,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -61,6 +62,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 public class BaseStartupIT {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(BaseStartupIT.class);
 
   private static final int STRIPES = 2;
   private static final int NODES_PER_STRIPE = 2;
@@ -118,11 +121,11 @@ public class BaseStartupIT {
     return Paths.get(BaseStartupIT.class.getResource("/license.xml").toURI());
   }
 
-  Path configRepositoryPath() {
-    return configRepositoryPath(1, 1);
+  Path getNodeRepositoryDir() {
+    return getNodeRepositoryDir(1, 1);
   }
 
-  Path configRepositoryPath(int stripeId, int nodeId) {
+  Path getNodeRepositoryDir(int stripeId, int nodeId) {
     return getBaseDir().resolve("repository").resolve("stripe" + stripeId).resolve("node-" + nodeId);
   }
 
@@ -133,44 +136,15 @@ public class BaseStartupIT {
         .until(callable, matcher);
   }
 
-  Path copyServerConfigFiles(int stripeId, int nodeId, BiFunction<Integer, Integer, Function<String, Path>> fn) throws Exception {
-    Path root = fn.apply(stripeId, nodeId).apply("config-repositories");
-    Path dest = configRepositoryPath(stripeId, nodeId);
-    copyDirectory(root, dest);
-    return dest;
-  }
-
-  Function<String, Path> singleStripeSingleNode(int stripeId, int nodeId) {
-    return (prefix) -> {
-      try {
-        String resourceName = "/" + prefix + "/single-stripe-single-node/stripe" + stripeId + "_node-" + nodeId;
-        return Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
-      } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
-    };
-  }
-
-  Function<String, Path> singleStripeMultiNode(int stripeId, int nodeId) {
-    return (prefix) -> {
-      try {
-        String resourceName = "/" + prefix + "/single-stripe-multi-node/stripe" + stripeId + "_node-" + nodeId;
-        return Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
-      } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
-    };
-  }
-
-  Function<String, Path> multiStripe(int stripeId, int nodeId) {
-    return (prefix) -> {
-      try {
-        String resourceName = "/" + prefix + "/multi-stripe/stripe" + stripeId + "_node-" + nodeId;
-        return Paths.get(NewServerStartupScriptIT.class.getResource(resourceName).toURI());
-      } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
-    };
+  Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
+    Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
+    Path repositoriesDir = getBaseDir().resolve("repositories");
+    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir);
+    LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
+    fn.accept(clusterGenerator);
+    copyDirectory(repositoriesDir.resolve("stripe" + stripeId + "_node-" + nodeId), nodeRepositoryDir);
+    LOGGER.debug("Created node repository into: {}", nodeRepositoryDir);
+    return nodeRepositoryDir;
   }
 
   Cluster getCluster(String host, int port) throws Exception {
@@ -219,7 +193,9 @@ public class BaseStartupIT {
         Paths.get("metadata"),
         Paths.get("repository"),
         Paths.get("user-data"),
-        Paths.get("user-data", "main"));
+        Paths.get("user-data", "main"),
+        Paths.get("repositories")
+    );
     // we use STRIPES * NODES_PER_STRIPE because we could support 1 stripe of 4 nodes
     Stream<Path> s2 = rangeClosed(1, STRIPES).mapToObj(stripeId -> rangeClosed(1, STRIPES * NODES_PER_STRIPE).mapToObj(nodeId -> of(
         Paths.get("metadata", "stripe" + stripeId),
@@ -243,7 +219,12 @@ public class BaseStartupIT {
         Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit"),
         Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit", "tmp"),
         Paths.get("user-data", "main", "stripe" + stripeId, "node-" + nodeId),
-        Paths.get("user-data", "main", "stripe" + stripeId, getIpAddress())
+        Paths.get("user-data", "main", "stripe" + stripeId, getIpAddress()),
+        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId),
+        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "config"),
+        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "license"),
+        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "sanskrit"),
+        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "sanskrit", "tmp")
     )).flatMap(identity())).flatMap(identity());
     List<Path> expected = concat(s1, s2).collect(toList());
     List<Path> unexpected = Files.walk(getBaseDir())
@@ -266,7 +247,7 @@ public class BaseStartupIT {
       int stripeId = vals[0];
       int nodeId = vals[1];
       int port = vals[2];
-      String configRepoPath = configRepositoryPath(stripeId, nodeId).toString();
+      String configRepoPath = getNodeRepositoryDir(stripeId, nodeId).toString();
       props.setProperty(("PORT-" + stripeId + "-" + nodeId), String.valueOf(port));
       props.setProperty(("GROUP-PORT-" + stripeId + "-" + nodeId), String.valueOf(port + 10));
       props.setProperty(("CONFIG-REPO-" + stripeId + "-" + nodeId), configRepoPath);

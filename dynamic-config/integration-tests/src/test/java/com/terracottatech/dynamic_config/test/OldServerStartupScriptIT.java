@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.test;
 
+import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Test;
@@ -18,28 +19,28 @@ import static org.hamcrest.Matchers.containsString;
 public class OldServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
-    String configurationRepo = copyServerConfigFiles(1, 1, this::singleStripeSingleNode).toString();
+    String configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1Node).toString();
     startServer("-r", configurationRepo, "-n", "node-1", "--node-name", "node-1");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
-    String configurationRepo = copyServerConfigFiles(1, 2, this::singleStripeMultiNode).toString();
+    String configurationRepo = generateNodeRepositoryDir(1, 2, ConfigRepositoryGenerator::generate1Stripe2Nodes).toString();
     startServer("-r", configurationRepo, "-n", "node-2", "--node-name", "node-2");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
-    String configurationRepo = copyServerConfigFiles(2, 1, this::multiStripe).toString();
+    String configurationRepo = generateNodeRepositoryDir(2, 1, ConfigRepositoryGenerator::generate2Stripes2Nodes).toString();
     startServer("-r", configurationRepo, "-n", "node-1", "--node-name", "node-1");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithConsistencyMode() throws Exception {
-    startServer("--config", createTcConfig().toString(), "--config-consistency", "-r", configRepositoryPath().toString(), "--node-name", "node-1");
+    startServer("--config", createTcConfig().toString(), "--config-consistency", "-r", getNodeRepositoryDir().toString(), "--node-name", "node-1");
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 

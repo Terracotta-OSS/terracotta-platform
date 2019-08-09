@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.test;
 
+import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Ignore;
@@ -24,28 +25,28 @@ import static org.junit.Assert.assertThat;
 public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
-    Path configurationRepo = copyServerConfigFiles(1, 1, this::singleStripeSingleNode);
+    Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1Node);
     startServer("--node-repository-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
-    Path configurationRepo = copyServerConfigFiles(1, 2, this::singleStripeMultiNode);
+    Path configurationRepo = generateNodeRepositoryDir(1, 2, ConfigRepositoryGenerator::generate1Stripe2Nodes);
     startServer("--node-repository-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
-    Path configurationRepo = copyServerConfigFiles(2, 1, this::multiStripe);
+    Path configurationRepo = generateNodeRepositoryDir(2, 1, ConfigRepositoryGenerator::generate2Stripes2Nodes);
     startServer("--node-repository-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithNonExistentRepo() {
-    startServer(1, 1, "-r", configRepositoryPath().toString());
+    startServer(1, 1, "-r", getNodeRepositoryDir().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
@@ -135,37 +136,37 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testFailedStartupConfigFile_invalidCliParams_2() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startServer("-f", configurationFile.toString(), "-m", configRepositoryPath().toString());
+    startServer("-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
     waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidAuthc() {
-    startServer("--security-authc=blah", "-r", configRepositoryPath().toString());
+    startServer("--security-authc=blah", "-r", getNodeRepositoryDir().toString());
     waitedAssert(out::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidHostname() {
-    startServer("--node-hostname=:::", "-r", configRepositoryPath().toString());
+    startServer("--node-hostname=:::", "-r", getNodeRepositoryDir().toString());
     waitedAssert(out::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() {
-    startServer("--failover-priority=blah", "-r", configRepositoryPath().toString());
+    startServer("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
     waitedAssert(out::getLog, containsString("failover-priority should be one of: [availability, consistency]"));
   }
 
   @Test
   public void testFailedStartupCliParams_invalidSecurity() {
-    startServer("--security-audit-log-dir", "audit-dir", "-r", configRepositoryPath().toString());
+    startServer("--security-audit-log-dir", "audit-dir", "-r", getNodeRepositoryDir().toString());
     waitedAssert(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
   }
 
   @Test
   public void testSuccessfulStartupCliParams() {
-    startServer(1, 1, "-p", String.valueOf(ports.getPort()), "-r", configRepositoryPath().toString());
+    startServer(1, 1, "-p", String.valueOf(ports.getPort()), "-r", getNodeRepositoryDir().toString());
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
@@ -174,7 +175,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     startServer(
         1, 1,
         "--node-port", String.valueOf(ports.getPort()),
-        "--node-repository-dir", configRepositoryPath().toString(),
+        "--node-repository-dir", getNodeRepositoryDir().toString(),
         "--node-hostname", "%c"
     );
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
@@ -188,7 +189,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     startServer(
         1, 1,
         "--node-port", String.valueOf(ports.getPort()),
-        "--node-repository-dir", configRepositoryPath().toString(),
+        "--node-repository-dir", getNodeRepositoryDir().toString(),
         "--node-hostname", "%h",
         "--node-bind-address", "%i",
         "--license-file", licensePath().toString(),
@@ -203,7 +204,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     startServer(
         1, 1,
         "--node-port", String.valueOf(ports.getPort()),
-        "--node-repository-dir", configRepositoryPath().toString(),
+        "--node-repository-dir", getNodeRepositoryDir().toString(),
         "--node-hostname", "%c",
         "--license-file", licensePath().toString(),
         "--cluster-name", "tc-cluster"
@@ -218,7 +219,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
         "--node-port", String.valueOf(ports.getPort()),
         "--license-file", licensePath().toString(),
         "--cluster-name", "tc-cluster",
-        "--node-repository-dir", configRepositoryPath().toString()
+        "--node-repository-dir", getNodeRepositoryDir().toString()
     );
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
@@ -228,7 +229,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     startServer(
         "--node-port", String.valueOf(ports.getPort()),
         "--license-file", licensePath().toString(),
-        "--node-repository-dir", configRepositoryPath().toString()
+        "--node-repository-dir", getNodeRepositoryDir().toString()
     );
     waitedAssert(out::getLog, containsString("'--license-file' parameter must be used with 'cluster-name' parameter"));
   }
