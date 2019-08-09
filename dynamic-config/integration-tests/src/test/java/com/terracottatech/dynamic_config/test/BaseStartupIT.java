@@ -69,7 +69,7 @@ public class BaseStartupIT {
   private static final int NODES_PER_STRIPE = 2;
 
   static final boolean CI = System.getProperty("JOB_NAME") != null;
-  static final int TIMEOUT = !CI ? 20_000 : 60_000;
+  static final int TIMEOUT = !CI ? 20_000 : 30_000;
 
   @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
