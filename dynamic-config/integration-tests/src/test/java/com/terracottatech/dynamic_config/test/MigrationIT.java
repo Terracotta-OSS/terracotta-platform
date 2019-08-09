@@ -18,7 +18,6 @@ import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.Tuple2;
 import com.terracottatech.utilities.junit.TmpDir;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,8 +54,6 @@ import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class MigrationIT {
 
-  private static String USER_DIR = System.getProperty("user.dir");
-
   @Rule
   public TmpDir tmpDir = new TmpDir();
 
@@ -64,18 +61,8 @@ public class MigrationIT {
 
   @Before
   public void setUp() {
-    // Here, this is to simulate the same thing as if we had started a node at a temporary working directory,
-    // so that when we use TCConfigurationParser, the directories get created inside the temporary directory
-    // and not in the current working directory
-    System.setProperty("user.dir", tmpDir.getRoot().toString());
-
     PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
     xmlConfigMapper = new XmlConfigMapper(userDirResolver);
-  }
-
-  @After
-  public void tearDown() {
-    System.setProperty("user.dir", USER_DIR);
   }
 
   @Test
