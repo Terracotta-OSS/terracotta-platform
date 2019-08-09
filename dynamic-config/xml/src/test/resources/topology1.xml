@@ -83,6 +83,7 @@
                     </security>
                   </ns2:service>
                 </ns2:plugins>
+                <ns2:tc-properties/>
                 <ns2:failover-priority>
                   <ns2:consistency>
                     <ns2:voter count="2"/>
@@ -144,6 +145,7 @@
                     </security>
                   </ns2:service>
                 </ns2:plugins>
+                <ns2:tc-properties/>
                 <ns2:failover-priority>
                   <ns2:consistency>
                     <ns2:voter count="2"/>
@@ -207,6 +209,7 @@
                     </security>
                   </ns2:service>
                 </ns2:plugins>
+                <ns2:tc-properties/>
                 <ns2:failover-priority>
                   <ns2:consistency>
                     <ns2:voter count="2"/>
@@ -268,6 +271,7 @@
                     </security>
                   </ns2:service>
                 </ns2:plugins>
+                <ns2:tc-properties/>
                 <ns2:failover-priority>
                   <ns2:consistency>
                     <ns2:voter count="2"/>
@@ -293,6 +297,7 @@
       </cluster>
     </config>
   </plugins>
+  <tc-properties/>
   <failover-priority>
     <consistency>
       <voter count="2"/>

@@ -57,6 +57,7 @@
                     </backup-restore>
                   </ns2:service>
                 </ns2:plugins>
+                <ns2:tc-properties/>
                 <ns2:failover-priority>
                   <ns2:availability/>
                 </ns2:failover-priority>
@@ -75,6 +76,7 @@
       </cluster>
     </config>
   </plugins>
+  <tc-properties/>
   <failover-priority>
     <availability></availability>
   </failover-priority>

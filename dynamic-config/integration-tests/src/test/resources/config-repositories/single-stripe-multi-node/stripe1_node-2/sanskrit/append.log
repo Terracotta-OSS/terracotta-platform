@@ -1,21 +1,21 @@
-2019-08-08T20:26:15.441Z
+2019-08-09T15:14:27.064Z
 {
   "mutativeMessageCount" : 1,
   "mode" : "ACCEPTING",
   "currentVersion" : 0,
   "highestVersion" : 0
 }
-7cbc06a117bc41374b2aae325cfee6a9ce8b0ce9
+d8094613a04083f2f782073081dae708007274f3
 
-2019-08-08T20:26:15.468Z
+2019-08-09T15:14:27.097Z
 {
   "mutativeMessageCount" : 2,
   "mode" : "PREPARED",
-  "latestChangeUuid" : "498fa0c1-ee46-490f-b18f-e284ab71b1d1",
+  "latestChangeUuid" : "88fe7fa5-f7dc-4bae-8fc5-41f291db09d0",
   "highestVersion" : 1,
   "lastMutationHost" : "MCMATC01",
   "lastMutationUser" : "mathieu",
-  "498fa0c1-ee46-490f-b18f-e284ab71b1d1" : {
+  "88fe7fa5-f7dc-4bae-8fc5-41f291db09d0" : {
     "state" : "PREPARED",
     "version" : 1,
     "operation" : {
@@ -29,17 +29,17 @@
               "unit" : "SECONDS",
               "type" : "TIME"
             },
-            "dataDirs" : {
-              "root1" : "%(user.dir)/metadata/stripe1"
-            },
+            "dataDirs" : { },
             "failoverPriority" : "availability",
             "nodeBindAddress" : "0.0.0.0",
             "nodeGroupBindAddress" : "0.0.0.0",
             "nodeGroupPort" : 9430,
             "nodeHostname" : "localhost",
             "nodeLogDir" : "%(user.dir)/logs/stripe1/node-1",
+            "nodeMetadataDir" : "%(user.dir)/metadata/stripe1",
             "nodeName" : "node-1",
             "nodePort" : 9410,
+            "nodeProperties" : { },
             "offheapResources" : {
               "primary-server-resource" : {
                 "quantity" : 64,
@@ -55,17 +55,17 @@
               "unit" : "SECONDS",
               "type" : "TIME"
             },
-            "dataDirs" : {
-              "root1" : "%(user.dir)/metadata/stripe1"
-            },
+            "dataDirs" : { },
             "failoverPriority" : "availability",
             "nodeBindAddress" : "0.0.0.0",
             "nodeGroupBindAddress" : "0.0.0.0",
             "nodeGroupPort" : 9530,
             "nodeHostname" : "localhost",
             "nodeLogDir" : "%(user.dir)/logs/stripe1/node-2",
+            "nodeMetadataDir" : "%(user.dir)/metadata/stripe1",
             "nodeName" : "node-2",
             "nodePort" : 9510,
+            "nodeProperties" : { },
             "offheapResources" : {
               "primary-server-resource" : {
                 "quantity" : 64,
@@ -83,21 +83,21 @@
       },
       "summary" : "Migrating configuration"
     },
-    "changeResultHash" : "80a3fafdb72e48ac0fdab44196d99d0904a777b6",
+    "changeResultHash" : "94867116f8a16055cbbb66a194d1eef9ed784ef2",
     "creationHost" : "MCMATC01",
     "creationUser" : "mathieu"
   }
 }
-7a06d72769c2a9d01dbbe7348a04c06acefaefee
+18996af85d20f8983b20f558fc1df7710477f2eb
 
-2019-08-08T20:26:15.514Z
+2019-08-09T15:14:27.142Z
 {
   "mutativeMessageCount" : 3,
   "mode" : "ACCEPTING",
   "currentVersion" : 1,
   "lastMutationHost" : "MCMATC01",
   "lastMutationUser" : "mathieu",
-  "498fa0c1-ee46-490f-b18f-e284ab71b1d1" : {
+  "88fe7fa5-f7dc-4bae-8fc5-41f291db09d0" : {
     "state" : "COMMITTED",
     "version" : 1,
     "operation" : {
@@ -111,17 +111,17 @@
               "unit" : "SECONDS",
               "type" : "TIME"
             },
-            "dataDirs" : {
-              "root1" : "%(user.dir)/metadata/stripe1"
-            },
+            "dataDirs" : { },
             "failoverPriority" : "availability",
             "nodeBindAddress" : "0.0.0.0",
             "nodeGroupBindAddress" : "0.0.0.0",
             "nodeGroupPort" : 9430,
             "nodeHostname" : "localhost",
             "nodeLogDir" : "%(user.dir)/logs/stripe1/node-1",
+            "nodeMetadataDir" : "%(user.dir)/metadata/stripe1",
             "nodeName" : "node-1",
             "nodePort" : 9410,
+            "nodeProperties" : { },
             "offheapResources" : {
               "primary-server-resource" : {
                 "quantity" : 64,
@@ -137,17 +137,17 @@
               "unit" : "SECONDS",
               "type" : "TIME"
             },
-            "dataDirs" : {
-              "root1" : "%(user.dir)/metadata/stripe1"
-            },
+            "dataDirs" : { },
             "failoverPriority" : "availability",
             "nodeBindAddress" : "0.0.0.0",
             "nodeGroupBindAddress" : "0.0.0.0",
             "nodeGroupPort" : 9530,
             "nodeHostname" : "localhost",
             "nodeLogDir" : "%(user.dir)/logs/stripe1/node-2",
+            "nodeMetadataDir" : "%(user.dir)/metadata/stripe1",
             "nodeName" : "node-2",
             "nodePort" : 9510,
+            "nodeProperties" : { },
             "offheapResources" : {
               "primary-server-resource" : {
                 "quantity" : 64,
@@ -165,10 +165,10 @@
       },
       "summary" : "Migrating configuration"
     },
-    "changeResultHash" : "80a3fafdb72e48ac0fdab44196d99d0904a777b6",
+    "changeResultHash" : "94867116f8a16055cbbb66a194d1eef9ed784ef2",
     "creationHost" : "MCMATC01",
     "creationUser" : "mathieu"
   }
 }
-b2667c80d7e92a82b337e058fe3c425937bdb222
+ecc0d9fe50561c01cb2251ba894c3cbeb8146c24
 

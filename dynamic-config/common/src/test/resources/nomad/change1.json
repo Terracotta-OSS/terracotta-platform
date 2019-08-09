@@ -15,6 +15,7 @@
             "nodeGroupPort": 0,
             "nodeName": "foo",
             "nodePort": 0,
+            "nodeProperties": {},
             "offheapResources": {
               "foo": {
                 "quantity": 1,

@@ -17,15 +17,18 @@ import org.terracotta.config.Config;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.ObjectFactory;
+import org.terracotta.config.Property;
 import org.terracotta.config.Servers;
 import org.terracotta.config.Service;
 import org.terracotta.config.Services;
 import org.terracotta.config.TcConfig;
+import org.terracotta.config.TcProperties;
 import org.terracotta.config.Voter;
 import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXB;
 import java.io.StringWriter;
+import java.util.Properties;
 
 public class ServerConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
@@ -56,6 +59,18 @@ public class ServerConfiguration {
     TcConfig tcConfig = FACTORY.createTcConfig();
 
     tcConfig.setServers(servers);
+
+    Properties nodeProperties = node.getNodeProperties();
+    TcProperties tcProperties = nodeProperties.stringPropertyNames().stream().map(key -> {
+      Property property = new Property();
+      property.setName(key);
+      property.setValue(nodeProperties.getProperty(key));
+      return property;
+    }).collect(
+        TcProperties::new,
+        (result, property) -> result.getProperty().add(property),
+        (result1, result2) -> result1.getProperty().addAll(result2.getProperty()));
+    tcConfig.setTcProperties(tcProperties);
 
     Services services = FACTORY.createServices();
 

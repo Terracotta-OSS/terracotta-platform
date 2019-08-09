@@ -16,6 +16,7 @@ import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
+import com.terracottatech.persistence.frs.config.FRSPersistenceServiceProviderConfiguration;
 import com.terracottatech.security.authentication.AuthenticationScheme;
 import com.terracottatech.security.server.config.SecurityConfigurationParser;
 import com.terracottatech.utilities.Measure;
@@ -28,6 +29,7 @@ import org.terracotta.config.Server;
 import org.terracotta.config.Service;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.config.TcProperties;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.lease.service.config.LeaseConfigurationParser;
@@ -49,8 +51,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -138,9 +142,10 @@ public class XmlConfigMapper {
         .setNodeLogDir(Paths.get(xmlServer.getLogs()))
         .setFailoverPriority(toFailoverPriority(xmlTcConfig.getFailoverPriority()))
         .setClientReconnectWindow(xmlTcConfig.getServers().getClientReconnectWindow(), SECONDS)
+        .setNodeProperties(toProperties(xmlTcConfig))
         // plugins
-        .setNodeMetadataDir(toNodeMetadataDir(xmlPlugins))
-        .setDataDirs(toDataDirs(xmlPlugins))
+        .setNodeMetadataDir(toNodeMetadataDir(xmlPlugins).orElse(null))
+        .setDataDirs(toUserDataDirs(xmlPlugins))
         .setOffheapResources(toOffheapResources(xmlPlugins))
         .setNodeBackupDir(toNodeBackupDir(xmlPlugins))
         .setClientLeaseDuration(toClientLeaseDuration(xmlPlugins))
@@ -155,6 +160,15 @@ public class XmlConfigMapper {
             .map(Enum<AuthenticationScheme>::name)
             .map(String::toLowerCase)
             .orElse(null));
+  }
+
+  private static Properties toProperties(TcConfig xmlTcConfig) {
+    Properties properties = new Properties();
+    TcProperties tcProperties = xmlTcConfig.getTcProperties();
+    if (tcProperties != null) {
+      tcProperties.getProperty().stream().forEach(p -> properties.setProperty(p.getName(), p.getValue()));
+    }
+    return properties;
   }
 
   private static Optional<Security> toSecurity(Map<Class<?>, List<Object>> plugins) {
@@ -184,23 +198,41 @@ public class XmlConfigMapper {
         .orElse(null);
   }
 
-  private static Path toNodeMetadataDir(Map<Class<?>, List<Object>> plugins) {
-    return plugins.getOrDefault(DataRootMapping.class, Collections.emptyList())
+  private static Optional<Path> toNodeMetadataDir(Map<Class<?>, List<Object>> plugins) {
+    // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
+    // that will give us the ID of the dataroot to use for platform persistence
+    return toPlatformPersistenceDirectoryId(plugins)
+        .map(name -> toDataDirs(plugins, mapping -> mapping.getName().equals(name)))
+        // otherwise try to find the platform persistence directory defined with use-for-platform="true"
+        .orElseGet(() -> toDataDirs(plugins, DataRootMapping::isUseForPlatform))
+        .values()
         .stream()
-        .map(DataRootMapping.class::cast)
-        .filter(DataRootMapping::isUseForPlatform)
-        .map(DataRootMapping::getValue)
-        .map(Paths::get)
-        .findFirst()
-        .orElse(null);
+        .findFirst();
   }
 
-  private static Map<String, Path> toDataDirs(Map<Class<?>, List<Object>> plugins) {
+  private static Map<String, Path> toDataDirs(Map<Class<?>, List<Object>> plugins, Predicate<DataRootMapping> filter) {
     return plugins.getOrDefault(DataRootMapping.class, Collections.emptyList())
         .stream()
         .map(DataRootMapping.class::cast)
-        .filter(mapping -> !mapping.isUseForPlatform())
+        .filter(filter)
         .collect(toMap(DataRootMapping::getName, mapping -> Paths.get(mapping.getValue())));
+  }
+
+  private static Map<String, Path> toUserDataDirs(Map<Class<?>, List<Object>> plugins) {
+    Map<String, Path> dataDirs = toDataDirs(plugins, mapping -> !mapping.isUseForPlatform());
+    // If the XML defines the deprecated tag "<persistence:platform-persistence data-directory-id="root1"/>"
+    // then we get the data directory ID and remove it from the user data directory list
+    // because this ID matches the directory used for platform (node metadata)
+    toPlatformPersistenceDirectoryId(plugins).ifPresent(dataDirs::remove);
+    return dataDirs;
+  }
+
+  private static Optional<String> toPlatformPersistenceDirectoryId(Map<Class<?>, List<Object>> plugins) {
+    return plugins.getOrDefault(FRSPersistenceServiceProviderConfiguration.class, Collections.emptyList())
+        .stream()
+        .map(FRSPersistenceServiceProviderConfiguration.class::cast)
+        .map(FRSPersistenceServiceProviderConfiguration::getDataDirectoryID)
+        .findFirst();
   }
 
   private static Map<String, Measure<MemoryUnit>> toOffheapResources(Map<Class<?>, List<Object>> plugins) {
@@ -257,7 +289,7 @@ public class XmlConfigMapper {
           Function<Element, OffheapResourcesType> fn = (Function<Element, OffheapResourcesType>) _parser.invoke(parser);
           return fn.apply(element).getResource().stream();
         }
-        // default case
+        // default case (includes Cluster tag)
         return Stream.of(parser.parse(element, xml));
       } else if (o instanceof Service) {
         Element element = ((Service) o).getServiceContent();
@@ -278,10 +310,11 @@ public class XmlConfigMapper {
           Function<Element, LeaseElement> fn = (Function<Element, LeaseElement>) _parser.invoke(parser);
           return Stream.of(fn.apply(element));
         }
+        // security
         if (parser instanceof SecurityConfigurationParser) {
           return Stream.of(((SecurityConfigurationParser) parser).parser().apply(element));
         }
-        // default case
+        // default case (includes FRSPersistenceConfigurationParser)
         return Stream.of(parser.parse(element, xml));
       } else {
         throw new AssertionError("Unsupported type: " + o.getClass());

@@ -8,7 +8,7 @@
         </config>
         <config>
             <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
-                <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe2</directory>
+                <directory name="meta-data-root" use-for-platform="true">%(user.dir)/metadata/stripe2</directory>
             </data-directories>
         </config>
         <service>
@@ -32,7 +32,7 @@
                                     </ns2:config>
                                     <ns2:config>
                                         <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
-                                            <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</directory>
+                                            <directory name="meta-data-root" use-for-platform="true">%(user.dir)/metadata/stripe1</directory>
                                         </data-directories>
                                     </ns2:config>
                                     <ns2:service>
@@ -41,6 +41,7 @@
                                         </backup-restore>
                                     </ns2:service>
                                 </ns2:plugins>
+                                <ns2:tc-properties/>
                                 <ns2:failover-priority>
                                     <ns2:availability/>
                                 </ns2:failover-priority>
@@ -72,7 +73,7 @@
                                     </ns2:config>
                                     <ns2:config>
                                         <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
-                                            <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe1</directory>
+                                            <directory name="meta-data-root" use-for-platform="true">%(user.dir)/metadata/stripe1</directory>
                                         </data-directories>
                                     </ns2:config>
                                     <ns2:service>
@@ -81,6 +82,7 @@
                                         </backup-restore>
                                     </ns2:service>
                                 </ns2:plugins>
+                                <ns2:tc-properties/>
                                 <ns2:failover-priority>
                                     <ns2:availability/>
                                 </ns2:failover-priority>
@@ -114,7 +116,7 @@
                                     </ns2:config>
                                     <ns2:config>
                                         <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
-                                            <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe2</directory>
+                                            <directory name="meta-data-root" use-for-platform="true">%(user.dir)/metadata/stripe2</directory>
                                         </data-directories>
                                     </ns2:config>
                                     <ns2:service>
@@ -123,6 +125,7 @@
                                         </backup-restore>
                                     </ns2:service>
                                 </ns2:plugins>
+                                <ns2:tc-properties/>
                                 <ns2:failover-priority>
                                     <ns2:availability/>
                                 </ns2:failover-priority>
@@ -154,7 +157,7 @@
                                     </ns2:config>
                                     <ns2:config>
                                         <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
-                                            <directory name="root1" use-for-platform="false">%(user.dir)/metadata/stripe2</directory>
+                                            <directory name="meta-data-root" use-for-platform="true">%(user.dir)/metadata/stripe2</directory>
                                         </data-directories>
                                     </ns2:config>
                                     <ns2:service>
@@ -163,6 +166,7 @@
                                         </backup-restore>
                                     </ns2:service>
                                 </ns2:plugins>
+                                <ns2:tc-properties/>
                                 <ns2:failover-priority>
                                     <ns2:availability/>
                                 </ns2:failover-priority>
@@ -186,6 +190,7 @@
             </cluster>
         </config>
     </plugins>
+    <tc-properties/>
     <failover-priority>
         <availability></availability>
     </failover-priority>

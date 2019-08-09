@@ -36,6 +36,7 @@ public class NodeTest {
       .setNodeHostname("localhost")
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
+      .setNodeProperty("key", "val")
       .setNodeName("node1")
       .setNodePort(9410)
       .setOffheapResource("off", 2, MemoryUnit.GB)
@@ -77,6 +78,7 @@ public class NodeTest {
   public void test_clone() {
     assertThat(new Node(), is(equalTo(new Node().clone())));
     assertThat(node, is(equalTo(node.clone())));
+    assertThat(node.hashCode(), is(equalTo(node.clone().hashCode())));
   }
 
   @Test
