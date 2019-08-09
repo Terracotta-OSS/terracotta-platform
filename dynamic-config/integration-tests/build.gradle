@@ -30,8 +30,8 @@ dependencies {
 apply plugin: TcDistribute
 
 task unzipKit(type: Copy) {
-  dependsOn project(':terracotta-db').distZip
-  from zipTree(project(':terracotta-db').distZip.archivePath)
+  dependsOn project(':terracotta').distZip
+  from zipTree(project(':terracotta').distZip.archivePath)
   into 'build/tc-db-kit'
 }
 
@@ -46,7 +46,7 @@ test {
   }
 
 //If this directory does not exist, tests will fail with a cryptic assert failure
-  systemProperty 'kitInstallationPath', "$unzipKit.destinationDir/${project(':terracotta-db').archivesBaseName}-$project.version"
+  systemProperty 'kitInstallationPath', "$unzipKit.destinationDir/${project(':terracotta').archivesBaseName}-$project.version"
 //systemProperty 'serverDebugStartPort', "5005"
 
   testLogging {
