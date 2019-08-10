@@ -16,6 +16,7 @@ import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadC
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.ChangeDetails;
@@ -35,7 +36,6 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static java.util.Objects.requireNonNull;
 
 public class NomadBootstrapper {
@@ -43,14 +43,15 @@ public class NomadBootstrapper {
   private static volatile NomadServerManager nomadServerManager;
   private static final AtomicBoolean BOOTSTRAPPED = new AtomicBoolean();
 
-  public static NomadServerManager bootstrap(Path repositoryPath, String nodeName) {
+  public static NomadServerManager bootstrap(Path repositoryPath, String nodeName, IParameterSubstitutor parameterSubstitutor) {
     requireNonNull(repositoryPath);
     requireNonNull(nodeName);
+    requireNonNull(parameterSubstitutor);
 
     if (BOOTSTRAPPED.compareAndSet(false, true)) {
       nomadServerManager = new NomadServerManager();
-      nomadServerManager.init(repositoryPath, nodeName);
-      LOGGER.info("Bootstrapped nomad system with root: {}", substitute(repositoryPath));
+      nomadServerManager.init(repositoryPath, nodeName, parameterSubstitutor);
+      LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(repositoryPath.toString()));
     }
 
     return nomadServerManager;
@@ -77,13 +78,14 @@ public class NomadBootstrapper {
      *
      * @param repositoryPath Configuration repository root
      * @param nodeName       Node name
+     * @param parameterSubstitutor parameter substitutor
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
-    void init(Path repositoryPath, String nodeName) throws NomadConfigurationException {
+    void init(Path repositoryPath, String nodeName, IParameterSubstitutor parameterSubstitutor) throws NomadConfigurationException {
       try {
-        repositoryManager = createNomadRepositoryManager(repositoryPath);
+        repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
         repositoryManager.createDirectories();
-        nomadServer = createServer(repositoryManager, nodeName);
+        nomadServer = createServer(repositoryManager, nodeName, parameterSubstitutor);
         registerDiagnosticService();
         LOGGER.info("Successfully initialized NomadServerManager");
       } catch (Exception e) {
@@ -178,12 +180,15 @@ public class NomadBootstrapper {
       }
     }
 
-    UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager, String nodeName) throws SanskritException, NomadException {
-      return new SingleThreadedNomadServer<>(UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName));
+    UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager, String nodeName,
+                                                    IParameterSubstitutor parameterSubstitutor) throws SanskritException, NomadException {
+      UpgradableNomadServer<NodeContext> upgradableNomadServer = UpgradableNomadServerFactory
+          .createServer(repositoryManager, null, nodeName, parameterSubstitutor);
+      return new SingleThreadedNomadServer<>(upgradableNomadServer);
     }
 
-    NomadRepositoryManager createNomadRepositoryManager(Path repositoryPath) {
-      return new NomadRepositoryManager(repositoryPath);
+    NomadRepositoryManager createNomadRepositoryManager(Path repositoryPath, IParameterSubstitutor parameterSubstitutor) {
+      return new NomadRepositoryManager(repositoryPath, parameterSubstitutor);
     }
 
     ConfigController createConfigController(String nodeName, int stripeId) {

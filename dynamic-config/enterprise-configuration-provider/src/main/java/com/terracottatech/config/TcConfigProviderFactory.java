@@ -4,12 +4,14 @@
  */
 package com.terracottatech.config;
 
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+
 class TcConfigProviderFactory {
-  static TcConfigProvider init(CommandLineParser commandLineParser) {
+  static TcConfigProvider init(CommandLineParser commandLineParser, IParameterSubstitutor parameterSubstitutor) {
     if (commandLineParser.isConfigConsistencyMode()) {
       return new TcConfigFileProvider(commandLineParser.getConfig());
     } else {
-      return new NomadTcConfigProvider();
+      return new NomadTcConfigProvider(parameterSubstitutor);
     }
   }
 }

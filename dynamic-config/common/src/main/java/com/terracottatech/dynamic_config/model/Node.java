@@ -417,11 +417,6 @@ public class Node implements Cloneable {
       filledPropertyConsumer.accept(CommonOptions.NODE_NAME, generateNodeName);
     }
 
-    if (getNodeHostname() == null) {
-      setNodeHostname(DynamicConfigConstants.DEFAULT_HOSTNAME);
-      filledPropertyConsumer.accept(CommonOptions.NODE_HOSTNAME, DynamicConfigConstants.DEFAULT_HOSTNAME);
-    }
-
     if (getNodePort() == 0) {
       setNodePort(Integer.parseInt(DynamicConfigConstants.DEFAULT_PORT));
       filledPropertyConsumer.accept(CommonOptions.NODE_PORT, DynamicConfigConstants.DEFAULT_PORT);

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
+import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class ConfigFileStarter implements NodeStarter {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileStarter.class);

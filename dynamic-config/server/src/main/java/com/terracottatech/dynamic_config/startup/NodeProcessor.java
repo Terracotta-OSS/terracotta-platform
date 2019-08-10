@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.parsing.Options;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 import java.util.Map;
 
@@ -13,19 +14,22 @@ public class NodeProcessor {
   private final Map<String, String> paramValueMap;
   private final StartupManager startupManager;
   private final ClusterCreator clusterCreator;
+  private final IParameterSubstitutor parameterSubstitutor;
 
-  public NodeProcessor(Options options, Map<String, String> paramValueMap, ClusterCreator clusterCreator, StartupManager startupManager) {
+  public NodeProcessor(Options options, Map<String, String> paramValueMap, ClusterCreator clusterCreator,
+                       StartupManager startupManager, IParameterSubstitutor parameterSubstitutor) {
     this.options = options;
     this.paramValueMap = paramValueMap;
     this.clusterCreator = clusterCreator;
     this.startupManager = startupManager;
+    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   public void process() {
     // Each NodeStarter either handles the startup itself or hands over to the next NodeStarter, following the chain-of-responsibility pattern
     NodeStarter third = new ConsoleParamsStarter(options, paramValueMap, clusterCreator, startupManager);
     NodeStarter second = new ConfigFileStarter(options, clusterCreator, startupManager, third);
-    NodeStarter first = new ConfigRepoStarter(options, startupManager, second);
+    NodeStarter first = new ConfigRepoStarter(options, startupManager, second, parameterSubstitutor);
     first.startNode();
   }
 }

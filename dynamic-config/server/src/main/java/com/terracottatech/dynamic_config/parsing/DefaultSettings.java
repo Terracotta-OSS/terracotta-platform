@@ -14,16 +14,16 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIEN
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_PORT;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_LOG_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_METADATA_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.OFFHEAP_RESOURCES;
 
-public class DefaultSettings {
+class DefaultSettings {
   private static final Map<String, Object> DEFAULT_SETTING_VALUES = new HashMap<>();
 
   static {
@@ -42,9 +42,8 @@ public class DefaultSettings {
     DEFAULT_SETTING_VALUES.put(DATA_DIRS, DynamicConfigConstants.DEFAULT_DATA_DIR);
   }
 
-  public static String getDefaultValueFor(String setting) {
+  static String getDefaultValueFor(String setting) {
     Object settingValue = DEFAULT_SETTING_VALUES.get(setting);
     return settingValue == null ? null : settingValue.toString();
   }
-
 }

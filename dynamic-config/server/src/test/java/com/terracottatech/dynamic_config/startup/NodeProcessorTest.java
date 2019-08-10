@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.startup;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.Options;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,6 +55,7 @@ public class NodeProcessorTest {
   private ClusterCreator clusterCreator;
   private StartupManager startupManager;
   private NodeProcessor nodeProcessor;
+  private IParameterSubstitutor parameterSubstitutor;
 
   @Before
   public void setUp() {
@@ -63,7 +65,8 @@ public class NodeProcessorTest {
     paramValueMap = new HashMap<>();
     clusterCreator = mock(ClusterCreator.class);
     startupManager = mock(StartupManager.class);
-    nodeProcessor = new NodeProcessor(options, paramValueMap, clusterCreator, startupManager);
+    parameterSubstitutor = mock(IParameterSubstitutor.class);
+    nodeProcessor = new NodeProcessor(options, paramValueMap, clusterCreator, startupManager, parameterSubstitutor);
   }
 
   @Test

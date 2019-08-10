@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.PathResolver;
 
 import java.io.IOException;
@@ -12,20 +13,21 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
-
 public class TransientTcConfig {
   private final Node node;
   private final PathResolver pathResolver;
+  private final IParameterSubstitutor parameterSubstitutor;
 
-  public TransientTcConfig(Node node, PathResolver pathResolver) {
+  public TransientTcConfig(Node node, PathResolver pathResolver, IParameterSubstitutor parameterSubstitutor) {
     this.node = node;
     this.pathResolver = pathResolver;
+    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   public Path createTempTcConfigFile() {
     try {
-      Path temporaryTcConfigXml = Files.createTempFile(substitute(pathResolver.getBaseDir()), "tc-config-tmp.", ".xml");
+      Path substituted = parameterSubstitutor.substitute(pathResolver.getBaseDir());
+      Path temporaryTcConfigXml = Files.createTempFile(substituted, "tc-config-tmp.", ".xml");
       String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
           "    <plugins>\n" +
           getDataDirectoryConfig() +
@@ -67,10 +69,14 @@ public class TransientTcConfig {
       sb.append("<security xmlns=\"http://www.terracottatech.com/config/security\">");
 
       if (node.getSecurityAuditLogDir() != null) {
-        sb.append("<audit-directory>").append(substitute(pathResolver.resolve(node.getSecurityAuditLogDir()))).append("</audit-directory>");
+        sb.append("<audit-directory>")
+            .append(parameterSubstitutor.substitute(pathResolver.resolve(node.getSecurityAuditLogDir())))
+            .append("</audit-directory>");
       }
 
-      sb.append("<security-root-directory>").append(substitute(pathResolver.resolve(node.getSecurityDir()))).append("</security-root-directory>");
+      sb.append("<security-root-directory>")
+          .append(parameterSubstitutor.substitute(pathResolver.resolve(node.getSecurityDir())))
+          .append("</security-root-directory>");
 
       if (node.isSecuritySslTls()) {
         sb.append("<ssl-tls/>");
@@ -100,6 +106,6 @@ public class TransientTcConfig {
         "    </data:data-directories>\n" +
         "    </config>\n";
 
-    return dataDirectoryConfig.replace("${DATA_DIR}", substitute(pathResolver.resolve(node.getNodeMetadataDir())).toString());
+    return dataDirectoryConfig.replace("${DATA_DIR}", parameterSubstitutor.substitute(pathResolver.resolve(node.getNodeMetadataDir())).toString());
   }
 }

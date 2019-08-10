@@ -6,7 +6,7 @@ package com.terracottatech.config;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
-import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.utilities.PathResolver;
 import org.terracotta.config.TCConfigurationParser;
@@ -14,7 +14,15 @@ import org.terracotta.config.TcConfiguration;
 
 import java.nio.file.Paths;
 
+import static java.util.Objects.requireNonNull;
+
 public class NomadTcConfigProvider implements TcConfigProvider {
+  private final IParameterSubstitutor parameterSubstitutor;
+
+  public NomadTcConfigProvider(IParameterSubstitutor parameterSubstitutor) {
+    this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
+  }
+
   @Override
   public TcConfiguration provide() throws Exception {
     // Sadly platform does not support anything else from XML to load so we have no choice but to re-generate on fly this XML data
@@ -26,7 +34,7 @@ public class NomadTcConfigProvider implements TcConfigProvider {
     // the config repository: repository/config.
     // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
     // That is why we need to force the resolving within the XML relatively to the user directory.
-    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
+    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
     XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(userDirResolver);
     String xml = xmlConfigMapper.toXml(configuration);
     // TCConfigurationParser substitutes values for platform parameters, so anything known to platform needn't be substituted before this

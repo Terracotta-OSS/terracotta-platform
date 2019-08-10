@@ -8,6 +8,7 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
 import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.migration.exception.MigrationException;
 import com.terracottatech.migration.xml.XmlUtility;
@@ -82,7 +83,8 @@ public class RepositoryStructureBuilder {
   }
 
   private NomadServer<NodeContext> createServer(Path repositoryPath, int stripeId, String nodeName) throws SanskritException, NomadException {
-    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(repositoryPath);
+    ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
+    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(repositoryPath, parameterSubstitutor);
     nomadRepositoryManager.createDirectories();
 
     ChangeApplicator<NodeContext> changeApplicator = new ChangeApplicator<NodeContext>() {
@@ -100,7 +102,7 @@ public class RepositoryStructureBuilder {
       }
     };
 
-    return UpgradableNomadServerFactory.createServer(nomadRepositoryManager, changeApplicator, nodeName);
+    return UpgradableNomadServerFactory.createServer(nomadRepositoryManager, changeApplicator, nodeName, parameterSubstitutor);
   }
 
   protected String getUser() {

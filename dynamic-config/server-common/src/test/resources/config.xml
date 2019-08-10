@@ -52,7 +52,7 @@
                   <ns2:availability/>
                 </ns2:failover-priority>
                 <ns2:servers>
-                  <ns2:server bind="0.0.0.0" host="%h" name="node-1">
+                  <ns2:server bind="0.0.0.0" host="localhost" name="node-1">
                     <ns2:logs>%H/terracotta/logs</ns2:logs>
                     <ns2:tsa-port bind="0.0.0.0">9410</ns2:tsa-port>
                     <ns2:tsa-group-port bind="0.0.0.0">9430</ns2:tsa-group-port>
@@ -71,7 +71,7 @@
     <availability></availability>
   </failover-priority>
   <servers>
-    <server host="%h" name="node-1" bind="0.0.0.0">
+    <server host="localhost" name="node-1" bind="0.0.0.0">
       <logs>%H/terracotta/logs</logs>
       <tsa-port bind="0.0.0.0">9410</tsa-port>
       <tsa-group-port bind="0.0.0.0">9430</tsa-group-port>

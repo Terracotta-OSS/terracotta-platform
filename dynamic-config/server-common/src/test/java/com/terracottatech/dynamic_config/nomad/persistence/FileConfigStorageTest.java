@@ -8,6 +8,8 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,21 +30,21 @@ public class FileConfigStorageTest {
   @Rule
   public TmpDir temporaryFolder = new TmpDir();
 
-  private NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(new Node().fillDefaults()
-      .setNodeName("node-1"))), 1, "node-1");
+  private static final String NODE_NAME = "node-1";
+  private Node node = Node.newDefaultNode(NODE_NAME, "localhost");
+  private NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(node)), 1, NODE_NAME);
 
   @Test
   public void saveAndRetrieve() throws Exception {
     Path root = temporaryFolder.getRoot();
-    FileConfigStorage storage = new FileConfigStorage(root, "node-1");
+    FileConfigStorage storage = new FileConfigStorage(root, NODE_NAME, new ParameterSubstitutor());
 
     storage.saveConfig(1L, topology);
     NodeContext loaded = storage.getConfig(1L);
     assertThat(loaded, is(topology));
 
     byte[] bytes = Files.readAllBytes(root.resolve("cluster-config.node-1.1.xml"));
-    String actual = new String(bytes, StandardCharsets.UTF_8)
-        .replace("\\", "/");
+    String actual = new String(bytes, StandardCharsets.UTF_8).replace("\\", "/");
 
     assertThat(actual, actual, isSimilarTo(Input.from(getClass().getResource("/config.xml")))
         .ignoreComments()

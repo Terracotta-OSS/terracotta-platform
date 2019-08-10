@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.startup.ClusterCreator;
 import com.terracottatech.dynamic_config.startup.NodeProcessor;
 import com.terracottatech.dynamic_config.startup.StartupManager;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -130,7 +131,11 @@ public class Options {
     specifiedOptions = jCommander.getUserSpecifiedOptions();
     validateOptions();
 
-    NodeProcessor nodeProcessor = new NodeProcessor(this, buildParamValueMap(jCommander), new ClusterCreator(), new StartupManager());
+    ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
+    NodeProcessor nodeProcessor = new NodeProcessor(
+        this, buildParamValueMap(jCommander), new ClusterCreator(parameterSubstitutor),
+        new StartupManager(parameterSubstitutor), parameterSubstitutor
+    );
     nodeProcessor.process();
   }
 

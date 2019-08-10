@@ -5,6 +5,8 @@
 package com.terracottatech.dynamic_config.repository;
 
 import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -15,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.substitute;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.FULL;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
@@ -35,9 +36,12 @@ public class NomadRepositoryManager {
   private final Path licensePath;
   private final Path sanskritPath;
 
-  public NomadRepositoryManager(Path nomadRoot) {
+  public NomadRepositoryManager(Path nomadRoot, IParameterSubstitutor parameterSubstitutor) {
+    requireNonNull(nomadRoot);
+    requireNonNull(parameterSubstitutor);
+
     // substitute path eagerly as this class needs to interact with the file system for all its functionalities
-    this.rootPath = substitute(requireNonNull(nomadRoot)).toAbsolutePath().normalize();
+    this.rootPath = parameterSubstitutor.substitute(nomadRoot).toAbsolutePath();
     this.configPath = rootPath.resolve(CONFIG);
     this.licensePath = rootPath.resolve(LICENSE);
     this.sanskritPath = rootPath.resolve(SANSKRIT);
@@ -135,7 +139,7 @@ public class NomadRepositoryManager {
   public static Optional<String> findNodeName(Path nomadRoot) {
     requireNonNull(nomadRoot);
 
-    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot, new ParameterSubstitutor());
     RepositoryDepth repositoryDepth = nomadRepositoryManager.getRepositoryDepth();
     if (repositoryDepth == FULL) {
       try (Stream<Path> pathStream = Files.list(nomadRepositoryManager.getConfigPath())) {

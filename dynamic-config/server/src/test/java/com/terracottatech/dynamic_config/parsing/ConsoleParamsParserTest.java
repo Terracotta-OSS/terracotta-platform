@@ -7,7 +7,11 @@ package com.terracottatech.dynamic_config.parsing;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
+import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.utilities.TimeUnit;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -15,10 +19,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_DATA_DIR;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_GROUP_PORT;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_HOSTNAME;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_LOG_DIR;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_METADATA_DIR;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_OFFHEAP_RESOURCE;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_PORT;
+import static com.terracottatech.dynamic_config.DynamicConfigConstants.PARAM_INTERNAL_SEP;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
-import static java.io.File.separator;
+import static java.lang.Integer.parseInt;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -27,56 +44,59 @@ import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class ConsoleParamsParserTest {
+  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
+
   @Test
   public void testDefaults() {
-    Cluster cluster = new ConsoleParamsParser(Collections.emptyMap()).parse();
+    Cluster cluster = new ConsoleParamsParser(Collections.emptyMap(), PARAMETER_SUBSTITUTOR).parse();
     assertThat(cluster.getName(), is(nullValue()));
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName(), startsWith("node-"));
-    assertThat(node.getNodeHostname(), is("%h"));
-    assertThat(node.getNodePort(), is(9410));
-    assertThat(node.getNodeGroupPort(), is(9430));
-    assertThat(node.getNodeBindAddress(), is("0.0.0.0"));
-    assertThat(node.getNodeGroupBindAddress(), is("0.0.0.0"));
-    assertThat(node.getOffheapResources(), hasEntry("main", Measure.of(512L, MB)));
+    assertThat(node.getNodeHostname(), is(substitute(DEFAULT_HOSTNAME)));
+    assertThat(node.getNodePort(), is(parseInt(DEFAULT_PORT)));
+    assertThat(node.getNodeGroupPort(), is(parseInt(DEFAULT_GROUP_PORT)));
+    assertThat(node.getNodeBindAddress(), is(DEFAULT_BIND_ADDRESS));
+    assertThat(node.getNodeGroupBindAddress(), is(DEFAULT_GROUP_BIND_ADDRESS));
+    assertThat(node.getOffheapResources(), hasEntry(DEFAULT_OFFHEAP_RESOURCE.split(PARAM_INTERNAL_SEP)[0], Measure.parse(DEFAULT_OFFHEAP_RESOURCE.split(PARAM_INTERNAL_SEP)[1], MemoryUnit.class)));
 
     assertThat(node.getNodeBackupDir(), is(nullValue()));
-    assertThat(node.getNodeLogDir().toString(), is("%H" + separator + "terracotta" + separator + "logs"));
-    assertThat(node.getNodeMetadataDir().toString(), is("%H" + separator + "terracotta" + separator + "metadata"));
+    assertThat(node.getNodeLogDir().toString(), is(DEFAULT_LOG_DIR));
+    assertThat(node.getNodeMetadataDir().toString(), is(DEFAULT_METADATA_DIR));
     assertThat(node.getSecurityDir(), is(nullValue()));
     assertThat(node.getSecurityAuditLogDir(), is(nullValue()));
-    assertThat(node.getDataDirs(), hasEntry("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main")));
+    assertThat(node.getDataDirs(), hasEntry(DEFAULT_DATA_DIR.split(PARAM_INTERNAL_SEP)[0], Paths.get(DEFAULT_DATA_DIR.split(PARAM_INTERNAL_SEP)[1])));
 
     assertFalse(node.isSecurityWhitelist());
     assertFalse(node.isSecuritySslTls());
     assertThat(node.getSecurityAuthc(), is(nullValue()));
 
-    assertThat(node.getFailoverPriority(), is("availability"));
-    assertThat(node.getClientReconnectWindow(), is(Measure.of(120L, SECONDS)));
-    assertThat(node.getClientLeaseDuration(), is(Measure.of(20L, SECONDS)));
+    assertThat(node.getFailoverPriority(), is(DEFAULT_FAILOVER_PRIORITY));
+    assertThat(node.getClientReconnectWindow(), is(Measure.parse(DEFAULT_CLIENT_RECONNECT_WINDOW, TimeUnit.class)));
+    assertThat(node.getClientLeaseDuration(), is(Measure.parse(DEFAULT_CLIENT_LEASE_DURATION, TimeUnit.class)));
   }
 
   @Test
   public void testParametersInInput() {
-    Cluster cluster = new ConsoleParamsParser(setPropertiesWithParameters()).parse();
+    Cluster cluster = new ConsoleParamsParser(setPropertiesWithParameters(), PARAMETER_SUBSTITUTOR).parse();
     assertThat(cluster.getName(), is(nullValue()));
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeHostname(), is("%h"));
+    assertThat(node.getNodeHostname(), is(substitute("%c")));
     assertThat(node.getNodeBindAddress(), is("%i"));
   }
 
   @Test
   public void testAllOptions() {
     Map<String, String> paramValueMap = setProperties();
-    Cluster cluster = new ConsoleParamsParser(paramValueMap).parse();
+    Cluster cluster = new ConsoleParamsParser(paramValueMap, PARAMETER_SUBSTITUTOR).parse();
     assertThat(cluster.getName(), is("tc-cluster"));
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
@@ -144,7 +164,7 @@ public class ConsoleParamsParserTest {
   private Map<String, String> setPropertiesWithParameters() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.NODE_BIND_ADDRESS, "%i");
-    paramValueMap.put(CommonOptions.NODE_HOSTNAME, "%h");
+    paramValueMap.put(CommonOptions.NODE_HOSTNAME, "%c");
     return paramValueMap;
   }
 }

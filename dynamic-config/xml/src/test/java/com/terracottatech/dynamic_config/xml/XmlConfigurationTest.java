@@ -13,7 +13,6 @@ import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.config.util.ParameterSubstitutor;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.ElementSelectors;
@@ -28,6 +27,7 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 import static org.junit.Assert.assertThat;
+import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 public class XmlConfigurationTest {
@@ -35,13 +35,14 @@ public class XmlConfigurationTest {
   @Rule
   public TmpDir temporaryFolder = new TmpDir();
 
-  PathResolver pathResolver;
+  private PathResolver pathResolver;
 
   @Before
   public void setUp() {
     pathResolver = new PathResolver(
         Paths.get("%(user.dir)"),
-        path -> path == null ? null : Paths.get(ParameterSubstitutor.substitute(path.toString())));
+        path -> path == null ? null : Paths.get(substitute(path.toString()))
+    );
   }
 
   @Test
@@ -54,16 +55,17 @@ public class XmlConfigurationTest {
         .setDataDir("main", Paths.get("bar"))
         .setNodeBackupDir(Paths.get("backup"))
         .setSecurityAuditLogDir(Paths.get("audit"))
-        .setNodeName("node-1")));
+        .setNodeName("node-1")
+        .setNodeHostname("localhost"))
+    );
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "node-1.xml");
   }
 
   @Test
   public void testMarshallingAbsolutePathWithPlaceHolders() throws Exception {
-    Cluster cluster = new Cluster(new Stripe(new Node()
-        .fillDefaults()
-        .setNodeName("node-2")));
+    Node node = Node.newDefaultNode("node-2", "localhost");
+    Cluster cluster = new Cluster(new Stripe(node));
     String actual = new XmlConfiguration(cluster, 1, "node-2", pathResolver).toString();
     assertXml(actual, "node-2.xml");
   }

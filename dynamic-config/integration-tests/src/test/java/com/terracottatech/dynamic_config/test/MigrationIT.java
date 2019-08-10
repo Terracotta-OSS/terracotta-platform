@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
@@ -58,10 +59,11 @@ public class MigrationIT {
   public TmpDir tmpDir = new TmpDir();
 
   private XmlConfigMapper xmlConfigMapper;
+  private final IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
 
   @Before
   public void setUp() {
-    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
+    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
     xmlConfigMapper = new XmlConfigMapper(userDirResolver);
   }
 

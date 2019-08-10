@@ -48,7 +48,6 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.getIpAddress;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
@@ -60,6 +59,7 @@ import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
 import static org.awaitility.pollinterval.IterativePollInterval.iterative;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
 
 public class BaseStartupIT {
 

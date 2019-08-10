@@ -4,9 +4,12 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
+import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +26,11 @@ import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 public class ConsoleParamsParser implements Parser<Cluster> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsParser.class);
   private final HashMap<String, String> paramValueMap;
+  private final IParameterSubstitutor parameterSubstitutor;
 
-  public ConsoleParamsParser(Map<String, String> paramValueMap) {
+  public ConsoleParamsParser(Map<String, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
     this.paramValueMap = new HashMap<>(paramValueMap);
+    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
@@ -33,20 +38,29 @@ public class ConsoleParamsParser implements Parser<Cluster> {
     Node node = new Node();
     Cluster cluster = new Cluster(new Stripe(node));
     paramValueMap.forEach((param, value) -> ParameterSetter.set(param, value, cluster));
-    Map<String, String> defaultsAdded = new TreeMap<>();
-    node.fillDefaults(defaultsAdded::put);
-    printParams(paramValueMap, defaultsAdded);
+
+    addDefaults(node);
     return cluster;
   }
 
-  private void printParams(Map<String, String> supplied, Map<String, String> defaulted) {
+  private void addDefaults(Node node) {
+    Map<String, String> defaultsAdded = new TreeMap<>();
+    if (node.getNodeHostname() == null) {
+      // We can't hostname null during Node construction from the client side (e.g. during parsing a config properties
+      // file in activate command). Therefore, this logic is here, and not in Node::fillDefaults
+      String hostName = parameterSubstitutor.substitute(DynamicConfigConstants.DEFAULT_HOSTNAME);
+      node.setNodeHostname(hostName);
+      defaultsAdded.put(CommonOptions.NODE_HOSTNAME, hostName);
+    }
+
+    node.fillDefaults(defaultsAdded::put);
     LOGGER.info(
         String.format(
             "%sRead the following parameters: %s%sAdded the following defaults: %s",
             lineSeparator(),
-            toDisplayParams(supplied),
+            toDisplayParams(paramValueMap),
             lineSeparator(),
-            toDisplayParams(defaulted)
+            toDisplayParams(defaultsAdded)
         )
     );
   }

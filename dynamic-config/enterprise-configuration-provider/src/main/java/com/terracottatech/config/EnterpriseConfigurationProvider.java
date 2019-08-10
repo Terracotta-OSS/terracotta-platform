@@ -10,6 +10,8 @@ import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
 
   private CommandLineParser cliParser;
   private Configuration configuration;
+  private IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
 
   @Override
   public void initialize(List<String> configurationParams) throws ConfigurationException {
@@ -43,7 +46,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
 
   private void bootstrapNomad() {
     String configRepository = cliParser.getConfigRepository() == null ? DEFAULT_REPOSITORY_DIR : cliParser.getConfigRepository();
-    NomadBootstrapper.bootstrap(Paths.get(configRepository), cliParser.getNodeName());
+    NomadBootstrapper.bootstrap(Paths.get(configRepository), cliParser.getNodeName(), parameterSubstitutor);
   }
 
   private CommandLineParser getCommandLineParser(List<String> configurationParams) throws ParseException, ConfigurationException {
@@ -62,7 +65,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   }
 
   private Configuration createConfiguration() throws Exception {
-    TcConfigProvider tcConfigProvider = TcConfigProviderFactory.init(cliParser);
+    TcConfigProvider tcConfigProvider = TcConfigProviderFactory.init(cliParser, parameterSubstitutor);
     TcConfiguration tcConfiguration = tcConfigProvider.provide();
     LOGGER.info("Startup configuration of the node: \n\n{}", tcConfiguration);
     return new TcConfigurationWrapper(tcConfiguration, cliParser.isConfigConsistencyMode());

@@ -18,9 +18,9 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
@@ -85,7 +85,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     startServer("--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
 
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%h")));
+    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(substitute("%h")));
   }
 
   @Test
@@ -179,7 +179,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
         "--node-hostname", "%c"
     );
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("%c")));
+    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(substitute("%c")));
   }
 
   @Test

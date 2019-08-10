@@ -7,6 +7,7 @@ dependencies {
   compile project(':sanskrit')
   compile project(':dynamic-config-common')
   compile project(':dynamic-config-xml')
+  compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"

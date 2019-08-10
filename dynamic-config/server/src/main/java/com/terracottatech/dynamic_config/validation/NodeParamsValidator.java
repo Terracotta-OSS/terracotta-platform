@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -15,16 +16,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.terracottatech.dynamic_config.util.ParameterSubstitutor.containsSubstitutionParams;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
 import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;
 
 public class NodeParamsValidator implements Validator {
   private final Map<String, String> paramValueMap;
+  private final IParameterSubstitutor parameterSubstitutor;
 
-  public NodeParamsValidator(Map<String, String> paramValueMap) {
+  public NodeParamsValidator(Map<String, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
     this.paramValueMap = new HashMap<>(paramValueMap);
+    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
@@ -150,7 +152,7 @@ public class NodeParamsValidator implements Validator {
 
   private void validateBindAddress(String setting) {
     String value = paramValueMap.get(setting);
-    if (value == null || containsSubstitutionParams(value)) {
+    if (value == null || parameterSubstitutor.containsSubstitutionParams(value)) {
       return;
     }
 
@@ -162,7 +164,7 @@ public class NodeParamsValidator implements Validator {
   private void validateNodeHostname() {
     String param = CommonOptions.NODE_HOSTNAME;
     String value = paramValueMap.get(param);
-    if (value == null || containsSubstitutionParams(value)) {
+    if (value == null || parameterSubstitutor.containsSubstitutionParams(value)) {
       return;
     }
 
@@ -178,7 +180,7 @@ public class NodeParamsValidator implements Validator {
       return;
     }
 
-    if (containsSubstitutionParams(value)) {
+    if (parameterSubstitutor.containsSubstitutionParams(value)) {
       throw new IllegalArgumentException("<node-name> specified in " + param + "=<name> cannot contain substitution parameters");
     }
   }
@@ -209,7 +211,7 @@ public class NodeParamsValidator implements Validator {
   private void validateOffheap() {
     final String param = CommonOptions.OFFHEAP_RESOURCES;
     String value = paramValueMap.get(param);
-    if (value == null || containsSubstitutionParams(value)) {
+    if (value == null || parameterSubstitutor.containsSubstitutionParams(value)) {
       return;
     }
 

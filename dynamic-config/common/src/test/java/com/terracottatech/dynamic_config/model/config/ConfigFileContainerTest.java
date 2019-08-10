@@ -36,14 +36,14 @@ public class ConfigFileContainerTest {
     ConfigFileContainer configFileContainer = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster");
     assertThat(configFileContainer.getClusterName(), is(equalTo("my-cluster")));
 
-    configFileContainer = new ConfigFileContainer(fileName, loadProperties(fileName), null);
+    configFileContainer = new ConfigFileContainer(fileName, loadProperties(fileName));
     assertThat(configFileContainer.getClusterName(), is(equalTo("single-stripe")));
   }
 
   @Test
   public void testParse_singleStripe() throws Exception {
     String fileName = "single-stripe.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), null).createCluster();
+    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName)).createCluster();
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
@@ -81,7 +81,7 @@ public class ConfigFileContainerTest {
   @Test
   public void testParseMinimal_singleStripe() throws Exception {
     String fileName = "single-stripe_minimal.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), null).createCluster();
+    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName)).createCluster();
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
@@ -114,7 +114,7 @@ public class ConfigFileContainerTest {
   @Test
   public void testParse_multiStripe() throws Exception {
     String fileName = "multi-stripe.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), null).createCluster();
+    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName)).createCluster();
     assertThat(cluster.getStripes().size(), is(2));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(2));
     assertThat(cluster.getStripes().get(1).getNodes().size(), is(2));

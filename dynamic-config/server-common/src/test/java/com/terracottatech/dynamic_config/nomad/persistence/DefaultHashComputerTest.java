@@ -24,14 +24,11 @@ import static org.junit.Assert.assertThat;
 public class DefaultHashComputerTest {
   @Test
   public void computeHash() throws IOException {
-    ObjectMapper om = NomadJson.buildObjectMapper()
-        .configure(SerializationFeature.INDENT_OUTPUT, false);
-
+    ObjectMapper om = NomadJson.buildObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, false);
     HashComputer<NodeContext> hashComputer = new DefaultHashComputer(NomadJson.buildObjectMapper());
 
-    NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(new Node()
-        .fillDefaults()
-        .setNodeName("foo"))), 1, "foo");
+    Node node = new Node().fillDefaults().setNodeName("foo");
+    NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node)), 1, "foo");
 
     String hash = hashComputer.computeHash(nodeContext);
     String json = om.writeValueAsString(nodeContext);

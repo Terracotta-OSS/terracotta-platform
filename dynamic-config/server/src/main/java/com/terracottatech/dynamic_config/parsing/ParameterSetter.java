@@ -20,6 +20,7 @@ import java.util.function.BiConsumer;
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.MULTI_VALUE_SEP;
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.PARAM_INTERNAL_SEP;
 import static com.terracottatech.utilities.Assertion.assertNonNull;
+import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 /**
  * Sets pre-validated parameters to their corresponding values in {@code Node} object.
@@ -29,7 +30,7 @@ class ParameterSetter {
 
   static {
     PARAM_ACTION_MAP.put(CommonOptions.NODE_NAME, toNode(Node::setNodeName));
-    PARAM_ACTION_MAP.put(CommonOptions.NODE_HOSTNAME, toNode(Node::setNodeHostname));
+    PARAM_ACTION_MAP.put(CommonOptions.NODE_HOSTNAME, toNode((node1, nodeHostname) -> node1.setNodeHostname(substitute(nodeHostname))));
     PARAM_ACTION_MAP.put(CommonOptions.NODE_PORT, toNode((node, value) -> node.setNodePort(Integer.parseInt(value))));
     PARAM_ACTION_MAP.put(CommonOptions.NODE_GROUP_PORT, toNode((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))));
     PARAM_ACTION_MAP.put(CommonOptions.NODE_BIND_ADDRESS, toNode(Node::setNodeBindAddress));

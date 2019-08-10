@@ -12,6 +12,8 @@ import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryExce
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.ChangeDetails;
 import com.terracottatech.nomad.messages.CommitMessage;
@@ -21,212 +23,191 @@ import com.terracottatech.nomad.messages.RejectionReason;
 import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.nio.file.Path;
 
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NomadServerManagerTest {
-  @Spy
-  NomadServerManager spyNomadManager;
+  private static final NodeContext TOPOLOGY = new NodeContext(new Cluster("foo", new Stripe(new Node().setNodeName("bar"))), 1, "bar");
+  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
+  private static final String NODE_NAME = "node0";
+  private static final int STRIPE_ID = 1;
 
-  private NodeContext topology = new NodeContext(new Cluster("foo", new Stripe(new Node().setNodeName("bar"))), 1, "bar");
+  private Path repositoryPath;
+  private NomadServerManager spyNomadManager;
+  private DiscoverResponse<NodeContext> response;
+  private ChangeDetails<NodeContext> changeDetails;
+  private NomadRepositoryManager repositoryStructureManager;
+  private UpgradableNomadServer<NodeContext> upgradableNomadServer;
+  private AcceptRejectResponse prepareResponse;
+  private AcceptRejectResponse commitResponse;
+
+  @Before
+  @SuppressWarnings("unchecked")
+  public void setUp() {
+    repositoryPath = mock(Path.class);
+    response = mock(DiscoverResponse.class);
+    repositoryStructureManager = mock(NomadRepositoryManager.class);
+    spyNomadManager = spy(NomadServerManager.class);
+    upgradableNomadServer = mock(UpgradableNomadServer.class);
+    changeDetails = mock(ChangeDetails.class);
+    prepareResponse = mock(AcceptRejectResponse.class);
+    commitResponse = mock(AcceptRejectResponse.class);
+  }
 
   @Test
   public void testCreateConfigController() {
-    ConfigController configController = spyNomadManager.createConfigController("node0", 1);
-    assertThat(configController.getNodeName(), is("node0"));
-    assertThat(configController.getStripeId(), is(1));
+    ConfigController configController = spyNomadManager.createConfigController(NODE_NAME, STRIPE_ID);
+    assertThat(configController.getNodeName(), is(NODE_NAME));
+    assertThat(configController.getStripeId(), is(STRIPE_ID));
   }
 
   @Test
   public void testInitFail() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    Exception exception = mock(NomadException.class);
-    doThrow(exception).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doThrow(NomadException.class).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    try {
-      spyNomadManager.init(repositoryPath, "node-1");
-      fail("Expected NomadConfigurationException");
-    } catch (NomadConfigurationException e) {
-      assertThat(e.getCause(), is(notNullValue()));
-    }
+    assertThat(
+        () -> spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR),
+        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Exception initializing Nomad Server")))
+    );
   }
 
   @Test
   public void testInitFailWithNomadConfigurationException() {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    MalformedRepositoryException exception = new MalformedRepositoryException("Failed to create repository");
-    doThrow(exception).when(repositoryStructureManager).createDirectories();
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doThrow(MalformedRepositoryException.class).when(repositoryStructureManager).createDirectories();
 
-    try {
-      spyNomadManager.init(repositoryPath, "node-1");
-      fail("Expected NomadConfigurationException");
-    } catch (NomadConfigurationException e) {
-      assertThat(e.getCause(), is(exception));
-    }
+    assertThat(
+        () -> spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR),
+        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Exception initializing Nomad Server")))
+    );
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testInitUpgradeAndDestroy() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
-
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
-    verify(spyNomadManager, times(1)).createServer(repositoryStructureManager, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    String nodeName = "node-0";
-    int stripeId = 1;
+    verify(spyNomadManager, times(STRIPE_ID)).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
+
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
 
-    //Upgrade
-    spyNomadManager.upgradeForWrite(stripeId, nodeName);
-    verify(upgradableNomadServer, times(1)).setChangeApplicator(any(ChangeApplicator.class));
+    verify(upgradableNomadServer, times(STRIPE_ID)).setChangeApplicator(any(ChangeApplicator.class));
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void testGetConfigurationWithExceptionInDiscover() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
-
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    doThrow(NomadException.class).when(upgradableNomadServer).discover();
 
-    NomadException exception = mock(NomadException.class);
-    doThrow(exception).when(upgradableNomadServer).discover();
-
-    assertThat(() -> spyNomadManager.getConfiguration(), is(throwing(instanceOf(NomadConfigurationException.class))));
+    assertThat(
+        spyNomadManager::getConfiguration,
+        is(throwing(instanceOf(NomadConfigurationException.class)))
+    );
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void testGetConfigurationWithEmptyLatestChange() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
-
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
     when(response.getLatestChange()).thenReturn(null);
 
-    assertThat(spyNomadManager::getConfiguration, is(throwing(instanceOf(NomadConfigurationException.class))));
+    assertThat(
+        spyNomadManager::getConfiguration,
+        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Did not get last stored configuration from Nomad")))
+    );
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void testGetConfigurationWithNullConfigurationString() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
-    ChangeDetails<NodeContext> changeDetails = mock(ChangeDetails.class);
     when(response.getLatestChange()).thenReturn(changeDetails);
-
     when(changeDetails.getResult()).thenReturn(null);
 
-    assertThat(spyNomadManager::getConfiguration, is(throwing(instanceOf(NomadConfigurationException.class))));
+    assertThat(
+        spyNomadManager::getConfiguration,
+        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Did not get last stored configuration from Nomad")))
+    );
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void testGetConfiguration() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
-
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
-    ChangeDetails<NodeContext> changeDetails = mock(ChangeDetails.class);
     when(response.getLatestChange()).thenReturn(changeDetails);
-    when(changeDetails.getResult()).thenReturn(topology);
+    when(changeDetails.getResult()).thenReturn(TOPOLOGY);
 
     NodeContext returnedConfiguration = spyNomadManager.getConfiguration();
-    assertThat(returnedConfiguration, is(topology));
+    assertThat(returnedConfiguration, is(TOPOLOGY));
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfiguration() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
-
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    String nodeName = "node0";
-    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(stripeId, nodeName);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
     Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
-    AcceptRejectResponse prepareResponse = mock(AcceptRejectResponse.class);
     when(prepareResponse.isAccepted()).thenReturn(true);
 
-    AcceptRejectResponse commitResponse = mock(AcceptRejectResponse.class);
     when(commitResponse.isAccepted()).thenReturn(true);
 
     doReturn(prepareResponse).when(upgradableNomadServer).prepare(any(PrepareMessage.class));
@@ -250,107 +231,90 @@ public class NomadServerManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfigurationWithPrepareFail() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    String nodeName = "node0";
-    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(stripeId, nodeName);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
     Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
-    AcceptRejectResponse prepareResponse = mock(AcceptRejectResponse.class);
     when(prepareResponse.isAccepted()).thenReturn(false);
     when(prepareResponse.getRejectionReason()).thenReturn(RejectionReason.BAD);
 
     doReturn(prepareResponse).when(upgradableNomadServer).prepare(any(PrepareMessage.class));
-    assertThat(() -> spyNomadManager.repairConfiguration(newConfiguration, version), is(throwing(instanceOf(NomadConfigurationException.class))));
+    assertThat(
+        () -> spyNomadManager.repairConfiguration(newConfiguration, version),
+        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Repair message is rejected by Nomad. Reason for rejection is BAD")))
+    );
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfigurationWithServerThrowingNomadException() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    String nodeName = "node0";
-    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(stripeId, nodeName);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
     Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
-    NomadException prepareException = mock(NomadException.class);
+    doThrow(NomadException.class).when(upgradableNomadServer).prepare(any(PrepareMessage.class));
 
-    doThrow(prepareException).when(upgradableNomadServer).prepare(any(PrepareMessage.class));
-    assertThat(() -> spyNomadManager.repairConfiguration(newConfiguration, version), is(throwing(instanceOf(NomadConfigurationException.class))));
+    assertThat(
+        () -> spyNomadManager.repairConfiguration(newConfiguration, version),
+        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Unable to repair configuration")))
+    );
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testRepairConfigurationWithCommitFail() throws Exception {
-    Path repositoryPath = mock(Path.class);
-    NomadRepositoryManager repositoryStructureManager = mock(NomadRepositoryManager.class);
-    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath);
-    UpgradableNomadServer<NodeContext> upgradableNomadServer = mock(UpgradableNomadServer.class);
-    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, "node-1");
+    doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
+    doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    spyNomadManager.init(repositoryPath, "node-1");
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    String nodeName = "node0";
-    int stripeId = 1;
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(stripeId, nodeName);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
-    DiscoverResponse<NodeContext> response = mock(DiscoverResponse.class);
     doReturn(response).when(upgradableNomadServer).discover();
 
     Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
-    AcceptRejectResponse prepareResponse = mock(AcceptRejectResponse.class);
     when(prepareResponse.isAccepted()).thenReturn(true);
-
-    AcceptRejectResponse commitResponse = mock(AcceptRejectResponse.class);
     when(commitResponse.isAccepted()).thenReturn(false);
     when(commitResponse.getRejectionReason()).thenReturn(RejectionReason.BAD);
 
@@ -362,7 +326,8 @@ public class NomadServerManagerTest {
 
     assertThat(
         () -> spyNomadManager.repairConfiguration(newConfiguration, version),
-        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(is(equalTo("Unexpected commit failure. Reason for failure is BAD")))));
+        is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(is(equalTo("Unexpected commit failure. Reason for failure is BAD"))))
+    );
 
     verify(upgradableNomadServer).prepare(argumentCaptorPrepare.capture());
     verify(upgradableNomadServer).commit(argumentCaptorCommit.capture());

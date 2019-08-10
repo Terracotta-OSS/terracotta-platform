@@ -5,6 +5,8 @@
 package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,6 +17,8 @@ import java.util.Map;
 public class NodeParamsValidatorTest {
   @Rule
   public ExpectedException exception = ExpectedException.none();
+
+  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Test
   public void testBadOffheap_1() {
@@ -214,7 +218,7 @@ public class NodeParamsValidatorTest {
     paramValueMap.put(CommonOptions.SECURITY_WHITELIST, "true");
     paramValueMap.put(CommonOptions.SECURITY_DIR, "security-dir");
     paramValueMap.put(CommonOptions.SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
-    new NodeParamsValidator(paramValueMap).validate();
+    new NodeParamsValidator(paramValueMap, PARAMETER_SUBSTITUTOR).validate();
   }
 
   @Test
@@ -223,13 +227,13 @@ public class NodeParamsValidatorTest {
     paramValueMap.put(CommonOptions.SECURITY_WHITELIST, "true");
     paramValueMap.put(CommonOptions.SECURITY_DIR, "security-dir");
     paramValueMap.put(CommonOptions.SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
-    new NodeParamsValidator(paramValueMap).validate();
+    new NodeParamsValidator(paramValueMap, PARAMETER_SUBSTITUTOR).validate();
   }
 
   @Test
   public void testGoodSecurity_3() {
     Map<String, String> paramValueMap = new HashMap<>();
-    new NodeParamsValidator(paramValueMap).validate();
+    new NodeParamsValidator(paramValueMap, PARAMETER_SUBSTITUTOR).validate();
   }
 
   @Test
@@ -238,7 +242,7 @@ public class NodeParamsValidatorTest {
     paramValueMap.put(CommonOptions.SECURITY_SSL_TLS, "true");
     paramValueMap.put(CommonOptions.SECURITY_AUTHC, "certificate");
     paramValueMap.put(CommonOptions.SECURITY_DIR, "security-root-dir");
-    new NodeParamsValidator(paramValueMap).validate();
+    new NodeParamsValidator(paramValueMap, PARAMETER_SUBSTITUTOR).validate();
   }
 
   @Test
@@ -249,14 +253,14 @@ public class NodeParamsValidatorTest {
     paramValueMap.put(CommonOptions.SECURITY_WHITELIST, "true");
     paramValueMap.put(CommonOptions.SECURITY_DIR, "security-root-dir");
     paramValueMap.put(CommonOptions.SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
-    new NodeParamsValidator(paramValueMap).validate();
+    new NodeParamsValidator(paramValueMap, PARAMETER_SUBSTITUTOR).validate();
   }
 
   @Test
   public void testGoodSecurity_6() {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.SECURITY_SSL_TLS, "false");
-    new NodeParamsValidator(paramValueMap).validate();
+    new NodeParamsValidator(paramValueMap, PARAMETER_SUBSTITUTOR).validate();
   }
 
   @Test
@@ -360,6 +364,6 @@ public class NodeParamsValidatorTest {
   private void testThrowsWithMessage(Map<String, String> paramValueMap, String message) {
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(message);
-    new NodeParamsValidator(paramValueMap).validate();
+    new NodeParamsValidator(paramValueMap, PARAMETER_SUBSTITUTOR).validate();
   }
 }

@@ -11,6 +11,7 @@ import com.terracottatech.dynamic_config.nomad.persistence.FileConfigStorage;
 import com.terracottatech.dynamic_config.nomad.persistence.InitialConfigStorage;
 import com.terracottatech.dynamic_config.nomad.persistence.SanskritNomadServerState;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServerImpl;
@@ -21,8 +22,8 @@ import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory
 
 public class UpgradableNomadServerFactory {
   public static UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
-                                                             ChangeApplicator<NodeContext> changeApplicator,
-                                                             String nodeName) throws SanskritException, NomadException {
+                                                                ChangeApplicator<NodeContext> changeApplicator, String nodeName,
+                                                                IParameterSubstitutor parameterSubstitutor) throws SanskritException, NomadException {
     ObjectMapper objectMapper = NomadJson.buildObjectMapper();
     return new NomadServerImpl<>(
         new SanskritNomadServerState<>(
@@ -33,7 +34,9 @@ public class UpgradableNomadServerFactory {
             new InitialConfigStorage<>(
                 new FileConfigStorage(
                     repositoryManager.getConfigPath(),
-                    nodeName                )
+                    nodeName,
+                    parameterSubstitutor
+                )
             ),
             new DefaultHashComputer(objectMapper)
         ),

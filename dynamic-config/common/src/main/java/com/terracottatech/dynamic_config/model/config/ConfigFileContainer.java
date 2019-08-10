@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.model.config;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Tuple2;
 
 import java.util.ArrayList;
@@ -20,23 +21,39 @@ import java.util.Set;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeId;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeId;
+import static com.terracottatech.utilities.Assertion.assertNonNull;
 
 public class ConfigFileContainer {
   private final Properties properties;
   private final String clusterName;
+  private final IParameterSubstitutor paramSubstitutor;
 
-  public ConfigFileContainer(String fileName, Properties properties, String optionalClusterName) {
+  public ConfigFileContainer(String fileName, Properties properties) {
+    this(fileName, properties, null);
+  }
+
+  public ConfigFileContainer(String fileName, Properties properties, String clusterName) {
+    this(fileName, properties, clusterName, IParameterSubstitutor.identity());
+  }
+
+  public ConfigFileContainer(String fileName, Properties properties, String clusterName, IParameterSubstitutor paramSubstitutor) {
     this.properties = properties;
-    this.clusterName = extractClusterName(fileName, optionalClusterName);
+    this.paramSubstitutor = paramSubstitutor;
+    this.clusterName = extractClusterName(fileName, clusterName);
+    assertNonNull(this.clusterName);
   }
 
   public Cluster createCluster() {
     Set<Integer> stripeSet = new HashSet<>();
     Map<Tuple2<Integer, String>, Node> uniqueServerToNodeMapping = new HashMap<>();
+    Map<Tuple2<Integer, String>, NodeParameterSetter> nodeParameterSetters = new HashMap<>();
+
     properties.forEach((key, value) -> {
       // stripe.1.node.1.node-name=node-1
       stripeSet.add(getStripeId(key.toString()));
-      uniqueServerToNodeMapping.putIfAbsent(Tuple2.tuple2(getStripeId(key.toString()), getNodeId(key.toString())), new Node());
+      Tuple2<Integer, String> nodeIdentifier = Tuple2.tuple2(getStripeId(key.toString()), getNodeId(key.toString()));
+      uniqueServerToNodeMapping.putIfAbsent(nodeIdentifier, new Node());
+      nodeParameterSetters.putIfAbsent(nodeIdentifier, new NodeParameterSetter(uniqueServerToNodeMapping.get(nodeIdentifier), paramSubstitutor));
     });
 
     List<Stripe> stripes = new ArrayList<>();
@@ -51,7 +68,8 @@ public class ConfigFileContainer {
     Cluster cluster = new Cluster(clusterName, stripes);
     properties.forEach((key, value) -> {
       Tuple2<Integer, String> nodeIdentifier = Tuple2.tuple2(getStripeId(key.toString()), getNodeId(key.toString()));
-      NodeParameterSetter.set(getProperty(key.toString()), value.toString(), uniqueServerToNodeMapping.get(nodeIdentifier));
+      NodeParameterSetter nodeParameterSetter = nodeParameterSetters.get(nodeIdentifier);
+      nodeParameterSetter.set(getProperty(key.toString()), value.toString());
     });
 
     uniqueServerToNodeMapping.values().forEach(Node::fillDefaults);

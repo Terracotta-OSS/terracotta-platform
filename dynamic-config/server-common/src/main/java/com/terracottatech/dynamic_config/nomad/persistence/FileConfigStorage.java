@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.nomad.persistence;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.utilities.PathResolver;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -27,20 +27,22 @@ import static java.util.Objects.requireNonNull;
 public class FileConfigStorage implements ConfigStorage<NodeContext> {
   private final Path root;
   private final String nodeName;
+  private final XmlConfigMapper xmlConfigMapper;
 
-  // This path resolver is used when converting a model to XML.
-  // It makes sure to resolve any relative path to absolute ones based on the working directory.
-  // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
-  // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
-  // the config repository: repository/config.
-  // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
-  // That is why we need to force the resolving within the XML relatively to the user directory.
-  private final PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), ParameterSubstitutor::substitute);
-  private final XmlConfigMapper xmlConfigMapper = new XmlConfigMapper(userDirResolver);
-
-  public FileConfigStorage(Path root, String nodeName) {
+  public FileConfigStorage(Path root, String nodeName, IParameterSubstitutor parameterSubstitutor) {
     this.root = requireNonNull(root);
     this.nodeName = requireNonNull(nodeName);
+    requireNonNull(parameterSubstitutor);
+
+    // This path resolver is used when converting a model to XML.
+    // It makes sure to resolve any relative path to absolute ones based on the working directory.
+    // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
+    // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
+    // the config repository: repository/config.
+    // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
+    // That is why we need to force the resolving within the XML relatively to the user directory.
+    PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
+    this.xmlConfigMapper = new XmlConfigMapper(userDirResolver);
   }
 
   @Override

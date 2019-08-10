@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.repository;
 
 import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -23,7 +24,6 @@ import static com.terracottatech.dynamic_config.repository.NomadRepositoryManage
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.findNodeName;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -40,26 +40,27 @@ public class NomadRepositoryManagerTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
-  private Path nomadRoot = Paths.get("nomadRoot").toAbsolutePath();
-  private Path configDirPath = nomadRoot.resolve("config");
-  private Path licenseDirPath = nomadRoot.resolve("license");
-  private Path sanskritDirPath = nomadRoot.resolve("sanskrit");
+  private final Path nomadRoot = Paths.get("nomadRoot").toAbsolutePath();
+  private final Path configDirPath = nomadRoot.resolve("config");
+  private final Path licenseDirPath = nomadRoot.resolve("license");
+  private final Path sanskritDirPath = nomadRoot.resolve("sanskrit");
+  private final IParameterSubstitutor parameterSubstitutor = IParameterSubstitutor.identity();
 
   @Test
   public void testGetConfigurationPath() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     assertThat(repoManager.getConfigPath(), is(configDirPath));
   }
 
   @Test
   public void testGetSanskritPath() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     assertThat(repoManager.getSanskritPath(), is(sanskritDirPath));
   }
 
   @Test
   public void testCreateRepositoryIfAbsentWithAllDirectoriesAbsent() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
     doNothing().when(spyRepoManager).createNomadRoot();
     doNothing().when(spyRepoManager).createNomadSubDirectories();
@@ -72,7 +73,7 @@ public class NomadRepositoryManagerTest {
 
   @Test
   public void testCreateRepositoryIfAbsentWithAllTheDirectoriesPresent() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
     doNothing().when(spyRepoManager).createNomadRoot();
     doNothing().when(spyRepoManager).createNomadSubDirectories();
@@ -85,7 +86,7 @@ public class NomadRepositoryManagerTest {
 
   @Test
   public void testCreateRepositoryIfAbsentWithOnlyRootPresent() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
     doNothing().when(spyRepoManager).createNomadRoot();
     doNothing().when(spyRepoManager).createNomadSubDirectories();
@@ -98,7 +99,7 @@ public class NomadRepositoryManagerTest {
 
   @Test
   public void testValidateRepositoryStructure() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
     doReturn(true).when(spyRepoManager).checkDirectoryExists(nomadRoot);
     doReturn(true).when(spyRepoManager).checkDirectoryExists(configDirPath);
@@ -151,7 +152,7 @@ public class NomadRepositoryManagerTest {
 
   @Test
   public void testCheckDirectoryExists() throws Exception {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     File newFolder = folder.newFolder();
     assertThat(repoManager.checkDirectoryExists(newFolder.toPath()), is(true));
     File newFile = folder.newFile();
@@ -164,7 +165,7 @@ public class NomadRepositoryManagerTest {
 
   @Test
   public void testGetNodeNameWithAllDirectoriesAbsent() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
     doReturn(NONE).when(spyRepoManager).getRepositoryDepth();
 
@@ -175,7 +176,7 @@ public class NomadRepositoryManagerTest {
 
   @Test
   public void testGetNodeNameWithOnlyRootPresent() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
 
     doReturn(ROOT_ONLY).when(spyRepoManager).getRepositoryDepth();
@@ -186,7 +187,7 @@ public class NomadRepositoryManagerTest {
 
   @Test
   public void testGetNodeNameWithAllDirectoriesPresent() {
-    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot);
+    NomadRepositoryManager repoManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
     NomadRepositoryManager spyRepoManager = spy(repoManager);
 
     doReturn(FULL).when(spyRepoManager).getRepositoryDepth();
