@@ -33,6 +33,7 @@ import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
@@ -89,7 +90,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     verify(results).startDiscovery(matchSetOf("server1", "server2"));
     verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discoverFail("server2");
+    verify(results).discoverFail(eq("server2"), anyString());
     verify(results).endDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
@@ -171,7 +172,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
     verify(results).prepared("server1");
-    verify(results).prepareFail("server2");
+    verify(results).prepareFail(eq("server2"), anyString());
     verify(results).endPrepare();
     verify(results).startRollback();
     verify(results).rolledBack("server1");
@@ -200,10 +201,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
     verify(results).prepared("server1");
-    verify(results).prepareFail("server2");
+    verify(results).prepareFail(eq("server2"), anyString());
     verify(results).endPrepare();
     verify(results).startRollback();
-    verify(results).rollbackFail("server1");
+    verify(results).rollbackFail(eq("server1"), anyString());
     verify(results).endRollback();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -229,7 +230,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
     verify(results).prepared("server1");
-    verify(results).prepareFail("server2");
+    verify(results).prepareFail(eq("server2"), anyString());
     verify(results).endPrepare();
     verify(results).startRollback();
     verify(results).rollbackOtherClient("server1", "lastMutationHost", "lastMutationUser");
@@ -367,7 +368,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     verify(results).startDiscovery(matchSetOf("server1", "server2"));
     verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discoverFail("server2");
+    verify(results).discoverFail(eq("server2"), anyString());
     verify(results).endDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }

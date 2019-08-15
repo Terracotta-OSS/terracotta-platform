@@ -9,11 +9,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.persistence.sanskrit.HashUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Mathieu Carbou
  */
 public class DefaultHashComputer implements HashComputer<NodeContext> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultHashComputer.class);
 
   private final ObjectMapper mapper;
 
@@ -25,7 +28,10 @@ public class DefaultHashComputer implements HashComputer<NodeContext> {
   @Override
   public String computeHash(NodeContext o) {
     try {
-      return HashUtils.generateHash(mapper.writeValueAsString(o));
+      String json = mapper.writeValueAsString(o);
+      String hash = HashUtils.generateHash(json);
+      LOGGER.debug("Computed hash: {} for json: {}", hash, json);
+      return hash;
     } catch (JsonProcessingException e) {
       throw new IllegalStateException(e);
     }

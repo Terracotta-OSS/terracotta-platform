@@ -40,9 +40,9 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discoverFail(String server) {
+  public void discoverFail(String server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
-      receiver.discoverFail(server);
+      receiver.discoverFail(server, reason);
     }
   }
 
@@ -111,9 +111,9 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void prepareFail(String server) {
+  public void prepareFail(String server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
-      receiver.prepareFail(server);
+      receiver.prepareFail(server, reason);
     }
   }
 
@@ -160,9 +160,9 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void takeoverFail(String server) {
+  public void takeoverFail(String server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
-      receiver.takeoverFail(server);
+      receiver.takeoverFail(server, reason);
     }
   }
 
@@ -223,9 +223,9 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(String server) {
+  public void rollbackFail(String server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
-      receiver.rollbackFail(server);
+      receiver.rollbackFail(server, reason);
     }
   }
 

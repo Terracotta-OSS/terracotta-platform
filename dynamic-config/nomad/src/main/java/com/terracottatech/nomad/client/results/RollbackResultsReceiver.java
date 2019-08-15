@@ -9,7 +9,7 @@ public interface RollbackResultsReceiver {
 
   default void rolledBack(String server) {}
 
-  default void rollbackFail(String server) {}
+  default void rollbackFail(String server, String reason) {}
 
   default void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
 

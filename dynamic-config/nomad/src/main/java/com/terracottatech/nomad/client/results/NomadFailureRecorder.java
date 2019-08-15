@@ -16,8 +16,8 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
   private volatile Set<String> failures = ConcurrentHashMap.newKeySet();
 
   @Override
-  public void discoverFail(String server) {
-    failures.add("Discover failed on server: " + server);
+  public void discoverFail(String server, String reason) {
+    failures.add("Discover failed on server: " + server + ". Reason: " + reason);
   }
 
   @Override
@@ -31,8 +31,8 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void prepareFail(String server) {
-    failures.add("Prepare failed for server: " + server);
+  public void prepareFail(String server, String reason) {
+    failures.add("Prepare failed for server: " + server + ". Reason: " + reason);
   }
 
   @Override
@@ -56,8 +56,8 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(String server) {
-    failures.add("Rollback failed for server: " + server);
+  public void rollbackFail(String server, String reason) {
+    failures.add("Rollback failed for server: " + server + ". Reason: " + reason);
   }
 
   @Override

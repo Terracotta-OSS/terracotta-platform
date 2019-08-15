@@ -9,6 +9,8 @@ import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.utilities.PathResolver;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,6 +27,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
 public class FileConfigStorage implements ConfigStorage<NodeContext> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(FileConfigStorage.class);
+
   private final Path root;
   private final String nodeName;
   private final XmlConfigMapper xmlConfigMapper;
@@ -48,6 +52,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
   @Override
   public NodeContext getConfig(long version) throws ConfigStorageException {
     Path file = toPath(version);
+    LOGGER.debug("Loading version: {} from file: {}", version, file);
 
     try {
       return xmlConfigMapper.fromXml(nodeName, new String(Files.readAllBytes(file), UTF_8));
@@ -62,6 +67,8 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     File file = toFile(version);
     file.getParentFile().mkdirs();
+    LOGGER.debug("Saving topology: {} with version: {} to file: {}", config, version, file);
+
     try (PrintWriter writer = new PrintWriter(file, UTF_8.name())) {
       writer.print(xmlConfigMapper.toXml(config));
     } catch (FileNotFoundException | UnsupportedEncodingException e) {

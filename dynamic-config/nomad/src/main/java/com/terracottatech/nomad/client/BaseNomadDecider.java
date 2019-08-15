@@ -75,7 +75,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discoverFail(String server) {
+  public void discoverFail(String server, String reason) {
     discoverFail = true;
   }
 
@@ -91,7 +91,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void prepareFail(String server) {
+  public void prepareFail(String server, String reason) {
     prepareFail = true;
   }
 
@@ -111,7 +111,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void takeoverFail(String server) {
+  public void takeoverFail(String server, String reason) {
     takeoverFail = true;
   }
 
@@ -126,7 +126,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void rollbackFail(String server) {
+  public void rollbackFail(String server, String reason) {
     commitRollbackFail = true;
   }
 

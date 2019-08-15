@@ -21,7 +21,7 @@ public class NoopChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void discoverFail(String server) {
+  public void discoverFail(String server, String reason) {
   }
 
   @Override
@@ -61,7 +61,7 @@ public class NoopChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void prepareFail(String server) {
+  public void prepareFail(String server, String reason) {
   }
 
   @Override
@@ -105,7 +105,7 @@ public class NoopChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(String server) {
+  public void rollbackFail(String server, String reason) {
   }
 
   @Override

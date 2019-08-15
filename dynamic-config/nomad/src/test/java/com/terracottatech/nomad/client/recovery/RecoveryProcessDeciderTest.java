@@ -46,7 +46,7 @@ public class RecoveryProcessDeciderTest {
 
     decider.startDiscovery(setOf("server1", "server2"));
     decider.discovered("server1", discovery(COMMITTED));
-    decider.discoverFail("server2");
+    decider.discoverFail("server2", "reason");
     decider.endDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -127,7 +127,7 @@ public class RecoveryProcessDeciderTest {
     decider.endDiscovery();
     decider.startSecondDiscovery();
     decider.discoverRepeated("server1");
-    decider.discoverFail("server2");
+    decider.discoverFail("server2", "reason");
     decider.endSecondDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -186,7 +186,7 @@ public class RecoveryProcessDeciderTest {
     decider.endDiscovery();
     decider.startTakeover();
     decider.takeover("server1");
-    decider.takeoverFail("server2");
+    decider.takeoverFail("server2", "reason");
     decider.endPrepare();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -327,7 +327,7 @@ public class RecoveryProcessDeciderTest {
     decider.takeover("server2");
     decider.endPrepare();
     decider.startRollback();
-    decider.rollbackFail("server2");
+    decider.rollbackFail("server2", "reason");
     decider.endRollback();
 
     assertTrue(decider.isDiscoverSuccessful());

@@ -11,7 +11,7 @@ public interface PrepareResultsReceiver {
 
   default void prepared(String server) {}
 
-  default void prepareFail(String server) {}
+  default void prepareFail(String server, String reason) {}
 
   default void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
 

@@ -37,9 +37,9 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void discoverFail(String server) {
+  public void discoverFail(String server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
-      changeResultReceiver.discoverFail(server);
+      changeResultReceiver.discoverFail(server, reason);
     }
   }
 
@@ -107,9 +107,9 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void prepareFail(String server) {
+  public void prepareFail(String server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
-      changeResultReceiver.prepareFail(server);
+      changeResultReceiver.prepareFail(server, reason);
     }
   }
 
@@ -184,9 +184,9 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void rollbackFail(String server) {
+  public void rollbackFail(String server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
-      changeResultReceiver.rollbackFail(server);
+      changeResultReceiver.rollbackFail(server, reason);
     }
   }
 

@@ -29,8 +29,8 @@ public class RecoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver<
   }
 
   @Override
-  public void discoverFail(String server) {
-    recoveryResultReceiver.discoverFail(server);
+  public void discoverFail(String server, String reason) {
+    recoveryResultReceiver.discoverFail(server, reason);
   }
 
   @Override
@@ -79,7 +79,7 @@ public class RecoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver<
   }
 
   @Override
-  public void prepareFail(String server) {
+  public void prepareFail(String server, String reason) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 
@@ -114,8 +114,8 @@ public class RecoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver<
   }
 
   @Override
-  public void takeoverFail(String server) {
-    recoveryResultReceiver.takeoverFail(server);
+  public void takeoverFail(String server, String reason) {
+    recoveryResultReceiver.takeoverFail(server, reason);
   }
 
   @Override
@@ -159,8 +159,8 @@ public class RecoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver<
   }
 
   @Override
-  public void rollbackFail(String server) {
-    recoveryResultReceiver.rollbackFail(server);
+  public void rollbackFail(String server, String reason) {
+    recoveryResultReceiver.rollbackFail(server, reason);
   }
 
   @Override

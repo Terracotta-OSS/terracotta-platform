@@ -47,7 +47,7 @@ public class ChangeProcessDeciderTest {
 
     decider.startDiscovery(setOf("server1", "server2"));
     decider.discovered("server1", discovery(COMMITTED));
-    decider.discoverFail("server2");
+    decider.discoverFail("server2", "reason");
     decider.endDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -114,7 +114,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startSecondDiscovery();
     decider.discoverRepeated("server1");
-    decider.discoverFail("server2");
+    decider.discoverFail("server2", "reason");
     decider.endSecondDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -228,7 +228,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared("server1");
-    decider.prepareFail("server2");
+    decider.prepareFail("server2", "reason");
     decider.endPrepare();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -248,7 +248,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared("server1");
-    decider.prepareFail("server2");
+    decider.prepareFail("server2", "reason");
     decider.endPrepare();
     decider.startRollback();
     decider.rolledBack("server2");
@@ -272,10 +272,10 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared("server1");
-    decider.prepareFail("server2");
+    decider.prepareFail("server2", "reason");
     decider.endPrepare();
     decider.startRollback();
-    decider.rollbackFail("server2");
+    decider.rollbackFail("server2", "reason");
     decider.endRollback();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -296,7 +296,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared("server1");
-    decider.prepareFail("server2");
+    decider.prepareFail("server2", "reason");
     decider.endPrepare();
     decider.startRollback();
     decider.rollbackOtherClient("server2", "lastMutationHost", "lastMutationUser");

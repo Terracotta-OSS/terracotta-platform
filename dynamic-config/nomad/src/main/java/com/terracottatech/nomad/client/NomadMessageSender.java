@@ -17,6 +17,8 @@ import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RejectionReason;
 import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -33,6 +35,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageSender.class);
+
   private final Map<String, NamedNomadServer<T>> serverMap;
   private final String host;
   private final String user;
@@ -63,7 +67,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
       futures.add(asyncCaller.runTimedAsync(
           server::discover,
           discovery -> results.discovered(serverName, discovery),
-          e -> results.discoverFail(serverName)
+          e -> {
+            LOGGER.error("Discover failed: " + e.getMessage(), e);
+            results.discoverFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+          }
       ));
     }
 
@@ -93,7 +100,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               results.discoverOtherClient(serverName, lastMutationHost, lastMutationUser);
             }
           },
-          e -> results.discoverFail(serverName)
+          e -> {
+            LOGGER.error("Discover failed: " + e.getMessage(), e);
+            results.discoverFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+          }
       ));
     }
 
@@ -147,7 +157,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> results.prepareFail(serverName)
+          e -> {
+            LOGGER.error("Prepare failed: " + e.getMessage(), e);
+            results.prepareFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+          }
       ));
     }
 
@@ -195,9 +208,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
             }
           },
           e -> {
-            StringWriter stack = new StringWriter();
-            e.printStackTrace(new PrintWriter(stack));
-            results.commitFail(serverName, e.getMessage() + "\n" + stack);
+            LOGGER.error("Commit failed: " + e.getMessage(), e);
+            results.commitFail(serverName, e.getMessage() + "\n" + stackTrace(e));
           }
       ));
     }
@@ -245,7 +257,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> results.rollbackFail(serverName)
+          e -> {
+            LOGGER.error("Rollback failed: " + e.getMessage(), e);
+            results.rollbackFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+          }
       ));
     }
 
@@ -291,7 +306,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> results.takeoverFail(serverName)
+          e -> {
+            LOGGER.error("Takeover failed: " + e.getMessage(), e);
+            results.takeoverFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+          }
       ));
     }
 
@@ -320,4 +338,11 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     mutativeMessageCounts.put(server, expectedMutativeMessageCount);
     maxVersionNumber.accumulateAndGet(highestVersionNumber, Long::max);
   }
+
+  private static String stackTrace(Throwable e) {
+    StringWriter stack = new StringWriter();
+    e.printStackTrace(new PrintWriter(stack));
+    return stack.toString();
+  }
+
 }

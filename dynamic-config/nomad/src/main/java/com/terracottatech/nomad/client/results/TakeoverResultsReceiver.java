@@ -11,7 +11,7 @@ public interface TakeoverResultsReceiver {
 
   default void takeoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
 
-  default void takeoverFail(String server) {}
+  default void takeoverFail(String server, String reason) {}
 
   default void endTakeover() {}
 }

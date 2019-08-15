@@ -30,6 +30,7 @@ import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -133,7 +134,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     verify(results).startDiscovery(matchSetOf("server1", "server2"));
     verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discoverFail("server2");
+    verify(results).discoverFail(eq("server2"), anyString());
     verify(results).endDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
@@ -198,7 +199,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
     verify(results).takeover("server1");
-    verify(results).takeoverFail("server2");
+    verify(results).takeoverFail(eq("server2"), anyString());
     verify(results).endTakeover();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -312,7 +313,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
     verify(results).takeover("server2");
     verify(results).endTakeover();
     verify(results).startRollback();
-    verify(results).rollbackFail("server2");
+    verify(results).rollbackFail(eq("server2"), anyString());
     verify(results).endRollback();
     verify(results).done(MAY_NEED_RECOVERY);
   }

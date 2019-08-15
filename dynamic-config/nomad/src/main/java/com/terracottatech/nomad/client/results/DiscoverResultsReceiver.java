@@ -14,7 +14,7 @@ public interface DiscoverResultsReceiver<T> {
 
   default void discovered(String server, DiscoverResponse<T> discovery) {};
 
-  default void discoverFail(String server) {}
+  default void discoverFail(String server, String reason) {}
 
   default void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {}
 

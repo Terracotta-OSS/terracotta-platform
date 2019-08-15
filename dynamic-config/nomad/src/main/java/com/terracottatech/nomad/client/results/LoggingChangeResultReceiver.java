@@ -27,8 +27,8 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void discoverFail(String server) {
-    printError("No response from server: " + server);
+  public void discoverFail(String server, String reason) {
+    printError("No response from server: " + server + ". Reason: " + reason);
   }
 
   @Override
@@ -77,8 +77,8 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void prepareFail(String server) {
-    printError("Server: " + server + " failed when asked to prepare to make the change");
+  public void prepareFail(String server, String reason) {
+    printError("Server: " + server + " failed when asked to prepare to make the change. Reason: " + reason);
   }
 
   @Override
@@ -132,8 +132,8 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(String server) {
-    printError("Server: " + server + " failed when asked to roll back the change");
+  public void rollbackFail(String server, String reason) {
+    printError("Server: " + server + " failed when asked to roll back the change. Reason: " + reason);
   }
 
   @Override

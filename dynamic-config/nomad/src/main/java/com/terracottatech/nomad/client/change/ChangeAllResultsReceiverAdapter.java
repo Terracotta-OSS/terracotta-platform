@@ -29,8 +29,8 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void discoverFail(String server) {
-    changeResultReceiver.discoverFail(server);
+  public void discoverFail(String server, String reason) {
+    changeResultReceiver.discoverFail(server, reason);
   }
 
   @Override
@@ -79,8 +79,8 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void prepareFail(String server) {
-    changeResultReceiver.prepareFail(server);
+  public void prepareFail(String server, String reason) {
+    changeResultReceiver.prepareFail(server, reason);
   }
 
   @Override
@@ -114,7 +114,7 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void takeoverFail(String server) {
+  public void takeoverFail(String server, String reason) {
     throw new AssertionError("This should not be called during the change process");
   }
 
@@ -159,8 +159,8 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void rollbackFail(String server) {
-    changeResultReceiver.rollbackFail(server);
+  public void rollbackFail(String server, String reason) {
+    changeResultReceiver.rollbackFail(server, reason);
   }
 
   @Override
