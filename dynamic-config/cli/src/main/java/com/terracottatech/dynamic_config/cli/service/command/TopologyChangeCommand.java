@@ -152,7 +152,7 @@ public abstract class TopologyChangeCommand extends Command {
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
-      Collection<Node> src = sources.stream()
+      List<Node> src = sources.stream()
           .map(addr -> connections.getDiagnosticService(addr)
               .map(ds -> ds.getProxy(TopologyService.class))
               .map(TopologyService::getThisNode)
@@ -180,7 +180,7 @@ public abstract class TopologyChangeCommand extends Command {
     logger.info("Command successful!\n");
   }
 
-  protected abstract Cluster updateTopology(Target destination, Collection<Node> sources);
+  protected abstract Cluster updateTopology(Target destination, List<Node> sources);
 
   private String nodeAddresses(Collection<InetSocketAddress> addresses) {
     return addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", "));

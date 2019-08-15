@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.model.Stripe;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
@@ -23,7 +24,7 @@ import static java.util.stream.Collectors.joining;
 @Usage("attach -t <node|stripe> -d HOST[:PORT] -s HOST1[:PORT1],HOST2[:PORT2],...")
 public class AttachCommand extends TopologyChangeCommand {
   @Override
-  protected Cluster updateTopology(Target destination, Collection<Node> sources) {
+  protected Cluster updateTopology(Target destination, List<Node> sources) {
 
     Cluster cluster = destination.getCluster().clone();
 

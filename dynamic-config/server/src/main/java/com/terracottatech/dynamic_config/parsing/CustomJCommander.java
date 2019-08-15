@@ -9,15 +9,15 @@ import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.WrappedParameter;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class CustomJCommander extends JCommander {
   private final String programName;
-  private final Set<String> userSpecifiedOptions = new TreeSet<>();
+  private final Collection<String> userSpecifiedOptions = new HashSet<>();
 
   public CustomJCommander(String programName, Object object) {
     super(object);
@@ -30,8 +30,8 @@ public class CustomJCommander extends JCommander {
     });
   }
 
-  public Set<String> getUserSpecifiedOptions() {
-    return Collections.unmodifiableSet(userSpecifiedOptions);
+  public Collection<String> getUserSpecifiedOptions() {
+    return Collections.unmodifiableCollection(userSpecifiedOptions);
   }
 
   @Override

@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -25,11 +24,11 @@ import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class ConsoleParamsParser implements Parser<Cluster> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsParser.class);
-  private final HashMap<String, String> paramValueMap;
+  private final TreeMap<String, String> paramValueMap;
   private final IParameterSubstitutor parameterSubstitutor;
 
   public ConsoleParamsParser(Map<String, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
-    this.paramValueMap = new HashMap<>(paramValueMap);
+    this.paramValueMap = new TreeMap<>(paramValueMap);
     this.parameterSubstitutor = parameterSubstitutor;
   }
 

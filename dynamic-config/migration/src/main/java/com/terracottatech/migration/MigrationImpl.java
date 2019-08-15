@@ -29,7 +29,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,10 +39,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.terracottatech.migration.exception.ErrorCode.UNKNOWN_ERROR;
 import static java.lang.String.format;
 import static java.lang.String.join;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 /*
@@ -334,18 +337,19 @@ public class MigrationImpl implements Migration {
   }
 
   private void checkUniqueServerNamesInStripe(List<String> serverNames, int stripeId, Path configFilePath) {
-    List<String> serverNamesLocal = new ArrayList<>(serverNames);
-    Set<String> distinctServerNames = new LinkedHashSet<>(serverNames);
-    if (distinctServerNames.size() != serverNames.size()) {
-      for (String uniqueServerName : serverNames) {
-        serverNamesLocal.remove(uniqueServerName);
-      }
+    Collection<String> duplicates = serverNames.stream()
+        .collect(groupingBy(identity(), counting()))
+        .entrySet().stream()
+        .filter(e -> e.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toCollection(TreeSet::new));
 
+    if (!duplicates.isEmpty()) {
       throw new InvalidInputConfigurationContentException(
           ErrorCode.DUPLICATE_SERVER_NAME_IN_STRIPE,
           format(
               "Duplicate server names %s in configuration file %s for stripe %s",
-              join(",", serverNamesLocal),
+              join(",", duplicates),
               configFilePath,
               stripeId
           )

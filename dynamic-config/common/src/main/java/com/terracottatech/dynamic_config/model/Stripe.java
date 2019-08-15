@@ -27,7 +27,7 @@ public class Stripe implements Cloneable {
   private final List<Node> nodes;
 
   @JsonCreator
-  public Stripe(@JsonProperty("nodes") Collection<Node> nodes) {
+  public Stripe(@JsonProperty("nodes") List<Node> nodes) {
     this.nodes = new CopyOnWriteArrayList<>(nodes);
   }
 
@@ -39,8 +39,8 @@ public class Stripe implements Cloneable {
     this.nodes = new ArrayList<>();
   }
 
-  public Collection<Node> getNodes() {
-    return Collections.unmodifiableCollection(nodes);
+  public List<Node> getNodes() {
+    return Collections.unmodifiableList(nodes);
   }
 
   @Override

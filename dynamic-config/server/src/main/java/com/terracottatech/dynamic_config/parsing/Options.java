@@ -15,9 +15,10 @@ import com.terracottatech.dynamic_config.startup.StartupManager;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -119,7 +120,7 @@ public class Options {
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
 
-  private Set<String> specifiedOptions;
+  private Collection<String> specifiedOptions;
 
   public void process(CustomJCommander jCommander) {
     if (help) {
@@ -173,8 +174,7 @@ public class Options {
     } else {
       // when using config file
 
-      Set<String> filteredOptions = new TreeSet<>(specifiedOptions);
-      System.out.println(specifiedOptions);
+      Set<String> filteredOptions = new HashSet<>(specifiedOptions);
       filteredOptions.remove("-f");
       filteredOptions.remove("-l");
       filteredOptions.remove("-s");

@@ -11,6 +11,7 @@ import com.terracottatech.dynamic_config.model.Node;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.List;
 
 import static java.util.stream.Collectors.joining;
 
@@ -21,7 +22,7 @@ import static java.util.stream.Collectors.joining;
 @Usage("detach -t <node|stripe> -d HOST[:PORT] -s HOST1[:PORT1],HOST2[:PORT2],...")
 public class DetachCommand extends TopologyChangeCommand {
   @Override
-  protected Cluster updateTopology(Target destination, Collection<Node> sources) {
+  protected Cluster updateTopology(Target destination, List<Node> sources) {
 
     Cluster cluster = destination.getCluster().clone();
 

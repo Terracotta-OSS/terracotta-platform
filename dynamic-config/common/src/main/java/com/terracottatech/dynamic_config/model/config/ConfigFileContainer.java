@@ -46,7 +46,7 @@ public class ConfigFileContainer {
 
   public Cluster createCluster() {
     Set<Integer> stripeSet = new TreeSet<>();
-    // keep the map ordered by stripe ID then ndoe name
+    // keep the map ordered by stripe ID then node name
     Comparator<Tuple2<Integer, String>> comparator = Comparator.comparing(tuple -> tuple.t1 + tuple.t2);
     Map<Tuple2<Integer, String>, Node> uniqueServerToNodeMapping = new TreeMap<>(comparator);
     Map<Tuple2<Integer, String>, NodeParameterSetter> nodeParameterSetters = new TreeMap<>(comparator);
