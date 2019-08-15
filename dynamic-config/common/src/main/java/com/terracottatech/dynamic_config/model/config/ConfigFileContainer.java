@@ -11,12 +11,13 @@ import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Tuple2;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeId;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
@@ -44,9 +45,11 @@ public class ConfigFileContainer {
   }
 
   public Cluster createCluster() {
-    Set<Integer> stripeSet = new HashSet<>();
-    Map<Tuple2<Integer, String>, Node> uniqueServerToNodeMapping = new HashMap<>();
-    Map<Tuple2<Integer, String>, NodeParameterSetter> nodeParameterSetters = new HashMap<>();
+    Set<Integer> stripeSet = new TreeSet<>();
+    // keep the map ordered by stripe ID then ndoe name
+    Comparator<Tuple2<Integer, String>> comparator = Comparator.comparing(tuple -> tuple.t1 + tuple.t2);
+    Map<Tuple2<Integer, String>, Node> uniqueServerToNodeMapping = new TreeMap<>(comparator);
+    Map<Tuple2<Integer, String>, NodeParameterSetter> nodeParameterSetters = new TreeMap<>(comparator);
 
     properties.forEach((key, value) -> {
       // stripe.1.node.1.node-name=node-1

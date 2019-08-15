@@ -11,13 +11,13 @@ import com.beust.jcommander.WrappedParameter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class CustomJCommander extends JCommander {
   private final String programName;
-  private final Set<String> userSpecifiedOptions = new HashSet<>();
+  private final Set<String> userSpecifiedOptions = new TreeSet<>();
 
   public CustomJCommander(String programName, Object object) {
     super(object);

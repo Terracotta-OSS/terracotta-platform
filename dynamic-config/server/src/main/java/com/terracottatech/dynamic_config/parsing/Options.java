@@ -15,9 +15,9 @@ import com.terracottatech.dynamic_config.startup.StartupManager;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -28,7 +28,6 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BACKUP_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_PORT;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
@@ -36,6 +35,7 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_METADATA_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_NAME;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_AUDIT_LOG_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_AUTHC;
@@ -173,7 +173,7 @@ public class Options {
     } else {
       // when using config file
 
-      Set<String> filteredOptions = new HashSet<>(specifiedOptions);
+      Set<String> filteredOptions = new TreeSet<>(specifiedOptions);
       System.out.println(specifiedOptions);
       filteredOptions.remove("-f");
       filteredOptions.remove("-l");

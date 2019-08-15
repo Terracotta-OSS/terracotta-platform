@@ -16,7 +16,7 @@ import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 class StripeConfiguration {
@@ -35,7 +35,8 @@ class StripeConfiguration {
   }
 
   private Map<String, ServerConfiguration> createStripeConfig(Stripe stripe) {
-    Map<String, ServerConfiguration> stripeConfiguration = new HashMap<>();
+    // please keep an ordering
+    Map<String, ServerConfiguration> stripeConfiguration = new LinkedHashMap<>();
     Servers servers = createServers(stripe);
     for (Node node : stripe.getNodes()) {
       if (stripeConfiguration.containsKey(node.getNodeName())) {

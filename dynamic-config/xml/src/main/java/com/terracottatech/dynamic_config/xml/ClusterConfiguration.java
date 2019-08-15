@@ -11,12 +11,13 @@ import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluste
 import com.terracottatech.utilities.PathResolver;
 import org.w3c.dom.Element;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ClusterConfiguration {
-  private final Map<Integer, StripeConfiguration> stripeIdConfigInfo = new HashMap<>();
+  // please keep an ordering
+  private final Map<Integer, StripeConfiguration> stripeIdConfigInfo = new LinkedHashMap<>();
   private final String clusterName;
   private final int stripeId;
 

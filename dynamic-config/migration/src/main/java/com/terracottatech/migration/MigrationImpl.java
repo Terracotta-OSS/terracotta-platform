@@ -29,12 +29,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -103,7 +104,7 @@ public class MigrationImpl implements Migration {
 
   protected void validateAndProcessInput(List<String> migrationStrings) {
     boolean generateStripeId = validateInputAndDecideSyntheticStripeIdGeneration(migrationStrings);
-    Set<Integer> discoveredStripeIds = new HashSet<>();
+    Set<Integer> discoveredStripeIds = new TreeSet<>();
     int stripeIndex = 0;
     for (String input : migrationStrings) {
       String[] inputStringArray = input.split(",");
@@ -334,7 +335,7 @@ public class MigrationImpl implements Migration {
 
   private void checkUniqueServerNamesInStripe(List<String> serverNames, int stripeId, Path configFilePath) {
     List<String> serverNamesLocal = new ArrayList<>(serverNames);
-    Set<String> distinctServerNames = new HashSet<>(serverNames);
+    Set<String> distinctServerNames = new LinkedHashSet<>(serverNames);
     if (distinctServerNames.size() != serverNames.size()) {
       for (String uniqueServerName : serverNames) {
         serverNamesLocal.remove(uniqueServerName);
