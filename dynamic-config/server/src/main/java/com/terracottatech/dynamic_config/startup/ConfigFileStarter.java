@@ -48,7 +48,7 @@ public class ConfigFileStarter implements NodeStarter {
         //TODO [DYNAMIC-CONFIG] TRACK #6: relax this constraint
         throw new UnsupportedOperationException("License file option can be used only with a one-node cluster config file");
       }
-      startupManager.startPreactivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
+      startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
     } else {
       startupManager.startUnconfigured(cluster, node, options.getNodeRepositoryDir());
     }

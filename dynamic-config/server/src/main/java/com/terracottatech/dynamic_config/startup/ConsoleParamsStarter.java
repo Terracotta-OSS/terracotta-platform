@@ -38,7 +38,7 @@ public class ConsoleParamsStarter implements NodeStarter {
 
     if (options.getLicenseFile() != null) {
       requireNonNull(options.getClusterName(), "Cluster name is required with license file");
-      startupManager.startPreactivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
+      startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
     } else {
       startupManager.startUnconfigured(cluster, node, options.getNodeRepositoryDir());
     }

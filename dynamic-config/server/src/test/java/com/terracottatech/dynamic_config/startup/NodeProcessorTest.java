@@ -119,12 +119,12 @@ public class NodeProcessorTest {
       System.out.println("Node startup in preactivated state successful");
       System.exit(0);
       return null;
-    }).when(startupManager).startPreactivated(cluster, node, LICENSE_FILE, null);
+    }).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
       assertThat(systemOutRule.getLog(), containsString("Node startup in preactivated state successful"));
-      verify(startupManager, times(1)).startPreactivated(cluster, node, LICENSE_FILE, null);
+      verify(startupManager, times(1)).startActivated(cluster, node, LICENSE_FILE, null);
       verify(startupManager, times(0)).startUnconfigured(cluster, node, null);
     });
     nodeProcessor.process();
@@ -143,12 +143,12 @@ public class NodeProcessorTest {
       System.out.println("Node startup in preactivated state successful");
       System.exit(0);
       return null;
-    }).when(startupManager).startPreactivated(cluster, node, LICENSE_FILE, null);
+    }).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
       assertThat(systemOutRule.getLog(), containsString("Node startup in preactivated state successful"));
-      verify(startupManager, times(1)).startPreactivated(cluster, node, LICENSE_FILE, null);
+      verify(startupManager, times(1)).startActivated(cluster, node, LICENSE_FILE, null);
       verify(startupManager, times(0)).startUnconfigured(cluster, node, null);
     });
     nodeProcessor.process();
@@ -167,7 +167,7 @@ public class NodeProcessorTest {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("License file option can be used only with a one-node cluster config file");
     systemExit.checkAssertionAfterwards(() -> {
-      verify(startupManager, times(0)).startPreactivated(cluster, node, LICENSE_FILE, NODE_REPOSITORY_DIR);
+      verify(startupManager, times(0)).startActivated(cluster, node, LICENSE_FILE, NODE_REPOSITORY_DIR);
       verify(startupManager, times(0)).startUnconfigured(cluster, node, NODE_REPOSITORY_DIR);
     });
     nodeProcessor.process();
@@ -182,16 +182,16 @@ public class NodeProcessorTest {
     when(startupManager.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node);
     when(cluster.getNodeCount()).thenReturn(2);
     doAnswer(invocation -> {
-      System.out.println("Node startup in UNCONFIGURED state successful");
+      System.out.println("Startup of unconfigured node successful");
       System.exit(0);
       return null;
     }).when(startupManager).startUnconfigured(cluster, node, null);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
-      assertThat(systemOutRule.getLog(), containsString("Node startup in UNCONFIGURED state successful"));
+      assertThat(systemOutRule.getLog(), containsString("Startup of unconfigured node successful"));
       verify(startupManager).startUnconfigured(cluster, node, null);
-      verify(startupManager, times(0)).startPreactivated(cluster, node, LICENSE_FILE, null);
+      verify(startupManager, times(0)).startActivated(cluster, node, LICENSE_FILE, null);
     });
     nodeProcessor.process();
   }
@@ -208,12 +208,12 @@ public class NodeProcessorTest {
       System.out.println("Node startup in preactivated state successful");
       System.exit(0);
       return null;
-    }).when(startupManager).startPreactivated(cluster, node, LICENSE_FILE, null);
+    }).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
       assertThat(systemOutRule.getLog(), containsString("Node startup in preactivated state successful"));
-      verify(startupManager).startPreactivated(cluster, node, LICENSE_FILE, null);
+      verify(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
       verify(startupManager, times(0)).startUnconfigured(cluster, node, null);
     });
     nodeProcessor.process();
@@ -229,12 +229,12 @@ public class NodeProcessorTest {
       System.out.println("Node startup in preactivated state successful");
       System.exit(0);
       return null;
-    }).when(startupManager).startPreactivated(cluster, node, LICENSE_FILE, null);
+    }).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
       assertThat(systemOutRule.getLog(), containsString("Node startup in preactivated state successful"));
-      verify(startupManager).startPreactivated(cluster, node, LICENSE_FILE, null);
+      verify(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
       verify(startupManager, times(0)).startUnconfigured(cluster, node, null);
     });
     nodeProcessor.process();
@@ -249,7 +249,7 @@ public class NodeProcessorTest {
     expectedException.expect(NullPointerException.class);
     expectedException.expectMessage("Cluster name is required with license file");
     systemExit.checkAssertionAfterwards(() -> {
-      verify(startupManager, times(0)).startPreactivated(cluster, node, LICENSE_FILE, null);
+      verify(startupManager, times(0)).startActivated(cluster, node, LICENSE_FILE, null);
       verify(startupManager, times(0)).startUnconfigured(cluster, node, null);
     });
     nodeProcessor.process();
@@ -260,15 +260,15 @@ public class NodeProcessorTest {
     when(clusterCreator.create(paramValueMap)).thenReturn(cluster);
     when(cluster.getSingleNode()).thenReturn(Optional.of(node));
     doAnswer(invocation -> {
-      System.out.println("Node startup in UNCONFIGURED state successful");
+      System.out.println("Startup of unconfigured node successful");
       System.exit(0);
       return null;
     }).when(startupManager).startUnconfigured(cluster, node, null);
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> {
-      assertThat(systemOutRule.getLog(), containsString("Node startup in UNCONFIGURED state successful"));
-      verify(startupManager, times(0)).startPreactivated(cluster, node, LICENSE_FILE, null);
+      assertThat(systemOutRule.getLog(), containsString("Startup of unconfigured node successful"));
+      verify(startupManager, times(0)).startActivated(cluster, node, LICENSE_FILE, null);
       verify(startupManager).startUnconfigured(cluster, node, null);
     });
     nodeProcessor.process();
