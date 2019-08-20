@@ -9,8 +9,6 @@ import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
-import com.terracottatech.dynamic_config.nomad.ConfigController;
-import com.terracottatech.dynamic_config.nomad.ConfigControllerImpl;
 import com.terracottatech.nomad.server.NomadException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,8 +36,7 @@ public class ClusterActivationNomadChangeProcessorTest {
 
   @Before
   public void setUp() {
-    ConfigController configController = new ConfigControllerImpl(() -> NODE_NAME, () -> 1);
-    processor = new ClusterActivationNomadChangeProcessor(configController);
+    processor = new ClusterActivationNomadChangeProcessor(1, NODE_NAME);
   }
 
   @Test

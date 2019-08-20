@@ -77,13 +77,6 @@ public class NomadServerManagerTest {
   }
 
   @Test
-  public void testCreateConfigController() {
-    ConfigController configController = spyNomadManager.createConfigController(NODE_NAME, STRIPE_ID);
-    assertThat(configController.getNodeName(), is(NODE_NAME));
-    assertThat(configController.getStripeId(), is(STRIPE_ID));
-  }
-
-  @Test
   public void testInitFail() throws Exception {
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
     doThrow(NomadException.class).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);

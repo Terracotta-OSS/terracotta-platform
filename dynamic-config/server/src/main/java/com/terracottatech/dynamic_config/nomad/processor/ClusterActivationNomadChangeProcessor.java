@@ -6,17 +6,15 @@ package com.terracottatech.dynamic_config.nomad.processor;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
-import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.nomad.server.NomadException;
 
-import static java.util.Objects.requireNonNull;
-
 public class ClusterActivationNomadChangeProcessor implements NomadChangeProcessor<ClusterActivationNomadChange> {
+  private final int stripeId;
+  private final String nodeName;
 
-  private final ConfigController configController;
-
-  public ClusterActivationNomadChangeProcessor(ConfigController configController) {
-    this.configController = requireNonNull(configController);
+  public ClusterActivationNomadChangeProcessor(int stripeId, String nodeName) {
+    this.stripeId = stripeId;
+    this.nodeName = nodeName;
   }
 
   @Override
@@ -25,10 +23,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
       throw new NomadException("Existing config must be null. Found: " + baseConfig);
     }
 
-    return new NodeContext(
-        change.getCluster(),
-        this.configController.getStripeId(),
-        this.configController.getNodeName());
+    return new NodeContext(change.getCluster(), stripeId, nodeName);
   }
 
   @Override

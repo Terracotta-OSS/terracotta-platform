@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.nomad.processor;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.Applicability;
-import com.terracottatech.dynamic_config.nomad.ConfigController;
 import com.terracottatech.dynamic_config.nomad.FilteredNomadChange;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.NomadException;
@@ -15,12 +14,14 @@ import com.terracottatech.nomad.server.NomadException;
  * Filters Nomad changes of type {@link FilteredNomadChange} based on their applicability
  */
 public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<NomadChange> {
-  private final ConfigController configController;
-  private final NomadChangeProcessor<NomadChange> underlying;
+  private final int stripeId;
+  private final String nodeName;
+  private final RoutingNomadChangeProcessor underlying;
 
-  public ApplicabilityNomadChangeProcessor(ConfigController configController, NomadChangeProcessor<NomadChange> underlying) {
-    this.configController = configController;
-    this.underlying = underlying;
+  public ApplicabilityNomadChangeProcessor(int stripeId, String nodeName, RoutingNomadChangeProcessor nomadChangeProcessor) {
+    this.stripeId = stripeId;
+    this.nodeName = nodeName;
+    this.underlying = nomadChangeProcessor;
   }
 
   @Override
@@ -44,10 +45,9 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
       case CLUSTER:
         return true;
       case STRIPE:
-        return configController.getStripeId() == applicability.getStripeId();
+        return stripeId == applicability.getStripeId();
       case NODE:
-        return configController.getStripeId() == applicability.getStripeId()
-            && configController.getNodeName().equals(applicability.getNodeName());
+        return stripeId == applicability.getStripeId() && nodeName.equals(applicability.getNodeName());
       default:
         throw new AssertionError("Unknown applicability: " + applicability);
     }

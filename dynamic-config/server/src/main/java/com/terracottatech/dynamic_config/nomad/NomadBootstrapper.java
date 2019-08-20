@@ -110,12 +110,17 @@ public class NomadBootstrapper {
      * @param nodeName Name of the running node, non-null
      */
     public void upgradeForWrite(int stripeId, String nodeName) {
-      ConfigController configController = createConfigController(nodeName, stripeId);
+      requireNonNull(nodeName);
+      if (stripeId < 1) {
+        throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
+      }
+
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())
-          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(configController));
+          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
 
-      ChangeApplicator<NodeContext> changeApplicator = new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(configController, nomadChangeProcessor));
+      ApplicabilityNomadChangeProcessor commandProcessor = new ApplicabilityNomadChangeProcessor(stripeId, nodeName, nomadChangeProcessor);
+      ChangeApplicator<NodeContext> changeApplicator = new ConfigChangeApplicator(commandProcessor);
       nomadServer.setChangeApplicator(changeApplicator);
       LOGGER.info("Successfully completed upgradeForWrite procedure");
     }
@@ -189,15 +194,6 @@ public class NomadBootstrapper {
 
     NomadRepositoryManager createNomadRepositoryManager(Path repositoryPath, IParameterSubstitutor parameterSubstitutor) {
       return new NomadRepositoryManager(repositoryPath, parameterSubstitutor);
-    }
-
-    ConfigController createConfigController(String nodeName, int stripeId) {
-      requireNonNull(nodeName);
-      if (stripeId < 1) {
-        throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
-      }
-
-      return new ConfigControllerImpl(() -> nodeName, () -> stripeId);
     }
 
     String getHost() {
