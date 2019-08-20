@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 
 public class TransientTcConfig {
   private final Node node;
@@ -30,6 +31,7 @@ public class TransientTcConfig {
       Path temporaryTcConfigXml = Files.createTempFile(substituted, "tc-config-tmp.", ".xml");
       String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
           "    <plugins>\n" +
+          getOffHeapConfig() +
           getDataDirectoryConfig() +
           getSecurityConfig() +
           "    </plugins>\n" +
@@ -107,5 +109,21 @@ public class TransientTcConfig {
         "    </config>\n";
 
     return dataDirectoryConfig.replace("${DATA_DIR}", parameterSubstitutor.substitute(pathResolver.resolve(node.getNodeMetadataDir())).toString());
+  }
+
+  private String getOffHeapConfig() {
+    String prefix = "    <config xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n" +
+        "      <ohr:offheap-resources>\n";
+
+    String middle = node.getOffheapResources().entrySet()
+        .stream()
+        .map(entry -> "<ohr:resource name=\"" + entry.getKey() + "\" unit=\"" + entry.getValue().getUnit().getShortName() + "\">" + entry.getValue().getQuantity(entry.getValue().getUnit()) + "</ohr:resource>")
+        .collect(Collectors.joining("\n"));
+
+    String suffix =
+        "      </ohr:offheap-resources>\n" +
+        "    </config>\n";
+
+    return prefix + middle + suffix;
   }
 }
