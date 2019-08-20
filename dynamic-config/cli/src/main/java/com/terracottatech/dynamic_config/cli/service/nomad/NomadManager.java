@@ -8,7 +8,6 @@ import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.DelegatingChangeResultReceiver;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.results.LoggingChangeResultReceiver;
-import com.terracottatech.nomad.client.results.NoopChangeResultReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +31,6 @@ public class NomadManager<T> {
 
     try (CloseableNomadClient<T> client = clientFactory.createClient(connectionServers)) {
       client.tryApplyChange(isVerbose ? new DelegatingChangeResultReceiver<>(Arrays.asList(new LoggingChangeResultReceiver<>(), results)) : results, change);
-    }
-  }
-
-  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change) {
-    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", change, connectionServers);
-
-    try (CloseableNomadClient<T> client = clientFactory.createClient(connectionServers)) {
-      ChangeResultReceiver<T> results = isVerbose ? new LoggingChangeResultReceiver<>() : new NoopChangeResultReceiver<>();
-      client.tryApplyChange(results, change);
     }
   }
 }
