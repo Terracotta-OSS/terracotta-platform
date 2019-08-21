@@ -71,7 +71,6 @@ public class ActivateCommand extends Command {
   @Resource
   public RestartService restartService;
 
-  private MultiDiagnosticServiceConnection connection;
   private ConfigFileContainer configFileContainer;
   private Cluster cluster;
 
@@ -148,31 +147,23 @@ public class ActivateCommand extends Command {
 
   @Override
   public final void run() {
-    try {
-      cluster = loadCluster();
-      connection = connectionFactory.createConnection(cluster.getNodeAddresses());
-
-      ensureNoActivatedNode();
+    cluster = loadCluster();
+    try(MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(cluster.getNodeAddresses())) {
+      ensureNoActivatedNode(connection);
 
       cluster.setName(clusterName);
       LOGGER.debug("Setting cluster name successful");
 
-      prepareClusterForActivation();
+      prepareClusterForActivation(connection);
       LOGGER.debug("Setting nomad writable successful");
 
       runNomadChange();
       LOGGER.debug("Nomad change run successful");
 
-      installLicense();
+      installLicense(connection);
       LOGGER.info("License installation successful");
 
       restartNodes();
-
-    } finally {
-      if (connection != null) {
-        connection.close();
-        connection = null;
-      }
     }
 
     LOGGER.info("Command successful!\n");
@@ -209,9 +200,9 @@ public class ActivateCommand extends Command {
     }
   }
 
-  private void ensureNoActivatedNode() {
+  private void ensureNoActivatedNode(MultiDiagnosticServiceConnection connection) {
     LOGGER.debug("Contacting all cluster nodes: {} to check for first run of activation command", cluster.getNodeAddresses());
-    Collection<String> activated = getTopologyServiceStream()
+    Collection<String> activated = getTopologyServiceStream(connection)
         .filter(t -> t.t2.isActivated())
         .map(Tuple2::getT1)
         .map(InetSocketAddress::toString)
@@ -229,9 +220,9 @@ public class ActivateCommand extends Command {
     }
   }
 
-  private void prepareClusterForActivation() {
+  private void prepareClusterForActivation(MultiDiagnosticServiceConnection connection) {
     LOGGER.debug("Contacting all cluster nodes: {} to prepare for activation", cluster.getNodeAddresses());
-    getTopologyServiceStream().map(Tuple2::getT2).forEach(ts -> ts.prepareActivation(cluster));
+    getTopologyServiceStream(connection).map(Tuple2::getT2).forEach(ts -> ts.prepareActivation(cluster));
   }
 
   private void runNomadChange() {
@@ -240,11 +231,11 @@ public class ActivateCommand extends Command {
     failures.reThrow();
   }
 
-  private Stream<Tuple2<InetSocketAddress, TopologyService>> getTopologyServiceStream() {
+  private Stream<Tuple2<InetSocketAddress, TopologyService>> getTopologyServiceStream(MultiDiagnosticServiceConnection connection) {
     return connection.map((address, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
   }
 
-  private void installLicense() {
+  private void installLicense(MultiDiagnosticServiceConnection connection) {
     LOGGER.debug("Reading license");
     String xml;
     try {
@@ -254,7 +245,7 @@ public class ActivateCommand extends Command {
     }
 
     LOGGER.debug("Contacting all cluster nodes: {} to install license", cluster.getNodeAddresses());
-    getTopologyServiceStream()
+    getTopologyServiceStream(connection)
         .map(tuple -> {
           try {
             tuple.t2.installLicense(xml);
