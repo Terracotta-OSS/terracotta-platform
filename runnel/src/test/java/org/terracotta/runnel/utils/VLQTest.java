@@ -80,6 +80,36 @@ public class VLQTest {
     assertThat(VLQ.encodedSize(Integer.MAX_VALUE), is(5));
   }
 
+  @Test
+  public void testEncodeWithPadding() {
+    ByteBuffer buffer = ByteBuffer.allocate(8);
+
+    VLQ.encode(2, true, buffer);
+    assertThat(buffer.position(), is(5));
+
+    buffer.rewind();
+    assertThat(buffer.get(), is((byte) 0x80));
+    assertThat(buffer.get(), is((byte) 0x80));
+    assertThat(buffer.get(), is((byte) 0x80));
+    assertThat(buffer.get(), is((byte) 0x80));
+    assertThat(buffer.get(), is((byte) 0x02));
+  }
+
+  @Test
+  public void testDecodeWithPadding() {
+    ByteBuffer bb = ByteBuffer.allocate(8);
+
+    bb.put((byte) 0x80);
+    bb.put((byte) 0x80);
+    bb.put((byte) 0x80);
+    bb.put((byte) 0x80);
+    bb.put((byte) 0x02);
+    bb.rewind();
+
+    int decoded = VLQ.decode(new ReadBuffer(bb));
+    assertThat(decoded, is(2));
+  }
+
   private void checkDecoding(int value, int... bytes) {
     ByteBuffer bb = ByteBuffer.allocate(8);
 
