@@ -9,6 +9,7 @@ import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
+import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.testing.lock.PortLockingRule;
 import com.terracottatech.utilities.PropertyResolver;
@@ -77,12 +78,24 @@ public class BaseStartupIT {
   @Rule public final ExpectedSystemExit systemExit = ExpectedSystemExit.none();
   @Rule public final TmpDir tmpDir = new TmpDir();
 
-  final Collection<NodeProcess> nodeProcesses = new ArrayList<>(ports.getPorts().length);
+  private final Collection<NodeProcess> nodeProcesses = new ArrayList<>(ports.getPorts().length);
 
   @After
   public void tearDown() throws IOException {
     nodeProcesses.forEach(NodeProcess::close);
     ensureNodesNotAccessingExternalFiles();
+  }
+
+  final NodeProcess startNode(String... cli) {
+    NodeProcess process = NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), cli);
+    nodeProcesses.add(process);
+    return process;
+  }
+
+  final NodeProcess startTcServer(String... cli) {
+    NodeProcess process = NodeProcess.startTcServer(Kit.getOrCreatePath(), getBaseDir(), cli);
+    nodeProcesses.add(process);
+    return process;
   }
 
   Path getBaseDir() {

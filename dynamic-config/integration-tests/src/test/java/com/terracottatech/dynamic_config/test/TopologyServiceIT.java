@@ -10,8 +10,6 @@ import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.test.util.Kit;
-import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,13 +28,10 @@ import static org.junit.Assert.assertThat;
 public class TopologyServiceIT extends BaseStartupIT {
   @Before
   public void setUp() throws Exception {
-    nodeProcesses.add(NodeProcess.startNode(
-        Kit.getOrCreatePath(),
-        getBaseDir(),
+    startNode(
         "--node-repository-dir", "repository/stripe1/node-1",
         "-N", "tc-cluster",
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
-        )
     );
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }

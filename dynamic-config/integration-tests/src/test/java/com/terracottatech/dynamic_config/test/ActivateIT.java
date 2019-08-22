@@ -5,8 +5,6 @@
 package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.cli.ConfigTool;
-import com.terracottatech.dynamic_config.test.util.Kit;
-import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.store.Dataset;
 import com.terracottatech.store.DatasetWriterReader;
 import com.terracottatech.store.Type;
@@ -35,9 +33,7 @@ public class ActivateIT extends BaseStartupIT {
 
   @Before
   public void setUp() {
-    forEachNode((stripeId, nodeId, port) -> nodeProcesses.add(NodeProcess.startNode(
-        Kit.getOrCreatePath(),
-        getBaseDir(),
+    forEachNode((stripeId, nodeId, port) -> startNode(
         "--node-name", "node-" + nodeId,
         "--node-hostname", "localhost",
         "--node-port", String.valueOf(port),
@@ -46,7 +42,7 @@ public class ActivateIT extends BaseStartupIT {
         "--node-backup-dir", "backup/stripe" + stripeId,
         "--node-metadata-dir", "metadata/stripe" + stripeId,
         "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId)));
+        "--data-dirs", "main:user-data/main/stripe" + stripeId));
 
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")

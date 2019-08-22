@@ -5,8 +5,6 @@
 package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
-import com.terracottatech.dynamic_config.test.util.Kit;
-import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -20,33 +18,33 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     String configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1Node).toString();
-    startServer("-r", configurationRepo, "-n", "node-1", "--node-name", "node-1");
+    startTcServer("-r", configurationRepo, "-n", "node-1", "--node-name", "node-1");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     String configurationRepo = generateNodeRepositoryDir(1, 2, ConfigRepositoryGenerator::generate1Stripe2Nodes).toString();
-    startServer("-r", configurationRepo, "-n", "node-2", "--node-name", "node-2");
+    startTcServer("-r", configurationRepo, "-n", "node-2", "--node-name", "node-2");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
     String configurationRepo = generateNodeRepositoryDir(2, 1, ConfigRepositoryGenerator::generate2Stripes2Nodes).toString();
-    startServer("-r", configurationRepo, "-n", "node-1", "--node-name", "node-1");
+    startTcServer("-r", configurationRepo, "-n", "node-1", "--node-name", "node-1");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithConsistencyMode() throws Exception {
-    startServer("--config", createTcConfig().toString(), "--config-consistency", "-r", getNodeRepositoryDir().toString(), "--node-name", "node-1");
+    startTcServer("--config", createTcConfig().toString(), "--config-consistency", "-r", getNodeRepositoryDir().toString(), "--node-name", "node-1");
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void testStartingWithTcConfig() throws Exception {
-    startServer("-f", createTcConfig().toString());
+    startTcServer("-f", createTcConfig().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -79,10 +77,6 @@ public class OldServerStartupScriptIT extends BaseStartupIT {
     Files.createDirectories(getBaseDir());
     write(tcConfigPath, serverConfiguration.getBytes(UTF_8));
     return tcConfigPath;
-  }
-
-  private void startServer(String... cli) {
-    nodeProcesses.add(NodeProcess.startTcServer(Kit.getOrCreatePath(), getBaseDir(), cli));
   }
 
 }

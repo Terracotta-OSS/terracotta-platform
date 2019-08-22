@@ -6,8 +6,6 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.cli.ConfigTool;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.test.util.Kit;
-import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.utilities.Json;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,8 +14,8 @@ import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
+import static java.util.stream.IntStream.range;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
@@ -33,18 +31,16 @@ public class AttachDetachCommandIT extends BaseStartupIT {
   public void setUp() {
     int[] ports = this.ports.getPorts();
 
-    IntStream.range(0, ports.length)
-        .mapToObj(i -> NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(),
-            "--node-name", "node-" + (i + 1),
-            "--node-hostname", "localhost",
-            "--node-port", String.valueOf(ports[i]),
-            "--node-log-dir", "logs/stripe1/node-" + (i + 1),
-            "--node-backup-dir", "backup/stripe1",
-            "--node-metadata-dir", "metadata/stripe1",
-            "--node-repository-dir", "repository/stripe1/node-" + (i + 1),
-            "--data-dirs", "main:user-data/main/stripe1"
-        ))
-        .forEach(nodeProcesses::add);
+    range(0, ports.length).forEach(i -> startNode(
+        "--node-name", "node-" + (i + 1),
+        "--node-hostname", "localhost",
+        "--node-port", String.valueOf(ports[i]),
+        "--node-log-dir", "logs/stripe1/node-" + (i + 1),
+        "--node-backup-dir", "backup/stripe1",
+        "--node-metadata-dir", "metadata/stripe1",
+        "--node-repository-dir", "repository/stripe1/node-" + (i + 1),
+        "--data-dirs", "main:user-data/main/stripe1"
+    ));
     waitedAssert(out::getLog, stringContainsInOrder(Arrays.asList(
         "Started the server in diagnostic mode\n",
         "Started the server in diagnostic mode\n",
