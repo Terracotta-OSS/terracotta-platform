@@ -38,6 +38,8 @@ task unzipKit(type: Copy) {
 test {
   dependsOn unzipKit
 
+  maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
 // Server-side
   def serverJvm = Jvm.current()
   environment 'JAVA_HOME', serverJvm.javaHome

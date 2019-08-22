@@ -57,7 +57,6 @@ import static java.util.stream.IntStream.rangeClosed;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
-import static org.awaitility.pollinterval.IterativePollInterval.iterative;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
@@ -144,7 +143,8 @@ public class BaseStartupIT {
 
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
     Awaitility.await()
-        .pollInterval(iterative(duration -> duration.plus(FIVE_HUNDRED_MILLISECONDS)).with().startDuration(FIVE_HUNDRED_MILLISECONDS))
+        // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
+        .pollInterval(FIVE_HUNDRED_MILLISECONDS)
         .atMost(new Duration(TIMEOUT, TimeUnit.MILLISECONDS))
         .until(callable, matcher);
   }
