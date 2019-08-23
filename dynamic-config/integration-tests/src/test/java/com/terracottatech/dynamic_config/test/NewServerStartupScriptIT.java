@@ -229,7 +229,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
         "--license-file", licensePath().toString(),
         "--node-repository-dir", getNodeRepositoryDir().toString()
     );
-    waitedAssert(out::getLog, containsString("'--license-file' parameter must be used with 'cluster-name' parameter"));
+    waitedAssert(out::getLog, containsString("'--license-file' parameter must be used with '--cluster-name' parameter"));
   }
 
   @Test

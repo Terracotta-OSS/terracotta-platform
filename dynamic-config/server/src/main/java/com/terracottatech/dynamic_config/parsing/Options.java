@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLUSTER_NAME;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BACKUP_DIR;
@@ -108,7 +107,7 @@ public class Options {
   @Parameter(names = {"-d", "--" + DATA_DIRS})
   private String dataDirs;
 
-  @Parameter(names = {"-N", "--" + CLUSTER_NAME}, hidden = true)
+  @Parameter(names = {"-N", "--cluster-name"}, hidden = true)
   private String clusterName;
 
   @Parameter(names = {"-f", "--config-file"})
@@ -168,7 +167,7 @@ public class Options {
       // when using CLI parameters
 
       if (licenseFile != null && clusterName == null) {
-        throw new ParameterException("'--license-file' parameter must be used with '" + CLUSTER_NAME + "' parameter");
+        throw new ParameterException("'--license-file' parameter must be used with '--cluster-name' parameter");
       }
 
     } else {
@@ -177,16 +176,16 @@ public class Options {
       Set<String> filteredOptions = new HashSet<>(specifiedOptions);
       filteredOptions.remove("-f");
       filteredOptions.remove("-l");
+      filteredOptions.remove("-N");
       filteredOptions.remove("-s");
       filteredOptions.remove("-p");
-      filteredOptions.remove("-N");
       filteredOptions.remove("-r");
 
       filteredOptions.remove("--config-file");
       filteredOptions.remove("--license-file");
+      filteredOptions.remove("--cluster-name");
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
       filteredOptions.remove(addDashDash(NODE_PORT));
-      filteredOptions.remove(addDashDash(CLUSTER_NAME));
       filteredOptions.remove(addDashDash(NODE_REPOSITORY_DIR));
 
       if (filteredOptions.size() != 0) {
@@ -194,7 +193,7 @@ public class Options {
             String.format(
                 "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 "--license-file",
-                addDashDash(CLUSTER_NAME),
+                "--cluster-name",
                 addDashDash(NODE_HOSTNAME),
                 addDashDash(NODE_PORT),
                 addDashDash(NODE_REPOSITORY_DIR)

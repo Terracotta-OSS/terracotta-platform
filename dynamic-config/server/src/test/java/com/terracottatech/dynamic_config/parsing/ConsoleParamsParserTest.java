@@ -134,7 +134,7 @@ public class ConsoleParamsParserTest {
 
   private Map<String, String> setProperties() {
     Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(CommonOptions.CLUSTER_NAME, "tc-cluster");
+    paramValueMap.put("cluster-name", "tc-cluster");
 
     paramValueMap.put(CommonOptions.NODE_BACKUP_DIR, "backup");
     paramValueMap.put(CommonOptions.NODE_LOG_DIR, "logs");

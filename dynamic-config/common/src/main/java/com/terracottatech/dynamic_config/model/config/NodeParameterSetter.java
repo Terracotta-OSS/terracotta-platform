@@ -20,6 +20,7 @@ import static com.terracottatech.dynamic_config.DynamicConfigConstants.MULTI_VAL
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.PARAM_INTERNAL_SEP;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BACKUP_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BIND_ADDRESS;
@@ -40,7 +41,7 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECUR
 /**
  * Sets pre-validated parameters to their corresponding values in {@code Node} object.
  */
-class NodeParameterSetter {
+public class NodeParameterSetter {
   private final Map<String, BiConsumer<Node, String>> PARAM_ACTION_MAP = new HashMap<>();
 
   private void buildMap() {
@@ -71,7 +72,7 @@ class NodeParameterSetter {
       String[] split = ofr.split(PARAM_INTERNAL_SEP);
       node.setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));
     }));
-    PARAM_ACTION_MAP.put(CommonOptions.DATA_DIRS, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(dir -> {
+    PARAM_ACTION_MAP.put(DATA_DIRS, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(dir -> {
       int firstColon = dir.indexOf(PARAM_INTERNAL_SEP);
       node.setDataDir(dir.substring(0, firstColon), Paths.get(dir.substring(firstColon + 1)));
     }));
@@ -80,13 +81,13 @@ class NodeParameterSetter {
   private final Node node;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  NodeParameterSetter(Node node, IParameterSubstitutor parameterSubstitutor) {
+  public NodeParameterSetter(Node node, IParameterSubstitutor parameterSubstitutor) {
     this.node = node;
     this.parameterSubstitutor = parameterSubstitutor;
     buildMap();
   }
 
-  void set(String param, String value) {
+  public void set(String param, String value) {
     BiConsumer<Node, String> action = PARAM_ACTION_MAP.get(param);
     if (action == null) {
       throw new AssertionError("Unrecognized param: " + param);

@@ -9,7 +9,9 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.model.config.NodeParameterSetter;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.utilities.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +37,12 @@ public class ConsoleParamsParser implements Parser<Cluster> {
   @Override
   public Cluster parse() {
     Node node = new Node();
+    String clusterName = paramValueMap.remove("cluster-name");
     Cluster cluster = new Cluster(new Stripe(node));
-    paramValueMap.forEach((param, value) -> ParameterSetter.set(param, value, cluster));
+    cluster.setName(clusterName);
+
+    NodeParameterSetter parameterSetter = new NodeParameterSetter(node, new ParameterSubstitutor());
+    paramValueMap.forEach(parameterSetter::set);
 
     addDefaults(node);
     return cluster;

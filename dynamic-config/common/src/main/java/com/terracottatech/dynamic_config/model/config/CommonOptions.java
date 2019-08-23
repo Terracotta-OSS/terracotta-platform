@@ -36,7 +36,6 @@ public class CommonOptions {
   public static final String CLIENT_LEASE_DURATION = "client-lease-duration";
   public static final String OFFHEAP_RESOURCES = "offheap-resources";
   public static final String DATA_DIRS = "data-dirs";
-  public static final String CLUSTER_NAME = "cluster-name";
 
   public static Collection<String> getAllOptions() {
     return Arrays.stream(CommonOptions.class.getDeclaredFields())
