@@ -74,46 +74,6 @@ public class ActivateCommand extends Command {
   private ConfigFileContainer configFileContainer;
   private Cluster cluster;
 
-  public Cluster getCluster() {
-    return cluster;
-  }
-
-  public ActivateCommand setNode(InetSocketAddress node) {
-    this.node = node;
-    return this;
-  }
-
-  public ActivateCommand setConfigPropertiesFile(Path configPropertiesFile) {
-    this.configPropertiesFile = configPropertiesFile;
-    return this;
-  }
-
-  public ActivateCommand setClusterName(String clusterName) {
-    this.clusterName = clusterName;
-    return this;
-  }
-
-  public ActivateCommand setLicenseFile(Path licenseFile) {
-    this.licenseFile = licenseFile;
-    return this;
-  }
-
-  public InetSocketAddress getNode() {
-    return node;
-  }
-
-  public Path getConfigPropertiesFile() {
-    return configPropertiesFile;
-  }
-
-  public String getClusterName() {
-    return clusterName;
-  }
-
-  public Path getLicenseFile() {
-    return licenseFile;
-  }
-
   @Override
   public void validate() {
     if (node == null && configPropertiesFile == null) {
@@ -167,6 +127,47 @@ public class ActivateCommand extends Command {
     }
 
     LOGGER.info("Command successful!\n");
+  }
+
+  /*<-- Test methods --> */
+  Cluster getCluster() {
+    return cluster;
+  }
+
+  ActivateCommand setNode(InetSocketAddress node) {
+    this.node = node;
+    return this;
+  }
+
+  ActivateCommand setConfigPropertiesFile(Path configPropertiesFile) {
+    this.configPropertiesFile = configPropertiesFile;
+    return this;
+  }
+
+  ActivateCommand setClusterName(String clusterName) {
+    this.clusterName = clusterName;
+    return this;
+  }
+
+  ActivateCommand setLicenseFile(Path licenseFile) {
+    this.licenseFile = licenseFile;
+    return this;
+  }
+
+  InetSocketAddress getNode() {
+    return node;
+  }
+
+  Path getConfigPropertiesFile() {
+    return configPropertiesFile;
+  }
+
+  String getClusterName() {
+    return clusterName;
+  }
+
+  Path getLicenseFile() {
+    return licenseFile;
   }
 
   private Cluster loadCluster() {

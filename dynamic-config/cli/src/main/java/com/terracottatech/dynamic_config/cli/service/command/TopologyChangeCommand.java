@@ -62,50 +62,6 @@ public abstract class TopologyChangeCommand extends Command {
   @Parameter(required = true, names = {"-s"}, description = "Selected nodes", variableArity = true, converter = InetSocketAddressConverter.class)
   private List<InetSocketAddress> sources = Collections.emptyList();
 
-  public Type getType() {
-    return type;
-  }
-
-  public TopologyChangeCommand setType(Type type) {
-    this.type = type;
-    return this;
-  }
-
-  public InetSocketAddress getDestination() {
-    return destination;
-  }
-
-  public TopologyChangeCommand setDestination(InetSocketAddress destination) {
-    this.destination = destination;
-    return this;
-  }
-
-  public TopologyChangeCommand setDestination(String host, int port) {
-    return setDestination(InetSocketAddress.createUnresolved(host, port));
-  }
-
-  public List<InetSocketAddress> getSources() {
-    return sources;
-  }
-
-  public TopologyChangeCommand setSources(List<InetSocketAddress> sources) {
-    this.sources = sources;
-    return this;
-  }
-
-  public TopologyChangeCommand setSources(InetSocketAddress... sources) {
-    setSources(Arrays.asList(sources));
-    return this;
-  }
-
-  public TopologyChangeCommand setSource(InetSocketAddress source) {
-    return setSources(source);
-  }
-
-  public TopologyChangeCommand setSource(String host, int port) {
-    return setSource(InetSocketAddress.createUnresolved(host, port));
-  }
-
   @Override
   public final void validate() {
     logger.debug("Validating parameter commands...");
@@ -178,6 +134,43 @@ public abstract class TopologyChangeCommand extends Command {
           .forEach(dcs -> dcs.setCluster(result));
     }
     logger.info("Command successful!\n");
+  }
+
+  /*<-- Test methods --> */
+  Type getType() {
+    return type;
+  }
+
+  TopologyChangeCommand setType(Type type) {
+    this.type = type;
+    return this;
+  }
+
+  InetSocketAddress getDestination() {
+    return destination;
+  }
+
+  TopologyChangeCommand setDestination(InetSocketAddress destination) {
+    this.destination = destination;
+    return this;
+  }
+
+  TopologyChangeCommand setDestination(String host, int port) {
+    return setDestination(InetSocketAddress.createUnresolved(host, port));
+  }
+
+  List<InetSocketAddress> getSources() {
+    return sources;
+  }
+
+  TopologyChangeCommand setSources(List<InetSocketAddress> sources) {
+    this.sources = sources;
+    return this;
+  }
+
+  TopologyChangeCommand setSources(InetSocketAddress... sources) {
+    setSources(Arrays.asList(sources));
+    return this;
   }
 
   protected abstract Cluster updateTopology(Target destination, List<Node> sources);

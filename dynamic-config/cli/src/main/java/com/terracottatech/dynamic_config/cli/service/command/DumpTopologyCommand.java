@@ -38,11 +38,6 @@ public class DumpTopologyCommand extends Command {
 
   @Resource public MultiDiagnosticServiceConnectionFactory connectionFactory;
 
-  public DumpTopologyCommand setNode(InetSocketAddress node) {
-    this.node = node;
-    return this;
-  }
-
   @Override
   public void validate() {}
 
