@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.cli.service.command.ActivateCommand;
 import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DumpTopologyCommand;
+import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
@@ -62,7 +63,8 @@ public class ConfigTool {
                 new ActivateCommand(),
                 new AttachCommand(),
                 new DetachCommand(),
-                new DumpTopologyCommand()
+                new DumpTopologyCommand(),
+                new GetCommand()
             )
         )
     );
