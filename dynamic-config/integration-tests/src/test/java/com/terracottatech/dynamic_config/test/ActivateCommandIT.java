@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 
-public class ActivateIT extends BaseStartupIT {
+public class ActivateCommandIT extends BaseStartupIT {
   @Rule
   public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
