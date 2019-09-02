@@ -20,82 +20,55 @@ public class GetCommandTest {
   @Test
   public void testNodeScopeValidation_invalidScopeIdentifier() {
     command.setConfigs(singletonList("blah.1.node.1:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Config property is of the format")))
-    );
+    assertValidationFailureWithMessage("Config property is of the format");
   }
 
   @Test
   public void testNodeScopeValidation_invalidScopeIdentifier2() {
     command.setConfigs(singletonList("stripe.1.blah.1:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Config property is of the format")))
-    );
+    assertValidationFailureWithMessage("Config property is of the format");
   }
 
   @Test
   public void testNodeScopeValidation_invalidStripeId() {
     command.setConfigs(singletonList("stripe.0.node.1:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected stripe id to be greater than 0")))
-    );
+    assertValidationFailureWithMessage("Expected stripe id to be greater than 0");
   }
 
   @Test
   public void testNodeScopeValidation_invalidNodeId() {
     command.setConfigs(singletonList("stripe.1.node.0:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected node id to be greater than 0")))
-    );
+    assertValidationFailureWithMessage("Expected node id to be greater than 0");
   }
 
   @Test
   public void testNodeScopeValidation_invalidScope() {
     command.setConfigs(singletonList("stripe.1.node.1.blah.1:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected scope to be either in")))
-    );
+    assertValidationFailureWithMessage("Expected scope to be either in");
   }
 
   @Test
   public void testNodeScopeValidation_invalidScopeSeparator() {
     command.setConfigs(singletonList("stripe-1.node-1:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Config property is of the format")))
-    );
+    assertValidationFailureWithMessage("Config property is of the format");
   }
 
   @Test
   public void testNodeScopeValidation_invalidNumberOfScopeSeparators() {
     command.setConfigs(singletonList("stripe-1.node-1:offheap-resources:main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected 0 or 1 scope-resolution colon characters")))
-    );
+    assertValidationFailureWithMessage("Expected 0 or 1 scope-resolution colon characters");
   }
 
   @Test
   public void testNodeScopeValidation_invalidProperty() {
     command.setConfigs(singletonList("stripe.1.node.1:blah.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Unknown property: blah")))
-    );
+    assertValidationFailureWithMessage("Unknown property: blah");
   }
 
   @Test
   public void testNodeScopeValidation_invalidPropertyNames() {
     command.setConfigs(singletonList("stripe.1.node.1:data-dirs.main.foo"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected property in the format")))
-    );
+    assertValidationFailureWithMessage("Expected property in the format");
   }
 
 
@@ -103,46 +76,31 @@ public class GetCommandTest {
   @Test
   public void testStripeScopeValidation_invalidScopeIdentifier() {
     command.setConfigs(singletonList("blah.1:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Config property is of the format")))
-    );
+    assertValidationFailureWithMessage("Config property is of the format");
   }
 
   @Test
   public void testStripeScopeValidation_invalidStripeId() {
     command.setConfigs(singletonList("stripe.0:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected stripe id to be greater than 0")))
-    );
+    assertValidationFailureWithMessage("Expected stripe id to be greater than 0");
   }
 
   @Test
   public void testStripeScopeValidation_invalidScopeSeparator() {
     command.setConfigs(singletonList("stripe-1:offheap-resources.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected scope to be either")))
-    );
+    assertValidationFailureWithMessage("Expected scope to be either");
   }
 
   @Test
   public void testStripeScopeValidation_invalidNumberOfScopeResolutionOperators() {
     command.setConfigs(singletonList("stripe-1:offheap-resources:main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected 0 or 1 scope-resolution colon characters")))
-    );
+    assertValidationFailureWithMessage("Expected 0 or 1 scope-resolution colon characters");
   }
 
   @Test
   public void testStripeScopeValidation_invalidProperty() {
     command.setConfigs(singletonList("stripe.1:blah.main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Unknown property: blah")))
-    );
+    assertValidationFailureWithMessage("Unknown property: blah");
   }
 
 
@@ -150,18 +108,19 @@ public class GetCommandTest {
   @Test
   public void testClusterScopeValidation_invalidNumberOfScopeResolutionOperators() {
     command.setConfigs(singletonList("offheap-resources:main"));
-    assertThat(
-        command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Expected scope to be either in")))
-    );
+    assertValidationFailureWithMessage("Expected scope to be either in");
   }
 
   @Test
   public void testClusterScopeValidation_invalidProperty() {
     command.setConfigs(singletonList("blah.main"));
+    assertValidationFailureWithMessage("Unknown property: blah");
+  }
+
+  private void assertValidationFailureWithMessage(String message) {
     assertThat(
         command::validate,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Unknown property: blah")))
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString(message)))
     );
   }
 }

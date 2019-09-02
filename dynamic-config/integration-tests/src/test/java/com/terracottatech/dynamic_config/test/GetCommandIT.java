@@ -87,9 +87,21 @@ public class GetCommandIT extends BaseStartupIT {
   }
 
   @Test
-  public void testNode_getNodeLogDir() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1:node-log-dir");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1" + separator + "node-1"));
+  public void testNode_getClientReconnectWindow() {
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1:client-reconnect-window");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.client-reconnect-window=120s"));
+  }
+
+  @Test
+  public void testNode_getSecurityAuthc() {
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1:security-authc");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.security-authc="));
+  }
+
+  @Test
+  public void testNode_getNodePort() {
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1:node-port");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-port=" + ports.getPorts()[0]));
   }
 
 
