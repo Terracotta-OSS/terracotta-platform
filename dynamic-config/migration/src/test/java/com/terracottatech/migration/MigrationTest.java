@@ -12,6 +12,7 @@ import com.terracottatech.migration.helper.ReflectionHelper;
 import com.terracottatech.migration.validators.ValidationWrapper;
 import com.terracottatech.utilities.Tuple2;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -32,11 +33,15 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MigrationTest {
@@ -809,5 +814,161 @@ public class MigrationTest {
     assertThat(servers.size(), is(2));
     assertThat(servers.contains("server1"), is(true));
     assertThat(servers.contains("server2"), is(true));
+  }
+
+  @Test
+  public void testRemapPlatformPersistenceWithNullDataDirName() {
+    Node dataRootNode = null;
+    Node platformPersistenceNode = mock(Node.class);
+    Path path = mock(Path.class);
+
+    MigrationImpl migration = new MigrationImpl();
+    try {
+      migration.remapPlatformPersistence(dataRootNode, platformPersistenceNode, path);
+      fail("Expected InvalidInputConfigurationContentException");
+    } catch (InvalidInputConfigurationContentException e) {
+      assertThat(e.getErrorCode(), is(ErrorCode.NO_DATA_DIR_WITH_PLATFORM_PERSISTENCE));
+      assertThat(e.getParameters().containsKey(ErrorParamKey.CONFIG_FILE.toString()), is(true));
+    }
+  }
+
+  @Test
+  public void testRemapPlatformPersistenceMismatchedDataRootName() {
+    Node dataRootNode = mock(Node.class);
+    Node platformPersistenceNode = mock(Node.class);
+    Path path  = mock(Path.class);
+    NodeList dataRootChildList = mock(NodeList.class);
+    Node platformDataRootNode = mock(Node.class);
+
+    MigrationImpl migration = new MigrationImpl();
+    MigrationImpl spyMigration = spy(migration);
+    doReturn("data-root").when(spyMigration).getAttributeValue(platformPersistenceNode,"data-directory-id");
+    when(dataRootNode.getChildNodes()).thenReturn(dataRootChildList);
+    when(dataRootChildList.getLength()).thenReturn(1);
+    when(dataRootChildList.item(0)).thenReturn(platformDataRootNode);
+    doReturn("anything-other-than-data-root").when(spyMigration).getAttributeValue(platformDataRootNode, "name");
+    try {
+      spyMigration.remapPlatformPersistence(dataRootNode, platformPersistenceNode, path);
+      fail("Expected InvalidInputConfigurationContentException");
+    } catch (InvalidInputConfigurationContentException e) {
+      assertThat(e.getErrorCode(), is(ErrorCode.INVALID_DATA_DIR_FOR_PLATFORM_PERSISTENCE));
+      assertThat(e.getParameters().containsKey(ErrorParamKey.CONFIG_FILE.toString()), is(true));
+    }
+  }
+
+  @Test
+  public void testRemapPlatformPersistence() {
+    Node dataRootNode = mock(Node.class);
+    Node platformPersistenceNode = mock(Node.class);
+    Path path  = mock(Path.class);
+    NodeList dataRootChildList = mock(NodeList.class);
+    Node platformDataRootNode = mock(Node.class);
+
+    MigrationImpl migration = new MigrationImpl();
+    MigrationImpl spyMigration = spy(migration);
+
+    doReturn("data-root").when(spyMigration).
+        getAttributeValue(platformPersistenceNode,"data-directory-id");
+    when(dataRootNode.getChildNodes()).thenReturn(dataRootChildList);
+    when(dataRootChildList.getLength()).thenReturn(1);
+    when(dataRootChildList.item(0)).thenReturn(platformDataRootNode);
+    doReturn("data-root").when(spyMigration).getAttributeValue(platformDataRootNode, "name");
+    doReturn(null).when(spyMigration).
+        getAttributeValue(platformDataRootNode, "use-for-platform", false);
+
+    ArgumentCaptor<Node> platformDataRootNodeCaptor = ArgumentCaptor.forClass(Node.class);
+    ArgumentCaptor<String> platformDataRootNodeAttributeNameCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> platformDataRootNodeAttributeValueCaptor = ArgumentCaptor.forClass(String.class);
+
+    doNothing().when(spyMigration).setAttributeValue(platformDataRootNodeCaptor.capture()
+        , platformDataRootNodeAttributeNameCaptor.capture()
+        , platformDataRootNodeAttributeValueCaptor.capture());
+
+    ArgumentCaptor<Node> platformPersistenceNodeCaptor = ArgumentCaptor.forClass(Node.class);
+    ArgumentCaptor<Boolean> removeEmptyParentCaptor = ArgumentCaptor.forClass(Boolean.class);
+
+    doNothing().when(spyMigration).removeNode(platformPersistenceNodeCaptor.capture(), removeEmptyParentCaptor.capture());
+    spyMigration.remapPlatformPersistence(dataRootNode, platformPersistenceNode, path);
+
+    assertThat(platformDataRootNodeCaptor.getValue(), is(platformDataRootNode));
+    assertThat(platformDataRootNodeAttributeNameCaptor.getValue(), is("use-for-platform"));
+    assertThat(platformDataRootNodeAttributeValueCaptor.getValue(), is("true"));
+
+    assertThat(platformPersistenceNodeCaptor.getValue(), is(platformPersistenceNode));
+    assertThat(removeEmptyParentCaptor.getValue(), is(true));
+  }
+
+  @Test
+  public void testRemapPlatformPersistenceWithUseForPlatformPresentAndFalse() {
+    Node dataRootNode = mock(Node.class);
+    Node platformPersistenceNode = mock(Node.class);
+    Path path  = mock(Path.class);
+    NodeList dataRootChildList = mock(NodeList.class);
+    Node platformDataRootNode = mock(Node.class);
+
+    MigrationImpl migration = new MigrationImpl();
+    MigrationImpl spyMigration = spy(migration);
+
+    doReturn("data-root").when(spyMigration).
+        getAttributeValue(platformPersistenceNode,"data-directory-id");
+    when(dataRootNode.getChildNodes()).thenReturn(dataRootChildList);
+    when(dataRootChildList.getLength()).thenReturn(1);
+    when(dataRootChildList.item(0)).thenReturn(platformDataRootNode);
+    doReturn("data-root").when(spyMigration).getAttributeValue(platformDataRootNode, "name");
+    doReturn("false").when(spyMigration).
+        getAttributeValue(platformDataRootNode, "use-for-platform", false);
+
+    ArgumentCaptor<Node> platformDataRootNodeCaptor = ArgumentCaptor.forClass(Node.class);
+    ArgumentCaptor<String> platformDataRootNodeAttributeNameCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> platformDataRootNodeAttributeValueCaptor = ArgumentCaptor.forClass(String.class);
+
+    doNothing().when(spyMigration).setAttributeValue(platformDataRootNodeCaptor.capture()
+        , platformDataRootNodeAttributeNameCaptor.capture()
+        , platformDataRootNodeAttributeValueCaptor.capture());
+
+    ArgumentCaptor<Node> platformPersistenceNodeCaptor = ArgumentCaptor.forClass(Node.class);
+    ArgumentCaptor<Boolean> removeEmptyParentCaptor = ArgumentCaptor.forClass(Boolean.class);
+
+    doNothing().when(spyMigration).removeNode(platformPersistenceNodeCaptor.capture(), removeEmptyParentCaptor.capture());
+    spyMigration.remapPlatformPersistence(dataRootNode, platformPersistenceNode, path);
+
+    assertThat(platformDataRootNodeCaptor.getValue(), is(platformDataRootNode));
+    assertThat(platformDataRootNodeAttributeNameCaptor.getValue(), is("use-for-platform"));
+    assertThat(platformDataRootNodeAttributeValueCaptor.getValue(), is("true"));
+
+    assertThat(platformPersistenceNodeCaptor.getValue(), is(platformPersistenceNode));
+    assertThat(removeEmptyParentCaptor.getValue(), is(true));
+  }
+
+  @Test
+  public void testRemapPlatformPersistenceWithUseForPlatformPresentAndTrue() {
+    Node dataRootNode = mock(Node.class);
+    Node platformPersistenceNode = mock(Node.class);
+    Path path  = mock(Path.class);
+    NodeList dataRootChildList = mock(NodeList.class);
+    Node platformDataRootNode = mock(Node.class);
+
+    MigrationImpl migration = new MigrationImpl();
+    MigrationImpl spyMigration = spy(migration);
+
+    doReturn("data-root").when(spyMigration).
+        getAttributeValue(platformPersistenceNode,"data-directory-id");
+    when(dataRootNode.getChildNodes()).thenReturn(dataRootChildList);
+    when(dataRootChildList.getLength()).thenReturn(1);
+    when(dataRootChildList.item(0)).thenReturn(platformDataRootNode);
+    doReturn("data-root").when(spyMigration).getAttributeValue(platformDataRootNode, "name");
+    doReturn("true").when(spyMigration).
+        getAttributeValue(platformDataRootNode, "use-for-platform", false);
+
+    ArgumentCaptor<Node> platformPersistenceNodeCaptor = ArgumentCaptor.forClass(Node.class);
+    ArgumentCaptor<Boolean> removeEmptyParentCaptor = ArgumentCaptor.forClass(Boolean.class);
+
+    doNothing().when(spyMigration).removeNode(platformPersistenceNodeCaptor.capture(), removeEmptyParentCaptor.capture());
+    spyMigration.remapPlatformPersistence(dataRootNode, platformPersistenceNode, path);
+
+    verify(spyMigration, never()).setAttributeValue(any(Node.class), anyString(), anyString());
+
+    assertThat(platformPersistenceNodeCaptor.getValue(), is(platformPersistenceNode));
+    assertThat(removeEmptyParentCaptor.getValue(), is(true));
   }
 }

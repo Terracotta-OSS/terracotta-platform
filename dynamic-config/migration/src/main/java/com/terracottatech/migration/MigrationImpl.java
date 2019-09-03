@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -68,6 +69,9 @@ public class MigrationImpl implements Migration {
   static final String SERVER_NODE_NAME = "server";
 
   static final String PLUGINS_NODE_NAME = "plugins";
+  static final String PLATFORM_PERSISTENCE_DATA_DIR_ID_ATTR_NAME = "data-directory-id";
+  static final String DATA_DIR_USER_FOR_PLATFORM_ATTR_NAME = "use-for-platform";
+  static final String NAME_ATTR_NAME = "name";
 
   private final Map<Path, Node> configFileRootNodeMap = new HashMap<>();
   private final List<String[]> inputParamList = new ArrayList<>();
@@ -99,6 +103,8 @@ public class MigrationImpl implements Migration {
     for (Map.Entry<Integer, Path> stringPathEntry : configFilePerStripeMap.entrySet()) {
       createServerConfigMapFunction(stripeServerConfigNodeMap, stringPathEntry.getKey(), stringPathEntry.getValue());
     }
+    LOGGER.info("Checking if deprecated platform-persistence needs to be converted to data-directory. Will convert if found.");
+    handlePlatformPersistence(configFileRootNodeMap);
     LOGGER.info("Validating contents of the configuration files");
     valueValidators();
     LOGGER.info("Building Cluster");
@@ -256,18 +262,32 @@ public class MigrationImpl implements Migration {
     return serverNames;
   }
 
-  protected String getAttributeValue(Node node, String attributeName) {
+  protected String getAttributeValue(Node node, String attributeName, boolean throwException) {
     Optional<String> attributeValue = getOptionalAttributeValue(node, attributeName);
     if (attributeValue.isPresent()) {
       return attributeValue.get();
     }
+    if (throwException) {
+      throw new MigrationException(
+          ErrorCode.INVALID_ATTRIBUTE_NAME,
+          "Attribute " + attributeName + " is missing in Node " + node.getLocalName(),
+          Tuple2.tuple2("AttributeName", attributeName),
+          Tuple2.tuple2("nodeName", node.getLocalName())
+      );
+    }
+    return null;
+  }
 
-    throw new MigrationException(
-        ErrorCode.INVALID_ATTRIBUTE_NAME,
-        "Attribute " + attributeName + " is missing in Node " + node.getLocalName(),
-        Tuple2.tuple2("AttributeName", attributeName),
-        Tuple2.tuple2("nodeName", node.getLocalName())
-    );
+  protected String getAttributeValue(Node node, String attributeName) {
+    return getAttributeValue(node, attributeName, true);
+  }
+
+  protected void setAttributeValue(Node node, String attributeName, String attributeValue) {
+    XmlUtility.setAttribute(node, attributeName, attributeValue);
+  }
+
+  protected void removeNode(Node node, boolean removeEmptyParent) {
+    XmlUtility.removeNode(node, removeEmptyParent);
   }
 
   private Optional<String> getOptionalAttributeValue(Node node, String attributeName) {
@@ -333,6 +353,70 @@ public class MigrationImpl implements Migration {
       String errorMessage = "Unexpected error while migrating the configuration files: " + e.getMessage();
       LOGGER.error(errorMessage, e);
       throw new MigrationException(UNKNOWN_ERROR, errorMessage);
+    }
+  }
+
+  protected void handlePlatformPersistence(Map<Path, Node> configurationFileFileRootNodeMap){
+    configurationFileFileRootNodeMap.forEach(handlePlatformPersistencePerConfigurationFile());
+  }
+
+  protected BiConsumer<Path, Node> handlePlatformPersistencePerConfigurationFile() {
+    return (Path configFilePath, Node rootNode) -> {
+      Node dataRootNode = null;
+      Node platformPersistenceNode = null;
+      for (int i = 0; i < rootNode.getChildNodes().getLength(); i++) {
+        Node node = rootNode.getChildNodes().item(i);
+        if (PLUGINS_NODE_NAME.equals(node.getLocalName())) {
+          NodeList nodeList = node.getChildNodes();
+          for (int j = 0; j < nodeList.getLength(); j++) {
+            Node configNode = nodeList.item(j);
+            if (configNode.getChildNodes().getLength() > 0) {
+              Node configServiceNode = configNode.getChildNodes().item(0);
+              String uri = configServiceNode.getNamespaceURI();
+              if (XmlUtility.getDataRootsNamespace().equals(uri)) {
+                dataRootNode = configServiceNode;
+              } else if (XmlUtility.getPlatformPersistenceNamespace().equals(uri)) {
+                platformPersistenceNode = configServiceNode;
+              }
+            }
+          }
+        }
+      }
+      remapPlatformPersistence(dataRootNode, platformPersistenceNode, configFilePath);
+    };
+  }
+
+  protected void remapPlatformPersistence(Node dataRootNode, Node platformPersistenceNode, Path configFilePath) {
+    if (platformPersistenceNode != null) {
+      if (dataRootNode == null || dataRootNode.getChildNodes().getLength() == 0) {
+        throw new InvalidInputConfigurationContentException(
+            ErrorCode.NO_DATA_DIR_WITH_PLATFORM_PERSISTENCE,
+            "Platform persistence points to a data-directory which is not present in the configuration file",
+            Tuple2.tuple2(ErrorParamKey.CONFIG_FILE.name(), configFilePath.toString()));
+      }
+      String dataDirId = getAttributeValue(platformPersistenceNode, PLATFORM_PERSISTENCE_DATA_DIR_ID_ATTR_NAME);
+      NodeList dataDirectories = dataRootNode.getChildNodes();
+      boolean dataDirMatched = false;
+      for (int i=0; i < dataDirectories.getLength(); i++) {
+        Node currentDataRootNode = dataDirectories.item(i);
+        String dataRootName = getAttributeValue(currentDataRootNode, NAME_ATTR_NAME);
+        if (dataDirId.equals(dataRootName)) {
+          String useForPlatformString  = getAttributeValue(currentDataRootNode,DATA_DIR_USER_FOR_PLATFORM_ATTR_NAME, false);
+          boolean useForPlatform = Boolean.parseBoolean(useForPlatformString);
+          if (!useForPlatform) {
+            setAttributeValue(currentDataRootNode, DATA_DIR_USER_FOR_PLATFORM_ATTR_NAME, Boolean.TRUE.toString());
+          }
+          dataDirMatched = true;
+          break;
+        }
+      }
+      if (!dataDirMatched) {
+        throw new InvalidInputConfigurationContentException(
+            ErrorCode.INVALID_DATA_DIR_FOR_PLATFORM_PERSISTENCE,
+            "Name for the data-directory missing",
+            Tuple2.tuple2(ErrorParamKey.CONFIG_FILE.name(), configFilePath.toString()));
+      }
+      removeNode(platformPersistenceNode, true);
     }
   }
 

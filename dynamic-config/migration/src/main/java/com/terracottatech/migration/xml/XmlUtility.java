@@ -10,6 +10,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
+import com.terracottatech.data.config.DataDirectories;
+import com.terracottatech.platform.persistence.config.PlatformPersistence;
+
+import javax.xml.bind.JAXBElement;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -48,6 +52,35 @@ public class XmlUtility {
     return parentNode.cloneNode(true);
   }
 
+  public static void setAttribute(Node node, String attributeName, String attributeValue) {
+    boolean match = false;
+    NamedNodeMap attributeMap = node.getAttributes();
+    for (int k = 0; k < attributeMap.getLength(); k++) {
+      Node attribute = attributeMap.item(k);
+      if (attributeName.equals(attribute.getLocalName())) {
+        attribute.setNodeValue(attributeValue);
+        match = true;
+        break;
+      }
+    }
+    if (!match) {
+      ((Element)node).setAttribute(attributeName, attributeValue);
+    }
+  }
+
+  public static void removeNode(Node node, boolean removeEmptyParent) {
+    Node removalNode = node;
+    Node parentNode = node.getParentNode();
+    while (parentNode != null) {
+      parentNode.removeChild(removalNode);
+      if (!removeEmptyParent || parentNode.getChildNodes().getLength() > 0) {
+        break;
+      }
+      removalNode = parentNode;
+      parentNode = parentNode.getParentNode();
+    }
+  }
+
   public static String getPrettyPrintableXmlString(Node doc) throws Exception {
     Transformer transformer = TransformerFactory.newInstance().newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -58,6 +91,19 @@ public class XmlUtility {
     DOMSource source = new DOMSource(doc);
     transformer.transform(source, result);
     return result.getWriter().toString();
+  }
+
+  public static String getDataRootsNamespace() {
+    com.terracottatech.data.config.ObjectFactory objectFactory = new com.terracottatech.data.config.ObjectFactory();
+    JAXBElement<DataDirectories> dummyJaxbElement  = objectFactory.createDataDirectories(null);
+    return dummyJaxbElement.getName().getNamespaceURI();
+  }
+
+  public static String getPlatformPersistenceNamespace() {
+    com.terracottatech.platform.persistence.config.ObjectFactory objectFactory
+        = new com.terracottatech.platform.persistence.config.ObjectFactory();
+    JAXBElement<PlatformPersistence> dummyJaxbElement  = objectFactory.createPlatformPersistence(null);
+    return dummyJaxbElement.getName().getNamespaceURI();
   }
 
 }
