@@ -64,6 +64,10 @@ public class ConfigFileContainerTest {
     assertThat(node.getNodeMetadataDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "metadata"));
     assertThat(node.getSecurityDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "security"));
     assertThat(node.getSecurityAuditLogDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "audit"));
+    assertThat(node.getTcProperties(), allOf(
+        hasEntry("topology.validate", "true"),
+        hasEntry("server.entity.processor.threads", "64")
+    ));
     assertThat(node.getDataDirs(), allOf(
         hasEntry("main", Paths.get(separator + "home" + separator + "terracotta" + separator + "user-data" + separator + "main")),
         hasEntry("second", Paths.get(separator + "home" + separator + "terracotta" + separator + "user-data" + separator + "second"))

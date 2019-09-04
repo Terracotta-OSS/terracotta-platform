@@ -51,7 +51,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -142,7 +141,7 @@ public class XmlConfigMapper {
         .setNodeLogDir(Paths.get(xmlServer.getLogs()))
         .setFailoverPriority(toFailoverPriority(xmlTcConfig.getFailoverPriority()))
         .setClientReconnectWindow(xmlTcConfig.getServers().getClientReconnectWindow(), SECONDS)
-        .setNodeProperties(toProperties(xmlTcConfig))
+        .setTcProperties(toProperties(xmlTcConfig))
         // plugins
         .setNodeMetadataDir(toNodeMetadataDir(xmlPlugins).orElse(null))
         .setDataDirs(toUserDataDirs(xmlPlugins))
@@ -162,11 +161,11 @@ public class XmlConfigMapper {
             .orElse(null));
   }
 
-  private static Properties toProperties(TcConfig xmlTcConfig) {
-    Properties properties = new Properties();
+  private static Map<String, String> toProperties(TcConfig xmlTcConfig) {
+    Map<String, String> properties = new HashMap<>();
     TcProperties tcProperties = xmlTcConfig.getTcProperties();
     if (tcProperties != null) {
-      tcProperties.getProperty().stream().forEach(p -> properties.setProperty(p.getName(), p.getValue()));
+      tcProperties.getProperty().forEach(p -> properties.put(p.getName(), p.getValue()));
     }
     return properties;
   }

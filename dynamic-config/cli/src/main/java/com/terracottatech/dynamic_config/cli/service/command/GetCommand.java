@@ -29,6 +29,7 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.TC_PROPERTIES;
 
 @Parameters(commandNames = "get", commandDescription = "Display properties of nodes")
 @Usage("get -s HOST -c PROPERTY1,PROPERTY2,...")
@@ -158,8 +159,7 @@ public class GetCommand extends PropertyCommand {
           }
           outputMap.put(key, found.toString());
         } else {
-          String allOffheaps = offheapResources.entrySet().stream().map(entry -> entry.getKey() + ":" + entry.getValue().toString()).collect(Collectors.joining(","));
-          outputMap.put(key, allOffheaps);
+          outputMap.put(key, allKeyValues(offheapResources));
         }
         break;
       case DATA_DIRS:
@@ -171,8 +171,19 @@ public class GetCommand extends PropertyCommand {
           }
           outputMap.put(key, found.toString());
         } else {
-          String allDataDirs = dataDirs.entrySet().stream().map(entry -> entry.getKey() + ":" + entry.getValue().toString()).collect(Collectors.joining(","));
-          outputMap.put(key, allDataDirs);
+          outputMap.put(key, allKeyValues(dataDirs));
+        }
+        break;
+      case TC_PROPERTIES:
+        Map<String, String> tcProperties = targetNode.getTcProperties();
+        if (input.getPropertyName() != null) {
+          String found = tcProperties.get(input.getPropertyName());
+          if (found == null) {
+            throwException("No tc-property match found for: %s. Available tc-properties are: %s", input.getPropertyName(), tcProperties.keySet());
+          }
+          outputMap.put(key, found);
+        } else {
+          outputMap.put(key, allKeyValues(tcProperties));
         }
         break;
       case SECURITY_SSL_TLS:
@@ -182,6 +193,10 @@ public class GetCommand extends PropertyCommand {
       default:
         invokeGetter(input, targetNode, key, "get");
     }
+  }
+
+  private String allKeyValues(Map<String, ?> map) {
+    return map.entrySet().stream().map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(","));
   }
 
   private void invokeGetter(ParsedInput input, Node targetNode, String key, String methodPrefix) {

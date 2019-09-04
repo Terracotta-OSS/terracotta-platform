@@ -28,7 +28,6 @@ import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXB;
 import java.io.StringWriter;
-import java.util.Properties;
 
 public class ServerConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
@@ -60,16 +59,20 @@ public class ServerConfiguration {
 
     tcConfig.setServers(servers);
 
-    Properties nodeProperties = node.getNodeProperties();
-    TcProperties tcProperties = nodeProperties.stringPropertyNames().stream().map(key -> {
-      Property property = new Property();
-      property.setName(key);
-      property.setValue(nodeProperties.getProperty(key));
-      return property;
-    }).collect(
-        TcProperties::new,
-        (result, property) -> result.getProperty().add(property),
-        (result1, result2) -> result1.getProperty().addAll(result2.getProperty()));
+    TcProperties tcProperties =
+        node.getTcProperties().entrySet()
+            .stream()
+            .map(entry -> {
+              Property property = new Property();
+              property.setName(entry.getKey());
+              property.setValue(entry.getValue());
+              return property;
+            })
+            .collect(
+                TcProperties::new,
+                (result, property) -> result.getProperty().add(property),
+                (result1, result2) -> result1.getProperty().addAll(result2.getProperty())
+            );
     tcConfig.setTcProperties(tcProperties);
 
     Services services = FACTORY.createServices();

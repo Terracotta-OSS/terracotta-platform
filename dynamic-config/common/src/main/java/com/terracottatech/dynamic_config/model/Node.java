@@ -42,7 +42,7 @@ public class Node implements Cloneable {
   private boolean securitySslTls;
   private boolean securityWhitelist;
   private String failoverPriority;
-  private Properties nodeProperties = new Properties();
+  private Map<String, String> tcProperties = new ConcurrentHashMap<>();
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
   private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
@@ -124,17 +124,17 @@ public class Node implements Cloneable {
     return Collections.unmodifiableMap(dataDirs);
   }
 
-  public Properties getNodeProperties() {
-    return nodeProperties;
+  public Map<String, String> getTcProperties() {
+    return tcProperties;
   }
 
-  public Node setNodeProperties(Properties nodeProperties) {
-    this.nodeProperties = nodeProperties;
+  public Node setTcProperties(Map<String, String> tcProperties) {
+    this.tcProperties.putAll(tcProperties);
     return this;
   }
 
-  public Node setNodeProperty(String key, String value) {
-    this.nodeProperties.setProperty(key, value);
+  public Node setTcProperty(String key, String value) {
+    this.tcProperties.put(key, value);
     return this;
   }
 
@@ -301,7 +301,7 @@ public class Node implements Cloneable {
         .setNodeMetadataDir(nodeMetadataDir)
         .setNodeName(nodeName)
         .setNodePort(nodePort)
-        .setNodeProperties(nodeProperties)
+        .setTcProperties(tcProperties)
         .setOffheapResources(offheapResources)
         .setSecurityAuditLogDir(securityAuditLogDir)
         .setSecurityAuthc(securityAuthc)
@@ -326,7 +326,7 @@ public class Node implements Cloneable {
         Objects.equals(nodeMetadataDir, node.nodeMetadataDir) &&
         Objects.equals(nodeLogDir, node.nodeLogDir) &&
         Objects.equals(nodeBackupDir, node.nodeBackupDir) &&
-        Objects.equals(nodeProperties, node.nodeProperties) &&
+        Objects.equals(tcProperties, node.tcProperties) &&
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
         Objects.equals(securityAuthc, node.securityAuthc) &&
@@ -339,7 +339,7 @@ public class Node implements Cloneable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, nodeProperties,
+    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, tcProperties,
         nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls,
         securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs);
   }
@@ -356,7 +356,7 @@ public class Node implements Cloneable {
         ", nodeMetadataDir='" + nodeMetadataDir + '\'' +
         ", nodeLogDir='" + nodeLogDir + '\'' +
         ", nodeBackupDir='" + nodeBackupDir + '\'' +
-        ", nodeProperties='" + nodeProperties + '\'' +
+        ", tcProperties='" + tcProperties + '\'' +
         ", securityDir='" + securityDir + '\'' +
         ", securityAuditLogDir='" + securityAuditLogDir + '\'' +
         ", securityAuthc='" + securityAuthc + '\'' +

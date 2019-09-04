@@ -107,17 +107,21 @@ public class Options {
   @Parameter(names = {"-d", "--" + DATA_DIRS})
   private String dataDirs;
 
-  @Parameter(names = {"-N", "--cluster-name"}, hidden = true)
-  private String clusterName;
-
   @Parameter(names = {"-f", "--config-file"})
   private String configFile;
 
-  @Parameter(names = {"-l", "--license-file"}, hidden = true)
-  private String licenseFile;
+  @Parameter(names = {"-T", "--tc-properties"})
+  private String tcProperties;
 
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
+
+  /*<--Hidden options-->*/
+  @Parameter(names = {"-N", "--cluster-name"}, hidden = true)
+  private String clusterName;
+
+  @Parameter(names = {"-l", "--license-file"}, hidden = true)
+  private String licenseFile;
 
   private Collection<String> specifiedOptions;
 
@@ -127,7 +131,7 @@ public class Options {
       return;
     }
 
-    // get specified options but remove the ones ot related to functional stuff
+    // get specified options but remove the ones related to functional stuff
     specifiedOptions = jCommander.getUserSpecifiedOptions();
     validateOptions();
 
@@ -293,5 +297,9 @@ public class Options {
 
   public String getLicenseFile() {
     return licenseFile;
+  }
+
+  public String getTcProperties() {
+    return tcProperties;
   }
 }

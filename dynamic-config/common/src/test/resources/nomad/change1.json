@@ -15,7 +15,6 @@
             "nodeGroupPort": 0,
             "nodeName": "foo",
             "nodePort": 0,
-            "nodeProperties": {},
             "offheapResources": {
               "foo": {
                 "quantity": 1,
@@ -24,7 +23,8 @@
               }
             },
             "securitySslTls": false,
-            "securityWhitelist": false
+            "securityWhitelist": false,
+            "tcProperties": {}
           }
         ]
       }

@@ -35,6 +35,7 @@ public class CommonOptions {
   public static final String CLIENT_RECONNECT_WINDOW = "client-reconnect-window";
   public static final String CLIENT_LEASE_DURATION = "client-lease-duration";
   public static final String OFFHEAP_RESOURCES = "offheap-resources";
+  public static final String TC_PROPERTIES = "tc-properties";
   public static final String DATA_DIRS = "data-dirs";
 
   public static Collection<String> getAllOptions() {

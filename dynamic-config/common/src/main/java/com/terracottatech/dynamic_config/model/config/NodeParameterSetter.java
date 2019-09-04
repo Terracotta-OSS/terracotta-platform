@@ -37,6 +37,7 @@ import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECUR
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.model.config.CommonOptions.TC_PROPERTIES;
 
 /**
  * Sets pre-validated parameters to their corresponding values in {@code Node} object.
@@ -71,6 +72,10 @@ public class NodeParameterSetter {
     PARAM_ACTION_MAP.put(OFFHEAP_RESOURCES, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(ofr -> {
       String[] split = ofr.split(PARAM_INTERNAL_SEP);
       node.setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));
+    }));
+    PARAM_ACTION_MAP.put(TC_PROPERTIES, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(ofr -> {
+      String[] split = ofr.split(PARAM_INTERNAL_SEP);
+      node.setTcProperty(split[0], split[1]);
     }));
     PARAM_ACTION_MAP.put(DATA_DIRS, (node, value) -> Arrays.asList(value.split(MULTI_VALUE_SEP)).forEach(dir -> {
       int firstColon = dir.indexOf(PARAM_INTERNAL_SEP);
