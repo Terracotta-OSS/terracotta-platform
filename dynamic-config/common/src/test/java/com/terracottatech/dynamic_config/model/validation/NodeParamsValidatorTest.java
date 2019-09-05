@@ -2,11 +2,10 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.validation;
+package com.terracottatech.dynamic_config.model.validation;
 
 import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -18,7 +17,7 @@ public class NodeParamsValidatorTest {
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
-  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
+  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = IParameterSubstitutor.identity();
 
   @Test
   public void testBadOffheap_1() {
@@ -109,13 +108,6 @@ public class NodeParamsValidatorTest {
     Map<String, String> paramValueMap = new HashMap<>();
     paramValueMap.put(CommonOptions.NODE_HOSTNAME, "10:10::10:zz");
     testThrowsWithMessage(paramValueMap, "must be a valid hostname or IP address");
-  }
-
-  @Test
-  public void testBadNodeName() {
-    Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(CommonOptions.NODE_NAME, "%i");
-    testThrowsWithMessage(paramValueMap, "cannot contain substitution parameters");
   }
 
   @Test

@@ -8,10 +8,10 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
+import com.terracottatech.dynamic_config.model.validation.NodeParamsValidator;
 import com.terracottatech.dynamic_config.parsing.ConsoleParamsParser;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
-import com.terracottatech.dynamic_config.validation.NodeParamsValidator;
 import com.terracottatech.utilities.Tuple2;
 
 import java.nio.file.Path;
