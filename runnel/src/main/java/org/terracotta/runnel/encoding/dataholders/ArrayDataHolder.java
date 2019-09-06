@@ -29,6 +29,7 @@ import java.util.List;
 public class ArrayDataHolder extends AbstractDataHolder {
 
   private final List<? extends DataHolder> values;
+  private int cacheSize = -1;
 
   public ArrayDataHolder(List<? extends DataHolder> values, int index) {
     super(index);
@@ -37,12 +38,15 @@ public class ArrayDataHolder extends AbstractDataHolder {
 
   @Override
   protected int valueSize() {
-    int size = 0;
-    for (DataHolder value : values) {
-      size += value.size(false);
+    if (cacheSize < 0) {
+      int size = 0;
+      for (DataHolder value : values) {
+        size += value.size(false);
+      }
+      size += VLQ.encodedSize(values.size()); // length field
+      cacheSize = size;
     }
-    size += VLQ.encodedSize(values.size()); // length field
-    return size;
+    return cacheSize;
   }
 
   @Override

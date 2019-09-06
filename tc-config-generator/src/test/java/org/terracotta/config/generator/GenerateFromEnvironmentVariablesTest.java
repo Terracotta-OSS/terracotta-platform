@@ -24,7 +24,9 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -138,7 +140,7 @@ public class GenerateFromEnvironmentVariablesTest {
     StringWriter output = new StringWriter();
     generateFromEnvironmentVariables.generateXmlFile(root, "template-tc-config.ftlh", output);
 
-    byte[] expectedEncoded = Files.readAllBytes(Paths.get(this.getClass().getResource("/tc-config-expected").getPath()));
+    byte[] expectedEncoded = Files.readAllBytes(Paths.get(this.getClass().getResource("/tc-config-expected").toURI()));
     String expected = new String(expectedEncoded, "UTF-8");
     String actual = output.toString();
     assertThat(actual, equalTo(expected));

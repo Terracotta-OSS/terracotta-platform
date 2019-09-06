@@ -22,6 +22,12 @@ import org.terracotta.runnel.utils.WriteBuffer;
  */
 public interface DataHolder {
 
+  /**
+   * Return the byte size of this data holder. Note that this value is cached
+   * on first calculation. Memoized, even.
+   * @param withIndex
+   * @return byte size.
+   */
   int size(boolean withIndex);
 
   void encode(WriteBuffer writeBuffer, boolean withIndex);
