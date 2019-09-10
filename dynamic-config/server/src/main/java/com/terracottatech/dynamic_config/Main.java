@@ -19,11 +19,7 @@ public class Main {
       jCommander.parse(args);
       command.process(jCommander);
     } catch (Throwable e) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.error(e.getMessage(), e);
-      } else {
-        LOGGER.error(e.getMessage() + System.lineSeparator());
-      }
+      LOGGER.error(e.getMessage(), e);
     }
   }
 }

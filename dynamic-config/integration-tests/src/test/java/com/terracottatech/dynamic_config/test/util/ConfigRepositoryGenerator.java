@@ -3,9 +3,8 @@ package com.terracottatech.dynamic_config.test.util;/*
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.migration.MigrationImpl;
-import com.terracottatech.nomad.server.NomadServer;
+import com.terracottatech.migration.nomad.RepositoryStructureBuilder;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,9 +12,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.nio.file.Files.copy;
 import static java.nio.file.Files.createDirectories;
@@ -62,12 +59,25 @@ public class ConfigRepositoryGenerator {
     }
   }
 
+  public void generate1Stripe1NodeAndSkipCommit() {
+    try {
+      migrate(singletonList(
+          "1," + Paths.get(ConfigRepositoryGenerator.class.getResource("/tc-configs/stripe1-1-node.xml").toURI())), true);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private void migrate(List<String> migrationStrings) {
+    migrate(migrationStrings, false);
+  }
+
+  private void migrate(List<String> migrationStrings, boolean skipCommit) {
     try {
       assertFalse("Directory already exists: " + root, Files.exists(root));
       createDirectories(root);
-      Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
-      MigrationITResultProcessor resultProcessor = new MigrationITResultProcessor(root, serverMap);
+      RepositoryStructureBuilder resultProcessor =
+          skipCommit ? new CommitSkippingRepositoryBuilder(root) : new RepositoryStructureBuilder(root);
       MigrationImpl migration = new MigrationImpl(resultProcessor::process);
       migration.processInput("testCluster", migrationStrings);
 

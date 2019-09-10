@@ -59,6 +59,21 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
   }
 
   @Override
+  public boolean isLatestChangeCommittedOrRolledBack() {
+    String latestChangeUuid = getString(LATEST_CHANGE_UUID);
+    if (latestChangeUuid == null) {
+      return true;
+    }
+
+    SanskritObject latestChange = getObject(latestChangeUuid);
+    if (latestChange == null) {
+      return true;
+    }
+
+    return !ChangeRequestState.PREPARED.name().equals(latestChange.getString(CHANGE_STATE));
+  }
+
+  @Override
   public long getMutativeMessageCount() {
     return getLong(MUTATIVE_MESSAGE_COUNT);
   }

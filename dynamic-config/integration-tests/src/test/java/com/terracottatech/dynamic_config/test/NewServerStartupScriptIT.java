@@ -245,6 +245,13 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
+  @Test
+  public void testStartingNodeWhenLatestChangeNotCommitted() throws Exception {
+    Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeAndSkipCommit);
+    startNode("--node-repository-dir", configurationRepo.toString());
+    waitedAssert(out::getLog, containsString("Latest configuration change was not committed"));
+  }
+
   private void startNode(int stripeId, int nodeId, String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(

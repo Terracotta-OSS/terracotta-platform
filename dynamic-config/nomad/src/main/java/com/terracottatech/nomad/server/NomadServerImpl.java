@@ -45,6 +45,10 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
           .setHighestVersion(0)
           .setInitialized()
       );
+    } else if (!state.isLatestChangeCommittedOrRolledBack()) {
+      String errMsg = "Latest configuration change was not committed or rolled back in the configuration repository, " +
+                      "restart the server in recovery mode to commit/rollback the configuration change";
+      throw new NomadException(errMsg);
     }
   }
 

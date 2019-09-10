@@ -18,6 +18,7 @@ public class NomadServerImplTest {
   public void testSetChangeApplicatorAlreadySet() throws Exception {
     NomadServerState<String> serverState = mock(NomadServerState.class);
     when(serverState.isInitialized()).thenReturn(true);
+    when(serverState.isLatestChangeCommittedOrRolledBack()).thenReturn(true);
     NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
     ChangeApplicator<String> changeApplicator = mock(ChangeApplicator.class);
     nomadServer.setChangeApplicator(changeApplicator);
@@ -35,6 +36,7 @@ public class NomadServerImplTest {
   public void testSetNullChangeApplicator() throws Exception {
     NomadServerState<String> serverState = mock(NomadServerState.class);
     when(serverState.isInitialized()).thenReturn(true);
+    when(serverState.isLatestChangeCommittedOrRolledBack()).thenReturn(true);
     NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
     nomadServer.setChangeApplicator(null);
   }

@@ -69,6 +69,11 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
   }
 
   @Override
+  public boolean isLatestChangeCommittedOrRolledBack() {
+    return true;
+  }
+
+  @Override
   public long getMutativeMessageCount() {
     return (long) state.get(MUTATIVE_MESSAGE_COUNT);
   }

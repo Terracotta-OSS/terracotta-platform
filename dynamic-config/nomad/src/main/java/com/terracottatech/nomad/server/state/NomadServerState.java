@@ -15,6 +15,8 @@ public interface NomadServerState<T> {
 
   NomadServerMode getMode();
 
+  boolean isLatestChangeCommittedOrRolledBack();
+
   long getMutativeMessageCount();
 
   String getLastMutationHost();
