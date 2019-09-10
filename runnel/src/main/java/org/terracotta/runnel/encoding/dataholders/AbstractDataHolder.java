@@ -22,7 +22,6 @@ import org.terracotta.runnel.utils.WriteBuffer;
  * @author Ludovic Orban
  */
 public abstract class AbstractDataHolder implements DataHolder {
-
   private final int index;
 
   protected AbstractDataHolder(int index) {

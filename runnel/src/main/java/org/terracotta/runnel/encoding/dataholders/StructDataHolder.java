@@ -28,6 +28,7 @@ import java.util.List;
 public class StructDataHolder extends AbstractDataHolder {
 
   private final List<? extends DataHolder> values;
+  private int cacheSize = -1;
 
   public StructDataHolder(List<? extends DataHolder> values, int index) {
     super(index);
@@ -36,11 +37,14 @@ public class StructDataHolder extends AbstractDataHolder {
 
   @Override
   protected int valueSize() {
-    int size = 0;
-    for (DataHolder value : values) {
-      size += value.size(true);
+    if (cacheSize < 0) {
+      int size = 0;
+      for (DataHolder value : values) {
+        size += value.size(true);
+      }
+      cacheSize = size;
     }
-    return size;
+    return cacheSize;
   }
 
   @Override
