@@ -81,7 +81,7 @@ public class ConfigRepositoryGenerator {
       MigrationImpl migration = new MigrationImpl(resultProcessor::process);
       migration.processInput("testCluster", migrationStrings);
 
-      Path license = Paths.get(ConfigRepositoryGenerator.class.getResource("/tc-configs/license.xml").toURI());
+      Path license = Paths.get(ConfigRepositoryGenerator.class.getResource("/license.xml").toURI());
       Files.list(root)
           .forEach(repoPath -> {
             try {
