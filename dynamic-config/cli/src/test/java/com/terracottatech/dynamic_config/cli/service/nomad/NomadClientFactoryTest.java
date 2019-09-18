@@ -6,8 +6,8 @@ package com.terracottatech.dynamic_config.cli.service.nomad;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
+import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.SimpleNomadChange;
@@ -38,13 +38,13 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class NomadClientFactoryTest {
   @Mock
-  private MultiDiagnosticServiceConnectionFactory connectionFactory;
+  private MultiDiagnosticServiceProvider connectionFactory;
 
   @Mock
   private NomadEnvironment environment;
 
   @Mock
-  private MultiDiagnosticServiceConnection connection;
+  private DiagnosticServices connection;
 
   @Mock
   private DiagnosticService diagnostics1;
@@ -77,7 +77,7 @@ public class NomadClientFactoryTest {
     InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
 
     hostPortList = Arrays.asList(server1, server2, server3, server4);
-    when(connectionFactory.createConnection(hostPortList)).thenReturn(connection);
+    when(connectionFactory.fetchDiagnosticServices(hostPortList)).thenReturn(connection);
     when(environment.getHost()).thenReturn("host");
     when(environment.getUser()).thenReturn("user");
 

@@ -4,14 +4,21 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.terracottatech.dynamic_config.model.config.ConfigFileParser;
+import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
 import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 import org.junit.Test;
 
+import java.io.File;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.Properties;
 
+import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
+import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -34,7 +41,7 @@ public class ClusterTest {
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
-      .setFailoverPriority("availability")
+      .setFailoverPriority(availability())
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
@@ -166,5 +173,60 @@ public class ClusterTest {
 
     cluster.attachStripe(new Stripe(node2));
     assertThat(cluster.getStripeId(node2).get(), is(2));
+  }
+
+  @Test
+  public void test_toProperties_default() throws URISyntaxException {
+    Cluster cluster = new Cluster("c1", new Stripe(new Node()
+        .setNodeName("my-node")
+        .fillDefaults()));
+    Properties actual = cluster.toProperties();
+    Properties expected = fixPaths(new PropertiesFileLoader(Paths.get(getClass().getResource("/config-property-files/c1.properties").toURI())).loadProperties());
+    Cluster rebuilt = new ConfigFileParser(Paths.get("c1.properties"), actual, identity()).createCluster();
+    assertThat(actual, is(equalTo(expected)));
+    assertThat(rebuilt, is(equalTo(cluster)));
+  }
+
+  @Test
+  public void test_toProperties_map() throws URISyntaxException {
+    Cluster cluster = new Cluster("c2", new Stripe(new Node()
+        .setNodeName("my-node")
+        .fillDefaults()
+        .setOffheapResource("foo", 1, MemoryUnit.GB)
+        .setOffheapResource("bar", 2, MemoryUnit.GB)
+        .setDataDir("foo", Paths.get("%H/tc/foo"))
+        .setDataDir("bar", Paths.get("%H/tc/bar"))
+        .setTcProperty("server.entity.processor.threads", "64")
+        .setTcProperty("topology.validate", "true")
+    ));
+    Properties actual = cluster.toProperties();
+    Properties expected = fixPaths(new PropertiesFileLoader(Paths.get(getClass().getResource("/config-property-files/c2.properties").toURI())).loadProperties());
+    Cluster rebuilt = new ConfigFileParser(Paths.get("c2.properties"), actual, identity()).createCluster();
+    assertThat(actual, is(equalTo(expected)));
+    assertThat(rebuilt, is(equalTo(cluster)));
+  }
+
+  @Test
+  public void test_toProperties_expanded() throws URISyntaxException {
+    Cluster cluster = new Cluster("my-cluster", new Stripe(new Node()
+        .setNodeName("my-node")
+        .fillDefaults()
+        .setOffheapResource("foo", 1, MemoryUnit.GB)
+        .setOffheapResource("bar", 2, MemoryUnit.GB)
+        .setDataDir("foo", Paths.get("%H/tc/foo"))
+        .setDataDir("bar", Paths.get("%H/tc/bar"))
+        .setTcProperty("server.entity.processor.threads", "64")
+        .setTcProperty("topology.validate", "true")
+    ));
+    Properties actual = cluster.toProperties(true);
+    Properties expected = fixPaths(new PropertiesFileLoader(Paths.get(getClass().getResource("/config-property-files/c3.properties").toURI())).loadProperties());
+    assertThat(actual, is(equalTo(expected)));
+  }
+
+  private Properties fixPaths(Properties props) {
+    if (File.separatorChar == '\\') {
+      props.entrySet().forEach(e -> e.setValue(e.getValue().toString().replace('/', '\\')));
+    }
+    return props;
   }
 }

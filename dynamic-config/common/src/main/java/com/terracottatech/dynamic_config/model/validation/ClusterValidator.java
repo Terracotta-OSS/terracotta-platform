@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.model.validation;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.exception.MalformedClusterConfigException;
+import com.terracottatech.dynamic_config.model.exception.MalformedClusterException;
 import com.terracottatech.utilities.Validator;
 
 import java.util.Collection;
@@ -21,7 +21,7 @@ public class ClusterValidator implements Validator {
   }
 
   @Override
-  public void validate() throws MalformedClusterConfigException {
+  public void validate() throws MalformedClusterException {
     validateSecurity();
     validateClientSettings();
     validateServerSettings();
@@ -49,7 +49,7 @@ public class ClusterValidator implements Validator {
         .map(function)
         .collect(Collectors.toSet());
     if (settings.size() != 1) {
-      throw new MalformedClusterConfigException(errorMsg + ", but found the following mismatches: " + settings);
+      throw new MalformedClusterException(errorMsg + ", but found the following mismatches: " + settings);
     }
   }
 }

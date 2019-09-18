@@ -63,6 +63,8 @@ public class NomadServerManagerTest {
   private AcceptRejectResponse prepareResponse;
   private AcceptRejectResponse commitResponse;
 
+  Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName(NODE_NAME)));
+
   @Before
   @SuppressWarnings("unchecked")
   public void setUp() {
@@ -109,7 +111,7 @@ public class NomadServerManagerTest {
     verify(spyNomadManager, times(STRIPE_ID)).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
-    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME, newConfiguration);
 
     verify(upgradableNomadServer, times(STRIPE_ID)).setChangeApplicator(any(ChangeApplicator.class));
   }
@@ -188,14 +190,14 @@ public class NomadServerManagerTest {
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME, newConfiguration);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
     doReturn(response).when(upgradableNomadServer).discover();
 
-    Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
+
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
@@ -233,14 +235,13 @@ public class NomadServerManagerTest {
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME, newConfiguration);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
 
     doReturn(response).when(upgradableNomadServer).discover();
 
-    Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName("foo")));
     long version = 10L;
 
     when(response.getMutativeMessageCount()).thenReturn(5L);
@@ -266,7 +267,7 @@ public class NomadServerManagerTest {
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME, newConfiguration);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();
@@ -296,7 +297,7 @@ public class NomadServerManagerTest {
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
     //Upgrade
-    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME);
+    spyNomadManager.upgradeForWrite(STRIPE_ID, NODE_NAME, newConfiguration);
 
     doReturn("user").when(spyNomadManager).getUser();
     doReturn("127.0.0.1").when(spyNomadManager).getHost();

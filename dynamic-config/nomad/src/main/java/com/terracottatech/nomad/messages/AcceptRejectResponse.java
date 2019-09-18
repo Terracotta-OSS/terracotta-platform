@@ -27,11 +27,11 @@ public class AcceptRejectResponse {
   }
 
   @JsonCreator
-  private AcceptRejectResponse(@JsonProperty("accepted") boolean accepted,
-                               @JsonProperty("rejectionReason") RejectionReason rejectionReason,
-                               @JsonProperty("rejectionMessage") String rejectionMessage,
-                               @JsonProperty("lastMutationHost") String lastMutationHost,
-                               @JsonProperty("lastMutationUser") String lastMutationUser) {
+  private AcceptRejectResponse(@JsonProperty(value = "accepted", required = true) boolean accepted,
+                               @JsonProperty(value = "rejectionReason") RejectionReason rejectionReason,
+                               @JsonProperty(value = "rejectionMessage") String rejectionMessage,
+                               @JsonProperty(value = "lastMutationHost") String lastMutationHost,
+                               @JsonProperty(value = "lastMutationUser") String lastMutationUser) {
     this.accepted = accepted;
     this.rejectionReason = rejectionReason;
     this.rejectionMessage = rejectionMessage;

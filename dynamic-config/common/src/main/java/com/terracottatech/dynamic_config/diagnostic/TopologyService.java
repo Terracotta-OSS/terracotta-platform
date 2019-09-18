@@ -45,21 +45,21 @@ public interface TopologyService {
   boolean isActivated();
 
   /**
-   * Changes the in-memory cluster to a new one for this node.
+   * Changes the in-memory cluster to a new one for this node while it is still not activated
    */
   void setCluster(Cluster cluster);
 
   /**
-   * Activates the Nomad system so that we can write a first config repository version
+   * Activates the Nomad system so that we can write a first config repository version. This requires the topology to set plus the license installed
    */
-  void prepareActivation(Cluster validatedTopology);
+  void prepareActivation(Cluster validatedTopology, String xml);
 
   /**
-   * Validate and install tthe license
+   * Validate and install a new license over an existing one
    *
    * @param xml license file content
    */
-  void installLicense(String xml);
+  void upgradeLicense(String xml);
 
   Optional<License> getLicense();
 }

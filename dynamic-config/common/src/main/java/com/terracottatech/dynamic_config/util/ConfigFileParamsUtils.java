@@ -5,6 +5,8 @@
 package com.terracottatech.dynamic_config.util;
 
 
+import com.terracottatech.dynamic_config.model.Setting;
+
 public class ConfigFileParamsUtils {
   public static int getStripeId(String key) {
     if (!"stripe".equals(splitKey(key)[0])) {
@@ -20,8 +22,8 @@ public class ConfigFileParamsUtils {
     return "node-" + splitKey(key)[3];
   }
 
-  public static String getProperty(String key) {
-    return splitKey(key)[4];
+  public static Setting getSetting(String key) {
+    return Setting.fromName(splitKey(key)[4]);
   }
 
   public static String[] splitKey(String key) {

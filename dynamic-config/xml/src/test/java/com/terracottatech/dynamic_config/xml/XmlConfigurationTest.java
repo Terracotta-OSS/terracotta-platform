@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.xml;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
+import com.terracottatech.dynamic_config.model.config.ConfigFileParser;
 import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Before;
@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
@@ -73,7 +74,8 @@ public class XmlConfigurationTest {
   @Test
   public void testSingleStripe() throws Exception {
     String fileName = "single-stripe-config.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster").createCluster();
+    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
+    cluster.setName("my-cluster");
 
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "single-stripe-config.xml");
@@ -82,7 +84,8 @@ public class XmlConfigurationTest {
   @Test
   public void testMultiStripe() throws Exception {
     String fileName = "multi-stripe-config.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster").createCluster();
+    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
+    cluster.setName("my-cluster");
 
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "multi-stripe-config.xml");

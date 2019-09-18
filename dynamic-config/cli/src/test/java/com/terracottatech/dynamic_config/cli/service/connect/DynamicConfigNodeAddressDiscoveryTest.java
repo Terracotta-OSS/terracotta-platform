@@ -8,30 +8,18 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.utilities.Tuple2;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityVersionMismatchException;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
-import static com.terracottatech.utilities.Exceptions.rethrow;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 /**
@@ -55,7 +43,6 @@ public class DynamicConfigNodeAddressDiscoveryTest {
 
     when(diagnosticService.getProxy(TopologyService.class)).thenReturn(topologyService);
     when(topologyService.getCluster()).thenReturn(cluster);
-    when(topologyService.getThisNodeAddress()).thenReturn(InetSocketAddress.createUnresolved("localhost", 9410));
     when(cluster.getNodeAddresses()).thenReturn(Arrays.asList(
         InetSocketAddress.createUnresolved("localhost", 9410),
         InetSocketAddress.createUnresolved("1.2.3.4", 9411),
@@ -63,42 +50,15 @@ public class DynamicConfigNodeAddressDiscoveryTest {
         InetSocketAddress.createUnresolved("1.2.3.5", 9411)
     ));
 
-    InetSocketAddress anAddress = InetSocketAddress.createUnresolved("127.0.0.1", 9410);
-    Tuple2<InetSocketAddress, Collection<InetSocketAddress>> nodes = discovery.discover(anAddress);
+    InetSocketAddress anAddress = InetSocketAddress.createUnresolved("localhost", 9410);
+    Collection<InetSocketAddress> nodes = discovery.discover(anAddress);
 
-    assertThat(nodes.t1, is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
-    assertThat(nodes.t2, Matchers.hasSize(4));
-    assertThat(nodes.t2, Matchers.containsInAnyOrder(
+    assertThat(nodes, Matchers.hasSize(4));
+    assertThat(nodes, Matchers.containsInAnyOrder(
         InetSocketAddress.createUnresolved("localhost", 9410),
         InetSocketAddress.createUnresolved("1.2.3.4", 9411),
         InetSocketAddress.createUnresolved("1.2.3.5", 9410),
         InetSocketAddress.createUnresolved("1.2.3.5", 9411)
     ));
   }
-
-  @Test
-  public void test_failures() {
-    Stream.of(
-        new IllegalStateException("a random exception"),
-        new ConnectionException(new Throwable()),
-        new EntityNotFoundException("cname", "ename"),
-        new EntityNotProvidedException("cname", "ename"),
-        new EntityVersionMismatchException("cname", "ename", 1, 2)
-    ).forEach(ex -> assertThat(
-        () -> new DynamicConfigNodeAddressDiscovery(fetchThrowing(ex)).discover(InetSocketAddress.createUnresolved("1.2.3.4", 9410)),
-        is(throwing(instanceOf(NodeAddressDiscoveryException.class)).andCause(is(ex)))
-    ));
-  }
-
-  private DiagnosticServiceProvider fetchThrowing(Throwable throwable) {
-    return new DiagnosticServiceProvider("foo", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS, null) {
-      @Override
-      public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
-        rethrow(throwable);
-        fail();
-        return diagnosticService;
-      }
-    };
-  }
-
 }

@@ -44,11 +44,6 @@ public class MainCommand extends Command {
     }
   }
 
-  @Override
-  public void validate() {
-    // Do nothing
-  }
-
   public boolean isVerbose() {
     return verbose;
   }

@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.nomad.processor;
 import com.terracottatech.dynamic_config.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.server.NomadException;
 import org.terracotta.entity.PlatformConfiguration;
@@ -20,7 +21,7 @@ import java.util.ServiceLoader;
  * Supports the processing of {@link SettingNomadChange} for dynamic configuration
  */
 public class SettingNomadChangeProcessor implements NomadChangeProcessor<SettingNomadChange> {
-  private static final Map<SettingNomadChange.Type, ConfigChangeHandler> CHANGE_HANDLERS = Collections.synchronizedMap(new EnumMap<>(SettingNomadChange.Type.class));
+  private static final Map<Setting, ConfigChangeHandler> CHANGE_HANDLERS = Collections.synchronizedMap(new EnumMap<>(Setting.class));
 
   private static SettingNomadChangeProcessor INSTANCE = new SettingNomadChangeProcessor();
 
@@ -42,7 +43,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public NodeContext tryApply(NodeContext baseConfig, SettingNomadChange change) throws NomadException {
     try {
-      return getHandler(change.getConfigType()).tryApply(baseConfig, change);
+      return getHandler(change.getSetting()).tryApply(baseConfig, change);
     } catch (InvalidConfigChangeException e) {
       throw new NomadException(e);
     }
@@ -50,15 +51,15 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   @Override
   public void apply(SettingNomadChange change) throws NomadException {
-    getHandler(change.getConfigType()).apply(change);
+    getHandler(change.getSetting()).apply(change);
   }
 
-  private ConfigChangeHandler getHandler(SettingNomadChange.Type type) throws NomadException {
+  private ConfigChangeHandler getHandler(Setting setting) throws NomadException {
     checkInitialized();
 
-    ConfigChangeHandler configChangeHandler = CHANGE_HANDLERS.get(type);
+    ConfigChangeHandler configChangeHandler = CHANGE_HANDLERS.get(setting);
     if (configChangeHandler == null) {
-      throw new NomadException("Unknown ConfigChangeHandler type: " + type);
+      throw new NomadException("Unknown ConfigChangeHandler type: " + setting);
     }
     return configChangeHandler;
   }
@@ -72,8 +73,8 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   private void initializeChangeHandlers(PlatformConfiguration platformConfiguration) {
     for (ConfigChangeHandler configChangeHandler : ServiceLoader.load(ConfigChangeHandler.class)) {
       configChangeHandler.initialize(platformConfiguration);
-      if (CHANGE_HANDLERS.putIfAbsent(configChangeHandler.getType(), configChangeHandler) != null) {
-        throw new RuntimeException("Found multiple ConfigChangeHandlers of type: " + configChangeHandler.getType());
+      if (CHANGE_HANDLERS.putIfAbsent(configChangeHandler.getSetting(), configChangeHandler) != null) {
+        throw new RuntimeException("Found multiple ConfigChangeHandlers of type: " + configChangeHandler.getSetting());
       }
     }
   }

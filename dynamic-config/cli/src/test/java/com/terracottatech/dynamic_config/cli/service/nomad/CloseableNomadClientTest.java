@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.service.nomad;
 
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
+import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.SimpleNomadChange;
@@ -21,7 +21,7 @@ public class CloseableNomadClientTest {
   private NomadClient<String> nomadClient;
 
   @Mock
-  private MultiDiagnosticServiceConnection connection;
+  private DiagnosticServices connection;
 
   @Mock
   private ChangeResultReceiver<String> results;

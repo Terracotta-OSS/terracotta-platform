@@ -10,6 +10,7 @@ import com.terracottatech.config.data_roots.DataRootConfigParser;
 import com.terracottatech.config.security.Security;
 import com.terracottatech.data.config.DataRootMapping;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.FailoverPriority;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -24,7 +25,6 @@ import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.TimeUnit;
 import org.terracotta.config.Config;
-import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.Server;
 import org.terracotta.config.Service;
 import org.terracotta.config.TcConfig;
@@ -241,11 +241,11 @@ public class XmlConfigMapper {
         .collect(toMap(ResourceType::getName, r -> Measure.of(r.getValue().longValue(), MemoryUnit.parse(r.getUnit().value()))));
   }
 
-  private static String toFailoverPriority(FailoverPriority failoverPriority) {
+  private static FailoverPriority toFailoverPriority(org.terracotta.config.FailoverPriority failoverPriority) {
     requireNonNull(failoverPriority);
     return failoverPriority.getConsistency() != null ?
-        "consistency:" + failoverPriority.getConsistency().getVoter().getCount() :
-        "availability";
+        FailoverPriority.consistency(failoverPriority.getConsistency().getVoter().getCount()) :
+        FailoverPriority.availability();
   }
 
   private static String moreRestrictive(String specific, String general) {

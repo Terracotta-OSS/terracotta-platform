@@ -6,12 +6,13 @@ package com.terracottatech.dynamic_config.cli;
 
 import com.beust.jcommander.ParameterException;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
+import com.terracottatech.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.cli.service.command.ActivateCommand;
 import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
-import com.terracottatech.dynamic_config.cli.service.command.DumpTopologyCommand;
+import com.terracottatech.dynamic_config.cli.service.command.ExportTopologyCommand;
 import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 import com.terracottatech.dynamic_config.cli.service.command.SetCommand;
@@ -64,7 +65,7 @@ public class ConfigTool {
                 new ActivateCommand(),
                 new AttachCommand(),
                 new DetachCommand(),
-                new DumpTopologyCommand(),
+                new ExportTopologyCommand(),
                 new GetCommand(),
                 new SetCommand()
             )
@@ -80,13 +81,13 @@ public class ConfigTool {
     // create services
     ConcurrencySizing concurrencySizing = new ConcurrencySizing();
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getConnectionTimeoutMillis(), MILLISECONDS, MAIN.getRequestTimeoutMillis(), MILLISECONDS, MAIN.getSecurityRootDirectory());
-    MultiDiagnosticServiceConnectionFactory connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS, concurrencySizing);
+    MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS, concurrencySizing);
     NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
-    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(connectionFactory, concurrencySizing, new NomadEnvironment(), MAIN.getRequestTimeoutMillis()), MAIN.isVerbose());
+    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), MAIN.getRequestTimeoutMillis()), MAIN.isVerbose());
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, MAIN.getRequestTimeoutMillis());
 
     LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(diagnosticServiceProvider, connectionFactory, nodeAddressDiscovery, nomadManager, restartService);
+    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nodeAddressDiscovery, nomadManager, restartService);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help

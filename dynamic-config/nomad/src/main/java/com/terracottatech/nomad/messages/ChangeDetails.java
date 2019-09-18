@@ -12,6 +12,8 @@ import com.terracottatech.nomad.server.ChangeRequestState;
 
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
+
 public class ChangeDetails<T> {
   private final UUID changeUuid;
   private final ChangeRequestState state;
@@ -23,20 +25,20 @@ public class ChangeDetails<T> {
   private final String creationUser;
 
   @JsonCreator
-  public ChangeDetails(@JsonProperty("changeUuid") UUID changeUuid,
-                       @JsonProperty("state") ChangeRequestState state,
-                       @JsonProperty("version") long version,
-                       @JsonProperty("operation") NomadChange operation,
-                       @JsonProperty("result") T result,
-                       @JsonProperty("creationHost") String creationHost,
-                       @JsonProperty("creationUser") String creationUser) {
-    this.changeUuid = changeUuid;
-    this.state = state;
+  public ChangeDetails(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
+                       @JsonProperty(value = "state", required = true) ChangeRequestState state,
+                       @JsonProperty(value = "version", required = true) long version,
+                       @JsonProperty(value = "operation", required = true) NomadChange operation,
+                       @JsonProperty(value = "result") T result,
+                       @JsonProperty(value = "creationHost", required = true) String creationHost,
+                       @JsonProperty(value = "creationUser", required = true) String creationUser) {
+    this.changeUuid = requireNonNull(changeUuid);
+    this.state = requireNonNull(state);
     this.version = version;
-    this.operation = operation;
+    this.operation = requireNonNull(operation);
     this.result = result;
-    this.creationHost = creationHost;
-    this.creationUser = creationUser;
+    this.creationHost = requireNonNull(creationHost);
+    this.creationUser = requireNonNull(creationUser);
   }
 
   public UUID getChangeUuid() {

@@ -76,7 +76,7 @@ public class RestartServiceTest extends BaseTest {
   public void test_restart() throws InterruptedException {
     mockSuccessfulServerRestart();
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restart(cluster).await();
+    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -94,7 +94,7 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticOperationTimeoutException("")).when(mock).restart();
     });
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restart(cluster).await();
+    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -110,7 +110,7 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new RuntimeException("error")).when(mock).restart();
     });
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restart(cluster).await();
+    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.size(), is(equalTo(6)));
     assertThat(errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()), containsInAnyOrder(
         "Failed asking node localhost:9411 to restart: error",
@@ -133,7 +133,7 @@ public class RestartServiceTest extends BaseTest {
 
     when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenAnswer(sleep(5, SECONDS));
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restart(cluster).await();
+    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(1)));
     assertThat(errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()), containsInAnyOrder(
         "Waiting for node localhost:9411 to restart timed out after 2000ms"
@@ -155,7 +155,7 @@ public class RestartServiceTest extends BaseTest {
     when(diagnosticServiceMock("localhost", 9421).getLogicalServerState()).thenReturn(STARTING);
     when(diagnosticServiceMock("localhost", 9422).getLogicalServerState()).thenReturn(UNINITIALIZED);
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restart(cluster).await();
+    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(5)));
     assertThat(errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()), containsInAnyOrder(
         "Waiting for node localhost:9411 to restart timed out after 2000ms",

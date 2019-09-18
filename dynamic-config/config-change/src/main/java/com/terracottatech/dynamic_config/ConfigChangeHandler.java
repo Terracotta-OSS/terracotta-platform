@@ -5,8 +5,8 @@
 package com.terracottatech.dynamic_config;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type;
 import org.terracotta.entity.PlatformConfiguration;
 
 /**
@@ -14,7 +14,7 @@ import org.terracotta.entity.PlatformConfiguration;
  */
 public interface ConfigChangeHandler {
 
-  Type getType();
+  Setting getSetting();
 
   void initialize(PlatformConfiguration platformConfiguration);
 

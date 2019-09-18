@@ -9,14 +9,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
+
 public class SimpleNomadChange implements NomadChange {
   private final String change;
   private final String summary;
 
   @JsonCreator
-  public SimpleNomadChange(@JsonProperty("change") String change, @JsonProperty("summary") String summary) {
-    this.change = change;
-    this.summary = summary;
+  public SimpleNomadChange(@JsonProperty(value = "change", required = true) String change,
+                           @JsonProperty(value = "summary", required = true) String summary) {
+    this.change = requireNonNull(change);
+    this.summary = requireNonNull(summary);
   }
 
   public String getChange() {

@@ -6,27 +6,21 @@ package com.terracottatech.dynamic_config.cli.service.command;
 
 
 import com.beust.jcommander.Parameter;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.TypeConverter;
-import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.Tuple2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
@@ -35,7 +29,7 @@ import static java.util.stream.Stream.concat;
 /**
  * @author Mathieu Carbou
  */
-public abstract class TopologyChangeCommand extends Command {
+public abstract class TopologyCommand extends RemoteCommand {
 
   public enum Type {
 
@@ -47,11 +41,6 @@ public abstract class TopologyChangeCommand extends Command {
       return name().toLowerCase();
     }
   }
-
-  @Resource public NodeAddressDiscovery nodeAddressDiscovery;
-  @Resource public MultiDiagnosticServiceConnectionFactory connectionFactory;
-
-  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Parameter(names = {"-t"}, description = "Type of attachment or detachment (default: node)", converter = TypeConverter.class)
   private Type type = Type.NODE;
@@ -85,26 +74,21 @@ public abstract class TopologyChangeCommand extends Command {
     logger.debug("Discovering destination cluster nodes to update by using node {}...", destination);
 
     // get all the nodes to update (which includes source node plus all the nodes on the destination cluster)
-    Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discovered = nodeAddressDiscovery.discover(destination);
-    if (logger.isDebugEnabled()) {
-      logger.debug("Discovered nodes {} through {}.", nodeAddresses(discovered.t2), discovered.t1);
-    }
+    Collection<InetSocketAddress> discovered = findPeers(destination);
 
     // create a list of addresses to connect to
-    Collection<InetSocketAddress> addresses = concat(sources.stream(), discovered.t2.stream()).collect(toCollection(LinkedHashSet::new));
+    Collection<InetSocketAddress> addresses = concat(sources.stream(), discovered.stream()).collect(toCollection(LinkedHashSet::new));
     if (logger.isDebugEnabled()) {
-      logger.debug("Connecting to nodes: {}...", nodeAddresses(addresses));
+      logger.debug("Connecting to nodes: {}...", toString(addresses));
     }
 
-    Cluster result;
-
     // create a multi-connection based on all the cluster addresses
-    try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(addresses)) {
+    try (DiagnosticServices connections = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
 
       // get the target node / cluster
-      Target dest = connections.getDiagnosticService(discovered.t1)
+      Target dest = connections.getDiagnosticService(destination)
           .map(ds -> ds.getProxy(TopologyService.class))
-          .map(dcs -> new Target(discovered.t1, dcs.getCluster()))
+          .map(dcs -> new Target(destination, dcs.getCluster()))
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
@@ -116,23 +100,21 @@ public abstract class TopologyChangeCommand extends Command {
           .collect(toList());
 
       // build an updated topology
-      result = updateTopology(dest, src);
+      Cluster result = updateTopology(dest, src);
 
       if (logger.isDebugEnabled()) {
         logger.debug("Updated topology:\n{}.", Json.toPrettyJson(result));
       }
-    }
-
-    // apply the changes only to the nodes remaining on the cluster
-    try (MultiDiagnosticServiceConnection connections = connectionFactory.createConnection(result.getNodeAddresses())) {
-      logger.info("Pushing the updated topology to all the cluster nodes: {}.", nodeAddresses(result.getNodeAddresses()));
 
       // push the updated topology to all the addresses
-      result.getNodeAddresses().stream()
-          .map(endpoint -> connections.getDiagnosticService(endpoint).get())
-          .map(ds -> ds.getProxy(TopologyService.class))
-          .forEach(dcs -> dcs.setCluster(result));
+      // If a node has been removed, then it will make itself alone on its own cluster and will have no more links to the previous nodes
+      // This is done in the TopologyService#setCluster() method
+      logger.info("Pushing the updated topology to all the nodes: {}.", toString(addresses));
+      topologyServices(connections)
+          .map(Tuple2::getT2)
+          .forEach(ts -> ts.setCluster(result));
     }
+
     logger.info("Command successful!\n");
   }
 
@@ -141,7 +123,7 @@ public abstract class TopologyChangeCommand extends Command {
     return type;
   }
 
-  TopologyChangeCommand setType(Type type) {
+  TopologyCommand setType(Type type) {
     this.type = type;
     return this;
   }
@@ -150,12 +132,12 @@ public abstract class TopologyChangeCommand extends Command {
     return destination;
   }
 
-  TopologyChangeCommand setDestination(InetSocketAddress destination) {
+  TopologyCommand setDestination(InetSocketAddress destination) {
     this.destination = destination;
     return this;
   }
 
-  TopologyChangeCommand setDestination(String host, int port) {
+  TopologyCommand setDestination(String host, int port) {
     return setDestination(InetSocketAddress.createUnresolved(host, port));
   }
 
@@ -163,21 +145,17 @@ public abstract class TopologyChangeCommand extends Command {
     return sources;
   }
 
-  TopologyChangeCommand setSources(List<InetSocketAddress> sources) {
+  TopologyCommand setSources(List<InetSocketAddress> sources) {
     this.sources = sources;
     return this;
   }
 
-  TopologyChangeCommand setSources(InetSocketAddress... sources) {
+  TopologyCommand setSources(InetSocketAddress... sources) {
     setSources(Arrays.asList(sources));
     return this;
   }
 
   protected abstract Cluster updateTopology(Target destination, List<Node> sources);
-
-  private String nodeAddresses(Collection<InetSocketAddress> addresses) {
-    return addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", "));
-  }
 
   static class Target {
 

@@ -31,7 +31,7 @@
     ]
   },
   "applicability": {
-    "type": "CLUSTER"
+    "scope": "CLUSTER"
   },
   "summary": "Activating cluster"
 }

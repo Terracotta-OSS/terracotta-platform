@@ -68,15 +68,14 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     super.setUp();
 
     // mock discover call
-    when(topologyServiceMock("127.0.0.1", 9410).getThisNodeAddress()).thenReturn(createUnresolved("localhost", 9410));
-    when(topologyServiceMock("127.0.0.1", 9410).getCluster()).thenReturn(cluster);
+    when(topologyServiceMock("localhost", 9410).getCluster()).thenReturn(cluster);
 
     // mock destination node information retrieval
     when(topologyServiceMock(node0.getNodeAddress()).getCluster()).thenReturn(cluster);
 
     // mock source node information retrieval
-    when(topologyServiceMock("127.0.0.1", 9411).getThisNode()).thenReturn(node1);
-    when(topologyServiceMock("127.0.0.1", 9412).getThisNode()).thenReturn(node2);
+    when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(node1);
+    when(topologyServiceMock("localhost", 9412).getThisNode()).thenReturn(node2);
   }
 
   @Test
@@ -86,9 +85,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     TopologyService topologyService12 = topologyServiceMock("localhost", 9412);
 
     newCommand()
-        .setType(TopologyChangeCommand.Type.NODE)
-        .setDestination("127.0.0.1", 9410)
-        .setSources(createUnresolved("127.0.0.1", 9411), createUnresolved("127.0.0.1", 9412))
+        .setType(TopologyCommand.Type.NODE)
+        .setDestination("localhost", 9410)
+        .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412))
         .run();
 
     // capture the new topology set calls
@@ -114,9 +113,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     TopologyService topologyService12 = topologyServiceMock("localhost", 9412);
 
     newCommand()
-        .setType(TopologyChangeCommand.Type.STRIPE)
-        .setDestination("127.0.0.1", 9410)
-        .setSources(createUnresolved("127.0.0.1", 9411), createUnresolved("127.0.0.1", 9412))
+        .setType(TopologyCommand.Type.STRIPE)
+        .setDestination("localhost", 9410)
+        .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412))
         .run();
 
     // capture the new topology set calls

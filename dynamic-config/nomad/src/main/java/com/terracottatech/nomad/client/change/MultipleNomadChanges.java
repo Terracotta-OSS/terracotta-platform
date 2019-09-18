@@ -22,10 +22,11 @@ import static java.util.Objects.requireNonNull;
  */
 public class MultipleNomadChanges implements NomadChange {
 
+  // keep this as a list, because the ordering to apply the changes might be important
   private final List<NomadChange> changes;
 
   @JsonCreator
-  public MultipleNomadChanges(@JsonProperty("changes") List<NomadChange> changes) {
+  public MultipleNomadChanges(@JsonProperty(value = "changes", required = true) List<? extends NomadChange> changes) {
     this.changes = new ArrayList<>(requireNonNull(changes));
   }
 
@@ -39,7 +40,7 @@ public class MultipleNomadChanges implements NomadChange {
 
   @Override
   public String getSummary() {
-    return changes.stream().map(NomadChange::getSummary).collect(Collectors.joining(", and "));
+    return changes.stream().map(NomadChange::getSummary).collect(Collectors.joining(" then "));
   }
 
   @Override

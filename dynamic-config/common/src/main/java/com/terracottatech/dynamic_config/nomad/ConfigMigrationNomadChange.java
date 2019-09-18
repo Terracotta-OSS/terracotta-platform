@@ -14,7 +14,7 @@ import com.terracottatech.dynamic_config.model.Cluster;
 public class ConfigMigrationNomadChange extends TopologyNomadChange {
 
   @JsonCreator
-  public ConfigMigrationNomadChange(@JsonProperty("cluster") Cluster cluster) {
+  public ConfigMigrationNomadChange(@JsonProperty(value = "cluster", required = true) Cluster cluster) {
     super(cluster, Applicability.cluster());
   }
 

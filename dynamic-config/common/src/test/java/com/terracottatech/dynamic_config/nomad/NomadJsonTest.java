@@ -17,7 +17,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URL;
 
-import static com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type.OFFHEAP;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_BACKUP_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -37,10 +38,10 @@ public class NomadJsonTest {
         new ClusterActivationNomadChange(cluster),
         new ConfigMigrationNomadChange(cluster),
         new ConfigRepairNomadChange(cluster),
-        SettingNomadChange.set(Applicability.node(1, "node1"), OFFHEAP, "foo", "2GB"),
+        SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
         new MultipleNomadChanges(
-            SettingNomadChange.set(Applicability.node(1, "node1"), OFFHEAP, "foo", "2GB"),
-            SettingNomadChange.set(Applicability.cluster(), OFFHEAP, "bar", "512MB")
+            SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
+            SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "bar", "512MB")
         )
     };
 

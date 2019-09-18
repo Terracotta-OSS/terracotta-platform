@@ -8,13 +8,12 @@ import com.terracottatech.diagnostic.client.DiagnosticOperationTimeoutException;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
+import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProviderException;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
-import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.lease.connection.TimeBudget;
 
 import java.net.InetSocketAddress;
@@ -51,8 +50,7 @@ public class RestartService {
     this.requestTimeoutMillis = requestTimeoutMillis;
   }
 
-  public RestartProgress restart(Cluster cluster) {
-    Collection<InetSocketAddress> addresses = cluster.getNodeAddresses();
+  public RestartProgress restartNodes(Collection<InetSocketAddress> addresses) {
     LOGGER.info("Asking all cluster nodes: {} to restart themselves", addresses);
 
     ExecutorService executor = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, "diagnostics-restart"));
@@ -128,7 +126,7 @@ public class RestartService {
       LogicalServerState state = diagnosticService.getLogicalServerState();
       // Note: STARTING is the state used when a server is blocked starting in diagnostic mode
       return state != null && state != UNREACHABLE && state != UNKNOWN && state != STARTING && state != UNINITIALIZED;
-    } catch (ConnectionException e) {
+    } catch (DiagnosticServiceProviderException e) {
       LOGGER.debug("Node {} didn't restarted yet: {}", e.getMessage(), e);
       return false;
     } catch (Exception e) {

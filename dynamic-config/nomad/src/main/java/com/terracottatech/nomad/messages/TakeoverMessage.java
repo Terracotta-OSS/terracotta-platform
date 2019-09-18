@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TakeoverMessage extends MutativeMessage {
   @JsonCreator
-  public TakeoverMessage(@JsonProperty("expectedMutativeMessageCount") long expectedMutativeMessageCount,
-                         @JsonProperty("mutationHost") String mutationHost,
-                         @JsonProperty("mutationUser") String mutationUser) {
+  public TakeoverMessage(@JsonProperty(value = "expectedMutativeMessageCount", required = true) long expectedMutativeMessageCount,
+                         @JsonProperty(value = "mutationHost", required = true) String mutationHost,
+                         @JsonProperty(value = "mutationUser", required = true) String mutationUser) {
     super(expectedMutativeMessageCount, mutationHost, mutationUser);
   }
 }

@@ -5,23 +5,25 @@
 package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.config.ConfigFileContainer;
+import com.terracottatech.dynamic_config.model.Setting;
+import com.terracottatech.dynamic_config.model.config.ConfigFileParser;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
-import com.terracottatech.dynamic_config.model.validation.ConfigFileValidator;
+import com.terracottatech.dynamic_config.model.validation.ConfigFileFormatValidator;
 import com.terracottatech.dynamic_config.model.validation.NodeParamsValidator;
 import com.terracottatech.dynamic_config.parsing.ConsoleParamsParser;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
-import com.terracottatech.utilities.Tuple2;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeId;
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getSetting;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeId;
+import static com.terracottatech.utilities.Tuple2.tuple2;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 
 public class ClusterCreator {
   private final IParameterSubstitutor parameterSubstitutor;
@@ -40,15 +42,30 @@ public class ClusterCreator {
   Cluster create(Path configFile, String clusterName) {
     // Load the properties and validate the config file
     Properties properties = new PropertiesFileLoader(configFile).loadProperties();
-    String fileName = configFile.toFile().getName(); //Path::getFileName can return null, which trips spotBugs
-    ConfigFileValidator configFileValidator = new ConfigFileValidator(fileName, properties);
+
+    ConfigFileFormatValidator configFileValidator = new ConfigFileFormatValidator(configFile, properties);
     configFileValidator.validate();
-    validateNodeParams(properties);
+
+    properties.entrySet()
+        .stream()
+        .collect(
+            groupingBy(
+                entry -> tuple2(getStripeId(entry.getKey().toString()), getNodeId(entry.getKey().toString())),
+                toMap(entry -> getSetting(entry.getKey().toString()), entry -> entry.getValue().toString().trim())
+            )
+        )
+        .values()
+        .forEach(this::validateNodeSettings);
 
     // Create Cluster object once validations are successful
-    ConfigFileContainer configFileContainer = new ConfigFileContainer(fileName, properties, clusterName, parameterSubstitutor);
-    Cluster cluster = configFileContainer.createCluster();
+    ConfigFileParser configFileParser = new ConfigFileParser(configFile, properties, parameterSubstitutor);
+    Cluster cluster = configFileParser.createCluster();
+    if (clusterName != null) {
+      cluster.setName(clusterName);
+    }
+
     new ClusterValidator(cluster).validate();
+
     return cluster;
   }
 
@@ -58,21 +75,12 @@ public class ClusterCreator {
    * @param paramValueMap parameter-value mapping
    * @return a {@code Cluster} object
    */
-  Cluster create(Map<String, String> paramValueMap) {
-    NodeParamsValidator nodeParamsValidator = new NodeParamsValidator(paramValueMap, parameterSubstitutor);
-    nodeParamsValidator.validate();
+  Cluster create(Map<Setting, String> paramValueMap) {
+    validateNodeSettings(paramValueMap);
     return new ConsoleParamsParser(paramValueMap, parameterSubstitutor).parse();
   }
 
-  private void validateNodeParams(Properties properties) {
-    properties.entrySet()
-        .stream()
-        .collect(
-            Collectors.groupingBy(
-                entry -> Tuple2.tuple2(getStripeId(entry.getKey().toString()), getNodeId(entry.getKey().toString())),
-                Collectors.toMap(entry -> getProperty(entry.getKey().toString()), entry -> entry.getValue().toString())
-            )
-        )
-        .forEach((nodeIdentifier, map) -> new NodeParamsValidator(map, parameterSubstitutor).validate());
+  private void validateNodeSettings(Map<Setting, String> map) {
+    new NodeParamsValidator(map, parameterSubstitutor).validate();
   }
 }

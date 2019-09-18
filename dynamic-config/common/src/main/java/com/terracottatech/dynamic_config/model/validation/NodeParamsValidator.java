@@ -4,177 +4,90 @@
  */
 package com.terracottatech.dynamic_config.model.validation;
 
-import com.terracottatech.dynamic_config.DynamicConfigConstants;
-import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
 import com.terracottatech.utilities.Validator;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
-import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;
+import static com.terracottatech.dynamic_config.model.Setting.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_NAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_AUTHC;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_SSL_TLS;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_WHITELIST;
 
 public class NodeParamsValidator implements Validator {
-  private final Map<String, String> paramValueMap;
+  private final Map<Setting, String> paramValueMap;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public NodeParamsValidator(Map<String, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
+  public NodeParamsValidator(Map<Setting, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
     this.paramValueMap = new HashMap<>(paramValueMap);
     this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
   public void validate() throws IllegalArgumentException {
-    validateOffheap();
-    validatePorts();
     validateNodeName();
-    validateNodeHostname();
-    validateBindAddresses();
-    validateFailoverPriority();
-    validateSecurity();
-    validateClientSettings();
-  }
-
-  private void validateFailoverPriority() {
-    String param = CommonOptions.FAILOVER_PRIORITY;
-    String value = paramValueMap.get(param);
-    if (value == null) {
-      return;
-    }
-
-    final String[] split = value.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
-    Set<String> acceptableValues = AcceptableSettingValues.get(CommonOptions.FAILOVER_PRIORITY);
-    if (split.length > 2) {
-      throw new IllegalArgumentException(param + " should be one of: " + acceptableValues);
-    }
-
-    if (!acceptableValues.contains(split[0])) {
-      throw new IllegalArgumentException(param + " should be one of: " + acceptableValues);
-    }
-
-    if (split.length == 2) {
-      boolean throwException = false;
-      if (split[0].equals("availability")) {
-        throwException = true;
-      } else {
-        String voterString = split[1];
-        try {
-          int voterCount = Integer.parseInt(voterString);
-          if (voterCount <= 0) {
-            throwException = true;
-          }
-        } catch (NumberFormatException e) {
-          throwException = true;
-        }
-      }
-
-      if (throwException) {
-        throw new IllegalArgumentException(param + " should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
-      }
-    }
-  }
-
-  private void validateSecurity() {
-    validateBooleanSetting(CommonOptions.SECURITY_SSL_TLS);
-    validateBooleanSetting(CommonOptions.SECURITY_WHITELIST);
-    validateSecurityAuthc();
+    validateIfPresent(NODE_PORT);
+    validateIfPresent(NODE_GROUP_PORT);
+    validateIfPresentAndNoPlaceholder(NODE_HOSTNAME);
+    validateIfPresentAndNoPlaceholder(NODE_BIND_ADDRESS);
+    validateIfPresentAndNoPlaceholder(NODE_GROUP_BIND_ADDRESS);
+    validateIfPresentAndNoPlaceholder(OFFHEAP_RESOURCES);
+    validateIfPresent(FAILOVER_PRIORITY);
+    validateIfPresent(CLIENT_LEASE_DURATION);
+    validateIfPresent(CLIENT_RECONNECT_WINDOW);
+    // security
+    validateIfPresent(SECURITY_SSL_TLS);
+    validateIfPresent(SECURITY_WHITELIST);
+    validateIfPresent(SECURITY_AUTHC);
     validateSecurityDir();
   }
 
-  private void validateBooleanSetting(String param) {
-    String setting = paramValueMap.get(param);
-    Set<String> acceptableValues = AcceptableSettingValues.get(param);
-    if (setting != null && !acceptableValues.contains(setting)) {
-      throw new IllegalArgumentException(param + " should be one of: " + acceptableValues);
-    }
-  }
-
   private void validateSecurityDir() {
-    String authc = paramValueMap.get(CommonOptions.SECURITY_AUTHC);
-    String securityDir = paramValueMap.get(CommonOptions.SECURITY_DIR);
-    String audirLogDir = paramValueMap.get(CommonOptions.SECURITY_AUDIT_LOG_DIR);
-    String sslTls = paramValueMap.get(CommonOptions.SECURITY_SSL_TLS);
-    String whitelist = paramValueMap.get(CommonOptions.SECURITY_WHITELIST);
+    String authc = paramValueMap.get(SECURITY_AUTHC);
+    String securityDir = paramValueMap.get(SECURITY_DIR);
+    String audirLogDir = paramValueMap.get(SECURITY_AUDIT_LOG_DIR);
+    String sslTls = paramValueMap.get(SECURITY_SSL_TLS);
+    String whitelist = paramValueMap.get(SECURITY_WHITELIST);
+
+    if (authc != null) {
+      if (authc.equals("certificate") && !Boolean.parseBoolean(sslTls)) {
+        throw new IllegalArgumentException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
+      }
+    }
 
     if ((authc != null && securityDir == null) || (audirLogDir != null && securityDir == null) ||
         (Boolean.parseBoolean(sslTls) && securityDir == null) || (Boolean.parseBoolean(whitelist) && securityDir == null)) {
-      throw new IllegalArgumentException(CommonOptions.SECURITY_DIR + " is mandatory for any of the security configuration");
+      throw new IllegalArgumentException(Setting.SECURITY_DIR + " is mandatory for any of the security configuration");
     }
 
     if (securityDir != null && !Boolean.parseBoolean(sslTls) && authc == null && !Boolean.parseBoolean(whitelist)) {
-      throw new IllegalArgumentException("One of " + CommonOptions.SECURITY_SSL_TLS + ", " + CommonOptions.SECURITY_AUTHC + ", or " + CommonOptions.SECURITY_WHITELIST + " is required for security configuration");
+      throw new IllegalArgumentException("One of " + Setting.SECURITY_SSL_TLS + ", " + Setting.SECURITY_AUTHC + ", or " + Setting.SECURITY_WHITELIST + " is required for security configuration");
     }
   }
 
-  private void validateSecurityAuthc() {
-    String param = CommonOptions.SECURITY_AUTHC;
-    String value = paramValueMap.get(param);
-    if (value == null) {
-      return;
-    }
-
-    Set<String> acceptableValues = AcceptableSettingValues.get(CommonOptions.SECURITY_AUTHC);
-    if (!acceptableValues.contains(value)) {
-      throw new IllegalArgumentException(param + " should be one of: " + acceptableValues);
-    }
-
-    String ssl = paramValueMap.get(CommonOptions.SECURITY_SSL_TLS);
-    if (value.equals("certificate") && !Boolean.parseBoolean(ssl)) {
-      throw new IllegalArgumentException(CommonOptions.SECURITY_SSL_TLS + " is required for " + CommonOptions.SECURITY_AUTHC + "=certificate");
-    }
-  }
-
-  private void validateClientSettings() {
-    validateClientSetting(CommonOptions.CLIENT_LEASE_DURATION);
-    validateClientSetting(CommonOptions.CLIENT_RECONNECT_WINDOW);
-  }
-
-  private void validateClientSetting(String setting) {
-    String value = paramValueMap.get(setting);
-    if (value == null) {
-      return;
-    }
-
-    Set<TimeUnit> acceptableUnits = AcceptableSettingUnits.get(setting);
-    Measure.parse(value, TimeUnit.class, null, acceptableUnits);
-  }
-
-  private void validateBindAddresses() {
-    validateBindAddress(CommonOptions.NODE_BIND_ADDRESS);
-    validateBindAddress(CommonOptions.NODE_GROUP_BIND_ADDRESS);
-  }
-
-  private void validateBindAddress(String setting) {
+  private void validateIfPresentAndNoPlaceholder(Setting setting) {
     String value = paramValueMap.get(setting);
     if (value == null || parameterSubstitutor.containsSubstitutionParams(value)) {
       return;
     }
-
-    if (!isValidIPv4(value) && !isValidIPv6(value)) {
-      throw new IllegalArgumentException("<address> specified in " + setting + "=<address> must be a valid IP address");
-    }
-  }
-
-  private void validateNodeHostname() {
-    String param = CommonOptions.NODE_HOSTNAME;
-    String value = paramValueMap.get(param);
-    if (value == null || parameterSubstitutor.containsSubstitutionParams(value)) {
-      return;
-    }
-
-    if (!isValidIPv4(value) && !isValidIPv6(value) && !isValidHost(value)) {
-      throw new IllegalArgumentException("<address> specified in " + param + "=<address> must be a valid hostname or IP address");
-    }
+    setting.validate(value);
   }
 
   private void validateNodeName() {
-    String param = CommonOptions.NODE_NAME;
+    Setting param = NODE_NAME;
     String value = paramValueMap.get(param);
     if (value == null) {
       return;
@@ -185,43 +98,11 @@ public class NodeParamsValidator implements Validator {
     }
   }
 
-  private void validatePorts() {
-    validatePort(CommonOptions.NODE_PORT);
-    validatePort(CommonOptions.NODE_GROUP_PORT);
-  }
-
-  private void validatePort(String setting) {
+  private void validateIfPresent(Setting setting) {
     String value = paramValueMap.get(setting);
     if (value == null) {
       return;
     }
-
-    int port;
-    try {
-      port = Integer.parseInt(value);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535");
-    }
-
-    if (port < 1 || port > 65535) {
-      throw new IllegalArgumentException("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535");
-    }
-  }
-
-  private void validateOffheap() {
-    final String param = CommonOptions.OFFHEAP_RESOURCES;
-    String value = paramValueMap.get(param);
-    if (value == null || parameterSubstitutor.containsSubstitutionParams(value)) {
-      return;
-    }
-
-    final String[] offheapResources = value.split(DynamicConfigConstants.MULTI_VALUE_SEP);
-    for (String offheapResource : offheapResources) {
-      final String[] nameQuantity = offheapResource.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
-      if (nameQuantity.length != 2) {
-        throw new IllegalArgumentException(param + " should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
-      }
-      Measure.parse(nameQuantity[1], MemoryUnit.class);
-    }
+    setting.validate(value);
   }
 }

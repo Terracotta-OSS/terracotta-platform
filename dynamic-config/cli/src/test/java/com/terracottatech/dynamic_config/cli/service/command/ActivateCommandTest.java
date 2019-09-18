@@ -9,8 +9,8 @@ import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.cli.service.NomadTestHelper;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RejectionReason;
@@ -40,7 +40,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -116,7 +117,7 @@ public class ActivateCommandTest extends BaseTest {
   public void test_activation_fails_if_a_node_is_activated() {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
     when(topologyServiceMock("localhost", 9421).isActivated()).thenReturn(true);
-    when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
+    when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(true);
 
     assertThat(
         () -> {
@@ -124,7 +125,7 @@ public class ActivateCommandTest extends BaseTest {
           cmd.validate();
           cmd.run();
         },
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Some nodes are already activated: localhost:9411, localhost:9421"))))
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster is already activated: localhost:9411, localhost:9421, localhost:9422"))))
     );
   }
 
@@ -151,7 +152,7 @@ public class ActivateCommandTest extends BaseTest {
             " - Prepare rejected for server localhost:9422. Reason: error")))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
+      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -188,7 +189,7 @@ public class ActivateCommandTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
+      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -230,7 +231,6 @@ public class ActivateCommandTest extends BaseTest {
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       DiagnosticService diagnosticService = diagnosticServiceMock("localhost", port);
 
-      doNothing().when(topologyService).installLicense(any(String.class));
       when(topologyService.isActivated()).thenReturn(false);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
@@ -242,10 +242,9 @@ public class ActivateCommandTest extends BaseTest {
     command.run();
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(command.getCluster());
+      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
       verify(topologyServiceMock("localhost", port), times(1)).restart();
       verify(nomadServerMock("localhost", port), times(2)).discover();
-      verify(topologyServiceMock("localhost", port), times(1)).installLicense(any(String.class));
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     }));
 
@@ -255,7 +254,7 @@ public class ActivateCommandTest extends BaseTest {
   private ActivateCommand command() {
     ActivateCommand command = new ActivateCommand()
         .setLicenseFile(license);
-    inject(command, connectionFactory, nomadManager, restartService);
+    inject(command, nodeAddressDiscovery, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
     return command;
   }
 

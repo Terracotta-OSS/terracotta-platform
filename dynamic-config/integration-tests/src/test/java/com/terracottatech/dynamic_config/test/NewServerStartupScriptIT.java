@@ -153,7 +153,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() {
     startNode("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
-    waitedAssert(out::getLog, containsString("failover-priority should be one of: [availability, consistency]"));
+    waitedAssert(out::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)"));
   }
 
   @Test

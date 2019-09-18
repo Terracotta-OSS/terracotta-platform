@@ -16,6 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
+import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
+import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
@@ -29,21 +32,18 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-public class ConfigFileContainerTest {
+public class ConfigFileParserTest {
   @Test
   public void testClusterName() throws Exception {
     String fileName = "single-stripe.properties";
-    ConfigFileContainer configFileContainer = new ConfigFileContainer(fileName, loadProperties(fileName), "my-cluster");
-    assertThat(configFileContainer.getClusterName(), is(equalTo("my-cluster")));
-
-    configFileContainer = new ConfigFileContainer(fileName, loadProperties(fileName));
-    assertThat(configFileContainer.getClusterName(), is(equalTo("single-stripe")));
+    ConfigFileParser configFileParser = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity());
+    assertThat(configFileParser.getClusterName(), is(equalTo("single-stripe")));
   }
 
   @Test
   public void testParse_singleStripe() throws Exception {
     String fileName = "single-stripe.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName)).createCluster();
+    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
@@ -77,7 +77,7 @@ public class ConfigFileContainerTest {
     assertTrue(node.isSecuritySslTls());
     assertThat(node.getSecurityAuthc(), is("file"));
 
-    assertThat(node.getFailoverPriority(), is("consistency:2"));
+    assertThat(node.getFailoverPriority(), is(consistency(2)));
     assertThat(node.getClientReconnectWindow(), is(Measure.of(100L, SECONDS)));
     assertThat(node.getClientLeaseDuration(), is(Measure.of(50L, SECONDS)));
   }
@@ -85,7 +85,7 @@ public class ConfigFileContainerTest {
   @Test
   public void testParseMinimal_singleStripe() throws Exception {
     String fileName = "single-stripe_minimal.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName)).createCluster();
+    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
     assertThat(cluster.getStripes().size(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
@@ -110,7 +110,7 @@ public class ConfigFileContainerTest {
     assertFalse(node.isSecuritySslTls());
     assertNull(node.getSecurityAuthc());
 
-    assertThat(node.getFailoverPriority(), is("availability"));
+    assertThat(node.getFailoverPriority(), is(availability()));
     assertThat(node.getClientReconnectWindow(), is(Measure.of(120L, SECONDS)));
     assertThat(node.getClientLeaseDuration(), is(Measure.of(20L, SECONDS)));
   }
@@ -118,7 +118,7 @@ public class ConfigFileContainerTest {
   @Test
   public void testParse_multiStripe() throws Exception {
     String fileName = "multi-stripe.properties";
-    Cluster cluster = new ConfigFileContainer(fileName, loadProperties(fileName)).createCluster();
+    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
     assertThat(cluster.getStripes().size(), is(2));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(2));
     assertThat(cluster.getStripes().get(1).getNodes().size(), is(2));

@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -49,7 +50,7 @@ public class ServerConfigurationTest {
     node.setClientLeaseDuration(10, TimeUnit.MINUTES);
     node.setDataDir("root", temporaryFolder.getRoot());
     node.setNodeMetadataDir(temporaryFolder.getRoot());
-    node.setFailoverPriority("consistency:2");
+    node.setFailoverPriority(consistency(2));
 
     Servers servers = new Servers();
 

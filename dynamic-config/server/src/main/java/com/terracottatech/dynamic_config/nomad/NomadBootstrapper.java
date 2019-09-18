@@ -76,8 +76,8 @@ public class NomadBootstrapper {
     /**
      * Initializes the Nomad system
      *
-     * @param repositoryPath Configuration repository root
-     * @param nodeName       Node name
+     * @param repositoryPath       Configuration repository root
+     * @param nodeName             Node name
      * @param parameterSubstitutor parameter substitutor
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
@@ -105,11 +105,8 @@ public class NomadBootstrapper {
 
     /**
      * Makes Nomad server capable of write operations.
-     *
-     * @param stripeId ID of the stripe where the node belongs, should be greater than 1
-     * @param nodeName Name of the running node, non-null
      */
-    public void upgradeForWrite(int stripeId, String nodeName) {
+    public void upgradeForWrite(int stripeId, String nodeName, Cluster expectedCluster) {
       requireNonNull(nodeName);
       if (stripeId < 1) {
         throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
@@ -117,7 +114,7 @@ public class NomadBootstrapper {
 
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())
-          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
+          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       ApplicabilityNomadChangeProcessor commandProcessor = new ApplicabilityNomadChangeProcessor(stripeId, nodeName, nomadChangeProcessor);
       ChangeApplicator<NodeContext> changeApplicator = new ConfigChangeApplicator(commandProcessor);

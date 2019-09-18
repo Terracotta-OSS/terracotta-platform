@@ -2,12 +2,11 @@
   "type": "SettingNomadChange",
   "applicability": {
     "nodeName": "node1",
-    "stripeId": 1,
-    "type": "NODE"
+    "scope": "NODE",
+    "stripeId": 1
   },
-  "cmd": "SET",
-  "configType": "OFFHEAP",
-  "name": "foo",
-  "value": "2GB",
-  "summary": "set offheap-resources.foo=2GB"
+  "operation": "SET",
+  "setting": "NODE_BACKUP_DIR",
+  "value": "backup",
+  "summary": "set node-backup-dir=backup"
 }

@@ -15,13 +15,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
-
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ClusterActivationNomadChangeProcessorTest {
 
   @Rule
@@ -30,29 +30,17 @@ public class ClusterActivationNomadChangeProcessorTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  private static final String NODE_NAME = "node-1";
-
   private ClusterActivationNomadChangeProcessor processor;
+  private NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(new Node().setNodeName("foo"))), 1, "foo");
 
   @Before
   public void setUp() {
-    processor = new ClusterActivationNomadChangeProcessor(1, NODE_NAME);
+    processor = new ClusterActivationNomadChangeProcessor(1, "foo", topology.getCluster());
   }
 
   @Test
   public void testGetConfigWithChange() throws Exception {
-    Node node = new Node();
-
-    node.setNodeName(NODE_NAME);
-    node.setNodeHostname("localhost");
-    node.setNodePort(3000);
-    node.setNodeLogDir(temporaryFolder.newFolder().toPath());
-    node.setClientReconnectWindow(120, TimeUnit.SECONDS);
-
-    Stripe stripe = new Stripe(Collections.singletonList(node));
-    Cluster cluster = new Cluster("cluster", Collections.singletonList(stripe));
-
-    ClusterActivationNomadChange change = new ClusterActivationNomadChange(cluster);
+    ClusterActivationNomadChange change = new ClusterActivationNomadChange(topology.getCluster());
 
     NodeContext configWithChange = processor.tryApply(null, change);
 

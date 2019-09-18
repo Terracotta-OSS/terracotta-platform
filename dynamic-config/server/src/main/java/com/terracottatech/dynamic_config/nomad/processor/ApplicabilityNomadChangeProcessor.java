@@ -36,18 +36,19 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<N
     }
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   private boolean applicableToThisServer(NomadChange change) {
     if (!(change instanceof FilteredNomadChange)) {
       return false;
     }
     Applicability applicability = ((FilteredNomadChange) change).getApplicability();
-    switch (applicability.getType()) {
+    switch (applicability.getScope()) {
       case CLUSTER:
         return true;
       case STRIPE:
-        return stripeId == applicability.getStripeId();
+        return stripeId == applicability.getStripeId().getAsInt();
       case NODE:
-        return stripeId == applicability.getStripeId() && nodeName.equals(applicability.getNodeName());
+        return stripeId == applicability.getStripeId().getAsInt() && nodeName.equals(applicability.getNodeName());
       default:
         throw new AssertionError("Unknown applicability: " + applicability);
     }

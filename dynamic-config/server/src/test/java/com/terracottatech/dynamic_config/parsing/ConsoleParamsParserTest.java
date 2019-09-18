@@ -5,8 +5,9 @@
 package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.FailoverPriority;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.config.CommonOptions;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
@@ -19,19 +20,27 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_DATA_DIR;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_GROUP_PORT;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_HOSTNAME;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_LOG_DIR;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_METADATA_DIR;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_OFFHEAP_RESOURCE;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_PORT;
 import static com.terracottatech.dynamic_config.DynamicConfigConstants.PARAM_INTERNAL_SEP;
+import static com.terracottatech.dynamic_config.model.Setting.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
+import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_BACKUP_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_METADATA_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_NAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_AUTHC;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_SSL_TLS;
+import static com.terracottatech.dynamic_config.model.Setting.SECURITY_WHITELIST;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
@@ -58,27 +67,27 @@ public class ConsoleParamsParserTest {
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName(), startsWith("node-"));
-    assertThat(node.getNodeHostname(), is(substitute(DEFAULT_HOSTNAME)));
-    assertThat(node.getNodePort(), is(parseInt(DEFAULT_PORT)));
-    assertThat(node.getNodeGroupPort(), is(parseInt(DEFAULT_GROUP_PORT)));
-    assertThat(node.getNodeBindAddress(), is(DEFAULT_BIND_ADDRESS));
-    assertThat(node.getNodeGroupBindAddress(), is(DEFAULT_GROUP_BIND_ADDRESS));
-    assertThat(node.getOffheapResources(), hasEntry(DEFAULT_OFFHEAP_RESOURCE.split(PARAM_INTERNAL_SEP)[0], Measure.parse(DEFAULT_OFFHEAP_RESOURCE.split(PARAM_INTERNAL_SEP)[1], MemoryUnit.class)));
+    assertThat(node.getNodeHostname(), is(substitute(NODE_HOSTNAME.getDefaultValue())));
+    assertThat(node.getNodePort(), is(parseInt(NODE_PORT.getDefaultValue())));
+    assertThat(node.getNodeGroupPort(), is(parseInt(NODE_GROUP_PORT.getDefaultValue())));
+    assertThat(node.getNodeBindAddress(), is(NODE_BIND_ADDRESS.getDefaultValue()));
+    assertThat(node.getNodeGroupBindAddress(), is(NODE_GROUP_BIND_ADDRESS.getDefaultValue()));
+    assertThat(node.getOffheapResources(), hasEntry(OFFHEAP_RESOURCES.getDefaultValue().split(PARAM_INTERNAL_SEP)[0], Measure.parse(OFFHEAP_RESOURCES.getDefaultValue().split(PARAM_INTERNAL_SEP)[1], MemoryUnit.class)));
 
     assertThat(node.getNodeBackupDir(), is(nullValue()));
-    assertThat(node.getNodeLogDir().toString(), is(DEFAULT_LOG_DIR));
-    assertThat(node.getNodeMetadataDir().toString(), is(DEFAULT_METADATA_DIR));
+    assertThat(node.getNodeLogDir().toString(), is(NODE_LOG_DIR.getDefaultValue()));
+    assertThat(node.getNodeMetadataDir().toString(), is(NODE_METADATA_DIR.getDefaultValue()));
     assertThat(node.getSecurityDir(), is(nullValue()));
     assertThat(node.getSecurityAuditLogDir(), is(nullValue()));
-    assertThat(node.getDataDirs(), hasEntry(DEFAULT_DATA_DIR.split(PARAM_INTERNAL_SEP)[0], Paths.get(DEFAULT_DATA_DIR.split(PARAM_INTERNAL_SEP)[1])));
+    assertThat(node.getDataDirs(), hasEntry(DATA_DIRS.getDefaultValue().split(PARAM_INTERNAL_SEP)[0], Paths.get(DATA_DIRS.getDefaultValue().split(PARAM_INTERNAL_SEP)[1])));
 
     assertFalse(node.isSecurityWhitelist());
     assertFalse(node.isSecuritySslTls());
     assertThat(node.getSecurityAuthc(), is(nullValue()));
 
-    assertThat(node.getFailoverPriority(), is(DEFAULT_FAILOVER_PRIORITY));
-    assertThat(node.getClientReconnectWindow(), is(Measure.parse(DEFAULT_CLIENT_RECONNECT_WINDOW, TimeUnit.class)));
-    assertThat(node.getClientLeaseDuration(), is(Measure.parse(DEFAULT_CLIENT_LEASE_DURATION, TimeUnit.class)));
+    assertThat(node.getFailoverPriority(), is(FailoverPriority.availability()));
+    assertThat(node.getClientReconnectWindow(), is(Measure.parse(CLIENT_RECONNECT_WINDOW.getDefaultValue(), TimeUnit.class)));
+    assertThat(node.getClientLeaseDuration(), is(Measure.parse(CLIENT_LEASE_DURATION.getDefaultValue(), TimeUnit.class)));
   }
 
   @Test
@@ -95,7 +104,7 @@ public class ConsoleParamsParserTest {
 
   @Test
   public void testAllOptions() {
-    Map<String, String> paramValueMap = setProperties();
+    Map<Setting, String> paramValueMap = setProperties();
     Cluster cluster = new ConsoleParamsParser(paramValueMap, PARAMETER_SUBSTITUTOR).parse();
     assertThat(cluster.getName(), is("tc-cluster"));
     assertThat(cluster.getStripes().size(), is(1));
@@ -127,44 +136,44 @@ public class ConsoleParamsParserTest {
     assertTrue(node.isSecuritySslTls());
     assertThat(node.getSecurityAuthc(), is("ldap"));
 
-    assertThat(node.getFailoverPriority(), is("consistency:1"));
+    assertThat(node.getFailoverPriority(), is(FailoverPriority.consistency(1)));
     assertThat(node.getClientReconnectWindow(), is(Measure.of(100L, SECONDS)));
     assertThat(node.getClientLeaseDuration(), is(Measure.of(50L, SECONDS)));
   }
 
-  private Map<String, String> setProperties() {
-    Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put("cluster-name", "tc-cluster");
+  private Map<Setting, String> setProperties() {
+    Map<Setting, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(CLUSTER_NAME, "tc-cluster");
 
-    paramValueMap.put(CommonOptions.NODE_BACKUP_DIR, "backup");
-    paramValueMap.put(CommonOptions.NODE_LOG_DIR, "logs");
-    paramValueMap.put(CommonOptions.NODE_METADATA_DIR, "metadata");
-    paramValueMap.put(CommonOptions.SECURITY_DIR, "security");
-    paramValueMap.put(CommonOptions.SECURITY_AUDIT_LOG_DIR, "audit-logs");
-    paramValueMap.put(CommonOptions.DATA_DIRS, "main:one,second:two");
+    paramValueMap.put(NODE_BACKUP_DIR, "backup");
+    paramValueMap.put(NODE_LOG_DIR, "logs");
+    paramValueMap.put(NODE_METADATA_DIR, "metadata");
+    paramValueMap.put(SECURITY_DIR, "security");
+    paramValueMap.put(SECURITY_AUDIT_LOG_DIR, "audit-logs");
+    paramValueMap.put(DATA_DIRS, "main:one,second:two");
 
-    paramValueMap.put(CommonOptions.NODE_NAME, "node-1");
-    paramValueMap.put(CommonOptions.NODE_PORT, "19410");
-    paramValueMap.put(CommonOptions.NODE_GROUP_PORT, "19430");
-    paramValueMap.put(CommonOptions.NODE_BIND_ADDRESS, "10.10.10.10");
-    paramValueMap.put(CommonOptions.NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
-    paramValueMap.put(CommonOptions.NODE_HOSTNAME, "localhost");
-    paramValueMap.put(CommonOptions.OFFHEAP_RESOURCES, "main:512MB,second:1GB");
+    paramValueMap.put(NODE_NAME, "node-1");
+    paramValueMap.put(NODE_PORT, "19410");
+    paramValueMap.put(NODE_GROUP_PORT, "19430");
+    paramValueMap.put(NODE_BIND_ADDRESS, "10.10.10.10");
+    paramValueMap.put(NODE_GROUP_BIND_ADDRESS, "20.20.20.20");
+    paramValueMap.put(NODE_HOSTNAME, "localhost");
+    paramValueMap.put(OFFHEAP_RESOURCES, "main:512MB,second:1GB");
 
-    paramValueMap.put(CommonOptions.SECURITY_AUTHC, "ldap");
-    paramValueMap.put(CommonOptions.SECURITY_SSL_TLS, "true");
-    paramValueMap.put(CommonOptions.SECURITY_WHITELIST, "true");
+    paramValueMap.put(SECURITY_AUTHC, "ldap");
+    paramValueMap.put(SECURITY_SSL_TLS, "true");
+    paramValueMap.put(SECURITY_WHITELIST, "true");
 
-    paramValueMap.put(CommonOptions.FAILOVER_PRIORITY, "consistency:1");
-    paramValueMap.put(CommonOptions.CLIENT_RECONNECT_WINDOW, "100s");
-    paramValueMap.put(CommonOptions.CLIENT_LEASE_DURATION, "50s");
+    paramValueMap.put(FAILOVER_PRIORITY, "consistency:1");
+    paramValueMap.put(CLIENT_RECONNECT_WINDOW, "100s");
+    paramValueMap.put(CLIENT_LEASE_DURATION, "50s");
     return paramValueMap;
   }
 
-  private Map<String, String> setPropertiesWithParameters() {
-    Map<String, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(CommonOptions.NODE_BIND_ADDRESS, "%i");
-    paramValueMap.put(CommonOptions.NODE_HOSTNAME, "%c");
+  private Map<Setting, String> setPropertiesWithParameters() {
+    Map<Setting, String> paramValueMap = new HashMap<>();
+    paramValueMap.put(NODE_BIND_ADDRESS, "%i");
+    paramValueMap.put(NODE_HOSTNAME, "%c");
     return paramValueMap;
   }
 }

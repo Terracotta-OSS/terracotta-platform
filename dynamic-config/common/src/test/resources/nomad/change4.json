@@ -5,26 +5,25 @@
       "type": "SettingNomadChange",
       "applicability": {
         "nodeName": "node1",
-        "stripeId": 1,
-        "type": "NODE"
+        "scope": "NODE",
+        "stripeId": 1
       },
-      "cmd": "SET",
-      "configType": "OFFHEAP",
-      "name": "foo",
-      "value": "2GB",
-      "summary": "set offheap-resources.foo=2GB"
+      "operation": "SET",
+      "setting": "NODE_BACKUP_DIR",
+      "value": "backup",
+      "summary": "set node-backup-dir=backup"
     },
     {
       "type": "SettingNomadChange",
       "applicability": {
-        "type": "CLUSTER"
+        "scope": "CLUSTER"
       },
-      "cmd": "SET",
-      "configType": "OFFHEAP",
       "name": "bar",
+      "operation": "SET",
+      "setting": "OFFHEAP_RESOURCES",
       "value": "512MB",
       "summary": "set offheap-resources.bar=512MB"
     }
   ],
-  "summary": "set offheap-resources.foo=2GB, and set offheap-resources.bar=512MB"
+  "summary": "set node-backup-dir=backup then set offheap-resources.bar=512MB"
 }

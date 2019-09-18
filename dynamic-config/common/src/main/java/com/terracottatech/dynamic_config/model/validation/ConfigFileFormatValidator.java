@@ -4,21 +4,24 @@
  */
 package com.terracottatech.dynamic_config.model.validation;
 
-import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.dynamic_config.model.exception.MalformedConfigFileException;
 import com.terracottatech.utilities.Validator;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.nio.file.Path;
 import java.util.Properties;
 
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getSetting;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.splitKey;
+import static java.util.Objects.requireNonNull;
 
-public class ConfigFileValidator implements Validator {
-  private final String fileName;
+public class ConfigFileFormatValidator implements Validator {
+  private final Path fileName;
   private final Properties properties;
 
-  public ConfigFileValidator(String fileName, Properties properties) {
-    this.fileName = fileName;
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
+  public ConfigFileFormatValidator(Path configFile, Properties properties) {
+    this.fileName = requireNonNull(configFile.getFileName());
     this.properties = properties;
   }
 
@@ -26,7 +29,6 @@ public class ConfigFileValidator implements Validator {
   public void validate() throws MalformedConfigFileException {
     properties.forEach((key, value) -> {
       ensureCorrectFieldCount(key.toString(), value.toString());
-      ensureNonEmptyValues(key.toString(), value.toString());
       ensureNoInvalidOptions(key.toString(), value.toString());
     });
   }
@@ -44,25 +46,13 @@ public class ConfigFileValidator implements Validator {
     }
   }
 
-  private void ensureNonEmptyValues(String key, String value) {
-    if (value.trim().isEmpty()) {
-      throw new MalformedConfigFileException(
-          String.format(
-              "Missing value for key %s in config fileName: %s",
-              key,
-              fileName
-          )
-      );
-    }
-  }
-
   private void ensureNoInvalidOptions(String key, String value) {
-    final String property = getProperty(key);
-    if (!CommonOptions.getAllOptions().contains(property)) {
+    try {
+      getSetting(key);
+    } catch (IllegalArgumentException e) {
       throw new MalformedConfigFileException(
           String.format(
-              "Unrecognized property: %s in line: %s=%s in config fileName: %s",
-              property,
+              "Unrecognized setting in line: %s=%s in config fileName: %s",
               key,
               value,
               fileName

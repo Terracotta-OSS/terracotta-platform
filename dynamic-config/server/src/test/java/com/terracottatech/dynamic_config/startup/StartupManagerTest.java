@@ -6,13 +6,13 @@ package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.DEFAULT_HOSTNAME;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -40,7 +40,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsOneNode_matchingNodeHostPortSpecified() {
-    Node node = Node.newDefaultNode(substitute(DEFAULT_HOSTNAME));
+    Node node = Node.newDefaultNode(substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
     Cluster cluster = new Cluster(new Stripe(node));
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(node.getNodeHostname(), String.valueOf(node.getNodePort()), CONFIG_FILE, cluster);
 
@@ -61,7 +61,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_noNodeHostPortSpecified_foundMatchUsingDefaults() {
-    Node node1 = Node.newDefaultNode(substitute(DEFAULT_HOSTNAME));
+    Node node1 = Node.newDefaultNode(substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
     Node node2 = Node.newDefaultNode("localhost", 1234);
     Cluster cluster = new Cluster(new Stripe(node1, node2));
 

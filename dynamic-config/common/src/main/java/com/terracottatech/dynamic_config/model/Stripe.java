@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.toList;
 
@@ -27,8 +28,8 @@ public class Stripe implements Cloneable {
   private final List<Node> nodes;
 
   @JsonCreator
-  public Stripe(@JsonProperty("nodes") List<Node> nodes) {
-    this.nodes = new CopyOnWriteArrayList<>(nodes);
+  public Stripe(@JsonProperty(value = "nodes", required = true) List<Node> nodes) {
+    this.nodes = new CopyOnWriteArrayList<>(requireNonNull(nodes));
   }
 
   public Stripe(Node... nodes) {
@@ -61,6 +62,11 @@ public class Stripe implements Cloneable {
     return "Stripe{" +
         "nodes=" + nodes +
         '}';
+  }
+
+  @JsonIgnore
+  public Collection<InetSocketAddress> getNodeAddresses() {
+    return getNodes().stream().map(Node::getNodeAddress).collect(toList());
   }
 
   @JsonIgnore

@@ -7,13 +7,10 @@ package com.terracottatech.dynamic_config.cli.service.connect;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.utilities.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
-import static com.terracottatech.utilities.Tuple2.tuple2;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -28,14 +25,14 @@ public class DynamicConfigNodeAddressDiscovery implements NodeAddressDiscovery {
   }
 
   @Override
-  public Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException {
+  public Collection<InetSocketAddress> discover(InetSocketAddress aNode) {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(aNode)) {
       TopologyService topologyService = requireNonNull(diagnosticService.getProxy(TopologyService.class));
-      InetSocketAddress thisNodeAddress = requireNonNull(topologyService.getThisNodeAddress());
-      Cluster cluster = requireNonNull(topologyService.getCluster());
-      return tuple2(thisNodeAddress, cluster.getNodeAddresses());
-    } catch (Exception e) {
-      throw new NodeAddressDiscoveryException(e);
+      Collection<InetSocketAddress> nodeAddresses = topologyService.getCluster().getNodeAddresses();
+      if (!nodeAddresses.contains(aNode)) {
+        throw new IllegalArgumentException("Node address " + aNode + " used to connect does not match any known node in cluster " + nodeAddresses);
+      }
+      return nodeAddresses;
     }
   }
 }

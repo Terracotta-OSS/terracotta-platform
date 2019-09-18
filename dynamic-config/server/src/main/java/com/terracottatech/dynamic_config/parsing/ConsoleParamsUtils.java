@@ -4,6 +4,8 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
+import com.terracottatech.dynamic_config.model.Setting;
+
 public class ConsoleParamsUtils {
   public static String stripDashDash(String param) {
     return param.substring(2);
@@ -11,5 +13,9 @@ public class ConsoleParamsUtils {
 
   public static String addDashDash(String param) {
     return "--" + param;
+  }
+
+  public static String addDashDash(Setting param) {
+    return addDashDash(param.toString());
   }
 }

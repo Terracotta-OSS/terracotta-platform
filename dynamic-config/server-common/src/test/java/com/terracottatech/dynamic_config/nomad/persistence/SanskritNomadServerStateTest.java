@@ -25,7 +25,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.UUID;
 
-import static com.terracottatech.dynamic_config.nomad.SettingNomadChange.Type.OFFHEAP;
+import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 import static com.terracottatech.nomad.server.NomadServerMode.ACCEPTING;
@@ -111,7 +111,7 @@ public class SanskritNomadServerStateTest {
   public void getChangeRequest() throws Exception {
     UUID uuid = UUID.randomUUID();
 
-    SettingNomadChange settingNomadChange = SettingNomadChange.set(Applicability.cluster(), OFFHEAP, "primary-server-resource", "2GB");
+    SettingNomadChange settingNomadChange = SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "primary-server-resource", "2GB");
 
     MutableSanskritObject changeObject = sanskrit.newMutableSanskritObject();
     changeObject.setString("state", "ROLLED_BACK");
@@ -151,7 +151,7 @@ public class SanskritNomadServerStateTest {
   private void runChangeTest(long expectedMutativeMessageCount) throws Exception {
     UUID uuid = UUID.randomUUID();
 
-    SettingNomadChange settingNomadChange = SettingNomadChange.set(Applicability.cluster(), OFFHEAP, "primary-server-resource", "2GB");
+    SettingNomadChange settingNomadChange = SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "primary-server-resource", "2GB");
 
     ChangeRequest<String> changeRequest = new ChangeRequest<>(
         COMMITTED,

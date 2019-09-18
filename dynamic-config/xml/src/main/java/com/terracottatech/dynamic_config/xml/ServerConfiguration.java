@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.model.FailoverPriority;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.xml.plugins.BackupRestore;
 import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
@@ -15,7 +16,6 @@ import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServer
 import com.terracottatech.utilities.PathResolver;
 import org.terracotta.config.Config;
 import org.terracotta.config.Consistency;
-import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Property;
 import org.terracotta.config.Servers;
@@ -144,20 +144,16 @@ public class ServerConfiguration {
       return;
     }
 
-    FailoverPriority failOverPriorityConfig = FACTORY.createFailoverPriority();
-    String failOverPriority = node.getFailoverPriority();
-    if (failOverPriority == null) {
+    org.terracotta.config.FailoverPriority failOverPriorityConfig = FACTORY.createFailoverPriority();
+    FailoverPriority failoverPriority = node.getFailoverPriority();
+    if (failoverPriority == null) {
       return;
     }
 
-    if ("availability".equals(failOverPriority)) {
+    if (failoverPriority.getType() == FailoverPriority.Type.AVAILABILITY) {
       failOverPriorityConfig.setAvailability("");
-    } else if (failOverPriority.contains("consistency")) {
-      String[] tokens = failOverPriority.split(":");
-      int voterCount = 0;
-      if (tokens.length == 2) {
-        voterCount = Integer.parseInt(tokens[1]);
-      }
+    } else if (failoverPriority.getType() == FailoverPriority.Type.CONSISTENCY) {
+      int voterCount = failoverPriority.getVoters();
 
       Consistency consistency = FACTORY.createConsistency();
       if (voterCount != 0) {

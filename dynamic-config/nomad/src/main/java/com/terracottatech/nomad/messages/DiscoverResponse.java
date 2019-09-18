@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.terracottatech.nomad.server.NomadServerMode;
 
+import static java.util.Objects.requireNonNull;
+
 public class DiscoverResponse<T> {
   private final NomadServerMode mode;
   private final long mutativeMessageCount;
@@ -18,14 +20,14 @@ public class DiscoverResponse<T> {
   private ChangeDetails<T> latestChange;
 
   @JsonCreator
-  public DiscoverResponse(@JsonProperty("mode") NomadServerMode mode,
-                          @JsonProperty("mutativeMessageCount") long mutativeMessageCount,
-                          @JsonProperty("lastMutationHost") String lastMutationHost,
-                          @JsonProperty("lastMutationUser") String lastMutationUser,
-                          @JsonProperty("currentVersion") long currentVersion,
-                          @JsonProperty("highestVersion") long highestVersion,
-                          @JsonProperty("latestChange") ChangeDetails<T> latestChange) {
-    this.mode = mode;
+  public DiscoverResponse(@JsonProperty(value = "mode", required = true) NomadServerMode mode,
+                          @JsonProperty(value = "mutativeMessageCount", required = true) long mutativeMessageCount,
+                          @JsonProperty(value = "lastMutationHost") String lastMutationHost,
+                          @JsonProperty(value = "lastMutationUser") String lastMutationUser,
+                          @JsonProperty(value = "currentVersion", required = true) long currentVersion,
+                          @JsonProperty(value = "highestVersion", required = true) long highestVersion,
+                          @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange) {
+    this.mode = requireNonNull(mode);
     this.mutativeMessageCount = mutativeMessageCount;
     this.lastMutationHost = lastMutationHost;
     this.lastMutationUser = lastMutationUser;

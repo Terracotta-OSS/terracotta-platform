@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.model.validation;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.exception.MalformedClusterConfigException;
+import com.terracottatech.dynamic_config.model.exception.MalformedClusterException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
+import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
@@ -50,8 +52,8 @@ public class ClusterConfigValidatorTest {
   public void testDifferingFailoverPriority() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setFailoverPriority("availability");
-    node2.setFailoverPriority("consistency");
+    node1.setFailoverPriority(availability());
+    node2.setFailoverPriority(consistency());
 
     testThrowsWithMessage(node1, node2, "Failover setting of all nodes should match");
   }
@@ -60,8 +62,8 @@ public class ClusterConfigValidatorTest {
   public void testDifferingFailoverVoterCount() {
     Node node1 = new Node();
     Node node2 = new Node();
-    node1.setFailoverPriority("consistency");
-    node2.setFailoverPriority("consistency:2");
+    node1.setFailoverPriority(consistency());
+    node2.setFailoverPriority(consistency(2));
 
     testThrowsWithMessage(node1, node2, "Failover setting of all nodes should match");
   }
@@ -169,7 +171,7 @@ public class ClusterConfigValidatorTest {
     node.setSecurityDir(Paths.get("security-root" + random.nextInt()));
     node.setOffheapResource("main", 1L, GB);
     node.setDataDir("dir-1", Paths.get("some-path" + random.nextInt()));
-    node.setFailoverPriority("consistency");
+    node.setFailoverPriority(consistency());
     node.setClientReconnectWindow(100L, SECONDS);
     node.setClientLeaseDuration(100L, SECONDS);
     node.setNodeBackupDir(Paths.get("backup-" + random.nextInt()));
@@ -190,7 +192,7 @@ public class ClusterConfigValidatorTest {
   }
 
   private void testThrowsWithMessage(Node node1, Node node2, String message) {
-    exception.expect(MalformedClusterConfigException.class);
+    exception.expect(MalformedClusterException.class);
     exception.expectMessage(message);
     new ClusterValidator(createCluster(node1, node2)).validate();
   }

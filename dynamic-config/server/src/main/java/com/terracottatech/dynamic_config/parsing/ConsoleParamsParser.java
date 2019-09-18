@@ -4,14 +4,11 @@
  */
 package com.terracottatech.dynamic_config.parsing;
 
-import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.config.CommonOptions;
-import com.terracottatech.dynamic_config.model.config.NodeParameterSetter;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.utilities.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,36 +23,34 @@ import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class ConsoleParamsParser implements Parser<Cluster> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsParser.class);
-  private final TreeMap<String, String> paramValueMap;
+  private final TreeMap<Setting, String> paramValueMap;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public ConsoleParamsParser(Map<String, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
-    this.paramValueMap = new TreeMap<>(paramValueMap);
+  public ConsoleParamsParser(Map<Setting, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
+    this.paramValueMap = new TreeMap<>(Comparator.comparing(Setting::toString));
+    this.paramValueMap.putAll(paramValueMap);
     this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
   public Cluster parse() {
     Node node = new Node();
-    String clusterName = paramValueMap.remove("cluster-name");
+    String clusterName = paramValueMap.remove(Setting.CLUSTER_NAME);
     Cluster cluster = new Cluster(new Stripe(node));
     cluster.setName(clusterName);
-
-    NodeParameterSetter parameterSetter = new NodeParameterSetter(node, new ParameterSubstitutor());
-    paramValueMap.forEach(parameterSetter::set);
-
+    paramValueMap.forEach((setting, value) -> setting.setProperty(node, setting.requiresEagerSubstitution() ? parameterSubstitutor.substitute(value) : value));
     addDefaults(node);
     return cluster;
   }
 
   private void addDefaults(Node node) {
-    Map<String, String> defaultsAdded = new TreeMap<>();
+    Map<Setting, String> defaultsAdded = new TreeMap<>(Comparator.comparing(Setting::toString));
     if (node.getNodeHostname() == null) {
       // We can't hostname null during Node construction from the client side (e.g. during parsing a config properties
       // file in activate command). Therefore, this logic is here, and not in Node::fillDefaults
-      String hostName = parameterSubstitutor.substitute(DynamicConfigConstants.DEFAULT_HOSTNAME);
+      String hostName = parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue());
       node.setNodeHostname(hostName);
-      defaultsAdded.put(CommonOptions.NODE_HOSTNAME, hostName);
+      defaultsAdded.put(Setting.NODE_HOSTNAME, hostName);
     }
 
     node.fillDefaults(defaultsAdded::put);
@@ -70,7 +65,7 @@ public class ConsoleParamsParser implements Parser<Cluster> {
     );
   }
 
-  private String toDisplayParams(Map<String, String> supplied) {
+  private String toDisplayParams(Map<Setting, String> supplied) {
     String suppliedParameters = supplied.entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
         .map(entry -> ConsoleParamsUtils.addDashDash(entry.getKey()) + "=" + substitute(entry.getValue()))
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));

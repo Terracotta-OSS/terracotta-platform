@@ -22,12 +22,12 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-public abstract class TopologyCommandTest<C extends TopologyChangeCommand> extends BaseTest {
+public abstract class TopologyCommandTest<C extends TopologyCommand> extends BaseTest {
 
   @Test
   public void test_defaults() {
     C command = newCommand();
-    assertThat(command.getType(), is(equalTo(TopologyChangeCommand.Type.NODE)));
+    assertThat(command.getType(), is(equalTo(TopologyCommand.Type.NODE)));
     assertThat(command.getSources(), is(equalTo(Collections.emptyList())));
     assertThat(command.getDestination(), is(nullValue()));
     assertThat(Metadata.getName(command), is(equalTo(command.getClass().getSimpleName().toLowerCase().substring(0, 6))));
@@ -37,7 +37,7 @@ public abstract class TopologyCommandTest<C extends TopologyChangeCommand> exten
   public void test_validate_failures() {
     assertThat(
         () -> newCommand()
-            .setType(TopologyChangeCommand.Type.NODE)
+            .setType(TopologyCommand.Type.NODE)
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
             .setSources(InetSocketAddress.createUnresolved("localhost", 9410), InetSocketAddress.createUnresolved("localhost", 9411))
             .validate(),
@@ -68,14 +68,14 @@ public abstract class TopologyCommandTest<C extends TopologyChangeCommand> exten
   @Test
   public void test_validate() {
     newCommand()
-        .setType(TopologyChangeCommand.Type.NODE)
+        .setType(TopologyCommand.Type.NODE)
         .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
         .setSources(InetSocketAddress.createUnresolved("localhost", 9411))
         .validate();
   }
 
   protected final C newCommand() {
-    return inject(newTopologyCommand(), nodeAddressDiscovery, connectionFactory);
+    return inject(newTopologyCommand(), nodeAddressDiscovery, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
   }
 
   protected abstract C newTopologyCommand();

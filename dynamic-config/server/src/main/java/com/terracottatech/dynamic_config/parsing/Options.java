@@ -9,6 +9,7 @@ import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.DynamicConfigConstants;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.startup.ClusterCreator;
 import com.terracottatech.dynamic_config.startup.NodeProcessor;
 import com.terracottatech.dynamic_config.startup.StartupManager;
@@ -22,26 +23,29 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.DATA_DIRS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BACKUP_DIR;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_GROUP_PORT;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_HOSTNAME;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_LOG_DIR;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_METADATA_DIR;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_NAME;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_PORT;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.NODE_REPOSITORY_DIR;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.OFFHEAP_RESOURCES;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_AUDIT_LOG_DIR;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_AUTHC;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_DIR;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_SSL_TLS;
-import static com.terracottatech.dynamic_config.model.config.CommonOptions.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.model.SettingName.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.model.SettingName.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.model.SettingName.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.model.SettingName.DATA_DIRS;
+import static com.terracottatech.dynamic_config.model.SettingName.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.model.SettingName.LICENSE_FILE;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_BACKUP_DIR;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_METADATA_DIR;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_NAME;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_REPOSITORY_DIR;
+import static com.terracottatech.dynamic_config.model.SettingName.OFFHEAP_RESOURCES;
+import static com.terracottatech.dynamic_config.model.SettingName.SECURITY_AUDIT_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.SettingName.SECURITY_AUTHC;
+import static com.terracottatech.dynamic_config.model.SettingName.SECURITY_DIR;
+import static com.terracottatech.dynamic_config.model.SettingName.SECURITY_SSL_TLS;
+import static com.terracottatech.dynamic_config.model.SettingName.SECURITY_WHITELIST;
+import static com.terracottatech.dynamic_config.model.SettingName.TC_PROPERTIES;
 import static com.terracottatech.dynamic_config.parsing.ConsoleParamsUtils.addDashDash;
 import static com.terracottatech.dynamic_config.parsing.ConsoleParamsUtils.stripDashDash;
 
@@ -110,17 +114,17 @@ public class Options {
   @Parameter(names = {"-f", "--config-file"})
   private String configFile;
 
-  @Parameter(names = {"-T", "--tc-properties"})
+  @Parameter(names = {"-T", "--" + TC_PROPERTIES})
   private String tcProperties;
 
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
 
   /*<--Hidden options-->*/
-  @Parameter(names = {"-N", "--cluster-name"}, hidden = true)
+  @Parameter(names = {"-N", "--" + CLUSTER_NAME}, hidden = true)
   private String clusterName;
 
-  @Parameter(names = {"-l", "--license-file"}, hidden = true)
+  @Parameter(names = {"-l", "--" + LICENSE_FILE}, hidden = true)
   private String licenseFile;
 
   private Collection<String> specifiedOptions;
@@ -150,7 +154,7 @@ public class Options {
    * @param jCommander jCommander instance
    * @return the constructed map
    */
-  private Map<String, String> buildParamValueMap(CustomJCommander jCommander) {
+  private Map<Setting, String> buildParamValueMap(CustomJCommander jCommander) {
     Predicate<ParameterDescription> isSpecified =
         pd -> Arrays.stream(pd.getNames().split(DynamicConfigConstants.MULTI_VALUE_SEP))
             .map(String::trim)
@@ -161,9 +165,9 @@ public class Options {
         .filter(isSpecified)
         .filter(pd -> {
           String longestName = pd.getLongestName();
-          return !longestName.equals("--license-file") && !longestName.equals("--config-file")  && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
+          return !longestName.equals(addDashDash(LICENSE_FILE)) && !longestName.equals("--config-file") && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
         })
-        .collect(Collectors.toMap(pd -> stripDashDash(pd.getLongestName()), pd -> pd.getParameterized().get(this).toString()));
+        .collect(Collectors.toMap(pd -> Setting.fromName(stripDashDash(pd.getLongestName())), pd -> pd.getParameterized().get(this).toString()));
   }
 
   private void validateOptions() {
@@ -186,8 +190,8 @@ public class Options {
       filteredOptions.remove("-r");
 
       filteredOptions.remove("--config-file");
-      filteredOptions.remove("--license-file");
-      filteredOptions.remove("--cluster-name");
+      filteredOptions.remove(addDashDash(LICENSE_FILE));
+      filteredOptions.remove(addDashDash(CLUSTER_NAME));
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
       filteredOptions.remove(addDashDash(NODE_PORT));
       filteredOptions.remove(addDashDash(NODE_REPOSITORY_DIR));
@@ -196,8 +200,8 @@ public class Options {
         throw new ParameterException(
             String.format(
                 "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
-                "--license-file",
-                "--cluster-name",
+                addDashDash(LICENSE_FILE),
+                addDashDash(CLUSTER_NAME),
                 addDashDash(NODE_HOSTNAME),
                 addDashDash(NODE_PORT),
                 addDashDash(NODE_REPOSITORY_DIR)

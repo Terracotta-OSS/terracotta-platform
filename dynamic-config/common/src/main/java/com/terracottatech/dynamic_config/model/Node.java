@@ -5,8 +5,6 @@
 package com.terracottatech.dynamic_config.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.terracottatech.dynamic_config.DynamicConfigConstants;
-import com.terracottatech.dynamic_config.model.config.CommonOptions;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -15,16 +13,27 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javax.xml.bind.DatatypeConverter;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+
+import static com.terracottatech.dynamic_config.model.Setting.CLIENT_LEASE_DURATION;
+import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
+import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_PORT;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_METADATA_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_NAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 
 public class Node implements Cloneable {
   private String nodeName;
@@ -41,7 +50,7 @@ public class Node implements Cloneable {
   private String securityAuthc;
   private boolean securitySslTls;
   private boolean securityWhitelist;
-  private String failoverPriority;
+  private FailoverPriority failoverPriority;
   private Map<String, String> tcProperties = new ConcurrentHashMap<>();
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
@@ -104,7 +113,7 @@ public class Node implements Cloneable {
     return securityWhitelist;
   }
 
-  public String getFailoverPriority() {
+  public FailoverPriority getFailoverPriority() {
     return failoverPriority;
   }
 
@@ -135,6 +144,11 @@ public class Node implements Cloneable {
 
   public Node setTcProperty(String key, String value) {
     this.tcProperties.put(key, value);
+    return this;
+  }
+
+  public Node removeTcProperty(String key) {
+    this.tcProperties.remove(key);
     return this;
   }
 
@@ -208,7 +222,7 @@ public class Node implements Cloneable {
     return this;
   }
 
-  public Node setFailoverPriority(String failoverPriority) {
+  public Node setFailoverPriority(FailoverPriority failoverPriority) {
     this.failoverPriority = failoverPriority;
     return this;
   }
@@ -260,6 +274,16 @@ public class Node implements Cloneable {
 
   public Node clearOffheapResources() {
     this.offheapResources.clear();
+    return this;
+  }
+
+  public Node clearTcProperties() {
+    this.tcProperties.clear();
+    return this;
+  }
+
+  public Node clearDataDirs() {
+    this.dataDirs.clear();
     return this;
   }
 
@@ -410,69 +434,66 @@ public class Node implements Cloneable {
     return thisCopy;
   }
 
-  public Node fillDefaults(BiConsumer<String, String> filledPropertyConsumer) {
+  public Node fillDefaults(BiConsumer<Setting, String> filledPropertyConsumer) {
     if (getNodeName() == null) {
       String generateNodeName = generateNodeName();
       setNodeName(generateNodeName);
-      filledPropertyConsumer.accept(CommonOptions.NODE_NAME, generateNodeName);
+      filledPropertyConsumer.accept(NODE_NAME, generateNodeName);
     }
 
     if (getNodePort() == 0) {
-      setNodePort(Integer.parseInt(DynamicConfigConstants.DEFAULT_PORT));
-      filledPropertyConsumer.accept(CommonOptions.NODE_PORT, DynamicConfigConstants.DEFAULT_PORT);
+      NODE_PORT.fillDefault(this);
+      filledPropertyConsumer.accept(NODE_PORT, NODE_PORT.getDefaultValue());
     }
 
     if (getNodeGroupPort() == 0) {
-      setNodeGroupPort(Integer.parseInt(DynamicConfigConstants.DEFAULT_GROUP_PORT));
-      filledPropertyConsumer.accept(CommonOptions.NODE_GROUP_PORT, DynamicConfigConstants.DEFAULT_GROUP_PORT);
+      NODE_GROUP_PORT.fillDefault(this);
+      filledPropertyConsumer.accept(NODE_GROUP_PORT, NODE_GROUP_PORT.getDefaultValue());
     }
 
     if (getOffheapResources().isEmpty()) {
-      String[] split = DynamicConfigConstants.DEFAULT_OFFHEAP_RESOURCE.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
-      setOffheapResource(split[0], Measure.parse(split[1], MemoryUnit.class));
-      filledPropertyConsumer.accept(CommonOptions.OFFHEAP_RESOURCES, DynamicConfigConstants.DEFAULT_OFFHEAP_RESOURCE);
+      OFFHEAP_RESOURCES.fillDefault(this);
+      filledPropertyConsumer.accept(OFFHEAP_RESOURCES, OFFHEAP_RESOURCES.getDefaultValue());
     }
 
     if (getDataDirs().isEmpty()) {
-      final String defaultDataDir = DynamicConfigConstants.DEFAULT_DATA_DIR;
-      int firstColon = defaultDataDir.indexOf(DynamicConfigConstants.PARAM_INTERNAL_SEP);
-      setDataDir(defaultDataDir.substring(0, firstColon), Paths.get(defaultDataDir.substring(firstColon + 1)));
-      filledPropertyConsumer.accept(CommonOptions.DATA_DIRS, defaultDataDir);
+      DATA_DIRS.fillDefault(this);
+      filledPropertyConsumer.accept(DATA_DIRS, DATA_DIRS.getDefaultValue());
     }
 
     if (getNodeBindAddress() == null) {
-      setNodeBindAddress(DynamicConfigConstants.DEFAULT_BIND_ADDRESS);
-      filledPropertyConsumer.accept(CommonOptions.NODE_BIND_ADDRESS, DynamicConfigConstants.DEFAULT_BIND_ADDRESS);
+      NODE_BIND_ADDRESS.fillDefault(this);
+      filledPropertyConsumer.accept(NODE_BIND_ADDRESS, NODE_BIND_ADDRESS.getDefaultValue());
     }
 
     if (getNodeGroupBindAddress() == null) {
-      setNodeGroupBindAddress(DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS);
-      filledPropertyConsumer.accept(CommonOptions.NODE_GROUP_BIND_ADDRESS, DynamicConfigConstants.DEFAULT_GROUP_BIND_ADDRESS);
+      NODE_GROUP_BIND_ADDRESS.fillDefault(this);
+      filledPropertyConsumer.accept(NODE_GROUP_BIND_ADDRESS, NODE_GROUP_BIND_ADDRESS.getDefaultValue());
     }
 
     if (getNodeLogDir() == null) {
-      setNodeLogDir(Paths.get(DynamicConfigConstants.DEFAULT_LOG_DIR));
-      filledPropertyConsumer.accept(CommonOptions.NODE_LOG_DIR, DynamicConfigConstants.DEFAULT_LOG_DIR);
+      NODE_LOG_DIR.fillDefault(this);
+      filledPropertyConsumer.accept(NODE_LOG_DIR, NODE_LOG_DIR.getDefaultValue());
     }
 
     if (getNodeMetadataDir() == null) {
-      setNodeMetadataDir(Paths.get(DynamicConfigConstants.DEFAULT_METADATA_DIR));
-      filledPropertyConsumer.accept(CommonOptions.NODE_METADATA_DIR, DynamicConfigConstants.DEFAULT_METADATA_DIR);
+      NODE_METADATA_DIR.fillDefault(this);
+      filledPropertyConsumer.accept(NODE_METADATA_DIR, NODE_METADATA_DIR.getDefaultValue());
     }
 
     if (getFailoverPriority() == null) {
-      setFailoverPriority(DynamicConfigConstants.DEFAULT_FAILOVER_PRIORITY);
-      filledPropertyConsumer.accept(CommonOptions.FAILOVER_PRIORITY, DynamicConfigConstants.DEFAULT_FAILOVER_PRIORITY);
+      FAILOVER_PRIORITY.fillDefault(this);
+      filledPropertyConsumer.accept(FAILOVER_PRIORITY, FAILOVER_PRIORITY.getDefaultValue());
     }
 
     if (getClientReconnectWindow() == null) {
-      setClientReconnectWindow(Measure.parse(DynamicConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW, TimeUnit.class));
-      filledPropertyConsumer.accept(CommonOptions.CLIENT_RECONNECT_WINDOW, DynamicConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW);
+      CLIENT_RECONNECT_WINDOW.fillDefault(this);
+      filledPropertyConsumer.accept(CLIENT_RECONNECT_WINDOW, CLIENT_RECONNECT_WINDOW.getDefaultValue());
     }
 
     if (getClientLeaseDuration() == null) {
-      setClientLeaseDuration(Measure.parse(DynamicConfigConstants.DEFAULT_CLIENT_LEASE_DURATION, TimeUnit.class));
-      filledPropertyConsumer.accept(CommonOptions.CLIENT_LEASE_DURATION, DynamicConfigConstants.DEFAULT_CLIENT_LEASE_DURATION);
+      CLIENT_LEASE_DURATION.fillDefault(this);
+      filledPropertyConsumer.accept(CLIENT_LEASE_DURATION, CLIENT_LEASE_DURATION.getDefaultValue());
     }
 
     return this;

@@ -26,10 +26,10 @@ public class NomadManager<T> {
     this.isVerbose = isVerbose;
   }
 
-  public void runChange(Collection<InetSocketAddress> connectionServers, NomadChange change, ChangeResultReceiver<T> results) {
-    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", change, connectionServers);
+  public void runChange(Collection<InetSocketAddress> expectedOnlineNodes, NomadChange change, ChangeResultReceiver<T> results) {
+    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", change, expectedOnlineNodes);
 
-    try (CloseableNomadClient<T> client = clientFactory.createClient(connectionServers)) {
+    try (CloseableNomadClient<T> client = clientFactory.createClient(expectedOnlineNodes)) {
       client.tryApplyChange(isVerbose ? new DelegatingChangeResultReceiver<>(Arrays.asList(new LoggingChangeResultReceiver<>(), results)) : results, change);
     }
   }

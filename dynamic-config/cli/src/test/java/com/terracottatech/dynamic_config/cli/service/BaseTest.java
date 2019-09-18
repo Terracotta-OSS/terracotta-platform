@@ -6,8 +6,9 @@ package com.terracottatech.dynamic_config.cli.service;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
+import com.terracottatech.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
@@ -37,7 +38,7 @@ public abstract class BaseTest {
 
   protected NodeAddressDiscovery nodeAddressDiscovery;
   protected DiagnosticServiceProvider diagnosticServiceProvider;
-  protected MultiDiagnosticServiceConnectionFactory connectionFactory;
+  protected MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
@@ -74,8 +75,8 @@ public abstract class BaseTest {
       }
     };
     nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
-    connectionFactory = new MultiDiagnosticServiceConnectionFactory(diagnosticServiceProvider, timeoutMillis, MILLISECONDS, new ConcurrencySizing());
-    nomadManager = new NomadManager<>(new NomadClientFactory<>(connectionFactory, concurrencySizing, new NomadEnvironment(), timeoutMillis), false);
+    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeoutMillis, MILLISECONDS, new ConcurrencySizing());
+    nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), timeoutMillis), false);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeoutMillis);
   }
 

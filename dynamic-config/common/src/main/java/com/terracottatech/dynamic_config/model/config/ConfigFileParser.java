@@ -6,10 +6,13 @@ package com.terracottatech.dynamic_config.model.config;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Tuple2;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -20,27 +23,21 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeId;
-import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getProperty;
+import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getSetting;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeId;
 import static com.terracottatech.utilities.Assertion.assertNonNull;
+import static com.terracottatech.utilities.Tuple2.tuple2;
+import static java.util.Objects.requireNonNull;
 
-public class ConfigFileContainer {
+public class ConfigFileParser {
   private final Properties properties;
   private final String clusterName;
   private final IParameterSubstitutor paramSubstitutor;
 
-  public ConfigFileContainer(String fileName, Properties properties) {
-    this(fileName, properties, null);
-  }
-
-  public ConfigFileContainer(String fileName, Properties properties, String clusterName) {
-    this(fileName, properties, clusterName, IParameterSubstitutor.identity());
-  }
-
-  public ConfigFileContainer(String fileName, Properties properties, String clusterName, IParameterSubstitutor paramSubstitutor) {
+  public ConfigFileParser(Path configFile, Properties properties, IParameterSubstitutor paramSubstitutor) {
+    this.clusterName = extractClusterName(configFile);
     this.properties = properties;
     this.paramSubstitutor = paramSubstitutor;
-    this.clusterName = extractClusterName(fileName, clusterName);
     assertNonNull(this.clusterName);
   }
 
@@ -49,14 +46,12 @@ public class ConfigFileContainer {
     // keep the map ordered by stripe ID then node name
     Comparator<Tuple2<Integer, String>> comparator = Comparator.comparing(tuple -> tuple.t1 + tuple.t2);
     Map<Tuple2<Integer, String>, Node> uniqueServerToNodeMapping = new TreeMap<>(comparator);
-    Map<Tuple2<Integer, String>, NodeParameterSetter> nodeParameterSetters = new TreeMap<>(comparator);
 
     properties.forEach((key, value) -> {
       // stripe.1.node.1.node-name=node-1
       stripeSet.add(getStripeId(key.toString()));
-      Tuple2<Integer, String> nodeIdentifier = Tuple2.tuple2(getStripeId(key.toString()), getNodeId(key.toString()));
+      Tuple2<Integer, String> nodeIdentifier = tuple2(getStripeId(key.toString()), getNodeId(key.toString()));
       uniqueServerToNodeMapping.putIfAbsent(nodeIdentifier, new Node());
-      nodeParameterSetters.putIfAbsent(nodeIdentifier, new NodeParameterSetter(uniqueServerToNodeMapping.get(nodeIdentifier), paramSubstitutor));
     });
 
     List<Stripe> stripes = new ArrayList<>();
@@ -69,11 +64,16 @@ public class ConfigFileContainer {
     }
 
     Cluster cluster = new Cluster(clusterName, stripes);
-    properties.forEach((key, value) -> {
-      Tuple2<Integer, String> nodeIdentifier = Tuple2.tuple2(getStripeId(key.toString()), getNodeId(key.toString()));
-      NodeParameterSetter nodeParameterSetter = nodeParameterSetters.get(nodeIdentifier);
-      nodeParameterSetter.set(getProperty(key.toString()), value.toString());
-    });
+    properties.entrySet().stream()
+        .filter(e -> e.getValue() != null && !e.getValue().toString().trim().isEmpty())
+        .forEach(e -> {
+          String key = e.getKey().toString();
+          String value = e.getValue().toString();
+          Tuple2<Integer, String> nodeIdentifier = tuple2(getStripeId(key), getNodeId(key));
+          Node node = uniqueServerToNodeMapping.get(nodeIdentifier);
+          Setting setting = getSetting(key);
+          setting.setProperty(node, setting.requiresEagerSubstitution() ? paramSubstitutor.substitute(value) : value);
+        });
 
     uniqueServerToNodeMapping.values().forEach(Node::fillDefaults);
     return cluster;
@@ -83,16 +83,15 @@ public class ConfigFileContainer {
     return clusterName;
   }
 
-  private String extractClusterName(String fileName, String optionalClusterName) {
-    if (optionalClusterName != null) {
-      return optionalClusterName;
-    }
-    optionalClusterName = fileName;
-    int point = optionalClusterName.lastIndexOf('.');
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
+  private static String extractClusterName(Path configFile) {
+    requireNonNull(configFile.getFileName());
+    String clusterName = configFile.getFileName().toString();
+    int point = clusterName.lastIndexOf('.');
     if (point != -1) {
       // removes the extension
-      optionalClusterName = optionalClusterName.substring(0, point);
+      clusterName = clusterName.substring(0, point);
     }
-    return optionalClusterName;
+    return clusterName;
   }
 }

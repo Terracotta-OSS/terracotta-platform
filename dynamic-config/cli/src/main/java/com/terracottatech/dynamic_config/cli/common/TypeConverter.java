@@ -5,13 +5,13 @@
 package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.converters.EnumConverter;
-import com.terracottatech.dynamic_config.cli.service.command.TopologyChangeCommand;
+import com.terracottatech.dynamic_config.cli.service.command.TopologyCommand;
 
 /**
  * @author Mathieu Carbou
  */
-public class TypeConverter extends EnumConverter<TopologyChangeCommand.Type> {
+public class TypeConverter extends EnumConverter<TopologyCommand.Type> {
   public TypeConverter() {
-    super("-t", TopologyChangeCommand.Type.class);
+    super("-t", TopologyCommand.Type.class);
   }
 }

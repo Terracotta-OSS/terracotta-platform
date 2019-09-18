@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.nio.file.Paths;
 
+import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
 import static java.net.InetSocketAddress.createUnresolved;
 import static org.hamcrest.Matchers.equalTo;
@@ -31,7 +32,7 @@ public class StripeTest {
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
-      .setFailoverPriority("availability")
+      .setFailoverPriority(availability())
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")

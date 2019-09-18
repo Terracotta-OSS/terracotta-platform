@@ -6,16 +6,18 @@ package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.terracottatech.dynamic_config.model.Scope;
 
 import java.util.Objects;
+import java.util.OptionalInt;
 
-import static com.terracottatech.dynamic_config.nomad.ApplicabilityType.CLUSTER;
-import static com.terracottatech.dynamic_config.nomad.ApplicabilityType.NODE;
-import static com.terracottatech.dynamic_config.nomad.ApplicabilityType.STRIPE;
+import static com.terracottatech.dynamic_config.model.Scope.CLUSTER;
+import static com.terracottatech.dynamic_config.model.Scope.NODE;
+import static com.terracottatech.dynamic_config.model.Scope.STRIPE;
 import static java.util.Objects.requireNonNull;
 
 public class Applicability {
-  private ApplicabilityType type;
+  private Scope scope;
   private String nodeName;
   private Integer stripeId;
 
@@ -32,24 +34,24 @@ public class Applicability {
   }
 
   @JsonCreator
-  private Applicability(@JsonProperty("type") ApplicabilityType type,
+  private Applicability(@JsonProperty(value = "scope", required = true) Scope scope,
                         @JsonProperty("stripeId") Integer stripeId,
                         @JsonProperty("nodeName") String nodeName) {
-    this.type = requireNonNull(type);
+    this.scope = requireNonNull(scope);
     this.stripeId = stripeId;
     this.nodeName = nodeName;
   }
 
-  public ApplicabilityType getType() {
-    return type;
+  public Scope getScope() {
+    return scope;
   }
 
   public String getNodeName() {
     return nodeName;
   }
 
-  public Integer getStripeId() {
-    return stripeId;
+  public OptionalInt getStripeId() {
+    return stripeId == null ? OptionalInt.empty() : OptionalInt.of(stripeId);
   }
 
   @Override
@@ -57,20 +59,20 @@ public class Applicability {
     if (this == o) return true;
     if (!(o instanceof Applicability)) return false;
     Applicability that = (Applicability) o;
-    return getType() == that.getType() &&
+    return getScope() == that.getScope() &&
         Objects.equals(getNodeName(), that.getNodeName()) &&
         Objects.equals(getStripeId(), that.getStripeId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getType(), getNodeName(), getStripeId());
+    return Objects.hash(getScope(), getNodeName(), getStripeId());
   }
 
   @Override
   public String toString() {
     return "Applicability{" +
-        "type=" + type +
+        "type=" + scope +
         ", nodeName='" + nodeName + '\'' +
         ", stripeId='" + stripeId + '\'' +
         '}';

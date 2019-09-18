@@ -23,12 +23,15 @@ public class NodeContext implements Cloneable {
   private final String nodeName;
 
   @JsonCreator
-  public NodeContext(@JsonProperty("cluster") Cluster cluster,
-                     @JsonProperty("stripeId") int stripeId,
-                     @JsonProperty("nodeName") String nodeName) {
+  public NodeContext(@JsonProperty(value = "cluster", required = true) Cluster cluster,
+                     @JsonProperty(value = "stripeId", required = true) int stripeId,
+                     @JsonProperty(value = "nodeName", required = true) String nodeName) {
     this.cluster = requireNonNull(cluster);
     this.stripeId = stripeId;
     this.nodeName = requireNonNull(nodeName);
+    if (stripeId < 1) {
+      throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
+    }
     // verify we can find the node
     getNode();
   }

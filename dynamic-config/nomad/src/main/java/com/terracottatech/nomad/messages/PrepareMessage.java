@@ -10,20 +10,22 @@ import com.terracottatech.nomad.client.change.NomadChange;
 
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
+
 public class PrepareMessage extends MutativeMessage {
   private final UUID changeUuid;
   private final long versionNumber;
   private final NomadChange change;
 
   @JsonCreator
-  public PrepareMessage(@JsonProperty("expectedMutativeMessageCount") long expectedMutativeMessageCount,
-                        @JsonProperty("mutationHost") String mutationHost,
-                        @JsonProperty("mutationUser") String mutationUser,
-                        @JsonProperty("changeUuid") UUID changeUuid,
-                        @JsonProperty("versionNumber") long versionNumber,
-                        @JsonProperty("change") NomadChange change) {
+  public PrepareMessage(@JsonProperty(value = "expectedMutativeMessageCount", required = true) long expectedMutativeMessageCount,
+                        @JsonProperty(value = "mutationHost", required = true) String mutationHost,
+                        @JsonProperty(value = "mutationUser", required = true) String mutationUser,
+                        @JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
+                        @JsonProperty(value = "versionNumber", required = true) long versionNumber,
+                        @JsonProperty(value = "change") NomadChange change) {
     super(expectedMutativeMessageCount, mutationHost, mutationUser);
-    this.changeUuid = changeUuid;
+    this.changeUuid = requireNonNull(changeUuid);
     this.versionNumber = versionNumber;
     this.change = change;
   }

@@ -4,8 +4,6 @@
  */
 package com.terracottatech.dynamic_config.cli.service.connect;
 
-import com.terracottatech.utilities.Tuple2;
-
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
@@ -22,6 +20,6 @@ public interface NodeAddressDiscovery {
    * <p>
    * The second value of the tuple is the list of addresses of the cluster nodes. The first tuple value is of course contained in this collection.
    */
-  Tuple2<InetSocketAddress, Collection<InetSocketAddress>> discover(InetSocketAddress aNode) throws NodeAddressDiscoveryException;
+  Collection<InetSocketAddress> discover(InetSocketAddress aNode);
 
 }

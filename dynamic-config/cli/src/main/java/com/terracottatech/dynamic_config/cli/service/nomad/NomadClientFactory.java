@@ -6,8 +6,8 @@ package com.terracottatech.dynamic_config.cli.service.nomad;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnection;
-import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceConnectionFactory;
+import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
+import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
@@ -20,12 +20,12 @@ import static java.util.stream.Collectors.toList;
 
 public class NomadClientFactory<T> {
 
-  private final MultiDiagnosticServiceConnectionFactory connectionFactory;
+  private final MultiDiagnosticServiceProvider connectionFactory;
   private final NomadEnvironment environment;
   private final long requestTimeoutMillis;
   private final ConcurrencySizing concurrencySizing;
 
-  public NomadClientFactory(MultiDiagnosticServiceConnectionFactory connectionFactory, ConcurrencySizing concurrencySizing,
+  public NomadClientFactory(MultiDiagnosticServiceProvider connectionFactory, ConcurrencySizing concurrencySizing,
                             NomadEnvironment environment, long requestTimeoutMillis) {
     this.connectionFactory = connectionFactory;
     this.environment = environment;
@@ -33,11 +33,11 @@ public class NomadClientFactory<T> {
     this.concurrencySizing = concurrencySizing;
   }
 
-  public CloseableNomadClient<T> createClient(Collection<InetSocketAddress> hostPortList) {
+  public CloseableNomadClient<T> createClient(Collection<InetSocketAddress> expectedOnlineNodes) {
     String host = environment.getHost();
     String user = environment.getUser();
 
-    MultiDiagnosticServiceConnection connection = connectionFactory.createConnection(hostPortList);
+    DiagnosticServices connection = connectionFactory.fetchDiagnosticServices(expectedOnlineNodes);
 
     Collection<NamedNomadServer<T>> servers = connection.getEndpoints().stream()
         .map(endpoint -> this.createNamedNomadServer(endpoint, connection.getDiagnosticService(endpoint)

@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.parsing.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +19,11 @@ public class ConsoleParamsStarter implements NodeStarter {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsStarter.class);
 
   private final Options options;
-  private final Map<String, String> paramValueMap;
+  private final Map<Setting, String> paramValueMap;
   private final ClusterCreator clusterCreator;
   private final StartupManager startupManager;
 
-  ConsoleParamsStarter(Options options, Map<String, String> paramValueMap, ClusterCreator clusterCreator,
+  ConsoleParamsStarter(Options options, Map<Setting, String> paramValueMap, ClusterCreator clusterCreator,
                        StartupManager startupManager) {
     this.options = options;
     this.paramValueMap = paramValueMap;

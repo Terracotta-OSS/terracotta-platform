@@ -16,10 +16,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
+import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_REPOSITORY_DIR;
+import static com.terracottatech.utilities.Tuple2.tuple2;
+import static java.util.Comparator.comparing;
+import static java.util.EnumSet.complementOf;
+import static java.util.EnumSet.of;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.IntStream.rangeClosed;
 
 
 public class Cluster implements Cloneable {
@@ -29,8 +40,8 @@ public class Cluster implements Cloneable {
 
   @JsonCreator
   public Cluster(@JsonProperty("name") String name,
-                 @JsonProperty("stripes") List<Stripe> stripes) {
-    this.stripes = new CopyOnWriteArrayList<>(stripes);
+                 @JsonProperty(value = "stripes", required = true) List<Stripe> stripes) {
+    this.stripes = new CopyOnWriteArrayList<>(requireNonNull(stripes));
     this.name = name;
   }
 
@@ -187,11 +198,48 @@ public class Cluster implements Cloneable {
     return stripes.get(stripeId - 1).getNode(nodeName);
   }
 
+  public Node getNode(int stripeId, int nodeId) {
+    return stripes.get(stripeId - 1).getNodes().get(nodeId - 1);
+  }
+
   public void forEach(BiConsumer<Integer, Node> consumer) {
     List<Stripe> stripes = getStripes();
     for (int i = 0; i < stripes.size(); i++) {
       int stripeId = i + 1;
       stripes.get(0).getNodes().forEach(node -> consumer.accept(stripeId, node));
     }
+  }
+
+  /**
+   * Transform this model into a config file
+   */
+  public Properties toProperties() {
+    return toProperties(false);
+  }
+
+  /**
+   * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
+   */
+  public Properties toProperties(boolean expanded) {
+    // select the settings to output
+    List<Setting> settings = complementOf(of(CLUSTER_NAME, LICENSE_FILE, NODE_REPOSITORY_DIR))
+        .stream()
+        .sorted(comparing(Setting::toString))
+        .collect(toList());
+    return rangeClosed(1, stripes.size()).boxed().flatMap(stripeId -> {
+      List<Node> nodes = stripes.get(stripeId - 1).getNodes();
+      return rangeClosed(1, nodes.size()).boxed().flatMap(nodeId -> {
+        Node node = nodes.get(nodeId - 1);
+        return settings.stream()
+            .flatMap(setting -> expanded && setting.isMap() ?
+                setting.getExpandedProperties(node).map(property -> tuple2("stripe." + stripeId + ".node." + nodeId + "." + setting + "." + property.t1, property.t2)) :
+                Stream.of(tuple2("stripe." + stripeId + ".node." + nodeId + "." + setting, setting.getPropertyValue(node).orElse(""))));
+      });
+    }).reduce(new Properties(), (props, tupe) -> {
+      props.setProperty(tupe.t1, tupe.t2);
+      return props;
+    }, (p1, p2) -> {
+      throw new UnsupportedOperationException();
+    });
   }
 }

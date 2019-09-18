@@ -6,6 +6,8 @@ package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.terracottatech.dynamic_config.model.Operation;
+import com.terracottatech.dynamic_config.model.Setting;
 
 import java.util.Objects;
 
@@ -18,31 +20,48 @@ import static java.util.Objects.requireNonNull;
  */
 public class SettingNomadChange extends FilteredNomadChange {
 
-  public enum Cmd {SET, UNSET}
-
-  private final Cmd cmd;
-  private final Type configType;
+  private final Operation operation;
+  private final Setting setting;
   private final String name;
   private final String value;
 
   @JsonCreator
-  private SettingNomadChange(@JsonProperty("applicability") Applicability applicability,
-                             @JsonProperty("cmd") Cmd cmd,
-                             @JsonProperty("configType") Type configType,
-                             @JsonProperty("name") String name,
-                             @JsonProperty("value") String value) {
+  private SettingNomadChange(@JsonProperty(value = "applicability", required = true) Applicability applicability,
+                             @JsonProperty(value = "operation", required = true) Operation operation,
+                             @JsonProperty(value = "setting", required = true) Setting setting,
+                             @JsonProperty(value = "name") String name,
+                             @JsonProperty(value = "value") String value) {
     super(applicability);
-    this.cmd = requireNonNull(cmd);
-    this.configType = requireNonNull(configType);
-    this.name = requireNonNull(name);
+    this.operation = requireNonNull(operation);
+    this.setting = requireNonNull(setting);
+    this.name = name;
     this.value = value;
+
+    // Setting Nomad Change is for unset and set commands after the server is active
+    if (!setting.allowsOperation(operation)) {
+      throw new IllegalArgumentException("Setting " + setting + " does not allow operation " + operation);
+    }
+    if (!setting.allowsScope(applicability.getScope())) {
+      throw new IllegalArgumentException("Setting " + setting + " does not allow scope " + applicability.getScope());
+    }
+    // verify the name parameter which is optional
+    if (!setting.isMap() && name != null) {
+      throw new IllegalArgumentException("Setting " + setting + " is not a map and must not have a key name");
+    }
+    // verify the value parameter
+    if (value == null && operation.isValueRequired()) {
+      throw new IllegalArgumentException("Operation " + operation + " requires a value");
+    }
+    if (value != null && !operation.isValueRequired()) {
+      throw new IllegalArgumentException("Operation " + operation + " does not require a value");
+    }
   }
 
   @Override
   public String getSummary() {
-    return cmd == Cmd.SET ?
-        ("set " + configType + "." + name + "=" + value) :
-        ("unset " + configType + "." + name);
+    return operation == Operation.SET ?
+        name == null ? (operation + " " + setting + "=" + value) : (operation + " " + setting + "." + name + "=" + value) :
+        name == null ? (operation + " " + setting) : (operation + " " + setting + "." + name);
   }
 
   public String getName() {
@@ -53,12 +72,12 @@ public class SettingNomadChange extends FilteredNomadChange {
     return value;
   }
 
-  public Type getConfigType() {
-    return configType;
+  public Setting getSetting() {
+    return setting;
   }
 
-  public Cmd getCmd() {
-    return cmd;
+  public Operation getOperation() {
+    return operation;
   }
 
   @Override
@@ -67,48 +86,42 @@ public class SettingNomadChange extends FilteredNomadChange {
     if (!(o instanceof SettingNomadChange)) return false;
     if (!super.equals(o)) return false;
     SettingNomadChange that = (SettingNomadChange) o;
-    return getCmd() == that.getCmd() &&
-        getName().equals(that.getName()) &&
+    return getOperation() == that.getOperation() &&
+        getSetting() == that.getSetting() &&
+        Objects.equals(getName(), that.getName()) &&
         Objects.equals(getValue(), that.getValue());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), getCmd(), getName(), getValue());
+    return Objects.hash(super.hashCode(), getOperation(), getSetting(), getName(), getValue());
   }
 
   @Override
   public String toString() {
     return "SettingNomadChange{" +
-        "cmd=" + cmd +
-        ", configType=" + configType +
+        "cmd=" + operation +
+        ", configType=" + setting +
         ", name='" + name + '\'' +
         ", value='" + value + '\'' +
         ", applicability=" + applicability +
         '}';
   }
 
-  public static SettingNomadChange set(Applicability applicability, Type type, String name, String value) {
-    return new SettingNomadChange(applicability, Cmd.SET, type, name, value);
+  public static SettingNomadChange set(Applicability applicability, Setting type, String name, String value) {
+    return new SettingNomadChange(applicability, Operation.SET, type, name, value);
   }
 
-  public static SettingNomadChange unset(Applicability applicability, Type type, String name) {
-    return new SettingNomadChange(applicability, Cmd.UNSET, type, name, null);
+  public static SettingNomadChange unset(Applicability applicability, Setting type, String name) {
+    return new SettingNomadChange(applicability, Operation.UNSET, type, name, null);
   }
 
-  public enum Type {
-    OFFHEAP("offheap-resources"),
-    DATA_ROOT("data-roots");
-
-    String name;
-
-    Type(String name) {
-      this.name = name;
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
+  public static SettingNomadChange set(Applicability applicability, Setting type, String value) {
+    return new SettingNomadChange(applicability, Operation.SET, type, null, value);
   }
+
+  public static SettingNomadChange unset(Applicability applicability, Setting type) {
+    return new SettingNomadChange(applicability, Operation.UNSET, type, null, null);
+  }
+
 }

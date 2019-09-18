@@ -6,14 +6,14 @@ package com.terracottatech.dynamic_config.model.exception;
 
 import com.terracottatech.utilities.ValidationException;
 
-public class MalformedClusterConfigException extends ValidationException {
+public class MalformedClusterException extends ValidationException {
   private static final long serialVersionUID = 1L;
 
-  public MalformedClusterConfigException(String message) {
+  public MalformedClusterException(String message) {
     super(message);
   }
 
-  public MalformedClusterConfigException(String message, Throwable cause) {
+  public MalformedClusterException(String message, Throwable cause) {
     super(message, cause);
   }
 }

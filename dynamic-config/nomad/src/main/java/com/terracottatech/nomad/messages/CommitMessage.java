@@ -9,16 +9,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
+
 public class CommitMessage extends MutativeMessage {
   private final UUID changeUuid;
 
   @JsonCreator
-  public CommitMessage(@JsonProperty("expectedMutativeMessageCount") long expectedMutativeMessageCount,
-                       @JsonProperty("mutationHost") String mutationHost,
-                       @JsonProperty("mutationUser") String mutationUser,
-                       @JsonProperty("changeUuid") UUID changeUuid) {
+  public CommitMessage(@JsonProperty(value = "expectedMutativeMessageCount", required = true) long expectedMutativeMessageCount,
+                       @JsonProperty(value = "mutationHost", required = true) String mutationHost,
+                       @JsonProperty(value = "mutationUser", required = true) String mutationUser,
+                       @JsonProperty(value = "changeUuid", required = true) UUID changeUuid) {
     super(expectedMutativeMessageCount, mutationHost, mutationUser);
-    this.changeUuid = changeUuid;
+    this.changeUuid = requireNonNull(changeUuid);
   }
 
   public UUID getChangeUuid() {

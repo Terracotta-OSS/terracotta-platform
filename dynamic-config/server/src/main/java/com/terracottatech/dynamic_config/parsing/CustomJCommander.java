@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.parsing;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.WrappedParameter;
+import com.terracottatech.dynamic_config.model.Setting;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,7 +55,7 @@ public class CustomJCommander extends JCommander {
 
         WrappedParameter parameter = pd.getParameter();
         out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "");
-        String defaultValue = DefaultSettings.getDefaultValueFor(ConsoleParamsUtils.stripDashDash(pd.getLongestName()));
+        String defaultValue = Setting.fromName(ConsoleParamsUtils.stripDashDash(pd.getLongestName())).getDefaultValue();
         if (defaultValue != null) {
           out.append(indent).append("    ");
           for (int i = 0; i < maxParamLength - pd.getNames().length(); i++) {

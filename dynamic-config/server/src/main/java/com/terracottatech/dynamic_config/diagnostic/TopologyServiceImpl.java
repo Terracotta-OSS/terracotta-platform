@@ -10,6 +10,7 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
@@ -34,14 +35,26 @@ public class TopologyServiceImpl implements TopologyService {
 
   private volatile NodeContext nodeContext;
   private volatile License license;
-  private final boolean clusterActivated;
+  private boolean clusterActivated;
   private final NomadServerManager nomadServerManager;
 
-  public TopologyServiceImpl(NodeContext nodeContext, boolean clusterActivated, NomadServerManager nomadServerManager) {
+  public TopologyServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager) {
     this.nodeContext = requireNonNull(nodeContext);
-    this.clusterActivated = clusterActivated;
     this.nomadServerManager = requireNonNull(nomadServerManager);
     loadLicense();
+  }
+
+  /**
+   * Called by startup manager to signify that the node has been activated
+   */
+  public void activated() {
+    this.clusterActivated = true;
+  }
+
+  public void upgradeNomadForWrite() {
+    LOGGER.info("Preparing activation of Node with validated topology: {}", nodeContext.getCluster());
+    nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeContext.getNodeName(), nodeContext.getCluster());
+    LOGGER.debug("Setting nomad writable successful");
   }
 
   @Override
@@ -75,9 +88,11 @@ public class TopologyServiceImpl implements TopologyService {
     requireNonNull(cluster);
 
     if (isActivated()) {
-      throw new UnsupportedOperationException("Unable to change the topology at runtime");
+      throw new UnsupportedOperationException("Unable to change the topology at runtime. Use Nomad system to do so.");
 
     } else {
+      new ClusterValidator(cluster).validate();
+
       Node oldMe = getThisNode();
       InetSocketAddress myNodeAddress = oldMe.getNodeAddress();
       Optional<Node> newMe = cluster.getNode(myNodeAddress);
@@ -96,69 +111,77 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public void prepareActivation(Cluster validatedCluster) {
+  public void prepareActivation(Cluster cluster, String xml) {
     if (isActivated()) {
       throw new IllegalStateException("Node is already activated");
     }
-    Node me = getThisNode();
-    Node node = validatedCluster.getStripes()
-        .stream()
-        .flatMap(stripe -> stripe.getNodes().stream())
-        .filter(node1 -> node1.getNodeHostname().equals(me.getNodeHostname()) && node1.getNodePort() == me.getNodePort())
-        .findFirst()
-        .orElseThrow(() -> {
-          String message = String.format(
-              "No match found for host: %s and port: %s in cluster topology: %s",
-              me.getNodeHostname(),
-              me.getNodePort(),
-              validatedCluster
-          );
-          return new IllegalArgumentException(message);
-        });
 
-    LOGGER.info("Preparing activation of Node with validated topology: {}", validatedCluster);
-    int stripeId = validatedCluster.getStripeId(node).get();
-    nomadServerManager.upgradeForWrite(stripeId, node.getNodeName());
+    // validate that we are part of this cluster
+    Node oldMe = getThisNode();
+    InetSocketAddress myNodeAddress = oldMe.getNodeAddress();
+    Node node = cluster.getNode(myNodeAddress).orElse(null);
+    if (node == null) {
+      throw new IllegalArgumentException(String.format(
+          "No match found for node: %s in cluster topology: %s",
+          oldMe.getNodeAddress(),
+          cluster.getNodeAddresses()
+      ));
+    }
+
+    this.setCluster(cluster);
+    this.license = installLicense(xml);
+
+    upgradeNomadForWrite();
   }
 
   @Override
-  public synchronized void installLicense(String xml) {
-    LOGGER.info("Validating license");
-    Path licenseFile = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
-
-    Path tempFile;
-    try {
-      tempFile = Files.createTempFile("terracotta-license-", ".xml");
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
+  public synchronized void upgradeLicense(String xml) {
+    if (this.license == null) {
+      throw new UnsupportedOperationException("Cannot upgrade license: none has been installed first");
     }
-
-    try {
-      Files.write(tempFile, xml.getBytes(StandardCharsets.UTF_8));
-
-      License license = new LicenseParser(tempFile).parse();
-      LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
-      licenseValidator.validate();
-
-      LOGGER.info("Installing license");
-      Files.move(tempFile, licenseFile, StandardCopyOption.REPLACE_EXISTING);
-      LOGGER.debug("License file: {} successfully copied to: {}", LICENSE_FILE_NAME, nomadServerManager.getRepositoryManager().getLicensePath());
-      LOGGER.info("License installation successful");
-
-      this.license = license;
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    } finally {
-      try {
-        Files.deleteIfExists(tempFile);
-      } catch (IOException ignored) {
-      }
-    }
+    this.license = installLicense(xml);
   }
 
   @Override
   public Optional<License> getLicense() {
     return Optional.ofNullable(license);
+  }
+
+  private License installLicense(String xml) {
+    Path tempFile = null;
+    try {
+      tempFile = Files.createTempFile("terracotta-license-", ".xml");
+      Files.write(tempFile, xml.getBytes(StandardCharsets.UTF_8));
+
+      LOGGER.info("Validating license");
+      License license = new LicenseParser(tempFile).parse();
+      LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
+      licenseValidator.validate();
+
+      LOGGER.info("Installing license");
+      Path licensePath = nomadServerManager.getRepositoryManager().getLicensePath();
+
+      try {
+        Path destination = licensePath.resolve(LICENSE_FILE_NAME);
+        Files.move(tempFile, destination, StandardCopyOption.REPLACE_EXISTING);
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+
+      LOGGER.debug("License file: {} successfully copied to: {}", LICENSE_FILE_NAME, licensePath);
+      LOGGER.info("License installation successful");
+
+      return license;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    } finally {
+      if (tempFile != null) {
+        try {
+          Files.deleteIfExists(tempFile);
+        } catch (IOException ignored) {
+        }
+      }
+    }
   }
 
   private void loadLicense() {

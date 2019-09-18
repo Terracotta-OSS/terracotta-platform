@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import java.nio.file.Paths;
 
+import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
@@ -63,7 +64,7 @@ public class TopologyServiceIT extends BaseStartupIT {
           .setNodeBackupDir(Paths.get("backup", "stripe1"))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)
-          .setFailoverPriority("availability")
+          .setFailoverPriority(availability())
           .setOffheapResource("main", 512, MB)
           .setDataDir("main", Paths.get("user-data", "main", "stripe1"))
       )))));
