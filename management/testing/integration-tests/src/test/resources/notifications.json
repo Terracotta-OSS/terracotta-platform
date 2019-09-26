@@ -10,6 +10,8 @@
     },
     "type": "CLIENT_CONNECTED"
   },
+  {"attributes":{"version":"<version>"},"context":{"clientId":"0@127.0.0.1:pet-clinic:<uuid>"},"type":"CLIENT_PROPERTY_ADDED"},
+  {"attributes":{"clientReportedAddress":"<clientReportedAddress>"},"context":{"clientId":"0@127.0.0.1:pet-clinic:<uuid>"},"type":"CLIENT_PROPERTY_ADDED"},
   {
     "attributes": {
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"
@@ -58,6 +60,8 @@
     },
     "type": "CLIENT_CONNECTED"
   },
+  {"attributes":{"version":"<version>"},"context":{"clientId":"0@127.0.0.1:pet-clinic:<uuid>"},"type":"CLIENT_PROPERTY_ADDED"},
+  {"attributes":{"clientReportedAddress":"<clientReportedAddress>"},"context":{"clientId":"0@127.0.0.1:pet-clinic:<uuid>"},"type":"CLIENT_PROPERTY_ADDED"},
   {
     "attributes": {
       "clientId": "0@127.0.0.1:pet-clinic:<uuid>"

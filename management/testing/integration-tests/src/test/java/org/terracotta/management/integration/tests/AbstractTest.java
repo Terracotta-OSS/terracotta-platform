@@ -239,7 +239,8 @@ public abstract class AbstractTest {
         .replaceAll("\"id\":\"[^\"]+:(\\w+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
         .replaceAll("-2", "")
-        .replaceAll("testServer1", "testServer0");
+        .replaceAll("testServer1", "testServer0")
+        .replaceAll("\"(clientReportedAddress)\":\"[^\"]*\"", "\"$1\":\"<$1>\"");
   }
 
   protected void triggerServerStatComputation() throws Exception {
