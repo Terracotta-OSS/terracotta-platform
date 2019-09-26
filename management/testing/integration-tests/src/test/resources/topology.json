@@ -484,7 +484,10 @@
       "clientId": "0@127.0.0.1:TopologyIT:<uuid>",
       "hostName": "<hostname>",
       "tags": [],
-      "properties" : {  },
+      "properties" : { 
+        "clientReportedAddress" : "<clientReportedAddress>",
+        "version" : "<version>"
+      },
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
@@ -515,7 +518,10 @@
         "caches",
         "pet-clinic"
       ],
-      "properties" : {  },
+      "properties" : { 
+        "clientReportedAddress" : "<clientReportedAddress>",
+        "version" : "<version>"
+      },
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
@@ -711,7 +717,10 @@
         "caches",
         "pet-clinic"
       ],
-      "properties" : {   },
+      "properties" : { 
+        "clientReportedAddress" : "<clientReportedAddress>",
+        "version" : "<version>"
+      },
       "connections": [
         {
           "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",

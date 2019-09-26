@@ -16,8 +16,6 @@
 package org.terracotta.management.integration.tests;
 
 import com.terracotta.diagnostic.Diagnostics;
-import org.hamcrest.core.StringContains;
-import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
