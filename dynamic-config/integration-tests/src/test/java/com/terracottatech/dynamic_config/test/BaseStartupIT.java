@@ -209,6 +209,8 @@ public class BaseStartupIT {
         Paths.get("user-data", "main"),
         Paths.get("repositories")
     );
+    // Do not call `getIpAddress()` sevral times because on MacOs each call can last up to 5 sec
+    String ipAddress = getIpAddress();
     // we use STRIPES * NODES_PER_STRIPE because we could support 1 stripe of 4 nodes
     Stream<Path> s2 = rangeClosed(1, STRIPES).mapToObj(stripeId -> rangeClosed(1, STRIPES * NODES_PER_STRIPE).mapToObj(nodeId -> of(
         Paths.get("metadata", "stripe" + stripeId),
@@ -217,22 +219,22 @@ public class BaseStartupIT {
         Paths.get("repository", "stripe" + stripeId),
         Paths.get("user-data", "main", "stripe" + stripeId),
         Paths.get("logs", "stripe" + stripeId, "node-" + nodeId),
-        Paths.get("logs", "stripe" + stripeId, getIpAddress()),
+        Paths.get("logs", "stripe" + stripeId, ipAddress),
         Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId),
         Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data"),
         Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data", "entityData"),
         Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data", "transactionsData"),
-        Paths.get("metadata", "stripe" + stripeId, getIpAddress()),
-        Paths.get("metadata", "stripe" + stripeId, getIpAddress(), "platform-data"),
-        Paths.get("metadata", "stripe" + stripeId, getIpAddress(), "platform-data", "entityData"),
-        Paths.get("metadata", "stripe" + stripeId, getIpAddress(), "platform-data", "transactionsData"),
+        Paths.get("metadata", "stripe" + stripeId, ipAddress),
+        Paths.get("metadata", "stripe" + stripeId, ipAddress, "platform-data"),
+        Paths.get("metadata", "stripe" + stripeId, ipAddress, "platform-data", "entityData"),
+        Paths.get("metadata", "stripe" + stripeId, ipAddress, "platform-data", "transactionsData"),
         Paths.get("repository", "stripe" + stripeId, "node-" + nodeId),
         Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "config"),
         Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "license"),
         Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit"),
         Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit", "tmp"),
         Paths.get("user-data", "main", "stripe" + stripeId, "node-" + nodeId),
-        Paths.get("user-data", "main", "stripe" + stripeId, getIpAddress()),
+        Paths.get("user-data", "main", "stripe" + stripeId, ipAddress),
         Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId),
         Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "config"),
         Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "license"),
