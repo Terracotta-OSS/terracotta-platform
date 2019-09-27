@@ -72,7 +72,7 @@ public class Applicability {
   @Override
   public String toString() {
     return "Applicability{" +
-        "type=" + scope +
+        "scope=" + scope +
         ", nodeName='" + nodeName + '\'' +
         ", stripeId='" + stripeId + '\'' +
         '}';

@@ -31,10 +31,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,7 +43,7 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -59,24 +60,25 @@ public abstract class RemoteCommand extends Command {
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   protected final void runNomadChange(Collection<InetSocketAddress> expectedOnlineNodes, NomadChange change) {
+    logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);
     NomadFailureRecorder<NodeContext> failures = new NomadFailureRecorder<>();
     nomadManager.runChange(expectedOnlineNodes, change, failures);
     failures.reThrow();
   }
 
   protected final Cluster getRemoteTopology(InetSocketAddress node) {
+    logger.trace("getRemoteTopology({})", node);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
       return diagnosticService.getProxy(TopologyService.class).getCluster();
     }
   }
 
   protected final void restartNodes(Collection<InetSocketAddress> addresses) {
+    logger.trace("restartNodes({})", addresses);
     try {
       RestartProgress progress = restartService.restartNodes(addresses);
       Map<InetSocketAddress, Tuple2<String, Exception>> failures = progress.await();
-      if (failures.isEmpty()) {
-        logger.info("All nodes: {} came back up", toString(addresses));
-      } else {
+      if (!failures.isEmpty()) {
         String failedNodes = failures.entrySet()
             .stream()
             .map(e -> e.getKey() + ": " + e.getValue().t1)
@@ -85,58 +87,61 @@ public abstract class RemoteCommand extends Command {
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("Restart has been interrupted");
+      throw new RuntimeException("Restart has been interrupted", e);
     }
   }
 
-  protected final Collection<InetSocketAddress> findPeers(InetSocketAddress nodeAddress) {
-    logger.debug("Discovering nodes through {}", nodeAddress);
+  protected final Collection<InetSocketAddress> getPeers(InetSocketAddress nodeAddress) {
+    logger.trace("getPeers({})", nodeAddress);
     Collection<InetSocketAddress> discovered = nodeAddressDiscovery.discover(nodeAddress);
     if (logger.isDebugEnabled()) {
-      logger.debug("Discovered nodes {} through {}", toString(discovered), nodeAddress);
+      logger.debug("Discovered nodes:{} through: {}", toString(discovered), nodeAddress);
     }
     return discovered;
   }
 
   protected final Map<InetSocketAddress, LogicalServerState> findOnlineNodes(Cluster cluster) {
+    logger.trace("findOnlineNodes({})", cluster);
     //TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
-    try (DiagnosticServices connection = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
-      return connection.map((inetSocketAddress, diagnosticService) -> diagnosticService.getLogicalServerState()).collect(toMap(
-          Tuple2::getT1,
-          Tuple2::getT2, (o1, o2) -> {
-            throw new UnsupportedOperationException();
-          },
-          LinkedHashMap::new));
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
+      return diagnosticServices
+          .map((inetSocketAddress, diagnosticService) -> diagnosticService.getLogicalServerState())
+          .collect(toMap(
+              Tuple2::getT1,
+              Tuple2::getT2, (o1, o2) -> {
+                throw new UnsupportedOperationException();
+              },
+              LinkedHashMap::new));
     }
   }
 
   protected final boolean validateActivationState(Collection<InetSocketAddress> expectedOnlineNodes) {
-    logger.debug("Contacting all cluster nodes: {} to check for activation", toString(expectedOnlineNodes));
-    try (DiagnosticServices connection = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
-      Map<Boolean, List<InetSocketAddress>> activations = topologyServices(connection)
+    logger.trace("validateActivationState({})", expectedOnlineNodes);
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
+      Map<Boolean, Collection<InetSocketAddress>> activations = topologyServices(diagnosticServices)
           .map(tuple -> tuple.map(identity(), TopologyService::isActivated))
-          .collect(groupingBy(Tuple2::getT2, mapping(Tuple2::getT1, toList())));
+          .collect(groupingBy(Tuple2::getT2, mapping(Tuple2::getT1, toCollection(() -> new TreeSet<>(Comparator.comparing(InetSocketAddress::toString))))));
       if (activations.isEmpty()) {
         throw new IllegalArgumentException("Cluster is empty or offline");
       }
       if (activations.size() == 2) {
-        throw new IllegalStateException("Cluster is badly formed of activated and non activated nodes. Activated: " + activations.get(Boolean.TRUE) + ", Non activated: " + activations.get(Boolean.FALSE));
+        throw new IllegalStateException("Cluster is badly formed as it contains a mix of activated and unconfigured nodes. " +
+            "Activated: " + activations.get(Boolean.TRUE) + ", Unconfigured: " + activations.get(Boolean.FALSE));
       }
       return activations.keySet().iterator().next();
     }
   }
 
   protected final void upgradeLicense(Collection<InetSocketAddress> expectedOnlineNodes, Path licenseFile) {
-    logger.debug("Reading license");
+    logger.trace("upgradeLicense({}, {})", expectedOnlineNodes, licenseFile);
     String xml;
     try {
       xml = new String(Files.readAllBytes(licenseFile), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    logger.debug("Contacting all cluster nodes: {} to upgrade the license", toString(expectedOnlineNodes));
-    try (DiagnosticServices connection = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
-      topologyServices(connection)
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
+      topologyServices(diagnosticServices)
           .map(tuple -> {
             try {
               tuple.t2.upgradeLicense(xml);
@@ -157,8 +162,8 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected static Stream<Tuple2<InetSocketAddress, TopologyService>> topologyServices(DiagnosticServices connection) {
-    return connection.map((address, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
+  protected static Stream<Tuple2<InetSocketAddress, TopologyService>> topologyServices(DiagnosticServices diagnosticServices) {
+    return diagnosticServices.map((address, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
   }
 
   protected static String toString(Collection<InetSocketAddress> addresses) {

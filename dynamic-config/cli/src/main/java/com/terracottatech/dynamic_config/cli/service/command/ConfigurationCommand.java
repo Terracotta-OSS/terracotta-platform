@@ -10,7 +10,6 @@ import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.model.Operation;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -27,14 +26,6 @@ public abstract class ConfigurationCommand extends RemoteCommand {
 
   protected ConfigurationCommand(Operation operation) {
     this.operation = operation;
-  }
-
-  public final void setNode(InetSocketAddress node) {
-    this.node = node;
-  }
-
-  public final void setConfigurations(Configuration... configurations) {
-    this.configurations = Arrays.asList(configurations);
   }
 
   @Override

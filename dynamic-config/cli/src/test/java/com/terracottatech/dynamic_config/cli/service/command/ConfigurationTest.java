@@ -81,40 +81,40 @@ public class ConfigurationTest {
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_valueOf() {
-    getAll().forEach(setting -> {
+    Stream.of(".", ":").forEach(nsSeparator -> getAll().forEach(setting -> {
 
       if (setting.isMap()) {
 
         if (setting.allowsScope(NODE)) {
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key=" + value(setting, true)).getKey(), is(equalTo("key")));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key=" + value(setting, true)).getValue(), is(equalTo(value(setting, true))));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key=" + value(setting, true)).getNodeId().getAsInt(), is(equalTo(2)));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key=" + value(setting, true)).getStripeId().getAsInt(), is(equalTo(1)));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key=" + value(setting, true)).getScope(), is(equalTo(NODE)));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key=" + value(setting, true)).getSetting(), is(equalTo(setting)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key=" + value(setting, true)).getKey(), is(equalTo("key")));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key=" + value(setting, true)).getValue(), is(equalTo(value(setting, true))));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key=" + value(setting, true)).getNodeId().getAsInt(), is(equalTo(2)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key=" + value(setting, true)).getStripeId().getAsInt(), is(equalTo(1)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key=" + value(setting, true)).getScope(), is(equalTo(NODE)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key=" + value(setting, true)).getSetting(), is(equalTo(setting)));
 
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key").getKey(), is(equalTo("key")));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key").getValue(), is(nullValue()));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key").getNodeId().getAsInt(), is(equalTo(2)));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key").getStripeId().getAsInt(), is(equalTo(1)));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key").getScope(), is(equalTo(NODE)));
-          assertThat(Configuration.valueOf("stripe.1.node.2." + setting + ".key").getSetting(), is(equalTo(setting)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key").getKey(), is(equalTo("key")));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key").getValue(), is(nullValue()));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key").getNodeId().getAsInt(), is(equalTo(2)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key").getStripeId().getAsInt(), is(equalTo(1)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key").getScope(), is(equalTo(NODE)));
+          assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + ".key").getSetting(), is(equalTo(setting)));
         }
 
         if (setting.allowsScope(STRIPE)) {
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key=" + value(setting, true)).getKey(), is(equalTo("key")));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key=" + value(setting, true)).getValue(), is(equalTo(value(setting, true))));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key=" + value(setting, true)).getNodeId().isPresent(), is(false));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key=" + value(setting, true)).getStripeId().getAsInt(), is(equalTo(1)));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key=" + value(setting, true)).getScope(), is(equalTo(STRIPE)));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key=" + value(setting, true)).getSetting(), is(equalTo(setting)));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key=" + value(setting, true)).getKey(), is(equalTo("key")));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key=" + value(setting, true)).getValue(), is(equalTo(value(setting, true))));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key=" + value(setting, true)).getNodeId().isPresent(), is(false));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key=" + value(setting, true)).getStripeId().getAsInt(), is(equalTo(1)));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key=" + value(setting, true)).getScope(), is(equalTo(STRIPE)));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key=" + value(setting, true)).getSetting(), is(equalTo(setting)));
 
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key").getKey(), is(equalTo("key")));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key").getValue(), is(nullValue()));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key").getNodeId().isPresent(), is(false));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key").getStripeId().getAsInt(), is(equalTo(1)));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key").getScope(), is(equalTo(STRIPE)));
-          assertThat(Configuration.valueOf("stripe.1." + setting + ".key").getSetting(), is(equalTo(setting)));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key").getKey(), is(equalTo("key")));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key").getValue(), is(nullValue()));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key").getNodeId().isPresent(), is(false));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key").getStripeId().getAsInt(), is(equalTo(1)));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key").getScope(), is(equalTo(STRIPE)));
+          assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + ".key").getSetting(), is(equalTo(setting)));
         }
 
         if (setting.allowsScope(CLUSTER)) {
@@ -136,35 +136,35 @@ public class ConfigurationTest {
       }
 
       if (setting.allowsScope(NODE)) {
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting + "=" + value(setting)).getKey(), is(nullValue()));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting + "=" + value(setting)).getValue(), is(equalTo(value(setting))));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting + "=" + value(setting)).getNodeId().getAsInt(), is(equalTo(2)));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting + "=" + value(setting)).getStripeId().getAsInt(), is(equalTo(1)));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting + "=" + value(setting)).getScope(), is(equalTo(NODE)));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting + "=" + value(setting)).getSetting(), is(equalTo(setting)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + "=" + value(setting)).getKey(), is(nullValue()));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + "=" + value(setting)).getValue(), is(equalTo(value(setting))));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + "=" + value(setting)).getNodeId().getAsInt(), is(equalTo(2)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + "=" + value(setting)).getStripeId().getAsInt(), is(equalTo(1)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + "=" + value(setting)).getScope(), is(equalTo(NODE)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting + "=" + value(setting)).getSetting(), is(equalTo(setting)));
 
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting).getKey(), is(nullValue()));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting).getValue(), is(nullValue()));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting).getNodeId().getAsInt(), is(equalTo(2)));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting).getStripeId().getAsInt(), is(equalTo(1)));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting).getScope(), is(equalTo(NODE)));
-        assertThat(Configuration.valueOf("stripe.1.node.2." + setting).getSetting(), is(equalTo(setting)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting).getKey(), is(nullValue()));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting).getValue(), is(nullValue()));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting).getNodeId().getAsInt(), is(equalTo(2)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting).getStripeId().getAsInt(), is(equalTo(1)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting).getScope(), is(equalTo(NODE)));
+        assertThat(Configuration.valueOf("stripe.1.node.2" + nsSeparator + setting).getSetting(), is(equalTo(setting)));
       }
 
       if (setting.allowsScope(STRIPE)) {
-        assertThat(Configuration.valueOf("stripe.1." + setting + "=" + value(setting)).getKey(), is(nullValue()));
-        assertThat(Configuration.valueOf("stripe.1." + setting + "=" + value(setting)).getValue(), is(equalTo(value(setting))));
-        assertThat(Configuration.valueOf("stripe.1." + setting + "=" + value(setting)).getNodeId().isPresent(), is(false));
-        assertThat(Configuration.valueOf("stripe.1." + setting + "=" + value(setting)).getStripeId().getAsInt(), is(equalTo(1)));
-        assertThat(Configuration.valueOf("stripe.1." + setting + "=" + value(setting)).getScope(), is(equalTo(STRIPE)));
-        assertThat(Configuration.valueOf("stripe.1." + setting + "=" + value(setting)).getSetting(), is(equalTo(setting)));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + "=" + value(setting)).getKey(), is(nullValue()));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + "=" + value(setting)).getValue(), is(equalTo(value(setting))));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + "=" + value(setting)).getNodeId().isPresent(), is(false));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + "=" + value(setting)).getStripeId().getAsInt(), is(equalTo(1)));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + "=" + value(setting)).getScope(), is(equalTo(STRIPE)));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting + "=" + value(setting)).getSetting(), is(equalTo(setting)));
 
-        assertThat(Configuration.valueOf("stripe.1." + setting).getKey(), is(nullValue()));
-        assertThat(Configuration.valueOf("stripe.1." + setting).getValue(), is(nullValue()));
-        assertThat(Configuration.valueOf("stripe.1." + setting).getNodeId().isPresent(), is(false));
-        assertThat(Configuration.valueOf("stripe.1." + setting).getStripeId().getAsInt(), is(equalTo(1)));
-        assertThat(Configuration.valueOf("stripe.1." + setting).getScope(), is(equalTo(STRIPE)));
-        assertThat(Configuration.valueOf("stripe.1." + setting).getSetting(), is(equalTo(setting)));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting).getKey(), is(nullValue()));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting).getValue(), is(nullValue()));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting).getNodeId().isPresent(), is(false));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting).getStripeId().getAsInt(), is(equalTo(1)));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting).getScope(), is(equalTo(STRIPE)));
+        assertThat(Configuration.valueOf("stripe.1" + nsSeparator + setting).getSetting(), is(equalTo(setting)));
       }
 
       if (setting.allowsScope(CLUSTER)) {
@@ -182,106 +182,111 @@ public class ConfigurationTest {
         assertThat(Configuration.valueOf(setting.toString()).getScope(), is(equalTo(CLUSTER)));
         assertThat(Configuration.valueOf(setting.toString()).getSetting(), is(equalTo(setting)));
       }
-    });
+    }));
+
   }
 
   @Test
   public void test_invalid_inputs() {
-    Stream.of(
-        tuple2("", ERROR_FORMAT),
-        tuple2("blah.1.node.1.offheap-resources.main", ERROR_FORMAT),
-        tuple2("stripe.1.blah.1.offheap-resources.main", ERROR_FORMAT),
-        tuple2("stripe.0.node.1.node-backup-dir", ERROR_STRIPE_ID),
-        tuple2("stripe.1.node.0.node-backup-dir", ERROR_NODE_ID),
-        tuple2("stripe.1.node.1.blah.1.offheap-resources.main", ERROR_FORMAT),
-        tuple2("stripe-1.node-1:offheap-resources.main", ERROR_FORMAT),
-        tuple2("stripe.1.node-1:offheap-resources:main", ERROR_FORMAT),
-        tuple2("stripe.1.node.1.blah.main", ERROR_SETTING + "blah"),
-        tuple2("data-dirs.main.foo", ERROR_FORMAT),
-        tuple2("blah.1.node-backup-dir", ERROR_FORMAT),
-        tuple2("stripe.0.node-backup-dir", ERROR_STRIPE_ID),
-        tuple2("stripe-1:node-backup-dir", ERROR_FORMAT),
-        tuple2("stripe.1.blah.main", ERROR_SETTING + "blah"),
-        tuple2("offheap-resources:main", ERROR_FORMAT),
-        tuple2("blah.main", ERROR_SETTING + "blah"),
-        tuple2("stripe.1.node.1.data-dirs.main.foo", ERROR_FORMAT)
-    ).forEach(tupe -> assertThat(
-        tupe.t1,
-        () -> Configuration.valueOf(tupe.t1).validate(GET),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'. " + tupe.t2))))));
+    Stream.of(".", ":").forEach(nsSeparator -> {
+      Stream.of(
+          tuple2("", ERROR_FORMAT),
+          tuple2("blah.1.node.1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe.1.blah.1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe.0.node.1" + nsSeparator + "node-backup-dir", ERROR_STRIPE_ID),
+          tuple2("stripe.1.node.0" + nsSeparator + "node-backup-dir", ERROR_NODE_ID),
+          tuple2("stripe.1.node.1.blah.1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe-1.node-1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe.1.node-1" + nsSeparator + "offheap-resources:main", ERROR_FORMAT),
+          tuple2("stripe.1.node.1" + nsSeparator + "blah.main", ERROR_SETTING + "blah"),
+          tuple2("data-dirs.main.foo", ERROR_FORMAT),
+          tuple2("blah.1" + nsSeparator + "node-backup-dir", ERROR_FORMAT),
+          tuple2("stripe.0" + nsSeparator + "node-backup-dir", ERROR_STRIPE_ID),
+          tuple2("stripe-1" + nsSeparator + "node-backup-dir", ERROR_FORMAT),
+          tuple2("stripe.1" + nsSeparator + "blah.main", ERROR_SETTING + "blah"),
+          tuple2("offheap-resources:main", ERROR_FORMAT),
+          tuple2("blah.main", ERROR_SETTING + "blah"),
+          tuple2("stripe.1.node.1" + nsSeparator + "data-dirs.main.foo", ERROR_FORMAT)
+      ).forEach(tupe -> assertThat(
+          tupe.t1,
+          () -> Configuration.valueOf(tupe.t1).validate(GET),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'. " + tupe.t2))))));
 
-    Stream.of(
-        tuple2("blah.1.node.1.offheap-resources.main=512MB", ERROR_FORMAT),
-        tuple2("stripe.1.blah.1.offheap-resources.main=512MB", ERROR_FORMAT),
-        tuple2("stripe.0.node.1.node-backup-dir=foo", ERROR_STRIPE_ID),
-        tuple2("stripe.1.node.0.node-backup-dir=foo", ERROR_NODE_ID),
-        tuple2("stripe.1.node.1.blah.1.offheap-resources.main=512MB", ERROR_FORMAT),
-        tuple2("stripe-1.node-1:offheap-resources.main=512MB", ERROR_FORMAT),
-        tuple2("stripe-1.node-1:offheap-resources:main=512MB", ERROR_FORMAT),
-        tuple2("stripe.1.node.1.blah.main=512MB", ERROR_SETTING + "blah"),
-        tuple2("stripe.1.node.1.data-dirs.main.foo=512MB", ERROR_FORMAT),
-        tuple2("stripe.1.node.1.data-dirs.main.foo=", ERROR_FORMAT),
-        tuple2("stripe.1.node.1.node-port=-100", ERROR_PORT),
-        tuple2("stripe.1.node.1.node-hostname=3:3:3", ERROR_ADDRESS),
-        tuple2("security-authc=blah", ERROR_AUTHC),
-        tuple2("stripe.1.node.1.security-authc=file", ERROR_AUTHC_SCOPE),
-        tuple2("failover-priority=blah", ERROR_FAILOVER),
-        tuple2("stripe.1.node.1.failover-priority=availability", ERROR_FAILOVER_SCOPE),
-        tuple2("security-ssl-tls=blah", ERROR_SSL),
-        tuple2("stripe.1.node.1.security-ssl-tls=true", ERROR_SSL_SCOPE),
-        tuple2("security-whitelist=blah", ERROR_WHITELIST),
-        tuple2("stripe.1.node.1.security-whitelist=true", ERROR_WHITELIST_SCOPE),
-        tuple2("offheap-resources.main=blah", ERROR_MEASURE),
-        tuple2("stripe.1.node.1.offheap-resources.main=1G", ERROR_OFFHEAP_UNIT),
-        tuple2("client-lease-duration=blah", ERROR_MEASURE),
-        tuple2("stripe.1.node.1.client-lease-duration=1m", ERROR_LEASE_SCOPE),
-        tuple2("client-reconnect-window=blah", ERROR_MEASURE),
-        tuple2("stripe.1.node.1.client-reconnect-window=1m", ERROR_RECONNECT_SCOPE),
-        tuple2("blah.1.offheap-resources.main=512MB", ERROR_FORMAT),
-        tuple2("stripe.0.offheap-resources.main=512MB", ERROR_STRIPE_ID),
-        tuple2("stripe-1:offheap-resources.main=512MB", ERROR_FORMAT),
-        tuple2("stripe.1.blah.main=512MB", ERROR_SETTING + "blah"),
-        tuple2("offheap-resources:main=512MB", ERROR_FORMAT),
-        tuple2("offheap-resources.main=main:512MB", ERROR_OFFHEAP),
-        tuple2("data-dirs:main=foo/bar", ERROR_FORMAT),
-        tuple2("data-dirs.main=main:foo/bar", ERROR_DIRS),
-        tuple2("client-reconnect-window.main=512MB", ERROR_MAP),
-        tuple2("blah.main=512MB", ERROR_SETTING + "blah")
-    ).forEach(tupe -> assertThat(
-        tupe.t1,
-        () -> Configuration.valueOf(tupe.t1).validate(SET),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'. " + tupe.t2))))));
+      Stream.of(
+          tuple2("blah.1.node.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.1.blah.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.0.node.1" + nsSeparator + "node-backup-dir=foo", ERROR_STRIPE_ID),
+          tuple2("stripe.1.node.0" + nsSeparator + "node-backup-dir=foo", ERROR_NODE_ID),
+          tuple2("stripe.1.node.1.blah.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe-1.node-1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe-1.node-1" + nsSeparator + "offheap-resources:main=512MB", ERROR_FORMAT),
+          tuple2("stripe.1.node.1" + nsSeparator + "blah.main=512MB", ERROR_SETTING + "blah"),
+          tuple2("stripe.1.node.1" + nsSeparator + "data-dirs.main.foo=512MB", ERROR_FORMAT),
+          tuple2("stripe.1.node.1" + nsSeparator + "data-dirs.main.foo=", ERROR_FORMAT),
+          tuple2("stripe.1.node.1" + nsSeparator + "node-port=-100", ERROR_PORT),
+          tuple2("stripe.1.node.1" + nsSeparator + "node-hostname=3:3:3", ERROR_ADDRESS),
+          tuple2("security-authc=blah", ERROR_AUTHC),
+          tuple2("stripe.1.node.1" + nsSeparator + "security-authc=file", ERROR_AUTHC_SCOPE),
+          tuple2("failover-priority=blah", ERROR_FAILOVER),
+          tuple2("stripe.1.node.1" + nsSeparator + "failover-priority=availability", ERROR_FAILOVER_SCOPE),
+          tuple2("security-ssl-tls=blah", ERROR_SSL),
+          tuple2("stripe.1.node.1" + nsSeparator + "security-ssl-tls=true", ERROR_SSL_SCOPE),
+          tuple2("security-whitelist=blah", ERROR_WHITELIST),
+          tuple2("stripe.1.node.1" + nsSeparator + "security-whitelist=true", ERROR_WHITELIST_SCOPE),
+          tuple2("offheap-resources.main=blah", ERROR_MEASURE),
+          tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources.main=1G", ERROR_OFFHEAP_UNIT),
+          tuple2("client-lease-duration=blah", ERROR_MEASURE),
+          tuple2("stripe.1.node.1" + nsSeparator + "client-lease-duration=1m", ERROR_LEASE_SCOPE),
+          tuple2("client-reconnect-window=blah", ERROR_MEASURE),
+          tuple2("stripe.1.node.1" + nsSeparator + "client-reconnect-window=1m", ERROR_RECONNECT_SCOPE),
+          tuple2("blah.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.0" + nsSeparator + "offheap-resources.main=512MB", ERROR_STRIPE_ID),
+          tuple2("stripe-1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.1" + nsSeparator + "blah.main=512MB", ERROR_SETTING + "blah"),
+          tuple2("offheap-resources:main=512MB", ERROR_FORMAT),
+          tuple2("offheap-resources.main=main:512MB", ERROR_OFFHEAP),
+          tuple2("data-dirs:main=foo/bar", ERROR_FORMAT),
+          tuple2("data-dirs.main=main:foo/bar", ERROR_DIRS),
+          tuple2("client-reconnect-window.main=512MB", ERROR_MAP),
+          tuple2("blah.main=512MB", ERROR_SETTING + "blah")
+      ).forEach(tupe -> assertThat(
+          tupe.t1,
+          () -> Configuration.valueOf(tupe.t1).validate(SET),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'. " + tupe.t2))))));
+    });
   }
 
   @Test
   public void test_match() {
-    Stream.of(
-        tuple2("offheap-resources", "stripe.1.node.1.offheap-resources=main:1GB,second:2GB"),
-        tuple2("offheap-resources.main", "stripe.1.node.1.offheap-resources.main=1GB"),
+    Stream.of(".", ":").forEach(nsSeparator -> {
+      Stream.of(
+          tuple2("offheap-resources", "stripe.1.node.1.offheap-resources=main:1GB,second:2GB"),
+          tuple2("offheap-resources.main", "stripe.1.node.1.offheap-resources.main=1GB"),
 
-        tuple2("stripe.1.offheap-resources", "stripe.1.node.1.offheap-resources=main:1GB,second:2GB"),
-        tuple2("stripe.1.offheap-resources.main", "stripe.1.node.1.offheap-resources.main=1GB"),
+          tuple2("stripe.1" + nsSeparator + "offheap-resources", "stripe.1.node.1.offheap-resources=main:1GB,second:2GB"),
+          tuple2("stripe.1" + nsSeparator + "offheap-resources.main", "stripe.1.node.1.offheap-resources.main=1GB"),
 
-        tuple2("stripe.1.node.1.offheap-resources", "stripe.1.node.1.offheap-resources=main:1GB,second:2GB"),
-        tuple2("stripe.1.node.1.offheap-resources.main", "stripe.1.node.1.offheap-resources.main=1GB")
-    ).forEach(tupe -> assertThat(tupe.t1 + " matches " + tupe.t2, Configuration.valueOf(tupe.t1).matchConfigPropertyKey(tupe.t2), is(true)));
+          tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources", "stripe.1.node.1.offheap-resources=main:1GB,second:2GB"),
+          tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources.main", "stripe.1.node.1.offheap-resources.main=1GB")
+      ).forEach(tupe -> assertThat(tupe.t1 + " matches " + tupe.t2, Configuration.valueOf(tupe.t1).matchConfigPropertyKey(tupe.t2), is(true)));
 
-    Stream.of(
-        tuple2("offheap-resources", "stripe.1.node.1.offheap-resources.main=1GB"),
-        tuple2("offheap-resources", "stripe.1.node.1.offheap-resources.second=2GB"),
-        tuple2("offheap-resources.main", "stripe.1.node.1.offheap-resources.second=1GB"),
-        tuple2("offheap-resources.main", "stripe.1.node.1.offheap-resources=main:1GB"),
+      Stream.of(
+          tuple2("offheap-resources", "stripe.1.node.1.offheap-resources.main=1GB"),
+          tuple2("offheap-resources", "stripe.1.node.1.offheap-resources.second=2GB"),
+          tuple2("offheap-resources.main", "stripe.1.node.1.offheap-resources.second=1GB"),
+          tuple2("offheap-resources.main", "stripe.1.node.1.offheap-resources=main:1GB"),
 
-        tuple2("stripe.1.offheap-resources", "stripe.1.node.1.offheap-resources.main=1GB"),
-        tuple2("stripe.1.offheap-resources", "stripe.1.node.1.offheap-resources.second=2GB"),
-        tuple2("stripe.1.offheap-resources.main", "stripe.1.node.1.offheap-resources.second=1GB"),
-        tuple2("stripe.1.offheap-resources.main", "stripe.1.node.1.offheap-resources=main:1GB"),
+          tuple2("stripe.1" + nsSeparator + "offheap-resources", "stripe.1.node.1.offheap-resources.main=1GB"),
+          tuple2("stripe.1" + nsSeparator + "offheap-resources", "stripe.1.node.1.offheap-resources.second=2GB"),
+          tuple2("stripe.1" + nsSeparator + "offheap-resources.main", "stripe.1.node.1.offheap-resources.second=1GB"),
+          tuple2("stripe.1" + nsSeparator + "offheap-resources.main", "stripe.1.node.1.offheap-resources=main:1GB"),
 
-        tuple2("stripe.1.node.1.offheap-resources", "stripe.1.node.1.offheap-resources.main=1GB"),
-        tuple2("stripe.1.node.1.offheap-resources", "stripe.1.node.1.offheap-resources.second=2GB"),
-        tuple2("stripe.1.node.1.offheap-resources.main", "stripe.1.node.1.offheap-resources.second=1GB"),
-        tuple2("stripe.1.node.1.offheap-resources.main", "stripe.1.node.1.offheap-resources=main:1GB")
-    ).forEach(tupe -> assertThat(tupe.t1 + " matches " + tupe.t2, Configuration.valueOf(tupe.t1).matchConfigPropertyKey(tupe.t2), is(false)));
+          tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources", "stripe.1.node.1.offheap-resources.main=1GB"),
+          tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources", "stripe.1.node.1.offheap-resources.second=2GB"),
+          tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources.main", "stripe.1.node.1.offheap-resources.second=1GB"),
+          tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources.main", "stripe.1.node.1.offheap-resources=main:1GB")
+      ).forEach(tupe -> assertThat(tupe.t1 + " matches " + tupe.t2, Configuration.valueOf(tupe.t1).matchConfigPropertyKey(tupe.t2), is(false)));
+    });
   }
 
   @Test

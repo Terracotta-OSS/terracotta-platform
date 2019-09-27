@@ -5,13 +5,13 @@
 package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.converters.EnumConverter;
-import com.terracottatech.dynamic_config.cli.service.command.ExportTopologyCommand;
+import com.terracottatech.dynamic_config.cli.service.command.ExportCommand;
 
 /**
  * @author Mathieu Carbou
  */
-public class FormatConverter extends EnumConverter<ExportTopologyCommand.Format> {
+public class FormatConverter extends EnumConverter<ExportCommand.Format> {
   public FormatConverter() {
-    super("-f", ExportTopologyCommand.Format.class);
+    super("-f", ExportCommand.Format.class);
   }
 }

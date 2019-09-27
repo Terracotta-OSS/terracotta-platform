@@ -28,7 +28,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
-import static com.terracottatech.utilities.Assertion.assertNonNull;
+import static com.terracottatech.utilities.Assertions.assertNonNull;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate the cluster")
 @Usage("activate <-s HOST[:PORT] | -f CONFIG-PROPERTIES-FILE> -n CLUSTER-NAME -l LICENSE-FILE")
@@ -75,10 +75,9 @@ public class ActivateCommand extends RemoteCommand {
 
     assertNonNull(licenseFile, "licenseFile must not be null");
     assertNonNull(clusterName, "clusterName must not be null");
-    assertNonNull(multiDiagnosticServiceProvider, "connectionFactory must not be null");
+    assertNonNull(multiDiagnosticServiceProvider, "multiDiagnosticServiceProvider must not be null");
     assertNonNull(nomadManager, "nomadManager must not be null");
     assertNonNull(restartService, "restartService must not be null");
-    logger.debug("Command validation successful");
   }
 
   @Override
@@ -86,22 +85,23 @@ public class ActivateCommand extends RemoteCommand {
     cluster = loadCluster();
 
     cluster.setName(clusterName);
-    logger.debug("Setting cluster name successful");
+    logger.info("Setting cluster name successful");
 
     boolean isClusterActive = validateActivationState(cluster.getNodeAddresses());
     if (isClusterActive) {
-      throw new IllegalStateException("Cluster is already activated: " + toString(cluster.getNodeAddresses()));
+      throw new IllegalStateException("Cluster is already activated");
     }
 
-    try (DiagnosticServices connection = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
-      prepareActivation(connection);
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
+      prepareActivation(diagnosticServices);
       logger.info("License installation successful");
-      logger.debug("Setting nomad writable successful");
 
       runNomadChange();
-      logger.debug("Nomad change run successful");
+      logger.info("Configuration repositories have been created for all nodes");
 
+      logger.info("Restarting nodes: {}", toString(cluster.getNodeAddresses()));
       restartNodes(cluster.getNodeAddresses());
+      logger.info("All nodes came back up: {}", toString(cluster.getNodeAddresses()));
     }
 
     logger.info("Command successful!\n");
@@ -140,17 +140,16 @@ public class ActivateCommand extends RemoteCommand {
     Cluster cluster;
     if (node != null) {
       cluster = getRemoteTopology(node);
-      logger.debug("Cluster topology validation successful");
+      logger.info("Cluster topology validation successful");
     } else {
       cluster = configFileParser.createCluster();
-      logger.debug("Config property file parsing and cluster topology validation successful");
+      logger.info("Config property file parsed and cluster topology validation successful");
     }
     return cluster;
   }
 
-  private void prepareActivation(DiagnosticServices connection) {
-    logger.debug("Contacting all cluster nodes: {} to prepare for activation", toString(cluster.getNodeAddresses()));
-    topologyServices(connection).map(Tuple2::getT2).forEach(ts -> ts.prepareActivation(cluster, read(licenseFile)));
+  private void prepareActivation(DiagnosticServices diagnosticServices) {
+    topologyServices(diagnosticServices).map(Tuple2::getT2).forEach(ts -> ts.prepareActivation(cluster, read(licenseFile)));
   }
 
   private void runNomadChange() {
@@ -158,7 +157,6 @@ public class ActivateCommand extends RemoteCommand {
     nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(cluster), failures);
     failures.reThrow();
   }
-
 
   private static String read(Path path) {
     try {

@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.PARAM_INTERNAL_SEP;
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
@@ -71,14 +70,14 @@ public class ConsoleParamsParserTest {
     assertThat(node.getNodeGroupPort(), is(parseInt(NODE_GROUP_PORT.getDefaultValue())));
     assertThat(node.getNodeBindAddress(), is(NODE_BIND_ADDRESS.getDefaultValue()));
     assertThat(node.getNodeGroupBindAddress(), is(NODE_GROUP_BIND_ADDRESS.getDefaultValue()));
-    assertThat(node.getOffheapResources(), hasEntry(OFFHEAP_RESOURCES.getDefaultValue().split(PARAM_INTERNAL_SEP)[0], Measure.parse(OFFHEAP_RESOURCES.getDefaultValue().split(PARAM_INTERNAL_SEP)[1], MemoryUnit.class)));
+    assertThat(node.getOffheapResources(), hasEntry(OFFHEAP_RESOURCES.getDefaultValue().split(":")[0], Measure.parse(OFFHEAP_RESOURCES.getDefaultValue().split(":")[1], MemoryUnit.class)));
 
     assertThat(node.getNodeBackupDir(), is(nullValue()));
     assertThat(node.getNodeLogDir().toString(), is(NODE_LOG_DIR.getDefaultValue()));
     assertThat(node.getNodeMetadataDir().toString(), is(NODE_METADATA_DIR.getDefaultValue()));
     assertThat(node.getSecurityDir(), is(nullValue()));
     assertThat(node.getSecurityAuditLogDir(), is(nullValue()));
-    assertThat(node.getDataDirs(), hasEntry(DATA_DIRS.getDefaultValue().split(PARAM_INTERNAL_SEP)[0], Paths.get(DATA_DIRS.getDefaultValue().split(PARAM_INTERNAL_SEP)[1])));
+    assertThat(node.getDataDirs(), hasEntry(DATA_DIRS.getDefaultValue().split(":")[0], Paths.get(DATA_DIRS.getDefaultValue().split(":")[1])));
 
     assertFalse(node.isSecurityWhitelist());
     assertFalse(node.isSecuritySslTls());

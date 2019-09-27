@@ -7,13 +7,13 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.terracottatech.dynamic_config.cli.common.FormatConverter;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.utilities.Json;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -25,20 +25,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-@Parameters(commandNames = "export", commandDescription = "Export the cluster topology in a property configuration file")
-@Usage("export -s HOST[:PORT] -d DEST_FOLDER -f [json|properties]")
-public class ExportTopologyCommand extends RemoteCommand {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ExportTopologyCommand.class);
+@Parameters(commandNames = "export", commandDescription = "Export the cluster topology in a file or output to the console")
+@Usage("export -s HOST[:PORT] [-d DESTINATION_DIRECTORY] [-f [json|properties]]")
+public class ExportCommand extends RemoteCommand {
 
-  public enum Format {json, properties}
+  public enum Format {JSON, PROPERTIES}
 
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to for topology information", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-o"}, description = "Path of the folder when the topology information should be saved to. Defaults to the current working directory.", converter = PathConverter.class)
+  @Parameter(names = {"-d"}, description = "Optional path of the folder when the topology information should be saved to. Defaults to the current working directory.", converter = PathConverter.class)
   private Path outputDir;
 
-  @Parameter(names = {"-f"}, description = "Output format: 'json' or 'properties'. Defaults to 'properties'.", converter = FormatConverter.class)
+  @Parameter(names = {"-f"}, description = "Output format. Defaults to 'properties'.", converter = FormatConverter.class)
   private Format format;
 
   @Override
@@ -47,7 +46,7 @@ public class ExportTopologyCommand extends RemoteCommand {
       outputDir = Paths.get(".");
     }
     if (format == null) {
-      format = Format.properties;
+      format = Format.PROPERTIES;
     }
   }
 
@@ -57,13 +56,13 @@ public class ExportTopologyCommand extends RemoteCommand {
     String name = cluster.getName() == null ? "UNIDENTIFIED" : cluster.getName();
     if (outputDir == null) {
       String output = buildOutput(cluster, format);
-      LOGGER.info("Cluster '{}' from '{}':\n{}", name, node, output);
+      logger.info("Cluster '{}' from: {}\n{}", name, node, output);
     } else {
       try {
-        Path file = outputDir.resolve(cluster.getName() + "." + format);
+        Path file = outputDir.resolve(cluster.getName() + "." + format.name().toLowerCase());
         String output = buildOutput(cluster, format);
         Files.write(file, output.getBytes(StandardCharsets.UTF_8));
-        LOGGER.info("Output saved to '{}'", file);
+        logger.info("Output saved to: {}", file);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
@@ -72,9 +71,17 @@ public class ExportTopologyCommand extends RemoteCommand {
 
   private String buildOutput(Cluster cluster, Format format) {
     switch (format) {
-      case json:
-        return Json.toPrettyJson(cluster);
-      case properties:
+      case JSON:
+        try {
+          // shows optional values that are unset
+          return Json.copyObjectMapper(true)
+              .setSerializationInclusion(JsonInclude.Include.ALWAYS)
+              .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
+              .writeValueAsString(cluster);
+        } catch (JsonProcessingException e) {
+          throw new AssertionError(format);
+        }
+      case PROPERTIES:
         Properties properties = cluster.toProperties();
         try (StringWriter writer = new StringWriter()) {
           properties.store(writer, "");

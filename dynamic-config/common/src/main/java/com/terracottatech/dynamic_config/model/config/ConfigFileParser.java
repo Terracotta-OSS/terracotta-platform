@@ -25,7 +25,7 @@ import java.util.TreeSet;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getNodeId;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getSetting;
 import static com.terracottatech.dynamic_config.util.ConfigFileParamsUtils.getStripeId;
-import static com.terracottatech.utilities.Assertion.assertNonNull;
+import static com.terracottatech.utilities.Assertions.assertNonNull;
 import static com.terracottatech.utilities.Tuple2.tuple2;
 import static java.util.Objects.requireNonNull;
 

@@ -11,11 +11,11 @@ import com.terracottatech.nomad.client.change.NomadChange;
 
 public class CloseableNomadClient<T> implements AutoCloseable {
   private final NomadClient<T> client;
-  private final DiagnosticServices connection;
+  private final DiagnosticServices diagnosticServices;
 
-  public CloseableNomadClient(NomadClient<T> client, DiagnosticServices connection) {
+  public CloseableNomadClient(NomadClient<T> client, DiagnosticServices diagnosticServices) {
     this.client = client;
-    this.connection = connection;
+    this.diagnosticServices = diagnosticServices;
   }
 
   public void tryApplyChange(ChangeResultReceiver<T> results, NomadChange change) {
@@ -24,6 +24,6 @@ public class CloseableNomadClient<T> implements AutoCloseable {
 
   @Override
   public void close() {
-    connection.close();
+    diagnosticServices.close();
   }
 }

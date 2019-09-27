@@ -21,18 +21,18 @@ public class CloseableNomadClientTest {
   private NomadClient<String> nomadClient;
 
   @Mock
-  private DiagnosticServices connection;
+  private DiagnosticServices diagnosticServices;
 
   @Mock
   private ChangeResultReceiver<String> results;
 
   @Test
   public void delegatesAndCloses() {
-    try (CloseableNomadClient<String> client = new CloseableNomadClient<>(nomadClient, connection)) {
+    try (CloseableNomadClient<String> client = new CloseableNomadClient<>(nomadClient, diagnosticServices)) {
       client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
     }
 
     verify(nomadClient).tryApplyChange(results, new SimpleNomadChange("change", "summary"));
-    verify(connection).close();
+    verify(diagnosticServices).close();
   }
 }

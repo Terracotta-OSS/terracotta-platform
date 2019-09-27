@@ -100,8 +100,8 @@ public class SettingNomadChange extends FilteredNomadChange {
   @Override
   public String toString() {
     return "SettingNomadChange{" +
-        "cmd=" + operation +
-        ", configType=" + setting +
+        "operation=" + operation +
+        ", setting=" + setting +
         ", name='" + name + '\'' +
         ", value='" + value + '\'' +
         ", applicability=" + applicability +

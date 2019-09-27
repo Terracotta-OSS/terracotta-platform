@@ -38,13 +38,13 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class NomadClientFactoryTest {
   @Mock
-  private MultiDiagnosticServiceProvider connectionFactory;
+  private MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
 
   @Mock
   private NomadEnvironment environment;
 
   @Mock
-  private DiagnosticServices connection;
+  private DiagnosticServices diagnosticServices;
 
   @Mock
   private DiagnosticService diagnostics1;
@@ -77,22 +77,22 @@ public class NomadClientFactoryTest {
     InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
 
     hostPortList = Arrays.asList(server1, server2, server3, server4);
-    when(connectionFactory.fetchDiagnosticServices(hostPortList)).thenReturn(connection);
+    when(multiDiagnosticServiceProvider.fetchDiagnosticServices(hostPortList)).thenReturn(diagnosticServices);
     when(environment.getHost()).thenReturn("host");
     when(environment.getUser()).thenReturn("user");
 
-    when(connection.getEndpoints()).thenReturn(hostPortList);
-    when(connection.getDiagnosticService(server1)).thenReturn(Optional.of(diagnostics1));
-    when(connection.getDiagnosticService(server2)).thenReturn(Optional.of(diagnostics2));
-    when(connection.getDiagnosticService(server3)).thenReturn(Optional.of(diagnostics3));
-    when(connection.getDiagnosticService(server4)).thenReturn(Optional.of(diagnostics4));
+    when(diagnosticServices.getEndpoints()).thenReturn(hostPortList);
+    when(diagnosticServices.getDiagnosticService(server1)).thenReturn(Optional.of(diagnostics1));
+    when(diagnosticServices.getDiagnosticService(server2)).thenReturn(Optional.of(diagnostics2));
+    when(diagnosticServices.getDiagnosticService(server3)).thenReturn(Optional.of(diagnostics3));
+    when(diagnosticServices.getDiagnosticService(server4)).thenReturn(Optional.of(diagnostics4));
     Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4)
         .forEach(diagnostics -> when(diagnostics.getProxy(NomadServer.class)).thenReturn(nomadServer));
   }
 
   @Test
   public void createClient() throws NomadException {
-    NomadClientFactory<String> factory = new NomadClientFactory<>(connectionFactory, new ConcurrencySizing(), environment, 2_000);
+    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, 2_000);
     CloseableNomadClient<String> client = factory.createClient(hostPortList);
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
 
@@ -106,11 +106,11 @@ public class NomadClientFactoryTest {
 
   @Test
   public void close() {
-    NomadClientFactory<String> factory = new NomadClientFactory<>(connectionFactory, new ConcurrencySizing(), environment, 2_000);
+    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, 2_000);
     CloseableNomadClient<String> client = factory.createClient(hostPortList);
 
-    verify(connection, never()).close();
+    verify(diagnosticServices, never()).close();
     client.close();
-    verify(connection).close();
+    verify(diagnosticServices).close();
   }
 }

@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.function.Consumer;
 
+//TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
 public class NomadClient<T> {
   private final Collection<NamedNomadServer<T>> servers;
   private final String host;

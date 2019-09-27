@@ -221,21 +221,27 @@ public class Cluster implements Cloneable {
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   public Properties toProperties(boolean expanded) {
-    // select the settings to output
+    // select the settings to output and sort them.
     List<Setting> settings = complementOf(of(CLUSTER_NAME, LICENSE_FILE, NODE_REPOSITORY_DIR))
         .stream()
         .sorted(comparing(Setting::toString))
         .collect(toList());
+    // iterate over all stripes
     return rangeClosed(1, stripes.size()).boxed().flatMap(stripeId -> {
       List<Node> nodes = stripes.get(stripeId - 1).getNodes();
+      // iterate over all nodes of this stripe
       return rangeClosed(1, nodes.size()).boxed().flatMap(nodeId -> {
         Node node = nodes.get(nodeId - 1);
+        // for each setting, create the line:
+        // stripe.<ids>.node.<idx>.<setting>=<value> or stripe.<ids>.node.<idx>.<setting>.<key>=<value>
+        // depending whether we want teh expanded or non expanded form
         return settings.stream()
             .flatMap(setting -> expanded && setting.isMap() ?
                 setting.getExpandedProperties(node).map(property -> tuple2("stripe." + stripeId + ".node." + nodeId + "." + setting + "." + property.t1, property.t2)) :
                 Stream.of(tuple2("stripe." + stripeId + ".node." + nodeId + "." + setting, setting.getPropertyValue(node).orElse(""))));
       });
     }).reduce(new Properties(), (props, tupe) -> {
+      // then reducing all these lines into a property object
       props.setProperty(tupe.t1, tupe.t2);
       return props;
     }, (p1, p2) -> {

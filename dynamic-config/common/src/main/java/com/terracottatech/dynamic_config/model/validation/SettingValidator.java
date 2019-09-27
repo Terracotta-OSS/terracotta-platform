@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.model.validation;
 
-import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
@@ -22,6 +21,9 @@ import static java.util.Objects.requireNonNull;
  * @author Mathieu Carbou
  */
 public class SettingValidator {
+
+  private static final String MULTI_VALUE_SEP = ",";
+  private static final String PARAM_INTERNAL_SEP = ":";
 
   public static final BiConsumer<String, Tuple2<String, String>> DEFAULT = (setting, kv) -> {
     // default validator applied to all settings
@@ -73,9 +75,9 @@ public class SettingValidator {
       // case where we validate: offheap-resources.main=1GB
       value = kv.t1 + ":" + value;
     }
-    final String[] offheapResources = value.split(DynamicConfigConstants.MULTI_VALUE_SEP);
+    final String[] offheapResources = value.split(MULTI_VALUE_SEP);
     for (String offheapResource : offheapResources) {
-      final String[] split = offheapResource.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
+      final String[] split = offheapResource.split(PARAM_INTERNAL_SEP);
       if (split.length != 2 || split[0] == null || split[1] == null || split[0].trim().isEmpty() || split[1].trim().isEmpty()) {
         throw new IllegalArgumentException(setting + " should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
       }
@@ -91,9 +93,9 @@ public class SettingValidator {
       // case where we validate: data-dirs.main=foo/bar
       value = kv.t1 + ":" + value;
     }
-    final String[] mappings = value.split(DynamicConfigConstants.MULTI_VALUE_SEP);
+    final String[] mappings = value.split(MULTI_VALUE_SEP);
     for (String mapping : mappings) {
-      final String[] split = mapping.split(DynamicConfigConstants.PARAM_INTERNAL_SEP);
+      final String[] split = mapping.split(PARAM_INTERNAL_SEP);
       if (split.length != 2 || split[0] == null || split[1] == null || split[0].trim().isEmpty() || split[1].trim().isEmpty()) {
         throw new IllegalArgumentException(setting + " should be specified in <resource-name>:<path>,<resource-name>:<path>... format");
       }

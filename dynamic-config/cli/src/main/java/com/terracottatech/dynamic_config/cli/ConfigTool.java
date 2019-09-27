@@ -12,10 +12,11 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServicePro
 import com.terracottatech.dynamic_config.cli.service.command.ActivateCommand;
 import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
-import com.terracottatech.dynamic_config.cli.service.command.ExportTopologyCommand;
+import com.terracottatech.dynamic_config.cli.service.command.ExportCommand;
 import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 import com.terracottatech.dynamic_config.cli.service.command.SetCommand;
+import com.terracottatech.dynamic_config.cli.service.command.UnsetCommand;
 import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
@@ -65,9 +66,10 @@ public class ConfigTool {
                 new ActivateCommand(),
                 new AttachCommand(),
                 new DetachCommand(),
-                new ExportTopologyCommand(),
+                new ExportCommand(),
                 new GetCommand(),
-                new SetCommand()
+                new SetCommand(),
+                new UnsetCommand()
             )
         )
     );

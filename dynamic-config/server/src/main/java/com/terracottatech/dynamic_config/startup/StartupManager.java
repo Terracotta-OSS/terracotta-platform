@@ -33,8 +33,6 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Optional;
 
-import static com.terracottatech.dynamic_config.model.SettingName.NODE_HOSTNAME;
-import static com.terracottatech.dynamic_config.model.SettingName.NODE_PORT;
 import static java.util.Collections.singleton;
 import static java.util.Objects.requireNonNull;
 
@@ -131,9 +129,9 @@ public class StartupManager {
         "%s in config file: %s based on %s=%s and %s=%d",
         msgFragment,
         parameterSubstitutor.substitute(configFilePath),
-        NODE_HOSTNAME,
+        Setting.NODE_HOSTNAME,
         hostname,
-        NODE_PORT,
+        Setting.NODE_PORT,
         port
     );
   }

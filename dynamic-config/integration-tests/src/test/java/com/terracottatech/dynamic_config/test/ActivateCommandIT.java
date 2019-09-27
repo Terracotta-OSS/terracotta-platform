@@ -79,7 +79,7 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All nodes: localhost:" + ports[0] + " came back up"));
+    waitedAssert(out::getLog, containsString("All nodes came back up: localhost:" + ports[0]));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports[0]);
@@ -92,7 +92,7 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All nodes: localhost:" + ports[0] + " came back up"));
+    waitedAssert(out::getLog, containsString("All nodes came back up: localhost:" + ports[0]));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -110,7 +110,7 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up"));
+    waitedAssert(out::getLog, containsString("All nodes came back up: "));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -129,7 +129,7 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up"));
+    waitedAssert(out::getLog, containsString("All nodes came back up: "));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -148,7 +148,7 @@ public class ActivateCommandIT extends BaseStartupIT {
     ));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up"));
+    waitedAssert(out::getLog, containsString("All nodes came back up: "));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);
@@ -168,7 +168,7 @@ public class ActivateCommandIT extends BaseStartupIT {
     ));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up"));
+    waitedAssert(out::getLog, containsString("All nodes came back up: "));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     createDatasetAndPerformAssertions(ports);

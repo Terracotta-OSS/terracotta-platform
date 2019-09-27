@@ -41,7 +41,9 @@ public class TopologyServiceImpl implements TopologyService {
   public TopologyServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager) {
     this.nodeContext = requireNonNull(nodeContext);
     this.nomadServerManager = requireNonNull(nomadServerManager);
-    loadLicense();
+    if (loadLicense()) {
+      validateAgainstLicense();
+    }
   }
 
   /**
@@ -88,7 +90,7 @@ public class TopologyServiceImpl implements TopologyService {
     requireNonNull(cluster);
 
     if (isActivated()) {
-      throw new UnsupportedOperationException("Unable to change the topology at runtime. Use Nomad system to do so.");
+      throw new AssertionError("This method cannot be used at runtime when node is activated. Use Nomad instead.");
 
     } else {
       new ClusterValidator(cluster).validate();
@@ -111,10 +113,12 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public void prepareActivation(Cluster cluster, String xml) {
+  public void prepareActivation(Cluster cluster, String licenseContent) {
     if (isActivated()) {
       throw new IllegalStateException("Node is already activated");
     }
+
+    LOGGER.info("Preparing activation of cluster: {}", cluster);
 
     // validate that we are part of this cluster
     Node oldMe = getThisNode();
@@ -129,17 +133,17 @@ public class TopologyServiceImpl implements TopologyService {
     }
 
     this.setCluster(cluster);
-    this.license = installLicense(xml);
+    this.installLicense(licenseContent);
 
     upgradeNomadForWrite();
   }
 
   @Override
-  public synchronized void upgradeLicense(String xml) {
+  public synchronized void upgradeLicense(String licenseContent) {
     if (this.license == null) {
-      throw new UnsupportedOperationException("Cannot upgrade license: none has been installed first");
+      throw new IllegalStateException("Cannot upgrade license: none has been installed first");
     }
-    this.license = installLicense(xml);
+    this.installLicense(licenseContent);
   }
 
   @Override
@@ -147,33 +151,42 @@ public class TopologyServiceImpl implements TopologyService {
     return Optional.ofNullable(license);
   }
 
-  private License installLicense(String xml) {
+  @Override
+  public void validateAgainstLicense(Cluster cluster) {
+    if (this.license == null) {
+      throw new IllegalStateException("Cannot validate against license: none has been installed first");
+    }
+    LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
+    licenseValidator.validate();
+    LOGGER.debug("License is valid for cluster: {}", cluster);
+  }
+
+  private void validateAgainstLicense() {
+    validateAgainstLicense(getCluster());
+  }
+
+  private void installLicense(String licenseContent) {
+    LOGGER.info("Installing license");
+
+    License backup = this.license;
     Path tempFile = null;
+
     try {
       tempFile = Files.createTempFile("terracotta-license-", ".xml");
-      Files.write(tempFile, xml.getBytes(StandardCharsets.UTF_8));
+      Files.write(tempFile, licenseContent.getBytes(StandardCharsets.UTF_8));
+      this.license = new LicenseParser(tempFile).parse();
 
-      LOGGER.info("Validating license");
-      License license = new LicenseParser(tempFile).parse();
-      LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
-      licenseValidator.validate();
-
-      LOGGER.info("Installing license");
-      Path licensePath = nomadServerManager.getRepositoryManager().getLicensePath();
-
-      try {
-        Path destination = licensePath.resolve(LICENSE_FILE_NAME);
-        Files.move(tempFile, destination, StandardCopyOption.REPLACE_EXISTING);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-
-      LOGGER.debug("License file: {} successfully copied to: {}", LICENSE_FILE_NAME, licensePath);
-      LOGGER.info("License installation successful");
-
-      return license;
+      validateAgainstLicense();
+      moveLicense(tempFile);
     } catch (IOException e) {
+      // rollback to previous license (or null) on IO error
+      this.license = backup;
       throw new UncheckedIOException(e);
+    } catch (RuntimeException e) {
+      // rollback to previous license (or null) on validation error
+      this.license = backup;
+      throw e;
+
     } finally {
       if (tempFile != null) {
         try {
@@ -182,17 +195,28 @@ public class TopologyServiceImpl implements TopologyService {
         }
       }
     }
+
+    LOGGER.info("License installation successful");
   }
 
-  private void loadLicense() {
+  private void moveLicense(Path tempFile) {
+    Path licensePath = nomadServerManager.getRepositoryManager().getLicensePath();
+    Path destination = licensePath.resolve(LICENSE_FILE_NAME);
+    LOGGER.debug("Moving license file: {} to: {}", tempFile, destination);
+    try {
+      Files.move(tempFile, destination, StandardCopyOption.REPLACE_EXISTING);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private boolean loadLicense() {
     Path licenseFile = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
     if (Files.exists(licenseFile)) {
       LOGGER.info("Reloading license");
-      License license = new LicenseParser(licenseFile).parse();
-      LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
-      licenseValidator.validate();
-
-      this.license = license;
+      this.license = new LicenseParser(licenseFile).parse();
+      return true;
     }
+    return false;
   }
 }

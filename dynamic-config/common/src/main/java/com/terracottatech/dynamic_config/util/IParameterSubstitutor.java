@@ -28,7 +28,8 @@ public interface IParameterSubstitutor {
   }
 
   default boolean containsSubstitutionParams(String source) {
-    // tries to find in the string some characters to be substituted
+    // Tries to find in the string some characters to be substituted
+    // See org.terracotta.config.util.ParameterSubstitutor.substitute(source) for the supported variables
     return Stream.of("d", "D", "h", "c", "i", "H", "n", "o", "a", "v", "t", "(")
         .map(c -> "%" + c)
         .anyMatch(source::contains);

@@ -40,14 +40,15 @@ public class Configuration {
   private static final String GRP_STRIPE = "stripe\\.(\\d+)";
   private static final String GRP_NODE = "node\\.(\\d+)";
   private static final String SEP = "\\.";
+  private static final String NS = "[.:]"; // namespace separator
   private static final String GRP_SETTING = "([a-z-]+)";
   private static final String GRP_KEY = "([^=:.]+)";
   private static final String ASSIGN = "=";
   private static final String GRP_VALUE = "([^=]+)";
 
   static {
-    // stripe.<index>.node.<index>:<setting>.<key>=<value>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + SEP + GRP_SETTING + SEP + GRP_KEY + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.node.<index>.<setting>.<key>=<value>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + NS + GRP_SETTING + SEP + GRP_KEY + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(3)),
         NODE,
@@ -55,8 +56,8 @@ public class Configuration {
         Integer.parseInt(matcher.group(2)),
         matcher.group(4),
         matcher.group(5)));
-    // stripe.<index>.node.<index>:<setting>=<value>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + SEP + GRP_SETTING + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.node.<index>.<setting>=<value>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + NS + GRP_SETTING + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(3)),
         NODE,
@@ -64,8 +65,8 @@ public class Configuration {
         Integer.parseInt(matcher.group(2)),
         null,
         matcher.group(4)));
-    // stripe.<index>:<setting>.<key>=<value>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_SETTING + SEP + GRP_KEY + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.<setting>.<key>=<value>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + NS + GRP_SETTING + SEP + GRP_KEY + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(2)),
         STRIPE,
@@ -73,8 +74,8 @@ public class Configuration {
         null,
         matcher.group(3),
         matcher.group(4)));
-    // stripe.<index>:<setting>=<value>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_SETTING + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.<setting>=<value>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + NS + GRP_SETTING + ASSIGN + GRP_VALUE + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(2)),
         STRIPE,
@@ -100,8 +101,8 @@ public class Configuration {
         null,
         null,
         matcher.group(2)));
-    // stripe.<index>.node.<index>:<setting>.<key>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + SEP + GRP_SETTING + SEP + GRP_KEY + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.node.<index>.<setting>.<key>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + NS + GRP_SETTING + SEP + GRP_KEY + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(3)),
         NODE,
@@ -109,8 +110,8 @@ public class Configuration {
         Integer.parseInt(matcher.group(2)),
         matcher.group(4),
         null));
-    // stripe.<index>.node.<index>:<setting>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + SEP + GRP_SETTING + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.node.<index>.<setting>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + NS + GRP_SETTING + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(3)),
         NODE,
@@ -118,8 +119,8 @@ public class Configuration {
         Integer.parseInt(matcher.group(2)),
         null,
         null));
-    // stripe.<index>:<setting>.<key>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_SETTING + SEP + GRP_KEY + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.<setting>.<key>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + NS + GRP_SETTING + SEP + GRP_KEY + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(2)),
         STRIPE,
@@ -127,8 +128,8 @@ public class Configuration {
         null,
         matcher.group(3),
         null));
-    // stripe.<index>:<setting>
-    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_SETTING + "$"), (input, matcher) -> new Configuration(
+    // stripe.<index>.<setting>
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + NS + GRP_SETTING + "$"), (input, matcher) -> new Configuration(
         input,
         Setting.fromName(matcher.group(2)),
         STRIPE,

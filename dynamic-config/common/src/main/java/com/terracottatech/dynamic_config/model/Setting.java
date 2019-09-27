@@ -21,8 +21,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.MULTI_VALUE_SEP;
-import static com.terracottatech.dynamic_config.DynamicConfigConstants.PARAM_INTERNAL_SEP;
 import static com.terracottatech.dynamic_config.model.Operation.GET;
 import static com.terracottatech.dynamic_config.model.Operation.SET;
 import static com.terracottatech.dynamic_config.model.Operation.UNSET;
@@ -38,7 +36,7 @@ import static com.terracottatech.dynamic_config.model.validation.SettingValidato
 import static com.terracottatech.dynamic_config.model.validation.SettingValidator.OFFHEAP_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.validation.SettingValidator.PORT_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.validation.SettingValidator.TIME_VALIDATOR;
-import static com.terracottatech.utilities.Assertion.assertNull;
+import static com.terracottatech.utilities.Assertions.assertNull;
 import static com.terracottatech.utilities.TimeUnit.HOURS;
 import static com.terracottatech.utilities.TimeUnit.MILLISECONDS;
 import static com.terracottatech.utilities.TimeUnit.MINUTES;
@@ -105,7 +103,7 @@ public enum Setting {
       unsupported(),
       of(GET, SET),
       of(NODE),
-      of(ACTIVES_ONLINE, RESTART),
+      of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_GROUP_PORT, tuple2(key, value))
@@ -198,7 +196,7 @@ public enum Setting {
       mapSetter(SettingName.TC_PROPERTIES, (node, tuple) -> {
         String value = tuple.t2;
         if (tuple.t1 == null) {
-          Stream.of(value.split(MULTI_VALUE_SEP)).map(kv -> kv.split(PARAM_INTERNAL_SEP)).forEach(kv -> node.setTcProperty(kv[0], kv[1]));
+          Stream.of(value.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setTcProperty(kv[0], kv[1]));
         } else {
           node.setTcProperty(tuple.t1, value);
         }
@@ -235,7 +233,7 @@ public enum Setting {
       unsupported(),
       of(GET, SET),
       of(CLUSTER),
-      of(ACTIVES_ONLINE, RESTART),
+      of(ALL_NODES_ONLINE, RESTART),
       asList("availability", "consistency"),
       emptyList(),
       (key, value) -> FailoverPriority.valueOf(value)
@@ -337,7 +335,7 @@ public enum Setting {
       mapSetter(SettingName.OFFHEAP_RESOURCES, (node, tuple) -> {
         String value = tuple.t2;
         if (tuple.t1 == null) {
-          Stream.of(value.split(MULTI_VALUE_SEP)).map(kv -> kv.split(PARAM_INTERNAL_SEP)).forEach(kv -> node.setOffheapResource(kv[0], Measure.parse(kv[1], MemoryUnit.class)));
+          Stream.of(value.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setOffheapResource(kv[0], Measure.parse(kv[1], MemoryUnit.class)));
         } else {
           node.setOffheapResource(tuple.t1, Measure.parse(tuple.t2, MemoryUnit.class));
         }
@@ -363,8 +361,8 @@ public enum Setting {
       mapSetter(SettingName.DATA_DIRS, (node, tuple) -> {
         String value = tuple.t2;
         if (tuple.t1 == null) {
-          Stream.of(value.split(MULTI_VALUE_SEP)).forEach(kv -> {
-            int firstColon = kv.indexOf(PARAM_INTERNAL_SEP);
+          Stream.of(value.split(",")).forEach(kv -> {
+            int firstColon = kv.indexOf(":");
             node.setDataDir(kv.substring(0, firstColon), Paths.get(kv.substring(firstColon + 1)));
           });
         } else {
@@ -399,23 +397,67 @@ public enum Setting {
   private final BiConsumer<Node, Tuple2<String, String>> setter;
   private final BiConsumer<Node, String> unsetter;
 
-  Setting(String name, boolean map, String defaultValue, Function<Node, Stream<Tuple2<String, String>>> extractor, BiConsumer<Node, Tuple2<String, String>> setter, BiConsumer<Node, String> unsetter, EnumSet<Operation> operations) {
+  Setting(String name,
+          boolean map,
+          String defaultValue,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<Node, Tuple2<String, String>> setter,
+          BiConsumer<Node, String> unsetter,
+          EnumSet<Operation> operations) {
     this(name, map, defaultValue, extractor, setter, unsetter, operations, allOf(Scope.class), noneOf(Requirement.class));
   }
 
-  Setting(String name, boolean map, String defaultValue, Function<Node, Stream<Tuple2<String, String>>> extractor, BiConsumer<Node, Tuple2<String, String>> setter, BiConsumer<Node, String> unsetter, EnumSet<Operation> operations, EnumSet<Scope> scopes, EnumSet<Requirement> requirements) {
+  Setting(String name,
+          boolean map,
+          String defaultValue,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<Node, Tuple2<String, String>> setter,
+          BiConsumer<Node, String> unsetter,
+          EnumSet<Operation> operations,
+          EnumSet<Scope> scopes,
+          EnumSet<Requirement> requirements) {
     this(name, map, defaultValue, extractor, setter, unsetter, operations, scopes, requirements, emptyList(), emptyList());
   }
 
-  Setting(String name, boolean map, String defaultValue, Function<Node, Stream<Tuple2<String, String>>> extractor, BiConsumer<Node, Tuple2<String, String>> setter, BiConsumer<Node, String> unsetter, EnumSet<Operation> operations, EnumSet<Scope> scopes, EnumSet<Requirement> requirements, Collection<String> allowedValues) {
+  Setting(String name,
+          boolean map,
+          String defaultValue,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<Node, Tuple2<String, String>> setter,
+          BiConsumer<Node, String> unsetter,
+          EnumSet<Operation> operations,
+          EnumSet<Scope> scopes,
+          EnumSet<Requirement> requirements,
+          Collection<String> allowedValues) {
     this(name, map, defaultValue, extractor, setter, unsetter, operations, scopes, requirements, allowedValues, emptyList());
   }
 
-  Setting(String name, boolean map, String defaultValue, Function<Node, Stream<Tuple2<String, String>>> extractor, BiConsumer<Node, Tuple2<String, String>> setter, BiConsumer<Node, String> unsetter, EnumSet<Operation> operations, EnumSet<Scope> scopes, EnumSet<Requirement> requirements, Collection<String> allowedValues, Collection<? extends Enum<?>> allowedUnits) {
+  Setting(String name,
+          boolean map,
+          String defaultValue,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<Node, Tuple2<String, String>> setter,
+          BiConsumer<Node, String> unsetter,
+          EnumSet<Operation> operations,
+          EnumSet<Scope> scopes,
+          EnumSet<Requirement> requirements,
+          Collection<String> allowedValues,
+          Collection<? extends Enum<?>> allowedUnits) {
     this(name, map, defaultValue, extractor, setter, unsetter, operations, scopes, requirements, allowedValues, allowedUnits, (key, value) -> DEFAULT.accept(name, tuple2(key, value)));
   }
 
-  Setting(String name, boolean map, String defaultValue, Function<Node, Stream<Tuple2<String, String>>> extractor, BiConsumer<Node, Tuple2<String, String>> setter, BiConsumer<Node, String> unsetter, EnumSet<Operation> operations, EnumSet<Scope> scopes, EnumSet<Requirement> requirements, Collection<String> allowedValues, Collection<? extends Enum<?>> allowedUnits, BiConsumer<String, String> validator) {
+  Setting(String name,
+          boolean map,
+          String defaultValue,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<Node, Tuple2<String, String>> setter,
+          BiConsumer<Node, String> unsetter,
+          EnumSet<Operation> operations,
+          EnumSet<Scope> scopes,
+          EnumSet<Requirement> requirements,
+          Collection<String> allowedValues,
+          Collection<? extends Enum<?>> allowedUnits,
+          BiConsumer<String, String> validator) {
     this.name = name;
     this.map = map;
     this.defaultValue = defaultValue;

@@ -20,14 +20,14 @@ import static java.util.stream.Collectors.toList;
 
 public class NomadClientFactory<T> {
 
-  private final MultiDiagnosticServiceProvider connectionFactory;
+  private final MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   private final NomadEnvironment environment;
   private final long requestTimeoutMillis;
   private final ConcurrencySizing concurrencySizing;
 
-  public NomadClientFactory(MultiDiagnosticServiceProvider connectionFactory, ConcurrencySizing concurrencySizing,
+  public NomadClientFactory(MultiDiagnosticServiceProvider multiDiagnosticServiceProvider, ConcurrencySizing concurrencySizing,
                             NomadEnvironment environment, long requestTimeoutMillis) {
-    this.connectionFactory = connectionFactory;
+    this.multiDiagnosticServiceProvider = multiDiagnosticServiceProvider;
     this.environment = environment;
     this.requestTimeoutMillis = requestTimeoutMillis;
     this.concurrencySizing = concurrencySizing;
@@ -37,19 +37,20 @@ public class NomadClientFactory<T> {
     String host = environment.getHost();
     String user = environment.getUser();
 
-    DiagnosticServices connection = connectionFactory.fetchDiagnosticServices(expectedOnlineNodes);
+    DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes);
 
-    Collection<NamedNomadServer<T>> servers = connection.getEndpoints().stream()
-        .map(endpoint -> this.createNamedNomadServer(endpoint, connection.getDiagnosticService(endpoint)
+    Collection<NamedNomadServer<T>> servers = diagnosticServices.getEndpoints().stream()
+        .map(endpoint -> this.createNamedNomadServer(endpoint, diagnosticServices.getDiagnosticService(endpoint)
             .orElseThrow(() -> new IllegalStateException("DiagnosticService not found for node " + endpoint))))
         .collect(toList());
 
+    //TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
     NomadClient<T> client = new NomadClient<>(servers, host, user);
     int concurrency = concurrencySizing.getThreadCount(servers.size());
     client.setConcurrency(concurrency);
     client.setTimeoutMillis(requestTimeoutMillis);
 
-    return new CloseableNomadClient<>(client, connection);
+    return new CloseableNomadClient<>(client, diagnosticServices);
   }
 
   @SuppressWarnings("unchecked")

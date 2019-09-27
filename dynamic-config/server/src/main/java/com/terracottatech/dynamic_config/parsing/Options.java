@@ -8,7 +8,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.terracottatech.dynamic_config.DynamicConfigConstants;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.startup.ClusterCreator;
 import com.terracottatech.dynamic_config.startup.NodeProcessor;
@@ -156,7 +155,7 @@ public class Options {
    */
   private Map<Setting, String> buildParamValueMap(CustomJCommander jCommander) {
     Predicate<ParameterDescription> isSpecified =
-        pd -> Arrays.stream(pd.getNames().split(DynamicConfigConstants.MULTI_VALUE_SEP))
+        pd -> Arrays.stream(pd.getNames().split(","))
             .map(String::trim)
             .anyMatch(specifiedOptions::contains);
 

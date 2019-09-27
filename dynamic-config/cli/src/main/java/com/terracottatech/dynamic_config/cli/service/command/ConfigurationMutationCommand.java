@@ -4,7 +4,9 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
+import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Operation;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -32,6 +34,8 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   @Override
   public void run() {
+    logger.info("Validating the new configuration change(s) against the topology of: {}", node);
+
     // get the remote topology, apply the parameters, and validate that the cluster is still valid
     Cluster cluster = getRemoteTopology(node);
 
@@ -41,30 +45,37 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     }
     new ClusterValidator(cluster).validate();
 
-    logger.info("Configuration has been validated");
-
     // get the current state of the nodes
     Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineNodes(cluster);
     boolean isActive = validateActivationState(onlineNodes.keySet());
 
     if (isActive) {
+      logger.info("Validating the new configuration change(s) against the license");
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+        diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(cluster);
+      }
+    }
+
+    logger.info("New configuration change(s) can be sent");
+
+    if (isActive) {
       // cluster is active, we need to run a nomad change and eventually a restart
       if (requiresAllNodesAlive()) {
-        logger.info("Applying new configuration to active cluster: {}", toString(cluster.getNodeAddresses()));
         ensureAllNodesAlive(cluster, onlineNodes);
+        logger.info("Applying new configuration change(s) to activated cluster: {}", toString(cluster.getNodeAddresses()));
         runNomadChange(cluster.getNodeAddresses(), getNomadChanges(cluster));
       } else {
-        logger.info("Applying new configuration to active cluster: {}", toString(onlineNodes.keySet()));
         ensureAtLeastActivesAreOnline(cluster, onlineNodes);
+        logger.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
         runNomadChange(onlineNodes.keySet(), getNomadChanges(cluster));
       }
       Collection<String> settingsRequiringRestart = findSettingsRequiringRestart();
       if (!settingsRequiringRestart.isEmpty()) {
-        logger.warn("=======\nWARNING\n=======\n\nA restart of the cluster is required to apply the following changes:\n - {}\n", String.join("\n - ", settingsRequiringRestart));
+        logger.info("=========\nIMPORTANT\n=========\n\nA restart of the cluster is required to apply the following changes:\n - {}\n", String.join("\n - ", settingsRequiringRestart));
       }
     } else {
       // cluster is not active, we just need to replace the topology
-      logger.info("Applying new configuration to nodes: {}", toString(cluster.getNodeAddresses()));
+      logger.info("Applying new configuration change(s) to nodes: {}", toString(cluster.getNodeAddresses()));
       try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
         topologyServices(diagnosticServices)
             .map(Tuple2::getT2)

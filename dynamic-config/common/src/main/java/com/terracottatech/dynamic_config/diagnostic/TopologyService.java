@@ -52,14 +52,19 @@ public interface TopologyService {
   /**
    * Activates the Nomad system so that we can write a first config repository version. This requires the topology to set plus the license installed
    */
-  void prepareActivation(Cluster validatedTopology, String xml);
+  void prepareActivation(Cluster validatedTopology, String licenseContent);
 
   /**
    * Validate and install a new license over an existing one
    *
-   * @param xml license file content
+   * @param licenseContent license file content
    */
-  void upgradeLicense(String xml);
+  void upgradeLicense(String licenseContent);
 
   Optional<License> getLicense();
+
+  /**
+   * Validate a cluster model against the license installed in the node
+   */
+  void validateAgainstLicense(Cluster cluster);
 }

@@ -21,7 +21,5 @@ public abstract class Command implements Runnable {
   /**
    * Run extra global validation after each parameter has been parsed, converted, injected and validated
    */
-  public void validate() {}
-
-  ;
+  public abstract void validate();
 }

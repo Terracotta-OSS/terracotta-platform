@@ -105,6 +105,12 @@ public class NomadBootstrapper {
 
     /**
      * Makes Nomad server capable of write operations.
+     *
+     * @param stripeId        ID of the stripe where the node belongs, should be greater than 1
+     * @param nodeName        Name of the running node, non-null
+     * @param expectedCluster The cluster coming from the topology entity, when upgrading Nomad to start it.
+     *                        This cluster will be also sent next in a ActivationNomadChange, that will make
+     *                        sure it receives the expected cluster that has been lastly set in the topology service
      */
     public void upgradeForWrite(int stripeId, String nodeName, Cluster expectedCluster) {
       requireNonNull(nodeName);

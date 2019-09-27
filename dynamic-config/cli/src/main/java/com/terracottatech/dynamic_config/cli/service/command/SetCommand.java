@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 
 import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
 
-@Parameters(commandNames = "set", commandDescription = "Set properties in the cluster")
+@Parameters(commandNames = "set", commandDescription = "Set properties in the cluster or in a node")
 @Usage("set -s HOST -c NAMESPACE1.PROPERTY1=VALUE1,NAMESPACE2.PROPERTY2=VALUE2,...")
 public class SetCommand extends ConfigurationMutationCommand {
 
@@ -39,8 +39,8 @@ public class SetCommand extends ConfigurationMutationCommand {
   @Override
   public void run() {
     if (licenseUpgrade) {
-      logger.info("Configuration has been validated");
       Cluster cluster = getRemoteTopology(node);
+      logger.info("Upgrading license on nodes: {}", toString(cluster.getNodeAddresses()));
       Path licenseFile = Paths.get(configurations.get(0).getValue());
       upgradeLicense(cluster.getNodeAddresses(), licenseFile);
     } else {

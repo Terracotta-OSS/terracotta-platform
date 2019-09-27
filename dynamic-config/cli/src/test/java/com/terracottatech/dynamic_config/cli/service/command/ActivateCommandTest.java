@@ -114,7 +114,7 @@ public class ActivateCommandTest extends BaseTest {
   }
 
   @Test
-  public void test_activation_fails_if_a_node_is_activated() {
+  public void test_activation_fails_if_all_nodes_are_activated() {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
     when(topologyServiceMock("localhost", 9421).isActivated()).thenReturn(true);
     when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(true);
@@ -125,7 +125,23 @@ public class ActivateCommandTest extends BaseTest {
           cmd.validate();
           cmd.run();
         },
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster is already activated: localhost:9411, localhost:9421, localhost:9422"))))
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster is already activated"))))
+    );
+  }
+
+  @Test
+  public void test_activation_fails_if_a_node_is_activated() {
+    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
+    when(topologyServiceMock("localhost", 9421).isActivated()).thenReturn(true);
+    when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
+
+    assertThat(
+        () -> {
+          ActivateCommand cmd = command().setConfigPropertiesFile(config);
+          cmd.validate();
+          cmd.run();
+        },
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster is badly formed as it contains a mix of activated and unconfigured nodes. Activated: [localhost:9411, localhost:9421], Unconfigured: [localhost:9422]"))))
     );
   }
 

@@ -53,7 +53,6 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   @Override
   public final void validate() {
-    logger.debug("Validating parameter commands...");
     if (sources.isEmpty()) {
       throw new IllegalArgumentException("Missing source nodes.");
     }
@@ -66,34 +65,29 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (sources.contains(destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
-    logger.debug("Command validation successful.");
   }
 
   @Override
   public final void run() {
-    logger.debug("Discovering destination cluster nodes to update by using node {}...", destination);
-
     // get all the nodes to update (which includes source node plus all the nodes on the destination cluster)
-    Collection<InetSocketAddress> discovered = findPeers(destination);
+    Collection<InetSocketAddress> discovered = getPeers(destination);
 
     // create a list of addresses to connect to
     Collection<InetSocketAddress> addresses = concat(sources.stream(), discovered.stream()).collect(toCollection(LinkedHashSet::new));
-    if (logger.isDebugEnabled()) {
-      logger.debug("Connecting to nodes: {}...", toString(addresses));
-    }
+    logger.info("Connecting to nodes to apply topology changes: {}", toString(addresses));
 
     // create a multi-connection based on all the cluster addresses
-    try (DiagnosticServices connections = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
 
       // get the target node / cluster
-      Target dest = connections.getDiagnosticService(destination)
+      Target dest = diagnosticServices.getDiagnosticService(destination)
           .map(ds -> ds.getProxy(TopologyService.class))
           .map(dcs -> new Target(destination, dcs.getCluster()))
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
       List<Node> src = sources.stream()
-          .map(addr -> connections.getDiagnosticService(addr)
+          .map(addr -> diagnosticServices.getDiagnosticService(addr)
               .map(ds -> ds.getProxy(TopologyService.class))
               .map(TopologyService::getThisNode)
               .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + addr)))
@@ -110,7 +104,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       // If a node has been removed, then it will make itself alone on its own cluster and will have no more links to the previous nodes
       // This is done in the TopologyService#setCluster() method
       logger.info("Pushing the updated topology to all the nodes: {}.", toString(addresses));
-      topologyServices(connections)
+      topologyServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(ts -> ts.setCluster(result));
     }

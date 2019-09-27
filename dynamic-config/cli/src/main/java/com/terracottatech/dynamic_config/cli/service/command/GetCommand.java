@@ -14,16 +14,10 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 @Parameters(commandNames = "get", commandDescription = "Display properties of nodes")
-@Usage("get -s HOST -c NAMESPACE1.ROPERTY1,NAMESPACE2.PROPERTY2,...")
+@Usage("get -s HOST -c NAMESPACE1.PROPERTY1,NAMESPACE2.PROPERTY2,...")
 public class GetCommand extends ConfigurationCommand {
   public GetCommand() {
     super(Operation.GET);
-  }
-
-  @Override
-  public void validate() {
-    super.validate();
-    logger.debug("Command validation successful");
   }
 
   @Override

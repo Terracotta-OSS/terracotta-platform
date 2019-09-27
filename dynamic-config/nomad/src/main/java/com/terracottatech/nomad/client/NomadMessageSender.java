@@ -34,6 +34,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+//TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageSender.class);
 
