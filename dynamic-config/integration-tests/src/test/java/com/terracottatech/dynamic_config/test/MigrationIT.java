@@ -51,7 +51,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class MigrationIT {
 
@@ -848,6 +847,6 @@ public class MigrationIT {
 
   private String[] resolve(String template) {
     String p = Paths.get("%(user.dir)", template.split("/")).toString();
-    return new String[]{p, substitute(p), "%(user.dir)/" + template};
+    return new String[]{p, parameterSubstitutor.substitute(p), "%(user.dir)/" + template};
   }
 }

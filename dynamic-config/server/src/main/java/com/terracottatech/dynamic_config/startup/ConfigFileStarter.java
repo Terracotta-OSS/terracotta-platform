@@ -7,16 +7,17 @@ package com.terracottatech.dynamic_config.startup;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.parsing.Options;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.terracotta.config.util.ParameterSubstitutor.substitute;
-
 public class ConfigFileStarter implements NodeStarter {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileStarter.class);
+  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   private final Options options;
   private final ClusterCreator clusterCreator;
@@ -38,7 +39,7 @@ public class ConfigFileStarter implements NodeStarter {
       nextStarter.startNode();
     }
 
-    Path substitutedConfigFile = Paths.get(substitute(options.getConfigFile()));
+    Path substitutedConfigFile = Paths.get(PARAMETER_SUBSTITUTOR.substitute(options.getConfigFile()));
     LOGGER.info("Starting node from config file: {}", substitutedConfigFile);
     Cluster cluster = clusterCreator.create(substitutedConfigFile, options.getClusterName());
     Node node = startupManager.getMatchingNodeFromConfigFile(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);

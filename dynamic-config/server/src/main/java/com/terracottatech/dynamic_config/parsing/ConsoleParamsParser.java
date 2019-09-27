@@ -19,7 +19,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
-import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class ConsoleParamsParser implements Parser<Cluster> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleParamsParser.class);
@@ -67,7 +66,7 @@ public class ConsoleParamsParser implements Parser<Cluster> {
 
   private String toDisplayParams(Map<Setting, String> supplied) {
     String suppliedParameters = supplied.entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
-        .map(entry -> ConsoleParamsUtils.addDashDash(entry.getKey()) + "=" + substitute(entry.getValue()))
+        .map(entry -> ConsoleParamsUtils.addDashDash(entry.getKey()) + "=" + parameterSubstitutor.substitute(entry.getValue()))
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {
       suppliedParameters = "[]";

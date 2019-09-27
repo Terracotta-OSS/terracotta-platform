@@ -53,7 +53,6 @@ import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class ConsoleParamsParserTest {
   private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
@@ -67,7 +66,7 @@ public class ConsoleParamsParserTest {
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName(), startsWith("node-"));
-    assertThat(node.getNodeHostname(), is(substitute(NODE_HOSTNAME.getDefaultValue())));
+    assertThat(node.getNodeHostname(), is(PARAMETER_SUBSTITUTOR.substitute(NODE_HOSTNAME.getDefaultValue())));
     assertThat(node.getNodePort(), is(parseInt(NODE_PORT.getDefaultValue())));
     assertThat(node.getNodeGroupPort(), is(parseInt(NODE_GROUP_PORT.getDefaultValue())));
     assertThat(node.getNodeBindAddress(), is(NODE_BIND_ADDRESS.getDefaultValue()));
@@ -98,7 +97,7 @@ public class ConsoleParamsParserTest {
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeHostname(), is(substitute("%c")));
+    assertThat(node.getNodeHostname(), is(PARAMETER_SUBSTITUTOR.substitute("%c")));
     assertThat(node.getNodeBindAddress(), is("%i"));
   }
 

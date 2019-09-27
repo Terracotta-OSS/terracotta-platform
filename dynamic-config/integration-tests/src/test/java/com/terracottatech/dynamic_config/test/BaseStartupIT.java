@@ -11,6 +11,8 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.testing.lock.PortLockingRule;
 import com.terracottatech.utilities.PropertyResolver;
 import com.terracottatech.utilities.fn.IntFn.IntTriConsumer;
@@ -70,6 +72,7 @@ public class BaseStartupIT {
 
   static final boolean CI = System.getProperty("JOB_NAME") != null;
   static final int TIMEOUT = !CI ? 20_000 : 30_000;
+  static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();

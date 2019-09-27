@@ -8,6 +8,7 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,11 +20,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 
 public class StartupManagerTest {
   private static final StartupManager STARTUP_MANAGER = new StartupManager(new ParameterSubstitutor());
   private static final String CONFIG_FILE = "/path/to/config-file";
+  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule
   public final SystemOutRule systemOutRule = new SystemOutRule().enableLog().muteForSuccessfulTests();
@@ -40,7 +41,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsOneNode_matchingNodeHostPortSpecified() {
-    Node node = Node.newDefaultNode(substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
+    Node node = Node.newDefaultNode(PARAMETER_SUBSTITUTOR.substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
     Cluster cluster = new Cluster(new Stripe(node));
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(node.getNodeHostname(), String.valueOf(node.getNodePort()), CONFIG_FILE, cluster);
 
@@ -61,7 +62,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_noNodeHostPortSpecified_foundMatchUsingDefaults() {
-    Node node1 = Node.newDefaultNode(substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
+    Node node1 = Node.newDefaultNode(PARAMETER_SUBSTITUTOR.substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
     Node node2 = Node.newDefaultNode("localhost", 1234);
     Cluster cluster = new Cluster(new Stripe(node1, node2));
 
