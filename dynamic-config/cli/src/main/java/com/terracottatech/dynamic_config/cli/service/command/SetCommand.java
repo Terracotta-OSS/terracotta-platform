@@ -18,8 +18,7 @@ import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
 @Parameters(commandNames = "set", commandDescription = "Set properties in the cluster or in a node")
 @Usage("set -s HOST -c NAMESPACE1.PROPERTY1=VALUE1,NAMESPACE2.PROPERTY2=VALUE2,...")
 public class SetCommand extends ConfigurationMutationCommand {
-
-  boolean licenseUpgrade;
+  private boolean licenseUpdate;
 
   public SetCommand() {
     super(Operation.SET);
@@ -28,19 +27,18 @@ public class SetCommand extends ConfigurationMutationCommand {
   @Override
   public void validate() {
     super.validate();
+    licenseUpdate = configurations.stream().anyMatch(configuration -> configuration.getSetting() == LICENSE_FILE);
 
-    licenseUpgrade = configurations.stream().anyMatch(configuration -> configuration.getSetting() == LICENSE_FILE);
-
-    if (configurations.size() > 1 && licenseUpgrade) {
+    if (configurations.size() > 1 && licenseUpdate) {
       throw new ParameterException("Updating the license cannot be combined with any other changes");
     }
   }
 
   @Override
   public void run() {
-    if (licenseUpgrade) {
+    if (licenseUpdate) {
       Cluster cluster = getRemoteTopology(node);
-      logger.info("Upgrading license on nodes: {}", toString(cluster.getNodeAddresses()));
+      logger.info("Updating license on nodes: {}", toString(cluster.getNodeAddresses()));
       Path licenseFile = Paths.get(configurations.get(0).getValue());
       upgradeLicense(cluster.getNodeAddresses(), licenseFile);
     } else {
