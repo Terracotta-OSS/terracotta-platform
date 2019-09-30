@@ -22,11 +22,10 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
 
-@Parameters(commandNames = "export", commandDescription = "Export the cluster topology in a file or output to the console")
-@Usage("export -s HOST[:PORT] [-d DESTINATION_DIRECTORY] [-f [json|properties]]")
+@Parameters(commandNames = "export", commandDescription = "Export the cluster topology")
+@Usage("export -s HOST[:PORT] [-d DESTINATION_DIRECTORY]")
 public class ExportCommand extends RemoteCommand {
 
   public enum Format {JSON, PROPERTIES}
@@ -34,35 +33,39 @@ public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to for topology information", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-d"}, description = "Optional path of the folder when the topology information should be saved to. Defaults to the current working directory.", converter = PathConverter.class)
+  @Parameter(names = {"-d"}, description = "Destination directory", converter = PathConverter.class)
   private Path outputDir;
 
-  @Parameter(names = {"-f"}, description = "Output format. Defaults to 'properties'.", converter = FormatConverter.class)
-  private Format format;
+  @Parameter(names = {"-f"}, hidden = true, description = "Output format", converter = FormatConverter.class)
+  private Format format = Format.PROPERTIES;
 
   @Override
   public void validate() {
-    if (outputDir == null) {
-      outputDir = Paths.get(".");
-    }
-    if (format == null) {
-      format = Format.PROPERTIES;
+    if (outputDir != null && Files.exists(outputDir) && !Files.isDirectory(outputDir)) {
+      throw new IllegalArgumentException(outputDir + " is not a directory");
     }
   }
 
   @Override
   public final void run() {
     Cluster cluster = getRemoteTopology(node);
-    String name = cluster.getName() == null ? "UNIDENTIFIED" : cluster.getName();
+    String output = buildOutput(cluster, format);
+
     if (outputDir == null) {
-      String output = buildOutput(cluster, format);
-      logger.info("Cluster '{}' from: {}\n{}", name, node, output);
+      logger.info("{}", output);
     } else {
+      String clusterName = cluster.getName() == null ? "default-cluster" : cluster.getName();
       try {
-        Path file = outputDir.resolve(cluster.getName() + "." + format.name().toLowerCase());
-        String output = buildOutput(cluster, format);
+        if (!Files.exists(outputDir)) {
+          Files.createDirectories(outputDir);
+        }
+
+        Path file = outputDir.resolve(clusterName + "." + format.name().toLowerCase());
+        if (Files.exists(file)) {
+          logger.warn(file + " already exists. Replacing this file.");
+        }
         Files.write(file, output.getBytes(StandardCharsets.UTF_8));
-        logger.info("Output saved to: {}", file);
+        logger.info("Output saved to: {}\n", file);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
@@ -84,7 +87,7 @@ public class ExportCommand extends RemoteCommand {
       case PROPERTIES:
         Properties properties = cluster.toProperties();
         try (StringWriter writer = new StringWriter()) {
-          properties.store(writer, "");
+          properties.store(writer, null);
           return writer.toString();
         } catch (IOException e) {
           throw new UncheckedIOException(e);
