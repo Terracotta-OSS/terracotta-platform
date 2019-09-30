@@ -74,7 +74,7 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     // create a list of addresses to connect to
     Collection<InetSocketAddress> addresses = concat(sources.stream(), discovered.stream()).collect(toCollection(LinkedHashSet::new));
-    logger.info("Connecting to nodes to apply topology changes: {}", toString(addresses));
+    logger.debug("Connecting to nodes to apply topology changes: {}", toString(addresses));
 
     // create a multi-connection based on all the cluster addresses
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {

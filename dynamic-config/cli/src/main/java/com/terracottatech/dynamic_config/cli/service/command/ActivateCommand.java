@@ -85,7 +85,6 @@ public class ActivateCommand extends RemoteCommand {
     cluster = loadCluster();
 
     cluster.setName(clusterName);
-    logger.info("Setting cluster name successful");
 
     boolean isClusterActive = validateActivationState(cluster.getNodeAddresses());
     if (isClusterActive) {
@@ -97,7 +96,7 @@ public class ActivateCommand extends RemoteCommand {
       logger.info("License installation successful");
 
       runNomadChange();
-      logger.info("Configuration repositories have been created for all nodes");
+      logger.debug("Configuration repositories have been created for all nodes");
 
       logger.info("Restarting nodes: {}", toString(cluster.getNodeAddresses()));
       restartNodes(cluster.getNodeAddresses());
@@ -140,10 +139,10 @@ public class ActivateCommand extends RemoteCommand {
     Cluster cluster;
     if (node != null) {
       cluster = getRemoteTopology(node);
-      logger.info("Cluster topology validation successful");
+      logger.debug("Cluster topology validation successful");
     } else {
       cluster = configFileParser.createCluster();
-      logger.info("Config property file parsed and cluster topology validation successful");
+      logger.debug("Config property file parsed and cluster topology validation successful");
     }
     return cluster;
   }

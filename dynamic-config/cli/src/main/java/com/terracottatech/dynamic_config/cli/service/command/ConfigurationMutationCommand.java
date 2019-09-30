@@ -34,7 +34,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   @Override
   public void run() {
-    logger.info("Validating the new configuration change(s) against the topology of: {}", node);
+    logger.debug("Validating the new configuration change(s) against the topology of: {}", node);
 
     // get the remote topology, apply the parameters, and validate that the cluster is still valid
     Cluster cluster = getRemoteTopology(node);
@@ -50,13 +50,13 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     boolean isActive = validateActivationState(onlineNodes.keySet());
 
     if (isActive) {
-      logger.info("Validating the new configuration change(s) against the license");
+      logger.debug("Validating the new configuration change(s) against the license");
       try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
         diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(cluster);
       }
     }
 
-    logger.info("New configuration change(s) can be sent");
+    logger.debug("New configuration change(s) can be sent");
 
     if (isActive) {
       // cluster is active, we need to run a nomad change and eventually a restart
@@ -71,7 +71,8 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       }
       Collection<String> settingsRequiringRestart = findSettingsRequiringRestart();
       if (!settingsRequiringRestart.isEmpty()) {
-        logger.info("=========\nIMPORTANT\n=========\n\nA restart of the cluster is required to apply the following changes:\n - {}\n", String.join("\n - ", settingsRequiringRestart));
+        logger.info("=========\nIMPORTANT\n=========\n\nA restart of the cluster is required to apply the following changes:" +
+            "\n - {}\n", String.join("\n - ", settingsRequiringRestart));
       }
     } else {
       // cluster is not active, we just need to replace the topology
