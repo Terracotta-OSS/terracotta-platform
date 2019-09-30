@@ -563,7 +563,11 @@ public enum Setting {
   }
 
   public static Setting fromName(String name) {
-    return Stream.of(values()).filter(setting -> setting.name.equals(name)).findFirst().orElseThrow(() -> new IllegalArgumentException("Illegal setting name: " + name));
+    return findSetting(name).orElseThrow(() -> new IllegalArgumentException("Illegal setting name: " + name));
+  }
+
+  public static Optional<Setting> findSetting(String name) {
+    return Stream.of(values()).filter(setting -> setting.name.equals(name)).findFirst();
   }
 
   public static Collection<Setting> getAll() {

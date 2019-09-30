@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 public class CustomJCommander extends JCommander {
   private final String programName;
@@ -55,13 +56,16 @@ public class CustomJCommander extends JCommander {
 
         WrappedParameter parameter = pd.getParameter();
         out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "");
-        String defaultValue = Setting.fromName(ConsoleParamsUtils.stripDashDash(pd.getLongestName())).getDefaultValue();
-        if (defaultValue != null) {
-          out.append(indent).append("    ");
-          for (int i = 0; i < maxParamLength - pd.getNames().length(); i++) {
-            out.append(" ");
+        Optional<Setting> settingOptional = Setting.findSetting(ConsoleParamsUtils.stripDashDash(pd.getLongestName()));
+        if (settingOptional.isPresent()) {
+          String defaultValue = settingOptional.get().getDefaultValue();
+          if (defaultValue != null) {
+            out.append(indent).append("    ");
+            for (int i = 0; i < maxParamLength - pd.getNames().length(); i++) {
+              out.append(" ");
+            }
+            out.append("(Default: ").append(defaultValue).append(")");
           }
-          out.append("(Default: ").append(defaultValue).append(")");
         }
         out.append("\n");
       }
