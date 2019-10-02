@@ -58,8 +58,8 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=512MB");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.offheap-resources.main");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=512MB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
@@ -76,8 +76,8 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window=10s");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.client-reconnect-window");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.client-reconnect-window=10s"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    waitedAssert(out::getLog, containsString("client-reconnect-window=10s"));
   }
 
   @Test
@@ -85,8 +85,8 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.security-authc");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.security-authc=file"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-authc");
+    waitedAssert(out::getLog, containsString("security-authc=file"));
   }
 
   @Test
@@ -103,8 +103,8 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.security-whitelist");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.security-whitelist=true"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-whitelist");
+    waitedAssert(out::getLog, containsString("security-whitelist=true"));
   }
 
   @Test
@@ -130,22 +130,22 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=1GB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main");
+    waitedAssert(out::getLog, containsString("offheap-resources.main=1GB"));
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"));
   }
 
 
   /*<--Stripe-wide Tests-->*/
   @Test
-  public void testStripe_setOffheap() {
+  public void testStripe_level() {
     ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=1GB");
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.data-dirs.main=stripe1-node1-data-dir");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.offheap-resources.main");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=1GB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources.main=1GB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:stripe1-node1-data-dir"));
+    waitedAssert(out::getLog, containsString("stripe.1.node.2.data-dirs=main:stripe1-node1-data-dir"));
   }
 
 
@@ -157,7 +157,7 @@ public class SetCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Command successful"));
 
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources=main:1GB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources=main:1GB"));
+    waitedAssert(out::getLog, containsString("offheap-resources=main:1GB"));
+    waitedAssert(out::getLog, containsString("offheap-resources=main:1GB"));
   }
 }

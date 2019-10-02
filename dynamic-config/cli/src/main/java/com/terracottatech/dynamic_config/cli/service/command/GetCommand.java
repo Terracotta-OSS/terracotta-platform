@@ -8,6 +8,7 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
 
 import java.util.Properties;

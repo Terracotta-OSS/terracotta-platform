@@ -150,7 +150,7 @@ public class StartupManager {
 
   private TopologyServiceImpl registerTopologyService(NodeContext nodeContext, NomadServerManager nomadServerManager) {
     logger.info("Registering TopologyService with DiagnosticServices");
-    TopologyServiceImpl topologyService = new TopologyServiceImpl(nodeContext, nomadServerManager);
+    TopologyServiceImpl topologyService = new TopologyServiceImpl(nodeContext, nomadServerManager, parameterSubstitutor);
     DiagnosticServices.register(TopologyService.class, topologyService);
     return topologyService;
   }

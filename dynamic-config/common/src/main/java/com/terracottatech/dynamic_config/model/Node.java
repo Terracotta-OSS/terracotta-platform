@@ -10,7 +10,6 @@ import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import javax.xml.bind.DatatypeConverter;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -18,9 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
@@ -434,74 +431,44 @@ public class Node implements Cloneable {
     return thisCopy;
   }
 
-  public Node fillDefaults(BiConsumer<Setting, String> filledPropertyConsumer) {
+  public Node fillDefaults() {
     if (getNodeName() == null) {
-      String generateNodeName = generateNodeName();
-      setNodeName(generateNodeName);
-      filledPropertyConsumer.accept(NODE_NAME, generateNodeName);
+      NODE_NAME.fillDefault(this);
     }
-
     if (getNodePort() == 0) {
       NODE_PORT.fillDefault(this);
-      filledPropertyConsumer.accept(NODE_PORT, NODE_PORT.getDefaultValue());
     }
-
     if (getNodeGroupPort() == 0) {
       NODE_GROUP_PORT.fillDefault(this);
-      filledPropertyConsumer.accept(NODE_GROUP_PORT, NODE_GROUP_PORT.getDefaultValue());
     }
-
     if (getOffheapResources().isEmpty()) {
       OFFHEAP_RESOURCES.fillDefault(this);
-      filledPropertyConsumer.accept(OFFHEAP_RESOURCES, OFFHEAP_RESOURCES.getDefaultValue());
     }
-
     if (getDataDirs().isEmpty()) {
       DATA_DIRS.fillDefault(this);
-      filledPropertyConsumer.accept(DATA_DIRS, DATA_DIRS.getDefaultValue());
     }
-
     if (getNodeBindAddress() == null) {
       NODE_BIND_ADDRESS.fillDefault(this);
-      filledPropertyConsumer.accept(NODE_BIND_ADDRESS, NODE_BIND_ADDRESS.getDefaultValue());
     }
-
     if (getNodeGroupBindAddress() == null) {
       NODE_GROUP_BIND_ADDRESS.fillDefault(this);
-      filledPropertyConsumer.accept(NODE_GROUP_BIND_ADDRESS, NODE_GROUP_BIND_ADDRESS.getDefaultValue());
     }
-
     if (getNodeLogDir() == null) {
       NODE_LOG_DIR.fillDefault(this);
-      filledPropertyConsumer.accept(NODE_LOG_DIR, NODE_LOG_DIR.getDefaultValue());
     }
-
     if (getNodeMetadataDir() == null) {
       NODE_METADATA_DIR.fillDefault(this);
-      filledPropertyConsumer.accept(NODE_METADATA_DIR, NODE_METADATA_DIR.getDefaultValue());
     }
-
     if (getFailoverPriority() == null) {
       FAILOVER_PRIORITY.fillDefault(this);
-      filledPropertyConsumer.accept(FAILOVER_PRIORITY, FAILOVER_PRIORITY.getDefaultValue());
     }
-
     if (getClientReconnectWindow() == null) {
       CLIENT_RECONNECT_WINDOW.fillDefault(this);
-      filledPropertyConsumer.accept(CLIENT_RECONNECT_WINDOW, CLIENT_RECONNECT_WINDOW.getDefaultValue());
     }
-
     if (getClientLeaseDuration() == null) {
       CLIENT_LEASE_DURATION.fillDefault(this);
-      filledPropertyConsumer.accept(CLIENT_LEASE_DURATION, CLIENT_LEASE_DURATION.getDefaultValue());
     }
-
     return this;
-  }
-
-  public Node fillDefaults() {
-    return fillDefaults((s, s2) -> {
-    });
   }
 
   public static Node newDefaultNode() {
@@ -530,27 +497,5 @@ public class Node implements Cloneable {
         .setNodeName(name)
         .setNodePort(port)
         .setNodeHostname(hostname);
-  }
-
-  private static String generateNodeName() {
-    UUID uuid = UUID.randomUUID();
-    byte[] data = new byte[16];
-    long msb = uuid.getMostSignificantBits();
-    long lsb = uuid.getLeastSignificantBits();
-    for (int i = 0; i < 8; i++) {
-      data[i] = (byte) (msb & 0xff);
-      msb >>>= 8;
-    }
-    for (int i = 8; i < 16; i++) {
-      data[i] = (byte) (lsb & 0xff);
-      lsb >>>= 8;
-    }
-
-    return "node-" + DatatypeConverter.printBase64Binary(data)
-        // java-8 and other - compatible B64 url decoder use - and _ instead of + and /
-        // padding can be ignored to shorten the UUID
-        .replace('+', '-')
-        .replace('/', '_')
-        .replace("=", "");
   }
 }

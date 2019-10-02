@@ -43,41 +43,27 @@ public class GetCommandIT extends BaseStartupIT {
   @Test
   public void testNode_getOneOffheap_unknownOffheap() {
     systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("No configuration found for: stripe.1.node.1.offheap-resources.blah")));
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.offheap-resources.blah");
-  }
-
-  @Test
-  public void testNode_getOneOffheap_stripeIdInvalid() {
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("No configuration found for: stripe.2.node.1.offheap-resources.main")));
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.2.node.1.offheap-resources.main");
-  }
-
-  @Test
-  public void testNode_getOneOffheap_nodeIdInvalid() {
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("No configuration found for: stripe.1.node.2.offheap-resources.main")));
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.2.offheap-resources.main");
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("No configuration found for: offheap-resources.blah")));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.blah");
   }
 
   @Test
   public void testNode_getOneOffheap() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.offheap-resources.main");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=512MB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testNode_getTwoOffheaps() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.offheap-resources.main", "-c", "stripe.1.node.1.offheap-resources.foo");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.foo=1GB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
+    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
+    waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
   }
 
   @Test
   public void testNode_getAllOffheaps() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.offheap-resources");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources=main:512MB,foo:1GB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
   }
 
   @Test
@@ -88,14 +74,14 @@ public class GetCommandIT extends BaseStartupIT {
 
   @Test
   public void testNode_getClientReconnectWindow() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.client-reconnect-window");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.client-reconnect-window=120s"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    waitedAssert(out::getLog, containsString("client-reconnect-window=120s"));
   }
 
   @Test
   public void testNode_getSecurityAuthc() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.security-authc");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.security-authc="));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-authc");
+    waitedAssert(out::getLog, containsString("security-authc="));
   }
 
   @Test
@@ -109,33 +95,29 @@ public class GetCommandIT extends BaseStartupIT {
   @Test
   public void testStripe_getOneOffheap() {
     ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.offheap-resources.main");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources.main=512MB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testStripe_getTwoOffheaps() {
     ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.offheap-resources.main", "-c", "stripe.1.offheap-resources.foo");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.foo=1GB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources.foo=1GB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
+    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
+    waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
   }
 
   @Test
   public void testStripe_getAllOffheaps() {
     ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.offheap-resources");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources=main:512MB,foo:1GB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources=main:512MB,foo:1GB"));
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
   }
 
   @Test
   public void testStripe_getAllDataDirs() {
     ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.data-dirs");
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
   }
@@ -155,10 +137,7 @@ public class GetCommandIT extends BaseStartupIT {
     activate2x2Cluster();
 
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.1.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.2.offheap-resources.main=512MB"));
+    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
@@ -166,15 +145,8 @@ public class GetCommandIT extends BaseStartupIT {
     activate2x2Cluster();
 
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.1.offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.2.offheap-resources.main=512MB"));
-
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources.foo=1GB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources.foo=1GB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.1.offheap-resources.foo=1GB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.2.offheap-resources.foo=1GB"));
+    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
+    waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
   }
 
   @Test
@@ -182,10 +154,7 @@ public class GetCommandIT extends BaseStartupIT {
     activate2x2Cluster();
 
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.offheap-resources=main:512MB,foo:1GB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.2.offheap-resources=main:512MB,foo:1GB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.1.offheap-resources=main:512MB,foo:1GB"));
-    waitedAssert(out::getLog, containsString("stripe.2.node.2.offheap-resources=main:512MB,foo:1GB"));
+    waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
   }
 
   @Test

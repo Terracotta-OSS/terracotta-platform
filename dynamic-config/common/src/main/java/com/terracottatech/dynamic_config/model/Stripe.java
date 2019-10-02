@@ -154,4 +154,11 @@ public class Stripe implements Cloneable {
   public Optional<Node> getNode(String nodeName) {
     return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findFirst();
   }
+
+  public Optional<Integer> getNodeId(String nodeName) {
+    return getNode(nodeName)
+        .map(nodes::indexOf)
+        .filter(idx -> idx >= 0)
+        .map(idx -> idx + 1);
+  }
 }

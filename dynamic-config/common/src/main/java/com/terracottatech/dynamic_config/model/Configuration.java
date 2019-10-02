@@ -2,13 +2,8 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.cli.service.command;
+package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.Operation;
-import com.terracottatech.dynamic_config.model.Scope;
-import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.nomad.Applicability;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
@@ -18,7 +13,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.OptionalInt;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,12 +23,12 @@ import static com.terracottatech.dynamic_config.model.Operation.UNSET;
 import static com.terracottatech.dynamic_config.model.Scope.CLUSTER;
 import static com.terracottatech.dynamic_config.model.Scope.NODE;
 import static com.terracottatech.dynamic_config.model.Scope.STRIPE;
+import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 public class Configuration {
 
-  private static final IParameterSubstitutor SUBSTITUTOR = IParameterSubstitutor.unsupported();
   private static final Map<Pattern, BiFunction<String, Matcher, Configuration>> PATTERNS = new IdentityHashMap<>();
 
   private static final String GRP_STRIPE = "stripe\\.(\\d+)";
@@ -101,6 +95,60 @@ public class Configuration {
         null,
         null,
         matcher.group(2)));
+    // stripe.<index>.node.<index>.<setting>.<key>=
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + NS + GRP_SETTING + SEP + GRP_KEY + ASSIGN + "$"), (input, matcher) -> new Configuration(
+        input,
+        Setting.fromName(matcher.group(3)),
+        NODE,
+        Integer.parseInt(matcher.group(1)),
+        Integer.parseInt(matcher.group(2)),
+        matcher.group(4),
+        null));
+    // stripe.<index>.node.<index>.<setting>=
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + NS + GRP_SETTING + ASSIGN + "$"), (input, matcher) -> new Configuration(
+        input,
+        Setting.fromName(matcher.group(3)),
+        NODE,
+        Integer.parseInt(matcher.group(1)),
+        Integer.parseInt(matcher.group(2)),
+        null,
+        null));
+    // stripe.<index>.<setting>.<key>=
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + NS + GRP_SETTING + SEP + GRP_KEY + ASSIGN + "$"), (input, matcher) -> new Configuration(
+        input,
+        Setting.fromName(matcher.group(2)),
+        STRIPE,
+        Integer.parseInt(matcher.group(1)),
+        null,
+        matcher.group(3),
+        null));
+    // stripe.<index>.<setting>=
+    PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + NS + GRP_SETTING + ASSIGN + "$"), (input, matcher) -> new Configuration(
+        input,
+        Setting.fromName(matcher.group(2)),
+        STRIPE,
+        Integer.parseInt(matcher.group(1)),
+        null,
+        null,
+        null));
+    // <setting>.<key>=
+    PATTERNS.put(Pattern.compile("^" + GRP_SETTING + SEP + GRP_KEY + ASSIGN + "$"), (input, matcher) -> new Configuration(
+        input,
+        Setting.fromName(matcher.group(1)),
+        CLUSTER,
+        null,
+        null,
+        matcher.group(2),
+        null));
+    // <setting>=
+    PATTERNS.put(Pattern.compile("^" + GRP_SETTING + ASSIGN + "$"), (input, matcher) -> new Configuration(
+        input,
+        Setting.fromName(matcher.group(1)),
+        CLUSTER,
+        null,
+        null,
+        null,
+        null));
     // stripe.<index>.node.<index>.<setting>.<key>
     PATTERNS.put(Pattern.compile("^" + GRP_STRIPE + SEP + GRP_NODE + NS + GRP_SETTING + SEP + GRP_KEY + "$"), (input, matcher) -> new Configuration(
         input,
@@ -173,18 +221,20 @@ public class Configuration {
     this.nodeId = nodeId;
     this.key = key;
     this.value = value;
+
+    preValidate();
   }
 
   public Scope getScope() {
     return scope;
   }
 
-  public OptionalInt getStripeId() {
-    return stripeId == null ? OptionalInt.empty() : OptionalInt.of(stripeId);
+  public int getStripeId() {
+    return stripeId;
   }
 
-  public OptionalInt getNodeId() {
-    return nodeId == null ? OptionalInt.empty() : OptionalInt.of(nodeId);
+  public int getNodeId() {
+    return nodeId;
   }
 
   public Setting getSetting() {
@@ -199,7 +249,7 @@ public class Configuration {
     return value;
   }
 
-  public void validate(Operation operation) {
+  private void preValidate() {
     if (!setting.isMap() && key != null) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " is not a map and must not have a key name");
     }
@@ -209,7 +259,16 @@ public class Configuration {
     if (nodeId != null && nodeId <= 0) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected node id to be greater than 0");
     }
-    if (value != null && !SUBSTITUTOR.containsSubstitutionParams(value)) {
+    if (!setting.allowsOperationsWithScope(scope)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " does not allow scope " + scope);
+    }
+    if (setting.isScope(CLUSTER) && (stripeId != null || nodeId != null)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " is a cluster setting not at a stripe or node level");
+    }
+  }
+
+  public void validate(Operation operation, IParameterSubstitutor substitutor) {
+    if (value != null && !substitutor.containsSubstitutionParams(value)) {
       try {
         setting.validate(key, value);
       } catch (RuntimeException e) {
@@ -219,48 +278,62 @@ public class Configuration {
     if (!setting.allowsOperation(operation)) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " does not allow operation " + operation);
     }
-    if (value == null && operation.isValueRequired()) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
-    }
-    if (value != null && !operation.isValueRequired()) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " must not have a value");
-    }
-    if (operation == SET || operation == UNSET) {
-      // only validate the scope where to apply the change in case of a set operation. Get can use any scope.
-      if (!setting.allowsScope(scope)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " does not allow scope " + scope);
-      }
+    switch (operation) {
+      case GET:
+      case UNSET:
+        if (value != null) {
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " must not have a value");
+        }
+        break;
+      case SET:
+        if (value == null) {
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
+        }
+        break;
+      case CONFIG:
+        if (value == null && !setting.allowsOperation(UNSET) && setting.getDefaultValue() == null) {
+          if (setting != CLUSTER_NAME) {
+            // TODO: find a better way to move this special check somewhere else. Cluster name is a special case where the value is optional and cannot be unset
+            throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
+          }
+        }
+        break;
+      default:
+        throw new AssertionError(operation);
     }
   }
 
+  /**
+   * Check if this configuration "pattern" supports the given property config
+   */
   public boolean matchConfigPropertyKey(String key) {
-    Configuration config = Configuration.valueOf(key);
-    if (config.scope != NODE || config.nodeId == null || config.stripeId == null) {
-      throw new IllegalArgumentException(key + " is not a valid property key from a property configuration");
-    }
-    if (config.setting != this.setting) {
+    Configuration configPropertyKey = Configuration.valueOf(key);
+    if (configPropertyKey.setting != this.setting) {
       return false;
     }
-    if (this.stripeId != null && !Objects.equals(this.stripeId, config.stripeId)) {
+    if (this.stripeId != null && !Objects.equals(this.stripeId, configPropertyKey.stripeId)) {
       // we want to match a node or stripe scope
       return false;
     }
-    if (this.nodeId != null && !Objects.equals(this.nodeId, config.nodeId)) {
+    if (this.nodeId != null && !Objects.equals(this.nodeId, configPropertyKey.nodeId)) {
       // we want to match a specific node
       return false;
     }
-    if (this.setting.isMap() && this.key != null && !Objects.equals(this.key, config.key)) {
+    if (this.setting.isMap() && this.key != null && !Objects.equals(this.key, configPropertyKey.key)) {
       // case of a map, where we want to match a specific key
       return false;
     }
-    if (this.setting.isMap() && this.key == null && config.key != null) {
+    if (this.setting.isMap() && this.key == null && configPropertyKey.key != null) {
       // case of a map, where we want to match a specific key
       return false;
     }
     return true;
   }
 
-  public void apply(Operation operation, Cluster cluster) {
+  /**
+   * Apply the value in this configuration in the given cluster
+   */
+  public void apply(Operation operation, Cluster cluster, IParameterSubstitutor substitutor) {
     if (operation == GET) {
       throw new IllegalArgumentException("Command " + GET + " is not a mutation operation");
     }
@@ -274,20 +347,20 @@ public class Configuration {
         try {
           target = cluster.getStripes().get(stripeId - 1).getNodes();
         } catch (RuntimeException e) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripes().size() + " stripe(s) only");
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
         }
         break;
       case NODE:
-        List<Node> nodes = null;
+        List<Node> nodes;
         try {
           nodes = cluster.getStripes().get(stripeId - 1).getNodes();
         } catch (RuntimeException e) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripes().size() + " stripe(s) only");
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
         }
         try {
           target = singletonList(nodes.get(nodeId - 1));
         } catch (Exception e) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified node id: " + nodeId + ", but stripe " + stripeId + " contains: " + cluster.getStripes().size() + " node(s) only");
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified node id: " + nodeId + ", but stripe " + stripeId + " contains: " + cluster.getStripeCount() + " node(s) only");
         }
         break;
       default:
@@ -305,17 +378,23 @@ public class Configuration {
         return;
       }
 
-      if (setting == Setting.CLUSTER_NAME) {
+      if (setting == CLUSTER_NAME) {
         cluster.setName(value);
         return;
       }
 
-      target.forEach(node -> setting.setProperty(node, key, value));
+      target.forEach(node -> {
+        if (setting.requiresEagerSubstitution()) {
+          setting.setProperty(node, key, substitutor.substitute(value));
+        } else {
+          setting.setProperty(node, key, value);
+        }
+      });
     }
   }
 
-  public SettingNomadChange toSettingNomadChange(Operation operation, Cluster cluster) {
-    validate(operation);
+  public SettingNomadChange toSettingNomadChange(Operation operation, Cluster cluster, IParameterSubstitutor substitutor) {
+    validate(operation, substitutor);
     switch (operation) {
       case SET:
         return SettingNomadChange.set(toApplicability(cluster), setting, key, value);
@@ -391,21 +470,11 @@ public class Configuration {
         }
       }
     } catch (RuntimeException e) {
+      if (e.getMessage() != null && e.getMessage().startsWith("Invalid input:")) {
+        throw e;
+      }
       throw new IllegalArgumentException("Invalid input: '" + input + "'. Reason: " + e.getMessage(), e);
     }
-    throw new IllegalArgumentException("Invalid input: '" + input + "'. Config property should be one of the format:\n" +
-        " - stripe.<index>.node.<index>:<setting>.<key>=<value>\n" +
-        " - stripe.<index>.node.<index>:<setting>=<value>\n" +
-        " - stripe.<index>:<setting>.<key>=<value>\n" +
-        " - stripe.<index>:<setting>=<value>\n" +
-        " - <setting>.<key>=<value>\n" +
-        " - <setting>=<value>\n" +
-        " - stripe.<index>.node.<index>:<setting>.<key>\n" +
-        " - stripe.<index>.node.<index>:<setting>\n" +
-        " - stripe.<index>:<setting>.<key>\n" +
-        " - stripe.<index>:<setting>\n" +
-        " - <setting>.<key>\n" +
-        " - <setting>"
-    );
+    throw new IllegalArgumentException("Invalid input: '" + input + "'.");
   }
 }

@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.model.config.ConfigFileParser;
+import com.terracottatech.dynamic_config.model.config.ConfigurationParser;
 import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
 import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.MemoryUnit;
@@ -168,28 +168,30 @@ public class ClusterTest {
 
   @Test
   public void test_getStripeId() {
-    assertThat(cluster.getStripeId(node1).get(), is(equalTo(1)));
+    assertThat(cluster.getStripeId(node1).getAsInt(), is(equalTo(1)));
     assertThat(cluster.getStripeId(node2).isPresent(), is(false));
 
     cluster.attachStripe(new Stripe(node2));
-    assertThat(cluster.getStripeId(node2).get(), is(2));
+    assertThat(cluster.getStripeId(node2).getAsInt(), is(2));
   }
 
   @Test
   public void test_toProperties_default() throws URISyntaxException {
-    Cluster cluster = new Cluster("c1", new Stripe(new Node()
+    Cluster cluster = new Cluster("my-cluster", new Stripe(new Node()
+        .setNodeHostname("localhost")
         .setNodeName("my-node")
         .fillDefaults()));
     Properties actual = cluster.toProperties();
+    Cluster rebuilt = ConfigurationParser.parsePropertyConfiguration(identity(), actual);
     Properties expected = fixPaths(new PropertiesFileLoader(Paths.get(getClass().getResource("/config-property-files/c1.properties").toURI())).loadProperties());
-    Cluster rebuilt = new ConfigFileParser(Paths.get("c1.properties"), actual, identity()).createCluster();
     assertThat(actual, is(equalTo(expected)));
     assertThat(rebuilt, is(equalTo(cluster)));
   }
 
   @Test
   public void test_toProperties_map() throws URISyntaxException {
-    Cluster cluster = new Cluster("c2", new Stripe(new Node()
+    Cluster cluster = new Cluster("my-cluster", new Stripe(new Node()
+        .setNodeHostname("localhost")
         .setNodeName("my-node")
         .fillDefaults()
         .setOffheapResource("foo", 1, MemoryUnit.GB)
@@ -201,7 +203,7 @@ public class ClusterTest {
     ));
     Properties actual = cluster.toProperties();
     Properties expected = fixPaths(new PropertiesFileLoader(Paths.get(getClass().getResource("/config-property-files/c2.properties").toURI())).loadProperties());
-    Cluster rebuilt = new ConfigFileParser(Paths.get("c2.properties"), actual, identity()).createCluster();
+    Cluster rebuilt = ConfigurationParser.parsePropertyConfiguration(identity(), actual);
     assertThat(actual, is(equalTo(expected)));
     assertThat(rebuilt, is(equalTo(cluster)));
   }

@@ -4,10 +4,9 @@
  */
 package com.terracottatech.dynamic_config.util;
 
-import com.terracottatech.dynamic_config.model.exception.MalformedConfigFileException;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -24,7 +23,7 @@ public class PropertiesFileLoader {
     try (InputStream in = Files.newInputStream(propertiesFile)) {
       props.load(in);
     } catch (IOException e) {
-      throw new MalformedConfigFileException("Failed to read config file: %s. Make sure the file exists and is readable" + propertiesFile.getFileName(), e);
+      throw new UncheckedIOException("Failed to read config file: %s. Make sure the file exists and is readable" + propertiesFile.getFileName(), e);
     }
     return props;
   }

@@ -8,6 +8,7 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
@@ -41,9 +42,9 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
-      c.apply(operation, cluster);
+      c.apply(operation, cluster, parameterSubstitutor);
     }
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster, parameterSubstitutor).validate();
 
     // get the current state of the nodes
     Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineNodes(cluster);
@@ -89,10 +90,10 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   private void ensureAtLeastActivesAreOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
     List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
-    if (cluster.getStripes().size() != actives.size()) {
+    if (cluster.getStripeCount() != actives.size()) {
       throw new IllegalStateException("Expected 1 active per stripe, but only this nodes are active: " + toString(actives));
     }
-    for (int i = 0; i < cluster.getStripes().size(); i++) {
+    for (int i = 0; i < cluster.getStripeCount(); i++) {
       Stripe stripe = cluster.getStripes().get(i);
       if (stripe.getNodeAddresses().stream().noneMatch(actives::contains)) {
         throw new IllegalStateException("Found no online active node for stripe " + (i + 1) + " in cluster: " + cluster);
@@ -108,7 +109,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   private MultipleNomadChanges getNomadChanges(Cluster cluster) {
     // MultipleNomadChanges will apply to whole change set given by the user as an atomic operation
-    return new MultipleNomadChanges(configurations.stream().map(configuration -> configuration.toSettingNomadChange(operation, cluster)).collect(toList()));
+    return new MultipleNomadChanges(configurations.stream().map(configuration -> configuration.toSettingNomadChange(operation, cluster, parameterSubstitutor)).collect(toList()));
   }
 
   private boolean requiresAllNodesAlive() {

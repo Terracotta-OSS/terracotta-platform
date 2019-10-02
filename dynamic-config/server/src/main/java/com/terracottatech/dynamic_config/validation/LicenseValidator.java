@@ -5,8 +5,8 @@
 package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.License;
-import com.terracottatech.licensing.LicenseConstants;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.licensing.LicenseConstants;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.Validator;
@@ -40,7 +40,7 @@ public class LicenseValidator implements Validator {
           " Provided: " + totalOffHeapInMB + " MB, but license allows: " + licenseOffHeapLimitInMB + " MB only");
     }
 
-    long perStripeOffHeapSizeInMB = licenseOffHeapLimitInMB / cluster.getStripes().size();
+    long perStripeOffHeapSizeInMB = licenseOffHeapLimitInMB / cluster.getStripeCount();
     Optional<Measure<MemoryUnit>> configWithHigherOffheap = cluster.getStripes().stream()
         .flatMap(stripe -> stripe.getNodes().stream())
         .flatMap(node -> node.getOffheapResources().values().stream())

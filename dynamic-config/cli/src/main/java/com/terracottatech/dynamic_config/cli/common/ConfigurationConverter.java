@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.IStringConverter;
-import com.terracottatech.dynamic_config.cli.service.command.Configuration;
+import com.terracottatech.dynamic_config.model.Configuration;
 
 /**
  * @author Mathieu Carbou

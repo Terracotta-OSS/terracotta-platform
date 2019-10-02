@@ -115,7 +115,7 @@ public class NomadBootstrapper {
     public void upgradeForWrite(int stripeId, String nodeName, Cluster expectedCluster) {
       requireNonNull(nodeName);
       if (stripeId < 1) {
-        throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
+        throw new IllegalArgumentException("Stripe Id should be greater than or equal to 1");
       }
 
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()

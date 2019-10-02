@@ -8,19 +8,26 @@ package com.terracottatech.dynamic_config.model;
  * @author Mathieu Carbou
  */
 public enum Operation {
-  GET(false),
-  SET(true),
-  UNSET(false);
 
-  private final boolean valueRequired;
+  /**
+   * <pre>config-tool get</pre> command
+   */
+  GET,
 
-  Operation(boolean valueRequired) {
-    this.valueRequired = valueRequired;
-  }
+  /**
+   * <pre>config-tool set</pre> command
+   */
+  SET,
 
-  public boolean isValueRequired() {
-    return valueRequired;
-  }
+  /**
+   * <pre>config-tool unset</pre> command
+   */
+  UNSET,
+
+  /**
+   * Property config loading
+   */
+  CONFIG;
 
   @Override
   public String toString() {

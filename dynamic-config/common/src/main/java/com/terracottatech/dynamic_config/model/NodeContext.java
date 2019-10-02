@@ -20,6 +20,7 @@ public class NodeContext implements Cloneable {
 
   private final Cluster cluster;
   private final int stripeId;
+  private final int nodeId;
   private final String nodeName;
 
   @JsonCreator
@@ -30,10 +31,11 @@ public class NodeContext implements Cloneable {
     this.stripeId = stripeId;
     this.nodeName = requireNonNull(nodeName);
     if (stripeId < 1) {
-      throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
+      throw new IllegalArgumentException("Stripe Id should be greater than or equal to 1");
     }
     // verify we can find the node
     getNode();
+    this.nodeId = cluster.getStripes().get(stripeId - 1).getNodeId(nodeName).get();
   }
 
   public NodeContext(Cluster cluster, Node node) {
@@ -43,6 +45,7 @@ public class NodeContext implements Cloneable {
     this.nodeName = node.getNodeName();
     // verify we can find the node
     getNode();
+    this.nodeId = cluster.getStripes().get(stripeId - 1).getNodeId(nodeName).get();
   }
 
   public Cluster getCluster() {
@@ -51,6 +54,10 @@ public class NodeContext implements Cloneable {
 
   public int getStripeId() {
     return stripeId;
+  }
+
+  public int getNodeId() {
+    return nodeId;
   }
 
   public String getNodeName() {

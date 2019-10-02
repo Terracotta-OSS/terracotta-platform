@@ -98,6 +98,10 @@ public class ActivateCommandTest extends BaseTest {
 
   @Test
   public void test_cluster_name_discovery() {
+    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
+    when(topologyServiceMock("localhost", 9421).isActivated()).thenReturn(false);
+    when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
+
     ActivateCommand command = command()
         .setConfigPropertiesFile(config);
     command.validate();
@@ -106,10 +110,15 @@ public class ActivateCommandTest extends BaseTest {
 
   @Test
   public void test_cluster_name_override() {
+    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
+    when(topologyServiceMock("localhost", 9421).isActivated()).thenReturn(false);
+    when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
+
     ActivateCommand command = command()
+        .setClusterName("foo")
         .setConfigPropertiesFile(config);
     command.validate();
-    assertThat(command.getClusterName(), is(equalTo("my-cluster")));
+    assertThat(command.getClusterName(), is(equalTo("foo")));
 
   }
 

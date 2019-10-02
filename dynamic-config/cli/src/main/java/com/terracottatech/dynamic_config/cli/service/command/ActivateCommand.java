@@ -12,9 +12,10 @@ import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.model.config.ConfigFileParser;
-import com.terracottatech.dynamic_config.model.validation.ConfigFileFormatValidator;
+import com.terracottatech.dynamic_config.model.config.ConfigurationParser;
+import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
 import com.terracottatech.utilities.Tuple2;
@@ -46,8 +47,8 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(required = true, names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
   private Path licenseFile;
 
-  private ConfigFileParser configFileParser;
   private Cluster cluster;
+  private final IParameterSubstitutor substitutor = identity();
 
   @Override
   public void validate() {
@@ -63,34 +64,39 @@ public class ActivateCommand extends RemoteCommand {
       throw new IllegalArgumentException("Cluster name should be provided when node is specified");
     }
 
-    if (configPropertiesFile != null) {
-      Properties properties = new PropertiesFileLoader(configPropertiesFile).loadProperties();
-      ConfigFileFormatValidator configFileValidator = new ConfigFileFormatValidator(configPropertiesFile, properties);
-      configFileValidator.validate();
-      configFileParser = new ConfigFileParser(configPropertiesFile, properties, identity());
-      if (clusterName == null) {
-        clusterName = configFileParser.getClusterName();
-      }
-    }
-
     assertNonNull(licenseFile, "licenseFile must not be null");
-    assertNonNull(clusterName, "clusterName must not be null");
     assertNonNull(multiDiagnosticServiceProvider, "multiDiagnosticServiceProvider must not be null");
     assertNonNull(nomadManager, "nomadManager must not be null");
     assertNonNull(restartService, "restartService must not be null");
-  }
 
-  @Override
-  public final void run() {
     cluster = loadCluster();
 
-    cluster.setName(clusterName);
+    // check if we want to override the cluster name
+    if (clusterName != null) {
+      if (!clusterName.equals(cluster.getName())) {
+        logger.info("Changing cluster name: {} to: {}", cluster.getName(), clusterName);
+      }
+      cluster.setName(clusterName);
+    } else {
+      clusterName = cluster.getName();
+    }
 
+    if (cluster.getName() == null) {
+      throw new IllegalArgumentException("Cluster name is missing");
+    }
+
+    // validate the topology
+    new ClusterValidator(cluster, substitutor).validate();
+
+    // verify the activated state of the nodes
     boolean isClusterActive = validateActivationState(cluster.getNodeAddresses());
     if (isClusterActive) {
       throw new IllegalStateException("Cluster is already activated");
     }
+  }
 
+  @Override
+  public final void run() {
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
       prepareActivation(diagnosticServices);
       logger.info("License installation successful");
@@ -141,7 +147,8 @@ public class ActivateCommand extends RemoteCommand {
       cluster = getRemoteTopology(node);
       logger.debug("Cluster topology validation successful");
     } else {
-      cluster = configFileParser.createCluster();
+      Properties properties = new PropertiesFileLoader(configPropertiesFile).loadProperties();
+      cluster = ConfigurationParser.parsePropertyConfiguration(substitutor, properties);
       logger.debug("Config property file parsed and cluster topology validation successful");
     }
     return cluster;

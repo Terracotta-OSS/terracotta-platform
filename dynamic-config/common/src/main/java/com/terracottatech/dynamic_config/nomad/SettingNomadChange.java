@@ -36,25 +36,6 @@ public class SettingNomadChange extends FilteredNomadChange {
     this.setting = requireNonNull(setting);
     this.name = name;
     this.value = value;
-
-    // Setting Nomad Change is for unset and set commands after the server is active
-    if (!setting.allowsOperation(operation)) {
-      throw new IllegalArgumentException("Setting " + setting + " does not allow operation " + operation);
-    }
-    if (!setting.allowsScope(applicability.getScope())) {
-      throw new IllegalArgumentException("Setting " + setting + " does not allow scope " + applicability.getScope());
-    }
-    // verify the name parameter which is optional
-    if (!setting.isMap() && name != null) {
-      throw new IllegalArgumentException("Setting " + setting + " is not a map and must not have a key name");
-    }
-    // verify the value parameter
-    if (value == null && operation.isValueRequired()) {
-      throw new IllegalArgumentException("Operation " + operation + " requires a value");
-    }
-    if (value != null && !operation.isValueRequired()) {
-      throw new IllegalArgumentException("Operation " + operation + " does not require a value");
-    }
   }
 
   @Override

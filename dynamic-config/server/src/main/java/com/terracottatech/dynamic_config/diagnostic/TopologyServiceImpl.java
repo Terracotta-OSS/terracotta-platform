@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
 import org.slf4j.Logger;
@@ -37,10 +38,12 @@ public class TopologyServiceImpl implements TopologyService {
   private volatile License license;
   private boolean clusterActivated;
   private final NomadServerManager nomadServerManager;
+  private final IParameterSubstitutor substitutor;
 
-  public TopologyServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager) {
+  public TopologyServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager, IParameterSubstitutor substitutor) {
     this.nodeContext = requireNonNull(nodeContext);
     this.nomadServerManager = requireNonNull(nomadServerManager);
+    this.substitutor = requireNonNull(substitutor);
     if (loadLicense()) {
       validateAgainstLicense();
     }
@@ -93,7 +96,7 @@ public class TopologyServiceImpl implements TopologyService {
       throw new AssertionError("This method cannot be used at runtime when node is activated. Use Nomad instead.");
 
     } else {
-      new ClusterValidator(cluster).validate();
+      new ClusterValidator(cluster, substitutor).validate();
 
       Node oldMe = getThisNode();
       InetSocketAddress myNodeAddress = oldMe.getNodeAddress();

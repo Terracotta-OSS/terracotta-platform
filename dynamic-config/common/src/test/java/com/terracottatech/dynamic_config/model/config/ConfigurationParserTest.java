@@ -7,7 +7,9 @@ package com.terracottatech.dynamic_config.model.config;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.Measure;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,19 +34,25 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-public class ConfigFileParserTest {
+public class ConfigurationParserTest {
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+
+  private final Properties properties = new Properties();
+
   @Test
   public void testClusterName() throws Exception {
     String fileName = "single-stripe.properties";
-    ConfigFileParser configFileParser = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity());
-    assertThat(configFileParser.getClusterName(), is(equalTo("single-stripe")));
+    final Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
+    assertThat(cluster.getName(), is(equalTo("my-cluster")));
   }
 
   @Test
   public void testParse_singleStripe() throws Exception {
     String fileName = "single-stripe.properties";
-    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
-    assertThat(cluster.getStripes().size(), is(1));
+    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
+    assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
@@ -85,8 +93,8 @@ public class ConfigFileParserTest {
   @Test
   public void testParseMinimal_singleStripe() throws Exception {
     String fileName = "single-stripe_minimal.properties";
-    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
-    assertThat(cluster.getStripes().size(), is(1));
+    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
+    assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
@@ -118,10 +126,34 @@ public class ConfigFileParserTest {
   @Test
   public void testParse_multiStripe() throws Exception {
     String fileName = "multi-stripe.properties";
-    Cluster cluster = new ConfigFileParser(Paths.get(fileName), loadProperties(fileName), identity()).createCluster();
-    assertThat(cluster.getStripes().size(), is(2));
+    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
+    assertThat(cluster.getStripeCount(), is(2));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(2));
     assertThat(cluster.getStripes().get(1).getNodes().size(), is(2));
+  }
+
+  @Test
+  public void testInsufficientKeys() {
+    properties.put("one.two.three", "something");
+    testThrowsWithMessage("Invalid input: 'one.two.three=something'.");
+  }
+
+  @Test
+  public void testExtraKeys() {
+    properties.put("stripe.0.node.0.property.foo", "bar");
+    testThrowsWithMessage("Invalid input: 'stripe.0.node.0.property.foo=bar'. Reason: Illegal setting name: property");
+  }
+
+  @Test
+  public void testUnknownNodeProperty() {
+    properties.put("stripe.0.node.0.blah", "something");
+    testThrowsWithMessage("Invalid input: 'stripe.0.node.0.blah=something'. Reason: Illegal setting name: blah");
+  }
+
+  private void testThrowsWithMessage(String message) {
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage(message);
+    ConfigurationParser.parsePropertyConfiguration(identity(), properties);
   }
 
   private Properties loadProperties(String fileName) throws IOException, URISyntaxException {

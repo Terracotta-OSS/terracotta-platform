@@ -37,7 +37,6 @@ public class AttachDetachCommandIT extends BaseStartupIT {
         "--node-hostname", "localhost",
         "--node-port", String.valueOf(ports[i]),
         "--node-log-dir", "logs/stripe1/node-" + (i + 1),
-        "--node-backup-dir", "backup/stripe1",
         "--node-metadata-dir", "metadata/stripe1",
         "--node-repository-dir", "repository/stripe1/node-" + (i + 1),
         "--data-dirs", "main:user-data/main/stripe1"
@@ -54,36 +53,36 @@ public class AttachDetachCommandIT extends BaseStartupIT {
   public void test() {
     int[] ports = this.ports.getPorts();
 
-    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build", "-f", "json");
-    Cluster cluster = Json.parse(Paths.get("build", "my-cluster.json"), Cluster.class);
+    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build/output.json", "-f", "json");
+    Cluster cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
 
     // add a node
     ConfigTool.main("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
-    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build", "-f", "json");
-    cluster = Json.parse(Paths.get("build", "my-cluster.json"), Cluster.class);
+    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build/output.json", "-f", "json");
+    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // add a stripe
     ConfigTool.main("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2], "-s", "localhost:" + ports[3]);
-    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build", "-f", "json");
-    cluster = Json.parse(Paths.get("build", "my-cluster.json"), Cluster.class);
+    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build/output.json", "-f", "json");
+    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getNodeAddresses(), hasSize(4));
 
     // remove the previously added stripe
     ConfigTool.main("detach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
-    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build", "-f", "json");
-    cluster = Json.parse(Paths.get("build", "my-cluster.json"), Cluster.class);
+    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build/output.json", "-f", "json");
+    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // remove the previously added node
     ConfigTool.main("detach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
-    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build", "-f", "json");
-    cluster = Json.parse(Paths.get("build", "my-cluster.json"), Cluster.class);
+    ConfigTool.main("export", "-s", "localhost:" + ports[0], "-d", "build/output.json", "-f", "json");
+    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
   }

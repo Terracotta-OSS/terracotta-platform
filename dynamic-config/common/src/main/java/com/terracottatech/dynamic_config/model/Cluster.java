@@ -16,18 +16,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
-import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_REPOSITORY_DIR;
 import static com.terracottatech.utilities.Tuple2.tuple2;
 import static java.util.Comparator.comparing;
-import static java.util.EnumSet.complementOf;
-import static java.util.EnumSet.of;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
@@ -173,20 +169,27 @@ public class Cluster implements Cloneable {
         .findFirst();
   }
 
-  public Optional<Integer> getStripeId(InetSocketAddress address) {
-    return getStripe(address)
-        .map(stripes::indexOf)
-        .filter(idx -> idx >= 0)
-        .map(idx -> idx + 1);
+  public OptionalInt getStripeId(InetSocketAddress address) {
+    for (int i = 0; i < stripes.size(); i++) {
+      if (stripes.get(i).containsNode(address)) {
+        return OptionalInt.of(i + 1);
+      }
+    }
+    return OptionalInt.empty();
   }
 
-  public Optional<Integer> getStripeId(Node me) {
+  public OptionalInt getStripeId(Node me) {
     return getStripeId(me.getNodeAddress());
   }
 
   @JsonIgnore
   public int getNodeCount() {
     return stripes.stream().mapToInt(Stripe::getNodeCount).sum();
+  }
+
+  @JsonIgnore
+  public int getStripeCount() {
+    return stripes.size();
   }
 
   @JsonIgnore
@@ -200,6 +203,10 @@ public class Cluster implements Cloneable {
 
   public Node getNode(int stripeId, int nodeId) {
     return stripes.get(stripeId - 1).getNodes().get(nodeId - 1);
+  }
+
+  public Stream<NodeContext> nodeContexts() {
+    return stripes.stream().flatMap(s -> s.getNodes().stream()).map(node -> new NodeContext(this, node));
   }
 
   public void forEach(BiConsumer<Integer, Node> consumer) {
@@ -222,8 +229,8 @@ public class Cluster implements Cloneable {
    */
   public Properties toProperties(boolean expanded) {
     // select the settings to output and sort them.
-    List<Setting> settings = complementOf(of(CLUSTER_NAME, LICENSE_FILE, NODE_REPOSITORY_DIR))
-        .stream()
+    List<Setting> settings = Setting.getAll().stream()
+        .filter(setting -> setting.allowsOperation(Operation.CONFIG))
         .sorted(comparing(Setting::toString))
         .collect(toList());
     // iterate over all stripes
@@ -231,14 +238,14 @@ public class Cluster implements Cloneable {
       List<Node> nodes = stripes.get(stripeId - 1).getNodes();
       // iterate over all nodes of this stripe
       return rangeClosed(1, nodes.size()).boxed().flatMap(nodeId -> {
-        Node node = nodes.get(nodeId - 1);
+        NodeContext nodeContext = new NodeContext(this, stripeId, nodes.get(nodeId - 1).getNodeName());
         // for each setting, create the line:
         // stripe.<ids>.node.<idx>.<setting>=<value> or stripe.<ids>.node.<idx>.<setting>.<key>=<value>
         // depending whether we want teh expanded or non expanded form
         return settings.stream()
             .flatMap(setting -> expanded && setting.isMap() ?
-                setting.getExpandedProperties(node).map(property -> tuple2("stripe." + stripeId + ".node." + nodeId + "." + setting + "." + property.t1, property.t2)) :
-                Stream.of(tuple2("stripe." + stripeId + ".node." + nodeId + "." + setting, setting.getPropertyValue(node).orElse(""))));
+                setting.getExpandedProperties(nodeContext).map(property -> tuple2(setting.getConfigPrefix(stripeId, nodeId) + "." + property.t1, property.t2)) :
+                Stream.of(tuple2(setting.getConfigPrefix(stripeId, nodeId), setting.getPropertyValue(nodeContext).orElse(""))));
       });
     }).reduce(new Properties(), (props, tupe) -> {
       // then reducing all these lines into a property object

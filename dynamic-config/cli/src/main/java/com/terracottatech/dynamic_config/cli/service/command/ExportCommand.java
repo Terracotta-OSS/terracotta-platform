@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 @Parameters(commandNames = "export", commandDescription = "Export the cluster topology")
-@Usage("export -s HOST[:PORT] [-d DESTINATION_DIRECTORY]")
+@Usage("export -s HOST[:PORT] [-d DESTINATION_FILE]")
 public class ExportCommand extends RemoteCommand {
 
   public enum Format {JSON, PROPERTIES}
@@ -34,15 +34,15 @@ public class ExportCommand extends RemoteCommand {
   private InetSocketAddress node;
 
   @Parameter(names = {"-d"}, description = "Destination directory", converter = PathConverter.class)
-  private Path outputDir;
+  private Path outputFile;
 
   @Parameter(names = {"-f"}, hidden = true, description = "Output format", converter = FormatConverter.class)
   private Format format = Format.PROPERTIES;
 
   @Override
   public void validate() {
-    if (outputDir != null && Files.exists(outputDir) && !Files.isDirectory(outputDir)) {
-      throw new IllegalArgumentException(outputDir + " is not a directory");
+    if (outputFile != null && Files.exists(outputFile) && !Files.isRegularFile(outputFile)) {
+      throw new IllegalArgumentException(outputFile + " is not a file");
     }
   }
 
@@ -51,21 +51,23 @@ public class ExportCommand extends RemoteCommand {
     Cluster cluster = getRemoteTopology(node);
     String output = buildOutput(cluster, format);
 
-    if (outputDir == null) {
-      logger.info("{}", output);
-    } else {
-      String clusterName = cluster.getName() == null ? "default-cluster" : cluster.getName();
-      try {
-        if (!Files.exists(outputDir)) {
-          Files.createDirectories(outputDir);
-        }
+    if (outputFile == null) {
+      // \n to make sure the content is outputted in one block without any logging prefixes ofr the first line
+      logger.info("\n{}", output);
 
-        Path file = outputDir.resolve(clusterName + "." + format.name().toLowerCase());
-        if (Files.exists(file)) {
-          logger.warn(file + " already exists. Replacing this file.");
+    } else {
+      try {
+        if (Files.exists(outputFile)) {
+          logger.warn(outputFile + " already exists. Replacing this file.");
+        } else {
+          // try to create the parent directories
+          Path dir = outputFile.toAbsolutePath().getParent();
+          if (dir != null) {
+            Files.createDirectories(dir);
+          }
         }
-        Files.write(file, output.getBytes(StandardCharsets.UTF_8));
-        logger.info("Output saved to: {}\n", file);
+        Files.write(outputFile, output.getBytes(StandardCharsets.UTF_8));
+        logger.info("Output saved to: {}\n", outputFile);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
