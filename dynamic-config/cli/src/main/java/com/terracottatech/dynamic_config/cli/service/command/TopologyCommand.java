@@ -85,7 +85,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       // get the target node / cluster
       NodeContext dest = diagnosticServices.getDiagnosticService(destination)
           .map(ds -> ds.getProxy(TopologyService.class))
-          .map(TopologyService::getNodeContext)
+          .map(TopologyService::getThisNodeContext)
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
@@ -107,7 +107,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       // If a node has been removed, then it will make itself alone on its own cluster and will have no more links to the previous nodes
       // This is done in the TopologyService#setCluster() method
       logger.info("Pushing the updated topology to all the nodes: {}.", toString(addresses));
-      topologyServices(diagnosticServices)
+      dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(ts -> ts.setCluster(result));
     }

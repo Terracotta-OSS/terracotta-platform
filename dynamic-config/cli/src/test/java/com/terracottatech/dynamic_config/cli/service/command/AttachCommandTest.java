@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
@@ -77,7 +77,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     when(topologyServiceMock("localhost", 9410).getCluster()).thenReturn(cluster);
 
     // mock destination node information retrieval
-    when(topologyServiceMock(node0.getNodeAddress()).getNodeContext()).thenReturn(new NodeContext(cluster, node0));
+    when(topologyServiceMock(node0.getNodeAddress()).getThisNodeContext()).thenReturn(new NodeContext(cluster, node0));
 
     // mock source node information retrieval
     when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(node1);
@@ -86,9 +86,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_nodes_to_stripe() {
-    TopologyService topologyService10 = topologyServiceMock("localhost", 9410);
-    TopologyService topologyService11 = topologyServiceMock("localhost", 9411);
-    TopologyService topologyService12 = topologyServiceMock("localhost", 9412);
+    DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
+    DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
+    DynamicConfigService mock12 = dynamicConfigServiceMock("localhost", 9412);
 
     newCommand()
         .setType(TopologyCommand.Type.NODE)
@@ -97,9 +97,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(topologyService10).setCluster(newCluster.capture());
-    verify(topologyService11).setCluster(newCluster.capture());
-    verify(topologyService12).setCluster(newCluster.capture());
+    verify(mock10).setCluster(newCluster.capture());
+    verify(mock11).setCluster(newCluster.capture());
+    verify(mock12).setCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(3));
@@ -114,9 +114,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe() {
-    TopologyService topologyService10 = topologyServiceMock("localhost", 9410);
-    TopologyService topologyService11 = topologyServiceMock("localhost", 9411);
-    TopologyService topologyService12 = topologyServiceMock("localhost", 9412);
+    DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
+    DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
+    DynamicConfigService mock12 = dynamicConfigServiceMock("localhost", 9412);
 
     newCommand()
         .setType(TopologyCommand.Type.STRIPE)
@@ -125,9 +125,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(topologyService10).setCluster(newCluster.capture());
-    verify(topologyService11).setCluster(newCluster.capture());
-    verify(topologyService12).setCluster(newCluster.capture());
+    verify(mock10).setCluster(newCluster.capture());
+    verify(mock11).setCluster(newCluster.capture());
+    verify(mock12).setCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(3));

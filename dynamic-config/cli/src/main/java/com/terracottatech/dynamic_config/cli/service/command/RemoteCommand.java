@@ -13,6 +13,7 @@ import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscover
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
@@ -152,7 +153,7 @@ public abstract class RemoteCommand extends Command {
       throw new UncheckedIOException(e);
     }
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
-      topologyServices(diagnosticServices)
+      dynamicConfigServices(diagnosticServices)
           .map(tuple -> {
             try {
               tuple.t2.upgradeLicense(xml);
@@ -175,6 +176,10 @@ public abstract class RemoteCommand extends Command {
 
   protected static Stream<Tuple2<InetSocketAddress, TopologyService>> topologyServices(DiagnosticServices diagnosticServices) {
     return diagnosticServices.map((address, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
+  }
+
+  protected static Stream<Tuple2<InetSocketAddress, DynamicConfigService>> dynamicConfigServices(DiagnosticServices diagnosticServices) {
+    return diagnosticServices.map((address, diagnosticService) -> diagnosticService.getProxy(DynamicConfigService.class));
   }
 
   protected static String toString(Collection<InetSocketAddress> addresses) {

@@ -6,8 +6,9 @@ package com.terracottatech.dynamic_config.startup;
 
 import com.tc.server.TCServerMain;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigServiceImpl;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
-import com.terracottatech.dynamic_config.diagnostic.TopologyServiceImpl;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
@@ -70,10 +71,10 @@ public class StartupManager {
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
     logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir.toAbsolutePath()));
     NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeRepositoryDir, nodeName, parameterSubstitutor);
-    TopologyServiceImpl topologyService = registerTopologyService(new NodeContext(cluster, node), nomadServerManager);
-    topologyService.prepareActivation(cluster, read(licenseFile));
+    DynamicConfigServiceImpl dynamicConfigService = registerTopologyService(new NodeContext(cluster, node), nomadServerManager);
+    dynamicConfigService.prepareActivation(cluster, read(licenseFile));
     runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);
-    topologyService.activated();
+    dynamicConfigService.activated();
     startServer(
         "-r", nodeRepositoryDir.toString(),
         "-n", nodeName,
@@ -85,9 +86,9 @@ public class StartupManager {
     logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(repositoryDir));
     NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(repositoryDir, nodeName, parameterSubstitutor);
     NodeContext nodeContext = nomadServerManager.getConfiguration();
-    TopologyServiceImpl topologyService = registerTopologyService(nodeContext, nomadServerManager);
-    topologyService.upgradeNomadForWrite();
-    topologyService.activated();
+    DynamicConfigServiceImpl dynamicConfigService = registerTopologyService(nodeContext, nomadServerManager);
+    dynamicConfigService.upgradeNomadForWrite();
+    dynamicConfigService.activated();
 
     startServer(
         "-r", repositoryDir.toString(),
@@ -148,10 +149,11 @@ public class StartupManager {
     return NomadRepositoryManager.findNodeName(repositoryDir);
   }
 
-  private TopologyServiceImpl registerTopologyService(NodeContext nodeContext, NomadServerManager nomadServerManager) {
+  private DynamicConfigServiceImpl registerTopologyService(NodeContext nodeContext, NomadServerManager nomadServerManager) {
     logger.info("Registering TopologyService with DiagnosticServices");
-    TopologyServiceImpl topologyService = new TopologyServiceImpl(nodeContext, nomadServerManager, parameterSubstitutor);
+    DynamicConfigServiceImpl topologyService = new DynamicConfigServiceImpl(nodeContext, nomadServerManager, parameterSubstitutor);
     DiagnosticServices.register(TopologyService.class, topologyService);
+    DiagnosticServices.register(DynamicConfigService.class, topologyService);
     return topologyService;
   }
 

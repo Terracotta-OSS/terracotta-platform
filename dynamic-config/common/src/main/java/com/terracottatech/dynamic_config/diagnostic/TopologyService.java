@@ -17,7 +17,10 @@ import java.util.Optional;
  */
 public interface TopologyService {
 
-  NodeContext getNodeContext();
+  /***
+   * Returns the information about this node, stripe, and containing cluster topology
+   */
+  NodeContext getThisNodeContext();
 
   /**
    * @return this node's Object representation
@@ -28,11 +31,6 @@ public interface TopologyService {
    * @return this node's host-port
    */
   InetSocketAddress getThisNodeAddress();
-
-  /**
-   * Restarts this node by invoking the appropriate platform APIs. Useful when a node needs to be restarted after activation.
-   */
-  void restart();
 
   /**
    * Returns the in-memory cluster for this node. Once the node is activated, it returns the cluster equivalent of the
@@ -48,26 +46,7 @@ public interface TopologyService {
   boolean isActivated();
 
   /**
-   * Changes the in-memory cluster to a new one for this node while it is still not activated
+   * Get the current installed license information if any
    */
-  void setCluster(Cluster cluster);
-
-  /**
-   * Activates the Nomad system so that we can write a first config repository version. This requires the topology to set plus the license installed
-   */
-  void prepareActivation(Cluster validatedTopology, String licenseContent);
-
-  /**
-   * Validate and install a new license over an existing one
-   *
-   * @param licenseContent license file content
-   */
-  void upgradeLicense(String licenseContent);
-
   Optional<License> getLicense();
-
-  /**
-   * Validate a cluster model against the license installed in the node
-   */
-  void validateAgainstLicense(Cluster cluster);
 }

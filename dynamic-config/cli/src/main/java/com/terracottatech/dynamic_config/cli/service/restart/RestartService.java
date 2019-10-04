@@ -9,7 +9,7 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProviderException;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
@@ -61,7 +61,7 @@ public class RestartService {
         .map(addr -> CompletableFuture.runAsync(() -> {
           LOGGER.debug("Asking node {} to restart", addr);
           try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
-            diagnosticService.getProxy(TopologyService.class).restart();
+            diagnosticService.getProxy(DynamicConfigService.class).restart();
           } catch (DiagnosticOperationTimeoutException e) {
             // This operation times out (DiagnosticOperationTimeoutException) because the nodes have shut down. All good.
           } catch (Exception e) {

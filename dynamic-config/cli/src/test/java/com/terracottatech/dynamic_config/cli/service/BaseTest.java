@@ -14,6 +14,7 @@ import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscover
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.NomadEnvironment;
@@ -26,8 +27,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Mathieu Carbou
@@ -41,26 +43,28 @@ public abstract class BaseTest {
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-
-  private final Cache<InetSocketAddress, DiagnosticService> diagnosticServices = Cache.<InetSocketAddress, DiagnosticService>create()
-      .withLoader(addr -> mock(DiagnosticService.class, addr.toString()))
-      .build();
+  protected long timeoutMillis = 2_000;
 
   private final Cache<InetSocketAddress, TopologyService> topologyServices = Cache.<InetSocketAddress, TopologyService>create()
-      .withLoader(addr -> {
-        TopologyService topologyService = mock(TopologyService.class, addr.toString());
-        DiagnosticService diagnosticService = diagnosticServices.get(addr);
-        when(diagnosticService.getProxy(TopologyService.class)).thenReturn(topologyService);
-        return topologyService;
-      })
+      .withLoader(addr -> mock(TopologyService.class, addr.toString()))
       .build();
 
+  private final Cache<InetSocketAddress, DynamicConfigService> dynamicConfigServices = Cache.<InetSocketAddress, DynamicConfigService>create()
+      .withLoader(addr -> mock(DynamicConfigService.class, addr.toString()))
+      .build();
+
+  @SuppressWarnings("unchecked")
   private final Cache<InetSocketAddress, NomadServer<NodeContext>> nomadServers = Cache.<InetSocketAddress, NomadServer<NodeContext>>create()
+      .withLoader(addr -> mock(NomadServer.class, addr.toString()))
+      .build();
+
+  private final Cache<InetSocketAddress, DiagnosticService> diagnosticServices = Cache.<InetSocketAddress, DiagnosticService>create()
       .withLoader(addr -> {
-        @SuppressWarnings("unchecked") NomadServer<NodeContext> nomadServer = mock(NomadServer.class, addr.toString());
-        DiagnosticService diagnosticService = diagnosticServices.get(addr);
-        when(diagnosticService.getProxy(NomadServer.class)).thenReturn(nomadServer);
-        return nomadServer;
+        final DiagnosticService diagnosticService = mock(DiagnosticService.class, addr.toString());
+        lenient().when(diagnosticService.getProxy(TopologyService.class)).thenAnswer(invocation -> topologyServices.get(addr));
+        lenient().when(diagnosticService.getProxy(DynamicConfigService.class)).thenAnswer(invocation -> dynamicConfigServices.get(addr));
+        lenient().when(diagnosticService.getProxy(NomadServer.class)).thenAnswer(invocation -> nomadServers.get(addr));
+        return diagnosticService;
       })
       .build();
 
@@ -89,6 +93,14 @@ public abstract class BaseTest {
 
   protected TopologyService topologyServiceMock(String host, int port) {
     return topologyServiceMock(InetSocketAddress.createUnresolved(host, port));
+  }
+
+  protected DynamicConfigService dynamicConfigServiceMock(InetSocketAddress address) {
+    return dynamicConfigServices.get(address);
+  }
+
+  protected DynamicConfigService dynamicConfigServiceMock(String host, int port) {
+    return dynamicConfigServiceMock(InetSocketAddress.createUnresolved(host, port));
   }
 
   protected NomadServer<NodeContext> nomadServerMock(String host, int port) {

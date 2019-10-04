@@ -30,8 +30,8 @@ import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-public class TopologyServiceImpl implements TopologyService {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TopologyServiceImpl.class);
+public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
   private volatile NodeContext nodeContext;
@@ -40,7 +40,7 @@ public class TopologyServiceImpl implements TopologyService {
   private final NomadServerManager nomadServerManager;
   private final IParameterSubstitutor substitutor;
 
-  public TopologyServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager, IParameterSubstitutor substitutor) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager, IParameterSubstitutor substitutor) {
     this.nodeContext = requireNonNull(nodeContext);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.substitutor = requireNonNull(substitutor);
@@ -63,7 +63,7 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public NodeContext getNodeContext() {
+  public NodeContext getThisNodeContext() {
     return nodeContext;
   }
 

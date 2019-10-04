@@ -159,7 +159,9 @@ public class ActivateCommand extends RemoteCommand {
   }
 
   private void prepareActivation(DiagnosticServices diagnosticServices) {
-    topologyServices(diagnosticServices).map(Tuple2::getT2).forEach(ts -> ts.prepareActivation(cluster, read(licenseFile)));
+    dynamicConfigServices(diagnosticServices)
+        .map(Tuple2::getT2)
+        .forEach(service -> service.prepareActivation(cluster, read(licenseFile)));
   }
 
   private void runNomadChange() {

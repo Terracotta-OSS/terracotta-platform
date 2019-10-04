@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
@@ -56,7 +56,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     if (isActive) {
       logger.debug("Validating the new configuration change(s) against the license");
       try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-        diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(updatedCluster);
+        diagnosticService.getProxy(DynamicConfigService.class).validateAgainstLicense(updatedCluster);
       }
     }
 
@@ -82,9 +82,9 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // cluster is not active, we just need to replace the topology
       logger.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodesAddresses));
       try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(onlineNodesAddresses)) {
-        topologyServices(diagnosticServices)
+        dynamicConfigServices(diagnosticServices)
             .map(Tuple2::getT2)
-            .forEach(topologyService -> topologyService.setCluster(updatedCluster));
+            .forEach(dynamicConfigService -> dynamicConfigService.setCluster(updatedCluster));
       }
     }
 

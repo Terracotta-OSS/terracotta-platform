@@ -76,7 +76,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     when(topologyServiceMock("localhost", 9410).getCluster()).thenReturn(cluster);
 
     // mock destination node information retrieval
-    when(topologyServiceMock(node0.getNodeAddress()).getNodeContext()).thenReturn(new NodeContext(cluster, node0));
+    when(topologyServiceMock(node0.getNodeAddress()).getThisNodeContext()).thenReturn(new NodeContext(cluster, node0));
 
     // mock source node information retrieval
     when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(node1);
@@ -92,7 +92,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(topologyServiceMock("localhost", 9410)).setCluster(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9410)).setCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
@@ -113,7 +113,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(topologyServiceMock("localhost", 9410)).setCluster(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9410)).setCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));

@@ -177,7 +177,7 @@ public class ActivateCommandTest extends BaseTest {
             " - Prepare rejected for server localhost:9422. Reason: error")))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -214,7 +214,7 @@ public class ActivateCommandTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -274,8 +274,8 @@ public class ActivateCommandTest extends BaseTest {
     command.run();
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
-      verify(topologyServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
       verify(nomadServerMock("localhost", port), times(2)).discover();
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     }));

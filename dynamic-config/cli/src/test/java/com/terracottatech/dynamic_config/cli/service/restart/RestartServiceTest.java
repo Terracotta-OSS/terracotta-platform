@@ -8,7 +8,7 @@ import com.terracottatech.diagnostic.client.DiagnosticOperationTimeoutException;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.utilities.Tuple2;
@@ -81,7 +81,7 @@ public class RestartServiceTest extends BaseTest {
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     });
   }
@@ -91,15 +91,15 @@ public class RestartServiceTest extends BaseTest {
     mockSuccessfulServerRestart();
 
     IntStream.of(PORTS).forEach(port -> {
-      TopologyService mock = topologyServiceMock("localhost", port);
-      doThrow(new DiagnosticOperationTimeoutException("")).when(mock).restart();
+      DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
+      doThrow(new DiagnosticOperationTimeoutException("")).when(dynamicConfigService).restart();
     });
 
     Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     });
   }
@@ -107,8 +107,8 @@ public class RestartServiceTest extends BaseTest {
   @Test
   public void test_restart_call_fails() throws InterruptedException {
     IntStream.of(PORTS).forEach(port -> {
-      TopologyService mock = topologyServiceMock("localhost", port);
-      doThrow(new RuntimeException("error")).when(mock).restart();
+      DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
+      doThrow(new RuntimeException("error")).when(dynamicConfigService).restart();
     });
 
     Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
@@ -123,7 +123,7 @@ public class RestartServiceTest extends BaseTest {
     ));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
       verify(diagnosticServiceMock("localhost", port), times(0)).getLogicalServerState();
     });
   }
@@ -141,7 +141,7 @@ public class RestartServiceTest extends BaseTest {
     ));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
       verify(diagnosticServiceMock("localhost", port), atLeast(1)).getLogicalServerState();
     });
   }
@@ -167,7 +167,7 @@ public class RestartServiceTest extends BaseTest {
     ));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(topologyServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
       verify(diagnosticServiceMock("localhost", port), atLeast(1)).getLogicalServerState();
     });
   }
@@ -188,8 +188,8 @@ public class RestartServiceTest extends BaseTest {
     when(diagnosticService23.getLogicalServerState()).thenReturn(PASSIVE);
 
     IntStream.of(PORTS).forEach(port -> {
-      TopologyService topologyService = topologyServiceMock("localhost", port);
-      doNothing().when(topologyService).restart();
+      DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
+      doNothing().when(dynamicConfigService).restart();
     });
   }
 
