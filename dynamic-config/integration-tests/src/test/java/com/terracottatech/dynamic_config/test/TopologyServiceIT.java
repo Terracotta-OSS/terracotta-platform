@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Paths;
+import java.time.Duration;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
 import static com.terracottatech.utilities.MemoryUnit.MB;
@@ -42,9 +43,10 @@ public class TopologyServiceIT extends BaseStartupIT {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         getServerAddress(),
         getClass().getSimpleName(),
-        5, SECONDS,
-        5, SECONDS,
-        null)) {
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(5),
+        null)
+    ) {
 
       TopologyService proxy = diagnosticService.getProxy(TopologyService.class);
       Cluster pendingCluster = proxy.getCluster();

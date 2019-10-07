@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -92,7 +93,7 @@ public class NomadClientFactoryTest {
 
   @Test
   public void createClient() throws NomadException {
-    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, 2_000);
+    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, Duration.ofSeconds(2));
     CloseableNomadClient<String> client = factory.createClient(hostPortList);
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
 
@@ -106,7 +107,7 @@ public class NomadClientFactoryTest {
 
   @Test
   public void close() {
-    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, 2_000);
+    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, Duration.ofSeconds(2));
     CloseableNomadClient<String> client = factory.createClient(hostPortList);
 
     verify(diagnosticServices, never()).close();

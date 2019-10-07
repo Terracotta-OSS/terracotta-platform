@@ -52,7 +52,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.nio.file.Files.walkFileTree;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
@@ -71,7 +70,7 @@ public class BaseStartupIT {
   private static final int NODES_PER_STRIPE = 2;
 
   static final boolean CI = System.getProperty("JOB_NAME") != null;
-  static final int TIMEOUT = !CI ? 20_000 : 30_000;
+  static final int TIMEOUT = !CI ? 20 : 30;
   static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
@@ -148,7 +147,7 @@ public class BaseStartupIT {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
         .pollInterval(FIVE_HUNDRED_MILLISECONDS)
-        .atMost(new Duration(TIMEOUT, TimeUnit.MILLISECONDS))
+        .atMost(new Duration(TIMEOUT, TimeUnit.SECONDS))
         .until(callable, matcher);
   }
 
@@ -167,8 +166,8 @@ public class BaseStartupIT {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
-        5, SECONDS,
-        5, SECONDS,
+        java.time.Duration.ofSeconds(5),
+        java.time.Duration.ofSeconds(5),
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getCluster();
     }

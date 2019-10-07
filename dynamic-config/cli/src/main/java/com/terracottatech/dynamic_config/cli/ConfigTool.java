@@ -24,13 +24,13 @@ import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.NomadEnvironment;
+import com.terracottatech.utilities.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
@@ -80,13 +80,16 @@ public class ConfigTool {
     // Process arguments like '-v'
     MAIN.run();
 
-    // create services
     ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", MAIN.getConnectionTimeoutMillis(), MILLISECONDS, MAIN.getRequestTimeoutMillis(), MILLISECONDS, MAIN.getSecurityRootDirectory());
-    MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, MAIN.getConnectionTimeoutMillis(), MILLISECONDS, concurrencySizing);
+    Duration connectionTimeout = Duration.ofMillis(MAIN.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    Duration requestTimeout = Duration.ofMillis(MAIN.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
+
+    // create services
+    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
+    MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
     NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
-    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), MAIN.getRequestTimeoutMillis()), MAIN.isVerbose());
-    RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, MAIN.getRequestTimeoutMillis());
+    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), requestTimeout), MAIN.isVerbose());
+    RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, requestTimeout);
 
     LOGGER.debug("Injecting services in CommandRepository");
     commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nodeAddressDiscovery, nomadManager, restartService);

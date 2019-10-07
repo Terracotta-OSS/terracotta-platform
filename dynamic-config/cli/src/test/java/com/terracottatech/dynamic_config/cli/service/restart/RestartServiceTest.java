@@ -18,6 +18,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -50,25 +51,25 @@ public class RestartServiceTest extends BaseTest {
 
   private static final int[] PORTS = {9411, 9412, 9413, 9421, 9422, 9423};
 
-  RestartService restartService;
-  Cluster cluster;
+  private RestartService restartService;
+  private Cluster cluster;
 
   @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing(), 2_000);
+    restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing(), Duration.ofSeconds(2));
     cluster = new Cluster(
         "my-cluster",
         new Stripe(
-            newDefaultNode("node1", "localhost", 9411),
-            newDefaultNode("node2", "localhost", 9412),
-            newDefaultNode("node3", "localhost", 9413)
+            newDefaultNode("node1", "localhost", PORTS[0]),
+            newDefaultNode("node2", "localhost", PORTS[1]),
+            newDefaultNode("node3", "localhost", PORTS[2])
         ),
         new Stripe(
-            newDefaultNode("node1", "localhost", 9421),
-            newDefaultNode("node2", "localhost", 9422),
-            newDefaultNode("node3", "localhost", 9423)
+            newDefaultNode("node1", "localhost", PORTS[3]),
+            newDefaultNode("node2", "localhost", PORTS[4]),
+            newDefaultNode("node3", "localhost", PORTS[5])
         ));
   }
 

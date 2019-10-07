@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.lease.connection.TimeBudget;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -42,12 +43,12 @@ public class RestartService {
 
   private final DiagnosticServiceProvider diagnosticServiceProvider;
   private final ConcurrencySizing concurrencySizing;
-  private final long requestTimeoutMillis;
+  private final Duration requestTimeout;
 
-  public RestartService(DiagnosticServiceProvider diagnosticServiceProvider, ConcurrencySizing concurrencySizing, long requestTimeoutMillis) {
+  public RestartService(DiagnosticServiceProvider diagnosticServiceProvider, ConcurrencySizing concurrencySizing, Duration requestTimeout) {
     this.diagnosticServiceProvider = diagnosticServiceProvider;
     this.concurrencySizing = concurrencySizing;
-    this.requestTimeoutMillis = requestTimeoutMillis;
+    this.requestTimeout = requestTimeout;
   }
 
   public RestartProgress restartNodes(Collection<InetSocketAddress> addresses) {
@@ -99,7 +100,7 @@ public class RestartService {
       } finally {
         executor.shutdownNow();
         try {
-          executor.awaitTermination(requestTimeoutMillis, MILLISECONDS);
+          executor.awaitTermination(requestTimeout.toMillis(), MILLISECONDS);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         }
@@ -109,13 +110,13 @@ public class RestartService {
 
   private void awaitRestart(InetSocketAddress addr) throws TimeoutException {
     LOGGER.debug("Waiting for node {} to restart", addr);
-    TimeBudget timeBudget = new TimeBudget(requestTimeoutMillis, MILLISECONDS);
+    TimeBudget timeBudget = new TimeBudget(requestTimeout.toMillis(), MILLISECONDS);
     boolean restarted = false;
     while (!restarted && timeBudget.remaining(MILLISECONDS) > 0) {
       restarted = nodeRestarted(addr);
     }
     if (!restarted) {
-      throw new TimeoutException("Waiting for node " + addr + " to restart timed out after " + requestTimeoutMillis + "ms");
+      throw new TimeoutException("Waiting for node " + addr + " to restart timed out after " + requestTimeout.toMillis() + "ms");
     }
   }
 

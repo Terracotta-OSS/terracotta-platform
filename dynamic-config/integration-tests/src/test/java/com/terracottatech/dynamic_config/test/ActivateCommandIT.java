@@ -120,7 +120,7 @@ public class ActivateCommandIT extends BaseStartupIT {
   public void testMultiNodeSingleStripeActivationWithConfigFile() throws Exception {
     int[] ports = this.ports.getPorts();
     ConfigTool.main(
-        "-r", String.valueOf(TIMEOUT),
+        "-r", TIMEOUT + "s",
         "activate",
         "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString(),
         "-l", licensePath().toString()
@@ -158,7 +158,7 @@ public class ActivateCommandIT extends BaseStartupIT {
   public void testMultiStripeActivationWithConfigFile() throws Exception {
     int[] ports = this.ports.getPorts();
     ConfigTool.main(
-        "-r", String.valueOf(TIMEOUT),
+        "-r", TIMEOUT + "s",
         "activate",
         "-f", copyConfigProperty("/config-property-files/multi-stripe.properties").toString(),
         "-l", licensePath().toString()

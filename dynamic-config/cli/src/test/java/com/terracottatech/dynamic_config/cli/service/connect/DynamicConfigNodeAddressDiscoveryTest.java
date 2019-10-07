@@ -15,9 +15,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -34,9 +34,10 @@ public class DynamicConfigNodeAddressDiscoveryTest {
 
   @Test
   public void test_discover() {
-    DynamicConfigNodeAddressDiscovery discovery = new DynamicConfigNodeAddressDiscovery(new DiagnosticServiceProvider("foo", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS, null) {
+    Duration timeout = Duration.ofSeconds(1);
+    DynamicConfigNodeAddressDiscovery discovery = new DynamicConfigNodeAddressDiscovery(new DiagnosticServiceProvider("foo", timeout, timeout, null) {
       @Override
-      public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
+      public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
         return diagnosticService;
       }
     });

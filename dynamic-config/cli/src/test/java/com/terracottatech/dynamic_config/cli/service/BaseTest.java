@@ -24,9 +24,8 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +41,6 @@ public abstract class BaseTest {
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-  protected long timeoutMillis = 2_000;
 
   private final Cache<InetSocketAddress, DiagnosticService> diagnosticServices = Cache.<InetSocketAddress, DiagnosticService>create()
       .withLoader(addr -> mock(DiagnosticService.class, addr.toString()))
@@ -68,16 +66,17 @@ public abstract class BaseTest {
 
   @Before
   public void setUp() throws Exception {
-    diagnosticServiceProvider = new DiagnosticServiceProvider(getClass().getSimpleName(), 5, TimeUnit.SECONDS, 5, TimeUnit.SECONDS, null) {
+    Duration timeout = Duration.ofSeconds(2);
+    diagnosticServiceProvider = new DiagnosticServiceProvider(getClass().getSimpleName(), timeout, timeout, null) {
       @Override
-      public DiagnosticService fetchDiagnosticService(InetSocketAddress address, long connectTimeout, TimeUnit connectTimeUnit) {
+      public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
         return diagnosticServices.get(address);
       }
     };
     nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
-    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeoutMillis, MILLISECONDS, new ConcurrencySizing());
-    nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), timeoutMillis), false);
-    restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeoutMillis);
+    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
+    nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), timeout), false);
+    restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeout);
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {
