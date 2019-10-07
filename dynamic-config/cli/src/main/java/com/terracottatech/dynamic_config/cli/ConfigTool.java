@@ -50,7 +50,7 @@ public class ConfigTool {
           LOGGER.error(errorMessage);
         }
       } else {
-        LOGGER.error("Internal error: {}}", e.getClass().getName(), e);
+        LOGGER.error("Internal error: {}", e.getClass().getName(), e);
       }
       System.exit(1);
     }

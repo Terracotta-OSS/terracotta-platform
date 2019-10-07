@@ -221,13 +221,13 @@ public class Cluster implements Cloneable {
    * Transform this model into a config file
    */
   public Properties toProperties() {
-    return toProperties(false);
+    return toProperties(false, true);
   }
 
   /**
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
-  public Properties toProperties(boolean expanded) {
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
     // select the settings to output and sort them.
     List<Setting> settings = Setting.getAll().stream()
         .filter(setting -> setting.allowsOperation(Operation.CONFIG))
@@ -243,9 +243,15 @@ public class Cluster implements Cloneable {
         // stripe.<ids>.node.<idx>.<setting>=<value> or stripe.<ids>.node.<idx>.<setting>.<key>=<value>
         // depending whether we want teh expanded or non expanded form
         return settings.stream()
-            .flatMap(setting -> expanded && setting.isMap() ?
-                setting.getExpandedProperties(nodeContext).map(property -> tuple2(setting.getConfigPrefix(stripeId, nodeId) + "." + property.t1, property.t2)) :
-                Stream.of(tuple2(setting.getConfigPrefix(stripeId, nodeId), setting.getPropertyValue(nodeContext).orElse(""))));
+            .flatMap(setting -> {
+              final String currentValue = setting.getPropertyValue(nodeContext).orElse(null);
+              final String defaultValue = setting.getDefaultValue();
+              return (!includeDefaultValues && Objects.equals(defaultValue, currentValue)) ?
+                  Stream.empty() :
+                  expanded && setting.isMap() ?
+                      setting.getExpandedProperties(nodeContext).map(property -> tuple2(setting.getConfigPrefix(stripeId, nodeId) + "." + property.t1, property.t2)) :
+                      Stream.of(tuple2(setting.getConfigPrefix(stripeId, nodeId), currentValue == null ? "" : currentValue));
+            });
       });
     }).reduce(new Properties(), (props, tupe) -> {
       // then reducing all these lines into a property object

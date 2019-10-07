@@ -220,7 +220,7 @@ public class ClusterTest {
         .setTcProperty("server.entity.processor.threads", "64")
         .setTcProperty("topology.validate", "true")
     ));
-    Properties actual = cluster.toProperties(true);
+    Properties actual = cluster.toProperties(true, true);
     Properties expected = fixPaths(new PropertiesFileLoader(Paths.get(getClass().getResource("/config-property-files/c3.properties").toURI())).loadProperties());
     assertThat(actual, is(equalTo(expected)));
   }

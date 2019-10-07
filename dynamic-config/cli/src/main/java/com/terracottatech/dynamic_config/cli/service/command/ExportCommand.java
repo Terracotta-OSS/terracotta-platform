@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +14,7 @@ import com.terracottatech.dynamic_config.cli.common.FormatConverter;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.util.PropertiesWriter;
 import com.terracottatech.utilities.Json;
 
 import java.io.IOException;
@@ -25,7 +27,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 @Parameters(commandNames = "export", commandDescription = "Export the cluster topology")
-@Usage("export -s HOST[:PORT] [-d DESTINATION_FILE]")
+@Usage("export -s HOST[:PORT] [-d DESTINATION_FILE] [-i]")
 public class ExportCommand extends RemoteCommand {
 
   public enum Format {JSON, PROPERTIES}
@@ -35,6 +37,9 @@ public class ExportCommand extends RemoteCommand {
 
   @Parameter(names = {"-d"}, description = "Destination directory", converter = PathConverter.class)
   private Path outputFile;
+
+  @Parameter(names = {"-i"}, description = "Ignore default values", converter = BooleanConverter.class)
+  private boolean ignoreDefaultValues;
 
   @Parameter(names = {"-f"}, hidden = true, description = "Output format", converter = FormatConverter.class)
   private Format format = Format.PROPERTIES;
@@ -87,10 +92,16 @@ public class ExportCommand extends RemoteCommand {
           throw new AssertionError(format);
         }
       case PROPERTIES:
-        Properties properties = cluster.toProperties();
-        try (StringWriter writer = new StringWriter()) {
-          properties.store(writer, null);
-          return writer.toString();
+        Properties nonDefaults = cluster.toProperties(false, false);
+        try (StringWriter out = new StringWriter()) {
+          PropertiesWriter.store(out, nonDefaults, "Non-default configurations:");
+          if (!this.ignoreDefaultValues) {
+            Properties defaults = cluster.toProperties(false, true);
+            defaults.keySet().removeAll(nonDefaults.keySet());
+            out.write(System.lineSeparator());
+            PropertiesWriter.store(out, defaults, "Default configurations:");
+          }
+          return out.toString();
         } catch (IOException e) {
           throw new UncheckedIOException(e);
         }

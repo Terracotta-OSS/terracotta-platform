@@ -27,8 +27,8 @@ public class GetCommand extends ConfigurationCommand {
     Properties properties = new Properties();
     // we put both expanded and non expanded properties
     // and we will filter depending on what the user wanted
-    properties.putAll(cluster.toProperties(false));
-    properties.putAll(cluster.toProperties(true));
+    properties.putAll(cluster.toProperties(false, true));
+    properties.putAll(cluster.toProperties(true, true));
     // we filter the properties the user wants based on his input
     String output = properties.entrySet()
         .stream()
