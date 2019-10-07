@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 
 import static com.terracottatech.dynamic_config.model.Requirement.ALL_NODES_ONLINE;
@@ -38,22 +39,24 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     logger.debug("Validating the new configuration change(s) against the topology of: {}", node);
 
     // get the remote topology, apply the parameters, and validate that the cluster is still valid
-    Cluster cluster = getRemoteTopology(node);
+    Cluster originalCluster = getRemoteTopology(node);
+    Cluster updatedCluster = originalCluster.clone();
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
-      c.apply(operation, cluster, parameterSubstitutor);
+      c.apply(operation, updatedCluster, parameterSubstitutor);
     }
-    new ClusterValidator(cluster, parameterSubstitutor).validate();
+    new ClusterValidator(updatedCluster, parameterSubstitutor).validate();
 
     // get the current state of the nodes
-    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineNodes(cluster);
-    boolean isActive = validateActivationState(onlineNodes.keySet());
+    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineNodes(originalCluster);
+    final Set<InetSocketAddress> onlineNodesAddresses = onlineNodes.keySet();
+    boolean isActive = validateActivationState(onlineNodesAddresses);
 
     if (isActive) {
       logger.debug("Validating the new configuration change(s) against the license");
       try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-        diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(cluster);
+        diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(updatedCluster);
       }
     }
 
@@ -62,13 +65,13 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     if (isActive) {
       // cluster is active, we need to run a nomad change and eventually a restart
       if (requiresAllNodesAlive()) {
-        ensureAllNodesAlive(cluster, onlineNodes);
-        logger.info("Applying new configuration change(s) to activated cluster: {}", toString(cluster.getNodeAddresses()));
-        runNomadChange(cluster.getNodeAddresses(), getNomadChanges(cluster));
+        ensureAllNodesAlive(originalCluster, onlineNodes);
+        logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodesAddresses));
+        runNomadChange(onlineNodesAddresses, getNomadChanges(updatedCluster));
       } else {
-        ensureAtLeastActivesAreOnline(cluster, onlineNodes);
-        logger.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
-        runNomadChange(onlineNodes.keySet(), getNomadChanges(cluster));
+        ensureAtLeastActivesAreOnline(originalCluster, onlineNodes);
+        logger.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodesAddresses));
+        runNomadChange(onlineNodesAddresses, getNomadChanges(updatedCluster));
       }
       Collection<String> settingsRequiringRestart = findSettingsRequiringRestart();
       if (!settingsRequiringRestart.isEmpty()) {
@@ -77,11 +80,11 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       }
     } else {
       // cluster is not active, we just need to replace the topology
-      logger.info("Applying new configuration change(s) to nodes: {}", toString(cluster.getNodeAddresses()));
-      try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
+      logger.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodesAddresses));
+      try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(onlineNodesAddresses)) {
         topologyServices(diagnosticServices)
             .map(Tuple2::getT2)
-            .forEach(topologyService -> topologyService.setCluster(cluster));
+            .forEach(topologyService -> topologyService.setCluster(updatedCluster));
       }
     }
 
