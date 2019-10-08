@@ -12,11 +12,16 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.TreeSet;
 
+/**
+ * Utility class used to write a property file without the date header and with the properties sorted
+ *
+ * @author Mathieu Carbou
+ */
 public class PropertiesWriter {
   public static void store(Writer out, Properties properties, String comment) throws IOException {
     StringWriter tmp = new StringWriter();
     Properties copy = new Properties() {
-      private static final long serialVersionUID = 4797598017350191220L;
+      private static final long serialVersionUID = 1L;
 
       // used to sort the lines in the output
       @Override

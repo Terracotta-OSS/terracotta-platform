@@ -8,6 +8,7 @@ import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -21,7 +22,7 @@ import static java.util.stream.Collectors.joining;
 @Usage("detach -t <node|stripe> -d HOST[:PORT] -s HOST1[:PORT1],HOST2[:PORT2],...")
 public class DetachCommand extends TopologyCommand {
   @Override
-  protected Cluster updateTopology(Target destination, List<Node> sources) {
+  protected Cluster updateTopology(NodeContext destination, List<Node> sources) {
 
     Cluster cluster = destination.getCluster().clone();
 
@@ -31,7 +32,7 @@ public class DetachCommand extends TopologyCommand {
         logger.info(
             "Detaching nodes {} from stripe {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress()
+            destination.getNode().getNodeAddress()
         );
         sources.stream().map(Node::getNodeAddress).forEach(cluster::detachNode);
         break;
@@ -41,7 +42,7 @@ public class DetachCommand extends TopologyCommand {
         logger.info(
             "Detaching stripes containing nodes {} from cluster {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress()
+            destination.getNode().getNodeAddress()
         );
         sources.stream().map(Node::getNodeAddress).forEach(address -> cluster.getStripe(address).ifPresent(cluster::detachStripe));
         break;

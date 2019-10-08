@@ -198,6 +198,9 @@ public class Cluster implements Cloneable {
   }
 
   public Optional<Node> getNode(int stripeId, String nodeName) {
+    if (stripeId < 1 || stripeId > stripes.size()) {
+      return Optional.empty();
+    }
     return stripes.get(stripeId - 1).getNode(nodeName);
   }
 

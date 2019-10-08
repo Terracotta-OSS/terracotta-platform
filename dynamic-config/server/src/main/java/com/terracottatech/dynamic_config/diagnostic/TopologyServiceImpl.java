@@ -63,18 +63,23 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
+  public NodeContext getNodeContext() {
+    return nodeContext;
+  }
+
+  @Override
   public Node getThisNode() {
     return nodeContext.getNode();
   }
 
   @Override
   public InetSocketAddress getThisNodeAddress() {
-    return getThisNode().getNodeAddress();
+    return nodeContext.getNode().getNodeAddress();
   }
 
   @Override
   public void restart() {
-    LOGGER.info("Executing restart on node: {} in stripe: {}", getThisNode().getNodeName(), nodeContext.getStripeId());
+    LOGGER.info("Executing restart on node: {} in stripe: {}", nodeContext.getNodeName(), nodeContext.getStripeId());
     TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
   }
 
@@ -89,26 +94,26 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public void setCluster(Cluster cluster) {
-    requireNonNull(cluster);
+  public void setCluster(Cluster updatedCluster) {
+    requireNonNull(updatedCluster);
 
     if (isActivated()) {
       throw new AssertionError("This method cannot be used at runtime when node is activated. Use Nomad instead.");
 
     } else {
-      new ClusterValidator(cluster, substitutor).validate();
+      new ClusterValidator(updatedCluster, substitutor).validate();
 
-      Node oldMe = getThisNode();
-      InetSocketAddress myNodeAddress = oldMe.getNodeAddress();
-      Optional<Node> newMe = cluster.getNode(myNodeAddress);
-      if (newMe.isPresent()) {
+      Node oldMe = nodeContext.getNode();
+      Node newMe = findMe(updatedCluster);
+
+      if (newMe != null) {
         // we have updated the topology and I am still part of this cluster
-        LOGGER.info("Set pending topology to: {}", cluster);
-        this.nodeContext = new NodeContext(cluster, newMe.get());
+        LOGGER.info("Set pending topology to: {}", updatedCluster);
+        this.nodeContext = new NodeContext(updatedCluster, newMe);
       } else {
         // We have updated the topology and I am not part anymore of the cluster
         // So we just reset the cluster object so that this node is alone
-        LOGGER.info("Node {} removed from pending topology: {}", myNodeAddress, cluster);
+        LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster);
         this.nodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe);
       }
 
@@ -116,26 +121,23 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public void prepareActivation(Cluster cluster, String licenseContent) {
+  public void prepareActivation(Cluster maybeUpdatedCluster, String licenseContent) {
     if (isActivated()) {
       throw new IllegalStateException("Node is already activated");
     }
 
-    LOGGER.info("Preparing activation of cluster: {}", cluster);
+    LOGGER.info("Preparing activation of cluster: {}", maybeUpdatedCluster);
 
     // validate that we are part of this cluster
-    Node oldMe = getThisNode();
-    InetSocketAddress myNodeAddress = oldMe.getNodeAddress();
-    Node node = cluster.getNode(myNodeAddress).orElse(null);
-    if (node == null) {
+    if (findMe(maybeUpdatedCluster) == null) {
       throw new IllegalArgumentException(String.format(
           "No match found for node: %s in cluster topology: %s",
-          oldMe.getNodeAddress(),
-          cluster.getNodeAddresses()
+          nodeContext.getNodeName(),
+          maybeUpdatedCluster
       ));
     }
 
-    this.setCluster(cluster);
+    this.setCluster(maybeUpdatedCluster);
     this.installLicense(licenseContent);
 
     upgradeNomadForWrite();
@@ -221,5 +223,20 @@ public class TopologyServiceImpl implements TopologyService {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Tries to find the node representing this process within the updated cluster.
+   * <p>
+   * - We cannot use the node hostname or port only, since they might have changed through a set command.
+   * - We cannot use the node name and stripe id only, since the stripe id can have changed in the new cluster with the attach/detach commands
+   * <p>
+   * So we try to find the best match we can...
+   */
+  private Node findMe(Cluster updatedCluster) {
+    final Node me = nodeContext.getNode();
+    return updatedCluster.getNode(me.getNodeAddress())
+        .orElseGet(() -> updatedCluster.getNode(nodeContext.getStripeId(), me.getNodeName())
+            .orElse(null));
   }
 }

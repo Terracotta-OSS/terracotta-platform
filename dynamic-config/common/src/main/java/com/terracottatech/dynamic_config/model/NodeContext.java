@@ -30,8 +30,8 @@ public class NodeContext implements Cloneable {
     this.cluster = requireNonNull(cluster);
     this.stripeId = stripeId;
     this.nodeName = requireNonNull(nodeName);
-    if (stripeId < 1) {
-      throw new IllegalArgumentException("Stripe Id should be greater than or equal to 1");
+    if (stripeId < 1 || stripeId > cluster.getStripeCount()) {
+      throw new IllegalArgumentException("Invalid Stripe Id: " + stripeId);
     }
     // verify we can find the node
     getNode();
@@ -68,6 +68,11 @@ public class NodeContext implements Cloneable {
   public Node getNode() {
     return cluster.getNode(stripeId, nodeName)
         .orElseThrow(() -> new IllegalStateException("Node " + nodeName + " in stripe " + stripeId + " not found"));
+  }
+
+  @JsonIgnore
+  public Stripe getStripe() {
+    return cluster.getStripes().get(stripeId - 1);
   }
 
   @Override

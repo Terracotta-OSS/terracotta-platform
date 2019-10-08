@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.diagnostic;
 import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
@@ -15,6 +16,8 @@ import java.util.Optional;
  * @author Mathieu Carbou
  */
 public interface TopologyService {
+
+  NodeContext getNodeContext();
 
   /**
    * @return this node's Object representation

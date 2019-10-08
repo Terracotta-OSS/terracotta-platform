@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.MemoryUnit;
@@ -70,7 +71,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     when(topologyServiceMock("localhost", 9410).getCluster()).thenReturn(cluster);
 
     // mock destination node information retrieval
-    when(topologyServiceMock(node0.getNodeAddress()).getCluster()).thenReturn(cluster);
+    when(topologyServiceMock(node0.getNodeAddress()).getNodeContext()).thenReturn(new NodeContext(cluster, node0));
 
     // mock source node information retrieval
     when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(node1);

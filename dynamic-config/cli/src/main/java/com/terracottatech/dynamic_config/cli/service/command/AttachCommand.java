@@ -8,6 +8,7 @@ import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
 
 import java.net.InetSocketAddress;
@@ -24,7 +25,7 @@ import static java.util.stream.Collectors.joining;
 @Usage("attach -t <node|stripe> -d HOST[:PORT] -s HOST1[:PORT1],HOST2[:PORT2],...")
 public class AttachCommand extends TopologyCommand {
   @Override
-  protected Cluster updateTopology(Target destination, List<Node> sources) {
+  protected Cluster updateTopology(NodeContext destination, List<Node> sources) {
 
     Cluster cluster = destination.getCluster().clone();
 
@@ -34,14 +35,14 @@ public class AttachCommand extends TopologyCommand {
         logger.info(
             "Attaching nodes {} to stripe {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress()
+            destination.getNode().getNodeAddress()
         );
         Collection<InetSocketAddress> duplicates = cluster.getNodeAddresses();
         duplicates.retainAll(sources.stream().map(Node::getNodeAddress).collect(Collectors.toSet()));
         if (!duplicates.isEmpty()) {
           throw new IllegalArgumentException("Cluster already contains nodes: " + duplicates.stream().map(InetSocketAddress::toString).collect(joining(", ")) + ".");
         }
-        Stripe stripe = cluster.getStripe(destination.getConfiguredNodeAddress()).get();
+        Stripe stripe = cluster.getStripe(destination.getNode().getNodeAddress()).get();
         sources.forEach(stripe::attachNode);
         break;
       }
@@ -50,7 +51,7 @@ public class AttachCommand extends TopologyCommand {
         logger.info(
             "Attaching a new stripe containing nodes {} to cluster {}",
             sources.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-            destination.getConfiguredNodeAddress()
+            destination.getNode().getNodeAddress()
         );
         cluster.attachStripe(new Stripe(sources));
         break;

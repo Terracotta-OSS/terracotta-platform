@@ -69,7 +69,6 @@ public class SettingValidator {
 
   public static final BiConsumer<String, Tuple2<String, String>> OFFHEAP_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
-    Setting s = Setting.fromName(setting);
     String value = kv.t2;
     if (kv.t1 != null) {
       // case where we validate: offheap-resources.main=1GB
@@ -81,13 +80,12 @@ public class SettingValidator {
       if (split.length != 2 || split[0] == null || split[1] == null || split[0].trim().isEmpty() || split[1].trim().isEmpty()) {
         throw new IllegalArgumentException(setting + " should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
       }
-      Measure.parse(split[1], MemoryUnit.class, null, s.getAllowedUnits());
+      Measure.parse(split[1], MemoryUnit.class, null, Setting.fromName(setting).getAllowedUnits());
     }
   };
 
   public static final BiConsumer<String, Tuple2<String, String>> DATA_DIRS_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
-    Setting s = Setting.fromName(setting);
     String value = kv.t2;
     if (kv.t1 != null) {
       // case where we validate: data-dirs.main=foo/bar

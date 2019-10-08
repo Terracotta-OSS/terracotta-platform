@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.cli.common.TypeConverter;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.Tuple2;
 
@@ -80,9 +81,9 @@ public abstract class TopologyCommand extends RemoteCommand {
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
 
       // get the target node / cluster
-      Target dest = diagnosticServices.getDiagnosticService(destination)
+      NodeContext dest = diagnosticServices.getDiagnosticService(destination)
           .map(ds -> ds.getProxy(TopologyService.class))
-          .map(dcs -> new Target(destination, dcs.getCluster()))
+          .map(TopologyService::getNodeContext)
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
@@ -149,30 +150,5 @@ public abstract class TopologyCommand extends RemoteCommand {
     return this;
   }
 
-  protected abstract Cluster updateTopology(Target destination, List<Node> sources);
-
-  static class Target {
-
-    // the node address from TopologyService
-    private final InetSocketAddress nodeAddress;
-
-    // the cluster topology this node has
-    private final Cluster cluster;
-
-    Target(InetSocketAddress nodeAddress, Cluster cluster) {
-      this.nodeAddress = nodeAddress;
-      this.cluster = cluster;
-      if (!cluster.containsNode(nodeAddress)) {
-        throw new IllegalArgumentException("Node " + nodeAddress + " not found in cluster " + cluster);
-      }
-    }
-
-    InetSocketAddress getConfiguredNodeAddress() {
-      return nodeAddress;
-    }
-
-    Cluster getCluster() {
-      return cluster;
-    }
-  }
+  protected abstract Cluster updateTopology(NodeContext destination, List<Node> sources);
 }

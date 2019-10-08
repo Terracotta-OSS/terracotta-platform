@@ -88,7 +88,7 @@ public class ClusterValidator implements Validator {
     Collection<Object> settings = cluster.getNodes().stream()
         .map(function)
         .collect(Collectors.toSet());
-    if (settings.size() != 1) {
+    if (settings.size() > 1) { // 0 means no node has the setting, 1 means all nodes have the same setting
       throw new MalformedClusterException(errorMsg + ", but found the following mismatches: " + settings);
     }
   }

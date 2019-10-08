@@ -26,8 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-@Parameters(commandNames = "export", commandDescription = "Export the cluster topology")
-@Usage("export -s HOST[:PORT] [-d DESTINATION_FILE] [-i]")
+@Parameters(commandNames = "export", commandDescription = "Export the cluster topology to the console or to a file")
+@Usage("export -s HOST[:PORT] [-o DESTINATION_FILE] [-x]")
 public class ExportCommand extends RemoteCommand {
 
   public enum Format {JSON, PROPERTIES}
@@ -35,11 +35,11 @@ public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to for topology information", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-d"}, description = "Destination directory", converter = PathConverter.class)
+  @Parameter(names = {"-o"}, description = "Destination file", converter = PathConverter.class)
   private Path outputFile;
 
-  @Parameter(names = {"-i"}, description = "Ignore default values", converter = BooleanConverter.class)
-  private boolean ignoreDefaultValues;
+  @Parameter(names = {"-x"}, description = "Exclude default values", converter = BooleanConverter.class)
+  private boolean excludeDefaultValues;
 
   @Parameter(names = {"-f"}, hidden = true, description = "Output format", converter = FormatConverter.class)
   private Format format = Format.PROPERTIES;
@@ -95,7 +95,7 @@ public class ExportCommand extends RemoteCommand {
         Properties nonDefaults = cluster.toProperties(false, false);
         try (StringWriter out = new StringWriter()) {
           PropertiesWriter.store(out, nonDefaults, "Non-default configurations:");
-          if (!this.ignoreDefaultValues) {
+          if (!this.excludeDefaultValues) {
             Properties defaults = cluster.toProperties(false, true);
             defaults.keySet().removeAll(nonDefaults.keySet());
             out.write(System.lineSeparator());
