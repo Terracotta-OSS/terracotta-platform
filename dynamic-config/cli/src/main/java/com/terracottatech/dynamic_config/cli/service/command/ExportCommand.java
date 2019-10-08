@@ -49,6 +49,7 @@ public class ExportCommand extends RemoteCommand {
     if (outputFile != null && Files.exists(outputFile) && !Files.isRegularFile(outputFile)) {
       throw new IllegalArgumentException(outputFile + " is not a file");
     }
+    verifyAddress(node);
   }
 
   @Override

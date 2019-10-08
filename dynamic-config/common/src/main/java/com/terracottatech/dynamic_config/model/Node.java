@@ -54,6 +54,15 @@ public class Node implements Cloneable {
   private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
   private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
 
+  public Node() {
+  }
+
+  public Node(String nodeName, String nodeHostname, int nodePort) {
+    this.nodeName = nodeName;
+    this.nodeHostname = nodeHostname;
+    this.nodePort = nodePort;
+  }
+
   public String getNodeName() {
     return nodeName;
   }

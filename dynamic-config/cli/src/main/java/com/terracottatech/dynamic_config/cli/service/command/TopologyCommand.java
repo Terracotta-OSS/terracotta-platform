@@ -66,6 +66,8 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (sources.contains(destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
+    verifyAddress(destination);
+    sources.forEach(this::verifyAddress);
   }
 
   @Override

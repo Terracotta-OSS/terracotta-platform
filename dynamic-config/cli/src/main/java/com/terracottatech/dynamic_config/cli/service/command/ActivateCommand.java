@@ -64,6 +64,10 @@ public class ActivateCommand extends RemoteCommand {
       throw new IllegalArgumentException("Cluster name should be provided when node is specified");
     }
 
+    if (node != null) {
+      verifyAddress(node);
+    }
+
     assertNonNull(licenseFile, "licenseFile must not be null");
     assertNonNull(multiDiagnosticServiceProvider, "multiDiagnosticServiceProvider must not be null");
     assertNonNull(nomadManager, "nomadManager must not be null");

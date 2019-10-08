@@ -15,6 +15,7 @@ import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
@@ -58,6 +59,16 @@ public abstract class RemoteCommand extends Command {
   @Resource public RestartService restartService;
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
+
+  protected final void verifyAddress(InetSocketAddress address) {
+    logger.trace("verifyAddress({})", address);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
+      Node node = diagnosticService.getProxy(TopologyService.class).getThisNode();
+      if (!node.getNodeAddress().equals(address)) {
+        throw new IllegalArgumentException("Address: " + address + " points to node: " + node.getNodeName() + " with configured address: " + node.getNodeAddress() + ". Is it a mistake ? If not, please use the configured node hostname and port to connect to it.");
+      }
+    }
+  }
 
   protected final void runNomadChange(Collection<InetSocketAddress> expectedOnlineNodes, NomadChange change) {
     logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);

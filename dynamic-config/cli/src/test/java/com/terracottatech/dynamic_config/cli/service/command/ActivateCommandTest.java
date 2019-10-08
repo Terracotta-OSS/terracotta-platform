@@ -246,7 +246,14 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setNode(InetSocketAddress.createUnresolved("localhost", 9411))
         .setClusterName("foo");
+
+
+    // mock address verification calls
+    when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(cluster.getNode(1, 1));
+
+    // mock topology call
     when(topologyServiceMock("localhost", 9411).getCluster()).thenReturn(cluster);
+
     doRunAndVerify("foo", command);
   }
 

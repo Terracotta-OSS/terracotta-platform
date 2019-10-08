@@ -67,6 +67,11 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   public void setUp() throws Exception {
     super.setUp();
 
+    // mock address verification calls
+    when(topologyServiceMock("localhost", 9410).getThisNode()).thenReturn(node0);
+    when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(node1);
+    when(topologyServiceMock("localhost", 9412).getThisNode()).thenReturn(node2);
+
     // mock discover call
     when(topologyServiceMock("localhost", 9410).getCluster()).thenReturn(cluster);
 
