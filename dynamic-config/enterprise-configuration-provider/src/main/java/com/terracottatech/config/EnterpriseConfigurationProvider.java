@@ -9,8 +9,10 @@ import com.tc.config.DefaultConfigurationProvider;
 import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
+import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
+import com.terracottatech.dynamic_config.service.ConfigChangeHandlerManagerImpl;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.apache.commons.cli.ParseException;
@@ -29,6 +31,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   private CommandLineParser cliParser;
   private Configuration configuration;
   private IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
+  private ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
 
   @Override
   public void initialize(List<String> configurationParams) throws ConfigurationException {
@@ -45,7 +48,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
 
   private void bootstrapNomad() {
     String configRepository = cliParser.getConfigRepository() == null ? Setting.NODE_REPOSITORY_DIR.getDefaultValue() : cliParser.getConfigRepository();
-    NomadBootstrapper.bootstrap(Paths.get(configRepository), cliParser.getNodeName(), parameterSubstitutor);
+    NomadBootstrapper.bootstrap(Paths.get(configRepository), cliParser.getNodeName(), parameterSubstitutor, configChangeHandlerManager);
   }
 
   private CommandLineParser getCommandLineParser(List<String> configurationParams) throws ParseException, ConfigurationException {

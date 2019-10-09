@@ -8,9 +8,9 @@ package com.terracottatech.dynamic_config.nomad;
 import com.terracottatech.diagnostic.common.DiagnosticConstants;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
+import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.nomad.processor.ApplicabilityNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
@@ -43,14 +43,15 @@ public class NomadBootstrapper {
   private static volatile NomadServerManager nomadServerManager;
   private static final AtomicBoolean BOOTSTRAPPED = new AtomicBoolean();
 
-  public static NomadServerManager bootstrap(Path repositoryPath, String nodeName, IParameterSubstitutor parameterSubstitutor) {
+  public static NomadServerManager bootstrap(Path repositoryPath, String nodeName, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager) {
     requireNonNull(repositoryPath);
     requireNonNull(nodeName);
     requireNonNull(parameterSubstitutor);
+    requireNonNull(manager);
 
     if (BOOTSTRAPPED.compareAndSet(false, true)) {
       nomadServerManager = new NomadServerManager();
-      nomadServerManager.init(repositoryPath, nodeName, parameterSubstitutor);
+      nomadServerManager.init(repositoryPath, nodeName, parameterSubstitutor, manager);
       LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(repositoryPath.toString()));
     }
 
@@ -66,6 +67,8 @@ public class NomadBootstrapper {
 
     private volatile UpgradableNomadServer<NodeContext> nomadServer;
     private volatile NomadRepositoryManager repositoryManager;
+    private volatile ConfigChangeHandlerManager configChangeHandlerManager;
+    private volatile IParameterSubstitutor parameterSubstitutor;
 
     public UpgradableNomadServer<NodeContext> getNomadServer() {
       return nomadServer;
@@ -81,8 +84,10 @@ public class NomadBootstrapper {
      * @param parameterSubstitutor parameter substitutor
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
-    void init(Path repositoryPath, String nodeName, IParameterSubstitutor parameterSubstitutor) throws NomadConfigurationException {
+    void init(Path repositoryPath, String nodeName, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager) throws NomadConfigurationException {
       try {
+        this.parameterSubstitutor = parameterSubstitutor;
+        this.configChangeHandlerManager = manager;
         repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
         repositoryManager.createDirectories();
         nomadServer = createServer(repositoryManager, nodeName, parameterSubstitutor);
@@ -95,6 +100,8 @@ public class NomadBootstrapper {
 
     @SuppressWarnings("unchecked")
     void registerDiagnosticService() {
+      DiagnosticServices.register(IParameterSubstitutor.class, parameterSubstitutor);
+      DiagnosticServices.register(ConfigChangeHandlerManager.class, configChangeHandlerManager);
       DiagnosticServicesRegistration<NomadServer<String>> registration = (DiagnosticServicesRegistration<NomadServer<String>>) (DiagnosticServicesRegistration) DiagnosticServices.register(NomadServer.class, nomadServer);
       registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
     }
@@ -119,7 +126,7 @@ public class NomadBootstrapper {
       }
 
       RoutingNomadChangeProcessor nomadChangeProcessor = new RoutingNomadChangeProcessor()
-          .register(SettingNomadChange.class, SettingNomadChangeProcessor.get())
+          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(configChangeHandlerManager))
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       ApplicabilityNomadChangeProcessor commandProcessor = new ApplicabilityNomadChangeProcessor(stripeId, nodeName, nomadChangeProcessor);

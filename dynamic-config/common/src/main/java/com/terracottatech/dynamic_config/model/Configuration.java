@@ -4,8 +4,6 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.nomad.Applicability;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 import java.util.Collection;
@@ -390,31 +388,6 @@ public class Configuration {
           setting.setProperty(node, key, value);
         }
       });
-    }
-  }
-
-  public SettingNomadChange toSettingNomadChange(Operation operation, Cluster cluster, IParameterSubstitutor substitutor) {
-    validate(operation, substitutor);
-    switch (operation) {
-      case SET:
-        return SettingNomadChange.set(toApplicability(cluster), setting, key, value);
-      case UNSET:
-        return SettingNomadChange.unset(toApplicability(cluster), setting, key);
-      default:
-        throw new IllegalArgumentException("Operation " + operation + " cannot be converted to a Nomad change for an active cluster");
-    }
-  }
-
-  private Applicability toApplicability(Cluster cluster) {
-    switch (scope) {
-      case NODE:
-        return Applicability.node(stripeId, cluster.getNode(stripeId, nodeId).getNodeName());
-      case STRIPE:
-        return Applicability.stripe(stripeId);
-      case CLUSTER:
-        return Applicability.cluster();
-      default:
-        throw new AssertionError(scope);
     }
   }
 

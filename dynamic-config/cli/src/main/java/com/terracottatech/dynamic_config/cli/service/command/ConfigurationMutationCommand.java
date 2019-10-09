@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
+import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
@@ -112,7 +113,12 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   private MultipleNomadChanges getNomadChanges(Cluster cluster) {
     // MultipleNomadChanges will apply to whole change set given by the user as an atomic operation
-    return new MultipleNomadChanges(configurations.stream().map(configuration -> configuration.toSettingNomadChange(operation, cluster, parameterSubstitutor)).collect(toList()));
+    return new MultipleNomadChanges(configurations.stream()
+        .map(configuration -> {
+          configuration.validate(operation, parameterSubstitutor);
+          return SettingNomadChange.fromConfiguration(configuration, operation, cluster);
+        })
+        .collect(toList()));
   }
 
   private boolean requiresAllNodesAlive() {

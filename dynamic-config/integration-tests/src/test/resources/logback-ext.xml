@@ -5,12 +5,6 @@
   -->
 <included>
 
-  <root level="DEBUG">
-    <appender-ref ref="TC_BASE"/>
-  </root>
-
-  <logger name="com.terracottatech.dynamic_config" level="TRACE" additivity="false">
-    <appender-ref ref="TC_BASE"/>
-  </logger>
+  <logger name="com.terracottatech.dynamic_config" level="TRACE"/>
 
 </included>

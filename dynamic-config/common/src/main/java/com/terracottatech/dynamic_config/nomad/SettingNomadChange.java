@@ -6,6 +6,8 @@ package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
 import com.terracottatech.dynamic_config.model.Setting;
 
@@ -89,6 +91,21 @@ public class SettingNomadChange extends FilteredNomadChange {
         '}';
   }
 
+  public Configuration toConfiguration() {
+    switch (operation) {
+      case SET:
+        return name == null ?
+            Configuration.valueOf(setting + "=" + value) :
+            Configuration.valueOf(setting + "." + name + "=" + value);
+      case UNSET:
+        return name == null ?
+            Configuration.valueOf(setting.toString()) :
+            Configuration.valueOf(setting + "." + name);
+      default:
+        throw new AssertionError(operation);
+    }
+  }
+
   public static SettingNomadChange set(Applicability applicability, Setting type, String name, String value) {
     return new SettingNomadChange(applicability, Operation.SET, type, name, value);
   }
@@ -105,4 +122,27 @@ public class SettingNomadChange extends FilteredNomadChange {
     return new SettingNomadChange(applicability, Operation.UNSET, type, null, null);
   }
 
+  public static SettingNomadChange fromConfiguration(Configuration configuration, Operation operation, Cluster cluster) {
+    switch (operation) {
+      case SET:
+        return SettingNomadChange.set(toApplicability(configuration, cluster), configuration.getSetting(), configuration.getKey(), configuration.getValue());
+      case UNSET:
+        return SettingNomadChange.unset(toApplicability(configuration, cluster), configuration.getSetting(), configuration.getKey());
+      default:
+        throw new IllegalArgumentException("Operation " + operation + " cannot be converted to a Nomad change for an active cluster");
+    }
+  }
+
+  private static Applicability toApplicability(Configuration configuration, Cluster cluster) {
+    switch (configuration.getScope()) {
+      case NODE:
+        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).getNodeName());
+      case STRIPE:
+        return Applicability.stripe(configuration.getStripeId());
+      case CLUSTER:
+        return Applicability.cluster();
+      default:
+        throw new AssertionError(configuration.getScope());
+    }
+  }
 }

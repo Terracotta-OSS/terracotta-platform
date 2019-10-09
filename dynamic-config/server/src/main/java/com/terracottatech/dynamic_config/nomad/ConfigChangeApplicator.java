@@ -37,13 +37,19 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
     for (NomadChange c : changes) {
       try {
         baseConfig = commandProcessor.tryApply(baseConfig, c);
+        // If one handler rejects the chanche by returning null, immediately reject!
+        // If we were continuing the loop, then the "null" baseConfig would be pass to the next handlers
+        // which would create a NPE
+        if (baseConfig == null) {
+          return reject("Change rejected: " + change);
+        }
       } catch (NomadException e) {
         LOGGER.warn(e.getMessage(), e);
         return reject(e.getMessage());
       }
     }
 
-    return baseConfig == null ? reject("Change rejected: " + change) : allow(baseConfig);
+    return allow(baseConfig);
   }
 
   @Override

@@ -8,6 +8,7 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.service.ConfigChangeHandlerManagerImpl;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import org.junit.Rule;
@@ -22,7 +23,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class StartupManagerTest {
-  private static final StartupManager STARTUP_MANAGER = new StartupManager(new ParameterSubstitutor());
+  private static final StartupManager STARTUP_MANAGER = new StartupManager(new ParameterSubstitutor(), new ConfigChangeHandlerManagerImpl());
   private static final String CONFIG_FILE = "/path/to/config-file";
   private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 

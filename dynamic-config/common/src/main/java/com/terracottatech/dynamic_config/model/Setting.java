@@ -255,7 +255,7 @@ public enum Setting {
       setter(SettingName.CLIENT_LEASE_DURATION, (node, value) -> node.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
       unsupported(),
       of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE),
+      of(ACTIVES_ONLINE, RESTART),
       emptyList(),
       asList(MILLISECONDS, SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_LEASE_DURATION, tuple2(key, value))

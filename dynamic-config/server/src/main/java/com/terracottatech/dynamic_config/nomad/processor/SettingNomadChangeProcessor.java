@@ -4,78 +4,49 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
-import com.terracottatech.dynamic_config.ConfigChangeHandler;
-import com.terracottatech.dynamic_config.InvalidConfigChangeException;
+import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
+import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
+import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.server.NomadException;
-import org.terracotta.entity.PlatformConfiguration;
-
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.ServiceLoader;
 
 /**
- * Supports the processing of {@link SettingNomadChange} for dynamic configuration
+ * Supports the processing of {@link SettingNomadChange} for dynamic configuration.
+ * <p>
+ * This Nomad processor finds the {@code ConfigChangeHandlerManager} registered in the diagnostic services
+ * to fire the Nomad change request to the right handler
  */
 public class SettingNomadChangeProcessor implements NomadChangeProcessor<SettingNomadChange> {
-  private static final Map<Setting, ConfigChangeHandler> CHANGE_HANDLERS = Collections.synchronizedMap(new EnumMap<>(Setting.class));
 
-  private static SettingNomadChangeProcessor INSTANCE = new SettingNomadChangeProcessor();
+  private final ConfigChangeHandlerManager manager;
 
-  public static SettingNomadChangeProcessor get() {
-    return INSTANCE;
-  }
-
-  private SettingNomadChangeProcessor() {
-
-  }
-
-  private volatile boolean initialized;
-
-  public void setPlatformConfiguration(PlatformConfiguration platformConfiguration) {
-    initializeChangeHandlers(platformConfiguration);
-    initialized = true;
+  public SettingNomadChangeProcessor(ConfigChangeHandlerManager manager) {
+    this.manager = manager;
   }
 
   @Override
   public NodeContext tryApply(NodeContext baseConfig, SettingNomadChange change) throws NomadException {
     try {
-      return getHandler(change.getSetting()).tryApply(baseConfig, change);
-    } catch (InvalidConfigChangeException e) {
+      // Note the call to baseConfig.clone() which is important
+      final Cluster updated = getConfigChangeHandlerManager(change).tryApply(baseConfig.clone(), change);
+      return updated == null ? // null marks the change as rejected
+          null :
+          baseConfig.getCluster().equals(updated) ? // check if there has been an update
+              baseConfig :
+              new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
+    } catch (Exception e) {
       throw new NomadException(e);
     }
   }
 
   @Override
-  public void apply(SettingNomadChange change) throws NomadException {
-    getHandler(change.getSetting()).apply(change);
+  public void apply(SettingNomadChange change) {
+    getConfigChangeHandlerManager(change).apply(change);
   }
 
-  private ConfigChangeHandler getHandler(Setting setting) throws NomadException {
-    checkInitialized();
-
-    ConfigChangeHandler configChangeHandler = CHANGE_HANDLERS.get(setting);
-    if (configChangeHandler == null) {
-      throw new NomadException("Unknown ConfigChangeHandler type: " + setting);
-    }
-    return configChangeHandler;
-  }
-
-  private void checkInitialized() {
-    if (!initialized) {
-      throw new RuntimeException("SettingNomadChangeProcessor is not initialized");
-    }
-  }
-
-  private void initializeChangeHandlers(PlatformConfiguration platformConfiguration) {
-    for (ConfigChangeHandler configChangeHandler : ServiceLoader.load(ConfigChangeHandler.class)) {
-      configChangeHandler.initialize(platformConfiguration);
-      if (CHANGE_HANDLERS.putIfAbsent(configChangeHandler.getSetting(), configChangeHandler) != null) {
-        throw new RuntimeException("Found multiple ConfigChangeHandlers of type: " + configChangeHandler.getSetting());
-      }
-    }
+  private ConfigChangeHandler getConfigChangeHandlerManager(SettingNomadChange change) {
+    return manager.findConfigChangeHandler(change.getSetting())
+        .orElseThrow(() -> new IllegalStateException("No " + ConfigChangeHandler.class.getName() + " found for setting " + change.getSetting()));
   }
 }

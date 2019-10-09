@@ -10,8 +10,8 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
-import com.terracottatech.dynamic_config.nomad.exception.NomadConfigurationException;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.service.ConfigChangeHandlerManagerImpl;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
@@ -63,7 +63,7 @@ public class NomadServerManagerTest {
   private AcceptRejectResponse prepareResponse;
   private AcceptRejectResponse commitResponse;
 
-  Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName(NODE_NAME)));
+  private Cluster newConfiguration = new Cluster(new Stripe(new Node().setNodeName(NODE_NAME)));
 
   @Before
   @SuppressWarnings("unchecked")
@@ -84,7 +84,7 @@ public class NomadServerManagerTest {
     doThrow(NomadException.class).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     assertThat(
-        () -> spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR),
+        () -> spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl()),
         is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Exception initializing Nomad Server")))
     );
   }
@@ -95,7 +95,7 @@ public class NomadServerManagerTest {
     doThrow(MalformedRepositoryException.class).when(repositoryStructureManager).createDirectories();
 
     assertThat(
-        () -> spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR),
+        () -> spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl()),
         is(throwing(instanceOf(NomadConfigurationException.class)).andMessage(containsString("Exception initializing Nomad Server")))
     );
   }
@@ -106,7 +106,7 @@ public class NomadServerManagerTest {
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     verify(spyNomadManager, times(STRIPE_ID)).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
@@ -121,7 +121,7 @@ public class NomadServerManagerTest {
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
     doThrow(NomadException.class).when(upgradableNomadServer).discover();
 
     assertThat(
@@ -135,7 +135,7 @@ public class NomadServerManagerTest {
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     doReturn(response).when(upgradableNomadServer).discover();
     when(response.getLatestChange()).thenReturn(null);
@@ -152,7 +152,7 @@ public class NomadServerManagerTest {
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     doReturn(response).when(upgradableNomadServer).discover();
     when(response.getLatestChange()).thenReturn(changeDetails);
@@ -169,7 +169,7 @@ public class NomadServerManagerTest {
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     doReturn(response).when(upgradableNomadServer).discover();
     when(response.getLatestChange()).thenReturn(changeDetails);
@@ -185,7 +185,7 @@ public class NomadServerManagerTest {
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
@@ -230,7 +230,7 @@ public class NomadServerManagerTest {
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
@@ -262,7 +262,7 @@ public class NomadServerManagerTest {
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
     doNothing().when(spyNomadManager).registerDiagnosticService();
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
@@ -292,7 +292,7 @@ public class NomadServerManagerTest {
     doReturn(repositoryStructureManager).when(spyNomadManager).createNomadRepositoryManager(repositoryPath, PARAMETER_SUBSTITUTOR);
     doReturn(upgradableNomadServer).when(spyNomadManager).createServer(repositoryStructureManager, NODE_NAME, PARAMETER_SUBSTITUTOR);
 
-    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR);
+    spyNomadManager.init(repositoryPath, NODE_NAME, PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl());
 
     doNothing().when(upgradableNomadServer).setChangeApplicator(any(ChangeApplicator.class));
 
