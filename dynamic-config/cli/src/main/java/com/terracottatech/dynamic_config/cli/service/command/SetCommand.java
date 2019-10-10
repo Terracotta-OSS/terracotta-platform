@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
 
 @Parameters(commandNames = "set", commandDescription = "Set properties in the cluster or in a node")
-@Usage("set -s HOST -c NAMESPACE1.PROPERTY1=VALUE1,NAMESPACE2.PROPERTY2=VALUE2,...")
+@Usage("set -s HOST -c NAMESPACE1.PROPERTY1=VALUE1 [-c NAMESPACE2.PROPERTY2=VALUE2]...")
 public class SetCommand extends ConfigurationMutationCommand {
   private boolean licenseUpdate;
 

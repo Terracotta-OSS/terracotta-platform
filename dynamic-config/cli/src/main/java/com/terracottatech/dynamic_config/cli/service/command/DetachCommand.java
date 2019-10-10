@@ -19,7 +19,7 @@ import static java.util.stream.Collectors.joining;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from an existing stripe or detach a stripe from a cluster")
-@Usage("detach -t <node|stripe> -d HOST[:PORT] -s HOST1[:PORT1],HOST2[:PORT2],...")
+@Usage("detach -t <node|stripe> -d HOST[:PORT] -s HOST1[:PORT1] [-s HOST2[:PORT2]]...")
 public class DetachCommand extends TopologyCommand {
   @Override
   protected Cluster updateTopology(NodeContext destination, List<Node> sources) {

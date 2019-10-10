@@ -12,7 +12,7 @@ import com.terracottatech.dynamic_config.model.Operation;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "unset", commandDescription = "Unset properties from the cluster or a node")
-@Usage("unset -s HOST -c NAMESPACE1.PROPERTY1,NAMESPACE2.PROPERTY2,...")
+@Usage("unset -s HOST -c NAMESPACE1.PROPERTY1 [-c NAMESPACE2.PROPERTY2]...")
 public class UnsetCommand extends ConfigurationMutationCommand {
   public UnsetCommand() {
     super(Operation.UNSET);
