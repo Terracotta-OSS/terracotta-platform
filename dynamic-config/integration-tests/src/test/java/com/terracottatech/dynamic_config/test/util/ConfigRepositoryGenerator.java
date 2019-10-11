@@ -9,10 +9,12 @@ import com.terracottatech.migration.nomad.RepositoryStructureBuilder;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.nio.file.Files.copy;
 import static java.nio.file.Files.createDirectories;
@@ -26,45 +28,62 @@ import static org.junit.Assert.assertFalse;
 public class ConfigRepositoryGenerator {
 
   private final Path root;
+  private int inUse;
+  private int[] ports;
 
-  public ConfigRepositoryGenerator(Path root) {
+  public ConfigRepositoryGenerator(Path root, int... ports) {
     this.root = root;
+    this.ports = ports;
   }
 
   public void generate2Stripes2Nodes() {
-    try {
-      migrate(asList(
-          "1," + Paths.get(ConfigRepositoryGenerator.class.getResource("/tc-configs/stripe1-2-nodes.xml").toURI()),
-          "2," + Paths.get(ConfigRepositoryGenerator.class.getResource("/tc-configs/stripe2-2-nodes.xml").toURI())));
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+    migrate(
+        asList(
+            "1," + substituteParams(2, "/tc-configs/stripe1-2-nodes.xml"),
+            "2," + substituteParams(2, "/tc-configs/stripe2-2-nodes.xml")
+        )
+    );
   }
 
   public void generate1Stripe2Nodes() {
-    try {
-      migrate(singletonList(
-          "1," + Paths.get(ConfigRepositoryGenerator.class.getResource("/tc-configs/stripe1-2-nodes.xml").toURI())));
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+    migrate(singletonList("1," + substituteParams(2, "/tc-configs/stripe1-2-nodes.xml")));
   }
 
   public void generate1Stripe1Node() {
-    try {
-      migrate(singletonList(
-          "1," + Paths.get(ConfigRepositoryGenerator.class.getResource("/tc-configs/stripe1-1-node.xml").toURI())));
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+    migrate(singletonList("1," + substituteParams(1, "/tc-configs/stripe1-1-node.xml")));
   }
 
   public void generate1Stripe1NodeAndSkipCommit() {
+    migrate(singletonList("1," + substituteParams(1, "/tc-configs/stripe1-1-node.xml")), true);
+  }
+
+  private Path substituteParams(int nodes, String s) {
+    int portsNeeded = 2 * nodes; // one for port and group-port each
+    if (ports.length - inUse < portsNeeded) {
+      throw new IllegalArgumentException("Not enough ports to use. Required: " + portsNeeded + ", found: " + (ports.length - inUse));
+    }
+
+    String defaultConfig;
     try {
-      migrate(singletonList(
-          "1," + Paths.get(ConfigRepositoryGenerator.class.getResource("/tc-configs/stripe1-1-node.xml").toURI())), true);
+      defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigRepositoryGenerator.class.getResource(s).toURI())));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
+    }
+
+    String configuration = defaultConfig;
+    for (int i = 1; i <= nodes; i++) {
+      configuration = configuration
+          .replace("${PORT-" + i + "}", String.valueOf(ports[inUse++]))
+          .replace("${GROUP-PORT-" + i + "}", String.valueOf(ports[inUse++]));
+    }
+
+    try {
+      Path temporaryTcConfigXml = Files.createTempFile("tc-config-tmp.", ".xml");
+      return Files.write(temporaryTcConfigXml, configuration.getBytes(StandardCharsets.UTF_8));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
@@ -82,14 +101,15 @@ public class ConfigRepositoryGenerator {
       migration.processInput("testCluster", migrationStrings);
 
       Path license = Paths.get(ConfigRepositoryGenerator.class.getResource("/license.xml").toURI());
-      Files.list(root)
-          .forEach(repoPath -> {
-            try {
-              copy(license, createDirectories(repoPath.resolve("license")).resolve(license.getFileName()));
-            } catch (IOException e) {
-              throw new UncheckedIOException(e);
-            }
-          });
+      try (Stream<Path> pathList = Files.list(root)) {
+        pathList.forEach(repoPath -> {
+          try {
+            copy(license, createDirectories(repoPath.resolve("license")).resolve(license.getFileName()));
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        });
+      }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     } catch (URISyntaxException e) {
@@ -97,9 +117,9 @@ public class ConfigRepositoryGenerator {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/single-stripe-single-node")).generate1Stripe1Node();
-    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/single-stripe-multi-node")).generate1Stripe2Nodes();
-    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/multi-stripe")).generate2Stripes2Nodes();
+  public static void main(String[] args) {
+    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/single-stripe-single-node"), 9410, 9430).generate1Stripe1Node();
+    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/single-stripe-multi-node"), 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
+    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/multi-stripe"), 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
   }
 }

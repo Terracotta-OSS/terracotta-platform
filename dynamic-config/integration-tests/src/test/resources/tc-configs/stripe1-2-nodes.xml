@@ -32,13 +32,13 @@
   <servers>
     <server host="localhost" name="node-1">
       <logs>%(user.dir)/logs/stripe1/node-1</logs>
-      <tsa-port>9410</tsa-port>
-      <tsa-group-port>9430</tsa-group-port>
+      <tsa-port>${PORT-1}</tsa-port>
+      <tsa-group-port>${GROUP-PORT-1}</tsa-group-port>
     </server>
     <server host="localhost" name="node-2">
       <logs>%(user.dir)/logs/stripe1/node-2</logs>
-      <tsa-port>9510</tsa-port>
-      <tsa-group-port>9530</tsa-group-port>
+      <tsa-port>${PORT-2}</tsa-port>
+      <tsa-group-port>${GROUP-PORT-2}</tsa-group-port>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>

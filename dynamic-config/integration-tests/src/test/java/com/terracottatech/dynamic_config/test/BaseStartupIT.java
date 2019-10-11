@@ -168,7 +168,7 @@ public class BaseStartupIT {
   Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
     Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
     Path repositoriesDir = getBaseDir().resolve("repositories");
-    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir);
+    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports.getPorts());
     LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
     fn.accept(clusterGenerator);
     copyDirectory(repositoriesDir.resolve("stripe" + stripeId + "_node-" + nodeId), nodeRepositoryDir);
