@@ -19,6 +19,7 @@ public class NomadJson {
     ObjectMapper objectMapper = Json.copyObjectMapper(true);
     objectMapper.registerSubtypes(
         NomadChange.class,
+        TopologyNomadChange.class,
         FilteredNomadChange.class,
         ConfigMigrationNomadChange.class,
         ConfigRepairNomadChange.class,
