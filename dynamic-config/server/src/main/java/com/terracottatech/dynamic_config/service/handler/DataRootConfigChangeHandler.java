@@ -13,10 +13,9 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 /**
- * Handles data directory additions
+ * Handles dynamic data-directory additions
  */
 public class DataRootConfigChangeHandler implements ConfigChangeHandler {
-
   private final DataDirectoriesConfig dataDirectoriesConfig;
   private final IParameterSubstitutor parameterSubstitutor;
 
@@ -28,32 +27,14 @@ public class DataRootConfigChangeHandler implements ConfigChangeHandler {
   @Override
   public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
-      throw new InvalidConfigChangeException("Unsupported operation: " + change);
+      throw new InvalidConfigChangeException("Invalid change: " + change);
     }
 
-    // TODO [DYNAMIC-CONFIG]: TDB-4655: handle data-dirs update correctly and finish this code:
-    // - validate against existing licence (use DiagnosticServices.getService(DynamicConfig.class).get().validate...())
-    //
-    // - validate every combinations of operation (GET/UNSET) ok ket/value VS existing state
-    // - operation == SET && key does not exist => OK => addition.
-    // - operation == SET && key exists => check directory if this is a move and we can move
-    // - operation == UNSET && ket does not exist => do nothing
-    // - operation == UNSET && ket exists => ??? not sure we can remove, but if yes, at least check if directory is used ?
-    //
-    // Then apply using:
-    //
-    // Operation operation = configChange.getOperation();
-    // Cluster updatedCluster = baseConfig.getCluster().clone();
-    // configChange.toConfiguration().apply(operation, updatedCluster, parameterSubstitutor);
-    // return updatedCluster;
-    //
-    // THIS IS VERY IMPORTANT TO CREATE A COPY OF THE CLUSTER TO NOT UPDATE THE INCOMING PARAMETER
-
+    //TODO [DYNAMIC-CONFIG]: TDB-4711 see if we can detect if a data-dir is in use
     try {
       String dataDirectoryName = change.getKey();
       String dataDirectoryPath = change.getValue();
-
-      validateChange(dataDirectoryName, dataDirectoryPath);
+      dataDirectoriesConfig.validateDataDirectory(dataDirectoryName, dataDirectoryPath);
 
       Cluster updatedCluster = baseConfig.getCluster();
       change.apply(updatedCluster, parameterSubstitutor);
@@ -68,13 +49,6 @@ public class DataRootConfigChangeHandler implements ConfigChangeHandler {
     String dataDirectoryName = change.getKey();
     String dataDirectoryPath = change.getValue();
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
-
-    // in some case, perhaps we need a restart ?
-    // return false;
     return true;
-  }
-
-  private void validateChange(String name, String path) throws Exception {
-    dataDirectoriesConfig.validateDataDirectory(name, path);
   }
 }
