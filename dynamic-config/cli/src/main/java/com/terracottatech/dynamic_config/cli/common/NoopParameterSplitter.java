@@ -6,11 +6,11 @@ package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.converters.IParameterSplitter;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class MatchNothingCommandSplitter implements IParameterSplitter {
+public class NoopParameterSplitter implements IParameterSplitter {
   public List<String> split(String value) {
-    return Arrays.asList(value.split("a^")); //Regex which matches nothing
+    return Collections.singletonList(value);
   }
 }
