@@ -31,6 +31,10 @@ public class ActivateCommandIT extends BaseStartupIT {
   @Rule
   public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
+  public ActivateCommandIT() {
+    super(2, 2);
+  }
+
   @Before
   public void setUp() {
     forEachNode((stripeId, nodeId, port) -> startNode(
@@ -47,55 +51,6 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
     ));
-  }
-
-  @Test
-  public void testWrongParams_1() throws Exception {
-    int[] ports = this.ports.getPorts();
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Cluster name should be provided when node is specified")));
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-l", licensePath().toString());
-  }
-
-  @Test
-  public void testWrongParams_2() throws Exception {
-    int[] ports = this.ports.getPorts();
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Either node or config properties file should be specified, not both")));
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-f", "dummy.properties", "-l", licensePath().toString());
-  }
-
-  @Test
-  public void testWrongParams_4() throws Exception {
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("One of node or config properties file must be specified")));
-    ConfigTool.main("activate", "-l", licensePath().toString());
-  }
-
-  @Test
-  public void testSingleNodeActivation() throws Exception {
-    int[] ports = this.ports.getPorts();
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-
-    waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All nodes came back up: localhost:" + ports[0]));
-    waitedAssert(out::getLog, containsString("Command successful"));
-
-    createDatasetAndPerformAssertions(ports[0]);
-  }
-
-  @Test
-  public void testSingleNodeActivationWithConfigFile() throws Exception {
-    int[] ports = this.ports.getPorts();
-    ConfigTool.main("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-l", licensePath().toString(), "-n", "my-cluster");
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-
-    waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All nodes came back up: localhost:" + ports[0]));
-    waitedAssert(out::getLog, containsString("Command successful"));
-
-    createDatasetAndPerformAssertions(ports);
   }
 
   @Test

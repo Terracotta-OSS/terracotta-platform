@@ -24,6 +24,9 @@ import static org.junit.Assert.assertThat;
  * @author Mathieu Carbou
  */
 public class AttachDetachCommandIT extends BaseStartupIT {
+  public AttachDetachCommandIT() {
+    super(2, 2);
+  }
 
   @Rule public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
@@ -31,7 +34,7 @@ public class AttachDetachCommandIT extends BaseStartupIT {
   public void setUp() {
     int[] ports = this.ports.getPorts();
 
-    range(0, ports.length).forEach(i -> startNode(
+    range(0, ports.length / 2).forEach(i -> startNode(
         "--cluster-name", "my-cluster",
         "--node-name", "node-" + (i + 1),
         "--node-hostname", "localhost",

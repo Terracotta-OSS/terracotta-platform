@@ -63,23 +63,37 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
 
 public class BaseStartupIT {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(BaseStartupIT.class);
-
-  private static final int STRIPES = 2;
-  private static final int NODES_PER_STRIPE = 2;
-
-  static final boolean CI = System.getProperty("JOB_NAME") != null;
+  private static final boolean CI = System.getProperty("JOB_NAME") != null;
   static final int TIMEOUT = !CI ? 20 : 30;
   static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
-  @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
-  @Rule public final PortLockingRule ports = new PortLockingRule(STRIPES * NODES_PER_STRIPE);
-  @Rule public final ExpectedSystemExit systemExit = ExpectedSystemExit.none();
-  @Rule public final TmpDir tmpDir = new TmpDir();
+  @Rule
+  public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule
+  public final SystemErrRule err = new SystemErrRule().enableLog();
+  @Rule
+  public final PortLockingRule ports;
 
-  private final Collection<NodeProcess> nodeProcesses = new ArrayList<>(ports.getPorts().length);
+  @Rule
+  public final ExpectedSystemExit systemExit = ExpectedSystemExit.none();
+  @Rule
+  public final TmpDir tmpDir = new TmpDir();
+
+  private final int stripes;
+  private final int nodesPerStripe;
+  private final Collection<NodeProcess> nodeProcesses;
+
+  public BaseStartupIT() {
+    this(1, 1);
+  }
+
+  public BaseStartupIT(int nodesPerStripe, int stripes) {
+    this.nodesPerStripe = nodesPerStripe;
+    this.stripes = stripes;
+    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
+    this.nodeProcesses = new ArrayList<>(ports.getPorts().length);
+  }
 
   @After
   public void tearDown() throws IOException {
@@ -214,7 +228,7 @@ public class BaseStartupIT {
     // Do not call `getIpAddress()` sevral times because on MacOs each call can last up to 5 sec
     String ipAddress = getIpAddress();
     // we use STRIPES * NODES_PER_STRIPE because we could support 1 stripe of 4 nodes
-    Stream<Path> s2 = rangeClosed(1, STRIPES).mapToObj(stripeId -> rangeClosed(1, STRIPES * NODES_PER_STRIPE).mapToObj(nodeId -> of(
+    Stream<Path> s2 = rangeClosed(1, stripes).mapToObj(stripeId -> rangeClosed(1, stripes * nodesPerStripe).mapToObj(nodeId -> of(
         Paths.get("metadata", "stripe" + stripeId),
         Paths.get("backup", "stripe" + stripeId),
         Paths.get("logs", "stripe" + stripeId),
@@ -253,9 +267,9 @@ public class BaseStartupIT {
 
   private Stream<int[]> combinations() {
     int[] ports = this.ports.getPorts();
-    return IntStream.rangeClosed(1, STRIPES)
-        .mapToObj(stripeId -> IntStream.rangeClosed(1, NODES_PER_STRIPE)
-            .mapToObj(nodeId -> new int[]{stripeId, nodeId, ports[STRIPES * (stripeId - 1) + (nodeId - 1)]}))
+    return IntStream.rangeClosed(1, stripes)
+        .mapToObj(stripeId -> IntStream.rangeClosed(1, nodesPerStripe)
+            .mapToObj(nodeId -> new int[]{stripeId, nodeId, ports[stripes * (stripeId - 1) + (nodeId - 1)]}))
         .flatMap(identity());
   }
 

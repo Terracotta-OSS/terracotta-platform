@@ -17,6 +17,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 
 public class GetCommandIT extends BaseStartupIT {
+  public GetCommandIT() {
+    super(2, 2);
+  }
+
   @Rule
   public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
@@ -38,58 +42,6 @@ public class GetCommandIT extends BaseStartupIT {
         Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
     ));
   }
-
-  /*<--Single Node Tests-->*/
-  @Test
-  public void testNode_getOneOffheap_unknownOffheap() {
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("No configuration found for: offheap-resources.blah")));
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.blah");
-  }
-
-  @Test
-  public void testNode_getOneOffheap() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
-    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
-  }
-
-  @Test
-  public void testNode_getTwoOffheaps() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
-    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
-    waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
-  }
-
-  @Test
-  public void testNode_getAllOffheaps() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
-    waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
-  }
-
-  @Test
-  public void testNode_getAllDataDirs() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.data-dirs");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
-  }
-
-  @Test
-  public void testNode_getClientReconnectWindow() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
-    waitedAssert(out::getLog, containsString("client-reconnect-window=120s"));
-  }
-
-  @Test
-  public void testNode_getSecurityAuthc() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-authc");
-    waitedAssert(out::getLog, containsString("security-authc="));
-  }
-
-  @Test
-  public void testNode_getNodePort() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.node-port");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-port=" + ports.getPorts()[0]));
-  }
-
 
   /*<--Stripe-wide Tests-->*/
   @Test
