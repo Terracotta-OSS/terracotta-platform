@@ -62,7 +62,7 @@ public class OffHeapResourceConfigurationParser implements ExtendedConfigParser 
     return new OffHeapConfigValidator(parser());
   }
 
-  private Function<Element, OffheapResourcesType> parser() {
+  public Function<Element, OffheapResourcesType> parser() {
     return (Element element) -> {
       OffheapResourcesType retValue;
       try {
