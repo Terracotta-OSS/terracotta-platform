@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.beust.jcommander.Parameter;
 import com.terracottatech.dynamic_config.cli.common.ConfigurationConverter;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
-import com.terracottatech.dynamic_config.cli.common.NoopParameterSplitter;
+import com.terracottatech.dynamic_config.cli.common.MultiConfigCommaSplitter;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
@@ -23,7 +23,7 @@ public abstract class ConfigurationCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-c"}, description = "Config properties to be set", splitter = NoopParameterSplitter.class, required = true, converter = ConfigurationConverter.class)
+  @Parameter(names = {"-c"}, description = "Config properties to be set", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
   List<Configuration> configurations;
 
   protected final Operation operation;
