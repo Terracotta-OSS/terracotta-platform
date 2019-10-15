@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.nomad.persistence;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.repository.ClusterConfigFilename;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.utilities.PathResolver;
@@ -21,8 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_EXT;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.FILENAME_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
@@ -82,7 +81,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
   }
 
   private Path toPath(long version) {
-    String filename = FILENAME_PREFIX + "." + nodeName + "." + version + "." + FILENAME_EXT;
+    String filename = ClusterConfigFilename.with(nodeName, version).toString();
     return root.resolve(filename);
   }
 }

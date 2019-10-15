@@ -12,19 +12,17 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.FULL;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.CONFIG_REPO_FILENAME_REGEX;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_PREFIX;
-import static com.terracottatech.dynamic_config.repository.RepositoryConstants.REGEX_SUFFIX;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toSet;
 
 public class NomadRepositoryManager {
   private static final String CONFIG = "config";
@@ -143,22 +141,22 @@ public class NomadRepositoryManager {
     RepositoryDepth repositoryDepth = nomadRepositoryManager.getRepositoryDepth();
     if (repositoryDepth == FULL) {
       try (Stream<Path> pathStream = Files.list(nomadRepositoryManager.getConfigPath())) {
-        Map<String, List<Path>> nodeConfigs = pathStream
-            .filter(file -> file.getFileName().toString().matches(CONFIG_REPO_FILENAME_REGEX))
-            .collect(
-                groupingBy(file -> file.getFileName().toString()
-                    .replaceAll("^" + REGEX_PREFIX, "")
-                    .replaceAll(REGEX_SUFFIX + "$", ""))
-            );
-        if (nodeConfigs.size() > 1) {
+        Set<String> nodeNames = pathStream
+            .map(Path::getFileName)
+            .map(Path::toString)
+            .map(ClusterConfigFilename::from)
+            .map(ClusterConfigFilename::getNodeName)
+            .filter(Objects::nonNull)
+            .collect(toSet());
+        if (nodeNames.size() > 1) {
           throw new MalformedRepositoryException(
               String.format("Found versioned cluster config files for the following different nodes: %s in: %s",
-                  String.join(", ", nodeConfigs.keySet()),
+                  String.join(", ", nodeNames),
                   nomadRepositoryManager.getConfigPath()
               )
           );
-        } else if (nodeConfigs.size() == 1) {
-          return Optional.of(nodeConfigs.keySet().iterator().next());
+        } else if (nodeNames.size() == 1) {
+          return Optional.of(nodeNames.iterator().next());
         }
       } catch (IOException e) {
         throw new UncheckedIOException(e);
