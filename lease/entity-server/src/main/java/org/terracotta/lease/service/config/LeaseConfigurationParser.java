@@ -97,7 +97,7 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
     return new LeaseConfiguration(TimeUnit.MILLISECONDS.convert(leaseLength, timeUnit));
   }
 
-  private Function<Element, LeaseElement> parser() {
+  public Function<Element, LeaseElement> parser() {
     return (element -> {
       NodeList childElements = element.getElementsByTagNameNS(NAMESPACE_STRING, LEASE_LENGTH_ELEMENT_NAME);
 
