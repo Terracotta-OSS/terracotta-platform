@@ -328,7 +328,7 @@ public enum Setting {
       setter(SettingName.SECURITY_WHITELIST, (node, value) -> node.setSecurityWhitelist(Boolean.parseBoolean(value))),
       unsupported(),
       of(GET, SET, CONFIG),
-      of(ALL_NODES_ONLINE),
+      of(ALL_NODES_ONLINE, RESTART),
       asList("true", "false")
   ),
 

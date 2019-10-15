@@ -73,6 +73,7 @@ public class ConfigChangeHandlerProvider implements ServiceProvider {
       manager.add(CLIENT_LEASE_DURATION, new LeaseConfigChangeHandler());
 
       // tc-properties
+      // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<>()
           .selector(SettingNomadChange::getName)
           .add("server.entity.processor.threads", new ProcessorThreadsConfigChangeHandler())

@@ -10,6 +10,7 @@ import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
@@ -19,6 +20,7 @@ import com.terracottatech.utilities.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +32,9 @@ import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
 public abstract class ConfigurationMutationCommand extends ConfigurationCommand {
+
+  // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE: for the tc properties we support with a config change handler dynamically, we can return false (do not need restart)
+  private static final Collection<String> TC_PROPERTY_NAMES_NO_RESTART = Collections.emptyList();
 
   protected ConfigurationMutationCommand(Operation operation) {
     super(operation);
@@ -127,7 +132,9 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   private Collection<String> findSettingsRequiringRestart() {
     return configurations.stream()
-        .filter(config -> config.getSetting().requires(RESTART))
+        // Default behaviour is to check if we need a restart for a setting.
+        // but for a tc-property where we support runtime dynamic change, we check if we do not need a restart
+        .filter(config -> (config.getSetting() != Setting.TC_PROPERTIES || !TC_PROPERTY_NAMES_NO_RESTART.contains(config.getKey())) && config.getSetting().requires(RESTART))
         .map(Configuration::toString)
         .collect(toCollection(TreeSet::new));
   }
