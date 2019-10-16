@@ -15,6 +15,7 @@
  */
 package org.terracotta.offheapresource;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
@@ -23,31 +24,39 @@ import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.ValueStatistic;
 
 import java.math.BigInteger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class OffHeapResourcesProviderTest {
+  private ResourceType resourceConfig;
+  private OffheapResourcesType configuration;
+
+  @Before
+  public void setUp() {
+    resourceConfig = mock(ResourceType.class);
+    configuration = mock(OffheapResourcesType.class);
+  }
 
   @Test
   public void testObserverExposed() {
-    ResourceType resourceConfig = mock(ResourceType.class);
     when(resourceConfig.getName()).thenReturn("foo");
     when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
     when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(2));
-
-    OffheapResourcesType configuration = mock(OffheapResourcesType.class);
     when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider(configuration);
-
     OffHeapResource offHeapResource = provider.getOffHeapResource(OffHeapResourceIdentifier.identifier("foo"));
     assertThat(offHeapResource.available(), equalTo(2L * 1024 * 1024));
 
@@ -58,64 +67,73 @@ public class OffHeapResourcesProviderTest {
 
   @Test
   public void testInitializeWithValidConfig() {
-    ResourceType resourceConfig = mock(ResourceType.class);
     when(resourceConfig.getName()).thenReturn("foo");
     when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
     when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(2));
-
-    OffheapResourcesType configuration = mock(OffheapResourcesType.class);
     when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider(configuration);
-
     assertThat(provider.getOffHeapResource(OffHeapResourceIdentifier.identifier("foo")), notNullValue());
     assertThat(provider.getOffHeapResource(OffHeapResourceIdentifier.identifier("foo")).available(), is(2L * 1024 * 1024));
   }
 
   @Test
   public void testNullReturnOnInvalidResource() {
-    ResourceType resourceConfig = mock(ResourceType.class);
     when(resourceConfig.getName()).thenReturn("foo");
     when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
     when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(2));
-
-    OffheapResourcesType configuration = mock(OffheapResourcesType.class);
     when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
 
     OffHeapResourcesProvider provider = new OffHeapResourcesProvider(configuration);
-
     assertThat(provider.getOffHeapResource(OffHeapResourceIdentifier.identifier("bar")), nullValue());
   }
 
-
-  @Test
-  public void testResourceTooBig() throws Exception {
-    ResourceType resourceConfig = mock(ResourceType.class);
+  @Test(expected = ArithmeticException.class)
+  public void testResourceTooBig() {
     when(resourceConfig.getName()).thenReturn("foo");
     when(resourceConfig.getUnit()).thenReturn(MemoryUnit.B);
     when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE));
-
-    OffheapResourcesType configuration = mock(OffheapResourcesType.class);
     when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
 
-    try {
-      new OffHeapResourcesProvider(configuration);
-      fail("Should have failed with exception");
-    } catch (ArithmeticException e) {
-      // expected
-    }
+    new OffHeapResourcesProvider(configuration);
   }
 
   @Test
-  public void testResourceMax() throws Exception {
-    ResourceType resourceConfig = mock(ResourceType.class);
+  public void testResourceMax() {
     when(resourceConfig.getName()).thenReturn("foo");
     when(resourceConfig.getUnit()).thenReturn(MemoryUnit.B);
     when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(Long.MAX_VALUE));
-
-    OffheapResourcesType configuration = mock(OffheapResourcesType.class);
     when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
 
-    OffHeapResourcesProvider provider = new OffHeapResourcesProvider(configuration);
+    new OffHeapResourcesProvider(configuration);
+  }
+
+  @Test
+  public void testResourceAddition_ok() {
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
+    assertTrue(offHeapResourcesProvider.addOffHeapResource(OffHeapResourceIdentifier.identifier("newOffheap"), 100_000L));
+  }
+
+  @Test
+  public void testResourceAddition_failForDuplicateResource() {
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
+    assertTrue(offHeapResourcesProvider.addOffHeapResource(OffHeapResourceIdentifier.identifier("newOffheap"), 100_000L));
+    assertFalse(offHeapResourcesProvider.addOffHeapResource(OffHeapResourceIdentifier.identifier("newOffheap"), 999L));
+  }
+
+  @Test
+  public void testConcurrentOffheapAddition() throws Exception {
+    long perThreadIncrement = 100L;
+    int updatesPerThread = 50;
+    int numThreads = 20;
+    ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
+    executorService.execute(() -> {
+      for (int i = 0; i < numThreads * updatesPerThread; i++) {
+        assertTrue(offHeapResourcesProvider.addOffHeapResource(OffHeapResourceIdentifier.identifier("newOffheap" + i), perThreadIncrement));
+      }
+    });
+    executorService.awaitTermination(10, TimeUnit.SECONDS);
+    assertThat(offHeapResourcesProvider.getTotalConfiguredOffheap(), equalTo(numThreads * updatesPerThread * perThreadIncrement));
   }
 }
