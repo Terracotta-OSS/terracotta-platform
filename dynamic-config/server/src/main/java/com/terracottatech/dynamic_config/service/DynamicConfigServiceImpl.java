@@ -58,24 +58,24 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.clusterActivated = true;
   }
 
-  public void upgradeNomadForWrite() {
-    LOGGER.info("Preparing activation of Node with validated topology: {}", nodeContext.getCluster());
-    nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeContext.getNodeName(), nodeContext.getCluster());
+  public synchronized void upgradeNomadForWrite() {
+    LOGGER.info("Preparing activation of Node with validated topology: {}", getCluster());
+    nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeContext.getNodeName(), getCluster());
     LOGGER.debug("Setting nomad writable successful");
   }
 
   @Override
-  public NodeContext getThisNodeContext() {
+  public synchronized NodeContext getThisNodeContext() {
     return nodeContext;
   }
 
   @Override
-  public Node getThisNode() {
+  public synchronized Node getThisNode() {
     return nodeContext.getNode();
   }
 
   @Override
-  public InetSocketAddress getThisNodeAddress() {
+  public synchronized InetSocketAddress getThisNodeAddress() {
     return nodeContext.getNode().getNodeAddress();
   }
 
@@ -96,7 +96,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void setCluster(Cluster updatedCluster) {
+  public synchronized void setCluster(Cluster updatedCluster) {
     requireNonNull(updatedCluster);
 
     if (isActivated()) {
@@ -123,7 +123,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void prepareActivation(Cluster maybeUpdatedCluster, String licenseContent) {
+  public synchronized void prepareActivation(Cluster maybeUpdatedCluster, String licenseContent) {
     if (isActivated()) {
       throw new IllegalStateException("Node is already activated");
     }
@@ -154,16 +154,16 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public Optional<License> getLicense() {
+  public synchronized Optional<License> getLicense() {
     return Optional.ofNullable(license);
   }
 
   @Override
-  public void validateAgainstLicense(Cluster cluster) {
+  public synchronized void validateAgainstLicense(Cluster cluster) {
     if (this.license == null) {
       throw new IllegalStateException("Cannot validate against license: none has been installed first");
     }
-    LicenseValidator licenseValidator = new LicenseValidator(getCluster(), license);
+    LicenseValidator licenseValidator = new LicenseValidator(cluster, license);
     licenseValidator.validate();
     LOGGER.debug("License is valid for cluster: {}", cluster);
   }
@@ -172,7 +172,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     validateAgainstLicense(getCluster());
   }
 
-  private void installLicense(String licenseContent) {
+  private synchronized void installLicense(String licenseContent) {
     LOGGER.info("Installing license");
 
     License backup = this.license;
