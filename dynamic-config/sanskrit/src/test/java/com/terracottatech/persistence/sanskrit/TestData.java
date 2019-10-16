@@ -18,7 +18,7 @@ public class TestData {
   public static abstract class Vegie<T extends CookingManual> {
 
     private final String color;
-    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS)
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
     private final T cookingManual;
 
     public Vegie(T cookingManual, String color) {

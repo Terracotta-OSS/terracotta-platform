@@ -6,6 +6,7 @@ package com.terracottatech.nomad.client.change;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
+@JsonTypeName("MultipleNomadChanges")
 public class MultipleNomadChanges implements NomadChange {
 
   // keep this as a list, because the ordering to apply the changes might be important

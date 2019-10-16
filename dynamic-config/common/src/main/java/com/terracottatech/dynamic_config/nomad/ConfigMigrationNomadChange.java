@@ -6,11 +6,13 @@ package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.terracottatech.dynamic_config.model.Cluster;
 
 /**
  * @author Mathieu Carbou
  */
+@JsonTypeName("ConfigMigrationNomadChange")
 public class ConfigMigrationNomadChange extends TopologyNomadChange {
 
   @JsonCreator

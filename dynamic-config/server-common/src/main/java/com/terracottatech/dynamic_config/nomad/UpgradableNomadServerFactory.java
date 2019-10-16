@@ -19,12 +19,13 @@ import com.terracottatech.nomad.server.UpgradableNomadServer;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
+import com.terracottatech.utilities.Json;
 
 public class UpgradableNomadServerFactory {
   public static UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
                                                                 ChangeApplicator<NodeContext> changeApplicator, String nodeName,
                                                                 IParameterSubstitutor parameterSubstitutor) throws SanskritException, NomadException {
-    ObjectMapper objectMapper = NomadJson.buildObjectMapper();
+    ObjectMapper objectMapper = Json.copyObjectMapper(true);
     return new NomadServerImpl<>(
         new SanskritNomadServerState<>(
             Sanskrit.init(

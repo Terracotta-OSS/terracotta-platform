@@ -14,6 +14,7 @@ dependencies {
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
   compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion"
   compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
+  compile "io.github.classgraph:classgraph:$classgraphVersion"
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"

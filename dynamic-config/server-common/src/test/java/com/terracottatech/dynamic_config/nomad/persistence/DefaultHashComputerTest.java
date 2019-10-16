@@ -10,7 +10,7 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.nomad.NomadJson;
+import com.terracottatech.utilities.Json;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -24,8 +24,8 @@ import static org.junit.Assert.assertThat;
 public class DefaultHashComputerTest {
   @Test
   public void computeHash() throws IOException {
-    ObjectMapper om = NomadJson.buildObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, false);
-    HashComputer<NodeContext> hashComputer = new DefaultHashComputer(NomadJson.buildObjectMapper());
+    ObjectMapper om = Json.copyObjectMapper(true).configure(SerializationFeature.INDENT_OUTPUT, false);
+    HashComputer<NodeContext> hashComputer = new DefaultHashComputer(Json.copyObjectMapper(true));
 
     Node node = new Node().fillDefaults().setNodeName("foo");
     NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node)), 1, "foo");

@@ -10,6 +10,7 @@ import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
 import com.terracottatech.nomad.client.change.NomadChange;
+import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class NomadJsonTest {
         )
     };
 
-    ObjectMapper objectMapper = NomadJson.buildObjectMapper();
+    ObjectMapper objectMapper = Json.copyObjectMapper(true);
 
     for (int i = 0; i < changes.length; i++) {
       NomadChange change = changes[i];
