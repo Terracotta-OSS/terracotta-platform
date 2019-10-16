@@ -35,15 +35,12 @@ import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.lease.service.config.LeaseConfigurationParser;
 import org.terracotta.lease.service.config.LeaseElement;
 import org.terracotta.offheapresource.OffHeapResourceConfigurationParser;
-import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -52,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -266,64 +262,47 @@ public class XmlConfigMapper {
   }
 
   @SuppressWarnings("unchecked")
-  // TODO [DYNAMIC-CONFIG]: TDB-4644: Update parsers (i.e. offheap, etc) to be able to keep user input such as units and placeholders
   private static Stream<?> parsePlugin(String xml, Object o) {
-    try {
-      if (o instanceof Config) {
-        Element element = ((Config) o).getConfigContent();
-        ExtendedConfigParser parser = CONFIG_PARSERS.get(element.getNamespaceURI());
-        // xml is expected to be valid
-        if (parser == null) {
-          throw new AssertionError("ExtendedConfigParser not found for namespace " + element.getNamespaceURI());
-        }
-        // special handling for data root to not apply any defaults
-        if (parser instanceof DataRootConfigParser) {
-          return ((DataRootConfigParser) parser).parser().apply(element).getDirectory().stream();
-        }
-        // special handling for offheaps to not apply any defaults
-        if (parser instanceof OffHeapResourceConfigurationParser) {
-          // offheap parser is not public
-          Method _parser = OffHeapResourceConfigurationParser.class.getDeclaredMethod("parser");
-          _parser.setAccessible(true);
-          Function<Element, OffheapResourcesType> fn = (Function<Element, OffheapResourcesType>) _parser.invoke(parser);
-          return fn.apply(element).getResource().stream();
-        }
-        // default case (includes Cluster tag)
-        return Stream.of(parser.parse(element, xml));
-      } else if (o instanceof Service) {
-        Element element = ((Service) o).getServiceContent();
-        ServiceConfigParser parser = SERVICE_PARSERS.get(element.getNamespaceURI());
-        // xml is expected to be valid
-        if (parser == null) {
-          throw new AssertionError("ServiceConfigParser not found for namespace " + element.getNamespaceURI());
-        }
-        // special handling for backup
-        if (parser instanceof BackupRestoreConfigurationParser) {
-          return Stream.of(((BackupRestoreConfigurationParser) parser).parseBackupRestore(element, xml));
-        }
-        // lease special handling
-        if (parser instanceof LeaseConfigurationParser) {
-          // not public
-          Method _parser = LeaseConfigurationParser.class.getDeclaredMethod("parser");
-          _parser.setAccessible(true);
-          Function<Element, LeaseElement> fn = (Function<Element, LeaseElement>) _parser.invoke(parser);
-          return Stream.of(fn.apply(element));
-        }
-        // security
-        if (parser instanceof SecurityConfigurationParser) {
-          return Stream.of(((SecurityConfigurationParser) parser).parser().apply(element));
-        }
-        // default case (includes FRSPersistenceConfigurationParser)
-        return Stream.of(parser.parse(element, xml));
-      } else {
-        throw new AssertionError("Unsupported type: " + o.getClass());
+    if (o instanceof Config) {
+      Element element = ((Config) o).getConfigContent();
+      ExtendedConfigParser parser = CONFIG_PARSERS.get(element.getNamespaceURI());
+      // xml is expected to be valid
+      if (parser == null) {
+        throw new AssertionError("ExtendedConfigParser not found for namespace " + element.getNamespaceURI());
       }
-    } catch (IllegalAccessException e) {
-      throw new IllegalStateException(e);
-    } catch (InvocationTargetException e) {
-      throw new IllegalStateException(e.getCause());
-    } catch (NoSuchMethodException e) {
-      throw new AssertionError(e);
+      // special handling for data root to not apply any defaults
+      if (parser instanceof DataRootConfigParser) {
+        return ((DataRootConfigParser) parser).parser().apply(element).getDirectory().stream();
+      }
+      // special handling for offheaps to not apply any defaults
+      if (parser instanceof OffHeapResourceConfigurationParser) {
+        return ((OffHeapResourceConfigurationParser) parser).parser().apply(element).getResource().stream();
+      }
+      // default case (includes Cluster tag)
+      return Stream.of(parser.parse(element, xml));
+    } else if (o instanceof Service) {
+      Element element = ((Service) o).getServiceContent();
+      ServiceConfigParser parser = SERVICE_PARSERS.get(element.getNamespaceURI());
+      // xml is expected to be valid
+      if (parser == null) {
+        throw new AssertionError("ServiceConfigParser not found for namespace " + element.getNamespaceURI());
+      }
+      // special handling for backup
+      if (parser instanceof BackupRestoreConfigurationParser) {
+        return Stream.of(((BackupRestoreConfigurationParser) parser).parser().apply(element));
+      }
+      // lease special handling
+      if (parser instanceof LeaseConfigurationParser) {
+        return Stream.of(((LeaseConfigurationParser) parser).parser().apply(element));
+      }
+      // security
+      if (parser instanceof SecurityConfigurationParser) {
+        return Stream.of(((SecurityConfigurationParser) parser).parser().apply(element));
+      }
+      // default case (includes FRSPersistenceConfigurationParser)
+      return Stream.of(parser.parse(element, xml));
+    } else {
+      throw new AssertionError("Unsupported type: " + o.getClass());
     }
   }
 }
