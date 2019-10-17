@@ -40,7 +40,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifier;
 
 /**
  * This service allows for the configuration of a multitude of virtual offheap resource pools from which participating
@@ -55,14 +58,10 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
   private final AtomicLong totalConfiguredOffheap = new AtomicLong(0);
 
   public OffHeapResourcesProvider(OffheapResourcesType configuration) {
-    long totalSize = 0;
     for (ResourceType r : configuration.getResource()) {
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
-      totalSize += size;
-      OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
-      createOffheapResource(identifier, size);
+      addToResources(identifier(r.getName()), size);
     }
-    updateCurrentUsage(totalSize);
   }
 
   @Override
@@ -77,9 +76,7 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
 
   @Override
   public boolean addOffHeapResource(OffHeapResourceIdentifier identifier, long capacityInBytes) {
-    boolean added = createOffheapResource(identifier, capacityInBytes);
-    updateCurrentUsage(capacityInBytes);
-    return added;
+    return addToResources(identifier, capacityInBytes);
   }
 
   @Override
@@ -119,11 +116,6 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     }
   }
 
-  //For testing only
-  long getTotalConfiguredOffheap() {
-    return totalConfiguredOffheap.get();
-  }
-
   static BigInteger convert(BigInteger value, MemoryUnit unit) {
     switch (unit) {
       case B:
@@ -150,53 +142,57 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     }
   }
 
-  private boolean createOffheapResource(OffHeapResourceIdentifier identifier, long size) {
-    if (resources.containsKey(identifier)) {
-      return false;
-    }
-
-    OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(
-        identifier.getName(),
-        size,
-        (res, update) -> {
-          for (EntityManagementRegistry registry : registries) {
-            Map<String, String> attrs = new HashMap<>();
-            attrs.put("oldThreshold", String.valueOf(update.old));
-            attrs.put("threshold", String.valueOf(update.now));
-            attrs.put("capacity", String.valueOf(res.capacity()));
-            attrs.put("available", String.valueOf(res.available()));
-            registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
-          }
-        },
-        (res, oldCapacity, newCapacity) -> {
-          updateCurrentUsage(newCapacity - oldCapacity);
-          for (EntityManagementRegistry registry : registries) {
-            Map<String, String> attrs = new HashMap<>();
-            attrs.put("oldCapacity", Long.toString(oldCapacity));
-            attrs.put("newCapacity", Long.toString(newCapacity));
-            registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_CAPACITY_CHANGED", attrs);
-          }
-        });
-
-    if (resources.putIfAbsent(identifier, offHeapResource) != null) {
-      return false;
-    }
-
-    Map<String, Object> properties = new HashMap<>();
-    properties.put("discriminator", "OffHeapResource");
-    properties.put("offHeapResourceIdentifier", identifier.getName());
-    StatisticsManager.createPassThroughStatistic(
-        offHeapResource,
-        "allocatedMemory",
-        new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
-        properties,
-        StatisticType.GAUGE,
-        () -> offHeapResource.capacity() - offHeapResource.available()
-    );
-    return true;
+  //For testing only
+  long getTotalConfiguredOffheap() {
+    return totalConfiguredOffheap.get();
   }
 
-  private void updateCurrentUsage(long delta) {
+  private boolean addToResources(OffHeapResourceIdentifier identifier, long capacityInBytes) {
+    AtomicBoolean status = new AtomicBoolean();
+    resources.computeIfAbsent(identifier, (id) -> {
+      status.compareAndSet(false, true);
+      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(
+          identifier.getName(),
+          capacityInBytes,
+          (res, update) -> {
+            for (EntityManagementRegistry registry : registries) {
+              Map<String, String> attrs = new HashMap<>();
+              attrs.put("oldThreshold", String.valueOf(update.old));
+              attrs.put("threshold", String.valueOf(update.now));
+              attrs.put("capacity", String.valueOf(res.capacity()));
+              attrs.put("available", String.valueOf(res.available()));
+              registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
+            }
+          },
+          (res, oldCapacity, newCapacity) -> {
+            updateConfiguredOffheap(newCapacity - oldCapacity);
+            for (EntityManagementRegistry registry : registries) {
+              Map<String, String> attrs = new HashMap<>();
+              attrs.put("oldCapacity", Long.toString(oldCapacity));
+              attrs.put("newCapacity", Long.toString(newCapacity));
+              registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_CAPACITY_CHANGED", attrs);
+            }
+          }
+      );
+      Map<String, Object> properties = new HashMap<>();
+      properties.put("discriminator", "OffHeapResource");
+      properties.put("offHeapResourceIdentifier", identifier.getName());
+      StatisticsManager.createPassThroughStatistic(
+          offHeapResource,
+          "allocatedMemory",
+          new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
+          properties,
+          StatisticType.GAUGE,
+          () -> offHeapResource.capacity() - offHeapResource.available()
+      );
+
+      updateConfiguredOffheap(capacityInBytes);
+      return offHeapResource;
+    });
+    return status.get();
+  }
+
+  private void updateConfiguredOffheap(long delta) {
     long current = totalConfiguredOffheap.addAndGet(delta);
     warnIfOffheapExceedsPhysicalMemory(current);
   }
