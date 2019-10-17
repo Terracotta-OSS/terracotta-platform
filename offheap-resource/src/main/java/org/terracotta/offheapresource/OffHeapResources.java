@@ -28,4 +28,6 @@ public interface OffHeapResources {
   Set<OffHeapResourceIdentifier> getAllIdentifiers();
 
   OffHeapResource getOffHeapResource(OffHeapResourceIdentifier identifier);
+
+  boolean addOffHeapResource(OffHeapResourceIdentifier identifier, long capacity);
 }

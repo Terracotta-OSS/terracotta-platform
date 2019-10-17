@@ -27,8 +27,8 @@ import org.terracotta.offheapresource.config.ResourceType;
 import org.terracotta.offheapresource.management.OffHeapResourceBinding;
 import org.terracotta.offheapresource.management.OffHeapResourceSettingsManagementProvider;
 import org.terracotta.offheapresource.management.OffHeapResourceStatisticsManagementProvider;
-import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.StatisticType;
+import org.terracotta.statistics.StatisticsManager;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -38,22 +38,21 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A provider of {@link OffHeapResource} instances.
- * <p>
- * This service allows for the configuration of a multitude of virtual offheap
- * resource pools from which participating entities can reserve space.  This
- * allows for the partitioning and control of memory usage by entities
- * consuming this service.
+ * This service allows for the configuration of a multitude of virtual offheap resource pools from which participating
+ * entities can reserve space. This allows for the partitioning and control of memory usage by entities consuming this service.
  */
 public class OffHeapResourcesProvider implements OffHeapResources, ManageableServerComponent, StateDumpable {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourcesProvider.class);
+  private static final BigInteger MAX_LONG_PLUS_ONE = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
 
-  private final Map<OffHeapResourceIdentifier, OffHeapResourceImpl> resources = new HashMap<>();
+  private final Map<OffHeapResourceIdentifier, OffHeapResourceImpl> resources = new ConcurrentHashMap<>();
   private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
+  private final AtomicLong totalConfiguredOffheap = new AtomicLong(0);
 
   public OffHeapResourcesProvider(OffheapResourcesType configuration) {
     long totalSize = 0;
@@ -61,42 +60,9 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
       totalSize += size;
       OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
-      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size,
-          (res, update) -> {
-            for (EntityManagementRegistry registry : registries) {
-              Map<String, String> attrs = new HashMap<>();
-              attrs.put("oldThreshold", String.valueOf(update.old));
-              attrs.put("threshold", String.valueOf(update.now));
-              attrs.put("capacity", String.valueOf(res.capacity()));
-              attrs.put("available", String.valueOf(res.available()));
-              registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
-            }
-          },
-          (res, oldCapacity, newCapacity) -> {
-            for (EntityManagementRegistry registry : registries) {
-              Map<String, String> attrs = new HashMap<>();
-              attrs.put("oldCapacity", Long.toString(oldCapacity));
-              attrs.put("newCapacity", Long.toString(newCapacity));
-              registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_CAPACITY_CHANGED", attrs);
-            }
-          });
-      resources.put(identifier, offHeapResource);
-
-      Map<String, Object> properties = new HashMap<>();
-      properties.put("discriminator", "OffHeapResource");
-      properties.put("offHeapResourceIdentifier", identifier.getName());
-      StatisticsManager.createPassThroughStatistic(
-          offHeapResource,
-          "allocatedMemory",
-          new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
-          properties,
-          StatisticType.GAUGE,
-          () -> offHeapResource.capacity() - offHeapResource.available());
+      createOffheapResource(identifier, size);
     }
-    Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
-    if (physicalMemory != null && totalSize > physicalMemory) {
-      LOGGER.warn("More offheap configured than there is physical memory [{} > {}]", totalSize, physicalMemory);
-    }
+    updateCurrentUsage(totalSize);
   }
 
   @Override
@@ -110,6 +76,13 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
   }
 
   @Override
+  public boolean addOffHeapResource(OffHeapResourceIdentifier identifier, long capacityInBytes) {
+    boolean added = createOffheapResource(identifier, capacityInBytes);
+    updateCurrentUsage(capacityInBytes);
+    return added;
+  }
+
+  @Override
   public void onManagementRegistryCreated(EntityManagementRegistry registry) {
     LOGGER.trace("[{}] onManagementRegistryCreated()", registry.getMonitoringService().getConsumerId());
 
@@ -119,13 +92,13 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     registry.addManagementProvider(new OffHeapResourceStatisticsManagementProvider());
 
     Set<OffHeapResourceIdentifier> identifiers = getAllIdentifiers();
-    if(!identifiers.isEmpty()) {
+    if (!identifiers.isEmpty()) {
       for (OffHeapResourceIdentifier identifier : identifiers) {
         LOGGER.trace("[{}] onManagementRegistryCreated() - Exposing OffHeapResource:{}", registry.getMonitoringService().getConsumerId(), identifier.getName());
         OffHeapResourceBinding managementBinding = getOffHeapResource(identifier).getManagementBinding();
         registry.register(managementBinding);
       }
-      registry.refresh(); 
+      registry.refresh();
     }
   }
 
@@ -146,25 +119,92 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     }
   }
 
+  //For testing only
+  long getTotalConfiguredOffheap() {
+    return totalConfiguredOffheap.get();
+  }
+
   static BigInteger convert(BigInteger value, MemoryUnit unit) {
     switch (unit) {
-      case B: return value.shiftLeft(0);
-      case K_B: return value.shiftLeft(10);
-      case MB: return value.shiftLeft(20);
-      case GB: return value.shiftLeft(30);
-      case TB: return value.shiftLeft(40);
-      case PB: return value.shiftLeft(50);
+      case B:
+        return value.shiftLeft(0);
+      case K_B:
+        return value.shiftLeft(10);
+      case MB:
+        return value.shiftLeft(20);
+      case GB:
+        return value.shiftLeft(30);
+      case TB:
+        return value.shiftLeft(40);
+      case PB:
+        return value.shiftLeft(50);
     }
     throw new IllegalArgumentException("Unknown unit " + unit);
   }
-
-  private static final BigInteger MAX_LONG_PLUS_ONE = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
 
   static long longValueExact(BigInteger value) {
     if (value.compareTo(MAX_LONG_PLUS_ONE) < 0) {
       return value.longValue();
     } else {
       throw new ArithmeticException("BigInteger out of long range");
+    }
+  }
+
+  private boolean createOffheapResource(OffHeapResourceIdentifier identifier, long size) {
+    if (resources.containsKey(identifier)) {
+      return false;
+    }
+
+    OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(
+        identifier.getName(),
+        size,
+        (res, update) -> {
+          for (EntityManagementRegistry registry : registries) {
+            Map<String, String> attrs = new HashMap<>();
+            attrs.put("oldThreshold", String.valueOf(update.old));
+            attrs.put("threshold", String.valueOf(update.now));
+            attrs.put("capacity", String.valueOf(res.capacity()));
+            attrs.put("available", String.valueOf(res.available()));
+            registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
+          }
+        },
+        (res, oldCapacity, newCapacity) -> {
+          updateCurrentUsage(newCapacity - oldCapacity);
+          for (EntityManagementRegistry registry : registries) {
+            Map<String, String> attrs = new HashMap<>();
+            attrs.put("oldCapacity", Long.toString(oldCapacity));
+            attrs.put("newCapacity", Long.toString(newCapacity));
+            registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_CAPACITY_CHANGED", attrs);
+          }
+        });
+
+    if (resources.putIfAbsent(identifier, offHeapResource) != null) {
+      return false;
+    }
+
+    Map<String, Object> properties = new HashMap<>();
+    properties.put("discriminator", "OffHeapResource");
+    properties.put("offHeapResourceIdentifier", identifier.getName());
+    StatisticsManager.createPassThroughStatistic(
+        offHeapResource,
+        "allocatedMemory",
+        new HashSet<>(Arrays.asList("OffHeapResource", "tier")),
+        properties,
+        StatisticType.GAUGE,
+        () -> offHeapResource.capacity() - offHeapResource.available()
+    );
+    return true;
+  }
+
+  private void updateCurrentUsage(long delta) {
+    long current = totalConfiguredOffheap.addAndGet(delta);
+    warnIfOffheapExceedsPhysicalMemory(current);
+  }
+
+  private void warnIfOffheapExceedsPhysicalMemory(long totalConfiguredOffheap) {
+    Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
+    if (physicalMemory != null && totalConfiguredOffheap > physicalMemory) {
+      LOGGER.warn("Configured offheap: {} is more than physical memory: {}", totalConfiguredOffheap, physicalMemory);
     }
   }
 }
