@@ -36,6 +36,8 @@ import static org.junit.Assert.assertTrue;
 
 public class ConfigurationParserTest {
 
+  private static boolean WINDOWS = System.getProperty("os.name", "unknown").toLowerCase().contains("win");
+
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
@@ -150,6 +152,19 @@ public class ConfigurationParserTest {
     testThrowsWithMessage("Invalid input: 'stripe.0.node.0.blah=something'. Reason: Illegal setting name: blah");
   }
 
+  @Test
+  public void test_cluster_creation_omitting_defaults() throws IOException, URISyntaxException {
+    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), new Properties());
+
+    Properties expected = loadProperties("c4.properties");
+    expected.put("stripe.1.node.1.node-name", cluster.getSingleNode().get().getNodeName()); // because node name is generated
+    if (WINDOWS) {
+      expected.stringPropertyNames().forEach(key -> expected.setProperty(key, expected.getProperty(key).replace('/', '\\'))); // windows compat'
+    }
+
+    assertThat(cluster.toProperties(false, true), is(equalTo(expected)));
+  }
+
   private void testThrowsWithMessage(String message) {
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(message);
@@ -157,9 +172,10 @@ public class ConfigurationParserTest {
   }
 
   private Properties loadProperties(String fileName) throws IOException, URISyntaxException {
-    InputStream inputStream = Files.newInputStream(Paths.get(getClass().getResource("/config-property-files/" + fileName).toURI()));
-    Properties properties = new Properties();
-    properties.load(inputStream);
-    return properties;
+    try (InputStream inputStream = Files.newInputStream(Paths.get(getClass().getResource("/config-property-files/" + fileName).toURI()))) {
+      Properties properties = new Properties();
+      properties.load(inputStream);
+      return properties;
+    }
   }
 }

@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.model.config.ClusterCreator;
 import com.terracottatech.dynamic_config.parsing.Options;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;

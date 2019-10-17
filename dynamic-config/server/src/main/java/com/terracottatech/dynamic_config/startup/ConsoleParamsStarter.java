@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.startup;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Setting;
+import com.terracottatech.dynamic_config.model.config.ClusterCreator;
 import com.terracottatech.dynamic_config.parsing.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

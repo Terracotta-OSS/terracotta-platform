@@ -450,4 +450,14 @@ public class Configuration {
     }
     throw new IllegalArgumentException("Invalid input: '" + input + "'.");
   }
+
+  public static Configuration valueOf(Setting setting) {
+    final String val = setting.getDefaultValue();
+    return new Configuration(setting + "=" + (val == null ? "" : val), setting, CLUSTER, null, null, null, val);
+  }
+
+  public static Configuration valueOf(int stripeId, int nodeId, Setting setting) {
+    final String val = setting.getDefaultValue();
+    return new Configuration("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + (val == null ? "" : val), setting, NODE, stripeId, nodeId, null, val);
+  }
 }

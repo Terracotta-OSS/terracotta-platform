@@ -506,6 +506,10 @@ public enum Setting {
     return map;
   }
 
+  public Scope getScope() {
+    return scope;
+  }
+
   public void fillDefault(Node node) {
     String v = getDefaultValue();
     if (v != null) {
@@ -611,10 +615,6 @@ public enum Setting {
 
   public static Optional<Setting> findSetting(String name) {
     return Stream.of(values()).filter(setting -> setting.name.equals(name)).findFirst();
-  }
-
-  public static Collection<Setting> getAll() {
-    return asList(Setting.values());
   }
 
   public static Collection<String> getAllNames() {

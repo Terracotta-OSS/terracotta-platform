@@ -28,7 +28,6 @@ import static com.terracottatech.dynamic_config.model.Setting.NODE_PORT;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_WHITELIST;
-import static com.terracottatech.dynamic_config.model.Setting.getAll;
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.Tuple2.tuple2;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
@@ -70,7 +69,7 @@ public class ConfigurationTest {
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_valueOf() {
-    Stream.of(".", ":").forEach(nsSeparator -> getAll().forEach(setting -> {
+    Stream.of(".", ":").forEach(nsSeparator -> Stream.of(Setting.values()).forEach(setting -> {
 
       if (setting.isMap()) {
 

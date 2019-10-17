@@ -232,7 +232,7 @@ public class Cluster implements Cloneable {
    */
   public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
     // select the settings to output and sort them.
-    List<Setting> settings = Setting.getAll().stream()
+    List<Setting> settings = Stream.of(Setting.values())
         .filter(setting -> setting.allowsOperation(Operation.CONFIG))
         .sorted(comparing(Setting::toString))
         .collect(toList());

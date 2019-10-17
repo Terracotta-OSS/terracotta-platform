@@ -12,11 +12,10 @@ import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.model.config.ConfigurationParser;
+import com.terracottatech.dynamic_config.model.config.ClusterCreator;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
 import com.terracottatech.utilities.Tuple2;
 
@@ -26,7 +25,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Properties;
 
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.Assertions.assertNonNull;
@@ -77,9 +75,7 @@ public class ActivateCommand extends RemoteCommand {
 
     // check if we want to override the cluster name
     if (clusterName != null) {
-      if (!clusterName.equals(cluster.getName())) {
-        logger.info("Changing cluster name: {} to: {}", cluster.getName(), clusterName);
-      }
+      logger.info("Setting cluster name to: {}", clusterName);
       cluster.setName(clusterName);
     } else {
       clusterName = cluster.getName();
@@ -151,8 +147,8 @@ public class ActivateCommand extends RemoteCommand {
       cluster = getRemoteTopology(node);
       logger.debug("Cluster topology validation successful");
     } else {
-      Properties properties = new PropertiesFileLoader(configPropertiesFile).loadProperties();
-      cluster = ConfigurationParser.parsePropertyConfiguration(substitutor, properties);
+      ClusterCreator clusterCreator = new ClusterCreator(substitutor);
+      cluster = clusterCreator.create(configPropertiesFile, clusterName);
       logger.debug("Config property file parsed and cluster topology validation successful");
     }
     return cluster;
