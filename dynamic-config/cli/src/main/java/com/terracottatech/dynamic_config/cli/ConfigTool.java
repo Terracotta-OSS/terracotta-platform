@@ -17,8 +17,6 @@ import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 import com.terracottatech.dynamic_config.cli.service.command.SetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.UnsetCommand;
-import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
-import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
@@ -87,12 +85,11 @@ public class ConfigTool {
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
-    NodeAddressDiscovery nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
     NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), requestTimeout), MAIN.isVerbose());
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, requestTimeout);
 
     LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nodeAddressDiscovery, nomadManager, restartService);
+    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help

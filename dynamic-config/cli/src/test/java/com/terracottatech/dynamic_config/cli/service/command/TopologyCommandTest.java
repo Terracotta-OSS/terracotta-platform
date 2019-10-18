@@ -75,7 +75,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   }
 
   protected final C newCommand() {
-    return inject(newTopologyCommand(), nodeAddressDiscovery, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
+    return inject(newTopologyCommand(), diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
   }
 
   protected abstract C newTopologyCommand();

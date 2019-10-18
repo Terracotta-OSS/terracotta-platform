@@ -9,14 +9,12 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
-import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
@@ -53,7 +51,6 @@ import static java.util.stream.Collectors.toMap;
  */
 public abstract class RemoteCommand extends Command {
 
-  @Resource public NodeAddressDiscovery nodeAddressDiscovery;
   @Resource public MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   @Resource public DiagnosticServiceProvider diagnosticServiceProvider;
   @Resource public NomadManager<NodeContext> nomadManager;
@@ -61,13 +58,17 @@ public abstract class RemoteCommand extends Command {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  protected final void verifyAddress(InetSocketAddress address) {
-    logger.trace("verifyAddress({})", address);
+  protected final void ensureAddressWithinCluster(InetSocketAddress address) {
+    logger.trace("ensureAddressWithinCluster({})", address);
+    getRuntimeCluster(address).getNode(address)
+        .orElseGet(() -> getUpcomingCluster(address).getNode(address)
+            .orElseThrow(() -> new IllegalArgumentException("Targeted cluster does not contain any node with this address: " + address + ". Is it a mistake ? Are you connecting to the wrong cluster ? If not, please use the configured node hostname and port to connect.")));
+  }
+
+  protected final boolean isRestartRequired(InetSocketAddress address) {
+    logger.trace("isRestartRequired({})", address);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
-      Node node = diagnosticService.getProxy(TopologyService.class).getThisNode();
-      if (!node.getNodeAddress().equals(address)) {
-        throw new IllegalArgumentException("Address: " + address + " points to node: " + node.getNodeName() + " with configured address: " + node.getNodeAddress() + ". Is it a mistake ? If not, please use the configured node hostname and port to connect to it.");
-      }
+      return diagnosticService.getProxy(TopologyService.class).isRestartRequired();
     }
   }
 
@@ -78,10 +79,17 @@ public abstract class RemoteCommand extends Command {
     failures.reThrow();
   }
 
-  protected final Cluster getRemoteTopology(InetSocketAddress node) {
-    logger.trace("getRemoteTopology({})", node);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-      return diagnosticService.getProxy(TopologyService.class).getCluster();
+  protected final Cluster getUpcomingCluster(InetSocketAddress address) {
+    logger.trace("getUpcomingCluster({})", address);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
+      return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
+    }
+  }
+
+  protected final Cluster getRuntimeCluster(InetSocketAddress address) {
+    logger.trace("getRuntimeCluster({})", address);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
+      return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
     }
   }
 
@@ -103,18 +111,22 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final Collection<InetSocketAddress> getPeers(InetSocketAddress nodeAddress) {
-    logger.trace("getPeers({})", nodeAddress);
-    Collection<InetSocketAddress> discovered = nodeAddressDiscovery.discover(nodeAddress);
-    if (logger.isDebugEnabled()) {
-      logger.debug("Discovered nodes:{} through: {}", toString(discovered), nodeAddress);
+  protected final Collection<InetSocketAddress> findRuntimePeers(InetSocketAddress address) {
+    logger.trace("findPeers({})", address);
+    final Collection<InetSocketAddress> peers = getRuntimeCluster(address).getNodeAddresses();
+    if (!peers.contains(address)) {
+      throw new IllegalArgumentException("Node address " + address + " used to connect does not match any known node in cluster " + peers);
     }
-    return discovered;
+    if (logger.isDebugEnabled()) {
+      logger.debug("Discovered nodes:{} through: {}", toString(peers), address);
+    }
+    return peers;
   }
 
-  protected final Map<InetSocketAddress, LogicalServerState> findOnlineNodes(Cluster cluster) {
-    logger.trace("findOnlineNodes({})", cluster);
+  protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress address) {
+    logger.trace("findOnlineNodes({})", address);
     //TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
+    final Cluster cluster = getRuntimeCluster(address);
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
       return diagnosticServices
           .map((inetSocketAddress, diagnosticService) -> diagnosticService.getLogicalServerState())
@@ -127,7 +139,7 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final boolean validateActivationState(Collection<InetSocketAddress> expectedOnlineNodes) {
+  protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {
     logger.trace("validateActivationState({})", expectedOnlineNodes);
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
       Map<Boolean, Collection<InetSocketAddress>> activations = topologyServices(diagnosticServices)

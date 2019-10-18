@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 @Parameters(commandNames = "export", commandDescription = "Export the cluster topology to the console or to a file")
-@Usage("export -s HOST[:PORT] [-o DESTINATION_FILE] [-x]")
+@Usage("export -s HOST[:PORT] [-o DESTINATION_FILE] [-x] [-r]")
 public class ExportCommand extends RemoteCommand {
 
   public enum Format {JSON, PROPERTIES}
@@ -41,6 +41,9 @@ public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-x"}, description = "Exclude default values", converter = BooleanConverter.class)
   private boolean excludeDefaultValues;
 
+  @Parameter(names = {"-r"}, description = "Export runtime configuration instead of upcoming configuration persisted on disk", converter = BooleanConverter.class)
+  private boolean wantsRuntimeConfig;
+
   @Parameter(names = {"-f"}, hidden = true, description = "Output format", converter = FormatConverter.class)
   private Format format = Format.PROPERTIES;
 
@@ -49,12 +52,12 @@ public class ExportCommand extends RemoteCommand {
     if (outputFile != null && Files.exists(outputFile) && !Files.isRegularFile(outputFile)) {
       throw new IllegalArgumentException(outputFile + " is not a file");
     }
-    verifyAddress(node);
+    ensureAddressWithinCluster(node);
   }
 
   @Override
   public final void run() {
-    Cluster cluster = getRemoteTopology(node);
+    Cluster cluster = wantsRuntimeConfig ? getRuntimeCluster(node) : getUpcomingCluster(node);
     String output = buildOutput(cluster, format);
 
     if (outputFile == null) {

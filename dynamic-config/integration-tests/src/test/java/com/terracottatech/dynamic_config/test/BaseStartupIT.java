@@ -183,7 +183,7 @@ public class BaseStartupIT {
         java.time.Duration.ofSeconds(5),
         java.time.Duration.ofSeconds(5),
         null)) {
-      return diagnosticService.getProxy(TopologyService.class).getCluster();
+      return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
   }
 

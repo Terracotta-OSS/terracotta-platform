@@ -36,7 +36,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
               baseConfig :
               new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
     } catch (Exception e) {
-      throw new NomadException(e);
+      throw new NomadException(e.getMessage(), e);
     }
   }
 

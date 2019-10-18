@@ -9,8 +9,6 @@ import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
-import com.terracottatech.dynamic_config.cli.service.connect.DynamicConfigNodeAddressDiscovery;
-import com.terracottatech.dynamic_config.cli.service.connect.NodeAddressDiscovery;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
@@ -27,7 +25,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
@@ -37,7 +34,6 @@ import static org.mockito.Mockito.mock;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class BaseTest {
 
-  protected NodeAddressDiscovery nodeAddressDiscovery;
   protected DiagnosticServiceProvider diagnosticServiceProvider;
   protected MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   protected NomadManager<NodeContext> nomadManager;
@@ -77,7 +73,6 @@ public abstract class BaseTest {
         return diagnosticServices.get(address);
       }
     };
-    nodeAddressDiscovery = new DynamicConfigNodeAddressDiscovery(diagnosticServiceProvider);
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
     nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), timeout), false);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeout);

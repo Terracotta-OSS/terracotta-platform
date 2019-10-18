@@ -73,6 +73,9 @@ public class ActivateCommandTest extends BaseTest {
     super.setUp();
     config = Paths.get(getClass().getResource("/my-cluster.properties").toURI());
     license = Paths.get(getClass().getResource("/license.xml").toURI());
+
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
+    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
   }
 
   @Test
@@ -246,14 +249,6 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setNode(InetSocketAddress.createUnresolved("localhost", 9411))
         .setClusterName("foo");
-
-
-    // mock address verification calls
-    when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(cluster.getNode(1, 1));
-
-    // mock topology call
-    when(topologyServiceMock("localhost", 9411).getCluster()).thenReturn(cluster);
-
     doRunAndVerify("foo", command);
   }
 
@@ -286,7 +281,7 @@ public class ActivateCommandTest extends BaseTest {
   private ActivateCommand command() {
     ActivateCommand command = new ActivateCommand()
         .setLicenseFile(license);
-    inject(command, nodeAddressDiscovery, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
+    inject(command, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
     return command;
   }
 

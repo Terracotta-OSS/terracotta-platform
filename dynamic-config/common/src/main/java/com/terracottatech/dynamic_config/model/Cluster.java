@@ -205,7 +205,14 @@ public class Cluster implements Cloneable {
   }
 
   public Node getNode(int stripeId, int nodeId) {
-    return stripes.get(stripeId - 1).getNodes().get(nodeId - 1);
+    if (stripeId < 1 || stripeId > stripes.size()) {
+      throw new IllegalArgumentException("Invalid stripe Id: " + stripeId);
+    }
+    Stripe stripe = stripes.get(stripeId - 1);
+    if (nodeId < 1 || stripeId > stripe.getNodeCount()) {
+      throw new IllegalArgumentException("Invalid node Id: " + nodeId);
+    }
+    return stripe.getNodes().get(nodeId - 1);
   }
 
   public Stream<NodeContext> nodeContexts() {

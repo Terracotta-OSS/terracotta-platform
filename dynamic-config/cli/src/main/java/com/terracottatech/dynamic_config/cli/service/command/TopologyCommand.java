@@ -66,14 +66,18 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (sources.contains(destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
-    verifyAddress(destination);
-    sources.forEach(this::verifyAddress);
+    ensureAddressWithinCluster(destination);
+    sources.forEach(this::ensureAddressWithinCluster);
+    // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
+    if (isRestartRequired(destination)) {
+      throw new IllegalStateException("Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes.");
+    }
   }
 
   @Override
   public final void run() {
     // get all the nodes to update (which includes source node plus all the nodes on the destination cluster)
-    Collection<InetSocketAddress> discovered = getPeers(destination);
+    Collection<InetSocketAddress> discovered = findRuntimePeers(destination);
 
     // create a list of addresses to connect to
     Collection<InetSocketAddress> addresses = concat(sources.stream(), discovered.stream()).collect(toCollection(LinkedHashSet::new));
@@ -85,14 +89,15 @@ public abstract class TopologyCommand extends RemoteCommand {
       // get the target node / cluster
       NodeContext dest = diagnosticServices.getDiagnosticService(destination)
           .map(ds -> ds.getProxy(TopologyService.class))
-          .map(TopologyService::getThisNodeContext)
+          .map(TopologyService::getUpcomingNodeContext)
           .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + destination));
 
       // get all the source node info
       List<Node> src = sources.stream()
           .map(addr -> diagnosticServices.getDiagnosticService(addr)
               .map(ds -> ds.getProxy(TopologyService.class))
-              .map(TopologyService::getThisNode)
+              .map(TopologyService::getUpcomingNodeContext)
+              .map(NodeContext::getNode)
               .orElseThrow(() -> new IllegalStateException("Diagnostic service not found for " + addr)))
           .collect(toList());
 
@@ -109,7 +114,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       logger.info("Pushing the updated topology to all the nodes: {}.", toString(addresses));
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
-          .forEach(ts -> ts.setCluster(result));
+          .forEach(ts -> ts.setUpcomingCluster(result));
     }
 
     logger.info("Command successful!\n");

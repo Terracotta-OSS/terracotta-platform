@@ -39,13 +39,18 @@ public class NodeContext implements Cloneable {
   }
 
   public NodeContext(Cluster cluster, Node node) {
-    this.cluster = requireNonNull(cluster);
-    this.stripeId = cluster.getStripeId(node)
-        .orElseThrow(() -> new IllegalArgumentException("Node " + node + " not in cluster " + cluster));
-    this.nodeName = node.getNodeName();
-    // verify we can find the node
-    getNode();
-    this.nodeId = cluster.getStripes().get(stripeId - 1).getNodeId(nodeName).get();
+    this(cluster, cluster.getStripeId(node).getAsInt(), node.getNodeName());
+  }
+
+  public NodeContext(Cluster cluster, int stripeId, int nodeId) {
+    this(cluster, stripeId, cluster.getNode(stripeId, nodeId).getNodeName());
+  }
+
+  /**
+   * Special flavor that is creating a node context of a single node cluster
+   */
+  public NodeContext(Node node) {
+    this(new Cluster(new Stripe(node)), node);
   }
 
   public Cluster getCluster() {

@@ -17,9 +17,10 @@ public interface DynamicConfigService {
   void restart();
 
   /**
-   * Changes the in-memory cluster to a new one for this node while it is still not activated
+   * Changes the in-memory cluster to a new one for this node while it is still not activated.
+   * The cluster topology will become effective when the nodes will be activated and restarted.
    */
-  void setCluster(Cluster cluster);
+  void setUpcomingCluster(Cluster cluster);
 
   /**
    * Activates the Nomad system so that we can write a first config repository version. This requires the topology to set plus the license installed

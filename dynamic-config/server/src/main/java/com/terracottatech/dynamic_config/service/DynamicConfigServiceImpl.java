@@ -23,7 +23,6 @@ import org.terracotta.monitoring.PlatformService;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,14 +35,16 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
-  private volatile NodeContext nodeContext;
+  private volatile NodeContext upcomingNodeContext;
+  private volatile NodeContext runtimeNodeContext;
   private volatile License license;
   private boolean clusterActivated;
   private final NomadServerManager nomadServerManager;
   private final IParameterSubstitutor substitutor;
 
   public DynamicConfigServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager, IParameterSubstitutor substitutor) {
-    this.nodeContext = requireNonNull(nodeContext);
+    this.upcomingNodeContext = requireNonNull(nodeContext);
+    this.runtimeNodeContext = requireNonNull(nodeContext);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.substitutor = requireNonNull(substitutor);
     if (loadLicense()) {
@@ -59,35 +60,25 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   public synchronized void upgradeNomadForWrite() {
-    LOGGER.info("Preparing activation of Node with validated topology: {}", getCluster());
-    nomadServerManager.upgradeForWrite(nodeContext.getStripeId(), nodeContext.getNodeName(), getCluster());
+    LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster());
+    nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName(), upcomingNodeContext.getCluster());
     LOGGER.debug("Setting nomad writable successful");
   }
 
   @Override
-  public synchronized NodeContext getThisNodeContext() {
-    return nodeContext;
+  public synchronized NodeContext getUpcomingNodeContext() {
+    return upcomingNodeContext;
   }
 
   @Override
-  public synchronized Node getThisNode() {
-    return nodeContext.getNode();
-  }
-
-  @Override
-  public synchronized InetSocketAddress getThisNodeAddress() {
-    return nodeContext.getNode().getNodeAddress();
+  public NodeContext getRuntimeNodeContext() {
+    return runtimeNodeContext;
   }
 
   @Override
   public void restart() {
-    LOGGER.info("Executing restart on node: {} in stripe: {}", nodeContext.getNodeName(), nodeContext.getStripeId());
+    LOGGER.info("Executing restart on node: {} in stripe: {}", runtimeNodeContext.getNodeName(), runtimeNodeContext.getStripeId());
     TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
-  }
-
-  @Override
-  public synchronized Cluster getCluster() {
-    return nodeContext.getCluster();
   }
 
   @Override
@@ -96,7 +87,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized void setCluster(Cluster updatedCluster) {
+  public boolean isRestartRequired() {
+    return !runtimeNodeContext.equals(upcomingNodeContext);
+  }
+
+  @Override
+  public synchronized void setUpcomingCluster(Cluster updatedCluster) {
     requireNonNull(updatedCluster);
 
     if (isActivated()) {
@@ -105,20 +101,22 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     } else {
       new ClusterValidator(updatedCluster, substitutor).validate();
 
-      Node oldMe = nodeContext.getNode();
+      Node oldMe = upcomingNodeContext.getNode();
       Node newMe = findMe(updatedCluster);
 
       if (newMe != null) {
         // we have updated the topology and I am still part of this cluster
         LOGGER.info("Set pending topology to: {}", updatedCluster);
-        this.nodeContext = new NodeContext(updatedCluster, newMe);
+        this.upcomingNodeContext = new NodeContext(updatedCluster, newMe);
       } else {
         // We have updated the topology and I am not part anymore of the cluster
         // So we just reset the cluster object so that this node is alone
         LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster);
-        this.nodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe);
+        this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe);
       }
 
+      // When node is not yest activated, runtimeNodeContext == upcomingNodeContext
+      this.runtimeNodeContext = upcomingNodeContext;
     }
   }
 
@@ -134,12 +132,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (findMe(maybeUpdatedCluster) == null) {
       throw new IllegalArgumentException(String.format(
           "No match found for node: %s in cluster topology: %s",
-          nodeContext.getNodeName(),
+          upcomingNodeContext.getNodeName(),
           maybeUpdatedCluster
       ));
     }
 
-    this.setCluster(maybeUpdatedCluster);
+    this.setUpcomingCluster(maybeUpdatedCluster);
     this.installLicense(licenseContent);
 
     upgradeNomadForWrite();
@@ -169,7 +167,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   private void validateAgainstLicense() {
-    validateAgainstLicense(getCluster());
+    validateAgainstLicense(upcomingNodeContext.getCluster());
   }
 
   private synchronized void installLicense(String licenseContent) {
@@ -236,9 +234,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    * So we try to find the best match we can...
    */
   private Node findMe(Cluster updatedCluster) {
-    final Node me = nodeContext.getNode();
+    final Node me = upcomingNodeContext.getNode();
     return updatedCluster.getNode(me.getNodeAddress())
-        .orElseGet(() -> updatedCluster.getNode(nodeContext.getStripeId(), me.getNodeName())
+        .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())
             .orElse(null));
   }
 }

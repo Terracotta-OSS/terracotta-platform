@@ -67,20 +67,12 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   public void setUp() throws Exception {
     super.setUp();
 
-    // mock address verification calls
-    when(topologyServiceMock("localhost", 9410).getThisNode()).thenReturn(node0);
-    when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(node1);
-    when(topologyServiceMock("localhost", 9412).getThisNode()).thenReturn(node2);
+    when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node0));
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(node1));
+    when(topologyServiceMock("localhost", 9412).getUpcomingNodeContext()).thenReturn(new NodeContext(node2));
 
-    // mock discover call
-    when(topologyServiceMock("localhost", 9410).getCluster()).thenReturn(cluster);
-
-    // mock destination node information retrieval
-    when(topologyServiceMock(node0.getNodeAddress()).getThisNodeContext()).thenReturn(new NodeContext(cluster, node0));
-
-    // mock source node information retrieval
-    when(topologyServiceMock("localhost", 9411).getThisNode()).thenReturn(node1);
-    when(topologyServiceMock("localhost", 9412).getThisNode()).thenReturn(node2);
+    when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node0));
+    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(node1));
   }
 
   @Test
@@ -92,7 +84,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(dynamicConfigServiceMock("localhost", 9410)).setCluster(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9410)).setUpcomingCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
@@ -113,7 +105,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
         .run();
 
     // capture the new topology set calls
-    verify(dynamicConfigServiceMock("localhost", 9410)).setCluster(newCluster.capture());
+    verify(dynamicConfigServiceMock("localhost", 9410)).setUpcomingCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));

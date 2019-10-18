@@ -7,11 +7,12 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.cli.common.Usage;
-import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Operation;
 
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
 
@@ -37,10 +38,10 @@ public class SetCommand extends ConfigurationMutationCommand {
   @Override
   public void run() {
     if (licenseUpdate) {
-      Cluster cluster = getRemoteTopology(node);
-      logger.info("Updating license on nodes: {}", toString(cluster.getNodeAddresses()));
+      Collection<InetSocketAddress> peers = findRuntimePeers(node);
+      logger.info("Updating license on nodes: {}", toString(peers));
       Path licenseFile = Paths.get(configurations.get(0).getValue());
-      upgradeLicense(cluster.getNodeAddresses(), licenseFile);
+      upgradeLicense(peers, licenseFile);
     } else {
       super.run();
     }

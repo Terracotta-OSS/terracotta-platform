@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 
 import static com.terracottatech.dynamic_config.model.Requirement.ALL_NODES_ONLINE;
@@ -45,7 +44,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     logger.debug("Validating the new configuration change(s) against the topology of: {}", node);
 
     // get the remote topology, apply the parameters, and validate that the cluster is still valid
-    Cluster originalCluster = getRemoteTopology(node);
+    Cluster originalCluster = getUpcomingCluster(node);
     Cluster updatedCluster = originalCluster.clone();
 
     // applying the set/unset operation to the cluster in memory for validation
@@ -55,9 +54,9 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     new ClusterValidator(updatedCluster, parameterSubstitutor).validate();
 
     // get the current state of the nodes
-    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineNodes(originalCluster);
-    final Set<InetSocketAddress> onlineNodesAddresses = onlineNodes.keySet();
-    boolean isActive = validateActivationState(onlineNodesAddresses);
+    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineRuntimePeers(node);
+    Collection<InetSocketAddress> onlineNodesAddresses = onlineNodes.keySet();
+    boolean isActive = areAllNodesActivated(onlineNodesAddresses);
 
     if (isActive) {
       logger.debug("Validating the new configuration change(s) against the license");
@@ -71,7 +70,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     if (isActive) {
       // cluster is active, we need to run a nomad change and eventually a restart
       if (requiresAllNodesAlive()) {
-        ensureAllNodesAlive(originalCluster, onlineNodes);
+        ensureAllNodesAlive(originalCluster, onlineNodesAddresses);
         logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodesAddresses));
         runNomadChange(onlineNodesAddresses, getNomadChanges(updatedCluster));
       } else {
@@ -90,29 +89,50 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(onlineNodesAddresses)) {
         dynamicConfigServices(diagnosticServices)
             .map(Tuple2::getT2)
-            .forEach(dynamicConfigService -> dynamicConfigService.setCluster(updatedCluster));
+            .forEach(dynamicConfigService -> dynamicConfigService.setUpcomingCluster(updatedCluster));
       }
     }
 
     logger.info("Command successful!\n");
   }
 
+  /**
+   * IMPORTANT NOTE:
+   * - onlineNodes comes from the runtime topology
+   * - cluster comes from the upcoming topology
+   * So this method will also validate that if a restart is needed because a hostname/port change has been done,
+   * if the hostname/port change that is pending impacts one of the active node, then we might not find the actives
+   * in the stripes.
+   */
   private void ensureAtLeastActivesAreOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+    // actives == list of current active nodes in the runtime topology
     List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
+    // Check for stripe count. Whether there is a pending dynamic config change or not, the stripe count is not changing.
+    // The stripe count only changes in case of a runtime topology change, which is another case.
     if (cluster.getStripeCount() != actives.size()) {
-      throw new IllegalStateException("Expected 1 active per stripe, but only this nodes are active: " + toString(actives));
+      throw new IllegalStateException("Expected 1 active per stripe, but only these nodes are active: " + toString(actives));
     }
     for (int i = 0; i < cluster.getStripeCount(); i++) {
       Stripe stripe = cluster.getStripes().get(i);
       if (stripe.getNodeAddresses().stream().noneMatch(actives::contains)) {
-        throw new IllegalStateException("Found no online active node for stripe " + (i + 1) + " in cluster: " + cluster);
+        throw new IllegalStateException("Found no online active node for stripe " + (i + 1) + " in cluster: " + cluster
+            + ". Either some nodes are shutdown, either a hostname/port change has been made and the cluster has not yet been restarted.");
       }
     }
   }
 
-  private void ensureAllNodesAlive(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
-    if (!onlineNodes.keySet().containsAll(cluster.getNodeAddresses())) {
-      throw new IllegalStateException("Not all cluster nodes are online: expected " + toString(cluster.getNodeAddresses()) + ", but only got: " + toString(onlineNodes.keySet()));
+  /**
+   * IMPORTANT NOTE:
+   * - onlineNodes comes from the runtime topology
+   * - cluster comes from the upcoming topology
+   * So this method will also validate that if a restart is needed because a hostname/port change has been done,
+   * if the hostname/port change that is pending impacts one of the active node, then we might not find the actives
+   * in the stripes.
+   */
+  private void ensureAllNodesAlive(Cluster cluster, Collection<InetSocketAddress> onlineNodes) {
+    if (!onlineNodes.containsAll(cluster.getNodeAddresses())) {
+      throw new IllegalStateException("Not all cluster nodes are online: expected " + toString(cluster.getNodeAddresses()) + ", but only got: " + toString(onlineNodes)
+          + ". Either some nodes are shutdown, either a hostname/port change has been made and the cluster has not yet been restarted.");
     }
   }
 

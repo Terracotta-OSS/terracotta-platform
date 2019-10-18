@@ -4,8 +4,10 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.BooleanConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
@@ -15,15 +17,19 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 @Parameters(commandNames = "get", commandDescription = "Display properties of nodes")
-@Usage("get -s HOST -c NAMESPACE1.PROPERTY1 [-c NAMESPACE2.PROPERTY2]...")
+@Usage("get -s HOST -c NAMESPACE1.PROPERTY1 [-c NAMESPACE2.PROPERTY2]... [-r]")
 public class GetCommand extends ConfigurationCommand {
+
+  @Parameter(names = {"-r"}, description = "Export runtime configuration instead of upcoming configuration persisted on disk", converter = BooleanConverter.class)
+  private boolean wantsRuntimeConfig;
+
   public GetCommand() {
     super(Operation.GET);
   }
 
   @Override
   public void run() {
-    Cluster cluster = getRemoteTopology(node);
+    Cluster cluster = wantsRuntimeConfig ? getRuntimeCluster(node) : getUpcomingCluster(node);
     Properties properties = new Properties();
     // we put both expanded and non expanded properties
     // and we will filter depending on what the user wanted

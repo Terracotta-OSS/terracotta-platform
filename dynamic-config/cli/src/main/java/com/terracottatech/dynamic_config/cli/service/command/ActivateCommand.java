@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.Assertions.assertNonNull;
@@ -45,8 +46,10 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(required = true, names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
   private Path licenseFile;
 
-  private Cluster cluster;
   private final IParameterSubstitutor substitutor = identity();
+
+  private Cluster cluster;
+  private Collection<InetSocketAddress> runtimePeers;
 
   @Override
   public void validate() {
@@ -63,7 +66,7 @@ public class ActivateCommand extends RemoteCommand {
     }
 
     if (node != null) {
-      verifyAddress(node);
+      ensureAddressWithinCluster(node);
     }
 
     assertNonNull(licenseFile, "licenseFile must not be null");
@@ -72,6 +75,7 @@ public class ActivateCommand extends RemoteCommand {
     assertNonNull(restartService, "restartService must not be null");
 
     cluster = loadCluster();
+    runtimePeers = node == null ? cluster.getNodeAddresses() : findRuntimePeers(node);
 
     // check if we want to override the cluster name
     if (clusterName != null) {
@@ -89,7 +93,7 @@ public class ActivateCommand extends RemoteCommand {
     new ClusterValidator(cluster, substitutor).validate();
 
     // verify the activated state of the nodes
-    boolean isClusterActive = validateActivationState(cluster.getNodeAddresses());
+    boolean isClusterActive = areAllNodesActivated(runtimePeers);
     if (isClusterActive) {
       throw new IllegalStateException("Cluster is already activated");
     }
@@ -97,16 +101,16 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(runtimePeers)) {
       prepareActivation(diagnosticServices);
       logger.info("License installation successful");
 
       runNomadChange();
       logger.debug("Configuration repositories have been created for all nodes");
 
-      logger.info("Restarting nodes: {}", toString(cluster.getNodeAddresses()));
-      restartNodes(cluster.getNodeAddresses());
-      logger.info("All nodes came back up: {}", toString(cluster.getNodeAddresses()));
+      logger.info("Restarting nodes: {}", toString(runtimePeers));
+      restartNodes(runtimePeers);
+      logger.info("All nodes came back up: {}", toString(runtimePeers));
     }
 
     logger.info("Command successful!\n");
@@ -144,7 +148,7 @@ public class ActivateCommand extends RemoteCommand {
   private Cluster loadCluster() {
     Cluster cluster;
     if (node != null) {
-      cluster = getRemoteTopology(node);
+      cluster = getUpcomingCluster(node);
       logger.debug("Cluster topology validation successful");
     } else {
       ClusterCreator clusterCreator = new ClusterCreator(substitutor);
@@ -162,7 +166,7 @@ public class ActivateCommand extends RemoteCommand {
 
   private void runNomadChange() {
     NomadFailureRecorder<NodeContext> failures = new NomadFailureRecorder<>();
-    nomadManager.runChange(cluster.getNodeAddresses(), new ClusterActivationNomadChange(cluster), failures);
+    nomadManager.runChange(runtimePeers, new ClusterActivationNomadChange(cluster), failures);
     failures.reThrow();
   }
 

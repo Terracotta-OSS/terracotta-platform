@@ -40,6 +40,6 @@ public abstract class ConfigurationCommand extends RemoteCommand {
     for (Configuration configuration : configurations) {
       configuration.validate(operation, parameterSubstitutor);
     }
-    verifyAddress(node);
+    ensureAddressWithinCluster(node);
   }
 }
