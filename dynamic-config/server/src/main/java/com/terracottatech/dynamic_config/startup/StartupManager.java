@@ -5,9 +5,6 @@
 package com.terracottatech.dynamic_config.startup;
 
 import com.tc.server.TCServerMain;
-import com.terracottatech.diagnostic.server.DiagnosticServices;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
@@ -53,8 +50,7 @@ public class StartupManager {
     String nodeName = node.getNodeName();
     logger.info("Starting unconfigured node: {}", nodeName);
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
-    NomadServerManager nomadServerManager = createNomadServerManager(nodeName, nodeRepositoryDir);
-    registerDiagnosticServices(new NodeContext(cluster, node), nomadServerManager);
+    NomadBootstrapper.bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node));
     // This resolver will make sure to rebase the relative given path only if the given path is not absolute
     // and this check happens after doing the substitution.
     // Note: the returned resolved path is not substituted and contains placeholders from both base directory and given path.
@@ -73,11 +69,10 @@ public class StartupManager {
     logger.info("Starting node: {} in cluster: {}", nodeName, cluster.getName());
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
     logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir.toAbsolutePath()));
-    NomadServerManager nomadServerManager = createNomadServerManager(nodeName, nodeRepositoryDir);
-    DynamicConfigServiceImpl dynamicConfigService = registerDiagnosticServices(new NodeContext(cluster, node), nomadServerManager);
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node));
+    DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.prepareActivation(cluster, read(licenseFile));
     runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);
-    dynamicConfigService.activated();
     startServer(
         "-r", nodeRepositoryDir.toString(),
         "-n", nodeName,
@@ -87,11 +82,9 @@ public class StartupManager {
 
   void startUsingConfigRepo(Path repositoryDir, String nodeName) {
     logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(repositoryDir));
-    NomadServerManager nomadServerManager = createNomadServerManager(nodeName, repositoryDir);
-    NodeContext nodeContext = nomadServerManager.getConfiguration();
-    DynamicConfigServiceImpl dynamicConfigService = registerDiagnosticServices(nodeContext, nomadServerManager);
-    dynamicConfigService.upgradeNomadForWrite();
-    dynamicConfigService.activated();
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(repositoryDir, parameterSubstitutor, changeHandlerManager, nodeName);
+    DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
+    dynamicConfigService.activate();
 
     startServer(
         "-r", repositoryDir.toString(),
@@ -152,13 +145,6 @@ public class StartupManager {
     return NomadRepositoryManager.findNodeName(repositoryDir);
   }
 
-  private DynamicConfigServiceImpl registerDiagnosticServices(NodeContext nodeContext, NomadServerManager nomadServerManager) {
-    DynamicConfigServiceImpl topologyService = new DynamicConfigServiceImpl(nodeContext, nomadServerManager, parameterSubstitutor);
-    DiagnosticServices.register(TopologyService.class, topologyService);
-    DiagnosticServices.register(DynamicConfigService.class, topologyService);
-    return topologyService;
-  }
-
   private void runNomadChange(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
     requireNonNull(nodeRepositoryDir);
     String nomadServerName = parameterSubstitutor.substitute(node.getNodeAddress().toString());
@@ -171,10 +157,6 @@ public class StartupManager {
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrow();
     logger.debug("Nomad change run successful");
-  }
-
-  private NomadServerManager createNomadServerManager(String nodeName, Path nodeRepositoryDir) {
-    return NomadBootstrapper.bootstrap(nodeRepositoryDir, nodeName, parameterSubstitutor, changeHandlerManager);
   }
 
   private String read(String path) {

@@ -89,10 +89,10 @@ public class NodeContext implements Cloneable {
 
   @Override
   public String toString() {
-    return "NodeContext{" +
-        "nodeName='" + nodeName + '\'' +
+    return "NodeContext{" + "cluster=" + cluster +
         ", stripeId=" + stripeId +
-        ", cluster=" + cluster +
+        ", nodeId=" + nodeId +
+        ", nodeName='" + nodeName + '\'' +
         '}';
   }
 
@@ -102,12 +102,13 @@ public class NodeContext implements Cloneable {
     if (!(o instanceof NodeContext)) return false;
     NodeContext that = (NodeContext) o;
     return getStripeId() == that.getStripeId() &&
+        getNodeId() == that.getNodeId() &&
         getCluster().equals(that.getCluster()) &&
         getNodeName().equals(that.getNodeName());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getCluster(), getStripeId(), getNodeName());
+    return Objects.hash(getCluster(), getStripeId(), getNodeId(), getNodeName());
   }
 }

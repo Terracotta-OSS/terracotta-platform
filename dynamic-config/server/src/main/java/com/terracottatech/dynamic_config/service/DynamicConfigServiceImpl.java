@@ -35,12 +35,13 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
+  private final NomadServerManager nomadServerManager;
+  private final IParameterSubstitutor substitutor;
+
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
   private volatile License license;
-  private boolean clusterActivated;
-  private final NomadServerManager nomadServerManager;
-  private final IParameterSubstitutor substitutor;
+  private volatile boolean clusterActivated;
 
   public DynamicConfigServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager, IParameterSubstitutor substitutor) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
@@ -53,16 +54,27 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   /**
-   * Called by startup manager to signify that the node has been activated
+   * called from startup manager (in case we want a pre-activated node) (and this class) to make Nomad RW.
    */
-  public void activated() {
-    this.clusterActivated = true;
-  }
-
-  public synchronized void upgradeNomadForWrite() {
+  public synchronized void activate() {
+    if (isActivated()) {
+      throw new AssertionError("Already activated");
+    }
     LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster());
     nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName(), upcomingNodeContext.getCluster());
     LOGGER.debug("Setting nomad writable successful");
+
+    clusterActivated = true;
+  }
+
+  /**
+   * called from Nomad just after a config repository change has been committed and persisted
+   */
+  public void committed(NodeContext updatedNodeContext) {
+    if (!isActivated()) {
+      throw new AssertionError("Not activated");
+    }
+    this.upcomingNodeContext = updatedNodeContext;
   }
 
   @Override
@@ -93,31 +105,30 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public synchronized void setUpcomingCluster(Cluster updatedCluster) {
-    requireNonNull(updatedCluster);
-
     if (isActivated()) {
       throw new AssertionError("This method cannot be used at runtime when node is activated. Use Nomad instead.");
-
-    } else {
-      new ClusterValidator(updatedCluster, substitutor).validate();
-
-      Node oldMe = upcomingNodeContext.getNode();
-      Node newMe = findMe(updatedCluster);
-
-      if (newMe != null) {
-        // we have updated the topology and I am still part of this cluster
-        LOGGER.info("Set pending topology to: {}", updatedCluster);
-        this.upcomingNodeContext = new NodeContext(updatedCluster, newMe);
-      } else {
-        // We have updated the topology and I am not part anymore of the cluster
-        // So we just reset the cluster object so that this node is alone
-        LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster);
-        this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe);
-      }
-
-      // When node is not yest activated, runtimeNodeContext == upcomingNodeContext
-      this.runtimeNodeContext = upcomingNodeContext;
     }
+
+    requireNonNull(updatedCluster);
+
+    new ClusterValidator(updatedCluster, substitutor).validate();
+
+    Node oldMe = upcomingNodeContext.getNode();
+    Node newMe = findMe(updatedCluster);
+
+    if (newMe != null) {
+      // we have updated the topology and I am still part of this cluster
+      LOGGER.info("Set pending topology to: {}", updatedCluster);
+      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe);
+    } else {
+      // We have updated the topology and I am not part anymore of the cluster
+      // So we just reset the cluster object so that this node is alone
+      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster);
+      this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe);
+    }
+
+    // When node is not yest activated, runtimeNodeContext == upcomingNodeContext
+    this.runtimeNodeContext = upcomingNodeContext;
   }
 
   @Override
@@ -140,7 +151,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.setUpcomingCluster(maybeUpdatedCluster);
     this.installLicense(licenseContent);
 
-    upgradeNomadForWrite();
+    activate();
   }
 
   @Override

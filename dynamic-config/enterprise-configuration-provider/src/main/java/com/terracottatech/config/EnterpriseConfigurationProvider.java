@@ -48,7 +48,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
 
   private void bootstrapNomad() {
     String configRepository = cliParser.getConfigRepository() == null ? Setting.NODE_REPOSITORY_DIR.getDefaultValue() : cliParser.getConfigRepository();
-    NomadBootstrapper.bootstrap(Paths.get(configRepository), cliParser.getNodeName(), parameterSubstitutor, configChangeHandlerManager);
+    NomadBootstrapper.bootstrap(Paths.get(configRepository), parameterSubstitutor, configChangeHandlerManager, cliParser.getNodeName());
   }
 
   private CommandLineParser getCommandLineParser(List<String> configurationParams) throws ParseException, ConfigurationException {

@@ -26,7 +26,8 @@ public class NomadTcConfigProvider implements TcConfigProvider {
   @Override
   public TcConfiguration provide() throws Exception {
     // Sadly platform does not support anything else from XML to load so we have no choice but to re-generate on fly this XML data
-    NodeContext configuration = NomadBootstrapper.getNomadServerManager().getConfiguration();
+    NodeContext configuration = NomadBootstrapper.getNomadServerManager().getConfiguration()
+        .orElseThrow(() -> new IllegalStateException("Unable to load configuration repository content"));
     // This path resolver is used when converting a model to XML.
     // It makes sure to resolve any relative path to absolute ones based on the working directory.
     // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
