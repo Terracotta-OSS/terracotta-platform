@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.handler;
 import com.terracottatech.dynamic_config.model.Setting;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Class responsible to hold a reference to all the {@code com.terracottatech.dynamic_config.handler.ConfigChangeHandler} on the classpath.
@@ -35,4 +36,14 @@ public interface ConfigChangeHandlerManager {
    * to a {@code com.terracottatech.dynamic_config.model.Setting}
    */
   Optional<ConfigChangeHandler> findConfigChangeHandler(Setting setting);
+
+  /**
+   * Register a {@code com.terracottatech.dynamic_config.handler.ConfigChangeHandler} for a
+   * {@code com.terracottatech.dynamic_config.model.Setting}.
+   * * {@code java.util.function.Supplier} provides the corresponding {@code com.terracottatech.dynamic_config.handler.ConfigChangeHandler}
+   *
+   * @return false if the addition was not possible because the
+   * {@code com.terracottatech.dynamic_config.model.Setting} si already associated
+   */
+  boolean compute(Setting setting, Supplier<ConfigChangeHandler> supplier);
 }

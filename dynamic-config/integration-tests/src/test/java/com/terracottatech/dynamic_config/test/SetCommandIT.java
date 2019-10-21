@@ -10,6 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 
+import java.io.File;
 import java.util.Arrays;
 
 import static org.hamcrest.Matchers.containsString;
@@ -43,7 +44,7 @@ public class SetCommandIT extends BaseStartupIT {
 
   /*<--Stripe-wide Tests-->*/
   @Test
-  public void testStripe_level() {
+  public void testStripe_level_setDataDirectory() {
     ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.data-dirs.main=stripe1-node1-data-dir");
     waitedAssert(out::getLog, containsString("Command successful"));
@@ -51,6 +52,17 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:stripe1-node1-data-dir"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.data-dirs=main:stripe1-node1-data-dir"));
+  }
+
+  @Test
+  public void testStripe_level_setBackupDirectory() {
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node-backup-dir=backup"+File.separator+"stripe-1");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-backup-dir");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-backup-dir=backup"+File.separator+"stripe-1"));
+    waitedAssert(out::getLog, containsString("stripe.1.node.2.node-backup-dir=backup"+File.separator+"stripe-1"));
   }
 
 
@@ -63,5 +75,15 @@ public class SetCommandIT extends BaseStartupIT {
 
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:1GB"));
+  }
+
+  @Test
+  public void testCluster_setBackupDirectory() {
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-backup-dir=backup"+File.separator+"data");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-backup-dir");
+    waitedAssert(out::getLog, containsString("node-backup-dir=backup" + File.separator + "data"));
   }
 }

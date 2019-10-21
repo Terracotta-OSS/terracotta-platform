@@ -188,7 +188,7 @@ public enum Setting {
       setter(SettingName.NODE_BACKUP_DIR, (node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
       (node, key) -> node.setNodeBackupDir(null),
       of(GET, SET, UNSET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART)
+      of(ACTIVES_ONLINE)
   ),
   TC_PROPERTIES(SettingName.TC_PROPERTIES,
       true,

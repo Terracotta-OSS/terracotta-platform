@@ -11,6 +11,7 @@ import com.terracottatech.dynamic_config.model.Setting;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * @author Mathieu Carbou
@@ -32,5 +33,10 @@ public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManage
   @Override
   public Optional<ConfigChangeHandler> findConfigChangeHandler(Setting setting) {
     return Optional.ofNullable(changeHandlers.get(setting));
+  }
+
+  @Override
+  public boolean compute(Setting setting, Supplier<ConfigChangeHandler> supplier) {
+    return changeHandlers.computeIfAbsent(setting, setting1 -> supplier.get()) == null;
   }
 }
