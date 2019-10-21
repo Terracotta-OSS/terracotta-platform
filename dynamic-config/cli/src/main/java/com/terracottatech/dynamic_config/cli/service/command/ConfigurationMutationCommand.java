@@ -49,7 +49,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
-      c.apply(operation, updatedCluster, parameterSubstitutor);
+      c.apply(updatedCluster, parameterSubstitutor);
     }
     new ClusterValidator(updatedCluster, parameterSubstitutor).validate();
 

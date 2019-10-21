@@ -5,17 +5,16 @@
 package com.terracottatech.dynamic_config.service.handler;
 
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
-import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 
 /**
  * @author Mathieu Carbou
  */
 public class FooBarConfigChangeHandler implements ConfigChangeHandler {
   @Override
-  public Cluster tryApply(NodeContext baseConfig, SettingNomadChange configChange) throws InvalidConfigChangeException {
+  public Cluster tryApply(NodeContext baseConfig, Configuration change) {
 
     // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE
 
@@ -25,7 +24,8 @@ public class FooBarConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public void apply(SettingNomadChange configChange) {
-    // depending on the property: either do nothing (will be applied at restart) or apply it at runtime
+  public boolean apply(Configuration change) {
+    // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE AT RUNTIME
+    return true;
   }
 }

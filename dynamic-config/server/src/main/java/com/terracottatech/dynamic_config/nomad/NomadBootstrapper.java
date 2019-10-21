@@ -111,15 +111,13 @@ public class NomadBootstrapper {
         this.configChangeHandlerManager = manager;
         this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
         this.repositoryManager.createDirectories();
-        this.nomadServer = createServer(repositoryManager, nodeName, parameterSubstitutor, updatedNodeContext -> {
-          dynamicConfigService.committed(updatedNodeContext);
-        });
+        this.nomadServer = createServer(repositoryManager, nodeName, parameterSubstitutor, updatedNodeContext -> dynamicConfigService.newTopologyCommitted(updatedNodeContext));
 
         NodeContext nodeContext = getConfiguration()
             // Case where Nomad is bootstrapped from the EnterpriseConfigurationProvider using the old startup script with --node-name and -r.
             // We only know the node name, the the node will start in diagnostic mode
             // So we create an empty cluster / node topology
-            .orElseGet(() -> new NodeContext(Node.newDefaultNode(nodeName, Setting.NODE_HOSTNAME.getDefaultValue())));
+            .orElseGet(() -> new NodeContext(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue()))));
 
         this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this, parameterSubstitutor);
 
@@ -136,9 +134,7 @@ public class NomadBootstrapper {
         this.configChangeHandlerManager = manager;
         this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
         this.repositoryManager.createDirectories();
-        this.nomadServer = createServer(repositoryManager, nodeContext.getNodeName(), parameterSubstitutor, updatedNodeContext -> {
-
-        });
+        this.nomadServer = createServer(repositoryManager, nodeContext.getNodeName(), parameterSubstitutor, updatedNodeContext -> dynamicConfigService.newTopologyCommitted(updatedNodeContext));
 
         this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this, parameterSubstitutor);
 
@@ -179,7 +175,7 @@ public class NomadBootstrapper {
       }
 
       RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
-          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(configChangeHandlerManager))
+          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(configChangeHandlerManager, parameterSubstitutor, dynamicConfigService::newConfigurationAppliedAtRuntime))
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));

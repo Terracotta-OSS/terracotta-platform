@@ -534,6 +534,10 @@ public enum Setting {
     return (Collection<U>) allowedUnits;
   }
 
+  public Collection<Requirement> getRequirements() {
+    return requirements;
+  }
+
   public boolean requires(Requirement requirement) {
     return requirements.contains(requirement);
   }
@@ -571,7 +575,7 @@ public enum Setting {
     validate(null, value);
   }
 
-  public Optional<String> getPropertyValue(NodeContext nodeContext) {
+  public Optional<String> getProperty(NodeContext nodeContext) {
     return extractor.apply(nodeContext)
         .filter(tuple -> !tuple.allNulls())
         .map(tuple -> tuple.t1 == null ? tuple.t2 : (tuple.t1 + ":" + tuple.t2))

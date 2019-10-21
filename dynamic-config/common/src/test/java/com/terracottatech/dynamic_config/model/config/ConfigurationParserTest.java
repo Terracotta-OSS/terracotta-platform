@@ -24,9 +24,11 @@ import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.ident
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
+import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
 import static java.io.File.separator;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.junit.Assert.assertFalse;
@@ -154,7 +156,12 @@ public class ConfigurationParserTest {
 
   @Test
   public void test_cluster_creation_omitting_defaults() throws IOException, URISyntaxException {
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), new Properties());
+    assertThat(
+        () -> ConfigurationParser.parsePropertyConfiguration(identity(), new Properties()),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid property: stripe.1.node.1.node-hostname=%h. Placeholders are not allowed.")))));
+    Properties properties = new Properties();
+    properties.setProperty("stripe.1.node.1.node-hostname", "localhost");
+    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), properties);
 
     Properties expected = loadProperties("c4.properties");
     expected.put("stripe.1.node.1.node-name", cluster.getSingleNode().get().getNodeName()); // because node name is generated

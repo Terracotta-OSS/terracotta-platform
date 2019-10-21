@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -63,17 +64,17 @@ public class SimpleNewServerStartupScriptIT extends BaseStartupIT {
   }
 
   @Test
-  public void testStartingWithConfigFileContainingSubstitutionParams() throws Exception {
-    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_substitution_params.properties");
+  public void testStartingWithConfigFile() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode("--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
 
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(PARAMETER_SUBSTITUTOR.substitute("%h")));
+    assertThat(getCluster("localhost", ports.getPort()).getSingleNode().get().getNodeHostname(), is(equalTo("localhost")));
   }
 
   @Test
-  public void testStartingWithConfigFileContainingSubstitutionParamsAndLicense() throws Exception {
-    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_substitution_params.properties");
+  public void testStartingWithConfigFileAndLicense() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode("--config-file", configurationFile.toString(), "--license-file", licensePath().toString(), "--node-repository-dir", "repository/stripe1/node-1");
 
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));

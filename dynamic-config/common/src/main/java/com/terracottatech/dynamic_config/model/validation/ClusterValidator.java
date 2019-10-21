@@ -11,6 +11,8 @@ import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Validator;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,9 @@ import static com.terracottatech.dynamic_config.model.Setting.SECURITY_AUTHC;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_WHITELIST;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 
 public class ClusterValidator implements Validator {
   private final Cluster cluster;
@@ -44,6 +49,22 @@ public class ClusterValidator implements Validator {
         throw new IllegalArgumentException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: <node-name> cannot contain substitution parameters");
       }
     });
+    for (int i = 0; i < cluster.getStripeCount(); i++) {
+      int stripeId = i + 1;
+      cluster.getStripes().get(i).getNodes()
+          .stream()
+          .map(Node::getNodeName)
+          .filter(Objects::nonNull)
+          .collect(groupingBy(identity(), counting()))
+          .entrySet()
+          .stream()
+          .filter(e -> e.getValue() > 1)
+          .map(Map.Entry::getKey)
+          .findFirst()
+          .ifPresent(nodeName -> {
+            throw new IllegalArgumentException("Found duplicate node name: " + nodeName + " in stripe " + stripeId);
+          });
+    }
   }
 
   private void validateSecurity() {

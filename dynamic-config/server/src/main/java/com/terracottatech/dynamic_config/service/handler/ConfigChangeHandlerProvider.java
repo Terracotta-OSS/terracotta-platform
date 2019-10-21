@@ -10,7 +10,7 @@ import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class ConfigChangeHandlerProvider implements ServiceProvider {
       // tc-properties
       // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<>()
-          .selector(SettingNomadChange::getName)
+          .selector(Configuration::getKey)
           .add("server.entity.processor.threads", new ProcessorThreadsConfigChangeHandler())
           .add("foo.bar", new FooBarConfigChangeHandler())
           .fallback(reject()));

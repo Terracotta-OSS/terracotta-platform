@@ -10,6 +10,7 @@ import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.model.config.ConfigurationParser;
 import com.terracottatech.dynamic_config.model.exception.MalformedClusterException;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -24,12 +25,14 @@ import java.util.Random;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
 import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
-import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.MemoryUnit.GB;
 import static com.terracottatech.utilities.MemoryUnit.MB;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
 
 public class ClusterValidatorTest {
+
+  private static final IParameterSubstitutor SERVER_SUBSTITUTOR_SIMULATOR = source -> "%h".equals(source) ? "localhost" : source;
+
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
@@ -164,7 +167,7 @@ public class ClusterValidatorTest {
     setNodeProperties(node1);
     setNodeProperties(node2);
 
-    new ClusterValidator(createCluster(node1, node2), identity()).validate();
+    new ClusterValidator(createCluster(node1, node2), SERVER_SUBSTITUTOR_SIMULATOR).validate();
   }
 
   @Test
@@ -358,7 +361,7 @@ public class ClusterValidatorTest {
     paramValueMap.put(Setting.SECURITY_WHITELIST, "true");
     paramValueMap.put(Setting.SECURITY_DIR, "security-dir");
     paramValueMap.put(Setting.SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
-    ConfigurationParser.parseCommandLineParameters(identity(), paramValueMap);
+    ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
   }
 
   @Test
@@ -367,13 +370,13 @@ public class ClusterValidatorTest {
     paramValueMap.put(Setting.SECURITY_WHITELIST, "true");
     paramValueMap.put(Setting.SECURITY_DIR, "security-dir");
     paramValueMap.put(Setting.SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
-    ConfigurationParser.parseCommandLineParameters(identity(), paramValueMap);
+    ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
   }
 
   @Test
   public void testGoodSecurity_3() {
     Map<Setting, String> paramValueMap = new HashMap<>();
-    ConfigurationParser.parseCommandLineParameters(identity(), paramValueMap);
+    ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
   }
 
   @Test
@@ -382,7 +385,7 @@ public class ClusterValidatorTest {
     paramValueMap.put(Setting.SECURITY_SSL_TLS, "true");
     paramValueMap.put(Setting.SECURITY_AUTHC, "certificate");
     paramValueMap.put(Setting.SECURITY_DIR, "security-root-dir");
-    ConfigurationParser.parseCommandLineParameters(identity(), paramValueMap);
+    ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
   }
 
   @Test
@@ -393,14 +396,14 @@ public class ClusterValidatorTest {
     paramValueMap.put(Setting.SECURITY_WHITELIST, "true");
     paramValueMap.put(Setting.SECURITY_DIR, "security-root-dir");
     paramValueMap.put(Setting.SECURITY_AUDIT_LOG_DIR, "security-audit-dir");
-    ConfigurationParser.parseCommandLineParameters(identity(), paramValueMap);
+    ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
   }
 
   @Test
   public void testGoodSecurity_6() {
     Map<Setting, String> paramValueMap = new HashMap<>();
     paramValueMap.put(Setting.SECURITY_SSL_TLS, "false");
-    ConfigurationParser.parseCommandLineParameters(identity(), paramValueMap);
+    ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
   }
 
   @Test
@@ -533,13 +536,13 @@ public class ClusterValidatorTest {
   private void testThrowsWithMessage(Map<Setting, String> paramValueMap, String message) {
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(message);
-    final Cluster cluster = ConfigurationParser.parseCommandLineParameters(identity(), paramValueMap);
-    new ClusterValidator(cluster, identity()).validate();
+    final Cluster cluster = ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
+    new ClusterValidator(cluster, SERVER_SUBSTITUTOR_SIMULATOR).validate();
   }
 
   private void testThrowsWithMessage(Node node1, Node node2, String message) {
     exception.expect(MalformedClusterException.class);
     exception.expectMessage(message);
-    new ClusterValidator(createCluster(node1, node2), identity()).validate();
+    new ClusterValidator(createCluster(node1, node2), SERVER_SUBSTITUTOR_SIMULATOR).validate();
   }
 }

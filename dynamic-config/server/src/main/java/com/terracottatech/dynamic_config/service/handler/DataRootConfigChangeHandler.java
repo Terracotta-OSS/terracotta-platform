@@ -8,9 +8,8 @@ import com.terracottatech.config.data_roots.DataDirectoriesConfig;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.model.Operation;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 /**
@@ -27,9 +26,9 @@ public class DataRootConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public Cluster tryApply(NodeContext baseConfig, SettingNomadChange configChange) throws InvalidConfigChangeException {
-    if (configChange.getOperation() == Operation.UNSET) {
-      throw new InvalidConfigChangeException("Unsupported operation: " + configChange.getSummary());
+  public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
+    if (change.getValue() == null) {
+      throw new InvalidConfigChangeException("Unsupported operation: " + change);
     }
 
     // TODO [DYNAMIC-CONFIG]: TDB-4655: handle data-dirs update correctly and finish this code:
@@ -51,14 +50,13 @@ public class DataRootConfigChangeHandler implements ConfigChangeHandler {
     // THIS IS VERY IMPORTANT TO CREATE A COPY OF THE CLUSTER TO NOT UPDATE THE INCOMING PARAMETER
 
     try {
-      String dataDirectoryName = configChange.getName();
-      String dataDirectoryPath = configChange.getValue();
+      String dataDirectoryName = change.getKey();
+      String dataDirectoryPath = change.getValue();
 
       validateChange(dataDirectoryName, dataDirectoryPath);
 
-      Operation operation = configChange.getOperation();
-      Cluster updatedCluster = baseConfig.getCluster().clone();
-      configChange.toConfiguration().apply(operation, updatedCluster, parameterSubstitutor);
+      Cluster updatedCluster = baseConfig.getCluster();
+      change.apply(updatedCluster, parameterSubstitutor);
       return updatedCluster;
     } catch (Exception e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
@@ -66,10 +64,14 @@ public class DataRootConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public void apply(SettingNomadChange configChange) {
-    String dataDirectoryName = configChange.getName();
-    String dataDirectoryPath = configChange.getValue();
+  public boolean apply(Configuration change) {
+    String dataDirectoryName = change.getKey();
+    String dataDirectoryPath = change.getValue();
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
+
+    // in some case, perhaps we need a restart ?
+    // return false;
+    return true;
   }
 
   private void validateChange(String name, String path) throws Exception {

@@ -5,16 +5,30 @@
 package com.terracottatech.dynamic_config.handler;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 
 /**
  * Handles config changes on the server side
  */
 public interface ConfigChangeHandler {
-  Cluster tryApply(NodeContext baseConfig, SettingNomadChange change) throws InvalidConfigChangeException;
 
-  void apply(SettingNomadChange change);
+  /**
+   * Try to apply a change to the provided topology and returns the updated topology (or non updated).
+   *
+   * @return the (eventually) updated cluster object, or null if we reject the change
+   */
+  Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException;
+
+
+  /**
+   * Apply a change at runtime on the server
+   *
+   * @return true if the change was applied at runtime. Returning true means that the runtime topology will also need to be updated.
+   */
+  default boolean apply(Configuration change) {
+    return false;
+  }
 
   /**
    * Handler that will return null to reject a change
@@ -22,13 +36,8 @@ public interface ConfigChangeHandler {
   static ConfigChangeHandler reject() {
     return new ConfigChangeHandler() {
       @Override
-      public Cluster tryApply(NodeContext baseConfig, SettingNomadChange change) throws InvalidConfigChangeException {
+      public Cluster tryApply(NodeContext baseConfig, Configuration change) {
         return null;
-      }
-
-      @Override
-      public void apply(SettingNomadChange change) {
-
       }
     };
   }
@@ -39,13 +48,8 @@ public interface ConfigChangeHandler {
   static ConfigChangeHandler noop() {
     return new ConfigChangeHandler() {
       @Override
-      public Cluster tryApply(NodeContext baseConfig, SettingNomadChange change) throws InvalidConfigChangeException {
+      public Cluster tryApply(NodeContext baseConfig, Configuration change) {
         return baseConfig.getCluster();
-      }
-
-      @Override
-      public void apply(SettingNomadChange change) {
-
       }
     };
   }

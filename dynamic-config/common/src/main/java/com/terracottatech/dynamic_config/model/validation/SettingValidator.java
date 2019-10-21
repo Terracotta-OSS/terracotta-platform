@@ -62,7 +62,8 @@ public class SettingValidator {
 
   public static final BiConsumer<String, Tuple2<String, String>> HOST_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
-    if (!isValidIPv4(kv.t2) && !isValidIPv6(kv.t2) && !isValidHost(kv.t2)) {
+    final String hostname = kv.t2;
+    if (!isValidIPv4(hostname) && !isValidIPv6(hostname) && !isValidHost(hostname)) {
       throw new IllegalArgumentException("<address> specified in " + setting + "=<address> must be a valid hostname or IP address");
     }
   };

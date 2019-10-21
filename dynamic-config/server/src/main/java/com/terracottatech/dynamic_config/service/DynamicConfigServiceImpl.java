@@ -9,6 +9,7 @@ import com.terracottatech.License;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
@@ -70,11 +71,21 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   /**
    * called from Nomad just after a config repository change has been committed and persisted
    */
-  public void committed(NodeContext updatedNodeContext) {
+  public synchronized void newTopologyCommitted(NodeContext updatedNodeContext) {
     if (!isActivated()) {
       throw new AssertionError("Not activated");
     }
     this.upcomingNodeContext = updatedNodeContext;
+  }
+
+  /**
+   * called from Nomad just after change has been applied at runtime
+   */
+  public synchronized void newConfigurationAppliedAtRuntime(Configuration configuration) {
+    if (!isActivated()) {
+      throw new AssertionError("Not activated");
+    }
+    configuration.apply(runtimeNodeContext.getCluster(), substitutor);
   }
 
   @Override

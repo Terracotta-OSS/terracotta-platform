@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.model;
 
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
-import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,15 +13,13 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.model.Operation.GET;
-import static com.terracottatech.dynamic_config.model.Operation.SET;
 import static com.terracottatech.dynamic_config.model.Operation.UNSET;
 import static com.terracottatech.dynamic_config.model.Scope.CLUSTER;
 import static com.terracottatech.dynamic_config.model.Scope.NODE;
 import static com.terracottatech.dynamic_config.model.Scope.STRIPE;
 import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
-import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 public class Configuration {
@@ -331,19 +328,15 @@ public class Configuration {
   /**
    * Apply the value in this configuration in the given cluster
    */
-  public void apply(Operation operation, Cluster cluster, IParameterSubstitutor substitutor) {
-    if (operation == GET) {
-      throw new IllegalArgumentException("Command " + GET + " is not a mutation operation");
-    }
-
-    Collection<Node> target;
+  public void apply(Cluster cluster, IParameterSubstitutor substitutor) {
+    Stream<NodeContext> targetContexts;
     switch (scope) {
       case CLUSTER:
-        target = cluster.getNodes();
+        targetContexts = cluster.nodeContexts();
         break;
       case STRIPE:
         try {
-          target = cluster.getStripes().get(stripeId - 1).getNodes();
+          targetContexts = cluster.getStripes().get(stripeId - 1).getNodes().stream().map(node -> new NodeContext(cluster, stripeId, node.getNodeName()));
         } catch (RuntimeException e) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
         }
@@ -356,7 +349,7 @@ public class Configuration {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
         }
         try {
-          target = singletonList(nodes.get(nodeId - 1));
+          targetContexts = Stream.of(new NodeContext(cluster, stripeId, nodes.get(nodeId - 1).getNodeName()));
         } catch (Exception e) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified node id: " + nodeId + ", but stripe " + stripeId + " contains: " + cluster.getStripeCount() + " node(s) only");
         }
@@ -365,12 +358,10 @@ public class Configuration {
         throw new AssertionError(scope);
     }
 
-    if (operation == UNSET) {
-      target.forEach(node -> setting.unsetProperty(node, key));
-      return;
-    }
+    if (value == null) {
+      targetContexts.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.unsetProperty(ctx.getNode(), key)));
 
-    if (operation == SET) {
+    } else {
       if (setting == Setting.LICENSE_FILE) {
         // do nothing, this is handled elsewhere to install a new license
         return;
@@ -381,11 +372,11 @@ public class Configuration {
         return;
       }
 
-      target.forEach(node -> {
+      targetContexts.forEach(ctx -> {
         if (setting.requiresEagerSubstitution()) {
-          setting.setProperty(node, key, substitutor.substitute(value));
+          setting.setProperty(ctx.getNode(), key, substitutor.substitute(value));
         } else {
-          setting.setProperty(node, key, value);
+          setting.setProperty(ctx.getNode(), key, value);
         }
       });
     }

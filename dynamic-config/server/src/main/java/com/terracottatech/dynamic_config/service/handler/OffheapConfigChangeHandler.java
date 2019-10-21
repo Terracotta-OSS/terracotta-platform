@@ -7,8 +7,8 @@ package com.terracottatech.dynamic_config.service.handler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.terracotta.offheapresource.OffHeapResources;
 
@@ -26,7 +26,7 @@ public class OffheapConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public Cluster tryApply(NodeContext baseConfig, SettingNomadChange configChange) throws InvalidConfigChangeException {
+  public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
 
     // TODO [DYNAMIC-CONFIG]: TDB-4654: IMPLEMENT OFFHEAP CHANGE
 
@@ -34,7 +34,8 @@ public class OffheapConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public void apply(SettingNomadChange configChange) {
-    // TODO [DYNAMIC-CONFIG]: TDB-4654: IMPLEMENT OFFHEAP CHANGE
+  public boolean apply(Configuration change) {
+    // TODO [DYNAMIC-CONFIG]: TDB-4654: IMPLEMENT OFFHEAP CHANGE AT RUNTIME
+    return true;
   }
 }

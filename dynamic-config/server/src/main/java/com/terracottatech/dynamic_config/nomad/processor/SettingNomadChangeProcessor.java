@@ -7,9 +7,15 @@ package com.terracottatech.dynamic_config.nomad.processor;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.server.NomadException;
+
+import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Supports the processing of {@link SettingNomadChange} for dynamic configuration.
@@ -20,16 +26,26 @@ import com.terracottatech.nomad.server.NomadException;
 public class SettingNomadChangeProcessor implements NomadChangeProcessor<SettingNomadChange> {
 
   private final ConfigChangeHandlerManager manager;
+  private final IParameterSubstitutor parameterSubstitutor;
+  private final Consumer<Configuration> onRuntimeChange;
 
-  public SettingNomadChangeProcessor(ConfigChangeHandlerManager manager) {
-    this.manager = manager;
+  public SettingNomadChangeProcessor(ConfigChangeHandlerManager manager, IParameterSubstitutor parameterSubstitutor, Consumer<Configuration> onRuntimeChange) {
+    this.manager = requireNonNull(manager);
+    this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
+    this.onRuntimeChange = requireNonNull(onRuntimeChange);
   }
 
   @Override
   public NodeContext tryApply(NodeContext baseConfig, SettingNomadChange change) throws NomadException {
     try {
       // Note the call to baseConfig.clone() which is important
-      final Cluster updated = getConfigChangeHandlerManager(change).tryApply(baseConfig.clone(), change);
+      NodeContext clone = baseConfig.clone();
+      Configuration configuration = change.toConfiguration();
+
+      configuration.validate(change.getOperation(), parameterSubstitutor);
+
+      Cluster updated = getConfigChangeHandlerManager(change).tryApply(clone, configuration);
+
       return updated == null ? // null marks the change as rejected
           null :
           baseConfig.getCluster().equals(updated) ? // check if there has been an update
@@ -42,7 +58,11 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   @Override
   public void apply(SettingNomadChange change) {
-    getConfigChangeHandlerManager(change).apply(change);
+    Configuration configuration = change.toConfiguration();
+    boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
+    if (changeAppliedAtRuntime) {
+      onRuntimeChange.accept(configuration);
+    }
   }
 
   private ConfigChangeHandler getConfigChangeHandlerManager(SettingNomadChange change) {

@@ -7,8 +7,8 @@ package com.terracottatech.dynamic_config.service.handler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 
 /**
  * @author Mathieu Carbou
@@ -16,7 +16,7 @@ import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 public class LeaseConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
-  public Cluster tryApply(NodeContext baseConfig, SettingNomadChange configChange) throws InvalidConfigChangeException {
+  public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
 
     // TODO [DYNAMIC-CONFIG]: TDB-4709: IMPLEMENT LEASE CHANGE: validate only and apply the change to the incoming cluster
 
@@ -24,7 +24,8 @@ public class LeaseConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public void apply(SettingNomadChange configChange) {
-    // do nothing: lease update will be applied on restart
+  public boolean apply(Configuration change) {
+    // TODO [DYNAMIC-CONFIG]: TDB-4709: IMPLEMENT LEASE CHANGE AT RUNTIME
+    return true;
   }
 }

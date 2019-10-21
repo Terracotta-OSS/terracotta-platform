@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.model.Operation.CONFIG;
-import static com.terracottatech.dynamic_config.model.Operation.SET;
 import static com.terracottatech.dynamic_config.model.Scope.CLUSTER;
 import static com.terracottatech.dynamic_config.model.Scope.NODE;
 import static com.terracottatech.dynamic_config.model.Scope.STRIPE;
@@ -55,23 +54,6 @@ public class ConfigurationParser implements Parser<Cluster> {
    */
   @Override
   public Cluster parse() {
-
-    // validate each config line
-    {
-      configurations.forEach(configuration -> {
-        // verify that the line is a supported config
-        if (!configuration.getSetting().allowsOperation(CONFIG)) {
-          throw new IllegalArgumentException("Invalid property: " + configuration);
-        }
-        // verify that we only have cluster or node scope
-        if (configuration.getScope() == STRIPE) {
-          throw new IllegalArgumentException("Invalid property: " + configuration);
-        }
-        // validate the config object
-        configuration.validate(CONFIG, paramSubstitutor);
-      });
-    }
-
     // adds missing configurations
     {
       final Collection<Setting> defined = configurations.stream().map(Configuration::getSetting).collect(toSet());
@@ -82,7 +64,10 @@ public class ConfigurationParser implements Parser<Cluster> {
           .filter(setting -> setting.allowsOperation(CONFIG))
           .filter(setting -> !defined.contains(setting))
           .map(Configuration::valueOf)
-          .forEach(configurations::add);
+          .forEach(configuration -> {
+            configurations.add(configuration);
+            defaultAddedListener.accept(configuration);
+          });
     }
 
     // Supplementary validation that ensures that our configuration list contains all the settings for the cluster, no more, no less
@@ -166,6 +151,7 @@ public class ConfigurationParser implements Parser<Cluster> {
                 // we add the missing configuration to both the global list, plus the temporary list within the map used for validation
                 nodeConfigurations.add(configuration);
                 configurations.add(configuration);
+                defaultAddedListener.accept(configuration);
               });
         }
 
@@ -191,6 +177,26 @@ public class ConfigurationParser implements Parser<Cluster> {
       }
     }
 
+    // validate each config line
+    {
+      configurations.forEach(configuration -> {
+        // verify that the line is a supported config
+        if (!configuration.getSetting().allowsOperation(CONFIG)) {
+          throw new IllegalArgumentException("Invalid property: " + configuration);
+        }
+        // verify that we only have cluster or node scope
+        if (configuration.getScope() == STRIPE) {
+          throw new IllegalArgumentException("Invalid property: " + configuration);
+        }
+        // validate the config object
+        configuration.validate(CONFIG, paramSubstitutor);
+        // ensure that properties requiring an eager resolve are resolved
+        if (configuration.getSetting().requiresEagerSubstitution() && paramSubstitutor.containsSubstitutionParams(configuration.getValue())) {
+          throw new IllegalArgumentException("Invalid property: " + configuration + ". Placeholders are not allowed.");
+        }
+      });
+    }
+
     // build the cluster
     Cluster cluster = new Cluster();
     configurationMap.forEach((stripeId, nodeCounts) -> {
@@ -208,7 +214,7 @@ public class ConfigurationParser implements Parser<Cluster> {
     });
 
     // install all the "settings" inside the cluster
-    configurations.forEach(configuration -> configuration.apply(SET, cluster, paramSubstitutor));
+    configurations.forEach(configuration -> configuration.apply(cluster, paramSubstitutor));
 
     return cluster;
   }
@@ -254,13 +260,18 @@ public class ConfigurationParser implements Parser<Cluster> {
     Properties properties = new Properties();
     consoleParameters.forEach((k, v) -> properties.setProperty(prefixed(k), v));
 
-    if (consoleParameters.get(NODE_HOSTNAME) == null) {
+    String key = prefixed(NODE_HOSTNAME);
+    String hostname = consoleParameters.get(NODE_HOSTNAME);
+    if (hostname == null) {
       // We can't have hostname null during Node construction from the client side (e.g. during parsing a config properties
       // file in activate command). Therefore, this logic is here, and not in Node::fillDefaults
-      String hostname = parameterSubstitutor.substitute(NODE_HOSTNAME.getDefaultValue());
-      final String key = prefixed(NODE_HOSTNAME);
+      hostname = parameterSubstitutor.substitute(NODE_HOSTNAME.getDefaultValue());
       properties.setProperty(key, hostname);
       defaultAddedListener.accept(Configuration.valueOf(key + "=" + hostname));
+    } else {
+      hostname = parameterSubstitutor.substitute(hostname);
+      properties.setProperty(key, hostname);
+      consoleParameters.put(NODE_HOSTNAME, parameterSubstitutor.substitute(hostname));
     }
 
     // delegate back to the parsing of a config file

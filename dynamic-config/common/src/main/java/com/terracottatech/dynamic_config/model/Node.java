@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -33,6 +34,7 @@ import static com.terracottatech.dynamic_config.model.Setting.NODE_PORT;
 import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 
 public class Node implements Cloneable {
+  static final IParameterSubstitutor CHECKER = IParameterSubstitutor.identity();
   private String nodeName;
   private String nodeHostname;
   private int nodePort;
@@ -310,7 +312,10 @@ public class Node implements Cloneable {
 
   @JsonIgnore
   public InetSocketAddress getNodeAddress() {
-    return InetSocketAddress.createUnresolved(getNodeHostname(), getNodePort());
+    if (nodeHostname == null || CHECKER.containsSubstitutionParams(nodeHostname)) {
+      throw new AssertionError("Node " + nodeName + " is not correctly defined with address: " + nodeHostname + ":" + nodePort);
+    }
+    return InetSocketAddress.createUnresolved(nodeHostname, nodePort);
   }
 
   @Override

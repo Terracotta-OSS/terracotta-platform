@@ -216,7 +216,12 @@ public class Cluster implements Cloneable {
   }
 
   public Stream<NodeContext> nodeContexts() {
-    return stripes.stream().flatMap(s -> s.getNodes().stream()).map(node -> new NodeContext(this, node));
+    return rangeClosed(1, stripes.size())
+        .boxed()
+        .flatMap(stripeId -> stripes.get(stripeId - 1).getNodes()
+            .stream()
+            .map(Node::getNodeName)
+            .map(name -> new NodeContext(this, stripeId, name)));
   }
 
   public void forEach(BiConsumer<Integer, Node> consumer) {
@@ -254,7 +259,7 @@ public class Cluster implements Cloneable {
         // depending whether we want teh expanded or non expanded form
         return settings.stream()
             .flatMap(setting -> {
-              final String currentValue = setting.getPropertyValue(nodeContext).orElse(null);
+              final String currentValue = setting.getProperty(nodeContext).orElse(null);
               final String defaultValue = setting.getDefaultValue();
               return (!includeDefaultValues && Objects.equals(defaultValue, currentValue)) ?
                   Stream.empty() :

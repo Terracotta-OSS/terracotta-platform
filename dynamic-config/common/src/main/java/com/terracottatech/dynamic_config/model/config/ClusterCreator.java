@@ -87,7 +87,9 @@ public class ClusterCreator {
             lineSeparator(),
             toDisplayParams("--", paramValueMap),
             lineSeparator(),
-            toDisplayParams("--", defaultsAdded.stream().collect(toMap(Configuration::getSetting, Configuration::getValue)))
+            toDisplayParams("--", defaultsAdded.stream()
+                .filter(configuration -> configuration.getValue() != null)
+                .collect(toMap(Configuration::getSetting, Configuration::getValue)))
         )
     );
 
@@ -100,7 +102,10 @@ public class ClusterCreator {
   }
 
   private String toDisplayParams(String prefix, Map<Setting, String> supplied) {
-    String suppliedParameters = supplied.entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
+    String suppliedParameters = supplied.entrySet()
+        .stream()
+        .filter(e -> e.getValue() != null)
+        .sorted(Comparator.comparing(Map.Entry::getKey))
         .map(entry -> prefix + entry.getKey() + "=" + parameterSubstitutor.substitute(entry.getValue()))
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {
@@ -112,7 +117,10 @@ public class ClusterCreator {
   }
 
   private String toDisplayParams(Properties properties) {
-    String suppliedParameters = properties.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().toString()))
+    String suppliedParameters = properties.entrySet()
+        .stream()
+        .filter(e -> e.getValue() != null && !e.getValue().equals(""))
+        .sorted(Comparator.comparing(e -> e.getKey().toString()))
         .map(entry -> entry.getKey() + "=" + entry.getValue())
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {
@@ -125,6 +133,7 @@ public class ClusterCreator {
 
   private String toDisplayParams(Collection<Configuration> configurations) {
     String suppliedParameters = configurations.stream()
+        .filter(c -> c.getValue() != null)
         .map(Configuration::toString)
         .sorted()
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
