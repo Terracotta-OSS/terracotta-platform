@@ -15,40 +15,25 @@
  */
 package org.terracotta.runnel.encoding;
 
-import org.terracotta.runnel.decoding.fields.BoolField;
-import org.terracotta.runnel.decoding.fields.CharField;
-import org.terracotta.runnel.decoding.fields.EnumField;
-import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.encoding.dataholders.BoolDataHolder;
-import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
-import org.terracotta.runnel.encoding.dataholders.CharDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
-import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
-import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
-import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
-import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
-import org.terracotta.runnel.encoding.dataholders.StringDataHolder;
 import org.terracotta.runnel.encoding.dataholders.StructDataHolder;
-import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.Int32Field;
-import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.metadata.FieldSearcher;
-import org.terracotta.runnel.decoding.fields.StringField;
+import org.terracotta.runnel.utils.SizeAccumulator;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Ludovic Orban
  */
-public class StructArrayEncoder<P> {
+public abstract class StructArrayEncoder<P extends StructEncoder<?>> {
 
   private final List<StructDataHolder> values;
   private final P parent;
   private final StructField structField;
   private List<DataHolder> currentData;
+  private StructEncoder<StructArrayEncoder<P>> lastStructEncoder;
 
   StructArrayEncoder(List<StructDataHolder> values, P parent, StructField structField) {
     this.structField = structField;
@@ -58,16 +43,53 @@ public class StructArrayEncoder<P> {
   }
 
   public StructEncoder<StructArrayEncoder<P>> add() {
+    return add((size) -> {});
+  }
+
+  public StructEncoder<StructArrayEncoder<P>> add(SizeAccumulator sizeAccumulator) {
     if (!currentData.isEmpty()) {
-      values.add(new StructDataHolder(currentData, -1));
+      StructDataHolder dh = new StructDataHolder(currentData, -1);
+      dh.cacheSize(lastStructEncoder.encodedSize);
+      values.add(dh);
+      // onDataHolderAddition is going to call size() on the data holder to calculate the header size,
+      // so we must pass it a StructDataHolder with an empty DataHolder list
+      StructDataHolder emptyDh = new StructDataHolder(Collections.emptyList(), -1);
+      emptyDh.cacheSize(lastStructEncoder.encodedSize);
+      onDataHolderAddition(emptyDh);
     }
-    return new StructEncoder<StructArrayEncoder<P>>(structField, currentData = new ArrayList<DataHolder>(), this);
+    if (lastStructEncoder != null) {
+      lastStructEncoder.end();
+    }
+    lastStructEncoder = new StructEncoder<StructArrayEncoder<P>>(structField, currentData = new ArrayList<>(), this) {
+      boolean ended = false;
+      @Override
+      public StructArrayEncoder<P> end() {
+        if (!ended) {
+          sizeAccumulator.accumulate(encodedSize);
+          ended = true;
+        }
+        return super.end();
+      }
+    };
+    return lastStructEncoder;
   }
 
   public P end() {
     if (!currentData.isEmpty()) {
-      values.add(new StructDataHolder(currentData, -1));
+      StructDataHolder dh = new StructDataHolder(currentData, -1);
+      dh.cacheSize(lastStructEncoder.encodedSize);
+      values.add(dh);
+      // onDataHolderAddition is going to call size() on the data holder to calculate the header size,
+      // so we must pass it a StructDataHolder with an empty DataHolder list
+      StructDataHolder emptyDh = new StructDataHolder(Collections.emptyList(), -1);
+      emptyDh.cacheSize(lastStructEncoder.encodedSize);
+      onDataHolderAddition(emptyDh);
+    }
+    if (lastStructEncoder != null) {
+      lastStructEncoder.end();
     }
     return parent;
   }
+
+  protected abstract void onDataHolderAddition(StructDataHolder dh);
 }

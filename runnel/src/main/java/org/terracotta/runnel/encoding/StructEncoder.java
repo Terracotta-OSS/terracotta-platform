@@ -54,6 +54,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   private final FieldSearcher fieldSearcher;
   private final List<DataHolder> data;
   private final P parent;
+  int encodedSize = 0;
 
   public StructEncoder(StructField structField) {
     this(structField, new ArrayList<DataHolder>(), null);
@@ -68,42 +69,54 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   @Override
   public StructEncoder<P> bool(String name, boolean value) {
     BoolField field = fieldSearcher.findField(name, BoolField.class, null);
-    data.add(new BoolDataHolder(value, field.index()));
+    BoolDataHolder dh = new BoolDataHolder(value, field.index());
+    data.add(dh);
+    encodedSize += dh.size(true);
     return this;
   }
 
   @Override
   public StructEncoder<P> chr(String name, char value) {
     CharField field = fieldSearcher.findField(name, CharField.class, null);
-    data.add(new CharDataHolder(value, field.index()));
+    CharDataHolder dh = new CharDataHolder(value, field.index());
+    data.add(dh);
+    encodedSize += dh.size(true);
     return this;
   }
 
   @Override
   public <E> StructEncoder<P> enm(String name, E value) {
     EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);
-    data.add(new EnumDataHolder<E>(value, field.index(), field.getEnumMapping()));
+    EnumDataHolder<E> dh = new EnumDataHolder<>(value, field.index(), field.getEnumMapping());
+    data.add(dh);
+    encodedSize += dh.size(true);
     return this;
   }
 
   @Override
   public StructEncoder<P> int32(String name, int value) {
     Int32Field field = fieldSearcher.findField(name, Int32Field.class, null);
-    data.add(new Int32DataHolder(value, field.index()));
+    Int32DataHolder dh = new Int32DataHolder(value, field.index());
+    data.add(dh);
+    encodedSize += dh.size(true);
     return this;
   }
 
   @Override
   public StructEncoder<P> int64(String name, long value) {
     Int64Field field = fieldSearcher.findField(name, Int64Field.class, null);
-    data.add(new Int64DataHolder(value, field.index()));
+    Int64DataHolder dh = new Int64DataHolder(value, field.index());
+    data.add(dh);
+    encodedSize += dh.size(true);
     return this;
   }
 
   @Override
   public StructEncoder<P> fp64(String name, double value) {
     FloatingPoint64Field field = fieldSearcher.findField(name, FloatingPoint64Field.class, null);
-    data.add(new FloatingPoint64DataHolder(value, field.index()));
+    FloatingPoint64DataHolder dh = new FloatingPoint64DataHolder(value, field.index());
+    data.add(dh);
+    encodedSize += dh.size(true);
     return this;
   }
 
@@ -111,7 +124,9 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public StructEncoder<P> string(String name, String value) {
     StringField field = fieldSearcher.findField(name, StringField.class, null);
     if (value != null) {
-      data.add(new StringDataHolder(value, field.index()));
+      StringDataHolder dh = new StringDataHolder(value, field.index());
+      data.add(dh);
+      encodedSize += dh.size(true);
     }
     return this;
   }
@@ -119,7 +134,9 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   @Override
   public StructEncoder<P> byteBuffer(String name, ByteBuffer value) {
     ByteBufferField field = fieldSearcher.findField(name, ByteBufferField.class, null);
-    data.add(new ByteBufferDataHolder(value, field.index()));
+    ByteBufferDataHolder dh = new ByteBufferDataHolder(value, field.index());
+    data.add(dh);
+    encodedSize += dh.size(true);
     return this;
   }
 
@@ -133,8 +150,18 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public StructEncoder<StructEncoder<P>> struct(String name) {
     StructField field = fieldSearcher.findField(name, StructField.class, null);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new StructDataHolder(values, field.index()));
-    return new StructEncoder<StructEncoder<P>>(field, values, this);
+    StructDataHolder dh = new StructDataHolder(values, field.index());
+    data.add(dh);
+    return new StructEncoder<StructEncoder<P>>(field, values, this) {
+      @Override
+      public StructEncoder<P> end() {
+        StructEncoder<P> parent = super.end();
+        // add to the parent's encodedSize this instance's encodedSize
+        int size = this.encodedSize;
+        StructEncoder.this.encodedSize += dh.size(size);
+        return parent;
+      }
+    };
   }
 
   public P end() {
@@ -147,11 +174,21 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public ArrayEncoder<Boolean, StructEncoder<P>> bools(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, BoolField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
+    ArrayDataHolder dh = new ArrayDataHolder(values, field.index());
+    data.add(dh);
     return new ArrayEncoder<Boolean, StructEncoder<P>>(values, this) {
+      int dataSize = 0;
       @Override
       protected DataHolder buildDataHolder(Boolean value) {
-        return new BoolDataHolder(value, field.index());
+        BoolDataHolder dh = new BoolDataHolder(value, field.index());
+        dataSize += dh.size(false);
+        return dh;
+      }
+
+      @Override
+      public StructEncoder<P> end() {
+        encodedSize += dh.size(dataSize);
+        return super.end();
       }
     };
   }
@@ -159,11 +196,21 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public ArrayEncoder<Character, StructEncoder<P>> chrs(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, CharField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
+    ArrayDataHolder dh = new ArrayDataHolder(values, field.index());
+    data.add(dh);
     return new ArrayEncoder<Character, StructEncoder<P>>(values, this) {
+      int dataSize = 0;
       @Override
       protected DataHolder buildDataHolder(Character value) {
-        return new CharDataHolder(value, field.index());
+        CharDataHolder dh = new CharDataHolder(value, field.index());
+        dataSize += dh.size(false);
+        return dh;
+      }
+
+      @Override
+      public StructEncoder<P> end() {
+        encodedSize += dh.size(dataSize);
+        return super.end();
       }
     };
   }
@@ -171,11 +218,21 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public ArrayEncoder<Integer, StructEncoder<P>> int32s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int32Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
+    ArrayDataHolder dh = new ArrayDataHolder(values, field.index());
+    data.add(dh);
     return new ArrayEncoder<Integer, StructEncoder<P>>(values, this) {
+      int dataSize = 0;
       @Override
       protected DataHolder buildDataHolder(Integer value) {
-        return new Int32DataHolder(value, field.index());
+        Int32DataHolder dh = new Int32DataHolder(value, field.index());
+        dataSize += dh.size(false);
+        return dh;
+      }
+
+      @Override
+      public StructEncoder<P> end() {
+        encodedSize += dh.size(dataSize);
+        return super.end();
       }
     };
   }
@@ -183,11 +240,21 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public ArrayEncoder<Long, StructEncoder<P>> int64s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
+    ArrayDataHolder dh = new ArrayDataHolder(values, field.index());
+    data.add(dh);
     return new ArrayEncoder<Long, StructEncoder<P>>(values, this) {
+      int dataSize = 0;
       @Override
       protected DataHolder buildDataHolder(Long value) {
-        return new Int64DataHolder(value, field.index());
+        Int64DataHolder dh = new Int64DataHolder(value, field.index());
+        dataSize += dh.size(false);
+        return dh;
+      }
+
+      @Override
+      public StructEncoder<P> end() {
+        encodedSize += dh.size(dataSize);
+        return super.end();
       }
     };
   }
@@ -195,11 +262,21 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public ArrayEncoder<Double, StructEncoder<P>> fp64s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, FloatingPoint64Field.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
+    ArrayDataHolder dh = new ArrayDataHolder(values, field.index());
+    data.add(dh);
     return new ArrayEncoder<Double, StructEncoder<P>>(values, this) {
+      int dataSize = 0;
       @Override
       protected DataHolder buildDataHolder(Double value) {
-        return new FloatingPoint64DataHolder(value, field.index());
+        FloatingPoint64DataHolder dh = new FloatingPoint64DataHolder(value, field.index());
+        dataSize += dh.size(false);
+        return dh;
+      }
+
+      @Override
+      public StructEncoder<P> end() {
+        encodedSize += dh.size(dataSize);
+        return super.end();
       }
     };
   }
@@ -207,11 +284,21 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public ArrayEncoder<String, StructEncoder<P>> strings(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StringField.class);
     List<DataHolder> values = new ArrayList<DataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
+    ArrayDataHolder dh = new ArrayDataHolder(values, field.index());
+    data.add(dh);
     return new ArrayEncoder<String, StructEncoder<P>>(values, this) {
+      int dataSize = 0;
       @Override
       protected DataHolder buildDataHolder(String value) {
-        return new StringDataHolder(value, field.index());
+        StringDataHolder dh = new StringDataHolder(value, field.index());
+        dataSize += dh.size(false);
+        return dh;
+      }
+
+      @Override
+      public StructEncoder<P> end() {
+        encodedSize += dh.size(dataSize);
+        return super.end();
       }
     };
   }
@@ -219,8 +306,29 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   public StructArrayEncoder<StructEncoder<P>> structs(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
-    data.add(new ArrayDataHolder(values, field.index()));
-    return new StructArrayEncoder<StructEncoder<P>>(values, this, ((StructField) field.subField()));
+    ArrayDataHolder dh = new ArrayDataHolder(values, field.index());
+    data.add(dh);
+    return new StructArrayEncoder<StructEncoder<P>>(values, this, ((StructField) field.subField())) {
+      int entriesHeaderSize = 0;
+      int entriesSize = 0;
+      @Override
+      protected void onDataHolderAddition(StructDataHolder dh) {
+        entriesHeaderSize += dh.size(false);
+      }
+
+      @Override
+      public StructEncoder<StructArrayEncoder<StructEncoder<P>>> add() {
+        return super.add((size) -> entriesSize += size);
+      }
+
+      @Override
+      public StructEncoder<P> end() {
+        // make sure to end the StructArrayEncoder before sizing it to make sure the latest array entry is accounted for
+        StructEncoder<P> parent = super.end();
+        encodedSize += dh.size(entriesHeaderSize + entriesSize);
+        return parent;
+      }
+    };
   }
 
   public <T> StructEncoder<P> structs(String name, T[] array, StructEncoderFunction<T> function) {
@@ -246,7 +354,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     if (parent != null) {
       throw new IllegalStateException("Cannot encode non-root encoder");
     }
-    int size = calculateSize();
+    int size = quickCalculateSize();
     return performEncoding(bb, size);
   }
 
@@ -259,17 +367,21 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     if (parent != null) {
       throw new IllegalStateException("Cannot encode non-root encoder");
     }
-    int size = calculateSize();
+    int size = quickCalculateSize();
     ByteBuffer bb = ByteBuffer.allocate(size + VLQ.encodedSize(size));
     return performEncoding(bb, size);
   }
 
-  private int calculateSize() {
+  private int slowCalculateSize() {
     int size = 0;
     for (DataHolder dataHolder : data) {
       size += dataHolder.size(true);
     }
     return size;
+  }
+
+  private int quickCalculateSize() {
+    return encodedSize;
   }
 
   private ByteBuffer performEncoding(ByteBuffer bb, int size) {

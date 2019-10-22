@@ -30,6 +30,13 @@ public interface DataHolder {
    */
   int size(boolean withIndex);
 
+  /**
+   * Return the byte size of this data holder, assuming the payload has the size given as a parameter.
+   * @param valueSize the payload size
+   * @return byte size.
+   */
+  int size(int valueSize);
+
   void encode(WriteBuffer writeBuffer, boolean withIndex);
 
 }

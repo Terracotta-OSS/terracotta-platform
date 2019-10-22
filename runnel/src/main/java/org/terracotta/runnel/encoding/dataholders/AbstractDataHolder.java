@@ -34,6 +34,11 @@ public abstract class AbstractDataHolder implements DataHolder {
     return (withIndex ? VLQ.encodedSize(index) : 0) + VLQ.encodedSize(dataSize) + dataSize;
   }
 
+  @Override
+  public int size(int valueSize) {
+    return VLQ.encodedSize(index) + VLQ.encodedSize(valueSize) + valueSize;
+  }
+
   protected abstract int valueSize();
 
   @Override
