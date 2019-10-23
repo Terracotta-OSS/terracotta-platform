@@ -42,7 +42,7 @@ public class StringDataHolder extends AbstractDataHolder {
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     writeBuffer.putByteBuffer(encodedString);
   }
 

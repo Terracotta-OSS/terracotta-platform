@@ -22,6 +22,7 @@ import org.terracotta.runnel.utils.WriteBuffer;
  * @author Ludovic Orban
  */
 public abstract class AbstractDataHolder implements DataHolder {
+  private static final boolean DEBUG = false;
   private final int index;
 
   protected AbstractDataHolder(int index) {
@@ -42,14 +43,29 @@ public abstract class AbstractDataHolder implements DataHolder {
   protected abstract int valueSize();
 
   @Override
-  public final void encode(WriteBuffer writeBuffer, boolean withIndex) {
+  public final void encode(WriteBuffer writeBuffer, boolean withIndex, int indentation) {
+    StringBuilder sb;
+    if (DEBUG) {
+      sb = new StringBuilder();
+      for (int i = 0; i < indentation; i++) {
+        sb.append(' ');
+      }
+      sb.append(getClass().getSimpleName());
+    }
     if (withIndex) {
+      if (DEBUG) {
+        sb.append(" with index : ").append(index);
+      }
       writeBuffer.putVlqInt(index);
     }
     writeBuffer.putVlqInt(valueSize());
-    encodeValue(writeBuffer);
+    if (DEBUG) {
+      sb.append(" with value size : ").append(valueSize());
+      System.out.println(sb.toString());
+    }
+    encodeValue(writeBuffer, indentation);
   }
 
-  protected abstract void encodeValue(WriteBuffer writeBuffer);
+  protected abstract void encodeValue(WriteBuffer writeBuffer, int indentation);
 
 }

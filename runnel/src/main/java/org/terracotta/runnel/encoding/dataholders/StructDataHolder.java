@@ -51,9 +51,9 @@ public class StructDataHolder extends AbstractDataHolder {
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     for (DataHolder value : values) {
-      value.encode(writeBuffer, true);
+      value.encode(writeBuffer, true, indentation + 2);
     }
   }
 

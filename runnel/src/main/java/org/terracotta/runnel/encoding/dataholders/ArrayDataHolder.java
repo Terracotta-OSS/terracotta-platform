@@ -53,10 +53,10 @@ public class ArrayDataHolder extends AbstractDataHolder {
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     writeBuffer.putVlqInt(values.size()); // length field
     for (DataHolder value : values) {
-      value.encode(writeBuffer, false);
+      value.encode(writeBuffer, false, indentation + 2);
     }
   }
 }

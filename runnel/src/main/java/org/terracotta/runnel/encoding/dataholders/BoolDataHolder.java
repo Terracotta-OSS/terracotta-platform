@@ -35,7 +35,7 @@ public class BoolDataHolder extends AbstractDataHolder {
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     writeBuffer.putBoolean(value);
   }
 }

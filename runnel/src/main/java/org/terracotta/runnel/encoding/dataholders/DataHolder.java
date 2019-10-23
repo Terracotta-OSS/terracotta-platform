@@ -37,6 +37,10 @@ public interface DataHolder {
    */
   int size(int valueSize);
 
-  void encode(WriteBuffer writeBuffer, boolean withIndex);
+  default void encode(WriteBuffer writeBuffer, boolean withIndex) {
+    encode(writeBuffer, withIndex, 0);
+  }
+
+  void encode(WriteBuffer writeBuffer, boolean withIndex, int indentation);
 
 }
