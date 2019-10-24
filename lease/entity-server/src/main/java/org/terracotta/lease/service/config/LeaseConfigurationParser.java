@@ -109,14 +109,12 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
       Element leaseLengthElement = (Element)childElements.item(0);
 
       String leaseLengthString = leaseLengthElement.getTextContent();
-      LOGGER.info("Found lease length XML text: " + leaseLengthString);
+      LOGGER.debug("Found lease length XML text: " + leaseLengthString);
 
       String timeUnitString = leaseLengthElement.getAttribute(TIME_UNIT_ATTRIBUTE_NAME);
-      LOGGER.info("Found lease length time unit: " + timeUnitString);
+      LOGGER.debug("Found lease length time unit: " + timeUnitString);
 
-      LeaseElement leaseElement = new LeaseElement(leaseLengthString, timeUnitString);
-
-      return leaseElement;
+      return new LeaseElement(leaseLengthString, timeUnitString);
     });
   }
 
