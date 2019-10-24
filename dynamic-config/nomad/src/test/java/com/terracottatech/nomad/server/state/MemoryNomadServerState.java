@@ -126,6 +126,6 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
 
     T changeResult = (T) state.get(Long.toString(version));
 
-    return new ChangeRequest<>(requestState, version, change, changeResult, creationHost, creationUser);
+    return new ChangeRequest<>(requestState, version, null, change, changeResult, creationHost, creationUser);
   }
 }

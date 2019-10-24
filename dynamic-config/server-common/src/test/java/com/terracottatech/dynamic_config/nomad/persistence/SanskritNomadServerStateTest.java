@@ -35,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -134,6 +135,39 @@ public class SanskritNomadServerStateTest {
     assertEquals("config", changeRequest.getChangeResult());
     assertEquals("host", changeRequest.getCreationHost());
     assertEquals("user", changeRequest.getCreationUser());
+    assertNull(changeRequest.getPrevChangeId());
+    assertEquals("set offheap-resources.primary-server-resource=2GB", change.getSummary());
+  }
+
+  @Test
+  public void getChangeRequestWithPrevChangeId() throws Exception {
+    UUID uuid = UUID.randomUUID();
+    UUID prevuuid = UUID.randomUUID();
+    SettingNomadChange settingNomadChange = SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "primary-server-resource", "2GB");
+
+    MutableSanskritObject changeObject = sanskrit.newMutableSanskritObject();
+    changeObject.setString("state", "ROLLED_BACK");
+    changeObject.setLong("version", 1L);
+    changeObject.setString("prevChangeUuid", prevuuid.toString());
+    changeObject.setExternal("operation", settingNomadChange);
+    changeObject.setString("changeResultHash", "c2c9b194778150614a8a1b127842fc6f42b1a5f4");
+    changeObject.setString("creationHost", "host");
+    changeObject.setString("creationUser", "user");
+    changeObject.setString("summary", "description");
+
+    when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
+    when(configStorage.getConfig(1L)).thenReturn("config");
+
+    ChangeRequest<String> changeRequest = state.getChangeRequest(uuid);
+    SettingNomadChange change = (SettingNomadChange) changeRequest.getChange();
+
+    assertEquals(ROLLED_BACK, changeRequest.getState());
+    assertEquals(1L, changeRequest.getVersion());
+    assertEquals(settingNomadChange, change);
+    assertEquals("config", changeRequest.getChangeResult());
+    assertEquals("host", changeRequest.getCreationHost());
+    assertEquals("user", changeRequest.getCreationUser());
+    assertEquals(prevuuid.toString(), changeRequest.getPrevChangeId());
     assertEquals("set offheap-resources.primary-server-resource=2GB", change.getSummary());
   }
 
@@ -156,6 +190,7 @@ public class SanskritNomadServerStateTest {
     ChangeRequest<String> changeRequest = new ChangeRequest<>(
         COMMITTED,
         4L,
+        null,
         settingNomadChange,
         "config",
         "host1",

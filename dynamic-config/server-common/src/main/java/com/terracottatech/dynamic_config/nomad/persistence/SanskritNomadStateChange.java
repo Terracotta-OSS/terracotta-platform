@@ -29,6 +29,7 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LAST_MUTATION_USER;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
+import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 
 public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   private final Sanskrit sanskrit;
@@ -94,6 +95,9 @@ public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
     MutableSanskritObject child = sanskrit.newMutableSanskritObject();
     child.setString(CHANGE_STATE, changeRequest.getState().name());
     child.setLong(CHANGE_VERSION, changeRequest.getVersion());
+    if (changeRequest.getPrevChangeId() != null) {
+      child.setString(PREV_CHANGE_UUID, changeRequest.getPrevChangeId());
+    }
     child.setExternal(CHANGE_OPERATION, changeRequest.getChange());
     child.setString(CHANGE_RESULT_HASH, resultHash);
     child.setString(CHANGE_CREATION_HOST, changeRequest.getCreationHost());

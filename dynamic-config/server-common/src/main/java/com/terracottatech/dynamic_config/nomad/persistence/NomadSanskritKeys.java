@@ -18,4 +18,5 @@ public interface NomadSanskritKeys {
   String CHANGE_RESULT_HASH = "changeResultHash";
   String CHANGE_CREATION_HOST = "creationHost";
   String CHANGE_CREATION_USER = "creationUser";
+  String PREV_CHANGE_UUID = "prevChangeUuid";
 }

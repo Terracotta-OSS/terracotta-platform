@@ -10,15 +10,17 @@ import com.terracottatech.nomad.client.change.NomadChange;
 public class ChangeRequest<T> {
   private final ChangeRequestState state;
   private final long version;
+  private final String prevChangeId;
   private final NomadChange change;
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final T changeResult;
   private final String creationHost;
   private final String creationUser;
 
-  public ChangeRequest(ChangeRequestState state, long version, NomadChange change, T changeResult, String creationHost, String creationUser) {
+  public ChangeRequest(ChangeRequestState state, long version, String prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser) {
     this.state = state;
     this.version = version;
+    this.prevChangeId = prevChangeId;
     this.change = change;
     this.changeResult = changeResult;
     this.creationHost = creationHost;
@@ -31,6 +33,10 @@ public class ChangeRequest<T> {
 
   public long getVersion() {
     return version;
+  }
+
+  public String getPrevChangeId() {
+    return prevChangeId;
   }
 
   public NomadChange getChange() {

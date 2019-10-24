@@ -146,8 +146,12 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     T newConfiguration = result.getNewConfiguration();
     String mutationHost = message.getMutationHost();
     String mutationUser = message.getMutationUser();
-
-    ChangeRequest<T> changeRequest = new ChangeRequest<>(ChangeRequestState.PREPARED, versionNumber, change, newConfiguration, mutationHost, mutationUser);
+    UUID prevChangeUuid = state.getLatestChangeUuid();
+    String prevChangeId = null;
+    if (prevChangeUuid != null) {
+      prevChangeId = prevChangeUuid.toString();
+    }
+    ChangeRequest<T> changeRequest = new ChangeRequest<>(ChangeRequestState.PREPARED, versionNumber, prevChangeId, change, newConfiguration, mutationHost, mutationUser);
 
     applyStateChange(state.newStateChange()
         .setMode(NomadServerMode.PREPARED)
@@ -191,6 +195,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
     applyStateChange(state.newStateChange()
         .setMode(NomadServerMode.ACCEPTING)
+        .setLatestChangeUuid(changeUuid)
         .setCurrentVersion(changeVersion)
         .setLastMutationHost(mutationHost)
         .setLastMutationUser(mutationUser)

@@ -31,6 +31,7 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
+import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 
 public class SanskritNomadServerState<T> implements NomadServerState<T> {
   private final Sanskrit sanskrit;
@@ -120,6 +121,7 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
       ChangeRequestState state = ChangeRequestState.valueOf(child.getString(CHANGE_STATE));
       long version = child.getLong(CHANGE_VERSION);
       NomadChange change = child.getExternal(CHANGE_OPERATION, NomadChange.class);
+      String prevChangeUuid = child.getString(PREV_CHANGE_UUID);
       String expectedHash = child.getString(CHANGE_RESULT_HASH);
       String creationHost = child.getString(CHANGE_CREATION_HOST);
       String creationUser = child.getString(CHANGE_CREATION_USER);
@@ -128,7 +130,7 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
       String actualHash = hashComputer.computeHash(newConfiguration);
       checkHash(changeUuid, actualHash, expectedHash);
 
-      return new ChangeRequest<>(state, version, change, newConfiguration, creationHost, creationUser);
+      return new ChangeRequest<>(state, version, prevChangeUuid, change, newConfiguration, creationHost, creationUser);
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }
