@@ -19,4 +19,5 @@ public interface StateKeys {
   String CHANGE = "change";
   String CREATION_HOST = "creationHost";
   String CREATION_USER = "creationUser";
+  String PREV_CHANGE_UUID = "prevChangeUuid";
 }

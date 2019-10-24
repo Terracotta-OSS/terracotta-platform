@@ -10,10 +10,8 @@ import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
-import com.terracottatech.nomad.server.ChangeApplicator;
-import com.terracottatech.nomad.server.NomadException;
-import com.terracottatech.nomad.server.UpgradableNomadServer;
 
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
@@ -79,6 +77,16 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
     lock.lock();
     try {
       underlying.setChangeApplicator(changeApplicator);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public List<NomadChangeHolder> getAllNomadChanges() throws NomadException {
+    lock.lock();
+    try {
+      return underlying.getAllNomadChanges();
     } finally {
       lock.unlock();
     }

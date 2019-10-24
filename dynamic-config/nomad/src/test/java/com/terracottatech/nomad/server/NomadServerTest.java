@@ -58,13 +58,13 @@ public class NomadServerTest {
 
   @Test
   public void initializesState() throws Exception {
-    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null);
+    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
   }
 
   @Test
   public void doubleInitialization() throws Exception {
     new NomadServerImpl<>(state, changeApplicator);
-    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null);
+    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
   }
 
   @Test
@@ -85,7 +85,7 @@ public class NomadServerTest {
     ));
 
     assertTrue(response.isAccepted());
-    assertState(PREPARED, 2L, "testhost", "testuser", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost", "testuser", "summary");
+    assertState(PREPARED, 2L, "testhost", "testuser", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost", "testuser", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
@@ -114,7 +114,7 @@ public class NomadServerTest {
     ));
 
     assertTrue(response.isAccepted());
-    assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 1L, 1L, ChangeRequestState.COMMITTED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
+    assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 1L, 1L, ChangeRequestState.COMMITTED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
     verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
   }
@@ -144,7 +144,7 @@ public class NomadServerTest {
     ));
 
     assertTrue(response.isAccepted());
-    assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.ROLLED_BACK, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
+    assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.ROLLED_BACK, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
@@ -172,7 +172,7 @@ public class NomadServerTest {
     ));
 
     assertTrue(response.isAccepted());
-    assertState(PREPARED, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
+    assertState(PREPARED, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
@@ -187,7 +187,7 @@ public class NomadServerTest {
     ));
 
     assertTrue(response.isAccepted());
-    assertState(ACCEPTING, 2L, "testhost1", "testuser1", null, 0L, 0L, null, null, null, null, null, null, null);
+    assertState(ACCEPTING, 2L, "testhost1", "testuser1", null, 0L, 0L, null, null, null, null, null, null, null, null);
   }
 
   @Test
@@ -212,7 +212,7 @@ public class NomadServerTest {
     ));
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
-    assertState(ACCEPTING, 2L, "testhost1", "testuser1", null, 0L, 0L, null, null, null, null, null, null, null);
+    assertState(ACCEPTING, 2L, "testhost1", "testuser1", null, 0L, 0L, null, null, null, null, null, null, null, null);
   }
 
   private void assertRejection(AcceptRejectResponse response, RejectionReason rejectionReason, String rejectionMessage, String host, String user) {
@@ -254,7 +254,7 @@ public class NomadServerTest {
     ));
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
-    assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
+    assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
@@ -289,7 +289,7 @@ public class NomadServerTest {
     ));
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
-    assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
+    assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
@@ -323,7 +323,7 @@ public class NomadServerTest {
     ));
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
-    assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, "change", "change-applied", "testhost1", "testuser1", "summary");
+    assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
@@ -345,8 +345,64 @@ public class NomadServerTest {
     ));
 
     assertRejection(response, UNACCEPTABLE, "fail", null, null);
-    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null);
+    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+  }
+
+  @Test
+  public void testCommitWithPrevId() throws Exception {
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+
+    DiscoverResponse<String> discoverResponse = server.discover();
+
+    UUID firstChangeUuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        firstChangeUuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    AcceptRejectResponse response = server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        firstChangeUuid
+    ));
+
+    assertTrue(response.isAccepted());
+    assertState(ACCEPTING, 3L, "testhost2", "testuser2", firstChangeUuid, 1L, 1L, ChangeRequestState.COMMITTED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
+
+    // Apply more changes
+    when(changeApplicator.tryApply("change-applied", new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("change-applied1"));
+    discoverResponse = server.discover();
+    UUID nextChangeUuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        nextChangeUuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change1", "summary1")
+    ));
+
+    response = server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        nextChangeUuid
+    ));
+
+    assertTrue(response.isAccepted());
+    assertState(ACCEPTING, 5L, "testhost2", "testuser2", nextChangeUuid, 2L, 2L, ChangeRequestState.COMMITTED, 2L, firstChangeUuid.toString(), "change1", "change-applied1", "testhost1", "testuser1", "summary1");
+    verify(changeApplicator).tryApply("change-applied", new SimpleNomadChange("change1", "summary1"));
+    verify(changeApplicator).apply(new SimpleNomadChange("change1", "summary1"));
   }
 
   private void assertState(
@@ -359,6 +415,7 @@ public class NomadServerTest {
       long highestVersion,
       ChangeRequestState changeState,
       Long changeVersion,
+      String prevChangeUuid,
       String changeOperation,
       String changeResult,
       String changeCreationHost,
@@ -378,6 +435,7 @@ public class NomadServerTest {
       ChangeRequest<String> changeRequest = state.getChangeRequest(latestChangeUuid);
       assertEquals(changeState, changeRequest.getState());
       assertEquals(changeVersion, (Long) changeRequest.getVersion());
+      assertEquals(prevChangeUuid, changeRequest.getPrevChangeId());
       assertEquals(changeOperation, ((SimpleNomadChange) changeRequest.getChange()).getChange());
       assertEquals(changeResult, changeRequest.getChangeResult());
       assertEquals(changeCreationHost, changeRequest.getCreationHost());

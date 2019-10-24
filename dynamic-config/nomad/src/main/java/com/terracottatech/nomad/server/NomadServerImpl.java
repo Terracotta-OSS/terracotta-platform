@@ -19,6 +19,8 @@ import com.terracottatech.nomad.server.state.NomadStateChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.accept;
@@ -65,6 +67,22 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       throw new IllegalArgumentException("Variable changeApplicator is already set");
     }
     this.changeApplicator = changeApplicator;
+  }
+
+  @Override
+  public List<NomadChangeHolder> getAllNomadChanges() throws NomadException {
+    LinkedList<NomadChangeHolder> allNomadChanges = new LinkedList<>();
+    UUID latestChangeUuid = state.getLatestChangeUuid();
+    while (latestChangeUuid != null) {
+      ChangeRequest<T> changeRequest = state.getChangeRequest(latestChangeUuid);
+      allNomadChanges.addFirst(new NomadChangeHolder(latestChangeUuid, changeRequest.getChange()));
+      if (changeRequest.getPrevChangeId() != null) {
+        latestChangeUuid = UUID.fromString(changeRequest.getPrevChangeId());
+      } else {
+        latestChangeUuid = null;
+      }
+    }
+    return allNomadChanges;
   }
 
   @Override

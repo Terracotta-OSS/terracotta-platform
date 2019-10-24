@@ -4,6 +4,9 @@
  */
 package com.terracottatech.nomad.server;
 
+import java.util.List;
+
 public interface UpgradableNomadServer<T> extends NomadServer<T> {
   void setChangeApplicator(ChangeApplicator<T> changeApplicator);
+  List<NomadChangeHolder> getAllNomadChanges() throws NomadException;
 }

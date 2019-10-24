@@ -74,6 +74,9 @@ public class MemoryNomadStateChange<T> implements NomadStateChange<T> {
     Map<String, Object> changeRequestState = new HashMap<>();
     changeRequestState.put(StateKeys.STATE, changeRequest.getState().toString());
     changeRequestState.put(StateKeys.VERSION, version);
+    if (changeRequest.getPrevChangeId() != null) {
+      changeRequestState.put(StateKeys.PREV_CHANGE_UUID, changeRequest.getPrevChangeId());
+    }
     changeRequestState.put(StateKeys.CHANGE, changeRequest.getChange());
     changeRequestState.put(StateKeys.CREATION_HOST, changeRequest.getCreationHost());
     changeRequestState.put(StateKeys.CREATION_USER, changeRequest.getCreationUser());
