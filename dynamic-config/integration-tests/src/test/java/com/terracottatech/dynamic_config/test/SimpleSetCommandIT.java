@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.cli.ConfigTool;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
@@ -57,6 +56,118 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     out.clearLog();
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
+  }
+
+  @Test
+  public void setOffheapResource_postActivation_decreaseSize() throws Exception {
+    activateCluster();
+
+    systemExit.expectSystemExit();
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("should be larger than the old size")));
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=1MB");
+  }
+
+  @Test
+  public void setOffheapResource_postActivation_licenseViolation() throws Exception {
+    activateCluster();
+
+    systemExit.expectSystemExit();
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("not within the license limits")));
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=10TB");
+  }
+
+  @Test
+  public void setOffheapResource_postActivation_increaseSize() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=1GB");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    waitedAssert(out::getLog, containsString("offheap-resources.main=1GB"));
+  }
+
+  @Test
+  public void setOffheapResource_postActivation_addResource() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources=second:1GB");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.second");
+    waitedAssert(out::getLog, containsString("offheap-resources.second=1GB"));
+  }
+
+  @Test
+  public void setOffheapResources_postActivation_addResources() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.third=1GB");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.second", "-c", "offheap-resources.third");
+    waitedAssert(out::getLog, containsString("offheap-resources.second=1GB"));
+    waitedAssert(out::getLog, containsString("offheap-resources.third=1GB"));
+  }
+
+  @Test
+  public void setOffheapResources_postActivation_addResource_increaseSize() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources=main:1GB,second:1GB");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    waitedAssert(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
+  }
+
+  @Test
+  public void setOffheapResources_postActivation_duplicateSpecification() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:1GB,second:1GB");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    waitedAssert(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
+  }
+
+  @Test
+  public void setOffheapResources_postActivation_sameKeysRepeated() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:2GB,second:2GB");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    waitedAssert(out::getLog, containsString("offheap-resources=main:2GB,second:2GB"));
+  }
+
+  @Test
+  public void setOffheapResources_postActivation_sameKeysRepeated_secondSmallerThanFirst() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:750MB,second:750MB");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    waitedAssert(out::getLog, containsString("offheap-resources=main:750MB,second:750MB"));
+  }
+
+  @Test
+  public void setOffheapResources_postActivation_newResource_decreaseSize() throws Exception {
+    activateCluster();
+
+    systemExit.expectSystemExit();
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("should be larger than the old size")));
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.main=1MB");
   }
 
   @Test
@@ -121,7 +232,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
   @Test
   public void setDataDir_postActivation_updatePath() throws Exception {
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    activateCluster();
 
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("A data directory with name: main already exists")));
@@ -130,9 +241,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
   @Test
   public void setDataDir_postActivation_overlappingPaths() throws Exception {
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    activateCluster();
 
-    out.clearLog();
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("overlaps with the existing data directory")));
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs.first=user-data/main/stripe1/node1");
@@ -140,9 +250,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
   @Test
   public void setDataDir_postActivation_addMultipleNonExistentDataDirs_overLappingPaths() throws Exception {
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    activateCluster();
 
-    out.clearLog();
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("overlaps with the existing data directory")));
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-1");
@@ -150,9 +259,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
   @Test
   public void setDataDir_postActivation_addMultipleNonExistentDataDirs_overLappingPaths_flavor2() throws Exception {
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    activateCluster();
 
-    out.clearLog();
     systemExit.expectSystemExit();
     systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("overlaps with the existing data directory")));
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-1");
@@ -160,7 +268,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
   @Test
   public void setDataDir_postActivation_addOneNonExistentDataDir() throws Exception {
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    activateCluster();
 
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1");
     waitedAssert(out::getLog, containsString("Command successful"));
@@ -172,7 +280,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
   @Test
   public void setDataDir_postActivation_addMultipleNonExistentDataDirs() throws Exception {
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    activateCluster();
 
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-2");
     waitedAssert(out::getLog, containsString("Command successful"));
@@ -188,7 +296,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
   @Test
   public void setDataDir_postActivation_addMultipleNonExistentDataDirs_flavor2() throws Exception {
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    activateCluster();
 
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-2");
     waitedAssert(out::getLog, containsString("Command successful"));
@@ -221,5 +329,10 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=1GB"));
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"));
+  }
+
+  private void activateCluster() throws Exception {
+    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    out.clearLog();
   }
 }
