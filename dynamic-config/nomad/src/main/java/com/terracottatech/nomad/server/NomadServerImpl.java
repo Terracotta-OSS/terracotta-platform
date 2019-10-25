@@ -70,16 +70,16 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public List<NomadChangeHolder> getAllNomadChanges() throws NomadException {
-    LinkedList<NomadChangeHolder> allNomadChanges = new LinkedList<>();
-    UUID latestChangeUuid = state.getLatestChangeUuid();
-    while (latestChangeUuid != null) {
-      ChangeRequest<T> changeRequest = state.getChangeRequest(latestChangeUuid);
-      allNomadChanges.addFirst(new NomadChangeHolder(latestChangeUuid, changeRequest.getChange()));
+  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
+    LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
+    UUID changeUuid = state.getLatestChangeUuid();
+    while (changeUuid != null) {
+      ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
+      allNomadChanges.addFirst(new NomadChangeInfo(changeUuid, changeRequest.getChange()));
       if (changeRequest.getPrevChangeId() != null) {
-        latestChangeUuid = UUID.fromString(changeRequest.getPrevChangeId());
+        changeUuid = UUID.fromString(changeRequest.getPrevChangeId());
       } else {
-        latestChangeUuid = null;
+        changeUuid = null;
       }
     }
     return allNomadChanges;

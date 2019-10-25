@@ -24,6 +24,8 @@ import org.terracotta.config.TcConfiguration;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static com.terracottatech.dynamic_config.nomad.NomadBootstrapper.bootstrap;
+
 @OverrideService("com.tc.config.DefaultConfigurationProvider")
 public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(EnterpriseConfigurationProvider.class);
@@ -32,6 +34,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   private Configuration configuration;
   private IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
   private ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
+  private volatile ConfigurationSyncManager configurationSyncManager;
 
   @Override
   public void initialize(List<String> configurationParams) throws ConfigurationException {
@@ -48,7 +51,9 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
 
   private void bootstrapNomad() {
     String configRepository = cliParser.getConfigRepository() == null ? Setting.NODE_REPOSITORY_DIR.getDefaultValue() : cliParser.getConfigRepository();
-    NomadBootstrapper.bootstrap(Paths.get(configRepository), parameterSubstitutor, configChangeHandlerManager, cliParser.getNodeName());
+    NomadBootstrapper.NomadServerManager nomadServerManager =
+        bootstrap(Paths.get(configRepository), parameterSubstitutor, configChangeHandlerManager, cliParser.getNodeName());
+    this.configurationSyncManager = new ConfigurationSyncManager(nomadServerManager.getNomadServer());
   }
 
   private CommandLineParser getCommandLineParser(List<String> configurationParams) throws ParseException, ConfigurationException {
@@ -81,6 +86,18 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   @Override
   public String getConfigurationParamsDescription() {
     return CommandLineParser.getConfigurationParamsDescription();
+  }
+
+  @Override
+  public byte[] startSync() {
+    return configurationSyncManager != null ? configurationSyncManager.getSyncData() : new byte[0];
+  }
+
+  @Override
+  public void sync(byte[] configuration) {
+    if (configurationSyncManager != null) {
+      configurationSyncManager.sync(configuration);
+    }
   }
 
   @Override

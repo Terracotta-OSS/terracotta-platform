@@ -7,9 +7,8 @@ package com.terracottatech.nomad.client.change;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-// Please see NomadJson class to wire additional sub-classes
-// They cannot be all defined through annotations directly there since the implementations are not
-// within this module
+// Annotate with @JsonTypeName the sub-classes of an interface annotated with @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+// so that the Json class can discover and register the implementations of the class in the object mapper
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
 public interface NomadChange {
 

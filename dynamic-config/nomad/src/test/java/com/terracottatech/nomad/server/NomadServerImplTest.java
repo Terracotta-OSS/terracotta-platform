@@ -111,7 +111,7 @@ public class NomadServerImplTest {
     verify(changeApplicator).apply(new SimpleNomadChange("change1", "summary1"));
 
     //Verifying changes are as it happened
-    List<NomadChangeHolder> getAllChanges = server.getAllNomadChanges();
+    List<NomadChangeInfo> getAllChanges = server.getAllNomadChanges();
     assertEquals(getAllChanges.size(), 2);
     assertEquals(getAllChanges.get(0).getChangeUuid(), firstChangeUuid);
     assertEquals(getAllChanges.get(0).getNomadChange(), new SimpleNomadChange("change", "summary"));

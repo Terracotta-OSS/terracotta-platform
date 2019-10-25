@@ -83,7 +83,7 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public List<NomadChangeHolder> getAllNomadChanges() throws NomadException {
+  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
     lock.lock();
     try {
       return underlying.getAllNomadChanges();
