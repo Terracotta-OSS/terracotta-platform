@@ -39,6 +39,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -112,7 +113,7 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final Collection<InetSocketAddress> findRuntimePeers(InetSocketAddress address) {
-    logger.trace("findPeers({})", address);
+    logger.trace("findRuntimePeers({})", address);
     final Collection<InetSocketAddress> peers = getRuntimeCluster(address).getNodeAddresses();
     if (!peers.contains(address)) {
       throw new IllegalArgumentException("Node address " + address + " used to connect does not match any known node in cluster " + peers);
@@ -124,15 +125,15 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress address) {
-    logger.trace("findOnlineNodes({})", address);
-    //TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
-    final Cluster cluster = getRuntimeCluster(address);
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(cluster.getNodeAddresses())) {
-      return diagnosticServices
-          .map((inetSocketAddress, diagnosticService) -> diagnosticService.getLogicalServerState())
+    logger.trace("findOnlineRuntimePeers({})", address);
+    Cluster cluster = getRuntimeCluster(address);
+    Collection<InetSocketAddress> addresses = cluster.getNodeAddresses();
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
+      return addresses.stream()
           .collect(toMap(
-              Tuple2::getT1,
-              Tuple2::getT2, (o1, o2) -> {
+              identity(),
+              addr -> diagnosticServices.getDiagnosticService(address).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
+              (o1, o2) -> {
                 throw new UnsupportedOperationException();
               },
               LinkedHashMap::new));
@@ -140,8 +141,8 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {
-    logger.trace("validateActivationState({})", expectedOnlineNodes);
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
+    logger.trace("areAllNodesActivated({})", expectedOnlineNodes);
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes)) {
       Map<Boolean, Collection<InetSocketAddress>> activations = topologyServices(diagnosticServices)
           .map(tuple -> tuple.map(identity(), TopologyService::isActivated))
           .collect(groupingBy(Tuple2::getT2, mapping(Tuple2::getT1, toCollection(() -> new TreeSet<>(Comparator.comparing(InetSocketAddress::toString))))));
@@ -164,7 +165,7 @@ public abstract class RemoteCommand extends Command {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes)) {
       dynamicConfigServices(diagnosticServices)
           .map(tuple -> {
             try {

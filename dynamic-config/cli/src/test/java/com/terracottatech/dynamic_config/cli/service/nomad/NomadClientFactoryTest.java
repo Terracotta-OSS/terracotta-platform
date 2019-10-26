@@ -78,11 +78,11 @@ public class NomadClientFactoryTest {
     InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
 
     hostPortList = Arrays.asList(server1, server2, server3, server4);
-    when(multiDiagnosticServiceProvider.fetchDiagnosticServices(hostPortList)).thenReturn(diagnosticServices);
+    when(multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(hostPortList)).thenReturn(diagnosticServices);
     when(environment.getHost()).thenReturn("host");
     when(environment.getUser()).thenReturn("user");
 
-    when(diagnosticServices.getEndpoints()).thenReturn(hostPortList);
+    when(diagnosticServices.getOnlineEndpoints()).thenReturn(hostPortList);
     when(diagnosticServices.getDiagnosticService(server1)).thenReturn(Optional.of(diagnostics1));
     when(diagnosticServices.getDiagnosticService(server2)).thenReturn(Optional.of(diagnostics2));
     when(diagnosticServices.getDiagnosticService(server3)).thenReturn(Optional.of(diagnostics3));

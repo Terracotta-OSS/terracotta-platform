@@ -57,7 +57,6 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Mathieu Carbou
  */
-//TODO [DYNAMIC-CONFIG]: TDB-4601: For supported setting, change from ALL_NODES_ONLINE to ACTIVES_ONLINE
 public enum Setting {
 
   // ==== Settings applied to a specific node only

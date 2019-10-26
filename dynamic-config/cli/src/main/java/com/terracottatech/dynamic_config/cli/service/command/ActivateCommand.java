@@ -101,7 +101,7 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(runtimePeers)) {
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
       prepareActivation(diagnosticServices);
       logger.info("License installation successful");
 

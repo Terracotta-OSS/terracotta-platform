@@ -86,7 +86,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     } else {
       // cluster is not active, we just need to replace the topology
       logger.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodesAddresses));
-      try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(onlineNodesAddresses)) {
+      try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(onlineNodesAddresses)) {
         dynamicConfigServices(diagnosticServices)
             .map(Tuple2::getT2)
             .forEach(dynamicConfigService -> dynamicConfigService.setUpcomingCluster(updatedCluster));

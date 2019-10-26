@@ -38,9 +38,9 @@ public class NomadClientFactory<T> {
     String host = environment.getHost();
     String user = environment.getUser();
 
-    DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes);
+    DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes);
 
-    Collection<NamedNomadServer<T>> servers = diagnosticServices.getEndpoints().stream()
+    Collection<NamedNomadServer<T>> servers = diagnosticServices.getOnlineEndpoints().stream()
         .map(endpoint -> this.createNamedNomadServer(endpoint, diagnosticServices.getDiagnosticService(endpoint)
             .orElseThrow(() -> new IllegalStateException("DiagnosticService not found for node " + endpoint))))
         .collect(toList());

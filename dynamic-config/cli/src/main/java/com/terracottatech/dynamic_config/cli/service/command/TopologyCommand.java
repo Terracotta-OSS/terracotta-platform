@@ -84,7 +84,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     logger.debug("Connecting to nodes to apply topology changes: {}", toString(addresses));
 
     // create a multi-connection based on all the cluster addresses
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(addresses)) {
 
       // get the target node / cluster
       NodeContext dest = diagnosticServices.getDiagnosticService(destination)
