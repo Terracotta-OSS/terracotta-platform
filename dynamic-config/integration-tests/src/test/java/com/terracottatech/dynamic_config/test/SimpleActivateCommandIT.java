@@ -4,13 +4,23 @@
  */
 package com.terracottatech.dynamic_config.test;
 
+import com.terracottatech.diagnostic.client.DiagnosticService;
+import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
 import com.terracottatech.dynamic_config.cli.ConfigTool;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 
+import java.net.InetSocketAddress;
+
+import static java.time.Duration.ofSeconds;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 public class SimpleActivateCommandIT extends BaseStartupIT {
   @Rule
@@ -75,5 +85,11 @@ public class SimpleActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("All nodes came back up: localhost:" + ports[0]));
     waitedAssert(out::getLog, containsString("Command successful"));
+
+    // TDB-4726
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(InetSocketAddress.createUnresolved("localhost", ports[0]), "diag", ofSeconds(10), ofSeconds(10), null)) {
+      NodeContext runtimeNodeContext = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext();
+      assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
+    }
   }
 }
