@@ -8,14 +8,14 @@ import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
 
-  private volatile Set<String> failures = ConcurrentHashMap.newKeySet();
+  private volatile List<String> failures = new CopyOnWriteArrayList<>();
 
   @Override
   public void discoverFail(InetSocketAddress server, String reason) {

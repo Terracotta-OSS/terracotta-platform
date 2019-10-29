@@ -11,10 +11,10 @@ import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
+import java.util.List;
 
 public class RecoveryMessageSender<T> extends NomadMessageSender<T> {
-  public RecoveryMessageSender(Collection<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public RecoveryMessageSender(List<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 

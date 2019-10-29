@@ -15,7 +15,7 @@ import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.client.NomadTestHelper.discovery;
-import static com.terracottatech.nomad.client.NomadTestHelper.matchSetOf;
+import static com.terracottatech.nomad.client.NomadTestHelper.withItems;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 import static org.mockito.ArgumentMatchers.eq;
@@ -70,7 +70,7 @@ public class ClusterConsistencyCheckerTest {
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterInconsistent(eq(uuid), matchSetOf(address1), matchSetOf(address2));
+    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
   }
 
   @Test
@@ -94,7 +94,7 @@ public class ClusterConsistencyCheckerTest {
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterInconsistent(eq(uuid1), matchSetOf(address1), matchSetOf(address2));
-    verify(results).discoverClusterInconsistent(eq(uuid2), matchSetOf(address3, address4), matchSetOf(address5));
+    verify(results).discoverClusterInconsistent(eq(uuid1), withItems(address1), withItems(address2));
+    verify(results).discoverClusterInconsistent(eq(uuid2), withItems(address3, address4), withItems(address5));
   }
 }

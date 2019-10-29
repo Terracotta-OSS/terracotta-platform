@@ -33,12 +33,14 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
@@ -73,10 +75,20 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void runNomadChange(Collection<InetSocketAddress> expectedOnlineNodes, NomadChange change) {
-    logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);
+  protected final void runNomadChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, NomadChange change) {
+    logger.trace("runNomadChange({}, {})", onlineNodes, change);
+    // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
+    List<InetSocketAddress> orderedList = Stream.concat(
+        onlineNodes.entrySet().stream().filter(e -> e.getValue() == PASSIVE),
+        onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive())
+    ).map(Map.Entry::getKey).collect(Collectors.toList());
+    runNomadChange(orderedList, change);
+  }
+
+  protected final void runNomadChange(List<InetSocketAddress> onlineNodes, NomadChange change) {
+    logger.trace("runNomadChange({}, {})", onlineNodes, change);
     NomadFailureRecorder<NodeContext> failures = new NomadFailureRecorder<>();
-    nomadManager.runChange(expectedOnlineNodes, change, failures);
+    nomadManager.runChange(onlineNodes, change, failures);
     failures.reThrow();
   }
 
@@ -138,6 +150,15 @@ public abstract class RemoteCommand extends Command {
               },
               LinkedHashMap::new));
     }
+  }
+
+  protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeersActivesAndPassives(InetSocketAddress address) {
+    logger.trace("findOnlineRuntimePeersActivesAndPassives({})", address);
+    return findOnlineRuntimePeers(address)
+        .entrySet()
+        .stream()
+        .filter(e -> e.getValue().isActive() || e.getValue() == PASSIVE)
+        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {

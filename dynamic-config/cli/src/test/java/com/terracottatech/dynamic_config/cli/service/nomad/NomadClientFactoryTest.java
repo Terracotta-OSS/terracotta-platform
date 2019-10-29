@@ -80,7 +80,6 @@ public class NomadClientFactoryTest {
     when(environment.getHost()).thenReturn("host");
     when(environment.getUser()).thenReturn("user");
 
-    when(diagnosticServices.getOnlineEndpoints()).thenReturn(hostPortList);
     when(diagnosticServices.getDiagnosticService(server1)).thenReturn(Optional.of(diagnostics1));
     when(diagnosticServices.getDiagnosticService(server2)).thenReturn(Optional.of(diagnostics2));
     when(diagnosticServices.getDiagnosticService(server3)).thenReturn(Optional.of(diagnostics3));

@@ -9,11 +9,11 @@ import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public class ChangeMessageSender<T> extends NomadMessageSender<T> {
-  public ChangeMessageSender(Collection<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public ChangeMessageSender(List<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 

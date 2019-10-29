@@ -11,11 +11,11 @@ import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public class ChangeProcess<T> extends NomadClientProcess<NomadChange, T> {
-  public ChangeProcess(Collection<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public ChangeProcess(List<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 

@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.cli.service.nomad;
 
-import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
@@ -16,6 +15,7 @@ import com.terracottatech.nomad.server.NomadServer;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 
@@ -34,29 +34,27 @@ public class NomadClientFactory<T> {
     this.concurrencySizing = concurrencySizing;
   }
 
+  @SuppressWarnings("unchecked")
   public CloseableNomadClient<T> createClient(Collection<InetSocketAddress> expectedOnlineNodes) {
     String host = environment.getHost();
     String user = environment.getUser();
 
+    // connect and concurrently open a diagnostic connection
     DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes);
 
-    Collection<NomadEndpoint<T>> servers = diagnosticServices.getOnlineEndpoints().stream()
-        .map(endpoint -> this.createNamedNomadServer(endpoint, diagnosticServices.getDiagnosticService(endpoint)
-            .orElseThrow(() -> new IllegalStateException("DiagnosticService not found for node " + endpoint))))
+    // build a list of endpoints, keeping the same order wanted by user
+    List<NomadEndpoint<T>> nomadEndpoints = expectedOnlineNodes.stream()
+        .map(address -> diagnosticServices.getDiagnosticService(address)
+            .map(diagnosticService -> (NomadServer<T>) diagnosticService.getProxy(NomadServer.class))
+            .map(nomadServer -> new NomadEndpoint<>(address, nomadServer))
+            .get())
         .collect(toList());
 
-    //TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
-    NomadClient<T> client = new NomadClient<>(servers, host, user);
-    int concurrency = concurrencySizing.getThreadCount(servers.size());
+    NomadClient<T> client = new NomadClient<>(nomadEndpoints, host, user);
+    int concurrency = concurrencySizing.getThreadCount(nomadEndpoints.size());
     client.setConcurrency(concurrency);
     client.setTimeoutMillis(requestTimeout.toMillis());
 
     return new CloseableNomadClient<>(client, diagnosticServices);
-  }
-
-  @SuppressWarnings("unchecked")
-  private NomadEndpoint<T> createNamedNomadServer(InetSocketAddress address, DiagnosticService diagnosticService) {
-    NomadServer<T> nomadServerProxy = diagnosticService.getProxy(NomadServer.class);
-    return new NomadEndpoint<>(address, nomadServerProxy);
   }
 }

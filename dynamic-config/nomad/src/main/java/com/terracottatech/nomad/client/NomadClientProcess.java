@@ -10,16 +10,15 @@ import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.results.MuxAllResultsReceiver;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 public abstract class NomadClientProcess<C, R> {
-  protected final Collection<NomadEndpoint<R>> servers;
+  protected final List<NomadEndpoint<R>> servers;
   protected final String host;
   protected final String user;
   protected final AsyncCaller asyncCaller;
 
-  public NomadClientProcess(Collection<NomadEndpoint<R>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadClientProcess(List<NomadEndpoint<R>> servers, String host, String user, AsyncCaller asyncCaller) {
     this.servers = servers;
     this.host = host;
     this.user = user;

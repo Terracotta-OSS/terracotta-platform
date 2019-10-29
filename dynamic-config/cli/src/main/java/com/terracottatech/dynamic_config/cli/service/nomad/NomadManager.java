@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 public class NomadManager<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);
@@ -26,7 +26,7 @@ public class NomadManager<T> {
     this.isVerbose = isVerbose;
   }
 
-  public void runChange(Collection<InetSocketAddress> expectedOnlineNodes, NomadChange change, ChangeResultReceiver<T> results) {
+  public void runChange(List<InetSocketAddress> expectedOnlineNodes, NomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", change, expectedOnlineNodes);
 
     try (CloseableNomadClient<T> client = clientFactory.createClient(expectedOnlineNodes)) {

@@ -24,7 +24,7 @@ import static com.terracottatech.nomad.client.Consistency.MAY_NEED_RECOVERY;
 import static com.terracottatech.nomad.client.Consistency.UNKNOWN_BUT_NO_CHANGE;
 import static com.terracottatech.nomad.client.Consistency.UNRECOVERABLY_INCONSISTENT;
 import static com.terracottatech.nomad.client.NomadTestHelper.discovery;
-import static com.terracottatech.nomad.client.NomadTestHelper.matchSetOf;
+import static com.terracottatech.nomad.client.NomadTestHelper.withItems;
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.accept;
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.reject;
 import static com.terracottatech.nomad.messages.RejectionReason.DEAD;
@@ -61,7 +61,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -88,7 +88,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discoverFail(eq(address2), anyString());
     verify(results).endDiscovery();
@@ -103,7 +103,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).discoverAlreadyPrepared(eq(address2), any(UUID.class), eq("testCreationHost"), eq("testCreationUser"));
@@ -120,14 +120,14 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
     verify(results).discoverRepeated(address1);
     verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterInconsistent(eq(uuid), matchSetOf(address1), matchSetOf(address2));
+    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
     verify(results).endSecondDiscovery();
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }
@@ -140,7 +140,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -162,7 +162,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -191,7 +191,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -220,7 +220,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -249,7 +249,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -278,7 +278,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -308,7 +308,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -339,7 +339,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
@@ -366,7 +366,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest(10);
 
-    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).startDiscovery(withItems(address1, address2));
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discoverFail(eq(address2), anyString());
     verify(results).endDiscovery();

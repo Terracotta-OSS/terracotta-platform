@@ -54,4 +54,12 @@ public class NomadEndpoint<T> implements NomadServer<T> {
   public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
     return server.takeover(message);
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("NomadEndpoint{");
+    sb.append("address=").append(address);
+    sb.append('}');
+    return sb.toString();
+  }
 }

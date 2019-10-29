@@ -11,6 +11,7 @@ import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -26,8 +27,8 @@ public class NomadTestHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> Set<T> matchSetOf(T... values) {
-    return (Set<T>) argThat(containsInAnyOrder(values));
+  public static <T> Collection<T> withItems(T... values) {
+    return (Collection<T>) argThat(containsInAnyOrder(values));
   }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState) {

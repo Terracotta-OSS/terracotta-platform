@@ -31,14 +31,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.client.Consistency.CONSISTENT;
 import static com.terracottatech.nomad.client.Consistency.MAY_NEED_RECOVERY;
-import static com.terracottatech.nomad.client.NomadTestHelper.matchSetOf;
-import static com.terracottatech.nomad.client.NomadTestHelper.setOf;
+import static com.terracottatech.nomad.client.NomadTestHelper.withItems;
 import static com.terracottatech.nomad.server.NomadServerMode.ACCEPTING;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -66,7 +65,7 @@ public class NomadIT {
   private ChangeApplicator<String> changeApplicator3;
 
   private NomadServerState<String> serverState1;
-  private Set<NomadEndpoint<String>> servers;
+  private List<NomadEndpoint<String>> servers;
   private NomadClient<String> client;
   private boolean assertNoMoreInteractions = true;
   private InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
@@ -91,7 +90,7 @@ public class NomadIT {
     NomadEndpoint<String> server2 = new NomadEndpoint<>(address2, serverImpl2);
     NomadEndpoint<String> server3 = new NomadEndpoint<>(address3, serverImpl3);
 
-    servers = setOf(server1, server2, server3);
+    servers = new ArrayList<>(Arrays.asList(server1, server2, server3));
     client = new NomadClient<>(servers, "host", "user");
   }
 
@@ -123,7 +122,7 @@ public class NomadIT {
     verify(changeApplicator1).apply(change);
     verify(changeApplicator2).apply(change);
     verify(changeApplicator3).apply(change);
-    verify(changeResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(changeResults).startDiscovery(withItems(address1, address2, address3));
     verify(changeResults).discovered(eq(address1), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq(address2), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq(address3), any(DiscoverResponse.class));
@@ -197,7 +196,7 @@ public class NomadIT {
     verify(changeApplicator1).tryApply(null, change);
     verify(changeApplicator2).tryApply(null, change);
     verify(changeApplicator3).tryApply(null, change);
-    verify(changeResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(changeResults).startDiscovery(withItems(address1, address2, address3));
     verify(changeResults).discovered(eq(address1), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq(address2), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq(address3), any(DiscoverResponse.class));
@@ -241,7 +240,7 @@ public class NomadIT {
     verifyNoMoreInteractions(changeApplicator1);
     verify(changeApplicator2).apply(new SimpleNomadChange("change", "summary"));
     verify(changeApplicator3).apply(new SimpleNomadChange("change", "summary"));
-    verify(changeResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(changeResults).startDiscovery(withItems(address1, address2, address3));
     verify(changeResults).discovered(eq(address1), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq(address2), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq(address3), any(DiscoverResponse.class));
@@ -268,7 +267,7 @@ public class NomadIT {
     client.tryRecovery(recoveryResults);
 
     verify(changeApplicator1).apply(new SimpleNomadChange("change", "summary"));
-    verify(recoveryResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(recoveryResults).startDiscovery(withItems(address1, address2, address3));
     verify(recoveryResults).discovered(eq(address1), any(DiscoverResponse.class));
     verify(recoveryResults).discovered(eq(address2), any(DiscoverResponse.class));
     verify(recoveryResults).discovered(eq(address3), any(DiscoverResponse.class));

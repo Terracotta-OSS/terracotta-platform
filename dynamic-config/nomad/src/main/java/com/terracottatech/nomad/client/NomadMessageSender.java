@@ -24,7 +24,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +34,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-//TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageSender.class);
 
@@ -50,7 +48,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   protected final Set<InetSocketAddress> preparedServers = ConcurrentHashMap.newKeySet();
   protected volatile UUID changeUuid;
 
-  public NomadMessageSender(Collection<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadMessageSender(List<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     this.host = host;
     this.user = user;
     this.serverMap = servers.stream().collect(Collectors.toMap(NomadEndpoint::getAddress, s -> s));

@@ -11,12 +11,10 @@ import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.config.ClusterCreator;
 import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.nomad.client.results.NomadFailureRecorder;
 import com.terracottatech.utilities.Tuple2;
 
 import java.io.IOException;
@@ -25,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
@@ -105,7 +104,7 @@ public class ActivateCommand extends RemoteCommand {
       prepareActivation(diagnosticServices);
       logger.info("License installation successful");
 
-      runNomadChange();
+      runNomadChange(new ArrayList<>(runtimePeers), new ClusterActivationNomadChange(cluster));
       logger.debug("Configuration repositories have been created for all nodes");
 
       logger.info("Restarting nodes: {}", toString(runtimePeers));
@@ -162,12 +161,6 @@ public class ActivateCommand extends RemoteCommand {
     dynamicConfigServices(diagnosticServices)
         .map(Tuple2::getT2)
         .forEach(service -> service.prepareActivation(cluster, read(licenseFile)));
-  }
-
-  private void runNomadChange() {
-    NomadFailureRecorder<NodeContext> failures = new NomadFailureRecorder<>();
-    nomadManager.runChange(runtimePeers, new ClusterActivationNomadChange(cluster), failures);
-    failures.reThrow();
   }
 
   private static String read(Path path) {
