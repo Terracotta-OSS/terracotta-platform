@@ -9,6 +9,7 @@ import com.terracottatech.nomad.messages.ChangeDetails;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.ChangeRequestState;
 
+import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +26,7 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     super.discovered(server, discovery);
 
     UUID latestChangeUuid = getLatestChangeUuid(discovery);

@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 
 //TODO [DYNAMIC-CONFIG]: TDB-4601: Allows to only connect to the online nodes, return only online nodes (fetchDiagnosticServices is throwing at the moment)
 public class NomadClient<T> {
-  private final Collection<NamedNomadServer<T>> servers;
+  private final Collection<NomadEndpoint<T>> servers;
   private final String host;
   private final String user;
   private volatile int concurrency;
@@ -27,7 +27,7 @@ public class NomadClient<T> {
    * @param host the name of the local machine
    * @param user the name of the user the current process is running as
    */
-  public NomadClient(Collection<NamedNomadServer<T>> servers, String host, String user) {
+  public NomadClient(Collection<NomadEndpoint<T>> servers, String host, String user) {
     if (servers.isEmpty()) {
       throw new IllegalArgumentException("There must be at least one server");
     }

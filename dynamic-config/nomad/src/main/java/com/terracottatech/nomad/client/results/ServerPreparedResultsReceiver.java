@@ -4,8 +4,9 @@
  */
 package com.terracottatech.nomad.client.results;
 
+import java.net.InetSocketAddress;
 import java.util.UUID;
 
 public interface ServerPreparedResultsReceiver {
-  default void discoverAlreadyPrepared(String server, UUID changeUuid, String creationHost, String creationUser) {}
+  default void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUuid, String creationHost, String creationUser) {}
 }

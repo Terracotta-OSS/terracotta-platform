@@ -4,14 +4,16 @@
  */
 package com.terracottatech.nomad.client.results;
 
+import java.net.InetSocketAddress;
+
 public interface RollbackResultsReceiver {
   default void startRollback() {}
 
-  default void rolledBack(String server) {}
+  default void rolledBack(InetSocketAddress server) {}
 
-  default void rollbackFail(String server, String reason) {}
+  default void rollbackFail(InetSocketAddress server, String reason) {}
 
-  default void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
+  default void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 
   default void endRollback() {}
 }

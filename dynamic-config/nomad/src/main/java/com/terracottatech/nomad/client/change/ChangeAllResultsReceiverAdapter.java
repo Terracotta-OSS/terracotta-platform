@@ -8,7 +8,8 @@ import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 
-import java.util.Set;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.UUID;
 
 public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T> {
@@ -19,22 +20,22 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void startDiscovery(Set<String> servers) {
+  public void startDiscovery(Collection<InetSocketAddress> servers) {
     changeResultReceiver.startDiscovery(servers);
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     changeResultReceiver.discovered(server, discovery);
   }
 
   @Override
-  public void discoverFail(String server, String reason) {
+  public void discoverFail(InetSocketAddress server, String reason) {
     changeResultReceiver.discoverFail(server, reason);
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {
+  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     changeResultReceiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
   }
 
@@ -49,12 +50,12 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void discoverRepeated(String server) {
+  public void discoverRepeated(InetSocketAddress server) {
     changeResultReceiver.discoverRepeated(server);
   }
 
   @Override
-  public void discoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     changeResultReceiver.discoverOtherClient(server, lastMutationHost, lastMutationUser);
   }
 
@@ -64,7 +65,7 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void discoverAlreadyPrepared(String server, UUID changeUuid, String creationHost, String creationUser) {
+  public void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUuid, String creationHost, String creationUser) {
     changeResultReceiver.discoverAlreadyPrepared(server, changeUuid, creationHost, creationUser);
   }
 
@@ -74,22 +75,22 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void prepared(String server) {
+  public void prepared(InetSocketAddress server) {
     changeResultReceiver.prepared(server);
   }
 
   @Override
-  public void prepareFail(String server, String reason) {
+  public void prepareFail(InetSocketAddress server, String reason) {
     changeResultReceiver.prepareFail(server, reason);
   }
 
   @Override
-  public void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     changeResultReceiver.prepareOtherClient(server, lastMutationHost, lastMutationUser);
   }
 
   @Override
-  public void prepareChangeUnacceptable(String server, String rejectionReason) {
+  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
     changeResultReceiver.prepareChangeUnacceptable(server, rejectionReason);
   }
 
@@ -104,17 +105,17 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void takeover(String server) {
+  public void takeover(InetSocketAddress server) {
     throw new AssertionError("This should not be called during the change process");
   }
 
   @Override
-  public void takeoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     throw new AssertionError("This should not be called during the change process");
   }
 
   @Override
-  public void takeoverFail(String server, String reason) {
+  public void takeoverFail(InetSocketAddress server, String reason) {
     throw new AssertionError("This should not be called during the change process");
   }
 
@@ -129,17 +130,17 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void committed(String server) {
+  public void committed(InetSocketAddress server) {
     changeResultReceiver.committed(server);
   }
 
   @Override
-  public void commitFail(String server, String reason) {
+  public void commitFail(InetSocketAddress server, String reason) {
     changeResultReceiver.commitFail(server, reason);
   }
 
   @Override
-  public void commitOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     changeResultReceiver.commitOtherClient(server, lastMutationHost, lastMutationUser);
   }
 
@@ -154,17 +155,17 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void rolledBack(String server) {
+  public void rolledBack(InetSocketAddress server) {
     changeResultReceiver.rolledBack(server);
   }
 
   @Override
-  public void rollbackFail(String server, String reason) {
+  public void rollbackFail(InetSocketAddress server, String reason) {
     changeResultReceiver.rollbackFail(server, reason);
   }
 
   @Override
-  public void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     changeResultReceiver.rollbackOtherClient(server, lastMutationHost, lastMutationUser);
   }
 

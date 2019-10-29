@@ -10,34 +10,35 @@ import com.terracottatech.nomad.messages.DiscoverResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.UUID;
 
 public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(LoggingChangeResultReceiver.class);
 
   @Override
-  public void startDiscovery(Set<String> servers) {
+  public void startDiscovery(Collection<InetSocketAddress> servers) {
     print("Gathering state from servers: " + servers);
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     print("Received server state for: " + server);
   }
 
   @Override
-  public void discoverFail(String server, String reason) {
+  public void discoverFail(InetSocketAddress server, String reason) {
     printError("No response from server: " + server + ". Reason: " + reason);
   }
 
   @Override
-  public void discoverAlreadyPrepared(String server, UUID changeUUID, String creationHost, String creationUser) {
+  public void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUUID, String creationHost, String creationUser) {
     printError("Another change (with UUID " + changeUUID + " is already underway on " + server + ". It was started by " + creationUser + " on " + creationHost);
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {
+  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     printError("UNRECOVERABLE: Inconsistent cluster for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
   }
 
@@ -52,12 +53,12 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void discoverRepeated(String server) {
+  public void discoverRepeated(InetSocketAddress server) {
     print("Received server state for: " + server);
   }
 
   @Override
-  public void discoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
   }
 
@@ -72,22 +73,22 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void prepared(String server) {
+  public void prepared(InetSocketAddress server) {
     print("Server: " + server + " is prepared to make the change");
   }
 
   @Override
-  public void prepareFail(String server, String reason) {
+  public void prepareFail(InetSocketAddress server, String reason) {
     printError("Server: " + server + " failed when asked to prepare to make the change. Reason: " + reason);
   }
 
   @Override
-  public void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
   }
 
   @Override
-  public void prepareChangeUnacceptable(String server, String rejectionReason) {
+  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
     printError("Server: " + server + " rejected the change as unacceptable because: " + rejectionReason);
   }
 
@@ -102,17 +103,17 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void committed(String server) {
+  public void committed(InetSocketAddress server) {
     print("Server: " + server + " has committed the change");
   }
 
   @Override
-  public void commitFail(String server, String reason) {
+  public void commitFail(InetSocketAddress server, String reason) {
     printError("Server: " + server + " failed when asked to commit the change: " + reason);
   }
 
   @Override
-  public void commitOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
   }
 
@@ -127,17 +128,17 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void rolledBack(String server) {
+  public void rolledBack(InetSocketAddress server) {
     print("Server: " + server + " has rolled back the change");
   }
 
   @Override
-  public void rollbackFail(String server, String reason) {
+  public void rollbackFail(InetSocketAddress server, String reason) {
     printError("Server: " + server + " failed when asked to roll back the change. Reason: " + reason);
   }
 
   @Override
-  public void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
   }
 

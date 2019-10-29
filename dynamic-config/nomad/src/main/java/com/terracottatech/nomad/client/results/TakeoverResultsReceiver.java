@@ -4,14 +4,16 @@
  */
 package com.terracottatech.nomad.client.results;
 
+import java.net.InetSocketAddress;
+
 public interface TakeoverResultsReceiver {
   default void startTakeover() {}
 
-  default void takeover(String server) {}
+  default void takeover(InetSocketAddress server) {}
 
-  default void takeoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
+  default void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 
-  default void takeoverFail(String server, String reason) {}
+  default void takeoverFail(InetSocketAddress server, String reason) {}
 
   default void endTakeover() {}
 }

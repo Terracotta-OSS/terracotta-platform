@@ -4,18 +4,19 @@
  */
 package com.terracottatech.nomad.client.results;
 
+import java.net.InetSocketAddress;
 import java.util.UUID;
 
 public interface PrepareResultsReceiver {
   default void startPrepare(UUID newChangeUuid) {}
 
-  default void prepared(String server) {}
+  default void prepared(InetSocketAddress server) {}
 
-  default void prepareFail(String server, String reason) {}
+  default void prepareFail(InetSocketAddress server, String reason) {}
 
-  default void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
+  default void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 
-  default void prepareChangeUnacceptable(String server, String rejectionReason) {}
+  default void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {}
 
   default void endPrepare() {}
 }

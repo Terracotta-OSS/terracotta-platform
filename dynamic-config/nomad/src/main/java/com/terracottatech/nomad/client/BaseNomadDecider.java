@@ -8,7 +8,8 @@ import com.terracottatech.nomad.client.results.AllResultsReceiver;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServerMode;
 
-import java.util.Set;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.client.Consistency.CONSISTENT;
@@ -67,7 +68,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     NomadServerMode mode = discovery.getMode();
     if (mode == PREPARED) {
       preparedServer = true;
@@ -75,63 +76,63 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discoverFail(String server, String reason) {
+  public void discoverFail(InetSocketAddress server, String reason) {
     discoverFail = true;
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {
+  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     discoverFail = true;
     discoveryInconsistentCluster = true;
   }
 
   @Override
-  public void discoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     discoverFail = true;
   }
 
   @Override
-  public void prepareFail(String server, String reason) {
+  public void prepareFail(InetSocketAddress server, String reason) {
     prepareFail = true;
   }
 
   @Override
-  public void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     prepareFail = true;
   }
 
   @Override
-  public void prepareChangeUnacceptable(String server, String rejectionReason) {
+  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
     prepareFail = true;
   }
 
   @Override
-  public void takeoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     takeoverFail = true;
   }
 
   @Override
-  public void takeoverFail(String server, String reason) {
+  public void takeoverFail(InetSocketAddress server, String reason) {
     takeoverFail = true;
   }
 
   @Override
-  public void commitFail(String server, String reason) {
+  public void commitFail(InetSocketAddress server, String reason) {
     commitRollbackFail = true;
   }
 
   @Override
-  public void commitOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     commitRollbackFail = true;
   }
 
   @Override
-  public void rollbackFail(String server, String reason) {
+  public void rollbackFail(InetSocketAddress server, String reason) {
     commitRollbackFail = true;
   }
 
   @Override
-  public void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     commitRollbackFail = true;
   }
 }

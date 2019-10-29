@@ -57,20 +57,20 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeover("server2");
+    verify(results).takeover(address1);
+    verify(results).takeover(address2);
     verify(results).endTakeover();
     verify(results).startCommit();
-    verify(results).committed("server2");
+    verify(results).committed(address2);
     verify(results).endCommit();
     verify(results).done(CONSISTENT);
   }
@@ -86,20 +86,20 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeover("server2");
+    verify(results).takeover(address1);
+    verify(results).takeover(address2);
     verify(results).endTakeover();
     verify(results).startRollback();
-    verify(results).rolledBack("server2");
+    verify(results).rolledBack(address2);
     verify(results).endRollback();
     verify(results).done(CONSISTENT);
   }
@@ -113,13 +113,13 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).done(CONSISTENT);
   }
@@ -132,9 +132,9 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discoverFail(eq("server2"), anyString());
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discoverFail(eq(address2), anyString());
     verify(results).endDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
@@ -148,14 +148,14 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
-    verify(results).discoverClusterInconsistent(eq(uuid), matchSetOf("server1"), matchSetOf("server2"));
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
+    verify(results).discoverClusterInconsistent(eq(uuid), matchSetOf(address1), matchSetOf(address2));
     verify(results).endSecondDiscovery();
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }
@@ -168,13 +168,13 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverOtherClient("server1", "testMutationHost", "testMutationUser");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverOtherClient(address1, "testMutationHost", "testMutationUser");
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
@@ -189,17 +189,17 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeoverFail(eq("server2"), anyString());
+    verify(results).takeover(address1);
+    verify(results).takeoverFail(eq(address2), anyString());
     verify(results).endTakeover();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -214,17 +214,17 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeoverOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    verify(results).takeover(address1);
+    verify(results).takeoverOtherClient(address2, "lastMutationHost", "lastMutationUser");
     verify(results).endTakeover();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -241,20 +241,20 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeover("server2");
+    verify(results).takeover(address1);
+    verify(results).takeover(address2);
     verify(results).endTakeover();
     verify(results).startCommit();
-    verify(results).commitFail(eq("server2"), any());
+    verify(results).commitFail(eq(address2), any());
     verify(results).endCommit();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -271,20 +271,20 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeover("server2");
+    verify(results).takeover(address1);
+    verify(results).takeover(address2);
     verify(results).endTakeover();
     verify(results).startCommit();
-    verify(results).commitOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    verify(results).commitOtherClient(address2, "lastMutationHost", "lastMutationUser");
     verify(results).endCommit();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -300,20 +300,20 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeover("server2");
+    verify(results).takeover(address1);
+    verify(results).takeover(address2);
     verify(results).endTakeover();
     verify(results).startRollback();
-    verify(results).rollbackFail(eq("server2"), anyString());
+    verify(results).rollbackFail(eq(address2), anyString());
     verify(results).endRollback();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -329,20 +329,20 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startTakeover();
-    verify(results).takeover("server1");
-    verify(results).takeover("server2");
+    verify(results).takeover(address1);
+    verify(results).takeover(address2);
     verify(results).endTakeover();
     verify(results).startRollback();
-    verify(results).rollbackOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    verify(results).rollbackOtherClient(address2, "lastMutationHost", "lastMutationUser");
     verify(results).endRollback();
     verify(results).done(MAY_NEED_RECOVERY);
   }

@@ -39,7 +39,6 @@ public abstract class BaseTest {
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-  protected long timeoutMillis = 2_000;
 
   private final Cache<InetSocketAddress, TopologyService> topologyServices = Cache.<InetSocketAddress, TopologyService>create()
       .withLoader(addr -> mock(TopologyService.class, addr.toString()))

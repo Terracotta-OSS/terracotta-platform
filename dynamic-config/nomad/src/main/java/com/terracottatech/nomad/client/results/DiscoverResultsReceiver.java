@@ -6,25 +6,26 @@ package com.terracottatech.nomad.client.results;
 
 import com.terracottatech.nomad.messages.DiscoverResponse;
 
-import java.util.Set;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.UUID;
 
 public interface DiscoverResultsReceiver<T> {
-  default void startDiscovery(Set<String> servers) {}
+  default void startDiscovery(Collection<InetSocketAddress> endpoints) {}
 
-  default void discovered(String server, DiscoverResponse<T> discovery) {};
+  default void discovered(InetSocketAddress endpoint, DiscoverResponse<T> discovery) {};
 
-  default void discoverFail(String server, String reason) {}
+  default void discoverFail(InetSocketAddress endpoint, String reason) {}
 
-  default void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {}
+  default void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {}
 
   default void endDiscovery() {}
 
   default void startSecondDiscovery() {}
 
-  default void discoverRepeated(String server) {}
+  default void discoverRepeated(InetSocketAddress server) {}
 
-  default void discoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {}
+  default void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 
   default void endSecondDiscovery() {}
 }

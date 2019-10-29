@@ -61,21 +61,21 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepared("server2");
+    verify(results).prepared(address1);
+    verify(results).prepared(address2);
     verify(results).endPrepare();
     verify(results).startCommit();
-    verify(results).committed("server1");
-    verify(results).committed("server2");
+    verify(results).committed(address1);
+    verify(results).committed(address2);
     verify(results).endCommit();
     verify(results).done(CONSISTENT);
   }
@@ -88,9 +88,9 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discoverFail(eq("server2"), anyString());
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discoverFail(eq(address2), anyString());
     verify(results).endDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
@@ -103,10 +103,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
-    verify(results).discoverAlreadyPrepared(eq("server2"), any(UUID.class), eq("testCreationHost"), eq("testCreationUser"));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(results).discoverAlreadyPrepared(eq(address2), any(UUID.class), eq("testCreationHost"), eq("testCreationUser"));
     verify(results).endDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
@@ -120,14 +120,14 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
-    verify(results).discoverClusterInconsistent(eq(uuid), matchSetOf("server1"), matchSetOf("server2"));
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
+    verify(results).discoverClusterInconsistent(eq(uuid), matchSetOf(address1), matchSetOf(address2));
     verify(results).endSecondDiscovery();
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }
@@ -140,13 +140,13 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverOtherClient("server1", "testMutationHost", "testMutationUser");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverOtherClient(address1, "testMutationHost", "testMutationUser");
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
@@ -162,20 +162,20 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepareFail(eq("server2"), anyString());
+    verify(results).prepared(address1);
+    verify(results).prepareFail(eq(address2), anyString());
     verify(results).endPrepare();
     verify(results).startRollback();
-    verify(results).rolledBack("server1");
+    verify(results).rolledBack(address1);
     verify(results).endRollback();
     verify(results).done(CONSISTENT);
   }
@@ -191,20 +191,20 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepareFail(eq("server2"), anyString());
+    verify(results).prepared(address1);
+    verify(results).prepareFail(eq(address2), anyString());
     verify(results).endPrepare();
     verify(results).startRollback();
-    verify(results).rollbackFail(eq("server1"), anyString());
+    verify(results).rollbackFail(eq(address1), anyString());
     verify(results).endRollback();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -220,20 +220,20 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepareFail(eq("server2"), anyString());
+    verify(results).prepared(address1);
+    verify(results).prepareFail(eq(address2), anyString());
     verify(results).endPrepare();
     verify(results).startRollback();
-    verify(results).rollbackOtherClient("server1", "lastMutationHost", "lastMutationUser");
+    verify(results).rollbackOtherClient(address1, "lastMutationHost", "lastMutationUser");
     verify(results).endRollback();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -249,20 +249,20 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepareOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    verify(results).prepared(address1);
+    verify(results).prepareOtherClient(address2, "lastMutationHost", "lastMutationUser");
     verify(results).endPrepare();
     verify(results).startRollback();
-    verify(results).rolledBack("server1");
+    verify(results).rolledBack(address1);
     verify(results).endRollback();
     verify(results).done(CONSISTENT);
   }
@@ -278,20 +278,20 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepareChangeUnacceptable("server2", "reason");
+    verify(results).prepared(address1);
+    verify(results).prepareChangeUnacceptable(address2, "reason");
     verify(results).endPrepare();
     verify(results).startRollback();
-    verify(results).rolledBack("server1");
+    verify(results).rolledBack(address1);
     verify(results).endRollback();
     verify(results).done(CONSISTENT);
   }
@@ -308,21 +308,21 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepared("server2");
+    verify(results).prepared(address1);
+    verify(results).prepared(address2);
     verify(results).endPrepare();
     verify(results).startCommit();
-    verify(results).commitFail(eq("server1"), any());
-    verify(results).committed("server2");
+    verify(results).commitFail(eq(address1), any());
+    verify(results).committed(address2);
     verify(results).endCommit();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -339,21 +339,21 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest();
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discovered(eq("server2"), any(DiscoverResponse.class));
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
     verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated("server1");
-    verify(results).discoverRepeated("server2");
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
     verify(results).endSecondDiscovery();
     verify(results).startPrepare(any(UUID.class));
-    verify(results).prepared("server1");
-    verify(results).prepared("server2");
+    verify(results).prepared(address1);
+    verify(results).prepared(address2);
     verify(results).endPrepare();
     verify(results).startCommit();
-    verify(results).commitOtherClient("server1", "lastMutationHost", "lastMutationUser");
-    verify(results).committed("server2");
+    verify(results).commitOtherClient(address1, "lastMutationHost", "lastMutationUser");
+    verify(results).committed(address2);
     verify(results).endCommit();
     verify(results).done(MAY_NEED_RECOVERY);
   }
@@ -366,9 +366,9 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
     runTest(10);
 
-    verify(results).startDiscovery(matchSetOf("server1", "server2"));
-    verify(results).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(results).discoverFail(eq("server2"), anyString());
+    verify(results).startDiscovery(matchSetOf(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discoverFail(eq(address2), anyString());
     verify(results).endDiscovery();
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }

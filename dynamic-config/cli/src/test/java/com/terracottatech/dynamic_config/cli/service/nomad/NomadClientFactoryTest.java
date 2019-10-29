@@ -26,7 +26,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -66,17 +65,16 @@ public class NomadClientFactoryTest {
   private NomadServer<String> nomadServer;
 
   @Captor
-  private ArgumentCaptor<Set<String>> serverNamesCaptor;
+  private ArgumentCaptor<Collection<InetSocketAddress>> serverNamesCaptor;
 
   private Collection<InetSocketAddress> hostPortList;
+  private InetSocketAddress server1 = InetSocketAddress.createUnresolved("host1", 1234);
+  private InetSocketAddress server2 = InetSocketAddress.createUnresolved("host1", 1235);
+  private InetSocketAddress server3 = InetSocketAddress.createUnresolved("host2", 1234);
+  private InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
 
   @Before
   public void before() {
-    InetSocketAddress server1 = InetSocketAddress.createUnresolved("host1", 1234);
-    InetSocketAddress server2 = InetSocketAddress.createUnresolved("host1", 1235);
-    InetSocketAddress server3 = InetSocketAddress.createUnresolved("host2", 1234);
-    InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
-
     hostPortList = Arrays.asList(server1, server2, server3, server4);
     when(multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(hostPortList)).thenReturn(diagnosticServices);
     when(environment.getHost()).thenReturn("host");
@@ -98,7 +96,7 @@ public class NomadClientFactoryTest {
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
 
     verify(results).startDiscovery(serverNamesCaptor.capture());
-    assertThat(serverNamesCaptor.getValue(), containsInAnyOrder("host1:1234", "host2:1234", "host1:1235", "host2:1235"));
+    assertThat(serverNamesCaptor.getValue(), containsInAnyOrder(server1, server2, server3, server4));
 
     Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4)
         .forEach(diagnostics -> verify(diagnostics).getProxy(NomadServer.class));

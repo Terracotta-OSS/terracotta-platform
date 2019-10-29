@@ -13,19 +13,21 @@ import com.terracottatech.nomad.messages.TakeoverMessage;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 
+import java.net.InetSocketAddress;
+
 import static java.util.Objects.requireNonNull;
 
-public class NamedNomadServer<T> implements NomadServer<T> {
-  private final String name;
+public class NomadEndpoint<T> implements NomadServer<T> {
+  private final InetSocketAddress address;
   private final NomadServer<T> server;
 
-  public NamedNomadServer(String name, NomadServer<T> server) {
-    this.name = requireNonNull(name);
+  public NomadEndpoint(InetSocketAddress address, NomadServer<T> server) {
+    this.address = requireNonNull(address);
     this.server = requireNonNull(server);
   }
 
-  public String getName() {
-    return name;
+  public InetSocketAddress getAddress() {
+    return address;
   }
 
   @Override

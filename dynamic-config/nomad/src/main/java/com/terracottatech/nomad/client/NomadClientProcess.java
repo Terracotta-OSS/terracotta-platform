@@ -14,12 +14,12 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class NomadClientProcess<C, R> {
-  protected final Collection<NamedNomadServer<R>> servers;
+  protected final Collection<NomadEndpoint<R>> servers;
   protected final String host;
   protected final String user;
   protected final AsyncCaller asyncCaller;
 
-  public NomadClientProcess(Collection<NamedNomadServer<R>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadClientProcess(Collection<NomadEndpoint<R>> servers, String host, String user, AsyncCaller asyncCaller) {
     this.servers = servers;
     this.host = host;
     this.user = user;

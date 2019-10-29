@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,21 +39,21 @@ import java.util.stream.Collectors;
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageSender.class);
 
-  private final Map<String, NamedNomadServer<T>> serverMap;
+  private final Map<InetSocketAddress, NomadEndpoint<T>> serverMap;
   private final String host;
   private final String user;
   private final AsyncCaller asyncCaller;
-  private final Map<String, Long> mutativeMessageCounts = new ConcurrentHashMap<>();
+  private final Map<InetSocketAddress, Long> mutativeMessageCounts = new ConcurrentHashMap<>();
   private final AtomicLong maxVersionNumber = new AtomicLong();
-  private volatile Set<String> servers;
+  private volatile Set<InetSocketAddress> servers;
 
-  protected final Set<String> preparedServers = ConcurrentHashMap.newKeySet();
+  protected final Set<InetSocketAddress> preparedServers = ConcurrentHashMap.newKeySet();
   protected volatile UUID changeUuid;
 
-  public NomadMessageSender(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadMessageSender(Collection<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     this.host = host;
     this.user = user;
-    this.serverMap = servers.stream().collect(Collectors.toMap(NamedNomadServer::getName, s -> s));
+    this.serverMap = servers.stream().collect(Collectors.toMap(NomadEndpoint::getAddress, s -> s));
     this.servers = serverMap.keySet();
     this.asyncCaller = asyncCaller;
   }
@@ -62,8 +63,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
-    for (String serverName : servers) {
-      NamedNomadServer<T> server = serverMap.get(serverName);
+    for (InetSocketAddress serverName : servers) {
+      NomadEndpoint<T> server = serverMap.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
           server::discover,
@@ -85,8 +86,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
-    for (String serverName : servers) {
-      NamedNomadServer<T> server = serverMap.get(serverName);
+    for (InetSocketAddress serverName : servers) {
+      NomadEndpoint<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -120,8 +121,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     long newVersionNumber = maxVersionNumber.get() + 1;
 
-    for (String serverName : servers) {
-      NamedNomadServer<T> server = serverMap.get(serverName);
+    for (InetSocketAddress serverName : servers) {
+      NomadEndpoint<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -175,8 +176,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
-    for (String serverName : preparedServers) {
-      NamedNomadServer<T> server = serverMap.get(serverName);
+    for (InetSocketAddress serverName : preparedServers) {
+      NomadEndpoint<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -225,8 +226,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
-    for (String serverName : preparedServers) {
-      NamedNomadServer<T> server = serverMap.get(serverName);
+    for (InetSocketAddress serverName : preparedServers) {
+      NomadEndpoint<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -275,8 +276,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     List<Future<Void>> futures = new ArrayList<>(servers.size());
 
-    for (String serverName : servers) {
-      NamedNomadServer<T> server = serverMap.get(serverName);
+    for (InetSocketAddress serverName : servers) {
+      NomadEndpoint<T> server = serverMap.get(serverName);
       long mutativeMessageCount = mutativeMessageCounts.get(serverName);
 
       futures.add(asyncCaller.runTimedAsync(
@@ -332,7 +333,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     long expectedMutativeMessageCount = discovery.getMutativeMessageCount();
     long highestVersionNumber = discovery.getHighestVersion();
 

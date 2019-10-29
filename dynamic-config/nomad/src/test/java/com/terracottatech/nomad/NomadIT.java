@@ -4,8 +4,8 @@
  */
 package com.terracottatech.nomad;
 
-import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
+import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.SimpleNomadChange;
 import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -65,9 +66,12 @@ public class NomadIT {
   private ChangeApplicator<String> changeApplicator3;
 
   private NomadServerState<String> serverState1;
-  private Set<NamedNomadServer<String>> servers;
+  private Set<NomadEndpoint<String>> servers;
   private NomadClient<String> client;
   private boolean assertNoMoreInteractions = true;
+  private InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
+  private InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
+  private InetSocketAddress address3 = InetSocketAddress.createUnresolved("localhost", 9412);
 
   @Before
   @SuppressWarnings("unchecked")
@@ -83,9 +87,9 @@ public class NomadIT {
     serverImpl2.setChangeApplicator(changeApplicator2);
     serverImpl3.setChangeApplicator(changeApplicator3);
 
-    NamedNomadServer<String> server1 = new NamedNomadServer<>("server1", serverImpl1);
-    NamedNomadServer<String> server2 = new NamedNomadServer<>("server2", serverImpl2);
-    NamedNomadServer<String> server3 = new NamedNomadServer<>("server3", serverImpl3);
+    NomadEndpoint<String> server1 = new NomadEndpoint<>(address1, serverImpl1);
+    NomadEndpoint<String> server2 = new NomadEndpoint<>(address2, serverImpl2);
+    NomadEndpoint<String> server3 = new NomadEndpoint<>(address3, serverImpl3);
 
     servers = setOf(server1, server2, server3);
     client = new NomadClient<>(servers, "host", "user");
@@ -105,37 +109,39 @@ public class NomadIT {
   @SuppressWarnings("unchecked")
   @Test
   public void applyChange() throws Exception {
-    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    SimpleNomadChange change = new SimpleNomadChange("change", "summary");
 
-    client.tryApplyChange(changeResults, new SimpleNomadChange("change", "summary"));
+    when(changeApplicator1.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator2.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator3.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
 
-    verify(changeApplicator1).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator2).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator1).apply(new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator2).apply(new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).apply(new SimpleNomadChange("change", "summary"));
-    verify(changeResults).startDiscovery(matchSetOf("server1", "server2", "server3"));
-    verify(changeResults).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(changeResults).discovered(eq("server2"), any(DiscoverResponse.class));
-    verify(changeResults).discovered(eq("server3"), any(DiscoverResponse.class));
+    client.tryApplyChange(changeResults, change);
+
+    verify(changeApplicator1).tryApply(null, change);
+    verify(changeApplicator2).tryApply(null, change);
+    verify(changeApplicator3).tryApply(null, change);
+    verify(changeApplicator1).apply(change);
+    verify(changeApplicator2).apply(change);
+    verify(changeApplicator3).apply(change);
+    verify(changeResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(changeResults).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(changeResults).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(changeResults).discovered(eq(address3), any(DiscoverResponse.class));
     verify(changeResults).endDiscovery();
     verify(changeResults).startSecondDiscovery();
-    verify(changeResults).discoverRepeated("server1");
-    verify(changeResults).discoverRepeated("server2");
-    verify(changeResults).discoverRepeated("server3");
+    verify(changeResults).discoverRepeated(address1);
+    verify(changeResults).discoverRepeated(address2);
+    verify(changeResults).discoverRepeated(address3);
     verify(changeResults).endSecondDiscovery();
     verify(changeResults).startPrepare(any(UUID.class));
-    verify(changeResults).prepared("server1");
-    verify(changeResults).prepared("server2");
-    verify(changeResults).prepared("server3");
+    verify(changeResults).prepared(address1);
+    verify(changeResults).prepared(address2);
+    verify(changeResults).prepared(address3);
     verify(changeResults).endPrepare();
     verify(changeResults).startCommit();
-    verify(changeResults).committed("server1");
-    verify(changeResults).committed("server2");
-    verify(changeResults).committed("server3");
+    verify(changeResults).committed(address1);
+    verify(changeResults).committed(address2);
+    verify(changeResults).committed(address3);
     verify(changeResults).endCommit();
     verify(changeResults).done(CONSISTENT);
     verifyNoMoreInteractions(changeResults);
@@ -148,25 +154,28 @@ public class NomadIT {
 
   @Test
   public void applyMultipleChanges() throws Exception {
-    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator1.tryApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
-    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator2.tryApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
-    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator3.tryApply("changeResult1", new SimpleNomadChange("change2", "summary2"))).thenReturn(PotentialApplicationResult.allow("changeResult2"));
+    SimpleNomadChange change1 = new SimpleNomadChange("change1", "summary1");
+    SimpleNomadChange change2 = new SimpleNomadChange("change2", "summary2");
 
-    client.tryApplyChange(changeResults, new SimpleNomadChange("change1", "summary1"));
-    client.tryApplyChange(changeResults, new SimpleNomadChange("change2", "summary2"));
+    when(changeApplicator1.tryApply(null, change1)).thenReturn(PotentialApplicationResult.allow("changeResult1"));
+    when(changeApplicator1.tryApply("changeResult1", change2)).thenReturn(PotentialApplicationResult.allow("changeResult2"));
+    when(changeApplicator2.tryApply(null, change1)).thenReturn(PotentialApplicationResult.allow("changeResult1"));
+    when(changeApplicator2.tryApply("changeResult1", change2)).thenReturn(PotentialApplicationResult.allow("changeResult2"));
+    when(changeApplicator3.tryApply(null, change1)).thenReturn(PotentialApplicationResult.allow("changeResult1"));
+    when(changeApplicator3.tryApply("changeResult1", change2)).thenReturn(PotentialApplicationResult.allow("changeResult2"));
 
-    verify(changeApplicator1).apply(new SimpleNomadChange("change1", "summary1"));
-    verify(changeApplicator1).apply(new SimpleNomadChange("change2", "summary2"));
-    verify(changeApplicator2).apply(new SimpleNomadChange("change1", "summary1"));
-    verify(changeApplicator2).apply(new SimpleNomadChange("change2", "summary2"));
-    verify(changeApplicator3).apply(new SimpleNomadChange("change1", "summary1"));
-    verify(changeApplicator3).apply(new SimpleNomadChange("change2", "summary2"));
-    verify(changeResults, times(2)).committed("server1");
-    verify(changeResults, times(2)).committed("server2");
-    verify(changeResults, times(2)).committed("server3");
+    client.tryApplyChange(changeResults, change1);
+    client.tryApplyChange(changeResults, change2);
+
+    verify(changeApplicator1).apply(change1);
+    verify(changeApplicator1).apply(change2);
+    verify(changeApplicator2).apply(change1);
+    verify(changeApplicator2).apply(change2);
+    verify(changeApplicator3).apply(change1);
+    verify(changeApplicator3).apply(change2);
+    verify(changeResults, times(2)).committed(address1);
+    verify(changeResults, times(2)).committed(address2);
+    verify(changeResults, times(2)).committed(address3);
     verify(changeResults, times(2)).done(CONSISTENT);
 
     assertEquals(2L, serverState1.getCurrentVersion());
@@ -177,33 +186,35 @@ public class NomadIT {
   @SuppressWarnings("unchecked")
   @Test
   public void rejectChange() {
-    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject("fail"));
-    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    SimpleNomadChange change = new SimpleNomadChange("change", "summary");
 
-    client.tryApplyChange(changeResults, new SimpleNomadChange("change", "summary"));
+    when(changeApplicator1.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator2.tryApply(null, change)).thenReturn(PotentialApplicationResult.reject("fail"));
+    when(changeApplicator3.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
 
-    verify(changeApplicator1).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator2).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeResults).startDiscovery(matchSetOf("server1", "server2", "server3"));
-    verify(changeResults).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(changeResults).discovered(eq("server2"), any(DiscoverResponse.class));
-    verify(changeResults).discovered(eq("server3"), any(DiscoverResponse.class));
+    client.tryApplyChange(changeResults, change);
+
+    verify(changeApplicator1).tryApply(null, change);
+    verify(changeApplicator2).tryApply(null, change);
+    verify(changeApplicator3).tryApply(null, change);
+    verify(changeResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(changeResults).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(changeResults).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(changeResults).discovered(eq(address3), any(DiscoverResponse.class));
     verify(changeResults).endDiscovery();
     verify(changeResults).startSecondDiscovery();
-    verify(changeResults).discoverRepeated("server1");
-    verify(changeResults).discoverRepeated("server2");
-    verify(changeResults).discoverRepeated("server3");
+    verify(changeResults).discoverRepeated(address1);
+    verify(changeResults).discoverRepeated(address2);
+    verify(changeResults).discoverRepeated(address3);
     verify(changeResults).endSecondDiscovery();
     verify(changeResults).startPrepare(any(UUID.class));
-    verify(changeResults).prepared("server1");
-    verify(changeResults).prepareChangeUnacceptable("server2", "fail");
-    verify(changeResults).prepared("server3");
+    verify(changeResults).prepared(address1);
+    verify(changeResults).prepareChangeUnacceptable(address2, "fail");
+    verify(changeResults).prepared(address3);
     verify(changeResults).endPrepare();
     verify(changeResults).startRollback();
-    verify(changeResults).rolledBack("server1");
-    verify(changeResults).rolledBack("server3");
+    verify(changeResults).rolledBack(address1);
+    verify(changeResults).rolledBack(address3);
     verify(changeResults).endRollback();
     verify(changeResults).done(CONSISTENT);
 
@@ -215,7 +226,7 @@ public class NomadIT {
   @SuppressWarnings("unchecked")
   @Test
   public void recovery() throws Exception {
-    InterceptionServer<String> interceptionServer = interceptServer("server1");
+    InterceptionServer<String> interceptionServer = interceptServer(address1);
     interceptionServer.setAllowCommit(false);
 
     when(changeApplicator1.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
@@ -230,25 +241,25 @@ public class NomadIT {
     verifyNoMoreInteractions(changeApplicator1);
     verify(changeApplicator2).apply(new SimpleNomadChange("change", "summary"));
     verify(changeApplicator3).apply(new SimpleNomadChange("change", "summary"));
-    verify(changeResults).startDiscovery(matchSetOf("server1", "server2", "server3"));
-    verify(changeResults).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(changeResults).discovered(eq("server2"), any(DiscoverResponse.class));
-    verify(changeResults).discovered(eq("server3"), any(DiscoverResponse.class));
+    verify(changeResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(changeResults).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(changeResults).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(changeResults).discovered(eq(address3), any(DiscoverResponse.class));
     verify(changeResults).endDiscovery();
     verify(changeResults).startSecondDiscovery();
-    verify(changeResults).discoverRepeated("server1");
-    verify(changeResults).discoverRepeated("server2");
-    verify(changeResults).discoverRepeated("server3");
+    verify(changeResults).discoverRepeated(address1);
+    verify(changeResults).discoverRepeated(address2);
+    verify(changeResults).discoverRepeated(address3);
     verify(changeResults).endSecondDiscovery();
     verify(changeResults).startPrepare(any(UUID.class));
-    verify(changeResults).prepared("server1");
-    verify(changeResults).prepared("server2");
-    verify(changeResults).prepared("server3");
+    verify(changeResults).prepared(address1);
+    verify(changeResults).prepared(address2);
+    verify(changeResults).prepared(address3);
     verify(changeResults).endPrepare();
     verify(changeResults).startCommit();
-    verify(changeResults).commitFail(eq("server1"), any());
-    verify(changeResults).committed("server2");
-    verify(changeResults).committed("server3");
+    verify(changeResults).commitFail(eq(address1), any());
+    verify(changeResults).committed(address2);
+    verify(changeResults).committed(address3);
     verify(changeResults).endCommit();
     verify(changeResults).done(MAY_NEED_RECOVERY);
 
@@ -257,36 +268,36 @@ public class NomadIT {
     client.tryRecovery(recoveryResults);
 
     verify(changeApplicator1).apply(new SimpleNomadChange("change", "summary"));
-    verify(recoveryResults).startDiscovery(matchSetOf("server1", "server2", "server3"));
-    verify(recoveryResults).discovered(eq("server1"), any(DiscoverResponse.class));
-    verify(recoveryResults).discovered(eq("server2"), any(DiscoverResponse.class));
-    verify(recoveryResults).discovered(eq("server3"), any(DiscoverResponse.class));
+    verify(recoveryResults).startDiscovery(matchSetOf(address1, address2, address3));
+    verify(recoveryResults).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(recoveryResults).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(recoveryResults).discovered(eq(address3), any(DiscoverResponse.class));
     verify(recoveryResults).endDiscovery();
     verify(recoveryResults).startSecondDiscovery();
-    verify(recoveryResults).discoverRepeated("server1");
-    verify(recoveryResults).discoverRepeated("server2");
-    verify(recoveryResults).discoverRepeated("server3");
+    verify(recoveryResults).discoverRepeated(address1);
+    verify(recoveryResults).discoverRepeated(address2);
+    verify(recoveryResults).discoverRepeated(address3);
     verify(recoveryResults).endSecondDiscovery();
     verify(recoveryResults).startTakeover();
-    verify(recoveryResults).takeover("server1");
-    verify(recoveryResults).takeover("server2");
-    verify(recoveryResults).takeover("server3");
+    verify(recoveryResults).takeover(address1);
+    verify(recoveryResults).takeover(address2);
+    verify(recoveryResults).takeover(address3);
     verify(recoveryResults).endTakeover();
     verify(recoveryResults).startCommit();
-    verify(recoveryResults).committed("server1");
+    verify(recoveryResults).committed(address1);
     verify(recoveryResults).endCommit();
     verify(recoveryResults).done(CONSISTENT);
   }
 
-  private InterceptionServer<String> interceptServer(String serverName) {
-    List<NamedNomadServer<String>> serverList = new ArrayList<>(servers);
+  private InterceptionServer<String> interceptServer(InetSocketAddress address) {
+    List<NomadEndpoint<String>> serverList = new ArrayList<>(servers);
     servers.clear();
 
     InterceptionServer<String> interceptionServer = null;
-    for (NamedNomadServer<String> server : serverList) {
-      if (server.getName().equals(serverName)) {
+    for (NomadEndpoint<String> server : serverList) {
+      if (server.getAddress().equals(address)) {
         interceptionServer = new InterceptionServer<>(server);
-        servers.add(new NamedNomadServer<>(serverName, interceptionServer));
+        servers.add(new NomadEndpoint<>(address, interceptionServer));
       } else {
         servers.add(server);
       }

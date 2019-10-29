@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.client.NomadTestHelper.discovery;
@@ -28,14 +29,16 @@ public class ChangeProcessDeciderTest {
   private AllResultsReceiver<String> results;
 
   ChangeProcessDecider<String> decider = new ChangeProcessDecider<>();
+  InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
+  InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
 
   @Test
   public void discoverSuccess() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -45,9 +48,9 @@ public class ChangeProcessDeciderTest {
   public void discoverFail() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discoverFail("server2", "reason");
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discoverFail(address2, "reason");
     decider.endDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -60,14 +63,14 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(PREPARED, uuid));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
 
-    verify(results).discoverAlreadyPrepared("server2", uuid, "testCreationHost", "testCreationUser");
+    verify(results).discoverAlreadyPrepared(address2, uuid, "testCreationHost", "testCreationUser");
     assertEquals(Consistency.UNKNOWN_BUT_NO_CHANGE, decider.getConsistency());
   }
 
@@ -75,13 +78,13 @@ public class ChangeProcessDeciderTest {
   public void secondDiscoverSuccess() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startSecondDiscovery();
-    decider.discoverRepeated("server1");
-    decider.discoverRepeated("server2");
+    decider.discoverRepeated(address1);
+    decider.discoverRepeated(address2);
     decider.endSecondDiscovery();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -91,13 +94,13 @@ public class ChangeProcessDeciderTest {
   public void secondDiscoverOtherClient() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startSecondDiscovery();
-    decider.discoverRepeated("server1");
-    decider.discoverOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    decider.discoverRepeated(address1);
+    decider.discoverOtherClient(address2, "lastMutationHost", "lastMutationUser");
     decider.endSecondDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -108,13 +111,13 @@ public class ChangeProcessDeciderTest {
   public void secondDiscoverFail() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startSecondDiscovery();
-    decider.discoverRepeated("server1");
-    decider.discoverFail("server2", "reason");
+    decider.discoverRepeated(address1);
+    decider.discoverFail(address2, "reason");
     decider.endSecondDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -127,13 +130,13 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepared("server2");
+    decider.prepared(address1);
+    decider.prepared(address2);
     decider.endPrepare();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -147,17 +150,17 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepared("server2");
+    decider.prepared(address1);
+    decider.prepared(address2);
     decider.endPrepare();
     decider.startCommit();
-    decider.committed("server1");
-    decider.committed("server2");
+    decider.committed(address1);
+    decider.committed(address2);
     decider.endCommit();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -172,17 +175,17 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepared("server2");
+    decider.prepared(address1);
+    decider.prepared(address2);
     decider.endPrepare();
     decider.startCommit();
-    decider.committed("server1");
-    decider.commitFail("server2", "reason");
+    decider.committed(address1);
+    decider.commitFail(address2, "reason");
     decider.endCommit();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -197,17 +200,17 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepared("server2");
+    decider.prepared(address1);
+    decider.prepared(address2);
     decider.endPrepare();
     decider.startCommit();
-    decider.committed("server1");
-    decider.commitOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    decider.committed(address1);
+    decider.commitOtherClient(address2, "lastMutationHost", "lastMutationUser");
     decider.endCommit();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -222,13 +225,13 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepareFail("server2", "reason");
+    decider.prepared(address1);
+    decider.prepareFail(address2, "reason");
     decider.endPrepare();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -242,16 +245,16 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepareFail("server2", "reason");
+    decider.prepared(address1);
+    decider.prepareFail(address2, "reason");
     decider.endPrepare();
     decider.startRollback();
-    decider.rolledBack("server2");
+    decider.rolledBack(address2);
     decider.endRollback();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -266,16 +269,16 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepareFail("server2", "reason");
+    decider.prepared(address1);
+    decider.prepareFail(address2, "reason");
     decider.endPrepare();
     decider.startRollback();
-    decider.rollbackFail("server2", "reason");
+    decider.rollbackFail(address2, "reason");
     decider.endRollback();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -290,16 +293,16 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepareFail("server2", "reason");
+    decider.prepared(address1);
+    decider.prepareFail(address2, "reason");
     decider.endPrepare();
     decider.startRollback();
-    decider.rollbackOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    decider.rollbackOtherClient(address2, "lastMutationHost", "lastMutationUser");
     decider.endRollback();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -314,13 +317,13 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf("server1", "server2"));
-    decider.discovered("server1", discovery(COMMITTED));
-    decider.discovered("server2", discovery(COMMITTED));
+    decider.startDiscovery(setOf(address1, address2));
+    decider.discovered(address1, discovery(COMMITTED));
+    decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
     decider.startPrepare(uuid);
-    decider.prepared("server1");
-    decider.prepareOtherClient("server2", "lastMutationHost", "lastMutationUser");
+    decider.prepared(address1);
+    decider.prepareOtherClient(address2, "lastMutationHost", "lastMutationUser");
     decider.endPrepare();
 
     assertTrue(decider.isDiscoverSuccessful());

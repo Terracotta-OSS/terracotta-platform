@@ -7,8 +7,8 @@ package com.terracottatech.nomad.client.change;
 import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -23,28 +23,28 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void startDiscovery(Set<String> servers) {
+  public void startDiscovery(Collection<InetSocketAddress> servers) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.startDiscovery(servers);
     }
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discovered(server, discovery);
     }
   }
 
   @Override
-  public void discoverFail(String server, String reason) {
+  public void discoverFail(InetSocketAddress server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverFail(server, reason);
     }
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {
+  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
     }
@@ -65,14 +65,14 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void discoverRepeated(String server) {
+  public void discoverRepeated(InetSocketAddress server) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverRepeated(server);
     }
   }
 
   @Override
-  public void discoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverOtherClient(server, lastMutationHost, lastMutationUser);
     }
@@ -86,7 +86,7 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void discoverAlreadyPrepared(String server, UUID changeUuid, String creationHost, String creationUser) {
+  public void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUuid, String creationHost, String creationUser) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverAlreadyPrepared(server, changeUuid, creationHost, creationUser);
     }
@@ -100,28 +100,28 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void prepared(String server) {
+  public void prepared(InetSocketAddress server) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepared(server);
     }
   }
 
   @Override
-  public void prepareFail(String server, String reason) {
+  public void prepareFail(InetSocketAddress server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareFail(server, reason);
     }
   }
 
   @Override
-  public void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
-  public void prepareChangeUnacceptable(String server, String rejectionReason) {
+  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareChangeUnacceptable(server, rejectionReason);
     }
@@ -142,21 +142,21 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void committed(String server) {
+  public void committed(InetSocketAddress server) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.committed(server);
     }
   }
 
   @Override
-  public void commitFail(String server, String reason) {
+  public void commitFail(InetSocketAddress server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.commitFail(server, reason);
     }
   }
 
   @Override
-  public void commitOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.commitOtherClient(server, lastMutationHost, lastMutationUser);
     }
@@ -177,21 +177,21 @@ public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T
   }
 
   @Override
-  public void rolledBack(String server) {
+  public void rolledBack(InetSocketAddress server) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rolledBack(server);
     }
   }
 
   @Override
-  public void rollbackFail(String server, String reason) {
+  public void rollbackFail(InetSocketAddress server, String reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rollbackFail(server, reason);
     }
   }
 
   @Override
-  public void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rollbackOtherClient(server, lastMutationHost, lastMutationUser);
     }

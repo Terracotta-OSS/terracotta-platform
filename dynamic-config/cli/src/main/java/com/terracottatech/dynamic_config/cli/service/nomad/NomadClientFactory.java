@@ -9,8 +9,8 @@ import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.nomad.NomadEnvironment;
-import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
+import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
@@ -40,7 +40,7 @@ public class NomadClientFactory<T> {
 
     DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes);
 
-    Collection<NamedNomadServer<T>> servers = diagnosticServices.getOnlineEndpoints().stream()
+    Collection<NomadEndpoint<T>> servers = diagnosticServices.getOnlineEndpoints().stream()
         .map(endpoint -> this.createNamedNomadServer(endpoint, diagnosticServices.getDiagnosticService(endpoint)
             .orElseThrow(() -> new IllegalStateException("DiagnosticService not found for node " + endpoint))))
         .collect(toList());
@@ -55,9 +55,8 @@ public class NomadClientFactory<T> {
   }
 
   @SuppressWarnings("unchecked")
-  private NamedNomadServer<T> createNamedNomadServer(InetSocketAddress address, DiagnosticService diagnosticService) {
+  private NomadEndpoint<T> createNamedNomadServer(InetSocketAddress address, DiagnosticService diagnosticService) {
     NomadServer<T> nomadServerProxy = diagnosticService.getProxy(NomadServer.class);
-    // use the <ip>:<port> for the name for nomad because server name as it was before might not be unique across the cluster.
-    return new NamedNomadServer<>(address.toString(), nomadServerProxy);
+    return new NomadEndpoint<>(address, nomadServerProxy);
   }
 }

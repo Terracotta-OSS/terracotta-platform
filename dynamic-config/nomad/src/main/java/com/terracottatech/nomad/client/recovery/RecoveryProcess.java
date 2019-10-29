@@ -5,16 +5,16 @@
 package com.terracottatech.nomad.client.recovery;
 
 import com.terracottatech.nomad.client.AsyncCaller;
-import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClientProcess;
 import com.terracottatech.nomad.client.NomadDecider;
+import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 
 import java.util.Collection;
 
 public class RecoveryProcess<T> extends NomadClientProcess<Void, T> {
-  public RecoveryProcess(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public RecoveryProcess(Collection<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 

@@ -7,8 +7,9 @@ package com.terracottatech.nomad.client.results;
 import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
@@ -26,28 +27,28 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void startDiscovery(Set<String> servers) {
+  public void startDiscovery(Collection<InetSocketAddress> servers) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.startDiscovery(servers);
     }
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discovered(server, discovery);
     }
   }
 
   @Override
-  public void discoverFail(String server, String reason) {
+  public void discoverFail(InetSocketAddress server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverFail(server, reason);
     }
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Set<String> committedServers, Set<String> rolledBackServers) {
+  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
     }
@@ -68,7 +69,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discoverRepeated(String server) {
+  public void discoverRepeated(InetSocketAddress server) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverRepeated(server);
     }
@@ -76,7 +77,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverOtherClient(server, lastMutationHost, lastMutationUser);
     }
@@ -90,7 +91,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discoverAlreadyPrepared(String server, UUID changeUuid, String creationHost, String creationUser) {
+  public void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUuid, String creationHost, String creationUser) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverAlreadyPrepared(server, changeUuid, creationHost, creationUser);
     }
@@ -104,28 +105,28 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void prepared(String server) {
+  public void prepared(InetSocketAddress server) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.prepared(server);
     }
   }
 
   @Override
-  public void prepareFail(String server, String reason) {
+  public void prepareFail(InetSocketAddress server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.prepareFail(server, reason);
     }
   }
 
   @Override
-  public void prepareOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.prepareOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
-  public void prepareChangeUnacceptable(String server, String rejectionReason) {
+  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.prepareChangeUnacceptable(server, rejectionReason);
     }
@@ -146,21 +147,21 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void takeover(String server) {
+  public void takeover(InetSocketAddress server) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.takeover(server);
     }
   }
 
   @Override
-  public void takeoverOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.takeoverOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
-  public void takeoverFail(String server, String reason) {
+  public void takeoverFail(InetSocketAddress server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.takeoverFail(server, reason);
     }
@@ -181,21 +182,21 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void committed(String server) {
+  public void committed(InetSocketAddress server) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.committed(server);
     }
   }
 
   @Override
-  public void commitFail(String server, String reason) {
+  public void commitFail(InetSocketAddress server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.commitFail(server, reason);
     }
   }
 
   @Override
-  public void commitOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.commitOtherClient(server, lastMutationHost, lastMutationUser);
     }
@@ -216,21 +217,21 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void rolledBack(String server) {
+  public void rolledBack(InetSocketAddress server) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.rolledBack(server);
     }
   }
 
   @Override
-  public void rollbackFail(String server, String reason) {
+  public void rollbackFail(InetSocketAddress server, String reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.rollbackFail(server, reason);
     }
   }
 
   @Override
-  public void rollbackOtherClient(String server, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.rollbackOtherClient(server, lastMutationHost, lastMutationUser);
     }

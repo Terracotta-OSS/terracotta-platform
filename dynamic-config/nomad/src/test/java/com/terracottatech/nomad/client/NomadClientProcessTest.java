@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,13 +23,16 @@ public abstract class NomadClientProcessTest {
   @Mock
   protected NomadServer<String> server2;
 
-  protected Set<NamedNomadServer<String>> servers;
+  protected Set<NomadEndpoint<String>> servers;
+
+  protected InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
+  protected InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
 
   @Before
   public void before() {
     servers = Stream.of(
-        new NamedNomadServer<>("server1", server1),
-        new NamedNomadServer<>("server2", server2)
+        new NomadEndpoint<>(address1, server1),
+        new NomadEndpoint<>(address2, server2)
     ).collect(Collectors.toSet());
   }
 }

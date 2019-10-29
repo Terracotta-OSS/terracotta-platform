@@ -10,15 +10,16 @@ import com.terracottatech.nomad.messages.ChangeDetails;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.ChangeRequestState;
 
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
-  private final Map<UUID, Set<String>> commits = new ConcurrentHashMap<>();
-  private final Map<UUID, Set<String>> rollbacks = new ConcurrentHashMap<>();
+  private final Map<UUID, Collection<InetSocketAddress>> commits = new ConcurrentHashMap<>();
+  private final Map<UUID, Collection<InetSocketAddress>> rollbacks = new ConcurrentHashMap<>();
 
   public void checkClusterConsistency(DiscoverResultsReceiver<T> results) {
     HashSet<UUID> inconsistentUUIDs = new HashSet<>(commits.keySet());
@@ -30,7 +31,7 @@ public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discovered(String server, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     ChangeDetails<T> latestChange = discovery.getLatestChange();
 
     if (latestChange != null) {
@@ -52,7 +53,7 @@ public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
     }
   }
 
-  private void addChangeState(Map<UUID, Set<String>> map, UUID latestChangeUuid, String server) {
+  private void addChangeState(Map<UUID, Collection<InetSocketAddress>> map, UUID latestChangeUuid, InetSocketAddress server) {
     map.computeIfAbsent(latestChangeUuid, k -> new HashSet<>()).add(server);
   }
 }

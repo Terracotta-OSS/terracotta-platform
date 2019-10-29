@@ -16,8 +16,8 @@ import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerMana
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.dynamic_config.service.DynamicConfigServiceImpl;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.nomad.client.NamedNomadServer;
 import com.terracottatech.nomad.client.NomadClient;
+import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.results.NomadFailureRecorder;
 import com.terracottatech.utilities.PathResolver;
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Optional;
 
-import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 public class StartupManager {
@@ -147,12 +147,7 @@ public class StartupManager {
 
   private void runNomadChange(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
     requireNonNull(nodeRepositoryDir);
-    String nomadServerName = parameterSubstitutor.substitute(node.getNodeAddress().toString());
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(
-        singleton(new NamedNomadServer<>(nomadServerName, nomadServerManager.getNomadServer())),
-        node.getNodeHostname(),
-        "SYSTEM"
-    );
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), node.getNodeHostname(), "SYSTEM");
     NomadFailureRecorder<NodeContext> failureRecorder = new NomadFailureRecorder<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrow();

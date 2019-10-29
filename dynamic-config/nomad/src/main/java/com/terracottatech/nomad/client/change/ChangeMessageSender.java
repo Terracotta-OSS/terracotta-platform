@@ -5,14 +5,15 @@
 package com.terracottatech.nomad.client.change;
 
 import com.terracottatech.nomad.client.AsyncCaller;
-import com.terracottatech.nomad.client.NamedNomadServer;
+import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
 public class ChangeMessageSender<T> extends NomadMessageSender<T> {
-  public ChangeMessageSender(Collection<NamedNomadServer<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public ChangeMessageSender(Collection<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
     super(servers, host, user, asyncCaller);
   }
 
@@ -23,7 +24,7 @@ public class ChangeMessageSender<T> extends NomadMessageSender<T> {
   }
 
   @Override
-  public void prepared(String server) {
+  public void prepared(InetSocketAddress server) {
     super.prepared(server);
     preparedServers.add(server);
   }
