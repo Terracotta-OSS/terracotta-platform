@@ -6,7 +6,6 @@ package com.terracottatech.nomad.server;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.terracottatech.nomad.client.change.NomadChange;
 
 import java.util.Objects;
