@@ -12,14 +12,26 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class NomadChangeInfo {
-  private UUID changeUuid;
-  private NomadChange nomadChange;
+  private final UUID changeUuid;
+  private final NomadChange nomadChange;
+  private final ChangeRequestState changeRequestState;
+  private final long version;
+  private final String creationHost;
+  private final String creationUser;
 
   @JsonCreator
   public NomadChangeInfo(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
-                         @JsonProperty (value = "nomadChange", required = true) NomadChange nomadChange) {
+                         @JsonProperty(value = "nomadChange", required = true) NomadChange nomadChange,
+                         @JsonProperty(value = "changeRequestState", required = true) ChangeRequestState changeRequestState,
+                         @JsonProperty(value = "version", required = true) long version,
+                         @JsonProperty(value = "creationHost", required = true) String creationHost,
+                         @JsonProperty(value = "creationUser", required = true) String creationUser) {
     this.changeUuid = changeUuid;
     this.nomadChange = nomadChange;
+    this.changeRequestState = changeRequestState;
+    this.version = version;
+    this.creationHost = creationHost;
+    this.creationUser = creationUser;
   }
 
   public UUID getChangeUuid() {
@@ -30,25 +42,49 @@ public class NomadChangeInfo {
     return nomadChange;
   }
 
+  public ChangeRequestState getChangeRequestState() {
+    return changeRequestState;
+  }
+
+  public String getCreationHost() {
+    return creationHost;
+  }
+
+  public String getCreationUser() {
+    return creationUser;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final NomadChangeInfo that = (NomadChangeInfo)o;
-    return Objects.equals(changeUuid, that.changeUuid) &&
-           Objects.equals(nomadChange, that.nomadChange);
+    NomadChangeInfo that = (NomadChangeInfo) o;
+    return version == that.version &&
+        Objects.equals(changeUuid, that.changeUuid) &&
+        Objects.equals(nomadChange, that.nomadChange) &&
+        changeRequestState == that.changeRequestState &&
+        Objects.equals(creationHost, that.creationHost) &&
+        Objects.equals(creationUser, that.creationUser);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(changeUuid, nomadChange);
+    return Objects.hash(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser);
   }
 
   @Override
   public String toString() {
     return "NomadChangeInfo{" +
-           "changeUuid=" + changeUuid +
-           ", nomadChange=" + nomadChange +
-           '}';
+        "changeUuid=" + changeUuid +
+        ", nomadChange=" + nomadChange +
+        ", changeRequestState=" + changeRequestState +
+        ", version=" + version +
+        ", creationHost=" + creationHost +
+        ", creationUser=" + creationUser +
+        '}';
   }
 }

@@ -4,11 +4,22 @@
  */
 package com.terracottatech.config;
 
-import org.junit.Test;
-
+import com.tc.exception.TCServerRestartException;
+import com.tc.exception.TCShutdownServerException;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
+import com.terracottatech.nomad.messages.AcceptRejectResponse;
+import com.terracottatech.nomad.messages.CommitMessage;
+import com.terracottatech.nomad.messages.DiscoverResponse;
+import com.terracottatech.nomad.messages.PrepareMessage;
+import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadChangeInfo;
+import com.terracottatech.nomad.server.NomadException;
+import com.terracottatech.nomad.server.UpgradableNomadServer;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,17 +30,160 @@ import static com.terracottatech.config.ConfigurationSyncManager.Codec.encode;
 import static com.terracottatech.dynamic_config.nomad.Applicability.cluster;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ConfigurationSyncManagerTest {
+  @Rule
+  public ExpectedException exceptionRule = ExpectedException.none();
+
   @Test
   public void testCodec() {
     List<NomadChangeInfo> nomadChanges = new ArrayList<>();
-    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100")));
-    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200")));
+    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
 
     List<NomadChangeInfo> decodedChanges = decode(encode(nomadChanges));
     System.out.println(new String(encode(nomadChanges)));
     assertThat(decodedChanges, is(nomadChanges));
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testSyncWhenPassiveHasMoreChanges() throws NomadException {
+    List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
+    UUID firstChange = UUID.randomUUID();
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
+    ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
+    when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
+    byte[] active = activeSyncManager.getSyncData();
+
+    List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
+    when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
+
+    ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
+    exceptionRule.expect(TCShutdownServerException.class);
+    exceptionRule.expectMessage("Passive has more changes");
+    syncManager.sync(active);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testSyncWhenPassiveChangeHistoryNotMatchWithActive() throws NomadException {
+    List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
+    ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
+    when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
+    byte[] active = activeSyncManager.getSyncData();
+
+    List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
+    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
+    when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
+
+    ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
+    exceptionRule.expect(TCShutdownServerException.class);
+    exceptionRule.expectMessage("Passive cannot sync because the change history does not match");
+    syncManager.sync(active);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testSyncWhenActiveHasChangesWhichIsNotCommitted() throws NomadException {
+    List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
+    UUID firstChange = UUID.randomUUID();
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.PREPARED, 2L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
+    ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
+    when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
+    byte[] active = activeSyncManager.getSyncData();
+
+    List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
+    DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
+    when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
+    when(nomadServer.discover()).thenReturn(discoverResponse);
+
+    ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
+    exceptionRule.expect(TCShutdownServerException.class);
+    exceptionRule.expectMessage("Active has some PREPARED changes that is not yet committed.");
+    syncManager.sync(active);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testForRestartWhenPassiveSyncDataFromActive() throws NomadException {
+    List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
+    UUID firstChange = UUID.randomUUID();
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
+    ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
+    when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
+    byte[] active = activeSyncManager.getSyncData();
+
+    List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
+    DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
+    AcceptRejectResponse acceptRejectResponse = mock(AcceptRejectResponse.class);
+    when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
+    when(nomadServer.discover()).thenReturn(discoverResponse);
+    when(nomadServer.prepare(any(PrepareMessage.class))).thenReturn(acceptRejectResponse);
+    when(nomadServer.commit(any(CommitMessage.class))).thenReturn(acceptRejectResponse);
+    when(acceptRejectResponse.isAccepted()).thenReturn(true);
+
+    ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
+    exceptionRule.expect(TCServerRestartException.class);
+    exceptionRule.expectMessage("Restarting server");
+    syncManager.sync(active);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testNoRestartInPassiveBecauseOfSameChangeAsActive() throws NomadException {
+    List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
+    UUID firstChange = UUID.randomUUID();
+    UUID secondChange = UUID.randomUUID();
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+
+    UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
+    ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
+    when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
+    byte[] active = activeSyncManager.getSyncData();
+
+    List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    passiveNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+    UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
+    DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
+    AcceptRejectResponse acceptRejectResponse = mock(AcceptRejectResponse.class);
+    when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
+    when(nomadServer.discover()).thenReturn(discoverResponse);
+    when(nomadServer.prepare(any(PrepareMessage.class))).thenReturn(acceptRejectResponse);
+    when(nomadServer.commit(any(CommitMessage.class))).thenReturn(acceptRejectResponse);
+    when(acceptRejectResponse.isAccepted()).thenReturn(true);
+
+    ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
+    syncManager.sync(active);
   }
 
   private static SettingNomadChange createOffheapChange(String resourceName, String size) {

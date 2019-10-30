@@ -75,7 +75,16 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     UUID changeUuid = state.getLatestChangeUuid();
     while (changeUuid != null) {
       ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
-      allNomadChanges.addFirst(new NomadChangeInfo(changeUuid, changeRequest.getChange()));
+      allNomadChanges.addFirst(
+          new NomadChangeInfo(
+              changeUuid,
+              changeRequest.getChange(),
+              changeRequest.getState(),
+              changeRequest.getVersion(),
+              changeRequest.getCreationHost(),
+              changeRequest.getCreationUser()
+          )
+      );
       if (changeRequest.getPrevChangeId() != null) {
         changeUuid = UUID.fromString(changeRequest.getPrevChangeId());
       } else {
