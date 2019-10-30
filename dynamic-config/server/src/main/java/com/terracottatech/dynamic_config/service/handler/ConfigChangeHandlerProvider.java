@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.reject;
-import static com.terracottatech.dynamic_config.model.Setting.CLIENT_LEASE_DURATION;
 import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
@@ -68,9 +67,6 @@ public class ConfigChangeHandlerProvider implements ServiceProvider {
           LOGGER.info("Registered dynamic configuration change handler: {} for setting: {}", configChangeHandler.getClass().getName(), OFFHEAP_RESOURCES);
         }
       }
-
-      // lease
-      manager.add(CLIENT_LEASE_DURATION, new LeaseConfigChangeHandler());
 
       // tc-properties
       // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE

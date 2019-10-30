@@ -86,4 +86,14 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-backup-dir");
     waitedAssert(out::getLog, containsString("node-backup-dir=backup" + File.separator + "data"));
   }
+
+  @Test
+  public void testCluster_setClientLeaseTime() {
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-lease-duration=10s");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-lease-duration");
+    waitedAssert(out::getLog, containsString("client-lease-duration=10s"));
+  }
 }
