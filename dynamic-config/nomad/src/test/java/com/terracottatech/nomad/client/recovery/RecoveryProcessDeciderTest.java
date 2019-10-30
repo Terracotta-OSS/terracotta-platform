@@ -15,9 +15,9 @@ import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.client.NomadTestHelper.discovery;
-import static com.terracottatech.nomad.client.NomadTestHelper.setOf;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,7 +35,7 @@ public class RecoveryProcessDeciderTest {
   public void discoverSuccess() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -47,7 +47,7 @@ public class RecoveryProcessDeciderTest {
   public void discoverFail() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discoverFail(address2, "reason");
     decider.endDiscovery();
@@ -60,7 +60,7 @@ public class RecoveryProcessDeciderTest {
   public void discoverPrepared() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(PREPARED));
     decider.endDiscovery();
@@ -72,7 +72,7 @@ public class RecoveryProcessDeciderTest {
   public void secondDiscoverSuccessConsistent() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -89,7 +89,7 @@ public class RecoveryProcessDeciderTest {
   public void secondDiscoverSuccessRecoveryNeeded() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(PREPARED));
     decider.endDiscovery();
@@ -107,7 +107,7 @@ public class RecoveryProcessDeciderTest {
 
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -124,7 +124,7 @@ public class RecoveryProcessDeciderTest {
   public void secondDiscoverFail() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -143,7 +143,7 @@ public class RecoveryProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED, uuid));
     decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
@@ -162,7 +162,7 @@ public class RecoveryProcessDeciderTest {
   public void takeoverSuccessRollback() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(PREPARED));
     decider.endDiscovery();
@@ -183,7 +183,7 @@ public class RecoveryProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED, uuid));
     decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
@@ -204,7 +204,7 @@ public class RecoveryProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED, uuid));
     decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
@@ -225,7 +225,7 @@ public class RecoveryProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED, uuid));
     decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
@@ -250,7 +250,7 @@ public class RecoveryProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED, uuid));
     decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
@@ -275,7 +275,7 @@ public class RecoveryProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED, uuid));
     decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
@@ -298,7 +298,7 @@ public class RecoveryProcessDeciderTest {
   public void takeoverSuccessRollbackSuccess() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(PREPARED));
     decider.endDiscovery();
@@ -321,7 +321,7 @@ public class RecoveryProcessDeciderTest {
   public void takeoverSuccessRollbackFail() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(PREPARED));
     decider.endDiscovery();
@@ -344,7 +344,7 @@ public class RecoveryProcessDeciderTest {
   public void takeoverSuccessRollbackOtherClient() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(PREPARED));
     decider.endDiscovery();

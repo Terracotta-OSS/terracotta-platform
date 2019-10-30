@@ -10,21 +10,17 @@ import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.recovery.RecoveryProcess;
 import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class NomadClient<T> {
   private final List<NomadEndpoint<T>> servers;
   private final String host;
   private final String user;
-  private volatile int concurrency;
-  private volatile Duration timeout = Duration.ofSeconds(10);
 
   /**
    * @param servers the set of servers to run the Nomad protocol across
-   * @param host the name of the local machine
-   * @param user the name of the user the current process is running as
+   * @param host    the name of the local machine
+   * @param user    the name of the user the current process is running as
    */
   public NomadClient(List<NomadEndpoint<T>> servers, String host, String user) {
     if (servers.isEmpty()) {
@@ -34,34 +30,15 @@ public class NomadClient<T> {
     this.servers = servers;
     this.host = host;
     this.user = user;
-    this.concurrency = servers.size();
-  }
-
-  public void setConcurrency(int concurrency) {
-    this.concurrency = concurrency;
-  }
-
-  public void setTimeoutMillis(long timeout) {
-    this.timeout = Duration.ofMillis(timeout);
   }
 
   public void tryApplyChange(ChangeResultReceiver<T> results, NomadChange change) {
-    withAsyncCaller(asyncCaller -> {
-      ChangeProcess<T> changeProcess = new ChangeProcess<>(servers, host, user, asyncCaller);
-      changeProcess.applyChange(results, change);
-    });
+    ChangeProcess<T> changeProcess = new ChangeProcess<>(servers, host, user);
+    changeProcess.applyChange(results, change);
   }
 
   public void tryRecovery(RecoveryResultReceiver<T> results) {
-    withAsyncCaller(asyncCaller -> {
-      RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user, asyncCaller);
-      recoveryProcess.recover(results);
-    });
-  }
-
-  private void withAsyncCaller(Consumer<AsyncCaller> action) {
-    try (AsyncCaller asyncCaller = new AsyncCaller(concurrency, timeout)) {
-      action.accept(asyncCaller);
-    }
+    RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user);
+    recoveryProcess.recover(results);
   }
 }

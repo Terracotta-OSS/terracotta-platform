@@ -5,110 +5,87 @@
 package com.terracottatech.dynamic_config.cli.service.nomad;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
-import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.nomad.NomadEnvironment;
-import com.terracottatech.nomad.client.change.ChangeResultReceiver;
-import com.terracottatech.nomad.client.change.SimpleNomadChange;
-import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Stream;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NomadClientFactoryTest {
-  @Mock
-  private MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
 
-  @Mock
-  private NomadEnvironment environment;
+  @Mock MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
+  @Mock DiagnosticService diagnostics1;
+  @Mock DiagnosticService diagnostics2;
+  @Mock DiagnosticService diagnostics3;
+  @Mock DiagnosticService diagnostics4;
+  @Mock NomadServer<String> nomadServer;
 
-  @Mock
+  private final InetSocketAddress server1 = InetSocketAddress.createUnresolved("host1", 1234);
+  private final InetSocketAddress server2 = InetSocketAddress.createUnresolved("host1", 1235);
+  private final InetSocketAddress server3 = InetSocketAddress.createUnresolved("host2", 1234);
+  private final InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
+  private final List<InetSocketAddress> servers = Arrays.asList(server1, server2, server3, server4);
+  private final NomadEnvironment environment = new NomadEnvironment() {
+    @Override
+    public String getHost() {
+      return "host";
+    }
+
+    @Override
+    public String getUser() {
+      return "user";
+    }
+  };
+
   private DiagnosticServices diagnosticServices;
-
-  @Mock
-  private DiagnosticService diagnostics1;
-
-  @Mock
-  private DiagnosticService diagnostics2;
-
-  @Mock
-  private DiagnosticService diagnostics3;
-
-  @Mock
-  private DiagnosticService diagnostics4;
-
-  @Mock
-  private ChangeResultReceiver<String> results;
-
-  @Mock
-  private NomadServer<String> nomadServer;
-
-  @Captor
-  private ArgumentCaptor<Collection<InetSocketAddress>> serverNamesCaptor;
-
-  private Collection<InetSocketAddress> hostPortList;
-  private InetSocketAddress server1 = InetSocketAddress.createUnresolved("host1", 1234);
-  private InetSocketAddress server2 = InetSocketAddress.createUnresolved("host1", 1235);
-  private InetSocketAddress server3 = InetSocketAddress.createUnresolved("host2", 1234);
-  private InetSocketAddress server4 = InetSocketAddress.createUnresolved("host2", 1235);
 
   @Before
   public void before() {
-    hostPortList = Arrays.asList(server1, server2, server3, server4);
-    when(multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(hostPortList)).thenReturn(diagnosticServices);
-    when(environment.getHost()).thenReturn("host");
-    when(environment.getUser()).thenReturn("user");
+    diagnosticServices = new DiagnosticServices(new HashMap<InetSocketAddress, DiagnosticService>() {
+      private static final long serialVersionUID = 1L;
 
-    when(diagnosticServices.getDiagnosticService(server1)).thenReturn(Optional.of(diagnostics1));
-    when(diagnosticServices.getDiagnosticService(server2)).thenReturn(Optional.of(diagnostics2));
-    when(diagnosticServices.getDiagnosticService(server3)).thenReturn(Optional.of(diagnostics3));
-    when(diagnosticServices.getDiagnosticService(server4)).thenReturn(Optional.of(diagnostics4));
-    Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4)
-        .forEach(diagnostics -> when(diagnostics.getProxy(NomadServer.class)).thenReturn(nomadServer));
+      {
+        put(server1, diagnostics1);
+        put(server2, diagnostics2);
+        put(server3, diagnostics3);
+        put(server4, diagnostics4);
+      }
+    }, Collections.emptyMap());
+    when(multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(servers)).thenReturn(diagnosticServices);
+    servers.forEach(addr -> when(diagnosticServices.getDiagnosticService(addr).get().getProxy(NomadServer.class)).thenReturn(nomadServer));
   }
 
   @Test
-  public void createClient() throws NomadException {
-    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, Duration.ofSeconds(2));
-    CloseableNomadClient<String> client = factory.createClient(hostPortList);
-    client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
+  public void createClient() {
+    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, environment);
+    factory.createClient(servers);
 
-    verify(results).startDiscovery(serverNamesCaptor.capture());
-    assertThat(serverNamesCaptor.getValue(), containsInAnyOrder(server1, server2, server3, server4));
-
-    Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4)
-        .forEach(diagnostics -> verify(diagnostics).getProxy(NomadServer.class));
-    verify(nomadServer, times(4)).discover();
+    Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4).forEach(diagnostics -> verify(diagnostics).getProxy(NomadServer.class));
   }
 
   @Test
   public void close() {
-    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, new ConcurrencySizing(), environment, Duration.ofSeconds(2));
-    CloseableNomadClient<String> client = factory.createClient(hostPortList);
+    NomadClientFactory<String> factory = new NomadClientFactory<>(multiDiagnosticServiceProvider, environment);
+    CloseableNomadClient<String> client = factory.createClient(servers);
 
-    verify(diagnosticServices, never()).close();
+    Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4).forEach(diagnostics -> verify(diagnostics, never()).close());
     client.close();
-    verify(diagnosticServices).close();
+    Stream.of(diagnostics1, diagnostics2, diagnostics3, diagnostics4).forEach(diagnostics -> verify(diagnostics).close());
   }
 }

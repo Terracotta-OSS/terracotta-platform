@@ -15,9 +15,9 @@ import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.client.NomadTestHelper.discovery;
-import static com.terracottatech.nomad.client.NomadTestHelper.setOf;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -36,7 +36,7 @@ public class ChangeProcessDeciderTest {
   public void discoverSuccess() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -48,7 +48,7 @@ public class ChangeProcessDeciderTest {
   public void discoverFail() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discoverFail(address2, "reason");
     decider.endDiscovery();
@@ -63,7 +63,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(PREPARED, uuid));
     decider.endDiscovery();
@@ -78,7 +78,7 @@ public class ChangeProcessDeciderTest {
   public void secondDiscoverSuccess() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -94,7 +94,7 @@ public class ChangeProcessDeciderTest {
   public void secondDiscoverOtherClient() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -111,7 +111,7 @@ public class ChangeProcessDeciderTest {
   public void secondDiscoverFail() {
     decider.setResults(results);
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -130,7 +130,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -150,7 +150,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -175,7 +175,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -200,7 +200,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -225,7 +225,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -245,7 +245,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -269,7 +269,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -293,7 +293,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();
@@ -317,7 +317,7 @@ public class ChangeProcessDeciderTest {
 
     UUID uuid = UUID.randomUUID();
 
-    decider.startDiscovery(setOf(address1, address2));
+    decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
     decider.discovered(address2, discovery(COMMITTED));
     decider.endDiscovery();

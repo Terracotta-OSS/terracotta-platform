@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.cli.service.nomad;
 
-import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.nomad.NomadEnvironment;
@@ -13,7 +12,6 @@ import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,15 +21,10 @@ public class NomadClientFactory<T> {
 
   private final MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   private final NomadEnvironment environment;
-  private final Duration requestTimeout;
-  private final ConcurrencySizing concurrencySizing;
 
-  public NomadClientFactory(MultiDiagnosticServiceProvider multiDiagnosticServiceProvider, ConcurrencySizing concurrencySizing,
-                            NomadEnvironment environment, Duration requestTimeout) {
+  public NomadClientFactory(MultiDiagnosticServiceProvider multiDiagnosticServiceProvider, NomadEnvironment environment) {
     this.multiDiagnosticServiceProvider = multiDiagnosticServiceProvider;
     this.environment = environment;
-    this.requestTimeout = requestTimeout;
-    this.concurrencySizing = concurrencySizing;
   }
 
   @SuppressWarnings("unchecked")
@@ -51,9 +44,6 @@ public class NomadClientFactory<T> {
         .collect(toList());
 
     NomadClient<T> client = new NomadClient<>(nomadEndpoints, host, user);
-    int concurrency = concurrencySizing.getThreadCount(nomadEndpoints.size());
-    client.setConcurrency(concurrency);
-    client.setTimeoutMillis(requestTimeout.toMillis());
 
     return new CloseableNomadClient<>(client, diagnosticServices);
   }

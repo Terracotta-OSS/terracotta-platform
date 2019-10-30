@@ -4,7 +4,6 @@
  */
 package com.terracottatech.nomad.client.recovery;
 
-import com.terracottatech.nomad.client.AsyncCaller;
 import com.terracottatech.nomad.client.NomadClientProcess;
 import com.terracottatech.nomad.client.NomadDecider;
 import com.terracottatech.nomad.client.NomadEndpoint;
@@ -14,15 +13,15 @@ import com.terracottatech.nomad.client.results.AllResultsReceiver;
 import java.util.List;
 
 public class RecoveryProcess<T> extends NomadClientProcess<Void, T> {
-  public RecoveryProcess(List<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
-    super(servers, host, user, asyncCaller);
+  public RecoveryProcess(List<NomadEndpoint<T>> servers, String host, String user) {
+    super(servers, host, user);
   }
 
   public void recover(RecoveryResultReceiver<T> results) {
     runProcess(
         new RecoveryAllResultsReceiverAdapter<>(results),
         new RecoveryProcessDecider<>(),
-        new RecoveryMessageSender<>(servers, host, user, asyncCaller),
+        new RecoveryMessageSender<>(servers, host, user),
         null
     );
   }

@@ -14,8 +14,6 @@ import com.terracottatech.nomad.server.NomadException;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.internal.stubbing.answers.AnswersWithDelay;
-import org.mockito.internal.stubbing.answers.Returns;
 
 import java.util.UUID;
 
@@ -35,7 +33,6 @@ import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -358,29 +355,8 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(MAY_NEED_RECOVERY);
   }
 
-  @SuppressWarnings("unchecked")
-  @Test(timeout = 10_000L)
-  public void timeout() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
-    doAnswer(new AnswersWithDelay(10_000L, new Returns(discovery(COMMITTED)))).when(server2).discover();
-
-    runTest(10);
-
-    verify(results).startDiscovery(withItems(address1, address2));
-    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
-    verify(results).discoverFail(eq(address2), anyString());
-    verify(results).endDiscovery();
-    verify(results).done(UNKNOWN_BUT_NO_CHANGE);
-  }
-
   private void runTest() {
     NomadClient<String> client = new NomadClient<>(servers, "host", "user");
-    client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
-  }
-
-  private void runTest(long timeout) {
-    NomadClient<String> client = new NomadClient<>(servers, "host", "user");
-    client.setTimeoutMillis(timeout);
     client.tryApplyChange(results, new SimpleNomadChange("change", "summary"));
   }
 }

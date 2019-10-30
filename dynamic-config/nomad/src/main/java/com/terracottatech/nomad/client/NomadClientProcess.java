@@ -16,13 +16,11 @@ public abstract class NomadClientProcess<C, R> {
   protected final List<NomadEndpoint<R>> servers;
   protected final String host;
   protected final String user;
-  protected final AsyncCaller asyncCaller;
 
-  public NomadClientProcess(List<NomadEndpoint<R>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadClientProcess(List<NomadEndpoint<R>> servers, String host, String user) {
     this.servers = servers;
     this.host = host;
     this.user = user;
-    this.asyncCaller = asyncCaller;
   }
 
   protected abstract boolean act(AllResultsReceiver<R> results, NomadDecider<R> decider, NomadMessageSender<R> messageSender, C data);

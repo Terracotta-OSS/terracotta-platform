@@ -14,6 +14,7 @@ import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RejectionReason;
+import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import org.junit.Before;
 import org.junit.Test;
@@ -202,7 +203,7 @@ public class ActivateCommandTest extends BaseTest {
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
-      when(mock.commit(any(CommitMessage.class))).thenReturn(reject(RejectionReason.UNACCEPTABLE, "error", "host", "user"));
+      when(mock.commit(any(CommitMessage.class))).thenThrow(new NomadException("an error"));
     }));
 
     command.validate();
@@ -211,9 +212,9 @@ public class ActivateCommandTest extends BaseTest {
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(allOf(
             containsString("Two-Phase commit failed:"),
-            containsString(" - Commit failed for server localhost:9411: Commit should not return UNACCEPTABLE"),
-            containsString(" - Commit failed for server localhost:9421: Commit should not return UNACCEPTABLE"),
-            containsString(" - Commit failed for server localhost:9422: Commit should not return UNACCEPTABLE")
+            containsString(" - Commit failed for server localhost:9411: an error"),
+            containsString(" - Commit failed for server localhost:9421: an error"),
+            containsString(" - Commit failed for server localhost:9422: an error")
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {

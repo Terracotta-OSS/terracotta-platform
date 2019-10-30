@@ -23,58 +23,47 @@ import org.slf4j.LoggerFactory;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
+
+import static java.util.stream.Collectors.toList;
 
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageSender.class);
 
-  private final Map<InetSocketAddress, NomadEndpoint<T>> serverMap;
+  private final List<NomadEndpoint<T>> servers;
   private final String host;
   private final String user;
-  private final AsyncCaller asyncCaller;
   private final Map<InetSocketAddress, Long> mutativeMessageCounts = new ConcurrentHashMap<>();
   private final AtomicLong maxVersionNumber = new AtomicLong();
-  private volatile Set<InetSocketAddress> servers;
 
-  protected final Set<InetSocketAddress> preparedServers = ConcurrentHashMap.newKeySet();
+  private final List<NomadEndpoint<T>> preparedServers = new CopyOnWriteArrayList<>();
   protected volatile UUID changeUuid;
 
-  public NomadMessageSender(List<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
+  public NomadMessageSender(List<NomadEndpoint<T>> servers, String host, String user) {
     this.host = host;
     this.user = user;
-    this.serverMap = servers.stream().collect(Collectors.toMap(NomadEndpoint::getAddress, s -> s));
-    this.servers = serverMap.keySet();
-    this.asyncCaller = asyncCaller;
+    this.servers = servers;
   }
 
   public void sendDiscovers(DiscoverResultsReceiver<T> results) {
-    results.startDiscovery(servers);
-
-    List<Future<Void>> futures = new ArrayList<>(servers.size());
-
-    for (InetSocketAddress serverName : servers) {
-      NomadEndpoint<T> server = serverMap.get(serverName);
-
-      futures.add(asyncCaller.runTimedAsync(
+    results.startDiscovery(servers.stream().map(NomadEndpoint::getAddress).collect(toList()));
+    for (NomadEndpoint<T> server : servers) {
+      runSync(
           server::discover,
-          discovery -> results.discovered(serverName, discovery),
+          discovery -> results.discovered(server.getAddress(), discovery),
           e -> {
             LOGGER.error("Discover failed: " + e.getMessage(), e);
-            results.discoverFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+            results.discoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
-      ));
+      );
     }
-
-    await(futures);
 
     results.endDiscovery();
   }
@@ -82,32 +71,26 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendSecondDiscovers(DiscoverResultsReceiver<T> results) {
     results.startSecondDiscovery();
 
-    List<Future<Void>> futures = new ArrayList<>(servers.size());
-
-    for (InetSocketAddress serverName : servers) {
-      NomadEndpoint<T> server = serverMap.get(serverName);
-      long mutativeMessageCount = mutativeMessageCounts.get(serverName);
-
-      futures.add(asyncCaller.runTimedAsync(
+    for (NomadEndpoint<T> server : servers) {
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      runSync(
           server::discover,
           discovery -> {
             long secondMutativeMessageCount = discovery.getMutativeMessageCount();
             if (secondMutativeMessageCount == mutativeMessageCount) {
-              results.discoverRepeated(serverName);
+              results.discoverRepeated(server.getAddress());
             } else {
               String lastMutationHost = discovery.getLastMutationHost();
               String lastMutationUser = discovery.getLastMutationUser();
-              results.discoverOtherClient(serverName, lastMutationHost, lastMutationUser);
+              results.discoverOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
             }
           },
           e -> {
             LOGGER.error("Discover failed: " + e.getMessage(), e);
-            results.discoverFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+            results.discoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
-      ));
+      );
     }
-
-    await(futures);
 
     // The endSecondDiscovery() call is made outside this method
   }
@@ -115,15 +98,11 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendPrepares(PrepareResultsReceiver results, UUID changeUuid, NomadChange change) {
     results.startPrepare(changeUuid);
 
-    List<Future<Void>> futures = new ArrayList<>(servers.size());
-
     long newVersionNumber = maxVersionNumber.get() + 1;
 
-    for (InetSocketAddress serverName : servers) {
-      NomadEndpoint<T> server = serverMap.get(serverName);
-      long mutativeMessageCount = mutativeMessageCounts.get(serverName);
-
-      futures.add(asyncCaller.runTimedAsync(
+    for (NomadEndpoint<T> server : servers) {
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      runSync(
           () -> server.prepare(
               new PrepareMessage(
                   mutativeMessageCount,
@@ -136,22 +115,22 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           ),
           response -> {
             if (response.isAccepted()) {
-              results.prepared(serverName);
+              results.prepared(server.getAddress());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
 
               switch (rejectionReason) {
                 case UNACCEPTABLE:
                   String rejectionMessage = response.getRejectionMessage();
-                  results.prepareChangeUnacceptable(serverName, rejectionMessage);
+                  results.prepareChangeUnacceptable(server.getAddress(), rejectionMessage);
                   break;
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.prepareOtherClient(serverName, lastMutationHost, lastMutationUser);
+                  results.prepareOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + serverName);
+                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
@@ -159,12 +138,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.error("Prepare failed: " + e.getMessage(), e);
-            results.prepareFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+            results.prepareFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
-      ));
+      );
     }
-
-    await(futures);
 
     results.endPrepare();
   }
@@ -172,13 +149,9 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendCommits(CommitResultsReceiver results) {
     results.startCommit();
 
-    List<Future<Void>> futures = new ArrayList<>(servers.size());
-
-    for (InetSocketAddress serverName : preparedServers) {
-      NomadEndpoint<T> server = serverMap.get(serverName);
-      long mutativeMessageCount = mutativeMessageCounts.get(serverName);
-
-      futures.add(asyncCaller.runTimedAsync(
+    for (NomadEndpoint<T> server : preparedServers) {
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      runSync(
           () -> server.commit(
               new CommitMessage(
                   mutativeMessageCount + 1,
@@ -189,7 +162,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           ),
           response -> {
             if (response.isAccepted()) {
-              results.committed(serverName);
+              results.committed(server.getAddress());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
               switch (rejectionReason) {
@@ -198,10 +171,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.commitOtherClient(serverName, lastMutationHost, lastMutationUser);
+                  results.commitOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + serverName);
+                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
@@ -209,12 +182,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.error("Commit failed: " + e.getMessage(), e);
-            results.commitFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+            results.commitFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
-      ));
+      );
     }
-
-    await(futures);
 
     results.endCommit();
   }
@@ -222,13 +193,9 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendRollbacks(RollbackResultsReceiver results) {
     results.startRollback();
 
-    List<Future<Void>> futures = new ArrayList<>(servers.size());
-
-    for (InetSocketAddress serverName : preparedServers) {
-      NomadEndpoint<T> server = serverMap.get(serverName);
-      long mutativeMessageCount = mutativeMessageCounts.get(serverName);
-
-      futures.add(asyncCaller.runTimedAsync(
+    for (NomadEndpoint<T> server : preparedServers) {
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      runSync(
           () -> server.rollback(
               new RollbackMessage(
                   mutativeMessageCount + 1,
@@ -239,7 +206,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           ),
           response -> {
             if (response.isAccepted()) {
-              results.rolledBack(serverName);
+              results.rolledBack(server.getAddress());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
               switch (rejectionReason) {
@@ -248,10 +215,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.rollbackOtherClient(serverName, lastMutationHost, lastMutationUser);
+                  results.rollbackOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + serverName);
+                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
@@ -259,12 +226,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.error("Rollback failed: " + e.getMessage(), e);
-            results.rollbackFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+            results.rollbackFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
-      ));
+      );
     }
-
-    await(futures);
 
     results.endRollback();
   }
@@ -272,13 +237,9 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendTakeovers(TakeoverResultsReceiver results) {
     results.startTakeover();
 
-    List<Future<Void>> futures = new ArrayList<>(servers.size());
-
-    for (InetSocketAddress serverName : servers) {
-      NomadEndpoint<T> server = serverMap.get(serverName);
-      long mutativeMessageCount = mutativeMessageCounts.get(serverName);
-
-      futures.add(asyncCaller.runTimedAsync(
+    for (NomadEndpoint<T> server : servers) {
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      runSync(
           () -> server.takeover(
               new TakeoverMessage(
                   mutativeMessageCount,
@@ -288,7 +249,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           ),
           response -> {
             if (response.isAccepted()) {
-              results.takeover(serverName);
+              results.takeover(server.getAddress());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
               switch (rejectionReason) {
@@ -297,10 +258,10 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.takeoverOtherClient(serverName, lastMutationHost, lastMutationUser);
+                  results.takeoverOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + serverName);
+                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
@@ -308,26 +269,12 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.error("Takeover failed: " + e.getMessage(), e);
-            results.takeoverFail(serverName, e.getMessage() + "\n" + stackTrace(e));
+            results.takeoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
-      ));
+      );
     }
-
-    await(futures);
 
     results.endTakeover();
-  }
-
-  private void await(List<Future<Void>> futures) {
-    for (Future<Void> future : futures) {
-      try {
-        future.get();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-        throw new AssertionError("Unexpected exception: " + e.getClass() + ": " + e.getMessage(), e);
-      }
-    }
   }
 
   @Override
@@ -337,6 +284,23 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     mutativeMessageCounts.put(server, expectedMutativeMessageCount);
     maxVersionNumber.accumulateAndGet(highestVersionNumber, Long::max);
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  public final void registerPreparedServer(InetSocketAddress address) {
+    preparedServers.add(servers.stream().filter(s -> s.getAddress().equals(address)).findFirst().get());
+  }
+
+  private <T> void runSync(Callable<T> callable, Consumer<T> onSuccess, Consumer<Throwable> onError) {
+    try {
+      T result = callable.call();
+      if (result == null) {
+        throw new AssertionError("Response expected. Bug or wrong mocking ?");
+      }
+      onSuccess.accept(result);
+    } catch (Exception e) {
+      onError.accept(e);
+    }
   }
 
   private static String stackTrace(Throwable e) {

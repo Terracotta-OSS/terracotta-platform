@@ -19,7 +19,6 @@ import com.terracottatech.nomad.server.ChangeApplicator;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.NomadServerImpl;
-import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.nomad.server.state.MemoryNomadServerState;
 import com.terracottatech.nomad.server.state.NomadServerState;
 import org.junit.After;
@@ -39,6 +38,8 @@ import static com.terracottatech.nomad.client.Consistency.CONSISTENT;
 import static com.terracottatech.nomad.client.Consistency.MAY_NEED_RECOVERY;
 import static com.terracottatech.nomad.client.NomadTestHelper.withItems;
 import static com.terracottatech.nomad.server.NomadServerMode.ACCEPTING;
+import static com.terracottatech.nomad.server.PotentialApplicationResult.allow;
+import static com.terracottatech.nomad.server.PotentialApplicationResult.reject;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -110,9 +111,9 @@ public class NomadIT {
   public void applyChange() throws Exception {
     SimpleNomadChange change = new SimpleNomadChange("change", "summary");
 
-    when(changeApplicator1.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator3.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator1.tryApply(null, change)).thenReturn(allow("changeResult"));
+    when(changeApplicator2.tryApply(null, change)).thenReturn(allow("changeResult"));
+    when(changeApplicator3.tryApply(null, change)).thenReturn(allow("changeResult"));
 
     client.tryApplyChange(changeResults, change);
 
@@ -156,12 +157,12 @@ public class NomadIT {
     SimpleNomadChange change1 = new SimpleNomadChange("change1", "summary1");
     SimpleNomadChange change2 = new SimpleNomadChange("change2", "summary2");
 
-    when(changeApplicator1.tryApply(null, change1)).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator1.tryApply("changeResult1", change2)).thenReturn(PotentialApplicationResult.allow("changeResult2"));
-    when(changeApplicator2.tryApply(null, change1)).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator2.tryApply("changeResult1", change2)).thenReturn(PotentialApplicationResult.allow("changeResult2"));
-    when(changeApplicator3.tryApply(null, change1)).thenReturn(PotentialApplicationResult.allow("changeResult1"));
-    when(changeApplicator3.tryApply("changeResult1", change2)).thenReturn(PotentialApplicationResult.allow("changeResult2"));
+    when(changeApplicator1.tryApply(null, change1)).thenReturn(allow("changeResult1"));
+    when(changeApplicator1.tryApply("changeResult1", change2)).thenReturn(allow("changeResult2"));
+    when(changeApplicator2.tryApply(null, change1)).thenReturn(allow("changeResult1"));
+    when(changeApplicator2.tryApply("changeResult1", change2)).thenReturn(allow("changeResult2"));
+    when(changeApplicator3.tryApply(null, change1)).thenReturn(allow("changeResult1"));
+    when(changeApplicator3.tryApply("changeResult1", change2)).thenReturn(allow("changeResult2"));
 
     client.tryApplyChange(changeResults, change1);
     client.tryApplyChange(changeResults, change2);
@@ -187,9 +188,9 @@ public class NomadIT {
   public void rejectChange() {
     SimpleNomadChange change = new SimpleNomadChange("change", "summary");
 
-    when(changeApplicator1.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.tryApply(null, change)).thenReturn(PotentialApplicationResult.reject("fail"));
-    when(changeApplicator3.tryApply(null, change)).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator1.tryApply(null, change)).thenReturn(allow("changeResult"));
+    when(changeApplicator2.tryApply(null, change)).thenReturn(reject("fail"));
+    when(changeApplicator3.tryApply(null, change)).thenReturn(allow("changeResult"));
 
     client.tryApplyChange(changeResults, change);
 
@@ -225,21 +226,23 @@ public class NomadIT {
   @SuppressWarnings("unchecked")
   @Test
   public void recovery() throws Exception {
+    SimpleNomadChange change = new SimpleNomadChange("change", "summary");
+
     InterceptionServer<String> interceptionServer = interceptServer(address1);
     interceptionServer.setAllowCommit(false);
 
-    when(changeApplicator1.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator2.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
-    when(changeApplicator3.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("changeResult"));
+    when(changeApplicator1.tryApply(null, change)).thenReturn(allow("changeResult"));
+    when(changeApplicator2.tryApply(null, change)).thenReturn(allow("changeResult"));
+    when(changeApplicator3.tryApply(null, change)).thenReturn(allow("changeResult"));
 
-    client.tryApplyChange(changeResults, new SimpleNomadChange("change", "summary"));
+    client.tryApplyChange(changeResults, change);
 
-    verify(changeApplicator1).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator2).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator1).tryApply(null, change);
+    verify(changeApplicator2).tryApply(null, change);
+    verify(changeApplicator3).tryApply(null, change);
     verifyNoMoreInteractions(changeApplicator1);
-    verify(changeApplicator2).apply(new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator3).apply(new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator2).apply(change);
+    verify(changeApplicator3).apply(change);
     verify(changeResults).startDiscovery(withItems(address1, address2, address3));
     verify(changeResults).discovered(eq(address1), any(DiscoverResponse.class));
     verify(changeResults).discovered(eq(address2), any(DiscoverResponse.class));
@@ -266,7 +269,7 @@ public class NomadIT {
 
     client.tryRecovery(recoveryResults);
 
-    verify(changeApplicator1).apply(new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator1).apply(change);
     verify(recoveryResults).startDiscovery(withItems(address1, address2, address3));
     verify(recoveryResults).discovered(eq(address1), any(DiscoverResponse.class));
     verify(recoveryResults).discovered(eq(address2), any(DiscoverResponse.class));

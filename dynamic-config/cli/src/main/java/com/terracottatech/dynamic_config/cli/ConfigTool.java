@@ -85,7 +85,7 @@ public class ConfigTool {
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
-    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, concurrencySizing, new NomadEnvironment(), requestTimeout), MAIN.isVerbose());
+    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()), MAIN.isVerbose());
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, requestTimeout);
 
     LOGGER.debug("Injecting services in CommandRepository");

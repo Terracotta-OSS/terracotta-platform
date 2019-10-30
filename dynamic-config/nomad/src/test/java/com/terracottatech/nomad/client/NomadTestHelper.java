@@ -10,10 +10,7 @@ import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
@@ -21,11 +18,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 public class NomadTestHelper {
-  @SuppressWarnings("unchecked")
-  public static <T> Set<T> setOf(T... values) {
-    return new HashSet<>(Arrays.asList(values));
-  }
-
   @SuppressWarnings("unchecked")
   public static <T> Collection<T> withItems(T... values) {
     return (Collection<T>) argThat(containsInAnyOrder(values));

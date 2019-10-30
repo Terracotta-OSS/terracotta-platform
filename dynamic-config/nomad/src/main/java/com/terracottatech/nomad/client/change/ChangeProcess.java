@@ -4,7 +4,6 @@
  */
 package com.terracottatech.nomad.client.change;
 
-import com.terracottatech.nomad.client.AsyncCaller;
 import com.terracottatech.nomad.client.NomadClientProcess;
 import com.terracottatech.nomad.client.NomadDecider;
 import com.terracottatech.nomad.client.NomadEndpoint;
@@ -15,15 +14,15 @@ import java.util.List;
 import java.util.UUID;
 
 public class ChangeProcess<T> extends NomadClientProcess<NomadChange, T> {
-  public ChangeProcess(List<NomadEndpoint<T>> servers, String host, String user, AsyncCaller asyncCaller) {
-    super(servers, host, user, asyncCaller);
+  public ChangeProcess(List<NomadEndpoint<T>> servers, String host, String user) {
+    super(servers, host, user);
   }
 
   public void applyChange(ChangeResultReceiver<T> results, NomadChange change) {
     runProcess(
         new ChangeAllResultsReceiverAdapter<>(results),
         new ChangeProcessDecider<>(),
-        new ChangeMessageSender<>(servers, host, user, asyncCaller),
+        new ChangeMessageSender<>(servers, host, user),
         change
     );
   }
