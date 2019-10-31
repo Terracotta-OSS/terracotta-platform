@@ -152,15 +152,6 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeersActivesAndPassives(InetSocketAddress address) {
-    logger.trace("findOnlineRuntimePeersActivesAndPassives({})", address);
-    return findOnlineRuntimePeers(address)
-        .entrySet()
-        .stream()
-        .filter(e -> e.getValue().isActive() || e.getValue() == PASSIVE)
-        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-  }
-
   protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {
     logger.trace("areAllNodesActivated({})", expectedOnlineNodes);
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes)) {

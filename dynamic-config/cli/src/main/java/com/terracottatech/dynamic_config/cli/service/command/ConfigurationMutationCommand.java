@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,7 @@ import static com.terracottatech.dynamic_config.model.Requirement.RESTART;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 public abstract class ConfigurationMutationCommand extends ConfigurationCommand {
 
@@ -56,9 +58,8 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     new ClusterValidator(updatedCluster, parameterSubstitutor).validate();
 
     // get the current state of the nodes
-    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineRuntimePeersActivesAndPassives(node);
-    Collection<InetSocketAddress> onlineNodesAddresses = onlineNodes.keySet();
-    boolean isActive = areAllNodesActivated(onlineNodesAddresses);
+    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineRuntimePeers(node);
+    boolean isActive = areAllNodesActivated(onlineNodes.keySet());
 
     if (isActive) {
       logger.debug("Validating the new configuration change(s) against the license");
@@ -71,27 +72,37 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     if (isActive) {
       // cluster is active, we need to run a nomad change and eventually a restart
+
+      // first only select active and passive nodes
+      onlineNodes = filterOnlineRuntimePeersActivesAndPassives(onlineNodes);
+
       if (requiresAllNodesAlive()) {
+        // case when the change requires all servers to be up
         ensureEitherActiveOrPassive(onlineNodes);
         ensureActivesAreAllOnline(originalCluster, onlineNodes);
         ensurePassivesAreAllOnline(originalCluster, onlineNodes);
-        logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodesAddresses));
+        logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
         runNomadChange(onlineNodes, getNomadChanges(updatedCluster));
+
       } else {
+        // case when the change requires only at least actives to be up
         ensureEitherActiveOrPassive(onlineNodes);
         ensureActivesAreAllOnline(originalCluster, onlineNodes);
-        logger.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodesAddresses));
+        logger.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
         runNomadChange(onlineNodes, getNomadChanges(updatedCluster));
       }
+
+      // do we need to restart to apply the serie fo change ?
       Collection<String> settingsRequiringRestart = findSettingsRequiringRestart();
       if (!settingsRequiringRestart.isEmpty()) {
         logger.info("=========\nIMPORTANT\n=========\n\nA restart of the cluster is required to apply the following changes:" +
             "\n - {}\n", String.join("\n - ", settingsRequiringRestart));
       }
+
     } else {
       // cluster is not active, we just need to replace the topology
-      logger.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodesAddresses));
-      try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(onlineNodesAddresses)) {
+      logger.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodes.keySet()));
+      try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(onlineNodes.keySet())) {
         dynamicConfigServices(diagnosticServices)
             .map(Tuple2::getT2)
             .forEach(dynamicConfigService -> dynamicConfigService.setUpcomingCluster(updatedCluster));
@@ -160,5 +171,18 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
         .filter(config -> (config.getSetting() != Setting.TC_PROPERTIES || !TC_PROPERTY_NAMES_NO_RESTART.contains(config.getKey())) && config.getSetting().requires(RESTART))
         .map(Configuration::toString)
         .collect(toCollection(TreeSet::new));
+  }
+
+  private static Map<InetSocketAddress, LogicalServerState> filterOnlineRuntimePeersActivesAndPassives(Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+    return onlineNodes.entrySet()
+        .stream()
+        .filter(e -> e.getValue().isActive() || e.getValue() == PASSIVE)
+        .collect(toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (o1, o2) -> {
+              throw new UnsupportedOperationException();
+            },
+            LinkedHashMap::new));
   }
 }
