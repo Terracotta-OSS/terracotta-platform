@@ -35,11 +35,11 @@ public class MainCommand extends Command {
   public void run() {
     if (verbose) {
       Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-      rootLogger.setLevel(Level.DEBUG);
+      rootLogger.setLevel(Level.TRACE);
       Appender<ILoggingEvent> detailAppender = rootLogger.getAppender("STDOUT-DETAIL");
 
       Logger configToolLogger = (Logger) LoggerFactory.getLogger("com.terracottatech.dynamic_config");
-      configToolLogger.setLevel(Level.DEBUG);
+      configToolLogger.setLevel(Level.TRACE);
       //Detach the STDOUT appender which logs in a minimal pattern and attached STDOUT-DETAIL appender
       configToolLogger.detachAppender("STDOUT");
       configToolLogger.addAppender(detailAppender);
