@@ -75,6 +75,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
       // first only select active and passive nodes
       onlineNodes = filterOnlineRuntimePeersActivesAndPassives(onlineNodes);
+      logger.debug("Online nodes: {}", onlineNodes);
 
       if (requiresAllNodesAlive()) {
         // case when the change requires all servers to be up

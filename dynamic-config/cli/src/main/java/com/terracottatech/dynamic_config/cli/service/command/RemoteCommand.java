@@ -144,7 +144,7 @@ public abstract class RemoteCommand extends Command {
       return addresses.stream()
           .collect(toMap(
               identity(),
-              addr -> diagnosticServices.getDiagnosticService(address).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
+              addr -> diagnosticServices.getDiagnosticService(addr).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
               (o1, o2) -> {
                 throw new UnsupportedOperationException();
               },
