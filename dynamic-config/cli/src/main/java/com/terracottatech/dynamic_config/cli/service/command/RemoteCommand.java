@@ -136,7 +136,7 @@ public abstract class RemoteCommand extends Command {
     return peers;
   }
 
-  protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress address) {
+  protected final Map<InetSocketAddress, LogicalServerState> findRuntimePeersStatus(InetSocketAddress address) {
     logger.trace("findOnlineRuntimePeers({})", address);
     Cluster cluster = getRuntimeCluster(address);
     Collection<InetSocketAddress> addresses = cluster.getNodeAddresses();
@@ -154,7 +154,7 @@ public abstract class RemoteCommand extends Command {
 
   protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {
     logger.trace("areAllNodesActivated({})", expectedOnlineNodes);
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(expectedOnlineNodes)) {
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes)) {
       Map<Boolean, Collection<InetSocketAddress>> activations = topologyServices(diagnosticServices)
           .map(tuple -> tuple.map(identity(), TopologyService::isActivated))
           .collect(groupingBy(Tuple2::getT2, mapping(Tuple2::getT1, toCollection(() -> new TreeSet<>(Comparator.comparing(InetSocketAddress::toString))))));
