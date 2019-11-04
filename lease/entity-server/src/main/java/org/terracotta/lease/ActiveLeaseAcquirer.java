@@ -32,14 +32,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The active server-side entity for connection leasing. Pretty much just delegates to the LeaseService.
  */
-class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, LeaseResponse> {
+public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, LeaseResponse> {
   private final LeaseService leaseService;
   private final ClientCommunicator clientCommunicator;
   private final IEntityMessenger entityMessenger;
   private final ConcurrentHashMap<ClientDescriptor, Long> connectionSequenceNumbers = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<UUID, ClientDescriptor> clientDescriptors = new ConcurrentHashMap<>();
 
-  ActiveLeaseAcquirer(LeaseService leaseService, ClientCommunicator clientCommunicator, IEntityMessenger entityMessenger) {
+  public ActiveLeaseAcquirer(LeaseService leaseService, ClientCommunicator clientCommunicator, IEntityMessenger entityMessenger) {
     this.leaseService = leaseService;
     this.clientCommunicator = clientCommunicator;
     this.entityMessenger = entityMessenger;
