@@ -18,7 +18,7 @@ package org.terracotta.lease;
 /**
  * The constants used to register the single lease entity.
  */
-interface LeaseEntityConstants {
+public interface LeaseEntityConstants {
   String ENTITY_NAME = "SystemLeaseAcquirer";
   int ENTITY_VERSION = 1;
 }

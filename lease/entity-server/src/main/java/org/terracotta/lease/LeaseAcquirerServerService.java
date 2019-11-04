@@ -72,7 +72,7 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
     return new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
   }
 
-  private <T> T getService(ServiceRegistry serviceRegistry, ServiceConfiguration<T> serviceConfiguration) throws ConfigurationException {
+  protected  <T> T getService(ServiceRegistry serviceRegistry, ServiceConfiguration<T> serviceConfiguration) throws ConfigurationException {
     try {
       T service = serviceRegistry.getService(serviceConfiguration);
 

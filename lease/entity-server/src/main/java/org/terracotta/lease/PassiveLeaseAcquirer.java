@@ -23,7 +23,7 @@ import org.terracotta.entity.PassiveServerEntity;
 /**
  * The passive server-side entity for connection leasing.
  */
-class PassiveLeaseAcquirer implements PassiveServerEntity<LeaseMessage, LeaseResponse> {
+public class PassiveLeaseAcquirer implements PassiveServerEntity<LeaseMessage, LeaseResponse> {
   @Override
   public void invokePassive(InvokeContext context, LeaseMessage message) throws EntityUserException {
   }
