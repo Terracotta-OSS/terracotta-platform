@@ -24,13 +24,13 @@ import org.terracotta.lease.service.monitor.LeaseState;
  * The implementation of LeaseService. It uses the LeaseState object to carry out the hard work of correctly issuing
  * leases.
  */
-class LeaseServiceImpl implements LeaseService {
+public class LeaseServiceImpl implements LeaseService {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceImpl.class);
 
   private final long leaseLength;
   private final LeaseState leaseState;
 
-  LeaseServiceImpl(long leaseLength, LeaseState leaseState) {
+  public LeaseServiceImpl(long leaseLength, LeaseState leaseState) {
     this.leaseLength = leaseLength;
     this.leaseState = leaseState;
   }
@@ -38,11 +38,12 @@ class LeaseServiceImpl implements LeaseService {
   @Override
   public LeaseResult acquireLease(ClientDescriptor clientDescriptor) {
     LOGGER.debug("Client requested lease: " + clientDescriptor);
-    boolean acquiredLease = leaseState.acquireLease(clientDescriptor, leaseLength);
+    long currentLeaseLength = getLeaseLength();
+    boolean acquiredLease = leaseState.acquireLease(clientDescriptor, currentLeaseLength);
 
     if (acquiredLease) {
       LOGGER.debug("Client acquired lease: " + clientDescriptor);
-      return LeaseResult.leaseGranted(leaseLength);
+      return LeaseResult.leaseGranted(currentLeaseLength);
     } else {
       LOGGER.debug("Client lease request rejected because connection is closing: " + clientDescriptor);
       return LeaseResult.leaseNotGranted();
@@ -61,6 +62,10 @@ class LeaseServiceImpl implements LeaseService {
 
   @Override
   public void reconnected(ClientDescriptor clientDescriptor) {
-    leaseState.reconnected(clientDescriptor, leaseLength);
+    leaseState.reconnected(clientDescriptor, getLeaseLength());
+  }
+
+  protected long getLeaseLength() {
+    return leaseLength;
   }
 }
