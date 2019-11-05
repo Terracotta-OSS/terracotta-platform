@@ -33,10 +33,11 @@ import org.terracotta.lease.service.monitor.LeaseMonitorThread;
 import org.terracotta.lease.service.monitor.LeaseState;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+
+import static org.terracotta.lease.service.LeaseConstants.DEFAULT_LEASE_LENGTH;
+import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 
 /**
  * LeaseServiceProvider consumes the LeaseConfiguration objects (generated from XML parsing) and then creates the
@@ -44,8 +45,6 @@ import java.util.concurrent.TimeUnit;
  */
 @BuiltinService
 public class LeaseServiceProvider implements ServiceProvider, Closeable {
-  public static long MAX_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-  private static long DEFAULT_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProvider.class);
 
   private long leaseLength;

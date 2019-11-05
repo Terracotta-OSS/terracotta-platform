@@ -38,7 +38,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.terracotta.lease.service.LeaseServiceProvider.MAX_LEASE_LENGTH;
+import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 
 public class LeaseConfigurationParser implements ServiceConfigParser {
   private static final Logger LOGGER = LoggerFactory.getLogger(LeaseConfigurationParser.class);

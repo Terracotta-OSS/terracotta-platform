@@ -16,7 +16,6 @@
 package org.terracotta.lease.service.config;
 
 import org.junit.Test;
-import org.terracotta.lease.service.LeaseServiceProvider;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -28,6 +27,7 @@ import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 
 public class LeaseConfigurationParserTest {
   private static final String LEASE_NAMESPACE = "http://www.terracotta.org/service/lease";
@@ -134,7 +134,7 @@ public class LeaseConfigurationParserTest {
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
     LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
 
-    assertEquals(LeaseServiceProvider.MAX_LEASE_LENGTH, configuration.getLeaseLength());
+    assertEquals(MAX_LEASE_LENGTH, configuration.getLeaseLength());
   }
 
   private Element getXMLConfigurationElement(String leaseLengthText, String timeUnit) throws Exception {
