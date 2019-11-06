@@ -74,7 +74,7 @@ public class RepairSanskrit {
            }
 
            @Override
-           void onNewRecord(String timestamp, String json) throws SanskritException {
+           public void onNewRecord(String timestamp, String json) throws SanskritException {
              output.appendRecord(timestamp, json);
            }
 

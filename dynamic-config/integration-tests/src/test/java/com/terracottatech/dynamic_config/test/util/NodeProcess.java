@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.test.util;
 
+import com.terracottatech.tools.detailed.state.LogicalServerState;
 import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
 import org.terracotta.ipceventbus.event.EventListener;
@@ -29,11 +30,13 @@ import static java.util.stream.Stream.of;
 public class NodeProcess implements Closeable {
 
   private final AnyProcess process;
-  private final ProcessListener listener;
+  private final PidListener pidListener;
+  private final ServerStateListener serverStateListener;
 
-  public NodeProcess(AnyProcess process, ProcessListener listener) {
+  public NodeProcess(AnyProcess process, PidListener pidListener, ServerStateListener serverStateListener) {
     this.process = process;
-    this.listener = listener;
+    this.pidListener = pidListener;
+    this.serverStateListener = serverStateListener;
   }
 
   @Override
@@ -48,18 +51,26 @@ public class NodeProcess implements Closeable {
   }
 
   private void kill() {
-    if (listener.pid != -1) {
+    while (pidListener.pid == -1 && process.isRunning()) {
       try {
-        if (Env.isWindows()) {
-          Runtime.getRuntime().exec("taskkill /F /t /pid " + listener.pid);
-        } else {
-          Runtime.getRuntime().exec("kill " + listener.pid);
-        }
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
+        Thread.sleep(2000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
+    try {
+      if (Env.isWindows()) {
+        Runtime.getRuntime().exec("taskkill /F /t /pid " + pidListener.pid);
+      } else {
+        Runtime.getRuntime().exec("kill " + pidListener.pid);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
 
+  public LogicalServerState getServerState() {
+    return serverStateListener.state;
   }
 
   public static NodeProcess startNode(Path kitInstallationPath, Path workingDir, String... cli) {
@@ -82,14 +93,15 @@ public class NodeProcess implements Closeable {
     if (!Files.exists(scriptPath)) {
       throw new IllegalArgumentException("Terracotta server start script does not exist: " + scriptPath);
     }
-
-    ProcessListener listener = new ProcessListener();
-
+    PidListener pidListener = new PidListener();
+    ServerStateListener serverStateListener = new ServerStateListener();
     EventBus serverBus = new EventBus.Builder().id("server-bus").build();
-    serverBus.on("PID", listener);
+    serverBus.on("PID", pidListener);
+    serverBus.on("STATE", serverStateListener);
 
     Map<String, String> eventMap = new HashMap<String, String>();
     eventMap.put("PID is", "PID");
+    eventMap.put("Moved to State", "STATE");
 
     try {
       Files.createDirectories(workingDir);
@@ -104,10 +116,10 @@ public class NodeProcess implements Closeable {
         .pipeStderr()
         .build();
 
-    return new NodeProcess(process, listener);
+    return new NodeProcess(process, pidListener, serverStateListener);
   }
 
-  private static class ProcessListener implements EventListener {
+  private static class PidListener implements EventListener {
     private volatile long pid = -1;
 
     @Override
@@ -116,9 +128,22 @@ public class NodeProcess implements Closeable {
       Matcher m = Pattern.compile("PID is ([0-9]*)").matcher(line);
       if (m.find()) {
         try {
-          ProcessListener.this.pid = Long.parseLong(m.group(1));
+          PidListener.this.pid = Long.parseLong(m.group(1));
         } catch (NumberFormatException ignored) {
         }
+      }
+    }
+  }
+
+  private static class ServerStateListener implements EventListener {
+    private volatile LogicalServerState state = LogicalServerState.UNKNOWN;
+
+    @Override
+    public void onEvent(Event event) {
+      String line = event.getData(String.class);
+      Matcher m = Pattern.compile("Moved to State\\[ ([A-Z\\-_]+) \\]").matcher(line);
+      if (m.find()) {
+        ServerStateListener.this.state = LogicalServerState.parse(m.group(1));
       }
     }
   }

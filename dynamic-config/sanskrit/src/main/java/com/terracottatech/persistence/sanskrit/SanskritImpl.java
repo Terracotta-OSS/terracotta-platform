@@ -128,7 +128,7 @@ public class SanskritImpl implements Sanskrit {
     return hashChecker.done();
   }
 
-  void onNewRecord(String timestamp, String json) throws SanskritException {
+  protected void onNewRecord(String timestamp, String json) throws SanskritException {
   }
 
   private String getHashFromFile(String hashFile, List<String> filesToDelete) throws SanskritException {

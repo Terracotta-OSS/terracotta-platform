@@ -263,6 +263,7 @@ public class BaseStartupIT {
     List<Path> expected = concat(s1, s2).collect(toList());
     List<Path> unexpected = Files.walk(getBaseDir())
         .filter(p -> Files.isDirectory(p))
+        .filter(p -> !p.toString().contains("backup-platform-data-"))
         .filter(p -> expected.stream().noneMatch(p::endsWith))
         .collect(toList());
     assertThat(unexpected.toString(), unexpected, hasSize(0));
