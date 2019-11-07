@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.model;
 
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
-import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,14 +24,14 @@ import static java.util.Objects.requireNonNull;
 
 public class Configuration {
 
-  private static final Map<Pattern, BiFunction<String, Matcher, Configuration>> PATTERNS = new IdentityHashMap<>();
+  private static final Map<Pattern, BiFunction<String, Matcher, Configuration>> PATTERNS = new LinkedHashMap<>();
 
   private static final String GRP_STRIPE = "stripe\\.(\\d+)";
   private static final String GRP_NODE = "node\\.(\\d+)";
   private static final String SEP = "\\.";
   private static final String NS = "[.:]"; // namespace separator
-  private static final String GRP_SETTING = "([a-z-]+)";
-  private static final String GRP_KEY = "([^=:.]+)";
+  private static final String GRP_SETTING = "([a-z\\-]+)";
+  private static final String GRP_KEY = "([^=:]+)";
   private static final String ASSIGN = "=";
   private static final String GRP_VALUE = "([^=]+)";
 

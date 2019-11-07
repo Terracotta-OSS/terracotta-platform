@@ -24,14 +24,14 @@ import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 import com.terracottatech.utilities.Json;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class UpgradableNomadServerFactory {
   public static UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
                                                                 ChangeApplicator<NodeContext> changeApplicator,
                                                                 String nodeName,
                                                                 IParameterSubstitutor parameterSubstitutor) throws SanskritException, NomadException {
-    return createServer(repositoryManager, changeApplicator, nodeName, parameterSubstitutor, nodeContext -> {
+    return createServer(repositoryManager, changeApplicator, nodeName, parameterSubstitutor, (version, nodeContext) -> {
     });
   }
 
@@ -39,7 +39,7 @@ public class UpgradableNomadServerFactory {
                                                                 ChangeApplicator<NodeContext> changeApplicator,
                                                                 String nodeName,
                                                                 IParameterSubstitutor parameterSubstitutor,
-                                                                Consumer<NodeContext> changeCommitted) throws SanskritException, NomadException {
+                                                                BiConsumer<Long, NodeContext> changeCommitted) throws SanskritException, NomadException {
     ObjectMapper objectMapper = Json.copyObjectMapper(true);
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(repositoryManager.getSanskritPath());
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
@@ -48,7 +48,7 @@ public class UpgradableNomadServerFactory {
       @Override
       public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
         super.saveConfig(version, config);
-        changeCommitted.accept(config);
+        changeCommitted.accept(version, config);
       }
     });
 

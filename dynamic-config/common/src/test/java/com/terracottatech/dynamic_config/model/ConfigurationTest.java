@@ -167,38 +167,41 @@ public class ConfigurationTest {
     Stream.of(".", ":").forEach(nsSeparator -> {
       Stream.of(
           tuple2("", ERROR_FORMAT),
-          tuple2("blah.1.node.1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
-          tuple2("stripe.1.blah.1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
+          tuple2("blah.1.node.1.offheap-resources.main", ERROR_SETTING + "blah"),
+          tuple2("blah.1.node.1:offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe.1.blah.1:offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe.1.blah.1.offheap-resources.main", ERROR_SETTING + "blah"),
           tuple2("stripe.0.node.1" + nsSeparator + "node-backup-dir", ERROR_STRIPE_ID),
           tuple2("stripe.1.node.0" + nsSeparator + "node-backup-dir", ERROR_NODE_ID),
-          tuple2("stripe.1.node.1.blah.1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe.1.node.1.blah.1:offheap-resources.main", ERROR_FORMAT),
+          tuple2("stripe.1.node.1.blah.1.offheap-resources.main", ERROR_SETTING + "blah"),
           tuple2("stripe-1.node-1" + nsSeparator + "offheap-resources.main", ERROR_FORMAT),
           tuple2("stripe.1.node-1" + nsSeparator + "offheap-resources:main", ERROR_FORMAT),
           tuple2("stripe.1.node.1" + nsSeparator + "blah.main", ERROR_SETTING + "blah"),
-          tuple2("data-dirs.main.foo", ERROR_FORMAT),
-          tuple2("blah.1" + nsSeparator + "node-backup-dir", ERROR_FORMAT),
+          tuple2("blah.1:node-backup-dir", ERROR_FORMAT),
+          tuple2("blah.1.node-backup-dir", ERROR_SETTING + "blah"),
           tuple2("stripe.0" + nsSeparator + "node-backup-dir", ERROR_STRIPE_ID),
           tuple2("stripe-1" + nsSeparator + "node-backup-dir", ERROR_FORMAT),
           tuple2("stripe.1" + nsSeparator + "blah.main", ERROR_SETTING + "blah"),
           tuple2("offheap-resources:main", ERROR_FORMAT),
-          tuple2("blah.main", ERROR_SETTING + "blah"),
-          tuple2("stripe.1.node.1" + nsSeparator + "data-dirs.main.foo", ERROR_FORMAT)
+          tuple2("blah.main", ERROR_SETTING + "blah")
       ).forEach(tupe -> assertThat(
           tupe.t1,
           () -> Configuration.valueOf(tupe.t1).validate(GET, identity()),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'." + tupe.t2))))));
 
       Stream.of(
-          tuple2("blah.1.node.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
-          tuple2("stripe.1.blah.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("blah.1.node.1.offheap-resources.main=512MB", ERROR_SETTING + "blah"),
+          tuple2("blah.1.node.1:offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.1.blah.1:offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.1.blah.1.offheap-resources.main=512MB", ERROR_SETTING + "blah"),
           tuple2("stripe.0.node.1" + nsSeparator + "node-backup-dir=foo", ERROR_STRIPE_ID),
           tuple2("stripe.1.node.0" + nsSeparator + "node-backup-dir=foo", ERROR_NODE_ID),
-          tuple2("stripe.1.node.1.blah.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.1.node.1.blah.1:offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("stripe.1.node.1.blah.1.offheap-resources.main=512MB", ERROR_SETTING + "blah"),
           tuple2("stripe-1.node-1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
           tuple2("stripe-1.node-1" + nsSeparator + "offheap-resources:main=512MB", ERROR_FORMAT),
           tuple2("stripe.1.node.1" + nsSeparator + "blah.main=512MB", ERROR_SETTING + "blah"),
-          tuple2("stripe.1.node.1" + nsSeparator + "data-dirs.main.foo=512MB", ERROR_FORMAT),
-          tuple2("stripe.1.node.1" + nsSeparator + "data-dirs.main.foo=", ERROR_FORMAT),
           tuple2("stripe.1.node.1" + nsSeparator + "node-port=-100", ERROR_PORT),
           tuple2("stripe.1.node.1" + nsSeparator + "node-hostname=3:3:3", ERROR_ADDRESS),
           tuple2("security-authc=blah", ERROR_AUTHC),
@@ -216,7 +219,8 @@ public class ConfigurationTest {
           tuple2("stripe.1.node.1" + nsSeparator + "client-lease-duration=1m", ERROR_LEASE_SCOPE),
           tuple2("client-reconnect-window=blah", ERROR_MEASURE),
           tuple2("stripe.1.node.1" + nsSeparator + "client-reconnect-window=1m", ERROR_RECONNECT_SCOPE),
-          tuple2("blah.1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("blah.1:offheap-resources.main=512MB", ERROR_FORMAT),
+          tuple2("blah.1.offheap-resources.main=512MB", ERROR_SETTING + "blah"),
           tuple2("stripe.0" + nsSeparator + "offheap-resources.main=512MB", ERROR_STRIPE_ID),
           tuple2("stripe-1" + nsSeparator + "offheap-resources.main=512MB", ERROR_FORMAT),
           tuple2("stripe.1" + nsSeparator + "blah.main=512MB", ERROR_SETTING + "blah"),
@@ -231,6 +235,11 @@ public class ConfigurationTest {
           () -> Configuration.valueOf(tupe.t1).validate(SET, identity()),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'." + tupe.t2))))));
     });
+  }
+
+  @Test
+  public void test_keys_with_points() {
+    Configuration.valueOf("stripe.1.node.1.tc-properties.foo.bar=blah");
   }
 
   @Test

@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.service.handler;
+package com.terracottatech.dynamic_config.service;
 
 import com.tc.classloader.BuiltinService;
 import com.terracottatech.config.data_roots.DataDirectoriesConfig;
@@ -11,6 +11,10 @@ import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
 import com.terracottatech.dynamic_config.model.Configuration;
+import com.terracottatech.dynamic_config.service.handler.DataRootConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.OffheapConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.ProcessorThreadsConfigChangeHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +33,9 @@ import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
 
 @BuiltinService
-public class ConfigChangeHandlerProvider implements ServiceProvider {
+public class DynamicConfigServiceProvider implements ServiceProvider {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeHandlerProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceProvider.class);
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
@@ -87,12 +91,15 @@ public class ConfigChangeHandlerProvider implements ServiceProvider {
     if (configuration.getServiceType() == ConfigChangeHandlerManager.class) {
       return configuration.getServiceType().cast(getManager());
     }
+    if (configuration.getServiceType() == DynamicConfigEventing.class) {
+      return configuration.getServiceType().cast(getEventingSupport());
+    }
     throw new UnsupportedOperationException(configuration.getServiceType().getName());
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(IParameterSubstitutor.class, ConfigChangeHandlerManager.class);
+    return Arrays.asList(IParameterSubstitutor.class, ConfigChangeHandlerManager.class, DynamicConfigEventing.class);
   }
 
   @Override
@@ -107,4 +114,9 @@ public class ConfigChangeHandlerProvider implements ServiceProvider {
   private ConfigChangeHandlerManager getManager() {
     return DiagnosticServices.findService(ConfigChangeHandlerManager.class).orElse(null);
   }
+
+  private DynamicConfigEventing getEventingSupport() {
+    return DiagnosticServices.findService(DynamicConfigEventing.class).orElse(null);
+  }
+
 }

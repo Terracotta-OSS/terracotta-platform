@@ -8,6 +8,7 @@ import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 /**
  * @author Mathieu Carbou
@@ -19,13 +20,15 @@ public class FooBarConfigChangeHandler implements ConfigChangeHandler {
     // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE
 
     //TODO here: validate and udpate the cluster model
+    Cluster updatedCluster = baseConfig.getCluster().clone();
+    change.apply(updatedCluster, IParameterSubstitutor.identity());
 
-    return baseConfig.getCluster();
+    return updatedCluster;
   }
 
   @Override
   public boolean apply(Configuration change) {
     // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE AT RUNTIME
-    return true;
+    return false;
   }
 }

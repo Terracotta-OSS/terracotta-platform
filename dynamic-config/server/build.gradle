@@ -19,6 +19,7 @@ dependencies {
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   compileOnly "org.slf4j:slf4j-api:$slf4jVersion"
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
+  compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
 
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"

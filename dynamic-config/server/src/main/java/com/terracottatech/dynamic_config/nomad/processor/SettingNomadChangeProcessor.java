@@ -13,7 +13,7 @@ import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.server.NomadException;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;
 
@@ -27,12 +27,12 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   private final ConfigChangeHandlerManager manager;
   private final IParameterSubstitutor parameterSubstitutor;
-  private final Consumer<Configuration> onRuntimeChange;
+  private final BiConsumer<Configuration, Boolean> changeListener;
 
-  public SettingNomadChangeProcessor(ConfigChangeHandlerManager manager, IParameterSubstitutor parameterSubstitutor, Consumer<Configuration> onRuntimeChange) {
+  public SettingNomadChangeProcessor(ConfigChangeHandlerManager manager, IParameterSubstitutor parameterSubstitutor, BiConsumer<Configuration, Boolean> changeListener) {
     this.manager = requireNonNull(manager);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
-    this.onRuntimeChange = requireNonNull(onRuntimeChange);
+    this.changeListener = requireNonNull(changeListener);
   }
 
   @Override
@@ -60,9 +60,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   public void apply(SettingNomadChange change) {
     Configuration configuration = change.toConfiguration();
     boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
-    if (changeAppliedAtRuntime) {
-      onRuntimeChange.accept(configuration);
-    }
+    changeListener.accept(configuration, changeAppliedAtRuntime);
   }
 
   private ConfigChangeHandler getConfigChangeHandlerManager(SettingNomadChange change) {

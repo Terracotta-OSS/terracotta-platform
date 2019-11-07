@@ -20,6 +20,7 @@ import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadC
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
+import com.terracottatech.dynamic_config.service.DynamicConfigEventing;
 import com.terracottatech.dynamic_config.service.DynamicConfigServiceImpl;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.NomadEnvironment;
@@ -39,7 +40,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;
 
@@ -111,7 +112,7 @@ public class NomadBootstrapper {
         this.configChangeHandlerManager = manager;
         this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
         this.repositoryManager.createDirectories();
-        this.nomadServer = createServer(repositoryManager, nodeName, parameterSubstitutor, updatedNodeContext -> dynamicConfigService.newTopologyCommitted(updatedNodeContext));
+        this.nomadServer = createServer(repositoryManager, nodeName, parameterSubstitutor, (version, updatedNodeContext) -> dynamicConfigService.newTopologyCommitted(version, updatedNodeContext));
 
         NodeContext nodeContext = getConfiguration()
             // Case where Nomad is bootstrapped from the EnterpriseConfigurationProvider using the old startup script with --node-name and -r.
@@ -134,7 +135,7 @@ public class NomadBootstrapper {
         this.configChangeHandlerManager = manager;
         this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
         this.repositoryManager.createDirectories();
-        this.nomadServer = createServer(repositoryManager, nodeContext.getNodeName(), parameterSubstitutor, updatedNodeContext -> dynamicConfigService.newTopologyCommitted(updatedNodeContext));
+        this.nomadServer = createServer(repositoryManager, nodeContext.getNodeName(), parameterSubstitutor, (version, updatedNodeContext) -> dynamicConfigService.newTopologyCommitted(version, updatedNodeContext));
 
         this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this, parameterSubstitutor);
 
@@ -151,6 +152,7 @@ public class NomadBootstrapper {
       DiagnosticServices.register(ConfigChangeHandlerManager.class, configChangeHandlerManager);
       DiagnosticServices.register(TopologyService.class, dynamicConfigService);
       DiagnosticServices.register(DynamicConfigService.class, dynamicConfigService);
+      DiagnosticServices.register(DynamicConfigEventing.class, dynamicConfigService);
       DiagnosticServicesRegistration<NomadServer<String>> registration = (DiagnosticServicesRegistration<NomadServer<String>>) (DiagnosticServicesRegistration) DiagnosticServices.register(NomadServer.class, nomadServer);
       registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
     }
@@ -175,7 +177,7 @@ public class NomadBootstrapper {
       }
 
       RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
-          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(configChangeHandlerManager, parameterSubstitutor, dynamicConfigService::newConfigurationAppliedAtRuntime))
+          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(configChangeHandlerManager, parameterSubstitutor, dynamicConfigService::newConfigurationChange))
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));
@@ -244,7 +246,7 @@ public class NomadBootstrapper {
     private UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
                                                             String nodeName,
                                                             IParameterSubstitutor parameterSubstitutor,
-                                                            Consumer<NodeContext> changeCommitted) throws SanskritException, NomadException {
+                                                            BiConsumer<Long, NodeContext> changeCommitted) throws SanskritException, NomadException {
       return UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName, parameterSubstitutor, changeCommitted);
     }
 

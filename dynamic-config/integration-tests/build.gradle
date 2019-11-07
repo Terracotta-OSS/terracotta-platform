@@ -15,6 +15,7 @@ dependencies {
   testCompile project(':nms-agent-entity-ee')
 
   testCompile "org.terracotta.management.dist:mnm-nms-agent:$terracottaPlatformVersion"
+  testCompile "org.terracotta.management.dist:mnm-nms:$terracottaPlatformVersion"
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   testCompile "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
   testCompile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"

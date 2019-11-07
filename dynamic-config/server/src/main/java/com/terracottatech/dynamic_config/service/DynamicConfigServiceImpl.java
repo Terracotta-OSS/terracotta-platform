@@ -28,16 +28,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;
 
-public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService {
+public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventing {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
   private final NomadServerManager nomadServerManager;
   private final IParameterSubstitutor substitutor;
+  private final List<BiConsumer<NodeContext, Configuration>> callbacks_onNewRuntimeConfiguration = new CopyOnWriteArrayList<>();
+  private final List<BiConsumer<NodeContext, Configuration>> callbacks_onNewUpcomingConfiguration = new CopyOnWriteArrayList<>();
+  private final List<BiConsumer<Long, NodeContext>> callbacks_onNewTopologyCommitted = new CopyOnWriteArrayList<>();
 
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
@@ -52,6 +59,24 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (loadLicense()) {
       validateAgainstLicense();
     }
+  }
+
+  @Override
+  public EventRegistration onNewRuntimeConfiguration(BiConsumer<NodeContext, Configuration> consumer) {
+    callbacks_onNewRuntimeConfiguration.add(consumer);
+    return () -> callbacks_onNewRuntimeConfiguration.remove(consumer);
+  }
+
+  @Override
+  public EventRegistration onNewUpcomingConfiguration(BiConsumer<NodeContext, Configuration> consumer) {
+    callbacks_onNewUpcomingConfiguration.add(consumer);
+    return () -> callbacks_onNewUpcomingConfiguration.remove(consumer);
+  }
+
+  @Override
+  public EventRegistration onNewTopologyCommitted(BiConsumer<Long, NodeContext> consumer) {
+    callbacks_onNewTopologyCommitted.add(consumer);
+    return () -> callbacks_onNewTopologyCommitted.remove(consumer);
   }
 
   /**
@@ -71,21 +96,36 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   /**
    * called from Nomad just after a config repository change has been committed and persisted
    */
-  public synchronized void newTopologyCommitted(NodeContext updatedNodeContext) {
-    if (!isActivated()) {
-      throw new AssertionError("Not activated");
+  public synchronized void newTopologyCommitted(long version, NodeContext updatedNodeContext) {
+    synchronized (this) {
+      if (!isActivated()) {
+        throw new AssertionError("Not activated");
+      }
+      this.upcomingNodeContext = updatedNodeContext.clone();
     }
-    this.upcomingNodeContext = updatedNodeContext;
+    // do not fire events within the synchronized block
+    NodeContext update = upcomingNodeContext.clone();
+    callbacks_onNewTopologyCommitted.forEach(c -> c.accept(version, update));
   }
 
   /**
    * called from Nomad just after change has been applied at runtime
    */
-  public synchronized void newConfigurationAppliedAtRuntime(Configuration configuration) {
-    if (!isActivated()) {
-      throw new AssertionError("Not activated");
+  public void newConfigurationChange(Configuration configuration, boolean changeAppliedAtRuntime) {
+    synchronized (this) {
+      if (!isActivated()) {
+        throw new AssertionError("Not activated");
+      }
+      configuration.apply(runtimeNodeContext.getCluster(), substitutor);
     }
-    configuration.apply(runtimeNodeContext.getCluster(), substitutor);
+    // do not fire events within the synchronized block
+    if (changeAppliedAtRuntime) {
+      NodeContext update = runtimeNodeContext.clone();
+      callbacks_onNewRuntimeConfiguration.forEach(c -> c.accept(update, configuration));
+    } else {
+      NodeContext update = upcomingNodeContext.clone();
+      callbacks_onNewUpcomingConfiguration.forEach(c -> c.accept(update, configuration));
+    }
   }
 
   @Override
