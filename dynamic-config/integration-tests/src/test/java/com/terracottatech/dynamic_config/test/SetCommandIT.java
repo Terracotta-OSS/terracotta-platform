@@ -96,4 +96,24 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-lease-duration");
     waitedAssert(out::getLog, containsString("client-lease-duration=10s"));
   }
+
+  @Test
+  public void testCluster_setFailoverPriorityAvailability() {
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority=availability");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority");
+    waitedAssert(out::getLog, containsString("failover-priority=availability"));
+  }
+
+  @Test
+  public void testCluster_setFailoverPriorityConsistency() {
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority=consistency:2");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority");
+    waitedAssert(out::getLog, containsString("failover-priority=consistency:2"));
+  }
 }

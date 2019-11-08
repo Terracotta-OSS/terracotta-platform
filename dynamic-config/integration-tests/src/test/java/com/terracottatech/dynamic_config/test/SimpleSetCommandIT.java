@@ -331,6 +331,18 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"));
   }
 
+  @Test
+  public void setFailover_Priority_postActivation_Consistency() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority=consistency:2");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority");
+    waitedAssert(out::getLog, containsString("failover-priority=consistency:2"));
+  }
+
   private void activateCluster() throws Exception {
     ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
     out.clearLog();

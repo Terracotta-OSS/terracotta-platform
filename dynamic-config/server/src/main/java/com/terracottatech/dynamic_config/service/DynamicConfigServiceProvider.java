@@ -11,7 +11,9 @@ import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
 import com.terracottatech.dynamic_config.model.Configuration;
+import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.service.handler.DataRootConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.FailoverPriorityConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.OffheapConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ProcessorThreadsConfigChangeHandler;
@@ -29,6 +31,7 @@ import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.reject;
 import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
+import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
 
@@ -51,26 +54,22 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       }
       if (!dataDirectoriesConfigs.isEmpty()) {
         ConfigChangeHandler configChangeHandler = new DataRootConfigChangeHandler(dataDirectoriesConfigs.iterator().next(), substitutor);
-        if (!manager.add(DATA_DIRS, configChangeHandler)) {
-          throw new AssertionError("Duplicate " + ConfigChangeHandler.class.getSimpleName() + " for " + DATA_DIRS);
-        } else {
-          LOGGER.info("Registered dynamic configuration change handler: {} for setting: {}", configChangeHandler.getClass().getName(), DATA_DIRS);
-        }
+        addToManager(manager, configChangeHandler, DATA_DIRS);
       }
 
-      // offheap
+      // offheap-resources
       Collection<OffHeapResources> offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class);
       if (offHeapResources.size() > 1) {
         throw new UnsupportedOperationException("Multiple " + OffHeapResources.class.getSimpleName() + " not supported");
       }
       if (!offHeapResources.isEmpty()) {
         ConfigChangeHandler configChangeHandler = new OffheapConfigChangeHandler(offHeapResources.iterator().next(), substitutor);
-        if (!manager.add(OFFHEAP_RESOURCES, configChangeHandler)) {
-          throw new AssertionError("Duplicate " + ConfigChangeHandler.class.getSimpleName() + " for " + OFFHEAP_RESOURCES);
-        } else {
-          LOGGER.info("Registered dynamic configuration change handler: {} for setting: {}", configChangeHandler.getClass().getName(), OFFHEAP_RESOURCES);
-        }
+        addToManager(manager, configChangeHandler, OFFHEAP_RESOURCES);
       }
+
+      // failover-priority
+      ConfigChangeHandler configChangeHandler = new FailoverPriorityConfigChangeHandler(substitutor);
+      addToManager(manager, configChangeHandler, FAILOVER_PRIORITY);
 
       // tc-properties
       // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE
@@ -119,4 +118,11 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     return DiagnosticServices.findService(DynamicConfigEventing.class).orElse(null);
   }
 
+  private void addToManager(ConfigChangeHandlerManager manager, ConfigChangeHandler configChangeHandler, Setting setting) {
+    if (!manager.add(setting, configChangeHandler)) {
+      throw new AssertionError("Duplicate " + ConfigChangeHandler.class.getSimpleName() + " for " + setting);
+    } else {
+      LOGGER.info("Registered dynamic configuration change handler: {} for setting: {}", configChangeHandler.getClass().getName(), setting);
+    }
+  }
 }
