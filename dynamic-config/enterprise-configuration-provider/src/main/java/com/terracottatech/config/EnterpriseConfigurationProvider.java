@@ -89,6 +89,11 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   }
 
   @Override
+  public byte[] getSyncData() {
+    return configurationSyncManager != null ? configurationSyncManager.getSyncData() : new byte[0];
+  }
+
+  @Override
   public void sync(byte[] configuration) {
     if (configurationSyncManager != null) {
       configurationSyncManager.sync(configuration);
