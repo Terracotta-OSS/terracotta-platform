@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.terracottatech.dynamic_config.cli.ConfigTool;
 import com.terracottatech.dynamic_config.test.util.AppendLogCapturer;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ public class ConfigSyncIT extends BaseStartupIT {
   }
 
   @Test
+  @Ignore
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
     int firstNodeId = 1;
     int stripeId = 1;
