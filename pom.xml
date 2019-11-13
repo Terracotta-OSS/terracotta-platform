@@ -34,7 +34,7 @@
     <passthrough-testing.version>1.7.0-pre1</passthrough-testing.version>
     <terracotta-core.version>5.7.0-pre4</terracotta-core.version>
     <statistics.version>2.1</statistics.version>
-    <jackson-databind.version>2.9.9</jackson-databind.version>
+    <jackson-databind.version>2.9.10.1</jackson-databind.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.8</java.version>
