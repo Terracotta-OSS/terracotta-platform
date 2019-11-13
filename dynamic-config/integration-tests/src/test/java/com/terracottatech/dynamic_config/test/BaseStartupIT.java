@@ -64,8 +64,8 @@ import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
 
 public class BaseStartupIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(BaseStartupIT.class);
-  private static final boolean CI = System.getProperty("JOB_NAME") != null;
-  static final int TIMEOUT = !CI ? 20 : 30;
+  static final boolean CI = System.getProperty("JOB_NAME") != null;
+  static final int TIMEOUT =  20;
   static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule
@@ -158,10 +158,14 @@ public class BaseStartupIT {
   }
 
   void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
+    waitedAssert(callable, matcher, TIMEOUT);
+  }
+
+  void waitedAssert(Callable<String> callable, Matcher<? super String> matcher, int timeout) {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
         .pollInterval(FIVE_HUNDRED_MILLISECONDS)
-        .atMost(new Duration(TIMEOUT, TimeUnit.SECONDS))
+        .atMost(new Duration(CI ? timeout + 10 : timeout, TimeUnit.SECONDS))
         .until(callable, matcher);
   }
 

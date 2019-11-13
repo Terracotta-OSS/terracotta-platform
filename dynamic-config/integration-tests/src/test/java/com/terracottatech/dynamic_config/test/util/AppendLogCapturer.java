@@ -4,9 +4,13 @@
  */
 package com.terracottatech.dynamic_config.test.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terracottatech.persistence.sanskrit.MutableSanskritObject;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.SanskritImpl;
+import com.terracottatech.persistence.sanskrit.SanskritObject;
+import com.terracottatech.persistence.sanskrit.SanskritObjectImpl;
+import com.terracottatech.persistence.sanskrit.JsonUtils;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 import com.terracottatech.utilities.Json;
 
@@ -16,12 +20,15 @@ import java.util.List;
 
 public class AppendLogCapturer {
 
-  public static List<JsonNode> getChanges(Path pathToAppendLog) throws SanskritException {
-    List<JsonNode> res = new ArrayList<>();
-    new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), Json.copyObjectMapper()) {
+  public static List<SanskritObject> getChanges(Path pathToAppendLog) throws SanskritException {
+    List<SanskritObject> res = new ArrayList<>();
+    ObjectMapper objectMapper = Json.copyObjectMapper();
+    new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), objectMapper) {
       @Override
-      public void onNewRecord(String timeStamp, String json) {
-        res.add(Json.parse(json));
+      public void onNewRecord(String timeStamp, String json) throws SanskritException {
+        MutableSanskritObject mutableSanskritObject = new SanskritObjectImpl(objectMapper);
+        JsonUtils.parse(objectMapper, json, mutableSanskritObject);
+        res.add(mutableSanskritObject);
       }
     };
     return res;
