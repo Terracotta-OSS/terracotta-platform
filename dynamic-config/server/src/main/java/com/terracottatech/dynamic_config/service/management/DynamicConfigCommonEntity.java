@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.service.management;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.service.DynamicConfigEventing;
 import com.terracottatech.dynamic_config.service.EventRegistration;
-import com.terracottatech.dynamic_config.util.PropertiesWriter;
+import com.terracottatech.dynamic_config.util.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.CommonServerEntity;
@@ -110,7 +110,7 @@ public class DynamicConfigCommonEntity implements CommonServerEntity<EntityMessa
   private static String topologyToConfig(Cluster cluster) {
     Properties properties = cluster.toProperties(false, true);
     try (StringWriter out = new StringWriter()) {
-      PropertiesWriter.store(out, properties, "Configurations:");
+      Props.store(out, properties, "Configurations:");
       return out.toString();
     } catch (IOException e) {
       throw new UncheckedIOException(e);

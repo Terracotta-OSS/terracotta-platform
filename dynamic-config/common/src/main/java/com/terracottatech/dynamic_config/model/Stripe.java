@@ -17,7 +17,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.isEqual;
@@ -132,18 +134,15 @@ public class Stripe implements Cloneable {
     return this;
   }
 
-  public Stripe addNodes(Collection<Node> sources) {
-    nodes.addAll(sources);
-    return this;
-  }
-
   public Stripe cloneForAttachment(Node aNodeFromTargetCluster) {
     return nodes.stream()
         .map(node -> node.cloneForAttachment(aNodeFromTargetCluster))
         .reduce(
             new Stripe(),
             Stripe::addNode,
-            (s1, s2) -> new Stripe().addNodes(s1.getNodes()).addNodes(s2.getNodes()));
+            (s1, s2) -> {
+              throw new UnsupportedOperationException();
+            });
   }
 
   @JsonIgnore
@@ -155,10 +154,17 @@ public class Stripe implements Cloneable {
     return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findFirst();
   }
 
-  public Optional<Integer> getNodeId(String nodeName) {
-    return getNode(nodeName)
-        .map(nodes::indexOf)
-        .filter(idx -> idx >= 0)
-        .map(idx -> idx + 1);
+  public OptionalInt getNodeId(String nodeName) {
+    return IntStream.range(0, nodes.size())
+        .filter(idx -> nodeName.equals(nodes.get(idx).getNodeName()))
+        .map(idx -> idx + 1)
+        .findFirst();
+  }
+
+  public OptionalInt getNodeId(InetSocketAddress nodeAddress) {
+    return IntStream.range(0, nodes.size())
+        .filter(idx -> nodeAddress.equals(nodes.get(idx).getNodeAddress()))
+        .map(idx -> idx + 1)
+        .findFirst();
   }
 }

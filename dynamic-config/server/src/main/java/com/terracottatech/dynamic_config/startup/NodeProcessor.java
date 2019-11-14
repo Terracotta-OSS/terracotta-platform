@@ -4,8 +4,8 @@
  */
 package com.terracottatech.dynamic_config.startup;
 
+import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.Setting;
-import com.terracottatech.dynamic_config.model.config.ClusterCreator;
 import com.terracottatech.dynamic_config.parsing.Options;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
@@ -15,10 +15,10 @@ public class NodeProcessor {
   private final Options options;
   private final Map<Setting, String> paramValueMap;
   private final StartupManager startupManager;
-  private final ClusterCreator clusterCreator;
+  private final ClusterFactory clusterCreator;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public NodeProcessor(Options options, Map<Setting, String> paramValueMap, ClusterCreator clusterCreator,
+  public NodeProcessor(Options options, Map<Setting, String> paramValueMap, ClusterFactory clusterCreator,
                        StartupManager startupManager, IParameterSubstitutor parameterSubstitutor) {
     this.options = options;
     this.paramValueMap = paramValueMap;

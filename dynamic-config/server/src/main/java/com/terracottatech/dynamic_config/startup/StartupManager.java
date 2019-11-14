@@ -50,7 +50,7 @@ public class StartupManager {
     String nodeName = node.getNodeName();
     logger.info("Starting unconfigured node: {}", nodeName);
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
-    NomadBootstrapper.bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node));
+    NomadBootstrapper.bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node.getNodeAddress()));
     // This resolver will make sure to rebase the relative given path only if the given path is not absolute
     // and this check happens after doing the substitution.
     // Note: the returned resolved path is not substituted and contains placeholders from both base directory and given path.
@@ -69,7 +69,7 @@ public class StartupManager {
     logger.info("Starting node: {} in cluster: {}", nodeName, cluster.getName());
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
     logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir.toAbsolutePath()));
-    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node));
+    NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node.getNodeAddress()));
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.prepareActivation(cluster, read(licenseFile));
     runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);

@@ -11,8 +11,8 @@ import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.config.ClusterCreator;
-import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
+import com.terracottatech.dynamic_config.model.ClusterFactory;
+import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Tuple2;
@@ -89,7 +89,7 @@ public class ActivateCommand extends RemoteCommand {
     }
 
     // validate the topology
-    new ClusterValidator(cluster, substitutor).validate();
+    new ClusterValidator(substitutor, cluster).validate();
 
     // verify the activated state of the nodes
     boolean isClusterActive = areAllNodesActivated(runtimePeers);
@@ -150,7 +150,7 @@ public class ActivateCommand extends RemoteCommand {
       cluster = getUpcomingCluster(node);
       logger.debug("Cluster topology validation successful");
     } else {
-      ClusterCreator clusterCreator = new ClusterCreator(substitutor);
+      ClusterFactory clusterCreator = new ClusterFactory(substitutor);
       cluster = clusterCreator.create(configPropertiesFile, clusterName);
       logger.debug("Config property file parsed and cluster topology validation successful");
     }

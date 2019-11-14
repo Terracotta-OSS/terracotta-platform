@@ -20,6 +20,7 @@ import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.terracottatech.utilities.Tuple2.tuple2;
@@ -27,7 +28,6 @@ import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
-
 
 public class Cluster implements Cloneable {
   private final List<Stripe> stripes;
@@ -82,11 +82,18 @@ public class Cluster implements Cloneable {
    */
   @JsonIgnore
   public Optional<Node> getSingleNode() throws IllegalStateException {
+    return getSingleStripe().flatMap(Stripe::getSingleNode);
+  }
+
+  @JsonIgnore
+  public Optional<Stripe> getSingleStripe() {
     if (stripes.size() > 1) {
       throw new IllegalStateException();
     }
-    Stripe s = stripes.iterator().next();
-    return s.getSingleNode();
+    if (stripes.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(stripes.iterator().next());
   }
 
   @Override
@@ -170,16 +177,32 @@ public class Cluster implements Cloneable {
   }
 
   public OptionalInt getStripeId(InetSocketAddress address) {
-    for (int i = 0; i < stripes.size(); i++) {
-      if (stripes.get(i).containsNode(address)) {
-        return OptionalInt.of(i + 1);
-      }
-    }
-    return OptionalInt.empty();
+    return IntStream.range(0, stripes.size())
+        .filter(idx -> stripes.get(idx).containsNode(address))
+        .map(idx -> idx + 1)
+        .findFirst();
   }
 
-  public OptionalInt getStripeId(Node me) {
-    return getStripeId(me.getNodeAddress());
+  public OptionalInt getNodeId(InetSocketAddress address) {
+    return stripes.stream()
+        .map(stripe -> stripe.getNodeId(address))
+        .filter(OptionalInt::isPresent)
+        .findFirst()
+        .orElse(OptionalInt.empty());
+  }
+
+  public OptionalInt getNodeId(int stripeId, String nodeName) {
+    if (stripeId < 1) {
+      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
+    }
+    if (stripeId > stripes.size()) {
+      return OptionalInt.empty();
+    }
+    Stripe stripe = stripes.get(stripeId - 1);
+    return IntStream.range(0, stripe.getNodeCount())
+        .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getNodeName()))
+        .map(idx -> idx + 1)
+        .findFirst();
   }
 
   @JsonIgnore
@@ -198,21 +221,30 @@ public class Cluster implements Cloneable {
   }
 
   public Optional<Node> getNode(int stripeId, String nodeName) {
-    if (stripeId < 1 || stripeId > stripes.size()) {
+    if (stripeId < 1) {
+      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
+    }
+    if (stripeId > stripes.size()) {
       return Optional.empty();
     }
     return stripes.get(stripeId - 1).getNode(nodeName);
   }
 
-  public Node getNode(int stripeId, int nodeId) {
-    if (stripeId < 1 || stripeId > stripes.size()) {
-      throw new IllegalArgumentException("Invalid stripe Id: " + stripeId);
+  public Optional<Node> getNode(int stripeId, int nodeId) {
+    if (stripeId < 1) {
+      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
+    }
+    if (nodeId < 1) {
+      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
+    }
+    if (stripeId > stripes.size()) {
+      return Optional.empty();
     }
     Stripe stripe = stripes.get(stripeId - 1);
-    if (nodeId < 1 || stripeId > stripe.getNodeCount()) {
-      throw new IllegalArgumentException("Invalid node Id: " + nodeId);
+    if (nodeId > stripe.getNodeCount()) {
+      return Optional.empty();
     }
-    return stripe.getNodes().get(nodeId - 1);
+    return Optional.of(stripe.getNodes().get(nodeId - 1));
   }
 
   public Stream<NodeContext> nodeContexts() {
@@ -228,7 +260,7 @@ public class Cluster implements Cloneable {
     List<Stripe> stripes = getStripes();
     for (int i = 0; i < stripes.size(); i++) {
       int stripeId = i + 1;
-      stripes.get(0).getNodes().forEach(node -> consumer.accept(stripeId, node));
+      stripes.get(stripeId - 1).getNodes().forEach(node -> consumer.accept(stripeId, node));
     }
   }
 

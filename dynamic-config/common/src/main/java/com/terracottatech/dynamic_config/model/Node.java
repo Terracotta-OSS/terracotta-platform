@@ -19,26 +19,24 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.model.Setting.CLIENT_LEASE_DURATION;
-import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
-import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
-import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_PORT;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_LOG_DIR;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_METADATA_DIR;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_NAME;
-import static com.terracottatech.dynamic_config.model.Setting.NODE_PORT;
-import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
+import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_REPOSITORY_DIR;
+import static java.util.function.Predicate.isEqual;
 
 public class Node implements Cloneable {
-  static final IParameterSubstitutor CHECKER = IParameterSubstitutor.identity();
+
+  private static final IParameterSubstitutor CHECKER = IParameterSubstitutor.identity();
+
+  // Note: primitive fields need to be initialized with their default value,
+  // otherwise we will wrongly detect that they have been initialized (Setting.getPropertyValue will return 0 for a port for example)
+
   private String nodeName;
   private String nodeHostname;
-  private int nodePort;
-  private int nodeGroupPort;
+  private int nodePort = Integer.parseInt(Setting.NODE_PORT.getDefaultValue());
+  private int nodeGroupPort = Integer.parseInt(Setting.NODE_GROUP_PORT.getDefaultValue());
   private String nodeBindAddress;
   private String nodeGroupBindAddress;
   private Path nodeMetadataDir;
@@ -47,8 +45,8 @@ public class Node implements Cloneable {
   private Path securityDir;
   private Path securityAuditLogDir;
   private String securityAuthc;
-  private boolean securitySslTls;
-  private boolean securityWhitelist;
+  private boolean securitySslTls = Boolean.parseBoolean(Setting.SECURITY_SSL_TLS.getDefaultValue());
+  private boolean securityWhitelist = Boolean.parseBoolean(Setting.SECURITY_WHITELIST.getDefaultValue());
   private FailoverPriority failoverPriority;
   private Map<String, String> tcProperties = new ConcurrentHashMap<>();
   private Measure<TimeUnit> clientReconnectWindow;
@@ -446,42 +444,11 @@ public class Node implements Cloneable {
   }
 
   public Node fillDefaults() {
-    if (getNodeName() == null) {
-      NODE_NAME.fillDefault(this);
-    }
-    if (getNodePort() == 0) {
-      NODE_PORT.fillDefault(this);
-    }
-    if (getNodeGroupPort() == 0) {
-      NODE_GROUP_PORT.fillDefault(this);
-    }
-    if (getOffheapResources().isEmpty()) {
-      OFFHEAP_RESOURCES.fillDefault(this);
-    }
-    if (getDataDirs().isEmpty()) {
-      DATA_DIRS.fillDefault(this);
-    }
-    if (getNodeBindAddress() == null) {
-      NODE_BIND_ADDRESS.fillDefault(this);
-    }
-    if (getNodeGroupBindAddress() == null) {
-      NODE_GROUP_BIND_ADDRESS.fillDefault(this);
-    }
-    if (getNodeLogDir() == null) {
-      NODE_LOG_DIR.fillDefault(this);
-    }
-    if (getNodeMetadataDir() == null) {
-      NODE_METADATA_DIR.fillDefault(this);
-    }
-    if (getFailoverPriority() == null) {
-      FAILOVER_PRIORITY.fillDefault(this);
-    }
-    if (getClientReconnectWindow() == null) {
-      CLIENT_RECONNECT_WINDOW.fillDefault(this);
-    }
-    if (getClientLeaseDuration() == null) {
-      CLIENT_LEASE_DURATION.fillDefault(this);
-    }
+    Stream.of(Setting.values())
+        .filter(isEqual(NODE_HOSTNAME).negate())
+        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
+        .filter(isEqual(CLUSTER_NAME).negate())
+        .forEach(setting -> setting.fillDefault(this));
     return this;
   }
 

@@ -12,9 +12,9 @@
               "type": "TIME"
             },
             "dataDirs": {},
-            "nodeGroupPort": 0,
+            "nodeGroupPort": 9430,
             "nodeName": "foo",
-            "nodePort": 0,
+            "nodePort": 9410,
             "offheapResources": {
               "foo": {
                 "quantity": 1,

@@ -4,8 +4,6 @@
  */
 package com.terracottatech.dynamic_config.service.handler;
 
-import org.junit.Test;
-
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.FailoverPriority;
 import com.terracottatech.dynamic_config.model.Node;
@@ -13,6 +11,7 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
+import org.junit.Test;
 
 import static com.terracottatech.dynamic_config.nomad.Applicability.cluster;
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
@@ -27,10 +26,10 @@ public class FailoverPriorityConfigChangeHandlerTest {
   @Test
   public void testTryApply() throws Exception {
     FailoverPriorityConfigChangeHandler failoverPriorityConfigChangeHandler = new FailoverPriorityConfigChangeHandler(identity());
-    Cluster updatedXmlConfig = failoverPriorityConfigChangeHandler.tryApply(topology, set1.toConfiguration());
+    Cluster updatedXmlConfig = failoverPriorityConfigChangeHandler.tryApply(topology, set1.toConfiguration(topology.getCluster()));
     assertThat(updatedXmlConfig.getSingleNode().get().getFailoverPriority(), is(FailoverPriority.valueOf("consistency:2")));
 
-    updatedXmlConfig = failoverPriorityConfigChangeHandler.tryApply(topology, set2.toConfiguration());
+    updatedXmlConfig = failoverPriorityConfigChangeHandler.tryApply(topology, set2.toConfiguration(topology.getCluster()));
     assertThat(updatedXmlConfig.getSingleNode().get().getFailoverPriority(), is(FailoverPriority.valueOf("availability")));
   }
 }

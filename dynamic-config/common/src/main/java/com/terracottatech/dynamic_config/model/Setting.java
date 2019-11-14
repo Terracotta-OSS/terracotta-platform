@@ -32,13 +32,13 @@ import static com.terracottatech.dynamic_config.model.Requirement.RESTART;
 import static com.terracottatech.dynamic_config.model.Scope.CLUSTER;
 import static com.terracottatech.dynamic_config.model.Scope.NODE;
 import static com.terracottatech.dynamic_config.model.Scope.STRIPE;
-import static com.terracottatech.dynamic_config.model.validation.SettingValidator.ADDRESS_VALIDATOR;
-import static com.terracottatech.dynamic_config.model.validation.SettingValidator.DATA_DIRS_VALIDATOR;
-import static com.terracottatech.dynamic_config.model.validation.SettingValidator.DEFAULT;
-import static com.terracottatech.dynamic_config.model.validation.SettingValidator.HOST_VALIDATOR;
-import static com.terracottatech.dynamic_config.model.validation.SettingValidator.OFFHEAP_VALIDATOR;
-import static com.terracottatech.dynamic_config.model.validation.SettingValidator.PORT_VALIDATOR;
-import static com.terracottatech.dynamic_config.model.validation.SettingValidator.TIME_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.ADDRESS_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.DATA_DIRS_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.DEFAULT;
+import static com.terracottatech.dynamic_config.model.SettingValidator.HOST_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.OFFHEAP_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.PORT_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.TIME_VALIDATOR;
 import static com.terracottatech.utilities.Assertions.assertNull;
 import static com.terracottatech.utilities.TimeUnit.HOURS;
 import static com.terracottatech.utilities.TimeUnit.MILLISECONDS;
@@ -50,7 +50,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.EnumSet.noneOf;
 import static java.util.EnumSet.of;
-import static java.util.stream.Collectors.toList;
 
 /**
  * See API doc Config-tool.adoc
@@ -142,7 +141,9 @@ public enum Setting {
       false,
       null,
       CLUSTER,
-      nodeContext -> Stream.of(tuple2(null, nodeContext.getCluster().getName())),
+      node -> {
+        throw new UnsupportedOperationException("Unable to get the cluster name from a node");
+      },
       unsupported(),
       unsupported(),
       of(GET, SET, CONFIG),
@@ -153,11 +154,11 @@ public enum Setting {
       "%H" + separator + "terracotta" + separator + "repository",
       NODE,
       node -> {
-        throw new UnsupportedOperationException("Unable to get the repository directory from a node");
+        throw new UnsupportedOperationException("Unable to get the repository directory of a node");
       },
       unsupported(),
       unsupported(),
-      of(GET)
+      noneOf(Operation.class)
   ),
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
       false,
@@ -403,7 +404,7 @@ public enum Setting {
   private final boolean map;
   private final String defaultValue;
   private final Scope scope;
-  private final Function<NodeContext, Stream<Tuple2<String, String>>> extractor;
+  private final Function<Node, Stream<Tuple2<String, String>>> extractor;
   private final Collection<Operation> operations;
   private final Collection<Requirement> requirements;
   private final Collection<String> allowedValues;
@@ -416,7 +417,7 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<NodeContext, Stream<Tuple2<String, String>>> extractor,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
           BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations) {
@@ -427,7 +428,7 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<NodeContext, Stream<Tuple2<String, String>>> extractor,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
           BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
@@ -439,7 +440,7 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<NodeContext, Stream<Tuple2<String, String>>> extractor,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
           BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
@@ -452,7 +453,7 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<NodeContext, Stream<Tuple2<String, String>>> extractor,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
           BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
@@ -466,7 +467,7 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<NodeContext, Stream<Tuple2<String, String>>> extractor,
+          Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
           BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
@@ -511,7 +512,7 @@ public enum Setting {
 
   public void fillDefault(Node node) {
     String v = getDefaultValue();
-    if (v != null) {
+    if (v != null && !getProperty(node).isPresent()) {
       setProperty(node, v);
     }
   }
@@ -533,16 +534,12 @@ public enum Setting {
     return (Collection<U>) allowedUnits;
   }
 
-  public Collection<Requirement> getRequirements() {
-    return requirements;
-  }
-
   public boolean requires(Requirement requirement) {
     return requirements.contains(requirement);
   }
 
   public boolean allowsOperation(Operation operation) {
-    return this.operations.isEmpty() || this.operations.contains(operation);
+    return this.operations.contains(operation);
   }
 
   public boolean isScope(Scope scope) {
@@ -574,18 +571,25 @@ public enum Setting {
     validate(null, value);
   }
 
-  public Optional<String> getProperty(NodeContext nodeContext) {
-    return extractor.apply(nodeContext)
+  public Optional<String> getProperty(Node node) {
+    return extractor.apply(node)
         .filter(tuple -> !tuple.allNulls())
         .map(tuple -> tuple.t1 == null ? tuple.t2 : (tuple.t1 + ":" + tuple.t2))
         .reduce((result, element) -> result + "," + element);
+  }
+
+  public Optional<String> getProperty(NodeContext nodeContext) {
+    if (this == CLUSTER_NAME) {
+      return Optional.ofNullable(nodeContext.getCluster().getName());
+    }
+    return getProperty(nodeContext.getNode());
   }
 
   public Stream<Tuple2<String, String>> getExpandedProperties(NodeContext nodeContext) {
     if (!isMap()) {
       throw new UnsupportedOperationException();
     }
-    return extractor.apply(nodeContext).filter(tuple -> tuple.t1 != null);
+    return extractor.apply(nodeContext.getNode()).filter(tuple -> tuple.t1 != null);
   }
 
   public void setProperty(Node node, String value) {
@@ -608,10 +612,6 @@ public enum Setting {
     return this == NODE_HOSTNAME;
   }
 
-  public <U extends Enum<U> & Unit<U>> boolean allowsUnit(U unit) {
-    return this.allowedUnits.isEmpty() || this.allowedUnits.contains(unit);
-  }
-
   public static Setting fromName(String name) {
     return findSetting(name).orElseThrow(() -> new IllegalArgumentException("Illegal setting name: " + name));
   }
@@ -620,13 +620,9 @@ public enum Setting {
     return Stream.of(values()).filter(setting -> setting.name.equals(name)).findFirst();
   }
 
-  public static Collection<String> getAllNames() {
-    return Stream.of(Setting.values()).map(Setting::toString).collect(toList());
-  }
-
-  private static Function<NodeContext, Stream<Tuple2<String, String>>> extractor(Function<Node, Object> extractor) {
-    return nodeContext -> {
-      Object o = extractor.apply(nodeContext.getNode());
+  private static Function<Node, Stream<Tuple2<String, String>>> extractor(Function<Node, Object> extractor) {
+    return node -> {
+      Object o = extractor.apply(node);
       if (o == null) {
         return Stream.empty();
       }

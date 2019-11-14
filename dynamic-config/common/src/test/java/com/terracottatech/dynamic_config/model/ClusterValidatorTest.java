@@ -2,14 +2,8 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.model.validation;
+package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.Setting;
-import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.config.ConfigurationParser;
-import com.terracottatech.dynamic_config.model.exception.MalformedClusterException;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;
@@ -167,7 +161,7 @@ public class ClusterValidatorTest {
     setNodeProperties(node1);
     setNodeProperties(node2);
 
-    new ClusterValidator(createCluster(node1, node2), SERVER_SUBSTITUTOR_SIMULATOR).validate();
+    new ClusterValidator(SERVER_SUBSTITUTOR_SIMULATOR, createCluster(node1, node2)).validate();
   }
 
   @Test
@@ -537,12 +531,12 @@ public class ClusterValidatorTest {
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(message);
     final Cluster cluster = ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
-    new ClusterValidator(cluster, SERVER_SUBSTITUTOR_SIMULATOR).validate();
+    new ClusterValidator(SERVER_SUBSTITUTOR_SIMULATOR, cluster).validate();
   }
 
   private void testThrowsWithMessage(Node node1, Node node2, String message) {
     exception.expect(MalformedClusterException.class);
     exception.expectMessage(message);
-    new ClusterValidator(createCluster(node1, node2), SERVER_SUBSTITUTOR_SIMULATOR).validate();
+    new ClusterValidator(SERVER_SUBSTITUTOR_SIMULATOR, createCluster(node1, node2)).validate();
   }
 }

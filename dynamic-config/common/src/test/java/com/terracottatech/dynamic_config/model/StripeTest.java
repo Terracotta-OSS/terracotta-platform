@@ -19,6 +19,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -139,5 +140,44 @@ public class StripeTest {
     assertThat(newNode.getOffheapResources(), hasKey("off"));
     assertThat(newNode.getOffheapResources(), not(hasKey("foo")));
     assertThat(newNode.getOffheapResources(), not(hasKey("bar")));
+  }
+
+  @Test
+  public void test_getNodeCount() {
+    assertThat(stripe.getNodeCount(), is(equalTo(1)));
+  }
+
+  @Test
+  public void test_getNode() {
+    assertThat(stripe.getNode("node1").get(), is(equalTo(node1)));
+    assertThat(stripe.getNode("foo").isPresent(), is(false));
+
+    assertThat(stripe.getNode(node1.getNodeAddress()).get(), is(equalTo(node1)));
+    assertThat(stripe.getNode(node2.getNodeAddress()).isPresent(), is(false));
+  }
+
+  @Test
+  public void test_getNodeId() {
+    assertThat(stripe.getNodeId("node1").getAsInt(), is(equalTo(1)));
+    assertThat(stripe.getNodeId("foo").isPresent(), is(false));
+
+    assertThat(stripe.getNodeId(node1.getNodeAddress()).getAsInt(), is(equalTo(1)));
+    assertThat(stripe.getNodeId(node2.getNodeAddress()).isPresent(), is(false));
+  }
+
+  @Test
+  public void test_getSingleNode() {
+    assertThat(stripe.getSingleNode().get(), is(sameInstance(node1)));
+
+    stripe.attachNode(node2);
+    assertThat(() -> stripe.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
+
+    // back to normal
+    stripe.detachNode(node2.getNodeAddress());
+    assertThat(stripe.getSingleNode().get(), is(sameInstance(node1)));
+
+    // empty
+    stripe.detachNode(node1.getNodeAddress());
+    assertThat(stripe.getSingleNode().isPresent(), is(false));
   }
 }

@@ -2,9 +2,8 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.model.validation;
+package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -18,14 +17,16 @@ import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;
 import static java.util.Objects.requireNonNull;
 
 /**
+ * This class purpose is to be used internally in {@link Setting}
+ *
  * @author Mathieu Carbou
  */
-public class SettingValidator {
+class SettingValidator {
 
   private static final String MULTI_VALUE_SEP = ",";
   private static final String PARAM_INTERNAL_SEP = ":";
 
-  public static final BiConsumer<String, Tuple2<String, String>> DEFAULT = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> DEFAULT = (setting, kv) -> {
     // default validator applied to all settings
     requireNonNull(kv);
     Setting s = Setting.fromName(setting);
@@ -34,13 +35,13 @@ public class SettingValidator {
     }
   };
 
-  public static final BiConsumer<String, Tuple2<String, String>> TIME_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> TIME_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv.t2);
     Setting s = Setting.fromName(setting);
     Measure.parse(kv.t2, TimeUnit.class, null, s.getAllowedUnits());
   };
 
-  public static final BiConsumer<String, Tuple2<String, String>> PORT_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> PORT_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
     int port;
     try {
@@ -53,14 +54,14 @@ public class SettingValidator {
     }
   };
 
-  public static final BiConsumer<String, Tuple2<String, String>> ADDRESS_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> ADDRESS_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
     if (!isValidIPv4(kv.t2) && !isValidIPv6(kv.t2)) {
       throw new IllegalArgumentException("<address> specified in " + setting + "=<address> must be a valid IP address");
     }
   };
 
-  public static final BiConsumer<String, Tuple2<String, String>> HOST_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> HOST_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
     final String hostname = kv.t2;
     if (!isValidIPv4(hostname) && !isValidIPv6(hostname) && !isValidHost(hostname)) {
@@ -68,7 +69,7 @@ public class SettingValidator {
     }
   };
 
-  public static final BiConsumer<String, Tuple2<String, String>> OFFHEAP_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> OFFHEAP_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
     String value = kv.t2;
     if (kv.t1 != null) {
@@ -85,7 +86,7 @@ public class SettingValidator {
     }
   };
 
-  public static final BiConsumer<String, Tuple2<String, String>> DATA_DIRS_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> DATA_DIRS_VALIDATOR = (setting, kv) -> {
     requireNonNull(kv);
     String value = kv.t2;
     if (kv.t1 != null) {

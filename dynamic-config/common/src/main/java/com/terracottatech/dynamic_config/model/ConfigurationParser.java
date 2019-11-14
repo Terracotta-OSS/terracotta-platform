@@ -2,13 +2,8 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.model.config;
+package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Configuration;
-import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.Setting;
-import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Parser;
 
@@ -22,6 +17,7 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
 import static com.terracottatech.dynamic_config.model.Operation.CONFIG;
 import static com.terracottatech.dynamic_config.model.Scope.CLUSTER;
 import static com.terracottatech.dynamic_config.model.Scope.NODE;
@@ -34,8 +30,10 @@ import static java.util.stream.Collectors.toSet;
 
 /**
  * Parses CLI or config file into a Cluster object, but does not validate the cluster object
+ * <p>
+ * This class purpose is to be used internally in {@link ClusterFactory}
  */
-public class ConfigurationParser implements Parser<Cluster> {
+class ConfigurationParser implements Parser<Cluster> {
 
   private final List<Configuration> configurations;
   private final Consumer<Configuration> defaultAddedListener;
@@ -50,7 +48,7 @@ public class ConfigurationParser implements Parser<Cluster> {
   /**
    * @return A parsed cluster object from properties.
    * The cluster object is NOT validated and will need to be validated with the
-   * {@link com.terracottatech.dynamic_config.model.validation.ClusterValidator}
+   * {@link ClusterValidator}
    */
   @Override
   public Cluster parse() {
@@ -113,12 +111,12 @@ public class ConfigurationParser implements Parser<Cluster> {
 
     // ids checks
     {
-      // verify the Stripe Id numbers
+      // verify the stripe ID numbers
       if (configurationMap.firstKey() != 1) {
-        throw new IllegalArgumentException("Stripe Id must start at 1");
+        throw new IllegalArgumentException("Stripe ID must start at 1");
       }
       if (configurationMap.lastKey() != configurationMap.size()) {
-        throw new IllegalArgumentException("Stripe Id must end at " + configurationMap.size());
+        throw new IllegalArgumentException("Stripe ID must end at " + configurationMap.size());
       }
       // verify the Node Id numbers
       configurationMap.forEach((stripeId, nodeCounts) -> {
@@ -167,11 +165,11 @@ public class ConfigurationParser implements Parser<Cluster> {
               .collect(toSet());
           if (actual.size() > expected.size()) {
             actual.removeAll(expected);
-            throw new IllegalArgumentException("Invalid settings in config file for stripe Id: " + stripeId + " and node Id: " + nodeId + ": " + actual);
+            throw new IllegalArgumentException("Invalid settings in config file for stripe ID: " + stripeId + " and node ID: " + nodeId + ": " + actual);
           }
           if (actual.size() < expected.size()) {
             expected.removeAll(actual);
-            throw new IllegalArgumentException("Missing settings in config file for stripe Id: " + stripeId + " and node Id: " + nodeId + ": " + expected);
+            throw new IllegalArgumentException("Missing settings in config file for stripe ID: " + stripeId + " and node ID: " + nodeId + ": " + expected);
           }
         }
       }
@@ -202,7 +200,7 @@ public class ConfigurationParser implements Parser<Cluster> {
     configurationMap.forEach((stripeId, nodeCounts) -> {
       Stripe stripe = new Stripe();
       nodeCounts.keySet().forEach(nodeId -> {
-        stripe.addNode(new Node().fillDefaults());
+        stripe.addNode(newDefaultNode());
         if (stripe.getNodeCount() != nodeId) {
           throw new AssertionError("Expected node count to be: " + nodeId + " but was: " + stripe.getNodeCount());
         }
@@ -219,21 +217,21 @@ public class ConfigurationParser implements Parser<Cluster> {
     return cluster;
   }
 
-  public static Cluster parsePropertyConfiguration(IParameterSubstitutor substitutor, Properties properties) {
+  static Cluster parsePropertyConfiguration(IParameterSubstitutor substitutor, Properties properties) {
     return parsePropertyConfiguration(substitutor, properties, configuration -> {
     });
   }
 
-  public static Cluster parsePropertyConfiguration(IParameterSubstitutor substitutor, Properties properties, Consumer<Configuration> defaultAddedListener) {
+  static Cluster parsePropertyConfiguration(IParameterSubstitutor substitutor, Properties properties, Consumer<Configuration> defaultAddedListener) {
     return new ConfigurationParser(substitutor, propertiesToConfigurations(properties), defaultAddedListener).parse();
   }
 
-  public static Cluster parseCommandLineParameters(IParameterSubstitutor substitutor, Map<Setting, String> userConsoleParameters) {
+  static Cluster parseCommandLineParameters(IParameterSubstitutor substitutor, Map<Setting, String> userConsoleParameters) {
     return parseCommandLineParameters(substitutor, userConsoleParameters, configuration -> {
     });
   }
 
-  public static Cluster parseCommandLineParameters(IParameterSubstitutor substitutor, Map<Setting, String> userConsoleParameters, Consumer<Configuration> defaultAddedListener) {
+  static Cluster parseCommandLineParameters(IParameterSubstitutor substitutor, Map<Setting, String> userConsoleParameters, Consumer<Configuration> defaultAddedListener) {
     final Properties properties = cliToProperties(substitutor, userConsoleParameters, defaultAddedListener);
     return parsePropertyConfiguration(substitutor, properties, defaultAddedListener);
   }

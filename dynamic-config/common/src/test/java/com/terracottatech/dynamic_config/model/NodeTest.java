@@ -10,7 +10,11 @@ import org.junit.Test;
 
 import java.nio.file.Paths;
 
+import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
+import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static java.io.File.separator;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
@@ -74,11 +78,48 @@ public class NodeTest {
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("data", Paths.get("/data/cache2"));
 
+  Node node3 = new Node()
+      .setNodePort(9410)
+      .setNodeGroupPort(9430)
+      .setNodeBindAddress("0.0.0.0")
+      .setNodeGroupBindAddress("0.0.0.0")
+      .setNodeMetadataDir(Paths.get("%H" + separator + "terracotta" + separator + "metadata"))
+      .setNodeLogDir(Paths.get("%H" + separator + "terracotta" + separator + "logs"))
+      .setClientReconnectWindow(120, TimeUnit.SECONDS)
+      .setFailoverPriority(availability())
+      .setClientLeaseDuration(150, TimeUnit.SECONDS)
+      .setSecuritySslTls(false)
+      .setSecurityWhitelist(false)
+      .setOffheapResource("main", 512, MemoryUnit.MB)
+      .setDataDir("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"));
+
   @Test
   public void test_clone() {
     assertThat(new Node(), is(equalTo(new Node().clone())));
     assertThat(node, is(equalTo(node.clone())));
     assertThat(node.hashCode(), is(equalTo(node.clone().hashCode())));
+  }
+
+  @Test
+  public void test_fillDefaults() {
+    assertThat(new Node().getNodeName(), is(nullValue()));
+    assertThat(newDefaultNode().getNodeName(), is(not(nullValue())));
+    assertThat(newDefaultNode().setNodeName(null), is(equalTo(node3)));
+  }
+
+  @Test
+  public void test_getNodeAddress() {
+    assertThat(
+        () -> new Node().getNodeAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with address: null:9410")))));
+
+    assertThat(
+        () -> newDefaultNode().getNodeAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with address: null:9410")))));
+
+    assertThat(
+        () -> newDefaultNode("%h").getNodeAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with address: %h:9410")))));
   }
 
   @Test

@@ -2,10 +2,8 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.model.config;
+package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.utilities.Measure;
 import org.junit.Rule;
 import org.junit.Test;
@@ -159,17 +157,24 @@ public class ConfigurationParserTest {
     assertThat(
         () -> ConfigurationParser.parsePropertyConfiguration(identity(), new Properties()),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid property: stripe.1.node.1.node-hostname=%h. Placeholders are not allowed.")))));
+
     Properties properties = new Properties();
     properties.setProperty("stripe.1.node.1.node-hostname", "localhost");
     Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), properties);
 
-    Properties expected = loadProperties("c4.properties");
+    Properties expected = loadProperties("minimal_with_default.properties");
     expected.put("stripe.1.node.1.node-name", cluster.getSingleNode().get().getNodeName()); // because node name is generated
     if (WINDOWS) {
       expected.stringPropertyNames().forEach(key -> expected.setProperty(key, expected.getProperty(key).replace('/', '\\'))); // windows compat'
     }
 
     assertThat(cluster.toProperties(false, true), is(equalTo(expected)));
+
+
+    //TODO
+    //    Cluster rebuilt = ConfigurationParser.parsePropertyConfiguration(identity(), actual);
+//    assertThat(rebuilt, is(equalTo(cluster)));
+
   }
 
   private void testThrowsWithMessage(String message) {

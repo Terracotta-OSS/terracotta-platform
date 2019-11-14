@@ -9,11 +9,11 @@ import com.terracottatech.License;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
@@ -162,7 +162,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     requireNonNull(updatedCluster);
 
-    new ClusterValidator(updatedCluster, substitutor).validate();
+    new ClusterValidator(substitutor, updatedCluster).validate();
 
     Node oldMe = upcomingNodeContext.getNode();
     Node newMe = findMe(updatedCluster);
@@ -170,12 +170,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (newMe != null) {
       // we have updated the topology and I am still part of this cluster
       LOGGER.info("Set pending topology to: {}", updatedCluster);
-      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe);
+      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getNodeAddress());
     } else {
       // We have updated the topology and I am not part anymore of the cluster
       // So we just reset the cluster object so that this node is alone
       LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster);
-      this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe);
+      this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe.getNodeAddress());
     }
 
     // When node is not yest activated, runtimeNodeContext == upcomingNodeContext
@@ -291,7 +291,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    * Tries to find the node representing this process within the updated cluster.
    * <p>
    * - We cannot use the node hostname or port only, since they might have changed through a set command.
-   * - We cannot use the node name and stripe id only, since the stripe id can have changed in the new cluster with the attach/detach commands
+   * - We cannot use the node name and stripe ID only, since the stripe ID can have changed in the new cluster with the attach/detach commands
    * <p>
    * So we try to find the best match we can...
    */

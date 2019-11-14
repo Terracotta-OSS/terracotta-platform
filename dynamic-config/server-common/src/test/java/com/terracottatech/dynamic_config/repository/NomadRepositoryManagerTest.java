@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.repository;
 
-import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.junit.Rule;
 import org.junit.Test;

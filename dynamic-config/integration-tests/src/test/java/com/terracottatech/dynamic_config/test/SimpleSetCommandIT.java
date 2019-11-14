@@ -37,14 +37,14 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void set_stripeIdInvalid() {
     systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Specified stripe id: 2, but cluster contains: 1 stripe(s) only")));
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Specified stripe ID: 2, but cluster contains: 1 stripe(s) only")));
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.2.node.1.node-backup-dir=foo");
   }
 
   @Test
   public void set_nodeIdInvalid() {
     systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Error: Invalid input: 'stripe.1.node.2.node-backup-dir=foo'. Reason: Specified node id: 2, but stripe 1 contains: 1 node(s) only")));
+    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("Error: Invalid input: 'stripe.1.node.2.node-backup-dir=foo'. Reason: Specified node ID: 2, but stripe ID: 1 contains: 1 node(s) only")));
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.2.node-backup-dir=foo");
   }
 

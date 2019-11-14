@@ -27,7 +27,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-public class NomadJsonTest {
+public class NomadChangeJsonTest {
 
   private Cluster cluster = new Cluster("myClusterName", new Stripe(new Node()
       .setNodeName("foo")

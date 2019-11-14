@@ -6,7 +6,7 @@
           "dataDirs": {
             "cache": "/data/cache1"
           },
-          "nodeGroupPort": 0,
+          "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
           "nodeName": "node0",
           "nodePort": 9410,
@@ -24,7 +24,7 @@
           "dataDirs": {
             "cache": "/data/cache2"
           },
-          "nodeGroupPort": 0,
+          "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
           "nodeName": "node1",
           "nodePort": 9411,
@@ -42,7 +42,7 @@
           "dataDirs": {
             "cache": "/data/cache2"
           },
-          "nodeGroupPort": 0,
+          "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
           "nodeName": "node2",
           "nodePort": 9412,

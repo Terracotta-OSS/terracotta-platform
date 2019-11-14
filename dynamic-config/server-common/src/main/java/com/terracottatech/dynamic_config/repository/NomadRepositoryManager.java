@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.repository;
 
-import com.terracottatech.dynamic_config.model.exception.MalformedRepositoryException;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 
@@ -21,7 +20,6 @@ import static com.terracottatech.dynamic_config.repository.NomadRepositoryManage
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 
 public class NomadRepositoryManager {

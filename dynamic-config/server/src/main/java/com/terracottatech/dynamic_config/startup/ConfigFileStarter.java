@@ -5,8 +5,8 @@
 package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.dynamic_config.model.config.ClusterCreator;
 import com.terracottatech.dynamic_config.parsing.Options;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
@@ -21,11 +21,11 @@ public class ConfigFileStarter implements NodeStarter {
   private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   private final Options options;
-  private final ClusterCreator clusterCreator;
+  private final ClusterFactory clusterCreator;
   private final NodeStarter nextStarter;
   private final StartupManager startupManager;
 
-  ConfigFileStarter(Options options, ClusterCreator clusterCreator,
+  ConfigFileStarter(Options options, ClusterFactory clusterCreator,
                     StartupManager startupManager, NodeStarter nextStarter) {
     this.options = options;
     this.clusterCreator = clusterCreator;

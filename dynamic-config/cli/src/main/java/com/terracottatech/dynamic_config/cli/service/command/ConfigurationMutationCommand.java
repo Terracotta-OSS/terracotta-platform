@@ -8,10 +8,10 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
 import com.terracottatech.dynamic_config.model.Setting;
-import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
@@ -54,7 +54,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     for (Configuration c : configurations) {
       c.apply(updatedCluster, parameterSubstitutor);
     }
-    new ClusterValidator(updatedCluster, parameterSubstitutor).validate();
+    new ClusterValidator(parameterSubstitutor, updatedCluster).validate();
 
     // get the current state of the nodes
     // this call can take some time and we can have some timeout

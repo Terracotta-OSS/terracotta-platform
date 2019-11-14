@@ -2,14 +2,10 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.model.config;
+package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.model.Configuration;
-import com.terracottatech.dynamic_config.model.Setting;
-import com.terracottatech.dynamic_config.model.validation.ClusterValidator;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.dynamic_config.util.PropertiesFileLoader;
+import com.terracottatech.dynamic_config.util.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,13 +24,13 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Parses CLI or config file into a validated cluster object
  */
-public class ClusterCreator {
+public class ClusterFactory {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCreator.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterFactory.class);
 
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public ClusterCreator(IParameterSubstitutor parameterSubstitutor) {
+  public ClusterFactory(IParameterSubstitutor parameterSubstitutor) {
     this.parameterSubstitutor = parameterSubstitutor;
   }
 
@@ -46,8 +42,10 @@ public class ClusterCreator {
    * @return a {@code Cluster} object
    */
   public Cluster create(Path configFile, String clusterName) {
-    Properties properties = new PropertiesFileLoader(configFile).loadProperties();
+    return create(Props.load(configFile), clusterName);
+  }
 
+  public Cluster create(Properties properties, String clusterName) {
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
     Cluster cluster = ConfigurationParser.parsePropertyConfiguration(parameterSubstitutor, properties, defaultsAdded::add);
 
@@ -97,7 +95,7 @@ public class ClusterCreator {
   }
 
   private Cluster validated(Cluster cluster) {
-    new ClusterValidator(cluster, parameterSubstitutor).validate();
+    new ClusterValidator(parameterSubstitutor, cluster).validate();
     return cluster;
   }
 

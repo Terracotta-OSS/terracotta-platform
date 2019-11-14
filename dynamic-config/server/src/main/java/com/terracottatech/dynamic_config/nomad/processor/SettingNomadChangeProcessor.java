@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.model.Cluster;
@@ -25,11 +26,13 @@ import static java.util.Objects.requireNonNull;
  */
 public class SettingNomadChangeProcessor implements NomadChangeProcessor<SettingNomadChange> {
 
+  private final TopologyService topologyService;
   private final ConfigChangeHandlerManager manager;
   private final IParameterSubstitutor parameterSubstitutor;
   private final BiConsumer<Configuration, Boolean> changeListener;
 
-  public SettingNomadChangeProcessor(ConfigChangeHandlerManager manager, IParameterSubstitutor parameterSubstitutor, BiConsumer<Configuration, Boolean> changeListener) {
+  public SettingNomadChangeProcessor(TopologyService topologyService, ConfigChangeHandlerManager manager, IParameterSubstitutor parameterSubstitutor, BiConsumer<Configuration, Boolean> changeListener) {
+    this.topologyService = requireNonNull(topologyService);
     this.manager = requireNonNull(manager);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.changeListener = requireNonNull(changeListener);
@@ -40,7 +43,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
     try {
       // Note the call to baseConfig.clone() which is important
       NodeContext clone = baseConfig.clone();
-      Configuration configuration = change.toConfiguration();
+      Configuration configuration = change.toConfiguration(clone.getCluster());
 
       configuration.validate(change.getOperation(), parameterSubstitutor);
 
@@ -58,7 +61,8 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   @Override
   public void apply(SettingNomadChange change) {
-    Configuration configuration = change.toConfiguration();
+    NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+    Configuration configuration = change.toConfiguration(runtimeNodeContext.getCluster());
     boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
     changeListener.accept(configuration, changeAppliedAtRuntime);
   }

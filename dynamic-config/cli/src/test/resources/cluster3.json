@@ -6,7 +6,7 @@
           "dataDirs": {
             "cache": "/data/cache0"
           },
-          "nodeGroupPort": 0,
+          "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
           "nodeName": "node0",
           "nodePort": 9410,

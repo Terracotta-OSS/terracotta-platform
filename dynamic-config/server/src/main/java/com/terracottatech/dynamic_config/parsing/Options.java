@@ -9,8 +9,8 @@ import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
+import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.Setting;
-import com.terracottatech.dynamic_config.model.config.ClusterCreator;
 import com.terracottatech.dynamic_config.service.ConfigChangeHandlerManagerImpl;
 import com.terracottatech.dynamic_config.startup.NodeProcessor;
 import com.terracottatech.dynamic_config.startup.StartupManager;
@@ -144,8 +144,11 @@ public class Options {
     ConfigChangeHandlerManager changeHandlerManager = new ConfigChangeHandlerManagerImpl();
 
     NodeProcessor nodeProcessor = new NodeProcessor(
-        this, buildParamValueMap(jCommander), new ClusterCreator(parameterSubstitutor),
-        new StartupManager(parameterSubstitutor, changeHandlerManager), parameterSubstitutor
+        this,
+        buildParamValueMap(jCommander),
+        new ClusterFactory(parameterSubstitutor),
+        new StartupManager(parameterSubstitutor, changeHandlerManager),
+        parameterSubstitutor
     );
     nodeProcessor.process();
   }

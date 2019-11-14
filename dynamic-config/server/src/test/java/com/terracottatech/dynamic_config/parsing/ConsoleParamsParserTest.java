@@ -5,11 +5,10 @@
 package com.terracottatech.dynamic_config.parsing;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.FailoverPriority;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Setting;
-import com.terracottatech.dynamic_config.model.config.ConfigurationParser;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
@@ -55,18 +54,19 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class ConsoleParamsParserTest {
-  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
+  private final ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
+  private final ClusterFactory clusterFactory = new ClusterFactory(parameterSubstitutor);
 
   @Test
   public void testDefaults() {
-    Cluster cluster = ConfigurationParser.parseCommandLineParameters(PARAMETER_SUBSTITUTOR, Collections.emptyMap());
+    Cluster cluster = clusterFactory.create(Collections.emptyMap());
     assertThat(cluster.getName(), is(nullValue()));
     assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
     assertThat(node.getNodeName(), startsWith("node-"));
-    assertThat(node.getNodeHostname(), is(PARAMETER_SUBSTITUTOR.substitute(NODE_HOSTNAME.getDefaultValue())));
+    assertThat(node.getNodeHostname(), is(parameterSubstitutor.substitute(NODE_HOSTNAME.getDefaultValue())));
     assertThat(node.getNodePort(), is(parseInt(NODE_PORT.getDefaultValue())));
     assertThat(node.getNodeGroupPort(), is(parseInt(NODE_GROUP_PORT.getDefaultValue())));
     assertThat(node.getNodeBindAddress(), is(NODE_BIND_ADDRESS.getDefaultValue()));
@@ -91,20 +91,20 @@ public class ConsoleParamsParserTest {
 
   @Test
   public void testParametersInInput() {
-    Cluster cluster = ConfigurationParser.parseCommandLineParameters(PARAMETER_SUBSTITUTOR, Collections.emptyMap());
+    Cluster cluster = clusterFactory.create(Collections.emptyMap());
     assertThat(cluster.getName(), is(nullValue()));
     assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
 
     Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeHostname(), is(PARAMETER_SUBSTITUTOR.substitute("%h")));
+    assertThat(node.getNodeHostname(), is(parameterSubstitutor.substitute("%h")));
     assertThat(node.getNodeBindAddress(), is(NODE_BIND_ADDRESS.getDefaultValue()));
   }
 
   @Test
   public void testAllOptions() {
     Map<Setting, String> paramValueMap = setProperties();
-    Cluster cluster = ConfigurationParser.parseCommandLineParameters(PARAMETER_SUBSTITUTOR, paramValueMap);
+    Cluster cluster = clusterFactory.create(paramValueMap);
     assertThat(cluster.getName(), is("tc-cluster"));
     assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));

@@ -249,10 +249,10 @@ public class Configuration {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " is not a map and must not have a key name");
     }
     if (stripeId != null && stripeId <= 0) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected stripe id to be greater than 0");
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected stripe ID to be greater than 0");
     }
     if (nodeId != null && nodeId <= 0) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected node id to be greater than 0");
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected node ID to be greater than 0");
     }
     if (!setting.allowsOperationsWithScope(scope)) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " does not allow scope " + scope);
@@ -338,7 +338,7 @@ public class Configuration {
         try {
           targetContexts = cluster.getStripes().get(stripeId - 1).getNodes().stream().map(node -> new NodeContext(cluster, stripeId, node.getNodeName()));
         } catch (RuntimeException e) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe ID: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
         }
         break;
       case NODE:
@@ -346,12 +346,12 @@ public class Configuration {
         try {
           nodes = cluster.getStripes().get(stripeId - 1).getNodes();
         } catch (RuntimeException e) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe id: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified stripe ID: " + stripeId + ", but cluster contains: " + cluster.getStripeCount() + " stripe(s) only");
         }
         try {
           targetContexts = Stream.of(new NodeContext(cluster, stripeId, nodes.get(nodeId - 1).getNodeName()));
         } catch (Exception e) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified node id: " + nodeId + ", but stripe " + stripeId + " contains: " + cluster.getStripeCount() + " node(s) only");
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Specified node ID: " + nodeId + ", but stripe ID: " + stripeId + " contains: " + cluster.getStripeCount() + " node(s) only");
         }
         break;
       default:

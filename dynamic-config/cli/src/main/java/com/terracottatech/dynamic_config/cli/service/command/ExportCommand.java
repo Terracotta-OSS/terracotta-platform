@@ -14,7 +14,7 @@ import com.terracottatech.dynamic_config.cli.common.FormatConverter;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.dynamic_config.util.PropertiesWriter;
+import com.terracottatech.dynamic_config.util.Props;
 import com.terracottatech.utilities.Json;
 
 import java.io.IOException;
@@ -98,12 +98,12 @@ public class ExportCommand extends RemoteCommand {
       case PROPERTIES:
         Properties nonDefaults = cluster.toProperties(false, false);
         try (StringWriter out = new StringWriter()) {
-          PropertiesWriter.store(out, nonDefaults, "Non-default configurations:");
+          Props.store(out, nonDefaults, "Non-default configurations:");
           if (!this.excludeDefaultValues) {
             Properties defaults = cluster.toProperties(false, true);
             defaults.keySet().removeAll(nonDefaults.keySet());
             out.write(System.lineSeparator());
-            PropertiesWriter.store(out, defaults, "Default configurations:");
+            Props.store(out, defaults, "Default configurations:");
           }
           return out.toString();
         } catch (IOException e) {

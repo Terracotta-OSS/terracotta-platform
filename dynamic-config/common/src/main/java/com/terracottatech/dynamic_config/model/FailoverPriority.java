@@ -76,10 +76,6 @@ public class FailoverPriority {
   @JsonCreator
   public static FailoverPriority valueOf(String str) {
     requireNonNull(str);
-    final String[] split = str.split(":");
-    if (split.length > 2) {
-      throw new IllegalArgumentException(Setting.FAILOVER_PRIORITY + " should be one of: " + Setting.FAILOVER_PRIORITY.getAllowedValues());
-    }
     if ("availability".equals(str)) {
       return availability();
     }

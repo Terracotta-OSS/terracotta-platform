@@ -44,7 +44,7 @@ import static org.junit.Assert.assertThat;
 public class ConfigurationTest {
 
   private static final String ERROR_SETTING = " Reason: Illegal setting name: ";
-  private static final String ERROR_STRIPE_ID = " Reason: Expected stripe id to be greater than 0";
+  private static final String ERROR_STRIPE_ID = " Reason: Expected stripe ID to be greater than 0";
   private static final String ERROR_ADDRESS = " Reason: <address> specified in node-hostname=<address> must be a valid hostname or IP address";
   private static final String ERROR_PORT = " Reason: <port> specified in node-port=<port> must be an integer between 1 and 65535";
   private static final String ERROR_AUTHC = " Reason: security-authc should be one of: [file, ldap, certificate]";
@@ -62,7 +62,7 @@ public class ConfigurationTest {
   private static final String ERROR_MEASURE = " Reason: Invalid measure: 'blah'. <quantity> is missing. Measure should be specified in <quantity><unit> format.";
   private static final String ERROR_LEASE_SCOPE = " Reason: Setting client-lease-duration does not allow scope NODE";
   private static final String ERROR_RECONNECT_SCOPE = " Reason: Setting client-reconnect-window does not allow scope NODE";
-  private static final String ERROR_NODE_ID = " Reason: Expected node id to be greater than 0";
+  private static final String ERROR_NODE_ID = " Reason: Expected node ID to be greater than 0";
   private static final String ERROR_MAP = " Reason: Setting client-reconnect-window is not a map and must not have a key name";
   private static final String ERROR_FORMAT = "";
 

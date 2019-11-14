@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -27,7 +28,7 @@ public class DefaultHashComputerTest {
     ObjectMapper om = Json.copyObjectMapper(true).configure(SerializationFeature.INDENT_OUTPUT, false);
     HashComputer<NodeContext> hashComputer = new DefaultHashComputer(Json.copyObjectMapper(true));
 
-    Node node = new Node().fillDefaults().setNodeName("foo");
+    Node node = newDefaultNode("foo", "localhost");
     NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node)), 1, "foo");
 
     String hash = hashComputer.computeHash(nodeContext);

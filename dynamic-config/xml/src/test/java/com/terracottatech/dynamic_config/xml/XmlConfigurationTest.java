@@ -5,9 +5,9 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.dynamic_config.model.config.ConfigurationParser;
 import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.junit.TmpDir;
 import org.junit.Before;
@@ -26,12 +26,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 public class XmlConfigurationTest {
+  
+  private final ClusterFactory clusterFactory = new ClusterFactory(identity());
 
   @Rule
   public TmpDir temporaryFolder = new TmpDir();
@@ -48,16 +51,13 @@ public class XmlConfigurationTest {
 
   @Test
   public void testMarshallingRelativePath() throws Exception {
-    Cluster cluster = new Cluster(new Stripe(new Node()
-        .fillDefaults()
+    Cluster cluster = new Cluster(new Stripe(newDefaultNode("node-1", "localhost")
         .setNodeLogDir(Paths.get("log"))
         .setNodeMetadataDir(Paths.get("metadata"))
         .setSecurityDir(Paths.get("security"))
         .setDataDir("main", Paths.get("bar"))
         .setNodeBackupDir(Paths.get("backup"))
-        .setSecurityAuditLogDir(Paths.get("audit"))
-        .setNodeName("node-1")
-        .setNodeHostname("localhost"))
+        .setSecurityAuditLogDir(Paths.get("audit")))
     );
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "node-1.xml");
@@ -65,7 +65,7 @@ public class XmlConfigurationTest {
 
   @Test
   public void testMarshallingAbsolutePathWithPlaceHolders() throws Exception {
-    Node node = Node.newDefaultNode("node-2", "localhost");
+    Node node = newDefaultNode("node-2", "localhost");
     Cluster cluster = new Cluster(new Stripe(node));
     String actual = new XmlConfiguration(cluster, 1, "node-2", pathResolver).toString();
     assertXml(actual, "node-2.xml");
@@ -74,8 +74,7 @@ public class XmlConfigurationTest {
   @Test
   public void testSingleStripe() throws Exception {
     String fileName = "single-stripe-config.properties";
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
-    cluster.setName("my-cluster");
+    Cluster cluster = clusterFactory.create(loadProperties(fileName), "my-cluster");
 
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "single-stripe-config.xml");
@@ -84,8 +83,7 @@ public class XmlConfigurationTest {
   @Test
   public void testMultiStripe() throws Exception {
     String fileName = "multi-stripe-config.properties";
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
-    cluster.setName("my-cluster");
+    Cluster cluster = clusterFactory.create(loadProperties(fileName), "my-cluster");
 
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "multi-stripe-config.xml");

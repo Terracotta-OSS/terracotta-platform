@@ -42,11 +42,20 @@ public class SettingNomadChange extends FilteredNomadChange {
     this.value = value;
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public String getSummary() {
-    return operation == Operation.SET ?
+    String s = operation == Operation.SET ?
         name == null ? (operation + " " + setting + "=" + value) : (operation + " " + setting + "." + name + "=" + value) :
         name == null ? (operation + " " + setting) : (operation + " " + setting + "." + name);
+    switch (applicability.getScope()) {
+      case STRIPE:
+        return s + " (stripe ID: " + applicability.getStripeId().getAsInt() + ")";
+      case NODE:
+        return s + " (stripe ID: " + applicability.getStripeId().getAsInt() + ", node: " + applicability.getNodeName() + ")";
+      default:
+        return s;
+    }
   }
 
   public String getName() {
@@ -93,18 +102,45 @@ public class SettingNomadChange extends FilteredNomadChange {
         '}';
   }
 
-  public Configuration toConfiguration() {
+  public Configuration toConfiguration(Cluster cluster) {
     switch (operation) {
       case SET:
         return name == null ?
-            Configuration.valueOf(setting + "=" + value) :
-            Configuration.valueOf(setting + "." + name + "=" + value);
+            Configuration.valueOf(namespace(cluster) + setting + "=" + value) :
+            Configuration.valueOf(namespace(cluster) + setting + "." + name + "=" + value);
       case UNSET:
         return name == null ?
-            Configuration.valueOf(setting.toString()) :
-            Configuration.valueOf(setting + "." + name);
+            Configuration.valueOf(namespace(cluster) + setting.toString()) :
+            Configuration.valueOf(namespace(cluster) + setting + "." + name);
       default:
         throw new AssertionError(operation);
+    }
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  private String namespace(Cluster cluster) {
+    switch (applicability.getScope()) {
+      case CLUSTER:
+        return "";
+      case STRIPE: {
+        int stripeId = applicability.getStripeId().getAsInt();
+        if (stripeId < 1) {
+          throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
+        }
+        if (stripeId > cluster.getStripeCount()) {
+          throw new IllegalArgumentException("Stripe ID: " + stripeId + " not found in cluster: " + cluster);
+        }
+        return "stripe." + stripeId + ".";
+      }
+      case NODE: {
+        int stripeId = applicability.getStripeId().getAsInt();
+        String nodeName = applicability.getNodeName();
+        int nodeId = cluster.getNodeId(stripeId, nodeName)
+            .orElseThrow(() -> new IllegalArgumentException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + cluster));
+        return "stripe." + stripeId + ".node." + nodeId + ".";
+      }
+      default:
+        throw new AssertionError(applicability.getScope());
     }
   }
 
@@ -125,20 +161,22 @@ public class SettingNomadChange extends FilteredNomadChange {
   }
 
   public static SettingNomadChange fromConfiguration(Configuration configuration, Operation operation, Cluster cluster) {
+    Applicability applicability = toApplicability(configuration, cluster);
     switch (operation) {
       case SET:
-        return SettingNomadChange.set(toApplicability(configuration, cluster), configuration.getSetting(), configuration.getKey(), configuration.getValue());
+        return SettingNomadChange.set(applicability, configuration.getSetting(), configuration.getKey(), configuration.getValue());
       case UNSET:
-        return SettingNomadChange.unset(toApplicability(configuration, cluster), configuration.getSetting(), configuration.getKey());
+        return SettingNomadChange.unset(applicability, configuration.getSetting(), configuration.getKey());
       default:
         throw new IllegalArgumentException("Operation " + operation + " cannot be converted to a Nomad change for an active cluster");
     }
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   private static Applicability toApplicability(Configuration configuration, Cluster cluster) {
     switch (configuration.getScope()) {
       case NODE:
-        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).getNodeName());
+        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).get().getNodeName());
       case STRIPE:
         return Applicability.stripe(configuration.getStripeId());
       case CLUSTER:

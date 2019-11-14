@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.net.InetSocketAddress;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
@@ -22,6 +23,7 @@ public class NodeContext implements Cloneable {
   private final int stripeId;
   private final int nodeId;
   private final String nodeName;
+  private final Node node;
 
   @JsonCreator
   public NodeContext(@JsonProperty(value = "cluster", required = true) Cluster cluster,
@@ -31,26 +33,43 @@ public class NodeContext implements Cloneable {
     this.stripeId = stripeId;
     this.nodeName = requireNonNull(nodeName);
     if (stripeId < 1 || stripeId > cluster.getStripeCount()) {
-      throw new IllegalArgumentException("Invalid Stripe Id: " + stripeId);
+      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
     }
-    // verify we can find the node
-    getNode();
-    this.nodeId = cluster.getStripes().get(stripeId - 1).getNodeId(nodeName).get();
+    this.node = cluster.getNode(stripeId, nodeName)
+        .orElseThrow(() -> new IllegalArgumentException("Node " + nodeName + " in stripe ID " + stripeId + " not found"));
+    this.nodeId = cluster.getNodeId(stripeId, nodeName)
+        .orElseThrow(() -> new IllegalArgumentException("Node " + nodeName + " in stripe ID " + stripeId + " not found"));
   }
 
-  public NodeContext(Cluster cluster, Node node) {
-    this(cluster, cluster.getStripeId(node).getAsInt(), node.getNodeName());
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  public NodeContext(Cluster cluster, InetSocketAddress nodeAddress) {
+    requireNonNull(nodeAddress);
+    this.cluster = requireNonNull(cluster);
+    this.node = cluster.getNode(nodeAddress)
+        .orElseThrow(() -> new IllegalArgumentException("Node " + nodeAddress + " not found"));
+    this.nodeName = requireNonNull(node.getNodeName());
+    this.stripeId = cluster.getStripeId(nodeAddress).getAsInt();
+    this.nodeId = cluster.getNodeId(nodeAddress).getAsInt();
   }
 
   public NodeContext(Cluster cluster, int stripeId, int nodeId) {
-    this(cluster, stripeId, cluster.getNode(stripeId, nodeId).getNodeName());
+    this.cluster = requireNonNull(cluster);
+    this.stripeId = stripeId;
+    this.nodeId = nodeId;
+    this.node = cluster.getNode(stripeId, nodeId)
+        .orElseThrow(() -> new IllegalArgumentException("Node ID " + nodeId + " in stripe ID " + stripeId + " not found"));
+    this.nodeName = requireNonNull(node.getNodeName());
   }
 
   /**
    * Special flavor that is creating a node context of a single node cluster
    */
   public NodeContext(Node node) {
-    this(new Cluster(new Stripe(node)), node);
+    this.node = requireNonNull(node);
+    this.cluster = new Cluster(new Stripe(node));
+    this.stripeId = 1;
+    this.nodeId = 1;
+    this.nodeName = requireNonNull(node.getNodeName());
   }
 
   public Cluster getCluster() {
@@ -71,8 +90,7 @@ public class NodeContext implements Cloneable {
 
   @JsonIgnore
   public Node getNode() {
-    return cluster.getNode(stripeId, nodeName)
-        .orElseThrow(() -> new IllegalStateException("Node " + nodeName + " in stripe " + stripeId + " not found"));
+    return node;
   }
 
   @JsonIgnore
