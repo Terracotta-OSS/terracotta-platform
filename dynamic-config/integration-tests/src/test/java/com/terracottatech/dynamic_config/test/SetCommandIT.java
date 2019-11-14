@@ -116,4 +116,31 @@ public class SetCommandIT extends BaseStartupIT {
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority");
     waitedAssert(out::getLog, containsString("failover-priority=consistency:2"));
   }
+
+  @Test
+  public void testCluster_setClientReconnectWindow() {
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window=10s");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    waitedAssert(out::getLog, containsString("client-reconnect-window=10s"));
+  }
+
+  @Test
+  public void testCluster_setClientReconnectWindow_postActivation() throws Exception {
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window=10s");
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    waitedAssert(out::getLog, containsString("client-reconnect-window=10s"));
+  }
+
+  private void activateCluster() throws Exception {
+    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    out.clearLog();
+  }
 }

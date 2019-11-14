@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Setting;
+import com.terracottatech.dynamic_config.service.handler.ClientReconnectWindowConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.DataRootConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.FailoverPriorityConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandler;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.reject;
+import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
@@ -67,9 +69,17 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         addToManager(manager, configChangeHandler, OFFHEAP_RESOURCES);
       }
 
-      // failover-priority
-      ConfigChangeHandler configChangeHandler = new FailoverPriorityConfigChangeHandler(substitutor);
-      addToManager(manager, configChangeHandler, FAILOVER_PRIORITY);
+      {
+        // failover-priority
+        ConfigChangeHandler configChangeHandler = new FailoverPriorityConfigChangeHandler(substitutor);
+        addToManager(manager, configChangeHandler, FAILOVER_PRIORITY);
+      }
+
+      {
+        // client-reconnect-window
+        ConfigChangeHandler configChangeHandler = new ClientReconnectWindowConfigChangeHandler(substitutor);
+        addToManager(manager, configChangeHandler, CLIENT_RECONNECT_WINDOW);
+      }
 
       // tc-properties
       // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE

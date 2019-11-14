@@ -225,7 +225,7 @@ public enum Setting {
       setter((node, value) -> node.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
       unsupported(),
       of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART),
+      of(ACTIVES_ONLINE),
       emptyList(),
       asList(SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_RECONNECT_WINDOW, tuple2(key, value))
