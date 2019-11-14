@@ -66,7 +66,7 @@ public enum Setting {
       null,
       NODE,
       extractor(Node::getNodeName),
-      setter(SettingName.NODE_NAME, Node::setNodeName),
+      setter(Node::setNodeName),
       unsupported(),
       of(GET, CONFIG)
   ),
@@ -75,7 +75,7 @@ public enum Setting {
       "%h",
       NODE,
       extractor(Node::getNodeHostname),
-      setter(SettingName.NODE_HOSTNAME, Node::setNodeHostname),
+      setter(Node::setNodeHostname),
       unsupported(),
       of(GET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -88,7 +88,7 @@ public enum Setting {
       "9410",
       NODE,
       extractor(Node::getNodePort),
-      setter(SettingName.NODE_PORT, (node, value) -> node.setNodePort(Integer.parseInt(value))),
+      setter((node, value) -> node.setNodePort(Integer.parseInt(value))),
       unsupported(),
       of(GET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -101,7 +101,7 @@ public enum Setting {
       "9430",
       NODE,
       extractor(Node::getNodeGroupPort),
-      setter(SettingName.NODE_GROUP_PORT, (node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
+      setter((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -114,7 +114,7 @@ public enum Setting {
       "0.0.0.0",
       NODE,
       extractor(Node::getNodeBindAddress),
-      setter(SettingName.NODE_BIND_ADDRESS, Node::setNodeBindAddress),
+      setter(Node::setNodeBindAddress),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE, RESTART),
@@ -127,7 +127,7 @@ public enum Setting {
       "0.0.0.0",
       NODE,
       extractor(Node::getNodeGroupBindAddress),
-      setter(SettingName.NODE_GROUP_BIND_ADDRESS, Node::setNodeGroupBindAddress),
+      setter(Node::setNodeGroupBindAddress),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -164,7 +164,7 @@ public enum Setting {
       "%H" + separator + "terracotta" + separator + "metadata",
       NODE,
       extractor(Node::getNodeMetadataDir),
-      setter(SettingName.NODE_METADATA_DIR, (node, value) -> node.setNodeMetadataDir(Paths.get(value))),
+      setter((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE, RESTART)
@@ -174,7 +174,7 @@ public enum Setting {
       "%H" + separator + "terracotta" + separator + "logs",
       NODE,
       extractor(Node::getNodeLogDir),
-      setter(SettingName.NODE_LOG_DIR, (node, value) -> node.setNodeLogDir(Paths.get(value))),
+      setter((node, value) -> node.setNodeLogDir(Paths.get(value))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE, RESTART)
@@ -184,7 +184,7 @@ public enum Setting {
       null,
       NODE,
       extractor(Node::getNodeBackupDir),
-      setter(SettingName.NODE_BACKUP_DIR, (node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
+      setter((node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
       (node, key) -> node.setNodeBackupDir(null),
       of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE)
@@ -194,7 +194,7 @@ public enum Setting {
       null,
       NODE,
       extractor(Node::getTcProperties),
-      mapSetter(SettingName.TC_PROPERTIES, (node, tuple) -> {
+      mapSetter((node, tuple) -> {
         if (tuple.allNulls()) {
           node.clearTcProperties();
         } else if (tuple.t1 != null && tuple.t2 == null) {
@@ -222,7 +222,7 @@ public enum Setting {
       "120s",
       CLUSTER,
       extractor(Node::getClientReconnectWindow),
-      setter(SettingName.CLIENT_RECONNECT_WINDOW, (node, value) -> node.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
+      setter((node, value) -> node.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE, RESTART),
@@ -235,7 +235,7 @@ public enum Setting {
       "availability",
       CLUSTER,
       extractor(Node::getFailoverPriority),
-      setter(SettingName.FAILOVER_PRIORITY, (node, value) -> node.setFailoverPriority(FailoverPriority.valueOf(value))),
+      setter((node, value) -> node.setFailoverPriority(FailoverPriority.valueOf(value))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -251,7 +251,7 @@ public enum Setting {
       "20s",
       CLUSTER,
       extractor(Node::getClientLeaseDuration),
-      setter(SettingName.CLIENT_LEASE_DURATION, (node, value) -> node.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
+      setter((node, value) -> node.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE),
@@ -282,7 +282,7 @@ public enum Setting {
       null,
       NODE,
       extractor(Node::getSecurityDir),
-      setter(SettingName.SECURITY_DIR, (node, value) -> node.setSecurityDir(value == null ? null : Paths.get(value))),
+      setter((node, value) -> node.setSecurityDir(value == null ? null : Paths.get(value))),
       (node, key) -> node.setSecurityDir(null),
       of(GET, SET, UNSET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART)
@@ -292,7 +292,7 @@ public enum Setting {
       null,
       NODE,
       extractor(Node::getSecurityAuditLogDir),
-      setter(SettingName.SECURITY_AUDIT_LOG_DIR, (node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
+      setter((node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
       (node, key) -> node.setSecurityAuditLogDir(null),
       of(GET, SET, UNSET, CONFIG),
       of(ALL_NODES_ONLINE)
@@ -302,7 +302,7 @@ public enum Setting {
       null,
       CLUSTER,
       extractor(Node::getSecurityAuthc),
-      setter(SettingName.SECURITY_AUTHC, Node::setSecurityAuthc),
+      setter(Node::setSecurityAuthc),
       (node, key) -> node.setSecurityAuthc(null),
       of(GET, SET, UNSET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -313,7 +313,7 @@ public enum Setting {
       "false",
       CLUSTER,
       extractor(Node::isSecuritySslTls),
-      setter(SettingName.SECURITY_SSL_TLS, (node, value) -> node.setSecuritySslTls(Boolean.parseBoolean(value))),
+      setter((node, value) -> node.setSecuritySslTls(Boolean.parseBoolean(value))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -324,7 +324,7 @@ public enum Setting {
       "false",
       CLUSTER,
       extractor(Node::isSecurityWhitelist),
-      setter(SettingName.SECURITY_WHITELIST, (node, value) -> node.setSecurityWhitelist(Boolean.parseBoolean(value))),
+      setter((node, value) -> node.setSecurityWhitelist(Boolean.parseBoolean(value))),
       unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
@@ -338,7 +338,7 @@ public enum Setting {
       "main:512MB",
       CLUSTER,
       extractor(Node::getOffheapResources),
-      mapSetter(SettingName.OFFHEAP_RESOURCES, (node, tuple) -> {
+      mapSetter((node, tuple) -> {
         if (tuple.allNulls()) {
           node.clearOffheapResources();
         } else if (tuple.t1 != null && tuple.t2 == null) {
@@ -369,7 +369,7 @@ public enum Setting {
       "main:%H" + separator + "terracotta" + separator + "user-data" + separator + "main",
       NODE,
       extractor(Node::getDataDirs),
-      mapSetter(SettingName.DATA_DIRS, (node, tuple) -> {
+      mapSetter((node, tuple) -> {
         if (tuple.allNulls()) {
           node.clearDataDirs();
         } else if (tuple.t1 != null && tuple.t2 == null) {
@@ -640,14 +640,14 @@ public enum Setting {
     };
   }
 
-  private static BiConsumer<Node, Tuple2<String, String>> setter(String paramName, BiConsumer<Node, String> setter) {
+  private static BiConsumer<Node, Tuple2<String, String>> setter(BiConsumer<Node, String> setter) {
     return (node, tuple) -> {
       assertNull(tuple.t1, "Key must be null: parameter is not a map");
       setter.accept(node, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim());
     };
   }
 
-  private static BiConsumer<Node, Tuple2<String, String>> mapSetter(String paramName, BiConsumer<Node, Tuple2<String, String>> setter) {
+  private static BiConsumer<Node, Tuple2<String, String>> mapSetter(BiConsumer<Node, Tuple2<String, String>> setter) {
     return (node, tuple) -> {
       setter.accept(node, tuple2(tuple.t1, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim()));
     };
