@@ -78,7 +78,7 @@ public enum Setting {
       setter(Node::setNodeHostname),
       unsupported(),
       of(GET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_HOSTNAME, tuple2(key, value))
@@ -91,7 +91,7 @@ public enum Setting {
       setter((node, value) -> node.setNodePort(Integer.parseInt(value))),
       unsupported(),
       of(GET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_PORT, tuple2(key, value))
