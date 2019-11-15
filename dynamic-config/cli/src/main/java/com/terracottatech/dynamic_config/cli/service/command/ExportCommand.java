@@ -62,7 +62,7 @@ public class ExportCommand extends RemoteCommand {
 
     if (outputFile == null) {
       // \n to make sure the content is outputted in one block without any logging prefixes ofr the first line
-      logger.info("\n{}", output);
+      logger.info("{}", output);
 
     } else {
       try {
