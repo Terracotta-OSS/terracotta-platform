@@ -14,6 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 
+import static com.terracottatech.utilities.XmlUtils.escapeXml;
+
 public class TransientTcConfig {
   private final Node node;
   private final PathResolver pathResolver;
@@ -47,10 +49,10 @@ public class TransientTcConfig {
 
       String configuration = defaultConfig
           .replace("${HOSTNAME}", node.getNodeHostname())
-          .replace("${NAME}", node.getNodeName())
+          .replace("${NAME}", escapeXml(node.getNodeName()))
           .replace("${BIND}", node.getNodeBindAddress())
           .replace("${PORT}", String.valueOf(node.getNodePort()))
-          .replace("${LOGS}", node.getNodeLogDir().toString())
+          .replace("${LOGS}", escapeXml(node.getNodeLogDir().toString()))
           .replace("${GROUP-BIND}", node.getNodeGroupBindAddress())
           .replace("${GROUP-PORT}", String.valueOf(node.getNodeGroupPort()))
           .replace("${RECONNECT_WINDOW}", String.valueOf((int) (node.getClientReconnectWindow().getUnit().toSeconds(node.getClientReconnectWindow().getQuantity()))));
@@ -72,12 +74,12 @@ public class TransientTcConfig {
 
       if (node.getSecurityAuditLogDir() != null) {
         sb.append("<audit-directory>")
-            .append(parameterSubstitutor.substitute(pathResolver.resolve(node.getSecurityAuditLogDir())))
+            .append(escapeXml(parameterSubstitutor.substitute(pathResolver.resolve(node.getSecurityAuditLogDir()).toString())))
             .append("</audit-directory>");
       }
 
       sb.append("<security-root-directory>")
-          .append(parameterSubstitutor.substitute(pathResolver.resolve(node.getSecurityDir())))
+          .append(escapeXml(parameterSubstitutor.substitute(pathResolver.resolve(node.getSecurityDir())).toString()))
           .append("</security-root-directory>");
 
       if (node.isSecuritySslTls()) {
@@ -108,7 +110,7 @@ public class TransientTcConfig {
         "    </data:data-directories>\n" +
         "    </config>\n";
 
-    return dataDirectoryConfig.replace("${DATA_DIR}", parameterSubstitutor.substitute(pathResolver.resolve(node.getNodeMetadataDir())).toString());
+    return dataDirectoryConfig.replace("${DATA_DIR}", escapeXml(parameterSubstitutor.substitute(pathResolver.resolve(node.getNodeMetadataDir())).toString()));
   }
 
   private String getOffHeapConfig() {
@@ -117,12 +119,12 @@ public class TransientTcConfig {
 
     String middle = node.getOffheapResources().entrySet()
         .stream()
-        .map(entry -> "<ohr:resource name=\"" + entry.getKey() + "\" unit=\"" + entry.getValue().getUnit().getShortName() + "\">" + entry.getValue().getQuantity(entry.getValue().getUnit()) + "</ohr:resource>")
+        .map(entry -> "<ohr:resource name=\"" + escapeXml(entry.getKey()) + "\" unit=\"" + entry.getValue().getUnit().getShortName() + "\">" + entry.getValue().getQuantity(entry.getValue().getUnit()) + "</ohr:resource>")
         .collect(Collectors.joining("\n"));
 
     String suffix =
         "      </ohr:offheap-resources>\n" +
-        "    </config>\n";
+            "    </config>\n";
 
     return prefix + middle + suffix;
   }
