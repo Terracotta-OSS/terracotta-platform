@@ -12,7 +12,7 @@
     </config>
     <service>
       <connection-leasing xmlns="http://www.terracotta.org/service/lease">
-        <lease-length unit="seconds">20</lease-length>
+        <lease-length unit="seconds">150</lease-length>
       </connection-leasing>
     </service>
     <config>
@@ -37,7 +37,7 @@
                   </ns2:config>
                   <ns2:service>
                     <connection-leasing xmlns="http://www.terracotta.org/service/lease">
-                      <lease-length unit="seconds">20</lease-length>
+                      <lease-length unit="seconds">150</lease-length>
                     </connection-leasing>
                   </ns2:service>
                   <ns2:config>

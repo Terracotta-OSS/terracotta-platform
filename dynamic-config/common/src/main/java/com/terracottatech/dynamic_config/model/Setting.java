@@ -248,7 +248,7 @@ public enum Setting {
 
   CLIENT_LEASE_DURATION(SettingName.CLIENT_LEASE_DURATION,
       false,
-      "20s",
+      "150s",
       CLUSTER,
       extractor(Node::getClientLeaseDuration),
       setter((node, value) -> node.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
