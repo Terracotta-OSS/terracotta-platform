@@ -23,13 +23,13 @@ import org.terracotta.offheapresource.OffHeapResources;
 /**
  * @author Mathieu Carbou
  */
-public class OffheapConfigChangeHandler implements ConfigChangeHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(OffheapConfigChangeHandler.class);
+public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(OffheapResourceConfigChangeHandler.class);
 
   private final OffHeapResources offHeapResources;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public OffheapConfigChangeHandler(OffHeapResources offHeapResources, IParameterSubstitutor parameterSubstitutor) {
+  public OffheapResourceConfigChangeHandler(OffHeapResources offHeapResources, IParameterSubstitutor parameterSubstitutor) {
     this.offHeapResources = offHeapResources;
     this.parameterSubstitutor = parameterSubstitutor;
   }

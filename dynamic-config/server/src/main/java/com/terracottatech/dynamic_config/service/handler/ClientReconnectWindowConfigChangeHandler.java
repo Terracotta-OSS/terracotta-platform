@@ -38,7 +38,7 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
 
-    ensureMBeanOperationExists(change);
+    ensureMBeanAttributeExists(change);
 
     Cluster updatedCluster = nodeContext.getCluster();
     try {
@@ -65,13 +65,13 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
     return false;
   }
 
-  private void ensureMBeanOperationExists(Configuration change) throws InvalidConfigChangeException {
+  private void ensureMBeanAttributeExists(Configuration change) throws InvalidConfigChangeException {
     MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     boolean canCall;
     try {
       canCall = Stream
           .of(mbeanServer.getMBeanInfo(TC_SERVER_INFO).getAttributes())
-          .anyMatch(op -> "ReconnectWindowTimeout".equals(op.getName()) && op.isReadable() && op.isWritable());
+          .anyMatch(attr -> "ReconnectWindowTimeout".equals(attr.getName()) && attr.isReadable() && attr.isWritable());
     } catch (JMException e) {
       LOGGER.error("MBeanServer::getMBeanInfo resulted in:", e);
       canCall = false;

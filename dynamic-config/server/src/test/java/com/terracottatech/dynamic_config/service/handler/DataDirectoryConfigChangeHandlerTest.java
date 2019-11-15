@@ -24,7 +24,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class DataRootConfigChangeHandlerTest {
+public class DataDirectoryConfigChangeHandlerTest {
 
   private NodeContext topology = new NodeContext(new Cluster("foo", new Stripe(new Node().setNodeName("bar"))), 1, "bar");
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "/path/to/data/root");
@@ -32,8 +32,8 @@ public class DataRootConfigChangeHandlerTest {
   @Test
   public void testGetConfigWithChange() throws Exception {
     DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataRootConfigChangeHandler dataRootConfigChangeHandler = new DataRootConfigChangeHandler(dataDirectoriesConfig, identity());
-    Cluster updatedXmlConfig = dataRootConfigChangeHandler.tryApply(topology, set.toConfiguration());
+    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, identity());
+    Cluster updatedXmlConfig = dataDirectoryConfigChangeHandler.tryApply(topology, set.toConfiguration());
 
     assertThat(updatedXmlConfig.getSingleNode().get().getDataDirs().entrySet(), Matchers.hasSize(1));
     assertThat(updatedXmlConfig.getSingleNode().get().getDataDirs(), hasEntry("new-root", Paths.get("/path/to/data/root")));
@@ -42,9 +42,9 @@ public class DataRootConfigChangeHandlerTest {
   @Test
   public void testApplyChange() {
     DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataRootConfigChangeHandler dataRootConfigChangeHandler = new DataRootConfigChangeHandler(dataDirectoriesConfig, identity());
+    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, identity());
 
-    dataRootConfigChangeHandler.apply(set.toConfiguration());
+    dataDirectoryConfigChangeHandler.apply(set.toConfiguration());
 
     verify(dataDirectoriesConfig).addDataDirectory("new-root", "/path/to/data/root");
   }

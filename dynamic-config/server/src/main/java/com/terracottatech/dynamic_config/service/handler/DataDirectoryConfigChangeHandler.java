@@ -17,13 +17,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Handles dynamic data-directory additions
  */
-public class DataRootConfigChangeHandler implements ConfigChangeHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DataRootConfigChangeHandler.class);
+public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoryConfigChangeHandler.class);
 
   private final DataDirectoriesConfig dataDirectoriesConfig;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public DataRootConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig, IParameterSubstitutor parameterSubstitutor) {
+  public DataDirectoryConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig, IParameterSubstitutor parameterSubstitutor) {
     this.dataDirectoriesConfig = dataDirectoriesConfig;
     this.parameterSubstitutor = parameterSubstitutor;
   }

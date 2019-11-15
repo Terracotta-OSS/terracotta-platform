@@ -13,10 +13,10 @@ import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.service.handler.ClientReconnectWindowConfigChangeHandler;
-import com.terracottatech.dynamic_config.service.handler.DataRootConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.DataDirectoryConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.FailoverPriorityConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandler;
-import com.terracottatech.dynamic_config.service.handler.OffheapConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ProcessorThreadsConfigChangeHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.slf4j.Logger;
@@ -55,7 +55,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         throw new UnsupportedOperationException("Multiple " + DataDirectoriesConfig.class.getSimpleName() + " not supported");
       }
       if (!dataDirectoriesConfigs.isEmpty()) {
-        ConfigChangeHandler configChangeHandler = new DataRootConfigChangeHandler(dataDirectoriesConfigs.iterator().next(), substitutor);
+        ConfigChangeHandler configChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfigs.iterator().next(), substitutor);
         addToManager(manager, configChangeHandler, DATA_DIRS);
       }
 
@@ -65,7 +65,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         throw new UnsupportedOperationException("Multiple " + OffHeapResources.class.getSimpleName() + " not supported");
       }
       if (!offHeapResources.isEmpty()) {
-        ConfigChangeHandler configChangeHandler = new OffheapConfigChangeHandler(offHeapResources.iterator().next(), substitutor);
+        ConfigChangeHandler configChangeHandler = new OffheapResourceConfigChangeHandler(offHeapResources.iterator().next(), substitutor);
         addToManager(manager, configChangeHandler, OFFHEAP_RESOURCES);
       }
 
