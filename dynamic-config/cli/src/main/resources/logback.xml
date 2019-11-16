@@ -18,9 +18,6 @@
   </appender>
 
   <appender name="STDOUT-DETAIL" class="ch.qos.logback.core.ConsoleAppender">
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>DEBUG</level>
-    </filter>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n</pattern>
     </layout>
