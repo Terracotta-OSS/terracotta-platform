@@ -33,7 +33,6 @@ import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 public class XmlConfigurationTest {
-  
   private final ClusterFactory clusterFactory = new ClusterFactory(identity());
 
   @Rule
