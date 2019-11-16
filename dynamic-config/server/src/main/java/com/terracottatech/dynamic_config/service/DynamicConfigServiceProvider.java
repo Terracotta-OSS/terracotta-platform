@@ -18,6 +18,7 @@ import com.terracottatech.dynamic_config.service.handler.FailoverPriorityConfigC
 import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ProcessorThreadsConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.ServerAttributeConfigChangeHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,9 @@ import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.reje
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_LOG_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
 
@@ -79,6 +83,14 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         // client-reconnect-window
         ConfigChangeHandler configChangeHandler = new ClientReconnectWindowConfigChangeHandler(substitutor);
         addToManager(manager, configChangeHandler, CLIENT_RECONNECT_WINDOW);
+      }
+
+      {
+        // server attributes
+        ConfigChangeHandler configChangeHandler = new ServerAttributeConfigChangeHandler(substitutor);
+        addToManager(manager, configChangeHandler, NODE_LOG_DIR);
+        addToManager(manager, configChangeHandler, NODE_BIND_ADDRESS);
+        addToManager(manager, configChangeHandler, NODE_GROUP_BIND_ADDRESS);
       }
 
       // tc-properties

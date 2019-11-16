@@ -53,7 +53,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     String dataDirectoryName = change.getKey();
     String dataDirectoryPath = change.getValue();
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
-    LOGGER.info("Data directory: {} with path: {} added", dataDirectoryName, dataDirectoryPath);
+    LOGGER.info("Added data-dir: {} with path: {}", dataDirectoryName, dataDirectoryPath);
     return true;
   }
 }

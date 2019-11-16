@@ -336,11 +336,51 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority=consistency:2");
+    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();
     ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority");
     waitedAssert(out::getLog, containsString("failover-priority=consistency:2"));
+  }
+
+  @Test
+  public void setNodeLogDir_postActivation() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-log-dir=logs/stripe1");
+    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-log-dir");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1"));
+  }
+
+  @Test
+  public void setNodeBindAddress_postActivation() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-bind-address=127.0.0.1");
+    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-bind-address");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-bind-address=127.0.0.1"));
+  }
+
+  @Test
+  public void setNodeGroupBindAddress_postActivation() throws Exception {
+    activateCluster();
+
+    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-group-bind-address=127.0.0.1");
+    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-group-bind-address");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
   }
 
   private void activateCluster() throws Exception {
