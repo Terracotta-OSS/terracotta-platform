@@ -112,7 +112,7 @@ public class RestartService {
     LOGGER.debug("Waiting for node {} to restart", addr);
     TimeBudget timeBudget = new TimeBudget(requestTimeout.toMillis(), MILLISECONDS);
     boolean restarted = false;
-    while (!restarted && timeBudget.remaining(MILLISECONDS) > 0) {
+    while (!restarted && timeBudget.remaining() > 0) {
       restarted = nodeRestarted(addr);
     }
     if (!restarted) {
