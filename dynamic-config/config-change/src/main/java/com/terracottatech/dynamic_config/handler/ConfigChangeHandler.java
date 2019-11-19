@@ -34,23 +34,13 @@ public interface ConfigChangeHandler {
    * Handler that will return null to reject a change
    */
   static ConfigChangeHandler reject() {
-    return new ConfigChangeHandler() {
-      @Override
-      public Cluster tryApply(NodeContext baseConfig, Configuration change) {
-        return null;
-      }
-    };
+    return (baseConfig, change) -> null;
   }
 
   /**
    * Handler that will do nothing
    */
   static ConfigChangeHandler noop() {
-    return new ConfigChangeHandler() {
-      @Override
-      public Cluster tryApply(NodeContext baseConfig, Configuration change) {
-        return baseConfig.getCluster();
-      }
-    };
+    return (baseConfig, change) -> baseConfig.getCluster();
   }
 }

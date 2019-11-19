@@ -25,6 +25,7 @@ import static com.tc.management.beans.L2MBeanNames.TC_SERVER_INFO;
 
 public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientReconnectWindowConfigChangeHandler.class);
+  private static final String ATTR_NAME = "ReconnectWindowTimeout";
 
   private final IParameterSubstitutor parameterSubstitutor;
 
@@ -55,13 +56,13 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
     int value = (int) Measure.parse(change.getValue(), TimeUnit.class).getQuantity(TimeUnit.SECONDS);
     MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     try {
-      mbeanServer.setAttribute(TC_SERVER_INFO, new Attribute("ReconnectWindowTimeout", value));
+      mbeanServer.setAttribute(TC_SERVER_INFO, new Attribute(ATTR_NAME, value));
     } catch (JMException e) {
       LOGGER.error("Invoke resulted in exception", e); // log the exception so that server logs get it too
       throw new AssertionError(e);
     }
 
-    LOGGER.info("client-reconnect-window set to: {}", change.getValue());
+    LOGGER.info("Set {} to: {}", change.getSetting(), change.getValue());
     return false;
   }
 
@@ -71,7 +72,7 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
     try {
       canCall = Stream
           .of(mbeanServer.getMBeanInfo(TC_SERVER_INFO).getAttributes())
-          .anyMatch(attr -> "ReconnectWindowTimeout".equals(attr.getName()) && attr.isReadable() && attr.isWritable());
+          .anyMatch(attr -> ATTR_NAME.equals(attr.getName()) && attr.isReadable() && attr.isWritable());
     } catch (JMException e) {
       LOGGER.error("MBeanServer::getMBeanInfo resulted in:", e);
       canCall = false;

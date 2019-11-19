@@ -54,7 +54,7 @@ public class ServerAttributeConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
   public boolean apply(Configuration change) {
-    LOGGER.info("Set {} to: {}", change.getSetting().toString(), change.getValue());
+    LOGGER.info("Set {} to: {}. Change will be applied upon server restart.", change.getSetting(), change.getValue());
     return false;
   }
 

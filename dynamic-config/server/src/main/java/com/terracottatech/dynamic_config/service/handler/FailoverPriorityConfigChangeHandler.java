@@ -24,23 +24,24 @@ public class FailoverPriorityConfigChangeHandler implements ConfigChangeHandler 
   }
 
   @Override
-  public Cluster tryApply(final NodeContext nodeContext, final Configuration change) throws InvalidConfigChangeException {
+  public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
-    Cluster updatedCluster = nodeContext.getCluster();
+
     try {
       FailoverPriority.valueOf(change.getValue());
+      Cluster updatedCluster = nodeContext.getCluster();
       change.apply(updatedCluster, parameterSubstitutor);
+      return updatedCluster;
     } catch (Exception e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }
-    return updatedCluster;
   }
 
   @Override
   public boolean apply(Configuration change) {
-    LOGGER.info("Set failover-priority to: {}", change.getValue());
+    LOGGER.info("Set {} to: {}. Change will be applied upon server restart.", change.getSetting().toString(), change.getValue());
     return false;
   }
 }
