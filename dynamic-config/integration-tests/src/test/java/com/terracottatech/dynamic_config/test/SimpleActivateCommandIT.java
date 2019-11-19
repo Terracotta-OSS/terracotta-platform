@@ -72,7 +72,7 @@ public class SimpleActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All nodes came back up: localhost:" + ports[0]));
+    waitedAssert(out::getLog, containsString("came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
   }
 
@@ -83,7 +83,7 @@ public class SimpleActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("All nodes came back up: localhost:" + ports[0]));
+    waitedAssert(out::getLog, containsString("came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 
     // TDB-4726

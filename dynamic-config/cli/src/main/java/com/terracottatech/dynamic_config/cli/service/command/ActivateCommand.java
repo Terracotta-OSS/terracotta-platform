@@ -78,7 +78,6 @@ public class ActivateCommand extends RemoteCommand {
 
     // check if we want to override the cluster name
     if (clusterName != null) {
-      logger.info("Setting cluster name to: {}", clusterName);
       cluster.setName(clusterName);
     } else {
       clusterName = cluster.getName();
@@ -109,7 +108,7 @@ public class ActivateCommand extends RemoteCommand {
 
       logger.info("Restarting nodes: {}", toString(runtimePeers));
       restartNodes(runtimePeers);
-      logger.info("All nodes came back up: {}", toString(runtimePeers));
+      logger.info("All nodes: {} came back up", toString(runtimePeers));
     }
 
     logger.info("Command successful!\n");

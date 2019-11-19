@@ -64,6 +64,7 @@ public class RestartService {
             diagnosticService.getProxy(DynamicConfigService.class).restart();
           } catch (DiagnosticOperationTimeoutException e) {
             // This operation times out (DiagnosticOperationTimeoutException) because the nodes have shut down. All good.
+            LOGGER.debug("Diagnostic operation timed out", e);
           } catch (Exception e) {
             // report the failure in the completable future
             Tuple2<String, Exception> err = tuple2("Failed asking node " + addr + " to restart: " + e.getMessage(), e);

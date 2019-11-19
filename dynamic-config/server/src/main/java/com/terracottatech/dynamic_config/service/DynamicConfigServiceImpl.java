@@ -91,6 +91,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.debug("Setting nomad writable successful");
 
     clusterActivated = true;
+    LOGGER.info("Node activation successful");
   }
 
   /**
