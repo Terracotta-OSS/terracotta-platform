@@ -271,7 +271,7 @@ public class ActivateCommandTest extends BaseTest {
 
     IntStream.of(ports).forEach(rethrow(port -> {
       verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(nomadServerMock("localhost", port), times(2)).discover();
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     }));

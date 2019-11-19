@@ -5,6 +5,8 @@
 package com.terracottatech.dynamic_config.diagnostic;
 
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.utilities.Measure;
+import com.terracottatech.utilities.TimeUnit;
 
 /**
  * @author Mathieu Carbou
@@ -13,8 +15,10 @@ public interface DynamicConfigService {
 
   /**
    * Restarts this node by invoking the appropriate platform APIs. Useful when a node needs to be restarted after activation.
+   *
+   * @param delay initial delay
    */
-  void restart();
+  void restart(Measure<TimeUnit> delay);
 
   /**
    * Changes the in-memory cluster to a new one for this node while it is still not activated.

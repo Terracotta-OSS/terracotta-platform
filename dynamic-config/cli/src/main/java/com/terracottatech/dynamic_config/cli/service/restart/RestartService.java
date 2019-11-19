@@ -8,9 +8,10 @@ import com.terracottatech.diagnostic.client.DiagnosticOperationTimeoutException;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
-import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProviderException;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
+import com.terracottatech.utilities.Measure;
+import com.terracottatech.utilities.TimeUnit;
 import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class RestartService {
         .map(addr -> CompletableFuture.runAsync(() -> {
           LOGGER.debug("Asking node {} to restart", addr);
           try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
-            diagnosticService.getProxy(DynamicConfigService.class).restart();
+            diagnosticService.getProxy(DynamicConfigService.class).restart(Measure.of(2, TimeUnit.SECONDS));
           } catch (DiagnosticOperationTimeoutException e) {
             // This operation times out (DiagnosticOperationTimeoutException) because the nodes have shut down. All good.
             LOGGER.debug("Diagnostic operation timed out", e);
@@ -88,9 +89,9 @@ public class RestartService {
       try {
         // wait for the restart calls to all be done
         // note: we do not use the timeout call here because it is useless.
-        // all calls to diagnostic service already have a default timeout, plus the Awaitility.
+        // all calls to diagnostic service already have a default timeout
         // so we can safely wait for them to finish or time out
-        LOGGER.debug("Waiting for all cluster nodes to restart: {}", addresses);
+        LOGGER.debug("Waiting for all cluster nodes: {} to restart", addresses);
         all.get();
         return failures;
 
@@ -113,28 +114,36 @@ public class RestartService {
     LOGGER.debug("Waiting for node {} to restart", addr);
     TimeBudget timeBudget = new TimeBudget(requestTimeout.toMillis(), MILLISECONDS);
     boolean restarted = false;
+    int tries = 0;
     while (!restarted && timeBudget.remaining() > 0) {
       restarted = nodeRestarted(addr);
+      tries++;
+      if (!restarted) {
+        try {
+          long sleepDuration = Math.min(1000, requestTimeout.dividedBy(5).toMillis()); //Use a small backoff time
+          Thread.sleep(sleepDuration);
+        } catch (InterruptedException e) {
+          LOGGER.debug("Received exception", e);
+          Thread.currentThread().interrupt();
+        }
+      }
     }
+
     if (!restarted) {
-      throw new TimeoutException("Waiting for node " + addr + " to restart timed out after " + requestTimeout.toMillis() + "ms");
+      throw new TimeoutException("Attempt to restart node " + addr + " aborted after " + tries + " tries");
     }
   }
 
   private boolean nodeRestarted(InetSocketAddress addr) {
     LOGGER.debug("Checking if node {} has restarted", addr);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
-      // STARTING is the state used when starting node in diagnostic mode
+    // Use a small timeout because we're polling the servers for status continuously
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr, requestTimeout.dividedBy(5))) {
       LogicalServerState state = diagnosticService.getLogicalServerState();
-      // Note: STARTING is the state used when a server is blocked starting in diagnostic mode
+      // STARTING is the state when server hasn't finished its startup yet
       return state != null && state != UNREACHABLE && state != UNKNOWN && state != STARTING && state != UNINITIALIZED;
-    } catch (DiagnosticServiceProviderException e) {
-      LOGGER.debug("Node {} didn't restarted yet: {}", e.getMessage(), e);
-      return false;
     } catch (Exception e) {
-      LOGGER.debug("Unable to query status for node {}: {}", e.getMessage(), e);
+      LOGGER.debug("Status query for node failed", e);
       return false;
     }
   }
-
 }

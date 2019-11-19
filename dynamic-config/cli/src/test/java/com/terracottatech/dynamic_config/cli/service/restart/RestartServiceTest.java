@@ -32,10 +32,13 @@ import static com.terracottatech.tools.detailed.state.LogicalServerState.UNKNOWN
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
 import static com.terracottatech.utilities.TimeUnit.SECONDS;
 import static com.terracottatech.utilities.mockito.Mocks.sleep;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -81,7 +84,7 @@ public class RestartServiceTest extends BaseTest {
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     });
   }
@@ -92,14 +95,14 @@ public class RestartServiceTest extends BaseTest {
 
     IntStream.of(PORTS).forEach(port -> {
       DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
-      doThrow(new DiagnosticOperationTimeoutException("")).when(dynamicConfigService).restart();
+      doThrow(new DiagnosticOperationTimeoutException("")).when(dynamicConfigService).restart(any());
     });
 
     Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     });
   }
@@ -108,7 +111,7 @@ public class RestartServiceTest extends BaseTest {
   public void test_restart_call_fails() throws InterruptedException {
     IntStream.of(PORTS).forEach(port -> {
       DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
-      doThrow(new RuntimeException("error")).when(dynamicConfigService).restart();
+      doThrow(new RuntimeException("error")).when(dynamicConfigService).restart(any());
     });
 
     Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
@@ -123,7 +126,7 @@ public class RestartServiceTest extends BaseTest {
     ));
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(diagnosticServiceMock("localhost", port), times(0)).getLogicalServerState();
     });
   }
@@ -136,17 +139,19 @@ public class RestartServiceTest extends BaseTest {
 
     Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(1)));
-    assertThat(errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()), containsInAnyOrder(
-        "Waiting for node localhost:9411 to restart timed out after 2000ms"
-    ));
+    assertThat(
+        errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()),
+        contains(containsString("Attempt to restart node localhost:9411 aborted"))
+    );
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(diagnosticServiceMock("localhost", port), atLeast(1)).getLogicalServerState();
     });
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void test_server_restart_with_unexpected_state() throws InterruptedException {
     mockSuccessfulServerRestart();
 
@@ -158,16 +163,18 @@ public class RestartServiceTest extends BaseTest {
 
     Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(5)));
-    assertThat(errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()), containsInAnyOrder(
-        "Waiting for node localhost:9411 to restart timed out after 2000ms",
-        "Waiting for node localhost:9412 to restart timed out after 2000ms",
-        "Waiting for node localhost:9413 to restart timed out after 2000ms",
-        "Waiting for node localhost:9421 to restart timed out after 2000ms",
-        "Waiting for node localhost:9422 to restart timed out after 2000ms"
-    ));
+    assertThat(
+        errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()),
+        containsInAnyOrder(containsString("Attempt to restart node localhost:9411 aborted"),
+            containsString("Attempt to restart node localhost:9412 aborted"),
+            containsString("Attempt to restart node localhost:9413 aborted"),
+            containsString("Attempt to restart node localhost:9421 aborted"),
+            containsString("Attempt to restart node localhost:9422 aborted")
+        )
+    );
 
     IntStream.of(PORTS).forEach(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart();
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(diagnosticServiceMock("localhost", port), atLeast(1)).getLogicalServerState();
     });
   }
@@ -189,7 +196,7 @@ public class RestartServiceTest extends BaseTest {
 
     IntStream.of(PORTS).forEach(port -> {
       DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
-      doNothing().when(dynamicConfigService).restart();
+      doNothing().when(dynamicConfigService).restart(any());
     });
   }
 

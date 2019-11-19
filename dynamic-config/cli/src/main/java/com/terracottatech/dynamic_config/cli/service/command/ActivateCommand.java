@@ -105,11 +105,11 @@ public class ActivateCommand extends RemoteCommand {
 
       runNomadChange(new ArrayList<>(runtimePeers), new ClusterActivationNomadChange(cluster));
       logger.debug("Configuration repositories have been created for all nodes");
-
-      logger.info("Restarting nodes: {}", toString(runtimePeers));
-      restartNodes(runtimePeers);
-      logger.info("All nodes: {} came back up", toString(runtimePeers));
     }
+
+    logger.info("Restarting nodes: {}", toString(runtimePeers));
+    restartNodes(runtimePeers);
+    logger.info("All nodes: {} came back up", toString(runtimePeers));
 
     logger.info("Command successful!\n");
   }
