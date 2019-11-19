@@ -136,5 +136,7 @@ public class GetCommandIT extends BaseStartupIT {
     ConfigTool.main("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
     ConfigTool.main("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2], "localhost:" + ports[3]);
     ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
   }
 }

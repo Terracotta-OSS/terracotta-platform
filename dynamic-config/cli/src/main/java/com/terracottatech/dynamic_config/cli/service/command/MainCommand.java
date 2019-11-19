@@ -31,11 +31,14 @@ public class MainCommand extends Command {
   @Parameter(names = {"-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
 
+  @Parameter(names = {"-rd", "--restart-delay"}, description = "Restart delay", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+
   @Override
   public void run() {
     if (verbose) {
       Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-      rootLogger.setLevel(Level.TRACE);
+      rootLogger.setLevel(Level.INFO);
       Appender<ILoggingEvent> detailAppender = rootLogger.getAppender("STDOUT-DETAIL");
 
       Logger configToolLogger = (Logger) LoggerFactory.getLogger("com.terracottatech.dynamic_config");
@@ -61,6 +64,10 @@ public class MainCommand extends Command {
 
   public Measure<TimeUnit> getConnectionTimeout() {
     return connectionTimeout;
+  }
+
+  public Measure<TimeUnit> getRestartDelay() {
+    return restartDelay;
   }
 
   public String getSecurityRootDirectory() {

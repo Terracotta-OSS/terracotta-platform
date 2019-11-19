@@ -4,8 +4,6 @@
  */
 package com.terracottatech.dynamic_config.cli.service.restart;
 
-import com.terracottatech.utilities.Tuple2;
-
 import java.net.InetSocketAddress;
 import java.util.Map;
 
@@ -13,5 +11,5 @@ import java.util.Map;
  * @author Mathieu Carbou
  */
 public interface RestartProgress {
-  Map<InetSocketAddress, Tuple2<String, Exception>> await() throws InterruptedException;
+  Map<InetSocketAddress, Exception> await() throws InterruptedException;
 }

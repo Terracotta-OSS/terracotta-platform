@@ -18,8 +18,6 @@ import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerMana
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformService;
@@ -30,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -142,18 +141,25 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void restart(Measure<TimeUnit> delay) {
-    LOGGER.info("Restarting self in {}", delay);
-    new Thread(() -> {
-      try {
-        // The delay helps the caller close the connection while it's live, otherwise it gets stuck for request timeout duration
-        Thread.sleep(delay.getQuantity(TimeUnit.MILLISECONDS));
-      } catch (InterruptedException e) {
-        LOGGER.debug("Received exception", e);
-        Thread.currentThread().interrupt();
+  public void restart(Duration delayInSeconds) {
+    // The delay helps the caller close the connection while it's live, otherwise it gets stuck for request timeout duration
+    final long millis = delayInSeconds.toMillis();
+    if (millis < 0) {
+      throw new IllegalArgumentException("Invalid delay: " + delayInSeconds);
+    }
+    LOGGER.info("Node: {} in stripe: {} will restart in: {} seconds", runtimeNodeContext.getNodeName(), runtimeNodeContext.getStripeId(), delayInSeconds);
+    new Thread(getClass().getSimpleName() + "-DelayedRestart") {
+      @Override
+      public void run() {
+        try {
+          sleep(millis);
+        } catch (InterruptedException e) {
+          // do nothing, still try to kill server
+        }
+        LOGGER.info("Executing restart on node: {} in stripe: {}", runtimeNodeContext.getNodeName(), runtimeNodeContext.getStripeId());
+        TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
       }
-      TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
-    }).start();
+    }.start();
   }
 
   @Override

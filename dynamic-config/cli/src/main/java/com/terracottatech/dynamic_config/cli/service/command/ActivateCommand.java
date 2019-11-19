@@ -100,12 +100,14 @@ public class ActivateCommand extends RemoteCommand {
   @Override
   public final void run() {
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
-      prepareActivation(diagnosticServices);
+      dynamicConfigServices(diagnosticServices)
+          .map(Tuple2::getT2)
+          .forEach(service -> service.prepareActivation(cluster, read(licenseFile)));
       logger.info("License installation successful");
-
-      runNomadChange(new ArrayList<>(runtimePeers), new ClusterActivationNomadChange(cluster));
-      logger.debug("Configuration repositories have been created for all nodes");
     }
+
+    runNomadChange(new ArrayList<>(runtimePeers), new ClusterActivationNomadChange(cluster));
+    logger.debug("Configuration repositories have been created for all nodes");
 
     logger.info("Restarting nodes: {}", toString(runtimePeers));
     restartNodes(runtimePeers);
@@ -154,12 +156,6 @@ public class ActivateCommand extends RemoteCommand {
       logger.debug("Config property file parsed and cluster topology validation successful");
     }
     return cluster;
-  }
-
-  private void prepareActivation(DiagnosticServices diagnosticServices) {
-    dynamicConfigServices(diagnosticServices)
-        .map(Tuple2::getT2)
-        .forEach(service -> service.prepareActivation(cluster, read(licenseFile)));
   }
 
   private static String read(Path path) {

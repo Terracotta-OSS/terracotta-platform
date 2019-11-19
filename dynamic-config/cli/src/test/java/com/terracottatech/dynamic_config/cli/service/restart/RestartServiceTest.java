@@ -7,11 +7,11 @@ package com.terracottatech.dynamic_config.cli.service.restart;
 import com.terracottatech.diagnostic.client.DiagnosticOperationTimeoutException;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
+import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProviderException;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.utilities.Tuple2;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +27,7 @@ import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.ACTIVE;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.STARTING;
+import static com.terracottatech.tools.detailed.state.LogicalServerState.SYNCHRONIZING;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNINITIALIZED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNKNOWN;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
@@ -61,7 +62,7 @@ public class RestartServiceTest extends BaseTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing(), Duration.ofSeconds(2));
+    restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing(), Duration.ofSeconds(2), Duration.ofSeconds(4));
     cluster = new Cluster(
         "my-cluster",
         new Stripe(
@@ -80,7 +81,7 @@ public class RestartServiceTest extends BaseTest {
   public void test_restart() throws InterruptedException {
     mockSuccessfulServerRestart();
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
+    Map<InetSocketAddress, Exception> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -98,7 +99,7 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticOperationTimeoutException("")).when(dynamicConfigService).restart(any());
     });
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
+    Map<InetSocketAddress, Exception> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -111,18 +112,12 @@ public class RestartServiceTest extends BaseTest {
   public void test_restart_call_fails() throws InterruptedException {
     IntStream.of(PORTS).forEach(port -> {
       DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
-      doThrow(new RuntimeException("error")).when(dynamicConfigService).restart(any());
+      doThrow(new DiagnosticServiceProviderException("error")).when(dynamicConfigService).restart(any());
     });
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
+    Map<InetSocketAddress, Exception> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.size(), is(equalTo(6)));
-    assertThat(errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()), containsInAnyOrder(
-        "Failed asking node localhost:9411 to restart: error",
-        "Failed asking node localhost:9412 to restart: error",
-        "Failed asking node localhost:9413 to restart: error",
-        "Failed asking node localhost:9421 to restart: error",
-        "Failed asking node localhost:9422 to restart: error",
-        "Failed asking node localhost:9423 to restart: error"
+    assertThat(errors.values().stream().map(Throwable::getMessage).collect(Collectors.toList()), containsInAnyOrder("error", "error", "error", "error", "error", "error"
     ));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -135,13 +130,13 @@ public class RestartServiceTest extends BaseTest {
   public void test_stats_call_times_out() throws InterruptedException {
     mockSuccessfulServerRestart();
 
-    when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenAnswer(sleep(5, SECONDS));
+    when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenAnswer(sleep(SYNCHRONIZING, 2, SECONDS));
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
+    Map<InetSocketAddress, Exception> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(1)));
     assertThat(
-        errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()),
-        contains(containsString("Attempt to restart node localhost:9411 aborted"))
+        errors.values().stream().map(Throwable::getMessage).collect(Collectors.toList()),
+        contains(containsString("Waiting for node localhost:9411 to restart timed out"))
     );
 
     IntStream.of(PORTS).forEach(port -> {
@@ -161,15 +156,16 @@ public class RestartServiceTest extends BaseTest {
     when(diagnosticServiceMock("localhost", 9421).getLogicalServerState()).thenReturn(STARTING);
     when(diagnosticServiceMock("localhost", 9422).getLogicalServerState()).thenReturn(UNINITIALIZED);
 
-    Map<InetSocketAddress, Tuple2<String, Exception>> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
+    Map<InetSocketAddress, Exception> errors = restartService.restartNodes(cluster.getNodeAddresses()).await();
     assertThat(errors.toString(), errors.size(), is(equalTo(5)));
     assertThat(
-        errors.values().stream().map(Tuple2::getT1).collect(Collectors.toList()),
-        containsInAnyOrder(containsString("Attempt to restart node localhost:9411 aborted"),
-            containsString("Attempt to restart node localhost:9412 aborted"),
-            containsString("Attempt to restart node localhost:9413 aborted"),
-            containsString("Attempt to restart node localhost:9421 aborted"),
-            containsString("Attempt to restart node localhost:9422 aborted")
+        errors.values().stream().map(Throwable::getMessage).collect(Collectors.toList()),
+        containsInAnyOrder(
+            containsString("Waiting for node localhost:9411 to restart timed out"),
+            containsString("Waiting for node localhost:9412 to restart timed out"),
+            containsString("Waiting for node localhost:9413 to restart timed out"),
+            containsString("Waiting for node localhost:9421 to restart timed out"),
+            containsString("Waiting for node localhost:9422 to restart timed out")
         )
     );
 

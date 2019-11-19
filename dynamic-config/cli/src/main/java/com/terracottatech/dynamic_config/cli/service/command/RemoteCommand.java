@@ -110,11 +110,11 @@ public abstract class RemoteCommand extends Command {
     logger.trace("restartNodes({})", addresses);
     try {
       RestartProgress progress = restartService.restartNodes(addresses);
-      Map<InetSocketAddress, Tuple2<String, Exception>> failures = progress.await();
+      Map<InetSocketAddress, Exception> failures = progress.await();
       if (!failures.isEmpty()) {
         String failedNodes = failures.entrySet()
             .stream()
-            .map(e -> e.getKey() + ": " + e.getValue().t1)
+            .map(e -> "Error when restarting node: " + e.getKey() + ": " + e.getValue().getMessage())
             .collect(joining("\n - "));
         throw new IllegalStateException("Some nodes failed to restart:\n - " + failedNodes);
       }
@@ -208,6 +208,6 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected static String toString(Collection<InetSocketAddress> addresses) {
-    return addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(", "));
+    return addresses.stream().map(InetSocketAddress::toString).sorted().collect(Collectors.joining(", "));
   }
 }

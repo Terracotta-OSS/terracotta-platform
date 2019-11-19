@@ -74,7 +74,7 @@ public abstract class BaseTest {
     };
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
     nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()), false);
-    restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeout);
+    restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeout, Duration.ofSeconds(20));
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {
