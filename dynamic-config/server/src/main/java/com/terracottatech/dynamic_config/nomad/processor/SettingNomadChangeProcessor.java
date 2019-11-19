@@ -13,6 +13,8 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.server.NomadException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 
@@ -25,6 +27,7 @@ import static java.util.Objects.requireNonNull;
  * to fire the Nomad change request to the right handler
  */
 public class SettingNomadChangeProcessor implements NomadChangeProcessor<SettingNomadChange> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SettingNomadChangeProcessor.class);
 
   private final TopologyService topologyService;
   private final ConfigChangeHandlerManager manager;
@@ -44,16 +47,25 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
       // Note the call to baseConfig.clone() which is important
       NodeContext clone = baseConfig.clone();
       Configuration configuration = change.toConfiguration(clone.getCluster());
-
       configuration.validate(change.getOperation(), parameterSubstitutor);
 
-      Cluster updated = getConfigChangeHandlerManager(change).tryApply(clone, configuration);
+      ConfigChangeHandler configChangeHandler = getConfigChangeHandlerManager(change);
+      LOGGER.debug("NodeContext before tryApply(): {}", clone);
+      Cluster updated = configChangeHandler.tryApply(clone, configuration);
 
-      return updated == null ? // null marks the change as rejected
-          null :
-          baseConfig.getCluster().equals(updated) ? // check if there has been an update
-              baseConfig :
-              new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
+      if (updated == null) {
+        LOGGER.debug("Change: {} rejected in config change handler: {}", change, configChangeHandler.getClass().getSimpleName());
+        return null;
+      } else {
+        if (baseConfig.getCluster().equals(updated)) {
+          LOGGER.debug("Cluster not updated for change: {} in config change handler: {}", change, configChangeHandler.getClass().getSimpleName());
+          return baseConfig;
+        } else {
+          LOGGER.info("Cluster updated to: {} for change: {} in: {}", updated, change, configChangeHandler.getClass().getSimpleName());
+          // Make a new NodeContext object just in case a clone of the original Cluster was returned from tryApply
+          return new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
+        }
+      }
     } catch (Exception e) {
       throw new NomadException(e.getMessage(), e);
     }

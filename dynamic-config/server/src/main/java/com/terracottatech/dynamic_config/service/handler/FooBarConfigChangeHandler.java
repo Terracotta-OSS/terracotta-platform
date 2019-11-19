@@ -20,7 +20,7 @@ public class FooBarConfigChangeHandler implements ConfigChangeHandler {
     // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE
 
     //TODO here: validate and udpate the cluster model
-    Cluster updatedCluster = baseConfig.getCluster().clone();
+    Cluster updatedCluster = baseConfig.getCluster();
     change.apply(updatedCluster, IParameterSubstitutor.identity());
 
     return updatedCluster;

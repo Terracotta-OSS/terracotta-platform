@@ -52,7 +52,7 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
         }
       }
 
-      Cluster updatedCluster = baseConfig.getCluster().clone();
+      Cluster updatedCluster = baseConfig.getCluster();
       change.apply(updatedCluster, parameterSubstitutor);
 
       LOGGER.debug("Validating the update cluster: {} against the license", updatedCluster);
