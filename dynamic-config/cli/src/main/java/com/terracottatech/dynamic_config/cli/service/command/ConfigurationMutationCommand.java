@@ -91,7 +91,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // do we need to restart to apply the serie fo change ?
       Collection<String> settingsRequiringRestart = findSettingsRequiringRestart();
       if (!settingsRequiringRestart.isEmpty()) {
-        logger.info("=========\nIMPORTANT\n=========\n\nA restart of the cluster is required to apply the following changes:" +
+        logger.warn("\n=========\nIMPORTANT\n=========\n\nA restart of the cluster is required to apply the following changes:" +
             "\n - {}\n", String.join("\n - ", settingsRequiringRestart));
       }
 
