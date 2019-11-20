@@ -13,9 +13,7 @@ import com.terracottatech.store.definition.CellDefinition;
 import com.terracottatech.store.definition.StringCellDefinition;
 import com.terracottatech.store.manager.DatasetManager;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
@@ -28,8 +26,6 @@ import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 
 public class ActivateCommandIT extends BaseStartupIT {
-  @Rule
-  public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
   public ActivateCommandIT() {
     super(2, 2);
@@ -56,11 +52,11 @@ public class ActivateCommandIT extends BaseStartupIT {
   @Test
   public void testMultiNodeSingleStripeActivation() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
+    ConfigTool.start("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
@@ -74,7 +70,7 @@ public class ActivateCommandIT extends BaseStartupIT {
   @Test
   public void testMultiNodeSingleStripeActivationWithConfigFile() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main(
+    ConfigTool.start(
         "-r", TIMEOUT + "s",
         "activate",
         "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString(),
@@ -93,11 +89,11 @@ public class ActivateCommandIT extends BaseStartupIT {
   @Test
   public void testMultiStripeActivation() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
+    ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
     waitedAssert(out::getLog, containsString("Command successful"));
 
     out.clearLog();
-    ConfigTool.main("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
     ));
@@ -112,7 +108,7 @@ public class ActivateCommandIT extends BaseStartupIT {
   @Test
   public void testMultiStripeActivationWithConfigFile() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.main(
+    ConfigTool.start(
         "-r", TIMEOUT + "s",
         "activate",
         "-f", copyConfigProperty("/config-property-files/multi-stripe.properties").toString(),

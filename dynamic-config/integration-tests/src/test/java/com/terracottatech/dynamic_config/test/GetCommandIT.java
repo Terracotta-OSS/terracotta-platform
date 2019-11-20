@@ -6,9 +6,7 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.cli.ConfigTool;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 
 import java.util.Arrays;
 
@@ -20,9 +18,6 @@ public class GetCommandIT extends BaseStartupIT {
   public GetCommandIT() {
     super(2, 2);
   }
-
-  @Rule
-  public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
 
   @Before
   public void setUp() {

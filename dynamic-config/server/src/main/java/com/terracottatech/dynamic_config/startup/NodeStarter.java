@@ -6,5 +6,5 @@ package com.terracottatech.dynamic_config.startup;
 
 @FunctionalInterface
 interface NodeStarter {
-  void startNode();
+  boolean startNode();
 }

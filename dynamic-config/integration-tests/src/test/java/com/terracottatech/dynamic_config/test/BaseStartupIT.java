@@ -22,7 +22,6 @@ import org.awaitility.Duration;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Rule;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.slf4j.Logger;
@@ -75,8 +74,6 @@ public class BaseStartupIT {
   @Rule
   public final PortLockingRule ports;
 
-  @Rule
-  public final ExpectedSystemExit systemExit = ExpectedSystemExit.none();
   @Rule
   public final TmpDir tmpDir = new TmpDir();
 

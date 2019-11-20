@@ -4,18 +4,20 @@
  */
 package com.terracottatech.dynamic_config.test;
 
+import com.beust.jcommander.ParameterException;
 import com.terracottatech.dynamic_config.cli.ConfigTool;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.ExpectedException;
 
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 
 public class SimpleGetCommandIT extends BaseStartupIT {
+
   @Rule
-  public ExpectedSystemExit systemExit = ExpectedSystemExit.none();
+  public ExpectedException exception = ExpectedException.none();
 
   @Before
   public void setUp() {
@@ -36,51 +38,51 @@ public class SimpleGetCommandIT extends BaseStartupIT {
 
   @Test
   public void testNode_getOneOffheap_unknownOffheap() {
-    systemExit.expectSystemExit();
-    systemExit.checkAssertionAfterwards(() -> waitedAssert(out::getLog, containsString("No configuration found for: offheap-resources.blah")));
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.blah");
+    exception.expect(ParameterException.class);
+    exception.expectMessage(containsString("No configuration found for: offheap-resources.blah"));
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.blah");
   }
 
   @Test
   public void testNode_getOneOffheap() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testNode_getTwoOffheaps() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
     waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
   }
 
   @Test
   public void testNode_getAllOffheaps() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
   }
 
   @Test
   public void testNode_getAllDataDirs() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.data-dirs");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.data-dirs");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
   }
 
   @Test
   public void testNode_getClientReconnectWindow() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
     waitedAssert(out::getLog, containsString("client-reconnect-window=120s"));
   }
 
   @Test
   public void testNode_getSecurityAuthc() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-authc");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-authc");
     waitedAssert(out::getLog, containsString("security-authc="));
   }
 
   @Test
   public void testNode_getNodePort() {
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.node-port");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.node-port");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-port=" + ports.getPorts()[0]));
   }
 }

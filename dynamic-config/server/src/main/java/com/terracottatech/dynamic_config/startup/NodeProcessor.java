@@ -32,6 +32,11 @@ public class NodeProcessor {
     NodeStarter third = new ConsoleParamsStarter(options, paramValueMap, clusterCreator, startupManager);
     NodeStarter second = new ConfigFileStarter(options, clusterCreator, startupManager, third);
     NodeStarter first = new ConfigRepoStarter(options, startupManager, second, parameterSubstitutor);
-    first.startNode();
+    boolean started = first.startNode();
+
+    if (!started) {
+      // If we're here, we've failed in our attempts to start the node
+      throw new AssertionError("Exhausted all methods of starting the node. Giving up!");
+    }
   }
 }

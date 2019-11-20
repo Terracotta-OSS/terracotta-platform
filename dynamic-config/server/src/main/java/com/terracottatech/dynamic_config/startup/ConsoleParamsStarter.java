@@ -33,19 +33,16 @@ public class ConsoleParamsStarter implements NodeStarter {
   }
 
   @Override
-  public void startNode() {
+  public boolean startNode() {
     LOGGER.info("Starting node from command-line parameters");
     Cluster cluster = clusterCreator.create(paramValueMap);
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {
       requireNonNull(options.getClusterName(), "Cluster name is required with license file");
-      startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
+      return startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
     } else {
-      startupManager.startUnconfigured(cluster, node, options.getNodeRepositoryDir());
+      return startupManager.startUnconfigured(cluster, node, options.getNodeRepositoryDir());
     }
-
-    // If we're here, we've failed in our attempts to start the node
-    throw new AssertionError("Exhausted all methods of starting the node. Giving up!");
   }
 }

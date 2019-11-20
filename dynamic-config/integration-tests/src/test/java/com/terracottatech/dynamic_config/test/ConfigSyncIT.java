@@ -66,16 +66,16 @@ public class ConfigSyncIT extends BaseStartupIT {
         Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
     ));
 
-    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[2]);
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[2]);
     waitForAssert(out::getLog, containsString("Command successful"));
     out.clearLog();
-    ConfigTool.main("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitForAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
     System.out.println("After activation " + secondNodeProcess.getServerState().toString());
     secondNodeProcess.close();
-    ConfigTool.main("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=1GB");
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=1GB");
     waitForAssert(out::getLog, containsString("Command successful"));
     out.clearLog();
 

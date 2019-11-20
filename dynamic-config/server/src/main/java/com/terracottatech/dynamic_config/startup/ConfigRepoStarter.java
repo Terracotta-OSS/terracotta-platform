@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 public class ConfigRepoStarter implements NodeStarter {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoStarter.class);
@@ -27,12 +28,15 @@ public class ConfigRepoStarter implements NodeStarter {
   }
 
   @Override
-  public void startNode() {
+  public boolean startNode() {
     Path repositoryDir = startupManager.getOrDefaultRepositoryDir(options.getNodeRepositoryDir());
-    startupManager.findNodeName(repositoryDir).ifPresent(nodeName -> startupManager.startUsingConfigRepo(repositoryDir, nodeName));
+    Optional<String> nodeName = startupManager.findNodeName(repositoryDir);
+    if (nodeName.isPresent()) {
+      return startupManager.startUsingConfigRepo(repositoryDir, nodeName.get());
+    }
 
     LOGGER.info("Did not find config repository at: " + parameterSubstitutor.substitute(repositoryDir));
     // Couldn't start node - pass the responsibility to the next starter
-    nextStarter.startNode();
+    return nextStarter.startNode();
   }
 }

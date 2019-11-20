@@ -35,9 +35,8 @@ public class ConfigTool {
   private static final MainCommand MAIN = new MainCommand();
 
   public static void main(String... args) {
-    ConfigTool configTool = new ConfigTool();
     try {
-      configTool.start(args);
+      ConfigTool.start(args);
     } catch (Exception e) {
       String message = e.getMessage();
       if (message != null && !message.isEmpty()) {
@@ -54,7 +53,7 @@ public class ConfigTool {
     }
   }
 
-  private void start(String... args) {
+  public static void start(String... args) {
     LOGGER.debug("Registering commands with CommandRepository");
     CommandRepository commandRepository = new CommandRepository();
     commandRepository.addAll(
@@ -111,7 +110,7 @@ public class ConfigTool {
     });
   }
 
-  private CustomJCommander parseArguments(CommandRepository commandRepository, String[] args) {
+  private static CustomJCommander parseArguments(CommandRepository commandRepository, String[] args) {
     CustomJCommander jCommander = new CustomJCommander(commandRepository, MAIN);
     try {
       jCommander.parse(args);

@@ -34,10 +34,10 @@ public class ConfigFileStarter implements NodeStarter {
   }
 
   @Override
-  public void startNode() {
+  public boolean startNode() {
     if (options.getConfigFile() == null) {
       // If config file wasn't specified - pass the responsibility to the next starter
-      nextStarter.startNode();
+      return nextStarter.startNode();
     }
 
     Path substitutedConfigFile = Paths.get(PARAMETER_SUBSTITUTOR.substitute(options.getConfigFile()));
@@ -50,9 +50,9 @@ public class ConfigFileStarter implements NodeStarter {
         //TODO [DYNAMIC-CONFIG] TRACK #6: relax this constraint
         throw new UnsupportedOperationException("License file option can be used only with a one-node cluster config file");
       }
-      startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
+      return startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
     } else {
-      startupManager.startUnconfigured(cluster, node, options.getNodeRepositoryDir());
+      return startupManager.startUnconfigured(cluster, node, options.getNodeRepositoryDir());
     }
   }
 }

@@ -46,7 +46,7 @@ public class StartupManager {
     this.changeHandlerManager = changeHandlerManager;
   }
 
-  void startUnconfigured(Cluster cluster, Node node, String optionalNodeRepositoryFromCLI) {
+  boolean startUnconfigured(Cluster cluster, Node node, String optionalNodeRepositoryFromCLI) {
     String nodeName = node.getNodeName();
     logger.info("Starting unconfigured node: {}", nodeName);
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
@@ -56,7 +56,7 @@ public class StartupManager {
     // Note: the returned resolved path is not substituted and contains placeholders from both base directory and given path.
     PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
     Path configPath = new TransientTcConfig(node, userDirResolver, parameterSubstitutor).createTempTcConfigFile();
-    startServer(
+    return startServer(
         "-r", nodeRepositoryDir.toString(),
         "--config-consistency",
         "--config", configPath.toAbsolutePath().toString(),
@@ -64,7 +64,7 @@ public class StartupManager {
     );
   }
 
-  void startActivated(Cluster cluster, Node node, String licenseFile, String optionalNodeRepositoryFromCLI) {
+  boolean startActivated(Cluster cluster, Node node, String licenseFile, String optionalNodeRepositoryFromCLI) {
     String nodeName = node.getNodeName();
     logger.info("Starting node: {} in cluster: {}", nodeName, cluster.getName());
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
@@ -73,20 +73,19 @@ public class StartupManager {
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.prepareActivation(cluster, read(licenseFile));
     runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);
-    startServer(
+    return startServer(
         "-r", nodeRepositoryDir.toString(),
         "-n", nodeName,
         "--node-name", nodeName
     );
   }
 
-  void startUsingConfigRepo(Path repositoryDir, String nodeName) {
+  boolean startUsingConfigRepo(Path repositoryDir, String nodeName) {
     logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(repositoryDir));
     NomadServerManager nomadServerManager = NomadBootstrapper.bootstrap(repositoryDir, parameterSubstitutor, changeHandlerManager, nodeName);
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.activate();
-
-    startServer(
+    return startServer(
         "-r", repositoryDir.toString(),
         "-n", nodeName,
         "--node-name", nodeName
@@ -137,8 +136,9 @@ public class StartupManager {
     return Paths.get(repositoryDir != null ? repositoryDir : Setting.NODE_REPOSITORY_DIR.getDefaultValue());
   }
 
-  private void startServer(String... args) {
+  private boolean startServer(String... args) {
     TCServerMain.main(args);
+    return true;
   }
 
   Optional<String> findNodeName(Path repositoryDir) {
