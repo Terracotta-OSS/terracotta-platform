@@ -36,7 +36,6 @@ import static java.util.stream.Collectors.toMap;
 
 public abstract class ConfigurationMutationCommand extends ConfigurationCommand {
 
-  // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE: for the tc properties we support with a config change handler dynamically, we can return false (do not need restart)
   private static final Collection<String> TC_PROPERTY_NAMES_NO_RESTART = Collections.emptyList();
 
   protected ConfigurationMutationCommand(Operation operation) {

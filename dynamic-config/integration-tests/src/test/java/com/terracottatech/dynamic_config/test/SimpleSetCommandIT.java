@@ -15,6 +15,7 @@ import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 public class SimpleSetCommandIT extends BaseStartupIT {
 
@@ -385,6 +386,32 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-group-bind-address");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
+  }
+
+  @Test
+  public void testTcProperty_postActivation() throws Exception {
+    activateCluster();
+
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo=bar");
+    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.start("get", "-r", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
+    waitedAssert(out::getLog, not(containsString("tc-properties=foo:bar")));
+
+    out.clearLog();
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
+    waitedAssert(out::getLog, containsString("tc-properties=foo:bar"));
+
+    out.clearLog();
+    ConfigTool.start("unset", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo");
+    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    waitedAssert(out::getLog, containsString("Command successful"));
+
+    out.clearLog();
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
+    waitedAssert(out::getLog, not(containsString("tc-properties=foo:bar")));
   }
 
   private void activateCluster() throws Exception {

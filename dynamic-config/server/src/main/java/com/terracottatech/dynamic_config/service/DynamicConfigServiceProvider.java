@@ -14,9 +14,7 @@ import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.service.handler.ClientReconnectWindowConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.DataDirectoryConfigChangeHandler;
-import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
-import com.terracottatech.dynamic_config.service.handler.ProcessorThreadsConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ServerAttributeConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.SimulationHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
@@ -32,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.applyAfterRestart;
-import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.reject;
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
@@ -94,13 +91,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       }
 
       // tc-properties
-      // TODO [DYNAMIC-CONFIG]: TDB-4710: IMPLEMENT TC-PROPERTIES CHANGE
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<>()
           .selector(Configuration::getKey)
-          .add("server.entity.processor.threads", new ProcessorThreadsConfigChangeHandler())
-          .add("foo.bar", new FooBarConfigChangeHandler())
           .add("com.terracottatech.dynamic-config.simulate", new SimulationHandler(substitutor))
-          .fallback(reject()));
+          .fallback(applyAfterRestart(substitutor)));
     }
     return true;
   }
