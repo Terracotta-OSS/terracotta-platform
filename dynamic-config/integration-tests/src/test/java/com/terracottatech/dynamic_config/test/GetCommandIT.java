@@ -41,38 +41,38 @@ public class GetCommandIT extends BaseStartupIT {
   /*<--Stripe-wide Tests-->*/
   @Test
   public void testStripe_getOneOffheap() {
-    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testStripe_getTwoOffheaps() {
-    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
     waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
   }
 
   @Test
   public void testStripe_getAllOffheaps() {
-    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
   }
 
   @Test
   public void testStripe_getAllDataDirs() {
-    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs");
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
   }
 
   @Test
   public void testStripe_getAllNodeHostnames() {
-    ConfigTool.main("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node-hostname");
+    ConfigTool.main("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node-hostname");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-hostname=localhost"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.node-hostname=localhost"));
   }
@@ -83,7 +83,7 @@ public class GetCommandIT extends BaseStartupIT {
   public void testCluster_getOneOffheap() throws Exception {
     activate2x2Cluster();
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
@@ -91,7 +91,7 @@ public class GetCommandIT extends BaseStartupIT {
   public void testCluster_getTwoOffheaps() throws Exception {
     activate2x2Cluster();
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
     waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
   }
@@ -100,7 +100,7 @@ public class GetCommandIT extends BaseStartupIT {
   public void testCluster_getAllOffheaps() throws Exception {
     activate2x2Cluster();
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
   }
 
@@ -108,7 +108,7 @@ public class GetCommandIT extends BaseStartupIT {
   public void testCluster_getAllDataDirs() throws Exception {
     activate2x2Cluster();
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs");
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
     waitedAssert(out::getLog, containsString("stripe.2.node.1.data-dirs=main:user-data" + separator + "main" + separator + "stripe2"));
@@ -119,7 +119,7 @@ public class GetCommandIT extends BaseStartupIT {
   public void testCluster_getNodeName() throws Exception {
     activate2x2Cluster();
 
-    ConfigTool.main("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-name");
+    ConfigTool.main("get", "-s", "localhost:" + ports.getPort(), "-c", "node-name");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-name=node-1"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.node-name=node-2"));
     waitedAssert(out::getLog, containsString("stripe.2.node.1.node-name=node-1"));

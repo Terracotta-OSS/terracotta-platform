@@ -40,49 +40,49 @@ public class SimpleGetCommandIT extends BaseStartupIT {
   public void testNode_getOneOffheap_unknownOffheap() {
     exception.expect(ParameterException.class);
     exception.expectMessage(containsString("No configuration found for: offheap-resources.blah"));
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.blah");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.blah");
   }
 
   @Test
   public void testNode_getOneOffheap() {
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testNode_getTwoOffheaps() {
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
     waitedAssert(out::getLog, containsString("offheap-resources.foo=1GB"));
   }
 
   @Test
   public void testNode_getAllOffheaps() {
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:512MB,foo:1GB"));
   }
 
   @Test
   public void testNode_getAllDataDirs() {
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.data-dirs");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.data-dirs");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:user-data" + separator + "main" + separator + "stripe1"));
   }
 
   @Test
   public void testNode_getClientReconnectWindow() {
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window");
     waitedAssert(out::getLog, containsString("client-reconnect-window=120s"));
   }
 
   @Test
   public void testNode_getSecurityAuthc() {
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "security-authc");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "security-authc");
     waitedAssert(out::getLog, containsString("security-authc="));
   }
 
   @Test
   public void testNode_getNodePort() {
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node.1.node-port");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-port=" + ports.getPorts()[0]));
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-port");
+    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-port=" + ports.getPort()));
   }
 }

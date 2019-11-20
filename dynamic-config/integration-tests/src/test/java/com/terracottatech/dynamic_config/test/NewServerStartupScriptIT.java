@@ -34,7 +34,7 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
   @Test
   public void testFailedStartupWithMultiNodeConfigFileAndLicense() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/multi-stripe.properties");
-    startNode("-f", configurationFile.toString(), "-l", licensePath().toString(), "-s", "localhost", "-p", String.valueOf(ports.getPorts()[0]), "--node-repository-dir", "repository/stripe1/node-1");
+    startNode("-f", configurationFile.toString(), "-l", licensePath().toString(), "-s", "localhost", "-p", String.valueOf(ports.getPort()), "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("License file option can be used only with a one-node cluster config file"));
   }
 }

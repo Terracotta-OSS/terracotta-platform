@@ -40,22 +40,22 @@ public class SetCommandIT extends BaseStartupIT {
   /*<--Stripe-wide Tests-->*/
   @Test
   public void testStripe_level_setDataDirectory() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.data-dirs.main=stripe1-node1-data-dir");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.data-dirs.main=stripe1-node1-data-dir");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "data-dirs");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs=main:stripe1-node1-data-dir"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.data-dirs=main:stripe1-node1-data-dir"));
   }
 
   @Test
   public void testStripe_level_setBackupDirectory() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "stripe.1.node-backup-dir=backup"+File.separator+"stripe-1");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node-backup-dir=backup"+File.separator+"stripe-1");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-backup-dir");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-backup-dir");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-backup-dir=backup"+File.separator+"stripe-1"));
     waitedAssert(out::getLog, containsString("stripe.1.node.2.node-backup-dir=backup"+File.separator+"stripe-1"));
   }
@@ -64,78 +64,78 @@ public class SetCommandIT extends BaseStartupIT {
   /*<--Cluster-wide Tests-->*/
   @Test
   public void testCluster_setOffheap() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources.main=1GB");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "offheap-resources");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:1GB"));
   }
 
   @Test
   public void testCluster_setBackupDirectory() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-backup-dir=backup"+File.separator+"data");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "node-backup-dir=backup"+File.separator+"data");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "node-backup-dir");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-backup-dir");
     waitedAssert(out::getLog, containsString("node-backup-dir=backup" + File.separator + "data"));
   }
 
   @Test
   public void testCluster_setClientLeaseTime() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-lease-duration=10s");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "client-lease-duration=10s");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-lease-duration");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "client-lease-duration");
     waitedAssert(out::getLog, containsString("client-lease-duration=10s"));
   }
 
   @Test
   public void testCluster_setFailoverPriorityAvailability() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority=availability");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority=availability");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority");
     waitedAssert(out::getLog, containsString("failover-priority=availability"));
   }
 
   @Test
   public void testCluster_setFailoverPriorityConsistency() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority=consistency:2");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority=consistency:2");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "failover-priority");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority");
     waitedAssert(out::getLog, containsString("failover-priority=consistency:2"));
   }
 
   @Test
   public void testCluster_setClientReconnectWindow() {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window=10s");
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window=10s");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window");
     waitedAssert(out::getLog, containsString("client-reconnect-window=10s"));
   }
 
   @Test
   public void testCluster_setClientReconnectWindow_postActivation() throws Exception {
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPorts()[0], "-s", "localhost:" + ports.getPorts()[1]);
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[1]);
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window=10s");
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window=10s");
     waitedAssert(out::getLog, containsString("Command successful"));
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPorts()[0], "-c", "client-reconnect-window");
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window");
     waitedAssert(out::getLog, containsString("client-reconnect-window=10s"));
   }
 
   private void activateCluster() throws Exception {
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPorts()[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
     out.clearLog();
   }
 }
