@@ -60,7 +60,7 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
           .orElseThrow(() -> new AssertionError("DynamicConfigService not found"))
           .validateAgainstLicense(updatedCluster);
       return updatedCluster;
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }
   }

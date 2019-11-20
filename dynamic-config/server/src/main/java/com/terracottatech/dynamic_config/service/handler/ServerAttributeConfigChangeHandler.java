@@ -47,7 +47,7 @@ public class ServerAttributeConfigChangeHandler implements ConfigChangeHandler {
       Cluster updatedCluster = nodeContext.getCluster();
       change.apply(updatedCluster, parameterSubstitutor);
       return updatedCluster;
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }
   }
