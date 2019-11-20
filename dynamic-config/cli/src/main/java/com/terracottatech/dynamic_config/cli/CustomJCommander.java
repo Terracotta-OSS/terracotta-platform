@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.lang.System.lineSeparator;
 import static java.util.function.Predicate.isEqual;
 
 /**
@@ -50,7 +51,7 @@ public class CustomJCommander extends JCommander {
     String description = getCommandDescription(commandName);
     JCommander jc = getCommands().get(commandName);
     if (description != null) {
-      out.append(indent).append(description).append("\n");
+      out.append(indent).append(description).append(lineSeparator());
     }
     appendUsage(commandRepository.getCommand(commandName), out, indent);
     appendOptions(jc, out, indent);
@@ -65,33 +66,33 @@ public class CustomJCommander extends JCommander {
       out.append(indent).append(" [command] [command-options]");
     }
 
-    out.append("\n");
+    out.append(lineSeparator());
     appendOptions(this, out, indent);
 
     // Show Commands
     if (hasCommands) {
-      out.append("\n\nCommands:\n");
+      out.append(lineSeparator()).append(lineSeparator()).append("Commands:").append(lineSeparator());
       for (Map.Entry<String, JCommander> command : getCommands().entrySet()) {
         Object arg = command.getValue().getObjects().get(0);
         Parameters p = arg.getClass().getAnnotation(Parameters.class);
         String name = command.getKey();
         if (p == null || !p.hidden()) {
           String description = getCommandDescription(name);
-          out.append(indent).append("    ").append(name).append("      ").append(description).append("\n");
+          out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator());
           appendUsage(commandRepository.getCommand(name), out, indent + "    ");
 
           // Options for this command
           JCommander jc = command.getValue();
           appendOptions(jc, out, "    ");
-          out.append("\n");
+          out.append(lineSeparator());
         }
       }
     }
   }
 
   private void appendUsage(Command command, StringBuilder out, String indent) {
-    out.append(indent).append("Usage:\n");
-    out.append(indent).append("    ").append(Metadata.getUsage(command).replace("\n", "\n    " + indent)).append("\n");
+    out.append(indent).append("Usage:").append(lineSeparator());
+    out.append(indent).append("    ").append(Metadata.getUsage(command).replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
   }
 
   private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {
@@ -113,14 +114,14 @@ public class CustomJCommander extends JCommander {
 
     // Display all the names and descriptions
     if (sorted.size() > 0) {
-      out.append(indent).append("Options:\n");
+      out.append(indent).append("Options:").append(lineSeparator());
     }
 
     for (ParameterDescription pd : sorted) {
       WrappedParameter parameter = pd.getParameter();
-      out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "").append("\n");
+      out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "").append(lineSeparator());
       out.append(indent).append("        ").append(pd.getDescription());
-      out.append("\n");
+      out.append(lineSeparator());
     }
   }
 }

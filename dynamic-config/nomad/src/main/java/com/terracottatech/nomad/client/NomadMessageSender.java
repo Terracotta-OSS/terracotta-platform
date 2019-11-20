@@ -32,6 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
 
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
@@ -60,7 +61,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           discovery -> results.discovered(server.getAddress(), discovery),
           e -> {
             LOGGER.error("Discover failed: " + e.getMessage(), e);
-            results.discoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
+            results.discoverFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
           }
       );
     }
@@ -87,7 +88,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.debug("Discover failed: " + e.getMessage(), e);
-            results.discoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
+            results.discoverFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
           }
       );
     }
@@ -138,7 +139,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.debug("Prepare failed: " + e.getMessage(), e);
-            results.prepareFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
+            results.prepareFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
           }
       );
     }
@@ -182,7 +183,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.debug("Commit failed: " + e.getMessage(), e);
-            results.commitFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
+            results.commitFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
           }
       );
     }
@@ -226,7 +227,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.debug("Rollback failed: " + e.getMessage(), e);
-            results.rollbackFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
+            results.rollbackFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
           }
       );
     }
@@ -269,7 +270,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           e -> {
             LOGGER.debug("Takeover failed: " + e.getMessage(), e);
-            results.takeoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
+            results.takeoverFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
           }
       );
     }

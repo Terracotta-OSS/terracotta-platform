@@ -22,6 +22,8 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Properties;
 
+import static java.lang.System.lineSeparator;
+
 public class ReadNotifications {
   public static void main(String[] args) throws ConnectionException, EntityConfigurationException, IOException, InterruptedException {
     String connectionName = ReadNotifications.class.getSimpleName();
@@ -38,11 +40,11 @@ public class ReadNotifications {
         switch (message.getType()) {
           case "NOTIFICATION":
             message.unwrap(ContextualNotification.class).forEach(notification ->
-                System.out.println("NOTIFICATION RECEIVED:\n" +
-                    " - TIME: " + Instant.ofEpochMilli(message.getTimestamp()) + "\n" +
-                    " - SEQ: " + message.getSequence() + "\n" +
-                    " - TYPE: " + notification.getType() + "\n" +
-                    " - FROM: " + notification.getContext() + "\n" +
+                System.out.println("NOTIFICATION RECEIVED:" + lineSeparator() +
+                    " - TIME: " + Instant.ofEpochMilli(message.getTimestamp()) + lineSeparator() +
+                    " - SEQ: " + message.getSequence() + lineSeparator() +
+                    " - TYPE: " + notification.getType() + lineSeparator() +
+                    " - FROM: " + notification.getContext() + lineSeparator() +
                     " - DATA: " + notification.getAttributes()));
             break;
           default:

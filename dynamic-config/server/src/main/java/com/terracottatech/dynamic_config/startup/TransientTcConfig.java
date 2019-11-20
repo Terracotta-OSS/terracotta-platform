@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 import static com.terracottatech.utilities.XmlUtils.escapeXml;
+import static java.lang.System.lineSeparator;
 
 public class TransientTcConfig {
   private final Node node;
@@ -31,20 +32,20 @@ public class TransientTcConfig {
     try {
       Path substituted = parameterSubstitutor.substitute(pathResolver.getBaseDir());
       Path temporaryTcConfigXml = Files.createTempFile(substituted, "tc-config-tmp.", ".xml");
-      String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">\n" +
-          "    <plugins>\n" +
+      String defaultConfig = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + lineSeparator() +
+          "    <plugins>" + lineSeparator() +
           getOffHeapConfig() +
           getDataDirectoryConfig() +
           getSecurityConfig() +
-          "    </plugins>\n" +
-          "    <servers>\n" +
-          "        <server host=\"${HOSTNAME}\" name=\"${NAME}\" bind=\"${BIND}\">\n" +
-          "            <logs>${LOGS}</logs>\n" +
-          "            <tsa-port bind=\"${BIND}\">${PORT}</tsa-port>\n" +
-          "            <tsa-group-port bind=\"${GROUP-BIND}\">${GROUP-PORT}</tsa-group-port>\n" +
-          "        </server>\n" +
-          "        <client-reconnect-window>${RECONNECT_WINDOW}</client-reconnect-window>\n" +
-          "    </servers>\n" +
+          "    </plugins>" + lineSeparator() +
+          "    <servers>" + lineSeparator() +
+          "        <server host=\"${HOSTNAME}\" name=\"${NAME}\" bind=\"${BIND}\">" + lineSeparator() +
+          "            <logs>${LOGS}</logs>" + lineSeparator() +
+          "            <tsa-port bind=\"${BIND}\">${PORT}</tsa-port>" + lineSeparator() +
+          "            <tsa-group-port bind=\"${GROUP-BIND}\">${GROUP-PORT}</tsa-group-port>" + lineSeparator() +
+          "        </server>" + lineSeparator() +
+          "        <client-reconnect-window>${RECONNECT_WINDOW}</client-reconnect-window>" + lineSeparator() +
+          "    </servers>" + lineSeparator() +
           "</tc-config>";
 
       String configuration = defaultConfig
@@ -104,27 +105,27 @@ public class TransientTcConfig {
   }
 
   private String getDataDirectoryConfig() {
-    String dataDirectoryConfig = "    <config xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n" +
-        "    <data:data-directories>\n" +
-        "        <data:directory name=\"data\" use-for-platform=\"true\">${DATA_DIR}</data:directory>\n" +
-        "    </data:data-directories>\n" +
-        "    </config>\n";
+    String dataDirectoryConfig = "    <config xmlns:data=\"http://www.terracottatech.com/config/data-roots\">" + lineSeparator() +
+        "    <data:data-directories>" + lineSeparator() +
+        "        <data:directory name=\"data\" use-for-platform=\"true\">${DATA_DIR}</data:directory>" + lineSeparator() +
+        "    </data:data-directories>" + lineSeparator() +
+        "    </config>" + lineSeparator();
 
     return dataDirectoryConfig.replace("${DATA_DIR}", escapeXml(parameterSubstitutor.substitute(pathResolver.resolve(node.getNodeMetadataDir())).toString()));
   }
 
   private String getOffHeapConfig() {
-    String prefix = "    <config xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">\n" +
-        "      <ohr:offheap-resources>\n";
+    String prefix = "    <config xmlns:ohr=\"http://www.terracotta.org/config/offheap-resource\">" + lineSeparator() +
+        "      <ohr:offheap-resources>" + lineSeparator();
 
     String middle = node.getOffheapResources().entrySet()
         .stream()
         .map(entry -> "<ohr:resource name=\"" + escapeXml(entry.getKey()) + "\" unit=\"" + entry.getValue().getUnit().getShortName() + "\">" + entry.getValue().getQuantity(entry.getValue().getUnit()) + "</ohr:resource>")
-        .collect(Collectors.joining("\n"));
+        .collect(Collectors.joining(lineSeparator()));
 
     String suffix =
-        "      </ohr:offheap-resources>\n" +
-            "    </config>\n";
+        "      </ohr:offheap-resources>" + lineSeparator() +
+            "    </config>" + lineSeparator();
 
     return prefix + middle + suffix;
   }

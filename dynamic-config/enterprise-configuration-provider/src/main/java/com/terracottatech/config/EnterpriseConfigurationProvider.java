@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static com.terracottatech.dynamic_config.nomad.NomadBootstrapper.bootstrap;
+import static java.lang.System.lineSeparator;
 
 @OverrideService("com.tc.config.DefaultConfigurationProvider")
 public class EnterpriseConfigurationProvider implements ConfigurationProvider {
@@ -74,7 +75,7 @@ public class EnterpriseConfigurationProvider implements ConfigurationProvider {
   private Configuration createConfiguration() throws Exception {
     TcConfigProvider tcConfigProvider = TcConfigProviderFactory.init(cliParser, parameterSubstitutor);
     TcConfiguration tcConfiguration = tcConfigProvider.provide();
-    LOGGER.info("Startup configuration of the node: \n\n{}", tcConfiguration);
+    LOGGER.info("Startup configuration of the node: {}{}{}", lineSeparator(), lineSeparator(), tcConfiguration);
     return new TcConfigurationWrapper(tcConfiguration, cliParser.isConfigConsistencyMode());
   }
 

@@ -41,10 +41,10 @@ public class AttachDetachCommandIT extends BaseStartupIT {
         "--data-dirs", "main:user-data/main/stripe1"
     ));
     waitedAssert(out::getLog, stringContainsInOrder(Arrays.asList(
-        "Started the server in diagnostic mode\n",
-        "Started the server in diagnostic mode\n",
-        "Started the server in diagnostic mode\n",
-        "Started the server in diagnostic mode\n"
+        "Started the server in diagnostic mode",
+        "Started the server in diagnostic mode",
+        "Started the server in diagnostic mode",
+        "Started the server in diagnostic mode"
     )));
   }
 

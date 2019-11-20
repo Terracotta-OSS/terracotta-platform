@@ -44,6 +44,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import static java.lang.System.lineSeparator;
+
 /**
  * This is a copy of the TCConfigurationParser class in platform but this one is not doing any substitution
  */
@@ -86,11 +88,11 @@ public class CustomTCConfigurationParser {
 
     Collection<SAXParseException> parseErrors = errorHandler.getErrors();
     if (parseErrors.size() != 0) {
-      StringBuilder buf = new StringBuilder("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s).\n");
+      StringBuilder buf = new StringBuilder("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s)." + lineSeparator());
       int i = 1;
       for (SAXParseException parseError : parseErrors) {
         buf.append(" [").append(i).append("] Line ").append(parseError.getLineNumber()).append(", column ")
-            .append(parseError.getColumnNumber()).append(": ").append(parseError.getMessage()).append("\n");
+            .append(parseError.getColumnNumber()).append(": ").append(parseError.getMessage()).append(lineSeparator());
         i++;
       }
       throw new TCConfigurationSetupException(buf.toString());

@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static java.lang.System.lineSeparator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.write;
 import static org.hamcrest.Matchers.containsString;
@@ -36,23 +37,23 @@ public class SimpleOldServerStartupScriptIT extends BaseStartupIT {
 
   private Path createTcConfig() throws Exception {
     Path tcConfigPath = getBaseDir().resolve("server-config.xml").toAbsolutePath();
-    String serverConfiguration = "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:data=\"http://www.terracottatech.com/config/data-roots\">\n" +
-        "\n" +
-        "  <plugins>\n" +
-        "     <config>\n" +
-        "       <data:data-directories>\n" +
+    String serverConfiguration = "<tc-config xmlns=\"http://www.terracotta.org/config\" xmlns:data=\"http://www.terracottatech.com/config/data-roots\">" + lineSeparator() +
+        lineSeparator() +
+        "  <plugins>" + lineSeparator() +
+        "     <config>" + lineSeparator() +
+        "       <data:data-directories>" + lineSeparator() +
         "         <data:directory name=\"data\" " +
-        "use-for-platform=\"true\">%(user.dir)/metadata/stripe1</data:directory>\n" +
-        "       </data:data-directories>\n" +
-        "     </config>\n" +
-        "  </plugins>\n" +
-        "  <servers>\n" +
-        "    <server host=\"localhost\" name=\"node-1\">\n" +
-        "      <logs>%(user.dir)/logs/stripe1/node-1</logs>\n" +
-        "      <tsa-port>${TSA_PORT}</tsa-port>\n" +
-        "      <tsa-group-port>${GROUP_PORT}</tsa-group-port>\n" +
-        "    </server>\n" +
-        "  </servers>\n" +
+        "use-for-platform=\"true\">%(user.dir)/metadata/stripe1</data:directory>" + lineSeparator() +
+        "       </data:data-directories>" + lineSeparator() +
+        "     </config>" + lineSeparator() +
+        "  </plugins>" + lineSeparator() +
+        "  <servers>" + lineSeparator() +
+        "    <server host=\"localhost\" name=\"node-1\">" + lineSeparator() +
+        "      <logs>%(user.dir)/logs/stripe1/node-1</logs>" + lineSeparator() +
+        "      <tsa-port>${TSA_PORT}</tsa-port>" + lineSeparator() +
+        "      <tsa-group-port>${GROUP_PORT}</tsa-group-port>" + lineSeparator() +
+        "    </server>" + lineSeparator() +
+        "  </servers>" + lineSeparator() +
         "</tc-config>";
 
     int[] ports = this.ports.getPorts();

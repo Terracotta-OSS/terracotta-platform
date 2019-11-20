@@ -28,6 +28,7 @@ import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.Assertions.assertNonNull;
+import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate the cluster")
 @Usage("activate <-s HOST[:PORT] | -f CONFIG-PROPERTIES-FILE> -n CLUSTER-NAME -l LICENSE-FILE")
@@ -113,7 +114,7 @@ public class ActivateCommand extends RemoteCommand {
     restartNodes(runtimePeers);
     logger.info("All nodes: {} came back up", toString(runtimePeers));
 
-    logger.info("Command successful!\n");
+    logger.info("Command successful!" + lineSeparator());
   }
 
   /*<-- Test methods --> */

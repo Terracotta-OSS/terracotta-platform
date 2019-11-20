@@ -14,6 +14,13 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,14 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.SchemaFactory;
-
+import static java.lang.System.lineSeparator;
 import static org.terracotta.config.TCConfigurationParser.TERRACOTTA_XML_SCHEMA;
 
 public class ConfigurationParser {
@@ -87,12 +87,12 @@ public class ConfigurationParser {
 
     Collection<SAXParseException> parseErrors = errorHandler.getErrors();
     if (parseErrors.size() != 0) {
-      StringBuffer buf = new StringBuffer("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s).\n");
+      StringBuffer buf = new StringBuffer("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s)." + lineSeparator());
       int i = 1;
       for (SAXParseException parseError : parseErrors) {
         buf.append(" [" + i + "] Line " + parseError.getLineNumber() + ", column " + parseError.getColumnNumber() + ": " + parseError
             .getMessage()
-                   + "\n");
+            + lineSeparator());
         i++;
       }
       throw new TCConfigurationSetupException(buf.toString());

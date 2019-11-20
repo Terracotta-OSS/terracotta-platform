@@ -13,6 +13,8 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.lang.System.lineSeparator;
+
 public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
 
   private volatile List<String> failures = new CopyOnWriteArrayList<>();
@@ -73,7 +75,7 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
 
   public void reThrow() throws IllegalStateException {
     if (!isEmpty()) {
-      throw new IllegalStateException("Two-Phase commit failed:\n - " + String.join("\n - ", new TreeSet<>(failures)));
+      throw new IllegalStateException("Two-Phase commit failed:" + lineSeparator() + " - " + String.join(lineSeparator() + " - ", new TreeSet<>(failures)));
     }
   }
 }

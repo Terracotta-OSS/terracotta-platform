@@ -15,6 +15,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
+import static java.lang.System.lineSeparator;
+
 /**
  * @author Mathieu Carbou
  */
@@ -53,7 +55,7 @@ public class Kit {
           .redirectStderr()
           .build();
       if (process.waitFor() != 0) {
-        throw new IllegalStateException("Failed building KIT. See logs below...\n" + process.getRecordedStdoutText());
+        throw new IllegalStateException("Failed building KIT. See logs below..." + lineSeparator() + process.getRecordedStdoutText());
       }
       File parent = Env.getModulePath().resolve("build").resolve("tc-db-kit").toFile();
       File[] children = parent.listFiles();

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
@@ -105,7 +106,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       Cluster result = updateTopology(dest, src);
 
       if (logger.isDebugEnabled()) {
-        logger.debug("Updated topology:\n{}.", Json.toPrettyJson(result));
+        logger.debug("Updated topology:{}{}.", lineSeparator(), Json.toPrettyJson(result));
       }
 
       // push the updated topology to all the addresses
@@ -117,7 +118,7 @@ public abstract class TopologyCommand extends RemoteCommand {
           .forEach(ts -> ts.setUpcomingCluster(result));
     }
 
-    logger.info("Command successful!\n");
+    logger.info("Command successful!" + lineSeparator());
   }
 
   /*<-- Test methods --> */

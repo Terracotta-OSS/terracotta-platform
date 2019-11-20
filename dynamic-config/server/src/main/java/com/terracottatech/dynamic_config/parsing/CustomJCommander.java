@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.System.lineSeparator;
+
 public class CustomJCommander extends JCommander {
   private final String programName;
   private final Collection<String> userSpecifiedOptions = new HashSet<>();
@@ -39,7 +41,7 @@ public class CustomJCommander extends JCommander {
   @Override
   public void usage(StringBuilder out, String indent) {
     out.append(indent).append("Usage: ").append(programName).append(" [options]");
-    out.append("\n");
+    out.append(lineSeparator());
     appendOptions(this, out, indent);
   }
 
@@ -50,7 +52,7 @@ public class CustomJCommander extends JCommander {
 
     // Display all the names and descriptions
     if (sorted.size() > 0) {
-      out.append(indent).append("Options:\n");
+      out.append(indent).append("Options:").append(lineSeparator());
       for (ParameterDescription pd : sorted) {
         if (pd.getParameter().hidden()) continue;
 
@@ -67,7 +69,7 @@ public class CustomJCommander extends JCommander {
             out.append("(Default: ").append(defaultValue).append(")");
           }
         }
-        out.append("\n");
+        out.append(lineSeparator());
       }
     }
   }

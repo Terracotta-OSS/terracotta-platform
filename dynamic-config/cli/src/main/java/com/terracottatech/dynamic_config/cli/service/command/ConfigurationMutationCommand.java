@@ -29,6 +29,7 @@ import java.util.TreeSet;
 
 import static com.terracottatech.dynamic_config.model.Requirement.ALL_NODES_ONLINE;
 import static com.terracottatech.dynamic_config.model.Requirement.RESTART;
+import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -91,8 +92,13 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // do we need to restart to apply the serie fo change ?
       Collection<String> settingsRequiringRestart = findSettingsRequiringRestart();
       if (!settingsRequiringRestart.isEmpty()) {
-        logger.warn("\n=========\nIMPORTANT\n=========\n\nA restart of the cluster is required to apply the following changes:" +
-            "\n - {}\n", String.join("\n - ", settingsRequiringRestart));
+        logger.warn(lineSeparator() +
+                "=========" + lineSeparator() +
+                "IMPORTANT" + lineSeparator() +
+                "=========" + lineSeparator() + lineSeparator() +
+                "A restart of the cluster is required to apply the following changes:" + lineSeparator() +
+                " - {}" + lineSeparator(),
+            String.join(lineSeparator() + " - ", settingsRequiringRestart));
       }
 
     } else {
@@ -105,7 +111,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       }
     }
 
-    logger.info("Command successful!\n");
+    logger.info("Command successful!" + lineSeparator());
   }
 
   /**

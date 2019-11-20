@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
+import static java.lang.System.lineSeparator;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -115,8 +116,8 @@ public abstract class RemoteCommand extends Command {
         String failedNodes = failures.entrySet()
             .stream()
             .map(e -> "Error when restarting node: " + e.getKey() + ": " + e.getValue().getMessage())
-            .collect(joining("\n - "));
-        throw new IllegalStateException("Some nodes failed to restart:\n - " + failedNodes);
+            .collect(joining(lineSeparator() + " - "));
+        throw new IllegalStateException("Some nodes failed to restart:" + lineSeparator() + " - " + failedNodes);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

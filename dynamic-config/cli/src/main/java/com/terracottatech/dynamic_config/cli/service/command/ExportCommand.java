@@ -26,6 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import static java.lang.System.lineSeparator;
+
 @Parameters(commandNames = "export", commandDescription = "Export the cluster topology to the console or to a file")
 @Usage("export -s HOST[:PORT] [-o DESTINATION_FILE] [-x] [-r]")
 public class ExportCommand extends RemoteCommand {
@@ -61,7 +63,6 @@ public class ExportCommand extends RemoteCommand {
     String output = buildOutput(cluster, format);
 
     if (outputFile == null) {
-      // \n to make sure the content is outputted in one block without any logging prefixes ofr the first line
       logger.info("{}", output);
 
     } else {
@@ -76,7 +77,7 @@ public class ExportCommand extends RemoteCommand {
           }
         }
         Files.write(outputFile, output.getBytes(StandardCharsets.UTF_8));
-        logger.info("Output saved to: {}\n", outputFile);
+        logger.info("Output saved to: {}" + lineSeparator(), outputFile);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
