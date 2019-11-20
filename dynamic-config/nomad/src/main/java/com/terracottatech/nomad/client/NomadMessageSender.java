@@ -86,7 +86,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
             }
           },
           e -> {
-            LOGGER.error("Discover failed: " + e.getMessage(), e);
+            LOGGER.debug("Discover failed: " + e.getMessage(), e);
             results.discoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
       );
@@ -137,7 +137,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
             }
           },
           e -> {
-            LOGGER.error("Prepare failed: " + e.getMessage(), e);
+            LOGGER.debug("Prepare failed: " + e.getMessage(), e);
             results.prepareFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
       );
@@ -181,7 +181,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
             }
           },
           e -> {
-            LOGGER.error("Commit failed: " + e.getMessage(), e);
+            LOGGER.debug("Commit failed: " + e.getMessage(), e);
             results.commitFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
       );
@@ -225,7 +225,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
             }
           },
           e -> {
-            LOGGER.error("Rollback failed: " + e.getMessage(), e);
+            LOGGER.debug("Rollback failed: " + e.getMessage(), e);
             results.rollbackFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
       );
@@ -268,7 +268,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
             }
           },
           e -> {
-            LOGGER.error("Takeover failed: " + e.getMessage(), e);
+            LOGGER.debug("Takeover failed: " + e.getMessage(), e);
             results.takeoverFail(server.getAddress(), e.getMessage() + "\n" + stackTrace(e));
           }
       );

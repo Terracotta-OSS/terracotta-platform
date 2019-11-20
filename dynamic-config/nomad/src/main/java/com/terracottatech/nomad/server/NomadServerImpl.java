@@ -156,7 +156,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     UUID changeUuid = message.getChangeUuid();
     ChangeRequest<T> existingChangeRequest = state.getChangeRequest(changeUuid);
     if (existingChangeRequest != null) {
-      LOGGER.error("Received an alive PrepareMessage for a change that already exists: " + changeUuid);
+      LOGGER.debug("Received an alive PrepareMessage for a change that already exists: " + changeUuid);
       return reject(BAD);
     }
 
@@ -211,7 +211,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
     ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
     if (changeRequest == null) {
-      LOGGER.error("Received an alive CommitMessage for a change that does not exist: " + changeUuid);
+      LOGGER.debug("Received an alive CommitMessage for a change that does not exist: " + changeUuid);
       return reject(BAD);
     }
 
@@ -283,7 +283,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     boolean correctMode = mode == expectedMode;
 
     if (!correctMode) {
-      LOGGER.error("Received an alive " + message.getClass().getSimpleName() + " but not in " + expectedMode + " mode");
+      LOGGER.debug("Received an alive " + message.getClass().getSimpleName() + " but not in " + expectedMode + " mode");
     }
 
     return !correctMode;
@@ -295,7 +295,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
     boolean lowVersionNumber = versionNumber <= highestVersionNumber;
     if (lowVersionNumber) {
-      LOGGER.error("Received an alive " + message.getClass().getSimpleName() + " with a low version number. High: " + highestVersionNumber + " received: " + versionNumber);
+      LOGGER.debug("Received an alive " + message.getClass().getSimpleName() + " with a low version number. High: " + highestVersionNumber + " received: " + versionNumber);
     }
 
     return lowVersionNumber;
