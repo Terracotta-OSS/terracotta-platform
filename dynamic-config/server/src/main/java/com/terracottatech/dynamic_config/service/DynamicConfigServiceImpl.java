@@ -196,7 +196,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe.getNodeAddress());
     }
 
-    // When node is not yest activated, runtimeNodeContext == upcomingNodeContext
+    // When node is not yet activated, runtimeNodeContext == upcomingNodeContext
     this.runtimeNodeContext = upcomingNodeContext;
   }
 
