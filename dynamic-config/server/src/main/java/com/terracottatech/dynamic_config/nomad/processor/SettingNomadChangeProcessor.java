@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.nomad.processor;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
+import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
@@ -66,17 +67,21 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
           return new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
         }
       }
-    } catch (Exception e) {
+    } catch (InvalidConfigChangeException | RuntimeException e) {
       throw new NomadException(e.getMessage(), e);
     }
   }
 
   @Override
-  public void apply(SettingNomadChange change) {
-    NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
-    Configuration configuration = change.toConfiguration(runtimeNodeContext.getCluster());
-    boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
-    changeListener.accept(configuration, changeAppliedAtRuntime);
+  public void apply(SettingNomadChange change) throws NomadException {
+    try {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+      Configuration configuration = change.toConfiguration(runtimeNodeContext.getCluster());
+      boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
+      changeListener.accept(configuration, changeAppliedAtRuntime);
+    } catch (RuntimeException e) {
+      throw new NomadException(e);
+    }
   }
 
   private ConfigChangeHandler getConfigChangeHandlerManager(SettingNomadChange change) {

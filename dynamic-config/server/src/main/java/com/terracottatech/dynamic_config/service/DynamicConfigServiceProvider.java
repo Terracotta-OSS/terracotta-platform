@@ -19,6 +19,7 @@ import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandl
 import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ProcessorThreadsConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ServerAttributeConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.SimulationHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +100,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
           .selector(Configuration::getKey)
           .add("server.entity.processor.threads", new ProcessorThreadsConfigChangeHandler())
           .add("foo.bar", new FooBarConfigChangeHandler())
+          .add("com.terracottatech.dynamic-config.simulate", new SimulationHandler(substitutor))
           .fallback(reject()));
     }
     return true;
