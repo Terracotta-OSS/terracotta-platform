@@ -15,7 +15,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 import static java.lang.System.lineSeparator;
 
@@ -43,6 +45,12 @@ public class CustomJCommander extends JCommander {
     out.append(indent).append("Usage: ").append(programName).append(" [options]");
     out.append(lineSeparator());
     appendOptions(this, out, indent);
+  }
+
+  @Override
+  public Map<String, JCommander> getCommands() {
+    // force an ordering of commands by name
+    return new TreeMap<>(super.getCommands());
   }
 
   private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {

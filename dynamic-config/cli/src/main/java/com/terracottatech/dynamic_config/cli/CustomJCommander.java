@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 import static java.lang.System.lineSeparator;
 import static java.util.function.Predicate.isEqual;
@@ -59,7 +60,8 @@ public class CustomJCommander extends JCommander {
 
   @Override
   public void usage(StringBuilder out, String indent) {
-    boolean hasCommands = !getCommands().isEmpty();
+    Map<String, JCommander> commands = getCommands();
+    boolean hasCommands = !commands.isEmpty();
     String programName = "config-tool";
     out.append(indent).append("Usage: ").append(programName).append(" [options]");
     if (hasCommands) {
@@ -72,7 +74,7 @@ public class CustomJCommander extends JCommander {
     // Show Commands
     if (hasCommands) {
       out.append(lineSeparator()).append(lineSeparator()).append("Commands:").append(lineSeparator());
-      for (Map.Entry<String, JCommander> command : getCommands().entrySet()) {
+      for (Map.Entry<String, JCommander> command : commands.entrySet()) {
         Object arg = command.getValue().getObjects().get(0);
         Parameters p = arg.getClass().getAnnotation(Parameters.class);
         String name = command.getKey();
@@ -88,6 +90,12 @@ public class CustomJCommander extends JCommander {
         }
       }
     }
+  }
+
+  @Override
+  public Map<String, JCommander> getCommands() {
+    // force an ordering of commands by name
+    return new TreeMap<>(super.getCommands());
   }
 
   private void appendUsage(Command command, StringBuilder out, String indent) {
