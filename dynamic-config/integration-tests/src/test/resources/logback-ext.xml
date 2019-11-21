@@ -4,7 +4,13 @@
   Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
   -->
 <included>
-
+  <!-- hide most of server logs-->
+  <logger name="com.terracottatech" level="WARN"/>
+  <logger name="com.tc" level="WARN"/>
+  <logger name="org.terracotta.lease" level="WARN"/>
+  <!-- except some -->
+  <logger name="com.tc.server.TCServerMain" level="INFO"/>
+  <logger name="com.terracottatech.config.EnterpriseConfigurationProvider" level="INFO"/>
+  <!-- project logging -->
   <logger name="com.terracottatech.dynamic_config" level="TRACE"/>
-
 </included>

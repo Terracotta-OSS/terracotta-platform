@@ -31,14 +31,24 @@ public class Kit {
   }
 
   public static Path getOrCreatePath() {
-    return getPath().orElseGet(() -> {
+    Path kitPath = getPath().orElseGet(() -> {
       Path path = build();
       System.setProperty("kitInstallationPath", path.toAbsolutePath().toString());
       return path;
     });
+    // copy custom logback-ext
+    try {
+      Path logConfg = Paths.get("src", "test", "resources", "logback-ext.xml");
+      if (Files.exists(logConfg)) {
+        Files.copy(logConfg, kitPath.resolve("server").resolve("lib").resolve("logback-ext.xml"), StandardCopyOption.REPLACE_EXISTING);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return kitPath;
   }
 
-  public static synchronized Path build() {
+  private static synchronized Path build() {
     if (kitPath != null) {
       return kitPath;
     }
@@ -63,10 +73,6 @@ public class Kit {
         throw new IllegalStateException("Kit directory not found in " + parent);
       }
       kitPath = children[0].toPath();
-      Path logConfg = Paths.get("src", "test", "resources", "logback-ext.xml");
-      if (Files.exists(logConfg)) {
-        Files.copy(logConfg, kitPath.resolve("server").resolve("lib").resolve("logback-ext.xml"), StandardCopyOption.REPLACE_EXISTING);
-      }
       return kitPath;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -74,9 +80,6 @@ public class Kit {
       throw error;
     } catch (RuntimeException e) {
       error = e;
-      throw error;
-    } catch (IOException e) {
-      error = new UncheckedIOException(e);
       throw error;
     }
   }
