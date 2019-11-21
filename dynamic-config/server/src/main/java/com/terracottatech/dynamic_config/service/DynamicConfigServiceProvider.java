@@ -14,7 +14,6 @@ import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.service.handler.ClientReconnectWindowConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.DataDirectoryConfigChangeHandler;
-import com.terracottatech.dynamic_config.service.handler.FailoverPriorityConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.FooBarConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ProcessorThreadsConfigChangeHandler;
@@ -32,6 +31,7 @@ import org.terracotta.offheapresource.OffHeapResources;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.applyAfterRestart;
 import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.reject;
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
@@ -76,8 +76,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
       {
         // failover-priority
-        ConfigChangeHandler configChangeHandler = new FailoverPriorityConfigChangeHandler(substitutor);
-        addToManager(manager, configChangeHandler, FAILOVER_PRIORITY);
+        addToManager(manager, applyAfterRestart(substitutor), FAILOVER_PRIORITY);
       }
 
       {

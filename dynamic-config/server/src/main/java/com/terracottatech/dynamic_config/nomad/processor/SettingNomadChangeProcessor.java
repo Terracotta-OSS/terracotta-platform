@@ -78,6 +78,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
       NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
       Configuration configuration = change.toConfiguration(runtimeNodeContext.getCluster());
       boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
+      LOGGER.debug("Change: {} applied at runtime ? {}", change.getSummary(), changeAppliedAtRuntime);
       changeListener.accept(configuration, changeAppliedAtRuntime);
     } catch (RuntimeException e) {
       throw new NomadException(e);

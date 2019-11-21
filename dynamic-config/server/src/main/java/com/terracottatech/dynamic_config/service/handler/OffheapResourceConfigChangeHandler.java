@@ -73,10 +73,10 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
 
     if (offHeapResource == null) {
       offHeapResources.addOffHeapResource(identifier, measure.getQuantity(MemoryUnit.B));
-      LOGGER.info("Added offheap-resource: {} with capacity: {}", change.getKey(), change.getValue());
+      LOGGER.debug("Added offheap-resource: {} with capacity: {}", change.getKey(), change.getValue());
     } else {
       offHeapResource.setCapacity(measure.getQuantity(MemoryUnit.B));
-      LOGGER.info("Set the capacity of offheap-resource: {} to: {}", change.getKey(), measure);
+      LOGGER.debug("Set the capacity of offheap-resource: {} to: {}", change.getKey(), measure);
     }
     return true;
   }

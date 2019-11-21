@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.handler;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 /**
  * Handles config changes on the server side
@@ -42,5 +43,20 @@ public interface ConfigChangeHandler {
    */
   static ConfigChangeHandler noop() {
     return (baseConfig, change) -> baseConfig.getCluster();
+  }
+
+  /**
+   * Handler that will just apply the change after a restart
+   */
+  static ConfigChangeHandler applyAfterRestart(IParameterSubstitutor parameterSubstitutor) {
+    return (baseConfig, change) -> {
+      try {
+        Cluster updatedCluster = baseConfig.getCluster();
+        change.apply(updatedCluster, parameterSubstitutor);
+        return updatedCluster;
+      } catch (RuntimeException e) {
+        throw new InvalidConfigChangeException(e.getMessage(), e);
+      }
+    };
   }
 }

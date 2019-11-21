@@ -61,8 +61,6 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
       LOGGER.error("Invoke resulted in exception", e); // log the exception so that server logs get it too
       throw new AssertionError(e);
     }
-
-    LOGGER.info("Set {} to: {}", change.getSetting(), change.getValue());
     return false;
   }
 

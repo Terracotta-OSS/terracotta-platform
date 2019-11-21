@@ -99,10 +99,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    * called from Nomad just after a config repository change has been committed and persisted
    */
   public synchronized void newTopologyCommitted(long version, NodeContext updatedNodeContext) {
+    if (!isActivated()) {
+      throw new AssertionError("Not activated");
+    }
+    LOGGER.info("New config repository version: {} has been saved", version);
     synchronized (this) {
-      if (!isActivated()) {
-        throw new AssertionError("Not activated");
-      }
       this.upcomingNodeContext = updatedNodeContext.clone();
     }
     // do not fire events within the synchronized block
@@ -114,11 +115,16 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    * called from Nomad just after change has been applied at runtime
    */
   public void newConfigurationChange(Configuration configuration, boolean changeAppliedAtRuntime) {
-    synchronized (this) {
-      if (!isActivated()) {
-        throw new AssertionError("Not activated");
+    if (!isActivated()) {
+      throw new AssertionError("Not activated");
+    }
+    if (changeAppliedAtRuntime) {
+      LOGGER.info("Updating runtime topology with change: {}", configuration);
+      synchronized (this) {
+        configuration.apply(runtimeNodeContext.getCluster(), substitutor);
       }
-      configuration.apply(runtimeNodeContext.getCluster(), substitutor);
+    } else {
+      LOGGER.info("Change: {} will be applied after restart", configuration);
     }
     // do not fire events within the synchronized block
     if (changeAppliedAtRuntime) {

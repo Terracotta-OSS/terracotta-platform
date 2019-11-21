@@ -11,15 +11,11 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles dynamic data-directory additions
  */
 public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoryConfigChangeHandler.class);
-
   private final DataDirectoriesConfig dataDirectoriesConfig;
   private final IParameterSubstitutor parameterSubstitutor;
 
@@ -53,7 +49,6 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     String dataDirectoryName = change.getKey();
     String dataDirectoryPath = change.getValue();
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
-    LOGGER.info("Added data-dir: {} with path: {}", dataDirectoryName, dataDirectoryPath);
     return true;
   }
 }
