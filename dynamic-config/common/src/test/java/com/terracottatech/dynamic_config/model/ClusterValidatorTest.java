@@ -168,7 +168,7 @@ public class ClusterValidatorTest {
   public void testBadOffheap_1() {
     Map<Setting, String> paramValueMap = new HashMap<>();
     paramValueMap.put(Setting.OFFHEAP_RESOURCES, "blah");
-    testThrowsWithMessage(paramValueMap, "should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
+    testThrowsWithMessage(paramValueMap, "should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...");
   }
 
   @Test
@@ -189,7 +189,7 @@ public class ClusterValidatorTest {
   public void testBadOffheap_4() {
     Map<Setting, String> paramValueMap = new HashMap<>();
     paramValueMap.put(Setting.OFFHEAP_RESOURCES, "blah:200MB;blah-2:200MB");
-    testThrowsWithMessage(paramValueMap, "should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format");
+    testThrowsWithMessage(paramValueMap, "should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...");
   }
 
   @Test

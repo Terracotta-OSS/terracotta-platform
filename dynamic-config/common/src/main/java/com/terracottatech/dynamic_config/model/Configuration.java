@@ -246,7 +246,7 @@ public class Configuration {
 
   private void preValidate() {
     if (!setting.isMap() && key != null) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " is not a map and must not have a key name");
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " is not a map and must not have a key name");
     }
     if (stripeId != null && stripeId <= 0) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected stripe ID to be greater than 0");
@@ -255,10 +255,10 @@ public class Configuration {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected node ID to be greater than 0");
     }
     if (!setting.allowsOperationsWithScope(scope)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " does not allow scope " + scope);
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " does not allow scope " + scope);
     }
     if (setting.isScope(CLUSTER) && (stripeId != null || nodeId != null)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " is a cluster setting not at a stripe or node level");
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " is a cluster setting not at a stripe or node level");
     }
   }
 
@@ -271,7 +271,7 @@ public class Configuration {
       }
     }
     if (!setting.allowsOperation(operation)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting " + setting + " does not allow operation " + operation);
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " does not allow operation " + operation);
     }
     switch (operation) {
       case GET:
@@ -359,7 +359,7 @@ public class Configuration {
     }
 
     if (value == null) {
-      targetContexts.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.unsetProperty(ctx.getNode(), key)));
+      targetContexts.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.setProperty(ctx.getNode(), key, null)));
 
     } else {
       if (setting == Setting.LICENSE_FILE) {

@@ -34,10 +34,12 @@ import static com.terracottatech.dynamic_config.model.Scope.NODE;
 import static com.terracottatech.dynamic_config.model.Scope.STRIPE;
 import static com.terracottatech.dynamic_config.model.SettingValidator.ADDRESS_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.DATA_DIRS_VALIDATOR;
-import static com.terracottatech.dynamic_config.model.SettingValidator.DEFAULT;
+import static com.terracottatech.dynamic_config.model.SettingValidator.DEFAULT_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.HOST_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.OFFHEAP_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.PATH_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.PORT_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.PROPS_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.TIME_VALIDATOR;
 import static com.terracottatech.utilities.Assertions.assertNull;
 import static com.terracottatech.utilities.TimeUnit.HOURS;
@@ -66,8 +68,10 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeName),
       setter(Node::setNodeName),
-      unsupported(),
-      of(GET, CONFIG)
+      of(GET, CONFIG),
+      noneOf(Requirement.class),
+      emptyList(),
+      emptyList()
   ),
   NODE_HOSTNAME(SettingName.NODE_HOSTNAME,
       false,
@@ -75,7 +79,6 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeHostname),
       setter(Node::setNodeHostname),
-      unsupported(),
       of(GET, CONFIG),
       noneOf(Requirement.class),
       emptyList(),
@@ -88,7 +91,6 @@ public enum Setting {
       NODE,
       extractor(Node::getNodePort),
       setter((node, value) -> node.setNodePort(Integer.parseInt(value))),
-      unsupported(),
       of(GET, CONFIG),
       noneOf(Requirement.class),
       emptyList(),
@@ -101,7 +103,6 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeGroupPort),
       setter((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
@@ -114,7 +115,6 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeBindAddress),
       setter(Node::setNodeBindAddress),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE, RESTART),
       emptyList(),
@@ -127,7 +127,6 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeGroupBindAddress),
       setter(Node::setNodeGroupBindAddress),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
@@ -145,7 +144,6 @@ public enum Setting {
         throw new UnsupportedOperationException("Unable to get the cluster name from a node");
       },
       unsupported(),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART)
   ),
@@ -157,8 +155,11 @@ public enum Setting {
         throw new UnsupportedOperationException("Unable to get the repository directory of a node");
       },
       unsupported(),
-      unsupported(),
-      noneOf(Operation.class)
+      noneOf(Operation.class),
+      noneOf(Requirement.class),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_REPOSITORY_DIR, tuple2(key, value))
   ),
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
       false,
@@ -166,9 +167,11 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeMetadataDir),
       setter((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
-      unsupported(),
       of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART)
+      of(ACTIVES_ONLINE, RESTART),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_METADATA_DIR, tuple2(key, value))
   ),
   NODE_LOG_DIR(SettingName.NODE_LOG_DIR,
       false,
@@ -176,9 +179,11 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeLogDir),
       setter((node, value) -> node.setNodeLogDir(Paths.get(value))),
-      unsupported(),
       of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART)
+      of(ACTIVES_ONLINE, RESTART),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_LOG_DIR, tuple2(key, value))
   ),
   NODE_BACKUP_DIR(SettingName.NODE_BACKUP_DIR,
       false,
@@ -186,9 +191,11 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeBackupDir),
       setter((node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
-      (node, key) -> node.setNodeBackupDir(null),
       of(GET, SET, UNSET, CONFIG),
-      of(ACTIVES_ONLINE)
+      of(ACTIVES_ONLINE),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_BACKUP_DIR, tuple2(key, value))
   ),
   TC_PROPERTIES(SettingName.TC_PROPERTIES,
       true,
@@ -208,15 +215,11 @@ public enum Setting {
           node.setTcProperty(tuple.t1, tuple.t2);
         }
       }),
-      (node, key) -> {
-        if (key == null) {
-          node.clearTcProperties();
-        } else {
-          node.removeTcProperty(key);
-        }
-      },
       of(GET, SET, UNSET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART)
+      of(ACTIVES_ONLINE, RESTART),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))
   ),
   CLIENT_RECONNECT_WINDOW(SettingName.CLIENT_RECONNECT_WINDOW,
       false,
@@ -224,7 +227,6 @@ public enum Setting {
       CLUSTER,
       extractor(Node::getClientReconnectWindow),
       setter((node, value) -> node.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -237,12 +239,11 @@ public enum Setting {
       CLUSTER,
       extractor(Node::getFailoverPriority),
       setter((node, value) -> node.setFailoverPriority(FailoverPriority.valueOf(value))),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
-      asList("availability", "consistency"),
       emptyList(),
-      (key, value) -> FailoverPriority.valueOf(value)
+      emptyList(),
+      (key, value) -> DEFAULT_VALIDATOR.andThen((k, v) -> FailoverPriority.valueOf(v.t2)).accept(SettingName.FAILOVER_PRIORITY, tuple2(key, value))
   ),
 
   // ==== Lease
@@ -253,7 +254,6 @@ public enum Setting {
       CLUSTER,
       extractor(Node::getClientLeaseDuration),
       setter((node, value) -> node.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -271,9 +271,11 @@ public enum Setting {
         throw new UnsupportedOperationException("Unable to get a license file from a node");
       },
       unsupported(),
-      unsupported(),
       of(SET),
-      of(ALL_NODES_ONLINE)
+      of(ALL_NODES_ONLINE),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.LICENSE_FILE, tuple2(key, value))
   ),
 
   // ==== Security
@@ -284,9 +286,11 @@ public enum Setting {
       NODE,
       extractor(Node::getSecurityDir),
       setter((node, value) -> node.setSecurityDir(value == null ? null : Paths.get(value))),
-      (node, key) -> node.setSecurityDir(null),
       of(GET, SET, UNSET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART)
+      of(ALL_NODES_ONLINE, RESTART),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_DIR, tuple2(key, value))
   ),
   SECURITY_AUDIT_LOG_DIR(SettingName.SECURITY_AUDIT_LOG_DIR,
       false,
@@ -294,9 +298,11 @@ public enum Setting {
       NODE,
       extractor(Node::getSecurityAuditLogDir),
       setter((node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
-      (node, key) -> node.setSecurityAuditLogDir(null),
       of(GET, SET, UNSET, CONFIG),
-      of(ALL_NODES_ONLINE)
+      of(ALL_NODES_ONLINE),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
   ),
   SECURITY_AUTHC(SettingName.SECURITY_AUTHC,
       false,
@@ -304,7 +310,6 @@ public enum Setting {
       CLUSTER,
       extractor(Node::getSecurityAuthc),
       setter(Node::setSecurityAuthc),
-      (node, key) -> node.setSecurityAuthc(null),
       of(GET, SET, UNSET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       asList("file", "ldap", "certificate")
@@ -315,7 +320,6 @@ public enum Setting {
       CLUSTER,
       extractor(Node::isSecuritySslTls),
       setter((node, value) -> node.setSecuritySslTls(Boolean.parseBoolean(value))),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       asList("true", "false")
@@ -326,7 +330,6 @@ public enum Setting {
       CLUSTER,
       extractor(Node::isSecurityWhitelist),
       setter((node, value) -> node.setSecurityWhitelist(Boolean.parseBoolean(value))),
-      unsupported(),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       asList("true", "false")
@@ -352,13 +355,6 @@ public enum Setting {
           node.setOffheapResource(tuple.t1, Measure.parse(tuple.t2, MemoryUnit.class));
         }
       }),
-      (node, key) -> {
-        if (key == null) {
-          node.clearOffheapResources();
-        } else {
-          node.removeOffheapResource(key);
-        }
-      },
       of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -386,13 +382,6 @@ public enum Setting {
           node.setDataDir(tuple.t1, Paths.get(tuple.t2));
         }
       }),
-      (node, key) -> {
-        if (key == null) {
-          node.clearDataDirs();
-        } else {
-          node.removeDataDir(key);
-        }
-      },
       of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -411,7 +400,6 @@ public enum Setting {
   private final Collection<? extends Enum<?>> allowedUnits;
   private final BiConsumer<String, String> validator;
   private final BiConsumer<Node, Tuple2<String, String>> setter;
-  private final BiConsumer<Node, String> unsetter;
 
   Setting(String name,
           boolean map,
@@ -419,9 +407,8 @@ public enum Setting {
           Scope scope,
           Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
-          BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations) {
-    this(name, map, defaultValue, scope, extractor, setter, unsetter, operations, noneOf(Requirement.class));
+    this(name, map, defaultValue, scope, extractor, setter, operations, noneOf(Requirement.class));
   }
 
   Setting(String name,
@@ -430,10 +417,9 @@ public enum Setting {
           Scope scope,
           Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
-          BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements) {
-    this(name, map, defaultValue, scope, extractor, setter, unsetter, operations, requirements, emptyList(), emptyList());
+    this(name, map, defaultValue, scope, extractor, setter, operations, requirements, emptyList(), emptyList());
   }
 
   Setting(String name,
@@ -442,11 +428,10 @@ public enum Setting {
           Scope scope,
           Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
-          BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues) {
-    this(name, map, defaultValue, scope, extractor, setter, unsetter, operations, requirements, allowedValues, emptyList());
+    this(name, map, defaultValue, scope, extractor, setter, operations, requirements, allowedValues, emptyList());
   }
 
   Setting(String name,
@@ -455,12 +440,11 @@ public enum Setting {
           Scope scope,
           Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
-          BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues,
           Collection<? extends Enum<?>> allowedUnits) {
-    this(name, map, defaultValue, scope, extractor, setter, unsetter, operations, requirements, allowedValues, allowedUnits, (key, value) -> DEFAULT.accept(name, tuple2(key, value)));
+    this(name, map, defaultValue, scope, extractor, setter, operations, requirements, allowedValues, allowedUnits, (key, value) -> DEFAULT_VALIDATOR.accept(name, tuple2(key, value)));
   }
 
   Setting(String name,
@@ -469,7 +453,6 @@ public enum Setting {
           Scope scope,
           Function<Node, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<Node, Tuple2<String, String>> setter,
-          BiConsumer<Node, String> unsetter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues,
@@ -480,7 +463,6 @@ public enum Setting {
     this.defaultValue = defaultValue;
     this.extractor = extractor;
     this.setter = setter;
-    this.unsetter = unsetter;
     this.operations = operations;
     this.scope = scope;
     this.requirements = requirements;
@@ -542,6 +524,14 @@ public enum Setting {
     return this.operations.contains(operation);
   }
 
+  public boolean isRequired() {
+    return !allowsOperation(UNSET);
+  }
+
+  public boolean isReadOnly() {
+    return !allowsOperation(SET) && !allowsOperation(CONFIG) && !allowsOperation(UNSET);
+  }
+
   public boolean isScope(Scope scope) {
     return this.scope == scope;
   }
@@ -564,6 +554,10 @@ public enum Setting {
   }
 
   public void validate(String key, String value) {
+    // do not validate if value os null and setting optional
+    if (key == null && value == null && !isRequired()) {
+      return;
+    }
     validator.accept(key, value);
   }
 
@@ -597,11 +591,11 @@ public enum Setting {
   }
 
   public void setProperty(Node node, String key, String value) {
+    if (isReadOnly()) {
+      throw new IllegalArgumentException("Setting: " + this + " is read-only");
+    }
+    validate(key, value);
     this.setter.accept(node, tuple2(key, value));
-  }
-
-  public void unsetProperty(Node node, String key) {
-    this.unsetter.accept(node, key);
   }
 
   public boolean allowsValue(String value) {
@@ -644,9 +638,7 @@ public enum Setting {
   }
 
   private static BiConsumer<Node, Tuple2<String, String>> mapSetter(BiConsumer<Node, Tuple2<String, String>> setter) {
-    return (node, tuple) -> {
-      setter.accept(node, tuple2(tuple.t1, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim()));
-    };
+    return (node, tuple) -> setter.accept(node, tuple2(tuple.t1, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim()));
   }
 
   private static <U, V> BiConsumer<U, V> unsupported() {

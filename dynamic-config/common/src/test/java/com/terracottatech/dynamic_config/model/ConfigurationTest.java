@@ -48,22 +48,23 @@ public class ConfigurationTest {
   private static final String ERROR_ADDRESS = " Reason: <address> specified in node-hostname=<address> must be a valid hostname or IP address";
   private static final String ERROR_PORT = " Reason: <port> specified in node-port=<port> must be an integer between 1 and 65535";
   private static final String ERROR_AUTHC = " Reason: security-authc should be one of: [file, ldap, certificate]";
-  private static final String ERROR_AUTHC_SCOPE = " Reason: Setting security-authc does not allow scope NODE";
+  private static final String ERROR_AUTHC_SCOPE = " Reason: security-authc does not allow scope NODE";
   private static final String ERROR_FAILOVER = " Reason: failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)";
-  private static final String ERROR_FAILOVER_SCOPE = " Reason: Setting failover-priority does not allow scope NODE";
+  private static final String ERROR_FAILOVER_SCOPE = " Reason: failover-priority does not allow scope NODE";
   private static final String ERROR_SSL = " Reason: security-ssl-tls should be one of: [true, false]";
-  private static final String ERROR_SSL_SCOPE = " Reason: Setting security-ssl-tls does not allow scope NODE";
+  private static final String ERROR_SSL_SCOPE = " Reason: security-ssl-tls does not allow scope NODE";
   private static final String ERROR_WHITELIST = " Reason: security-whitelist should be one of: [true, false]";
-  private static final String ERROR_WHITELIST_SCOPE = " Reason: Setting security-whitelist does not allow scope NODE";
-  private static final String ERROR_OFFHEAP = " Reason: offheap-resources should be specified in <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>... format";
-  private static final String ERROR_DIRS = " Reason: data-dirs should be specified in <resource-name>:<path>,<resource-name>:<path>... format";
-  private static final String ERROR_OFFHEAP_UNIT = " Reason: Invalid measure: '1R'. <unit> must be one of [B, KB, MB, GB, TB, PB].";
-  private static final String ERROR_SCOPE = " Reason: Setting offheap-resources does not allow scope NODE";
+  private static final String ERROR_WHITELIST_SCOPE = " Reason: security-whitelist does not allow scope NODE";
+  private static final String ERROR_OFFHEAP = " Reason: offheap-resources should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...";
+  private static final String ERROR_DIRS = " Reason: data-dirs should be specified in the format <resource-name>:<path>,<resource-name>:<path>...";
+  private static final String ERROR_OFFHEAP_UNIT = " Reason: offheap-resources.main is invalid: Invalid measure: '1R'. <unit> must be one of [B, KB, MB, GB, TB, PB].";
+  private static final String ERROR_SCOPE = " Reason: offheap-resources does not allow scope NODE";
+  private static final String ERROR_MEASURE_OH = " Reason: offheap-resources.main is invalid: Invalid measure: 'blah'. <quantity> is missing. Measure should be specified in <quantity><unit> format.";
   private static final String ERROR_MEASURE = " Reason: Invalid measure: 'blah'. <quantity> is missing. Measure should be specified in <quantity><unit> format.";
-  private static final String ERROR_LEASE_SCOPE = " Reason: Setting client-lease-duration does not allow scope NODE";
-  private static final String ERROR_RECONNECT_SCOPE = " Reason: Setting client-reconnect-window does not allow scope NODE";
+  private static final String ERROR_LEASE_SCOPE = " Reason: client-lease-duration does not allow scope NODE";
+  private static final String ERROR_RECONNECT_SCOPE = " Reason: client-reconnect-window does not allow scope NODE";
   private static final String ERROR_NODE_ID = " Reason: Expected node ID to be greater than 0";
-  private static final String ERROR_MAP = " Reason: Setting client-reconnect-window is not a map and must not have a key name";
+  private static final String ERROR_MAP = " Reason: client-reconnect-window is not a map and must not have a key name";
   private static final String ERROR_FORMAT = "";
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -212,7 +213,7 @@ public class ConfigurationTest {
           tuple2("stripe.1.node.1" + nsSeparator + "security-ssl-tls=true", ERROR_SSL_SCOPE),
           tuple2("security-whitelist=blah", ERROR_WHITELIST),
           tuple2("stripe.1.node.1" + nsSeparator + "security-whitelist=true", ERROR_WHITELIST_SCOPE),
-          tuple2("offheap-resources.main=blah", ERROR_MEASURE),
+          tuple2("offheap-resources.main=blah", ERROR_MEASURE_OH),
           tuple2("stripe.1.node.1" + nsSeparator + "offheap-resources.main=1G", ERROR_SCOPE),
           tuple2("offheap-resources.main=1R", ERROR_OFFHEAP_UNIT),
           tuple2("client-lease-duration=blah", ERROR_MEASURE),
@@ -265,19 +266,19 @@ public class ConfigurationTest {
         .forEach(s -> assertThat(
             s.toString(),
             () -> Configuration.valueOf(s + "=foo").validate(SET, identity()),
-            is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("Setting " + s + " does not allow operation set"))))));
+            is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(s + " does not allow operation set"))))));
 
     Stream.of(NODE_NAME, NODE_REPOSITORY_DIR, NODE_PORT, NODE_GROUP_PORT, NODE_BIND_ADDRESS, NODE_GROUP_BIND_ADDRESS, NODE_METADATA_DIR, NODE_LOG_DIR)
         .forEach(s -> assertThat(
             s.toString(),
             () -> Configuration.valueOf("stripe.1.node.1." + s).validate(UNSET, identity()),
-            is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("Setting " + s + " does not allow operation unset"))))));
+            is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(s + " does not allow operation unset"))))));
 
     Stream.of(CLIENT_RECONNECT_WINDOW, FAILOVER_PRIORITY, CLIENT_LEASE_DURATION, LICENSE_FILE, SECURITY_SSL_TLS, SECURITY_WHITELIST)
         .forEach(s -> assertThat(
             s.toString(),
             () -> Configuration.valueOf(s.toString()).validate(UNSET, identity()),
-            is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + s + "'. Reason: Setting " + s + " does not allow operation unset"))))));
+            is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + s + "'. Reason: " + s + " does not allow operation unset"))))));
 
     Configuration.valueOf("offheap-resources").validate(GET, identity());
     Configuration.valueOf("offheap-resources.main").validate(GET, identity());

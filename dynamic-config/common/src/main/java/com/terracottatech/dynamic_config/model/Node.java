@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.model.Setting.CLUSTER_NAME;
+import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_HOSTNAME;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_REPOSITORY_DIR;
 import static java.util.function.Predicate.isEqual;
@@ -448,6 +449,7 @@ public class Node implements Cloneable {
         .filter(isEqual(NODE_HOSTNAME).negate())
         .filter(isEqual(NODE_REPOSITORY_DIR).negate())
         .filter(isEqual(CLUSTER_NAME).negate())
+        .filter(isEqual(LICENSE_FILE).negate())
         .forEach(setting -> setting.fillDefault(this));
     return this;
   }
