@@ -56,9 +56,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setOffheapResource() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=512MB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
   }
@@ -86,9 +85,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=1GB"));
   }
@@ -98,9 +96,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=second:1GB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.second");
     waitedAssert(out::getLog, containsString("offheap-resources.second=1GB"));
   }
@@ -110,9 +107,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.third=1GB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.second", "-c", "offheap-resources.third");
     waitedAssert(out::getLog, containsString("offheap-resources.second=1GB"));
     waitedAssert(out::getLog, containsString("offheap-resources.third=1GB"));
@@ -123,9 +119,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
   }
@@ -135,9 +130,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:1GB,second:1GB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
   }
@@ -147,9 +141,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:2GB,second:2GB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:2GB,second:2GB"));
   }
@@ -159,9 +152,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:750MB,second:750MB");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:750MB,second:750MB"));
   }
@@ -178,9 +170,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setTcProperties() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.something=value");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.something");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.tc-properties.something=value"));
   }
@@ -188,9 +179,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setClientReconnectWindow() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window=10s");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window");
     waitedAssert(out::getLog, containsString("client-reconnect-window=10s"));
   }
@@ -198,9 +188,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setSecurityAuthc() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "security-authc");
     waitedAssert(out::getLog, containsString("security-authc=file"));
   }
@@ -208,9 +197,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setNodeGroupPort() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-group-port=9630");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-group-port");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-group-port=9630"));
   }
@@ -218,9 +206,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setSecurityWhitelist() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "security-whitelist");
     waitedAssert(out::getLog, containsString("security-whitelist=true"));
   }
@@ -228,9 +215,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setDataDir() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.data-dirs.main");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.main=user-data" + separator + "main" + separator + "stripe1-node1-data-dir"));
   }
@@ -276,9 +262,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
   }
@@ -288,9 +273,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-2");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
 
@@ -304,9 +288,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-2");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
 
@@ -318,9 +301,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setNodeBackupDir() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-backup-dir=backup/stripe1-node1-backup");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-backup-dir");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-backup-dir=backup" + separator + "stripe1-node1-backup"));
   }
@@ -328,9 +310,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   @Test
   public void setTwoProperties() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir");
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main");
     waitedAssert(out::getLog, containsString("offheap-resources.main=1GB"));
     waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"));
@@ -342,9 +323,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority=consistency:2");
     waitedAssert(out::getLog, containsString("restart of the cluster is required"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority");
     waitedAssert(out::getLog, containsString("failover-priority=consistency:2"));
   }
@@ -355,9 +335,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "node-log-dir=logs/stripe1");
     waitedAssert(out::getLog, containsString("restart of the cluster is required"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-log-dir");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1"));
   }
@@ -368,9 +347,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "node-bind-address=127.0.0.1");
     waitedAssert(out::getLog, containsString("restart of the cluster is required"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-bind-address");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-bind-address=127.0.0.1"));
   }
@@ -381,9 +359,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "node-group-bind-address=127.0.0.1");
     waitedAssert(out::getLog, containsString("restart of the cluster is required"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-group-bind-address");
     waitedAssert(out::getLog, containsString("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
   }
@@ -394,9 +371,8 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo=bar");
     waitedAssert(out::getLog, containsString("restart of the cluster is required"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-r", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
     waitedAssert(out::getLog, not(containsString("tc-properties=foo:bar")));
 
@@ -407,15 +383,9 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     out.clearLog();
     ConfigTool.start("unset", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo");
     waitedAssert(out::getLog, containsString("restart of the cluster is required"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
     waitedAssert(out::getLog, not(containsString("tc-properties=foo:bar")));
-  }
-
-  private void activateCluster() throws Exception {
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    out.clearLog();
   }
 }

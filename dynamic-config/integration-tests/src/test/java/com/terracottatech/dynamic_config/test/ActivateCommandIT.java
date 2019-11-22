@@ -53,16 +53,15 @@ public class ActivateCommandIT extends BaseStartupIT {
   public void testMultiNodeSingleStripeActivation() throws Exception {
     int[] ports = this.ports.getPorts();
     ConfigTool.start("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
     createDatasetAndPerformAssertions(ports);
   }
@@ -81,7 +80,7 @@ public class ActivateCommandIT extends BaseStartupIT {
 
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
     createDatasetAndPerformAssertions(ports);
   }
@@ -90,9 +89,8 @@ public class ActivateCommandIT extends BaseStartupIT {
   public void testMultiStripeActivation() throws Exception {
     int[] ports = this.ports.getPorts();
     ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
-    out.clearLog();
     ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
@@ -100,7 +98,7 @@ public class ActivateCommandIT extends BaseStartupIT {
 
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
     createDatasetAndPerformAssertions(ports);
   }
@@ -120,7 +118,7 @@ public class ActivateCommandIT extends BaseStartupIT {
 
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    assertCommandSuccessful();
 
     createDatasetAndPerformAssertions(ports);
   }

@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
+import com.terracottatech.dynamic_config.cli.ConfigTool;
 import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
@@ -57,6 +58,7 @@ import static java.util.stream.IntStream.rangeClosed;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
@@ -162,8 +164,13 @@ public class BaseStartupIT {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
         .pollInterval(FIVE_HUNDRED_MILLISECONDS)
-        .atMost(new Duration(CI ? timeout + 10 : timeout, TimeUnit.SECONDS))
+        .atMost(new Duration(timeout, TimeUnit.SECONDS))
         .until(callable, matcher);
+  }
+
+  void assertCommandSuccessful() {
+    waitedAssert(out::getLog, containsString("Command successful"));
+    out.clearLog();
   }
 
   Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
@@ -186,6 +193,11 @@ public class BaseStartupIT {
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
+  }
+
+  void activateCluster() throws Exception {
+    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
+    assertCommandSuccessful();
   }
 
   private static void copyDirectory(Path source, Path destination) throws IOException {
