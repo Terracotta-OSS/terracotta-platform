@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.service;
 import com.tc.classloader.BuiltinService;
 import com.terracottatech.config.data_roots.DataDirectoriesConfig;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
+import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
@@ -110,12 +111,15 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     if (configuration.getServiceType() == DynamicConfigEventing.class) {
       return configuration.getServiceType().cast(getEventingSupport());
     }
+    if (configuration.getServiceType() == TopologyService.class) {
+      return configuration.getServiceType().cast(getTopologyService());
+    }
     throw new UnsupportedOperationException(configuration.getServiceType().getName());
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(IParameterSubstitutor.class, ConfigChangeHandlerManager.class, DynamicConfigEventing.class);
+    return Arrays.asList(IParameterSubstitutor.class, ConfigChangeHandlerManager.class, DynamicConfigEventing.class, TopologyService.class);
   }
 
   @Override
@@ -133,6 +137,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
   private DynamicConfigEventing getEventingSupport() {
     return DiagnosticServices.findService(DynamicConfigEventing.class).orElse(null);
+  }
+
+  private TopologyService getTopologyService() {
+    return DiagnosticServices.findService(TopologyService.class).orElse(null);
   }
 
   private void addToManager(ConfigChangeHandlerManager manager, ConfigChangeHandler configChangeHandler, Setting setting) {
