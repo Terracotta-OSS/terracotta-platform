@@ -72,24 +72,18 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         addToManager(manager, configChangeHandler, OFFHEAP_RESOURCES);
       }
 
-      {
-        // failover-priority
-        addToManager(manager, applyAfterRestart(substitutor), FAILOVER_PRIORITY);
-      }
+      // client-reconnect-window
+      ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler(substitutor);
+      addToManager(manager, clientReconnectWindowHandler, CLIENT_RECONNECT_WINDOW);
 
-      {
-        // client-reconnect-window
-        ConfigChangeHandler configChangeHandler = new ClientReconnectWindowConfigChangeHandler(substitutor);
-        addToManager(manager, configChangeHandler, CLIENT_RECONNECT_WINDOW);
-      }
+      // server attributes
+      ConfigChangeHandler serverAttributeConfigChangeHandler = new ServerAttributeConfigChangeHandler(substitutor);
+      addToManager(manager, serverAttributeConfigChangeHandler, NODE_LOG_DIR);
+      addToManager(manager, serverAttributeConfigChangeHandler, NODE_BIND_ADDRESS);
+      addToManager(manager, serverAttributeConfigChangeHandler, NODE_GROUP_BIND_ADDRESS);
 
-      {
-        // server attributes
-        ConfigChangeHandler configChangeHandler = new ServerAttributeConfigChangeHandler(substitutor);
-        addToManager(manager, configChangeHandler, NODE_LOG_DIR);
-        addToManager(manager, configChangeHandler, NODE_BIND_ADDRESS);
-        addToManager(manager, configChangeHandler, NODE_GROUP_BIND_ADDRESS);
-      }
+      // failover-priority
+      addToManager(manager, applyAfterRestart(substitutor), FAILOVER_PRIORITY);
 
       // tc-properties
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<>()
