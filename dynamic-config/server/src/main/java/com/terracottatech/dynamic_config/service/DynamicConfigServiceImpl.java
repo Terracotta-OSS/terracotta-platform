@@ -103,9 +103,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       throw new AssertionError("Not activated");
     }
     LOGGER.info("New config repository version: {} has been saved", version);
-    synchronized (this) {
-      this.upcomingNodeContext = updatedNodeContext.clone();
-    }
+    this.upcomingNodeContext = updatedNodeContext.clone();
     // do not fire events within the synchronized block
     NodeContext update = upcomingNodeContext.clone();
     callbacks_onNewTopologyCommitted.forEach(c -> c.accept(version, update));
@@ -114,30 +112,25 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   /**
    * called from Nomad just after change has been applied at runtime
    */
-  public void newConfigurationChange(Configuration configuration, boolean changeAppliedAtRuntime) {
+  public synchronized void newConfigurationChange(Configuration configuration, boolean changeAppliedAtRuntime) {
     if (!isActivated()) {
       throw new AssertionError("Not activated");
     }
+
     if (changeAppliedAtRuntime) {
-      LOGGER.info("Updating runtime topology with change: {}", configuration);
-      synchronized (this) {
-        configuration.apply(runtimeNodeContext.getCluster(), substitutor);
-      }
-    } else {
-      LOGGER.info("Change: {} will be applied after restart", configuration);
-    }
-    // do not fire events within the synchronized block
-    if (changeAppliedAtRuntime) {
+      configuration.apply(runtimeNodeContext.getCluster(), substitutor);
       NodeContext update = runtimeNodeContext.clone();
       callbacks_onNewRuntimeConfiguration.forEach(c -> c.accept(update, configuration));
+      LOGGER.info("Change: {} applied at runtime", configuration);
     } else {
       NodeContext update = upcomingNodeContext.clone();
       callbacks_onNewUpcomingConfiguration.forEach(c -> c.accept(update, configuration));
+      LOGGER.info("Change: {} will be applied after restart", configuration);
     }
   }
 
   @Override
-  public synchronized NodeContext getUpcomingNodeContext() {
+  public NodeContext getUpcomingNodeContext() {
     return upcomingNodeContext;
   }
 
@@ -153,7 +146,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (millis < 0) {
       throw new IllegalArgumentException("Invalid delay: " + delayInSeconds);
     }
-    LOGGER.info("Node: {} in stripe: {} will restart in: {} seconds", runtimeNodeContext.getNodeName(), runtimeNodeContext.getStripeId(), delayInSeconds);
+
+    LOGGER.info("Node will restart in: {} seconds", delayInSeconds.getSeconds());
     new Thread(getClass().getSimpleName() + "-DelayedRestart") {
       @Override
       public void run() {
@@ -162,7 +156,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
         } catch (InterruptedException e) {
           // do nothing, still try to kill server
         }
-        LOGGER.info("Executing restart on node: {} in stripe: {}", runtimeNodeContext.getNodeName(), runtimeNodeContext.getStripeId());
+        LOGGER.info("Restarting node");
         TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
       }
     }.start();
