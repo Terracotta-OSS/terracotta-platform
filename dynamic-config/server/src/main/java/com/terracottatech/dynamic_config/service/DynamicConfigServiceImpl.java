@@ -98,13 +98,13 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   /**
    * called from Nomad just after a config repository change has been committed and persisted
    */
-  public synchronized void newTopologyCommitted(long version, NodeContext updatedNodeContext) {
+  public void newTopologyCommitted(long version, NodeContext updatedNodeContext) {
     if (!isActivated()) {
       throw new AssertionError("Not activated");
     }
     LOGGER.info("New config repository version: {} has been saved", version);
     this.upcomingNodeContext = updatedNodeContext.clone();
-    // do not fire events within the synchronized block
+    // do not fire events within a synchronized block
     NodeContext update = upcomingNodeContext.clone();
     callbacks_onNewTopologyCommitted.forEach(c -> c.accept(version, update));
   }
@@ -112,17 +112,20 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   /**
    * called from Nomad just after change has been applied at runtime
    */
-  public synchronized void newConfigurationChange(Configuration configuration, boolean changeAppliedAtRuntime) {
+  public void newConfigurationChange(Configuration configuration, boolean changeAppliedAtRuntime) {
     if (!isActivated()) {
       throw new AssertionError("Not activated");
     }
-
     if (changeAppliedAtRuntime) {
-      configuration.apply(runtimeNodeContext.getCluster(), substitutor);
+      synchronized (this) {
+        configuration.apply(runtimeNodeContext.getCluster(), substitutor);
+      }
+      // do not fire events within a synchronized block
       NodeContext update = runtimeNodeContext.clone();
       callbacks_onNewRuntimeConfiguration.forEach(c -> c.accept(update, configuration));
       LOGGER.info("Change: {} applied at runtime", configuration);
     } else {
+      // do not fire events within a synchronized block
       NodeContext update = upcomingNodeContext.clone();
       callbacks_onNewUpcomingConfiguration.forEach(c -> c.accept(update, configuration));
       LOGGER.info("Change: {} will be applied after restart", configuration);
@@ -146,7 +149,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (millis < 0) {
       throw new IllegalArgumentException("Invalid delay: " + delayInSeconds);
     }
-
     LOGGER.info("Node will restart in: {} seconds", delayInSeconds.getSeconds());
     new Thread(getClass().getSimpleName() + "-DelayedRestart") {
       @Override
