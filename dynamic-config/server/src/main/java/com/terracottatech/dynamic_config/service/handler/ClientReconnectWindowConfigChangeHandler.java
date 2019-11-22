@@ -61,7 +61,7 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
       LOGGER.error("Invoke resulted in exception", e); // log the exception so that server logs get it too
       throw new AssertionError(e);
     }
-    return false;
+    return true;
   }
 
   private void ensureMBeanAttributeExists(Configuration change) throws InvalidConfigChangeException {
