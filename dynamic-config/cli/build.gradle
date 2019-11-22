@@ -3,7 +3,9 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-apply plugin: TcDeploy
+apply plugin: TcDistribute
+
+evaluationDependsOn(':terracotta-common-client')
 
 dependencies {
   compile project(':diagnostic-client')
@@ -12,6 +14,11 @@ dependencies {
 
   compile "com.beust:jcommander:$jcommanderVersion"
   compile "ch.qos.logback:logback-classic:$logbackVersion"
+
+  // We also need the same dependency set as terracotta-common-client
+  project(':terracotta-common-client').configurations.compileOnly.dependencies.each {
+    add('compileOnly', it)
+  }
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile("org.mockito:mockito-core:$mockitoVersion")
