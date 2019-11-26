@@ -7,7 +7,7 @@ apply plugin: TcDeploy
 
 dependencies {
   compile project(':dynamic-config-server')
-  compile "commons-cli:commons-cli:1.3.1"
+  compile "commons-cli:commons-cli:$commonsCliVersion"
   
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
   compileOnly "org.terracotta.internal:configuration-provider:$terracottaCoreVersion"
