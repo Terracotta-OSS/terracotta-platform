@@ -4,26 +4,30 @@
  */
 package com.terracottatech.dynamic_config.test.util;
 
+import com.terracottatech.br.BackupServiceProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 import static java.lang.System.lineSeparator;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * @author Mathieu Carbou
  */
 public class Kit {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Kit.class);
 
   // memoize results for subsequent test execution to fasten build feedback in case of error
-  private static Path kitPath;
+  private static volatile Path kitPath;
   private static RuntimeException error;
 
   public static Optional<Path> getPath() {
@@ -31,21 +35,35 @@ public class Kit {
   }
 
   public static Path getOrCreatePath() {
-    Path kitPath = getPath().orElseGet(() -> {
-      Path path = build();
-      System.setProperty("kitInstallationPath", path.toAbsolutePath().toString());
-      return path;
-    });
-    // copy custom logback-ext
-    try {
-      Path logConfg = Paths.get("src", "test", "resources", "logback-ext.xml");
-      if (Files.exists(logConfg)) {
-        Files.copy(logConfg, kitPath.resolve("server").resolve("lib").resolve("logback-ext.xml"), StandardCopyOption.REPLACE_EXISTING);
-      }
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
+    if (kitPath == null) {
+      constructPath();
     }
     return kitPath;
+  }
+
+  private synchronized static void constructPath() {
+    if (kitPath == null) {
+      Path constructedKitPath = getPath().orElseGet(() -> {
+        Path path = build();
+        System.setProperty("kitInstallationPath", path.toAbsolutePath().toString());
+        return path;
+      });
+
+      // copy custom logback-ext
+      try {
+        Path logConfig = Paths.get(Kit.class.getResource("/logback-ext.xml").toURI());
+        if (Files.exists(logConfig)) {
+          Files.copy(logConfig, constructedKitPath.resolve("server").resolve("lib").resolve("logback-ext.xml"), REPLACE_EXISTING);
+        }
+      } catch (URISyntaxException e) {
+        throw new AssertionError(e);
+      } catch (IOException e) {
+        //log an exception and continue, because not being able to copy logback-ext doesn't harm us in any way
+        LOGGER.error("Caught exception during Files::copy", e);
+      }
+
+      kitPath = constructedKitPath;
+    }
   }
 
   private static synchronized Path build() {
