@@ -15,21 +15,3 @@ dependencies {
   testCompile("org.mockito:mockito-core:$mockitoVersion")
   testCompile project(':galvan-support-ee')
 }
-
-task unzipKit(type: Copy) {
-  dependsOn project(':terracotta').distZip
-  from zipTree(project(':terracotta').distZip.archivePath)
-  into 'build/tc-db-kit'
-}
-
-test {
-  dependsOn unzipKit
-
-  //If this directory does not exist, tests will fail with a cryptic assert failure
-  systemProperty 'kitInstallationPath', "$unzipKit.destinationDir/${project(':terracotta').archivesBaseName}-$project.version"
-  //systemProperty 'serverDebugStartPort', "5005"
-
-  testLogging {
-    events 'started'
-  }
-}
