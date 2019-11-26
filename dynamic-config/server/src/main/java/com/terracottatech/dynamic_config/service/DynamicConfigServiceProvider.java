@@ -17,7 +17,6 @@ import com.terracottatech.dynamic_config.service.handler.ClientReconnectWindowCo
 import com.terracottatech.dynamic_config.service.handler.DataDirectoryConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ServerAttributeConfigChangeHandler;
-import com.terracottatech.dynamic_config.service.handler.SimulationHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,9 +85,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       addToManager(manager, applyAfterRestart(substitutor), FAILOVER_PRIORITY);
 
       // tc-properties
-      manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<>()
+      manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
           .selector(Configuration::getKey)
-          .add("com.terracottatech.dynamic-config.simulate", new SimulationHandler(substitutor))
           .fallback(applyAfterRestart(substitutor)));
     }
     return true;

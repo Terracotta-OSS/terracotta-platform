@@ -13,6 +13,7 @@ dependencies {
   testCompile project(':galvan-support-ee')
   testCompile project(':terracotta-store-clustered-client')
   testCompile project(':nms-agent-entity-ee')
+  testCompile project(':dynamic-config-test-support')
 
   testCompile "org.terracotta.management.dist:mnm-nms-agent:$terracottaPlatformVersion"
   testCompile "org.terracotta.management.dist:mnm-nms:$terracottaPlatformVersion"
@@ -32,8 +33,13 @@ apply plugin: TcDistribute
 
 task unzipKit(type: Copy) {
   dependsOn project(':terracotta').distZip
+  into('build/tc-db-kit')
   from zipTree(project(':terracotta').distZip.archivePath)
-  into 'build/tc-db-kit'
+  
+  dependsOn project(':dynamic-config-test-support').jar
+  into("terracotta-$project.version/server/plugins/lib") {
+    from project(':dynamic-config-test-support').jar.archivePath.getPath()
+  }
 }
 
 test {
