@@ -65,8 +65,8 @@ import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
 
 public class BaseStartupIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(BaseStartupIT.class);
-  static final boolean CI = System.getProperty("JOB_NAME") != null;
-  static final int TIMEOUT =  CI ? 40 : 20;
+  private static final boolean CI = System.getProperty("JOB_NAME") != null;
+  static final int TIMEOUT = CI ? 90 : 20;
   static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule

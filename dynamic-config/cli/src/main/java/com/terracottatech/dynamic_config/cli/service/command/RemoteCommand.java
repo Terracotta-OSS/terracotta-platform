@@ -30,6 +30,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -107,17 +108,21 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void restartNodes(Collection<InetSocketAddress> addresses) {
-    logger.trace("restartNodes({})", addresses);
+  protected final void restartNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime) {
+    logger.trace("restartNodes({}, {})", addresses, maximumWaitTime);
     try {
       RestartProgress progress = restartService.restartNodes(addresses);
-      Map<InetSocketAddress, Exception> failures = progress.await();
-      if (!failures.isEmpty()) {
-        String failedNodes = failures.entrySet()
-            .stream()
-            .map(e -> "Error when restarting node: " + e.getKey() + ": " + e.getValue().getMessage())
-            .collect(joining(lineSeparator() + " - "));
-        throw new IllegalStateException("Some nodes failed to restart:" + lineSeparator() + " - " + failedNodes);
+      progress.getErrors().forEach((address, e) -> logger.warn("Unable to ask node: {} to restart: please restart it manually.", address));
+      progress.onRestarted(address -> logger.info("Node: {} has restarted.", address));
+      Collection<InetSocketAddress> restarted = progress.await(maximumWaitTime);
+      // check where we are
+      Collection<InetSocketAddress> missing = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+      missing.addAll(addresses);
+      missing.removeAll(progress.getErrors().keySet()); // remove nodes that we were not able to contact
+      missing.removeAll(restarted); // remove nodes that have been restarted
+      if (!missing.isEmpty()) {
+        throw new IllegalStateException("Some nodes failed to restart within " + maximumWaitTime.getSeconds() + " seconds:" + lineSeparator()
+            + " - " + missing.stream().map(InetSocketAddress::toString).collect(joining(lineSeparator() + " - ")));
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

@@ -146,8 +146,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   public void restart(Duration delayInSeconds) {
     // The delay helps the caller close the connection while it's live, otherwise it gets stuck for request timeout duration
     final long millis = delayInSeconds.toMillis();
-    if (millis < 0) {
-      throw new IllegalArgumentException("Invalid delay: " + delayInSeconds);
+    if (millis < 1_000) {
+      throw new IllegalArgumentException("Invalid delay: " + delayInSeconds.getSeconds() + " seconds");
     }
     LOGGER.info("Node will restart in: {} seconds", delayInSeconds.getSeconds());
     new Thread(getClass().getSimpleName() + "-DelayedRestart") {

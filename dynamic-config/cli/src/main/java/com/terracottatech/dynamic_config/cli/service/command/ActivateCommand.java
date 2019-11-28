@@ -9,12 +9,15 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
+import com.terracottatech.dynamic_config.cli.common.TimeUnitConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.utilities.Measure;
+import com.terracottatech.utilities.TimeUnit;
 import com.terracottatech.utilities.Tuple2;
 
 import java.io.IOException;
@@ -23,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -45,6 +49,9 @@ public class ActivateCommand extends RemoteCommand {
 
   @Parameter(required = true, names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
   private Path licenseFile;
+
+  @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Restart wait time", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> restartWaitTime = Measure.of(1, TimeUnit.MINUTES);
 
   private final IParameterSubstitutor substitutor = identity();
 
@@ -111,7 +118,7 @@ public class ActivateCommand extends RemoteCommand {
     logger.debug("Configuration repositories have been created for all nodes");
 
     logger.info("Restarting nodes: {}", toString(runtimePeers));
-    restartNodes(runtimePeers);
+    restartNodes(runtimePeers, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
     logger.info("All nodes: {} came back up", toString(runtimePeers));
 
     logger.info("Command successful!" + lineSeparator());
