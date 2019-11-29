@@ -2,14 +2,14 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package entity;
+package com.terracottatech.dynamic_config.test_support.entity;
 
 import com.tc.classloader.PermanentEntity;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
+import com.terracottatech.dynamic_config.test_support.handler.SimulationHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import handler.SimulationHandler;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.EntityServerService;

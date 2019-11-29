@@ -2,21 +2,30 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package entity;
+package com.terracottatech.dynamic_config.test_support.entity;
 
-import org.terracotta.entity.CommonServerEntity;
-import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.PassiveServerEntity;
 
-public class TestCommonEntity implements CommonServerEntity<EntityMessage, EntityResponse> {
+public class TestPassiveEntity extends TestCommonEntity implements PassiveServerEntity<EntityMessage, EntityResponse> {
   @Override
-  public void createNew() throws ConfigurationException {
+  public void startSyncEntity() {
 
   }
 
   @Override
-  public void destroy() {
+  public void endSyncEntity() {
+
+  }
+
+  @Override
+  public void startSyncConcurrencyKey(int concurrencyKey) {
+
+  }
+
+  @Override
+  public void endSyncConcurrencyKey(int concurrencyKey) {
 
   }
 }

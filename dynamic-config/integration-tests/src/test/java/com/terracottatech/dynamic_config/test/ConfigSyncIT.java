@@ -68,27 +68,24 @@ public class ConfigSyncIT extends BaseStartupIT {
     ));
 
     ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    waitForAssert(out::getLog, containsString("Command successful"));
-    out.clearLog();
+    assertCommandSuccessful();
     ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    waitForAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    assertCommandSuccessful();
 
     secondNodeProcess.close();
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB");
-    waitForAssert(out::getLog, containsString("Command successful"));
-    out.clearLog();
+    assertCommandSuccessful();
 
     Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + firstNodeId + "/sanskrit");
     Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
     List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
     List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-    assertContentsBeforeSync(activeChanges, passiveChanges, 5, 3);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 3);
     startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
 
     waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
     passiveChanges = AppendLogCapturer.getChanges(passivePath);
-    assertContentsAfterSync(activeChanges, passiveChanges, 5, 5);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 5);
   }
 
   @Test
@@ -121,12 +118,9 @@ public class ConfigSyncIT extends BaseStartupIT {
     ));
 
     ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    waitForAssert(out::getLog, containsString("Command successful"));
-    out.clearLog();
+    assertCommandSuccessful();
     ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    waitForAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
-
+    assertCommandSuccessful();
     secondNodeProcess.close();
     try {
       ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
@@ -136,12 +130,13 @@ public class ConfigSyncIT extends BaseStartupIT {
       Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
       List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
       List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-      assertContentsBeforeSync(activeChanges, passiveChanges, 4, 3);
+      assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 3);
+      out.clearLog();
       startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
 
       waitForAssert(out::getLog, containsString("Active has some PREPARED changes that is not yet committed."));
       passiveChanges = AppendLogCapturer.getChanges(passivePath);
-      assertContentsAfterSync(activeChanges, passiveChanges, 4, 3);
+      assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 3);
     }
   }
 
@@ -175,11 +170,9 @@ public class ConfigSyncIT extends BaseStartupIT {
     ));
 
     ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    waitForAssert(out::getLog, containsString("Command successful"));
-    out.clearLog();
+    assertCommandSuccessful();
     ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    waitForAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    assertCommandSuccessful();
 
     boolean isFirstNodePassive = false;
     if (firstNodeProcess.getServerState().toString().equals("PASSIVE")) {
@@ -194,13 +187,14 @@ public class ConfigSyncIT extends BaseStartupIT {
         Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
         List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
         List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeSync(activeChanges, passiveChanges, 4, 5);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
         firstNodeProcess.close();
+        out.clearLog();
         startNode("-r", "repository/stripe" + stripeId + "/node-" + firstNodeId);
 
         waitForAssert(out::getLog, containsString("Passive cannot sync because the change history does not match"));
         passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsAfterSync(activeChanges, passiveChanges, 4, 5);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
       }
     } else {
       try {
@@ -211,13 +205,14 @@ public class ConfigSyncIT extends BaseStartupIT {
         Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
         List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
         List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeSync(activeChanges, passiveChanges, 4, 5);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
         secondNodeProcess.close();
+        out.clearLog();
         startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
 
         waitForAssert(out::getLog, containsString("Passive cannot sync because the change history does not match"));
         passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsAfterSync(activeChanges, passiveChanges, 4, 5);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
       }
     }
   }
@@ -252,11 +247,9 @@ public class ConfigSyncIT extends BaseStartupIT {
     ));
 
     ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    waitForAssert(out::getLog, containsString("Command successful"));
-    out.clearLog();
+    assertCommandSuccessful();
     ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    waitForAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    assertCommandSuccessful();
 
     boolean isFirstNodePassive = false;
     if (firstNodeProcess.getServerState().toString().equals("PASSIVE")) {
@@ -271,13 +264,14 @@ public class ConfigSyncIT extends BaseStartupIT {
         Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
         List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
         List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeSync(activeChanges, passiveChanges, 5, 4);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
         firstNodeProcess.close();
+        out.clearLog();
         startNode("-r", "repository/stripe" + stripeId + "/node-" + firstNodeId);
 
         waitForAssert(out::getLog, containsString("Latest configuration change was not committed"));
         passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsAfterSync(activeChanges, passiveChanges, 5, 4);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
       }
     } else {
       try {
@@ -288,42 +282,26 @@ public class ConfigSyncIT extends BaseStartupIT {
         Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
         List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
         List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeSync(activeChanges, passiveChanges, 5, 4);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
         secondNodeProcess.close();
+        out.clearLog();
         startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
 
         waitForAssert(out::getLog, containsString("Latest configuration change was not committed"));
         passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsAfterSync(activeChanges, passiveChanges, 5, 4);
+        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
       }
     }
   }
 
-  private void assertContentsAfterSync(List<SanskritObject> activeChanges,
+  private void assertContentsBeforeOrAfterSync(List<SanskritObject> activeChanges,
                                        List<SanskritObject> passiveChanges,
                                        int activeChangesSize,
                                        int passiveChangesSize
   ) {
     assertThat(activeChanges.size(), is(activeChangesSize));
     assertThat(passiveChanges.size(), is(passiveChangesSize));
-    if (activeChangesSize < passiveChangesSize) {
-      assertContents(activeChanges, passiveChanges, activeChangesSize);
-    } else {
-      assertContents(activeChanges, passiveChanges, passiveChangesSize);
-    }
-  }
-
-  private void assertContentsBeforeSync(List<SanskritObject> activeChanges,
-                                        List<SanskritObject> passiveChanges,
-                                        int activeChangesSize,
-                                        int passiveChangesSize) {
-    assertThat(activeChanges.size(), is(activeChangesSize));
-    assertThat(passiveChanges.size(), is(passiveChangesSize));
-    if (activeChangesSize < passiveChangesSize) {
-      assertContents(activeChanges, passiveChanges, activeChangesSize);
-    } else {
-      assertContents(activeChanges, passiveChanges, passiveChangesSize);
-    }
+    assertContents(activeChanges, passiveChanges, Math.min(activeChangesSize, passiveChangesSize));
   }
 
   private void assertContents(List<SanskritObject> activeChanges, List<SanskritObject> passiveChanges, int till) {

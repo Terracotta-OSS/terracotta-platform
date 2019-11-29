@@ -6,7 +6,7 @@
 apply plugin: TcDeploy
 
 dependencies {
-    compile project(':dynamic-config-change')
-    compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
-    compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"    
+  compile project(':dynamic-config-change')
+  compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"
 }
