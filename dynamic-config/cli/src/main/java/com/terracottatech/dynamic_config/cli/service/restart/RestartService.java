@@ -11,6 +11,7 @@ import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider
 import com.terracottatech.diagnostic.common.DiagnosticException;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,6 +124,7 @@ public class RestartService {
       }
 
       @Override
+      @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
       public Collection<InetSocketAddress> await(Duration duration) throws InterruptedException {
         try {
           done.await(duration.toMillis(), MILLISECONDS);
