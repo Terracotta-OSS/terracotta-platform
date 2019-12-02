@@ -25,6 +25,8 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import org.terracotta.tripwire.MemoryMonitor;
+import org.terracotta.tripwire.TripwireFactory;
 
 /**
  * An implementation of {@link OffHeapResource}.
@@ -67,6 +69,7 @@ class OffHeapResourceImpl implements OffHeapResource {
   private final CapacityChangeHandler onCapacityChanged;
   private final OffHeapResourceBinding managementBinding;
   private final AtomicInteger threshold = new AtomicInteger();
+  private final MemoryMonitor monitor;
 
   /**
    * Creates a resource of the given initial size.
@@ -87,6 +90,8 @@ class OffHeapResourceImpl implements OffHeapResource {
 
     this.state = new AtomicReference<>(new OffHeapResourceState(size));
     this.identifier = identifier;
+    monitor = TripwireFactory.createMemoryMonitor(identifier);
+    monitor.register();
   }
 
   /**
@@ -172,6 +177,7 @@ class OffHeapResourceImpl implements OffHeapResource {
         onReservationThresholdReached.accept(this, new ThresholdChange(curT, newT));
       }
     }
+    monitor.sample(capacity - used, used);
   }
 
   /**

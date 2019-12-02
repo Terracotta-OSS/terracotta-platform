@@ -111,7 +111,6 @@
       <artifactId>jackson-databind</artifactId>
       <scope>test</scope>
     </dependency>
-
     <!-- management client for testing to read the monitoring service-->
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
