@@ -63,47 +63,47 @@ public abstract class RemoteCommand extends Command {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  protected final void ensureAddressWithinCluster(InetSocketAddress address) {
-    logger.trace("ensureAddressWithinCluster({})", address);
-    getRuntimeCluster(address).getNode(address)
-        .orElseGet(() -> getUpcomingCluster(address).getNode(address)
-            .orElseThrow(() -> new IllegalArgumentException("Targeted cluster does not contain any node with this address: " + address + ". Is it a mistake ? Are you connecting to the wrong cluster ? If not, please use the configured node hostname and port to connect.")));
+  protected final void ensureAddressWithinCluster(InetSocketAddress expectedOnlineNode) {
+    logger.trace("ensureAddressWithinCluster({})", expectedOnlineNode);
+    getRuntimeCluster(expectedOnlineNode).getNode(expectedOnlineNode)
+        .orElseGet(() -> getUpcomingCluster(expectedOnlineNode).getNode(expectedOnlineNode)
+            .orElseThrow(() -> new IllegalArgumentException("Targeted cluster does not contain any node with this address: " + expectedOnlineNode + ". Is it a mistake ? Are you connecting to the wrong cluster ? If not, please use the configured node hostname and port to connect.")));
   }
 
-  protected final boolean isRestartRequired(InetSocketAddress address) {
-    logger.trace("isRestartRequired({})", address);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
+  protected final boolean isRestartRequired(InetSocketAddress expectedOnlineNode) {
+    logger.trace("isRestartRequired({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).isRestartRequired();
     }
   }
 
-  protected final void runNomadChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, NomadChange change) {
-    logger.trace("runNomadChange({}, {})", onlineNodes, change);
+  protected final void runNomadChange(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes, NomadChange change) {
+    logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
     List<InetSocketAddress> orderedList = Stream.concat(
-        onlineNodes.entrySet().stream().filter(e -> e.getValue() == PASSIVE),
-        onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive())
+        expectedOnlineNodes.entrySet().stream().filter(e -> e.getValue() == PASSIVE),
+        expectedOnlineNodes.entrySet().stream().filter(e -> e.getValue().isActive())
     ).map(Map.Entry::getKey).collect(Collectors.toList());
     runNomadChange(orderedList, change);
   }
 
-  protected final void runNomadChange(List<InetSocketAddress> onlineNodes, NomadChange change) {
-    logger.trace("runNomadChange({}, {})", onlineNodes, change);
+  protected final void runNomadChange(List<InetSocketAddress> expectedOnlineNodes, NomadChange change) {
+    logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);
     NomadFailureRecorder<NodeContext> failures = new NomadFailureRecorder<>();
-    nomadManager.runChange(onlineNodes, change, failures);
+    nomadManager.runChange(expectedOnlineNodes, change, failures);
     failures.reThrow();
   }
 
-  protected final Cluster getUpcomingCluster(InetSocketAddress address) {
-    logger.trace("getUpcomingCluster({})", address);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
+  protected final Cluster getUpcomingCluster(InetSocketAddress expectedOnlineNode) {
+    logger.trace("getUpcomingCluster({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
   }
 
-  protected final Cluster getRuntimeCluster(InetSocketAddress address) {
-    logger.trace("getRuntimeCluster({})", address);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
+  protected final Cluster getRuntimeCluster(InetSocketAddress expectedOnlineNode) {
+    logger.trace("getRuntimeCluster({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
     }
   }
@@ -130,24 +130,25 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final Collection<InetSocketAddress> findRuntimePeers(InetSocketAddress address) {
-    logger.trace("findRuntimePeers({})", address);
-    final Collection<InetSocketAddress> peers = getRuntimeCluster(address).getNodeAddresses();
-    if (!peers.contains(address)) {
-      throw new IllegalArgumentException("Node address " + address + " used to connect does not match any known node in cluster " + peers);
+  protected final Collection<InetSocketAddress> findRuntimePeers(InetSocketAddress expectedOnlineNode) {
+    logger.trace("findRuntimePeers({})", expectedOnlineNode);
+    final Collection<InetSocketAddress> peers = getRuntimeCluster(expectedOnlineNode).getNodeAddresses();
+    if (!peers.contains(expectedOnlineNode)) {
+      throw new IllegalArgumentException("Node address " + expectedOnlineNode + " used to connect does not match any known node in cluster " + peers);
     }
     if (logger.isDebugEnabled()) {
-      logger.debug("Discovered nodes:{} through: {}", toString(peers), address);
+      logger.debug("Discovered nodes:{} through: {}", toString(peers), expectedOnlineNode);
     }
     return peers;
   }
 
-  protected final Map<InetSocketAddress, LogicalServerState> findRuntimePeersStatus(InetSocketAddress address) {
-    logger.trace("findOnlineRuntimePeers({})", address);
-    Cluster cluster = getRuntimeCluster(address);
+  protected final Map<InetSocketAddress, LogicalServerState> findRuntimePeersStatus(InetSocketAddress expectedOnlineNode) {
+    logger.trace("findOnlineRuntimePeers({})", expectedOnlineNode);
+    Cluster cluster = getRuntimeCluster(expectedOnlineNode);
+    logger.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(cluster.getNodeAddresses()));
     Collection<InetSocketAddress> addresses = cluster.getNodeAddresses();
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
-      return addresses.stream()
+      LinkedHashMap<InetSocketAddress, LogicalServerState> status = addresses.stream()
           .collect(toMap(
               identity(),
               addr -> diagnosticServices.getDiagnosticService(addr).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
@@ -155,6 +156,12 @@ public abstract class RemoteCommand extends Command {
                 throw new UnsupportedOperationException();
               },
               LinkedHashMap::new));
+      status.forEach((address, state) -> {
+        if (state.isUnreacheable()) {
+          logger.info(" - {} is not reachable", address);
+        }
+      });
+      return status;
     }
   }
 
