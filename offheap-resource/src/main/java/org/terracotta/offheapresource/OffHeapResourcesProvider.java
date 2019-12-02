@@ -49,7 +49,7 @@ import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifie
  * This service allows for the configuration of a multitude of virtual offheap resource pools from which participating
  * entities can reserve space. This allows for the partitioning and control of memory usage by entities consuming this service.
  */
-public class OffHeapResourcesProvider implements OffHeapResources, ManageableServerComponent, StateDumpable {
+public class OffHeapResourcesProvider implements OffHeapResources, ManageableServerComponent, StateDumpable, AutoCloseable {
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourcesProvider.class);
   private static final BigInteger MAX_LONG_PLUS_ONE = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
 
@@ -197,6 +197,11 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     warnIfOffheapExceedsPhysicalMemory(current);
   }
 
+  @Override
+  public void close() {
+    this.resources.values().forEach(oh->oh.close());
+  }  
+  
   private void warnIfOffheapExceedsPhysicalMemory(long totalConfiguredOffheap) {
     Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
     if (physicalMemory != null && totalConfiguredOffheap > physicalMemory) {

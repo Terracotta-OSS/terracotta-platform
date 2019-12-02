@@ -31,7 +31,7 @@ import org.terracotta.tripwire.TripwireFactory;
 /**
  * An implementation of {@link OffHeapResource}.
  */
-class OffHeapResourceImpl implements OffHeapResource {
+class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourceImpl.class);
 
@@ -120,6 +120,11 @@ class OffHeapResourceImpl implements OffHeapResource {
 
   public OffHeapResourceBinding getManagementBinding() {
     return managementBinding;
+  }
+  
+  @Override
+  public void close() {
+    monitor.unregister();
   }
 
   /**
