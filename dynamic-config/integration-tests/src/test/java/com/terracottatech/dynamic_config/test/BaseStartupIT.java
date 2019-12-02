@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -95,7 +96,7 @@ public class BaseStartupIT {
   }
 
   @After
-  public void tearDown() throws IOException {
+  public void tearDown() {
     nodeProcesses.forEach(NodeProcess::close);
     ensureNodesNotAccessingExternalFiles();
   }
@@ -227,7 +228,7 @@ public class BaseStartupIT {
    * All the path on the nodes should be relative to the working directory and also configured
    * accordingly to support the different stripes / node IDs.
    */
-  private void ensureNodesNotAccessingExternalFiles() throws IOException {
+  private void ensureNodesNotAccessingExternalFiles() {
     Stream<Path> s1 = of(
         getBaseDir(),
         Paths.get("backup"),
@@ -273,13 +274,17 @@ public class BaseStartupIT {
         Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "sanskrit"),
         Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "sanskrit", "tmp")
     )).flatMap(identity())).flatMap(identity());
+
     List<Path> expected = concat(s1, s2).collect(toList());
-    List<Path> unexpected = Files.walk(getBaseDir())
-        .filter(p -> Files.isDirectory(p))
-        .filter(p -> !p.toString().contains("backup-platform-data-"))
-        .filter(p -> expected.stream().noneMatch(p::endsWith))
-        .collect(toList());
-    assertThat(unexpected.toString(), unexpected, hasSize(0));
+    try (Stream<Path> stream = Files.walk(getBaseDir())) {
+      List<Path> unexpected = stream.filter(p -> Files.isDirectory(p))
+          .filter(p -> !p.toString().contains("backup-platform-data-"))
+          .filter(p -> expected.stream().noneMatch(p::endsWith))
+          .collect(toList());
+      assertThat(unexpected.toString(), unexpected, hasSize(0));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private Stream<int[]> combinations() {

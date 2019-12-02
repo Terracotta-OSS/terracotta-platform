@@ -13,6 +13,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Objects.requireNonNull;
@@ -43,8 +44,8 @@ public class RepairSanskrit {
         throw new UncheckedIOException(e);
       }
     } else {
-      try {
-        if (Files.list(output).findAny().isPresent()) {
+      try (Stream<Path> stream = Files.list(output)) {
+        if (stream.findAny().isPresent()) {
           throw new IllegalArgumentException(output.toString());
         }
       } catch (IOException e) {
@@ -87,9 +88,10 @@ public class RepairSanskrit {
     } catch (SanskritException e) {
       throw new UncheckedSanskritException(e);
     }
+
     if (replace) {
-      try {
-        Files.list(output).forEach(file -> {
+      try (Stream<Path> stream = Files.list(output)) {
+        stream.forEach(file -> {
           try {
             Files.move(file, input.resolve(file.getFileName()), REPLACE_EXISTING);
           } catch (IOException e) {
