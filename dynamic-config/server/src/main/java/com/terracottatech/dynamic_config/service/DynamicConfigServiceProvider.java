@@ -138,8 +138,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   private void addToManager(ConfigChangeHandlerManager manager, ConfigChangeHandler configChangeHandler, Setting setting) {
     if (!manager.add(setting, configChangeHandler)) {
       throw new AssertionError("Duplicate " + ConfigChangeHandler.class.getSimpleName() + " for " + setting);
-    } else {
-      LOGGER.info("Registered dynamic configuration change handler: {} for setting: {}", configChangeHandler.getClass().getName(), setting);
     }
+    LOGGER.debug("Registered dynamic configuration change handler: {} for setting: {}", configChangeHandler.getClass().getSimpleName(), setting);
   }
 }

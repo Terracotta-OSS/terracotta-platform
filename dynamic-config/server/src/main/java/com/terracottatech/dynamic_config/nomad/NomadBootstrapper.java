@@ -181,7 +181,7 @@ public class NomadBootstrapper {
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));
-      LOGGER.info("Successfully completed upgradeForWrite procedure");
+      LOGGER.debug("Successfully completed upgradeForWrite procedure");
     }
 
     /**
