@@ -28,7 +28,7 @@ public class Props {
     try (InputStream in = Files.newInputStream(propertiesFile)) {
       props.load(in);
     } catch (IOException e) {
-      throw new UncheckedIOException("Failed to read config file: %s. Make sure the file exists and is readable" + propertiesFile.getFileName(), e);
+      throw new UncheckedIOException("Failed to read config file: " + propertiesFile.getFileName() + ". Make sure the file exists and is readable", e);
     }
     return props;
   }

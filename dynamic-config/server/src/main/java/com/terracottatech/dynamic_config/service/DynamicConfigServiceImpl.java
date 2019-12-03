@@ -189,7 +189,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     if (newMe != null) {
       // we have updated the topology and I am still part of this cluster
-      LOGGER.info("Set pending topology to: {}", updatedCluster);
+      LOGGER.info("Set upcoming topology to: {}", updatedCluster);
       this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getNodeAddress());
     } else {
       // We have updated the topology and I am not part anymore of the cluster
