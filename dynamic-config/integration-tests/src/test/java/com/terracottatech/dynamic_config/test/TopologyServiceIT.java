@@ -54,10 +54,7 @@ public class TopologyServiceIT extends BaseStartupIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingCluster, is(equalTo(new Cluster("tc-cluster", new Stripe(new Node()
-          .setNodeName("node-1")
-          .setNodeHostname("localhost")
-          .setNodePort(ports.getPort())
+      assertThat(pendingCluster, is(equalTo(new Cluster("tc-cluster", new Stripe(Node.newDefaultNode("node-1", "localhost", ports.getPort())
           .setNodeGroupPort(ports.getPort() + 10)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")

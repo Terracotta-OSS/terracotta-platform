@@ -31,7 +31,7 @@ public class ClusterActivationNomadChangeProcessorTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   private ClusterActivationNomadChangeProcessor processor;
-  private NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(new Node().setNodeName("foo"))), 1, "foo");
+  private NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(Node.newDefaultNode("foo", "localhost"))), 1, "foo");
 
   @Before
   public void setUp() {
@@ -50,7 +50,7 @@ public class ClusterActivationNomadChangeProcessorTest {
   @Test
   public void testCanApplyWithNonNullBaseConfig() throws Exception {
     ClusterActivationNomadChange change = new ClusterActivationNomadChange(new Cluster("cluster"));
-    NodeContext topology = new NodeContext(new Cluster(new Stripe(new Node().setNodeName("foo"))), 1, "foo");
+    NodeContext topology = new NodeContext(new Cluster(new Stripe(Node.newDefaultNode("foo", "localhost"))), 1, "foo");
 
     expectedException.expect(NomadException.class);
     expectedException.expectMessage("Existing config must be null. Found: " + topology);

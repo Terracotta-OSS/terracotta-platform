@@ -127,7 +127,7 @@ public class XmlConfigMapper {
         .orElseThrow(() -> new AssertionError("Unable to find server node " + xmlNode.getName()));
     Map<Class<?>, List<Object>> xmlPlugins = parsePlugins(xml, xmlTcConfig);
     Optional<Security> security = toSecurity(xmlPlugins);
-    return new Node()
+    return Node.empty()
         .setNodeName(xmlNode.getName())
         .setNodeHostname(xmlServer.getHost())
         .setNodePort(xmlServer.getTsaPort().getValue())

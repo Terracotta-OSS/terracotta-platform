@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class StripeTest {
 
-  Node node1 = new Node()
+  Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
@@ -38,21 +38,15 @@ public class StripeTest {
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
-      .setNodeHostname("localhost")
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
-      .setNodeName("node1")
-      .setNodePort(9410)
       .setOffheapResource("off", 2, MemoryUnit.GB)
       .setSecurityAuditLogDir(Paths.get("audit"))
       .setSecurityAuthc("ldap")
       .setSecuritySslTls(true)
       .setSecurityWhitelist(true);
 
-  Node node2 = new Node()
-      .setNodeHostname("localhost")
-      .setNodePort(9411)
-      .setNodeName("node2")
+  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("data", Paths.get("/data/cache2"));
@@ -88,11 +82,11 @@ public class StripeTest {
   @Test
   public void test_attach() {
     assertThat(
-        () -> stripe.attachNode(new Node().setNodeHostname("localhost").setNodePort(9410)),
+        () -> stripe.attachNode(Node.newDefaultNode("localhost", 9410)),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9410 is already in the stripe.")))));
 
     assertThat(
-        () -> new Stripe().attachNode(new Node().setNodeHostname("localhost").setNodePort(9410)),
+        () -> new Stripe().attachNode(Node.newDefaultNode("localhost", 9410)),
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Empty stripe.")))));
 
     // attaching a non-secured node to secured nodes

@@ -42,26 +42,20 @@ public class StripeConfigurationTest {
   @Test
   public void testCreation() {
     List<Node> nodeList = new ArrayList<>();
-    Node node1 = new Node();
+    Node node1 = Node.newDefaultNode("server-1", "localhost", 94101);
     Path logPath = temporaryFolder.getRoot();
-    node1.setNodeName("server-1");
-    node1.setNodeHostname("localhost");
     node1.setNodeLogDir(logPath);
     node1.setClientReconnectWindow(100, TimeUnit.SECONDS);
     node1.setNodeBindAddress("127.0.0.1");
     node1.setNodeGroupBindAddress("127.0.1.1");
-    node1.setNodePort(94101);
     node1.setNodeGroupPort(94102);
     nodeList.add(node1);
 
-    Node node2 = new Node();
-    node2.setNodeName("server-2");
-    node2.setNodeHostname("localhost");
+    Node node2 = Node.newDefaultNode("server-2", "localhost", 94101);
     node2.setNodeLogDir(logPath);
     node2.setClientReconnectWindow(100, TimeUnit.SECONDS);
     node2.setNodeBindAddress("127.0.0.1");
     node2.setNodeGroupBindAddress("127.0.1.1");
-    node2.setNodePort(94101);
     node2.setNodeGroupPort(94102);
     nodeList.add(node2);
 

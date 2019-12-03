@@ -25,7 +25,7 @@ public class LicenseValidatorTest {
     capabilityMap.put(LicenseConstants.CAPABILITY_OFFHEAP, 500L);
     License license = new License(capabilityMap, LocalDate.now());
     Cluster cluster = new Cluster(
-        new Stripe(new Node().setOffheapResource("main", Measure.of(512, MemoryUnit.MB)))
+        new Stripe(Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(512, MemoryUnit.MB)))
     );
     LicenseValidator validator = new LicenseValidator(cluster, license);
     validator.validate();
@@ -37,8 +37,8 @@ public class LicenseValidatorTest {
     capabilityMap.put(LicenseConstants.CAPABILITY_OFFHEAP, 1000L);
     License license = new License(capabilityMap, LocalDate.now());
     Cluster cluster = new Cluster(
-        new Stripe(new Node().setOffheapResource("main", Measure.of(512, MemoryUnit.MB))),
-        new Stripe(new Node().setOffheapResource("main", Measure.of(512, MemoryUnit.MB)))
+        new Stripe(Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(512, MemoryUnit.MB))),
+        new Stripe(Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(512, MemoryUnit.MB)))
     );
     LicenseValidator validator = new LicenseValidator(cluster, license);
     validator.validate();
@@ -51,12 +51,12 @@ public class LicenseValidatorTest {
     License license = new License(capabilityMap, LocalDate.now());
     Cluster cluster = new Cluster(
         new Stripe(
-            new Node().setOffheapResource("main", Measure.of(512, MemoryUnit.MB)),
-            new Node().setOffheapResource("main", Measure.of(512, MemoryUnit.MB))
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(512, MemoryUnit.MB)),
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(512, MemoryUnit.MB))
         ),
         new Stripe(
-            new Node().setOffheapResource("main", Measure.of(512, MemoryUnit.MB)),
-            new Node().setOffheapResource("main", Measure.of(512, MemoryUnit.MB))
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(512, MemoryUnit.MB)),
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(512, MemoryUnit.MB))
         )
     );
     LicenseValidator validator = new LicenseValidator(cluster, license);
@@ -69,7 +69,7 @@ public class LicenseValidatorTest {
     capabilityMap.put(LicenseConstants.CAPABILITY_OFFHEAP, 500L);
     License license = new License(capabilityMap, LocalDate.now());
     Cluster cluster = new Cluster(
-        new Stripe(new Node().setOffheapResource("main", Measure.of(500, MemoryUnit.MB)))
+        new Stripe(Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(500, MemoryUnit.MB)))
     );
     LicenseValidator validator = new LicenseValidator(cluster, license);
     validator.validate();
@@ -81,8 +81,8 @@ public class LicenseValidatorTest {
     capabilityMap.put(LicenseConstants.CAPABILITY_OFFHEAP, 1000L);
     License license = new License(capabilityMap, LocalDate.now());
     Cluster cluster = new Cluster(
-        new Stripe(new Node().setOffheapResource("main", Measure.of(500, MemoryUnit.MB))),
-        new Stripe(new Node().setOffheapResource("main", Measure.of(500, MemoryUnit.MB)))
+        new Stripe(Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(500, MemoryUnit.MB))),
+        new Stripe(Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(500, MemoryUnit.MB)))
     );
     LicenseValidator validator = new LicenseValidator(cluster, license);
     validator.validate();
@@ -95,12 +95,12 @@ public class LicenseValidatorTest {
     License license = new License(capabilityMap, LocalDate.now());
     Cluster cluster = new Cluster(
         new Stripe(
-            new Node().setOffheapResource("main", Measure.of(500, MemoryUnit.MB)),
-            new Node().setOffheapResource("main", Measure.of(500, MemoryUnit.MB))
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(500, MemoryUnit.MB)),
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(500, MemoryUnit.MB))
         ),
         new Stripe(
-            new Node().setOffheapResource("main", Measure.of(500, MemoryUnit.MB)),
-            new Node().setOffheapResource("main", Measure.of(500, MemoryUnit.MB))
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(500, MemoryUnit.MB)),
+            Node.newDefaultNode("localhost").setOffheapResource("main", Measure.of(500, MemoryUnit.MB))
         )
     );
     LicenseValidator validator = new LicenseValidator(cluster, license);

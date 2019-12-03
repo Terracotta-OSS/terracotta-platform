@@ -32,25 +32,16 @@ import static org.mockito.Mockito.when;
  */
 public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
-  Node node0 = new Node()
-      .setNodeHostname("localhost")
-      .setNodePort(9410)
-      .setNodeName("node0")
+  Node node0 = Node.newDefaultNode("node0", "localhost", 9410)
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache1"));
 
-  Node node1 = new Node()
-      .setNodeHostname("localhost")
-      .setNodePort(9411)
-      .setNodeName("node1")
+  Node node1 = Node.newDefaultNode("node1", "localhost", 9411)
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache2"));
 
-  Node node2 = new Node()
-      .setNodeHostname("localhost")
-      .setNodePort(9412)
-      .setNodeName("node2")
+  Node node2 = Node.newDefaultNode("node2", "localhost", 9412)
       .setOffheapResource("foo", 2, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache2"));
 

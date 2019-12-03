@@ -200,7 +200,7 @@ class ConfigurationParser implements Parser<Cluster> {
     configurationMap.forEach((stripeId, nodeCounts) -> {
       Stripe stripe = new Stripe();
       nodeCounts.keySet().forEach(nodeId -> {
-        stripe.addNode(newDefaultNode());
+        stripe.addNode(newDefaultNode(null));
         if (stripe.getNodeCount() != nodeId) {
           throw new AssertionError("Expected node count to be: " + nodeId + " but was: " + stripe.getNodeCount());
         }

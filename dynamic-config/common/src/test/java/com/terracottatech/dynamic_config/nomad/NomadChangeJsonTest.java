@@ -29,8 +29,7 @@ import static org.junit.Assert.assertThat;
  */
 public class NomadChangeJsonTest {
 
-  private Cluster cluster = new Cluster("myClusterName", new Stripe(new Node()
-      .setNodeName("foo")
+  private Cluster cluster = new Cluster("myClusterName", new Stripe(Node.newDefaultNode("foo", "localhost", 9410)
       .setClientReconnectWindow(60, TimeUnit.SECONDS).setOffheapResource("foo", 1, MemoryUnit.GB)));
 
   @Test
@@ -51,7 +50,6 @@ public class NomadChangeJsonTest {
     for (int i = 0; i < changes.length; i++) {
       NomadChange change = changes[i];
       URL jsonFile = getClass().getResource("/nomad/change" + i + ".json");
-      //System.out.println(Json.toPrettyJson(change));
       assertThat(jsonFile.getPath(), objectMapper.valueToTree(change).toString(), is(equalTo(objectMapper.readTree(jsonFile).toString())));
       assertThat(jsonFile.getPath(), objectMapper.readValue(jsonFile, NomadChange.class), is(equalTo(change)));
     }

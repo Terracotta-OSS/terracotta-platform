@@ -28,7 +28,7 @@ import static org.junit.Assert.assertThat;
  */
 public class NodeTest {
 
-  Node node = new Node()
+  Node node = Node.newDefaultNode("node1", "localhost", 9410)
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
@@ -37,12 +37,9 @@ public class NodeTest {
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
-      .setNodeHostname("localhost")
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
       .setTcProperty("key", "val")
-      .setNodeName("node1")
-      .setNodePort(9410)
       .setOffheapResource("off", 2, MemoryUnit.GB)
       .setSecurityAuditLogDir(Paths.get("audit"))
       .setSecurityAuthc("ldap")
@@ -50,7 +47,7 @@ public class NodeTest {
       .setSecuritySslTls(true)
       .setSecurityWhitelist(true);
 
-  Node node1 = new Node()
+  Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
@@ -59,27 +56,20 @@ public class NodeTest {
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
-      .setNodeHostname("localhost")
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
-      .setNodeName("node1")
-      .setNodePort(9410)
       .setOffheapResource("off", 2, MemoryUnit.GB)
       .setSecurityAuditLogDir(Paths.get("audit"))
       .setSecurityAuthc("ldap")
       .setSecuritySslTls(true)
       .setSecurityWhitelist(true);
 
-  Node node2 = new Node()
-      .setNodeHostname("localhost")
-      .setNodePort(9411)
-      .setNodeName("node2")
+  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("data", Paths.get("/data/cache2"));
 
-  Node node3 = new Node()
-      .setNodePort(9410)
+  Node node3 = Node.newDefaultNode("node3", "localhost", 9410)
       .setNodeGroupPort(9430)
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
@@ -103,8 +93,8 @@ public class NodeTest {
   @Test
   public void test_fillDefaults() {
     assertThat(new Node().getNodeName(), is(nullValue()));
-    assertThat(newDefaultNode().getNodeName(), is(not(nullValue())));
-    assertThat(newDefaultNode().setNodeName(null), is(equalTo(node3)));
+    assertThat(newDefaultNode(null).getNodeName(), is(not(nullValue())));
+    assertThat(newDefaultNode("localhost").setNodeName(null), is(equalTo(node3.setNodeName(null))));
   }
 
   @Test
@@ -114,7 +104,7 @@ public class NodeTest {
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with address: null:9410")))));
 
     assertThat(
-        () -> newDefaultNode().getNodeAddress(),
+        () -> newDefaultNode(null).getNodeAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with address: null:9410")))));
 
     assertThat(

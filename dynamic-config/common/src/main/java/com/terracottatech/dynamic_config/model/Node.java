@@ -55,13 +55,7 @@ public class Node implements Cloneable {
   private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
   private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
 
-  public Node() {
-  }
-
-  public Node(String nodeName, String nodeHostname, int nodePort) {
-    this.nodeName = nodeName;
-    this.nodeHostname = nodeHostname;
-    this.nodePort = nodePort;
+  Node() {
   }
 
   public String getNodeName() {
@@ -444,7 +438,7 @@ public class Node implements Cloneable {
     return thisCopy;
   }
 
-  public Node fillDefaults() {
+  private Node fillDefaults() {
     Stream.of(Setting.values())
         .filter(isEqual(NODE_HOSTNAME).negate())
         .filter(isEqual(NODE_REPOSITORY_DIR).negate())
@@ -454,31 +448,35 @@ public class Node implements Cloneable {
     return this;
   }
 
-  public static Node newDefaultNode() {
-    return new Node().fillDefaults();
-  }
-
   public static Node newDefaultNode(String hostname) {
-    return newDefaultNode()
+    return new Node()
+        .fillDefaults()
         .setNodeHostname(hostname);
   }
 
   public static Node newDefaultNode(String name, String hostname) {
-    return newDefaultNode()
+    return new Node()
+        .fillDefaults()
         .setNodeName(name)
         .setNodeHostname(hostname);
   }
 
   public static Node newDefaultNode(String hostname, int port) {
-    return newDefaultNode()
+    return new Node()
+        .fillDefaults()
         .setNodePort(port)
         .setNodeHostname(hostname);
   }
 
   public static Node newDefaultNode(String name, String hostname, int port) {
-    return newDefaultNode()
+    return new Node()
+        .fillDefaults()
         .setNodeName(name)
         .setNodePort(port)
         .setNodeHostname(hostname);
+  }
+
+  public static Node empty() {
+    return new Node();
   }
 }

@@ -32,7 +32,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsOneNode_noNodeHostPortSpecified() {
-    Node node = Node.newDefaultNode();
+    Node node = Node.newDefaultNode(null);
     Cluster cluster = new Cluster(new Stripe(node));
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(null, null, CONFIG_FILE, cluster);
 
@@ -52,7 +52,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsOneNode_noMatchingNodeHostPortSpecified() {
-    Node node = Node.newDefaultNode();
+    Node node = Node.newDefaultNode(null);
     Cluster cluster = new Cluster(new Stripe(node));
 
     assertThat(
@@ -86,7 +86,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_matchingNodeHostPortSpecified() {
-    Node node1 = Node.newDefaultNode();
+    Node node1 = Node.newDefaultNode(null);
     Node node2 = Node.newDefaultNode("localhost", 1234);
     Cluster cluster = new Cluster(new Stripe(node1, node2));
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(node2.getNodeHostname(), String.valueOf(node2.getNodePort()), CONFIG_FILE, cluster);
@@ -97,7 +97,7 @@ public class StartupManagerTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_noMatchingNodeHostPortSpecified() {
-    Node node1 = Node.newDefaultNode();
+    Node node1 = Node.newDefaultNode(null);
     Node node2 = Node.newDefaultNode("localhost", 1234);
     Cluster cluster = new Cluster(new Stripe(node1, node2));
 

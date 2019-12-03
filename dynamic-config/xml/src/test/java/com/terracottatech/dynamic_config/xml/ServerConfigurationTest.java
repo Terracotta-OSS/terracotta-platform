@@ -43,7 +43,7 @@ public class ServerConfigurationTest {
 
   @Test
   public void testCreation() {
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setOffheapResource("main", 100, MemoryUnit.MB);
     node.setNodeBackupDir(temporaryFolder.getRoot());
     node.setSecurityDir(temporaryFolder.getRoot());

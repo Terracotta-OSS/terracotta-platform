@@ -47,7 +47,7 @@ public class ClusterTest {
 
   @Mock BiConsumer<Integer, Node> consumer;
 
-  private final Node node1 = new Node()
+  private final Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
@@ -56,21 +56,15 @@ public class ClusterTest {
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
-      .setNodeHostname("localhost")
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
-      .setNodeName("node1")
-      .setNodePort(9410)
       .setOffheapResource("off", 2, MemoryUnit.GB)
       .setSecurityAuditLogDir(Paths.get("audit"))
       .setSecurityAuthc("ldap")
       .setSecuritySslTls(true)
       .setSecurityWhitelist(true);
 
-  Node node2 = new Node()
-      .setNodeHostname("localhost")
-      .setNodePort(9411)
-      .setNodeName("node2")
+  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("data", Paths.get("/data/cache2"));
@@ -149,15 +143,15 @@ public class ClusterTest {
   @Test
   public void test_attach() {
     assertThat(
-        () -> new Cluster().attachStripe(new Stripe(new Node().setNodeHostname("localhost").setNodePort(9410))),
+        () -> new Cluster().attachStripe(new Stripe(Node.newDefaultNode("localhost", 9410))),
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Empty cluster.")))));
 
     assertThat(
-        () -> new Cluster(new Stripe()).attachStripe(new Stripe(new Node().setNodeHostname("localhost").setNodePort(9410))),
+        () -> new Cluster(new Stripe()).attachStripe(new Stripe(Node.newDefaultNode("localhost", 9410))),
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Empty cluster.")))));
 
     assertThat(
-        () -> cluster.attachStripe(new Stripe(new Node().setNodeHostname("localhost").setNodePort(9410))),
+        () -> cluster.attachStripe(new Stripe(Node.newDefaultNode("localhost", 9410))),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Nodes are already in the cluster: localhost:9410.")))));
 
     cluster.attachStripe(new Stripe(node2));

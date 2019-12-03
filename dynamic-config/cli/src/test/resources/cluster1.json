@@ -3,11 +3,27 @@
     {
       "nodes": [
         {
-          "dataDirs": {
-            "cache": "/data/cache1"
+          "clientLeaseDuration": {
+            "quantity": 150,
+            "unit": "SECONDS",
+            "type": "TIME"
           },
+          "clientReconnectWindow": {
+            "quantity": 120,
+            "unit": "SECONDS",
+            "type": "TIME"
+          },
+          "dataDirs": {
+            "cache": "/data/cache1",
+            "main": "%H/terracotta/user-data/main"
+          },
+          "failoverPriority": "availability",
+          "nodeBindAddress": "0.0.0.0",
+          "nodeGroupBindAddress": "0.0.0.0",
           "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
+          "nodeLogDir": "%H/terracotta/logs",
+          "nodeMetadataDir": "%H/terracotta/metadata",
           "nodeName": "node0",
           "nodePort": 9410,
           "offheapResources": {
@@ -15,17 +31,39 @@
               "quantity": 1,
               "unit": "GB",
               "type": "MEMORY"
+            },
+            "main": {
+              "quantity": 512,
+              "unit": "MB",
+              "type": "MEMORY"
             }
           },
           "securitySslTls": false,
-          "securityWhitelist": false
+          "securityWhitelist": false,
+          "tcProperties": {}
         },
         {
-          "dataDirs": {
-            "cache": "/data/cache2"
+          "clientLeaseDuration": {
+            "quantity": 150,
+            "unit": "SECONDS",
+            "type": "TIME"
           },
+          "clientReconnectWindow": {
+            "quantity": 120,
+            "unit": "SECONDS",
+            "type": "TIME"
+          },
+          "dataDirs": {
+            "cache": "/data/cache2",
+            "main": "%H/terracotta/user-data/main"
+          },
+          "failoverPriority": "availability",
+          "nodeBindAddress": "0.0.0.0",
+          "nodeGroupBindAddress": "0.0.0.0",
           "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
+          "nodeLogDir": "%H/terracotta/logs",
+          "nodeMetadataDir": "%H/terracotta/metadata",
           "nodeName": "node1",
           "nodePort": 9411,
           "offheapResources": {
@@ -33,17 +71,39 @@
               "quantity": 1,
               "unit": "GB",
               "type": "MEMORY"
+            },
+            "main": {
+              "quantity": 512,
+              "unit": "MB",
+              "type": "MEMORY"
             }
           },
           "securitySslTls": false,
-          "securityWhitelist": false
+          "securityWhitelist": false,
+          "tcProperties": {}
         },
         {
-          "dataDirs": {
-            "cache": "/data/cache2"
+          "clientLeaseDuration": {
+            "quantity": 150,
+            "unit": "SECONDS",
+            "type": "TIME"
           },
+          "clientReconnectWindow": {
+            "quantity": 120,
+            "unit": "SECONDS",
+            "type": "TIME"
+          },
+          "dataDirs": {
+            "cache": "/data/cache2",
+            "main": "%H/terracotta/user-data/main"
+          },
+          "failoverPriority": "availability",
+          "nodeBindAddress": "0.0.0.0",
+          "nodeGroupBindAddress": "0.0.0.0",
           "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
+          "nodeLogDir": "%H/terracotta/logs",
+          "nodeMetadataDir": "%H/terracotta/metadata",
           "nodeName": "node2",
           "nodePort": 9412,
           "offheapResources": {
@@ -51,10 +111,16 @@
               "quantity": 1,
               "unit": "GB",
               "type": "MEMORY"
+            },
+            "main": {
+              "quantity": 512,
+              "unit": "MB",
+              "type": "MEMORY"
             }
           },
           "securitySslTls": false,
-          "securityWhitelist": false
+          "securityWhitelist": false,
+          "tcProperties": {}
         }
       ]
     }

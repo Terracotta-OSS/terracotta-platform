@@ -34,7 +34,7 @@ public class SecurityTest {
   public void testBasic() {
     Path securityPath = temporaryFolder.getRoot();
     Path auditPath = temporaryFolder.getRoot();
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setSecurityDir(securityPath);
     node.setSecurityWhitelist(true);
     node.setSecuritySslTls(true);
@@ -55,7 +55,7 @@ public class SecurityTest {
   @Test
   public void testAuditDirectoryNotConfigured() {
     Path securityPath = temporaryFolder.getRoot();
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setSecurityDir(securityPath);
     node.setSecurityAuditLogDir(null);
 
@@ -68,7 +68,7 @@ public class SecurityTest {
   @Test
   public void testWhitelistNotConfigured() {
     Path securityPath = temporaryFolder.getRoot();
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setSecurityDir(securityPath);
     node.setSecurityWhitelist(false);
 
@@ -81,7 +81,7 @@ public class SecurityTest {
   @Test
   public void testSslTlsNotConfigured() {
     Path securityPath = temporaryFolder.getRoot();
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setSecurityDir(securityPath);
     node.setSecuritySslTls(false);
 
@@ -94,7 +94,7 @@ public class SecurityTest {
   @Test
   public void testAuthenticationNotConfigured() {
     Path securityPath = temporaryFolder.getRoot();
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setSecurityDir(securityPath);
     node.setSecurityAuthc(null);
 
@@ -107,7 +107,7 @@ public class SecurityTest {
   @Test
   public void testCertificateAuthentication() {
     Path securityPath = temporaryFolder.getRoot();
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setSecurityDir(securityPath);
     node.setSecurityAuthc("certificate");
 
@@ -121,7 +121,7 @@ public class SecurityTest {
   @Test
   public void testLdapAuthentication() {
     Path securityPath = temporaryFolder.getRoot();
-    Node node = new Node();
+    Node node = Node.newDefaultNode("localhost");
     node.setSecurityDir(securityPath);
     node.setSecurityAuthc("ldap");
 
