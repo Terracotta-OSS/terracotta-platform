@@ -221,6 +221,9 @@ public class SettingValidatorTest {
     OFFHEAP_RESOURCES.validate(null, "main:1GB,second:2GB");
 
     assertThat(
+        () -> OFFHEAP_RESOURCES.validate(null, "bar"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("offheap-resources should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...")))));
+    assertThat(
         () -> OFFHEAP_RESOURCES.validate(null, "bar:"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("offheap-resources should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...")))));
     assertThat(

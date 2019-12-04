@@ -128,6 +128,10 @@ public class ClusterTest {
 
   @Test
   public void test_detach_node() {
+    cluster.detachNode(InetSocketAddress.createUnresolved("foo", 9410));
+    assertFalse(cluster.isEmpty());
+    assertThat(cluster.getStripes(), hasSize(1));
+
     cluster.detachNode(InetSocketAddress.createUnresolved("localhost", 9410));
     assertTrue(cluster.isEmpty());
     assertThat(cluster.getStripes(), hasSize(0));

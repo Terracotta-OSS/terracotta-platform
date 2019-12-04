@@ -4,11 +4,13 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.Validator;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,7 +21,13 @@ import static com.terracottatech.dynamic_config.model.Setting.SECURITY_WHITELIST
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toCollection;
 
+/**
+ * This class expects all the fields to be first validated by {@link Setting#validate(String)}.
+ * <p>
+ * This class will validate the complete cluster object (inter-field checks and dependency checks).
+ */
 public class ClusterValidator implements Validator {
   private final Cluster cluster;
 
@@ -50,7 +58,7 @@ public class ClusterValidator implements Validator {
           .map(Map.Entry::getKey)
           .findFirst()
           .ifPresent(nodeName -> {
-            throw new IllegalArgumentException("Found duplicate node name: " + nodeName + " in stripe " + stripeId);
+            throw new MalformedClusterException("Found duplicate node name: " + nodeName + " in stripe " + stripeId);
           });
     }
   }
@@ -67,7 +75,13 @@ public class ClusterValidator implements Validator {
   }
 
   private void validateServerSettings() {
-    validate(Node::getOffheapResources, "Offheap resources of all nodes should match");
+    validate(
+        node -> node.getOffheapResources()
+            .entrySet()
+            .stream()
+            .map(e -> e.getKey() + ":" + e.getValue().to(MemoryUnit.B))
+            .collect(toCollection(TreeSet::new)),
+        "Offheap resources of all nodes should match");
     validate(node -> node.getDataDirs().keySet(), "Data directory names of all nodes should match");
     validate(Node::getFailoverPriority, "Failover setting of all nodes should match");
   }
@@ -76,18 +90,18 @@ public class ClusterValidator implements Validator {
     cluster.nodeContexts().forEach(nodeContext -> {
       Node node = nodeContext.getNode();
       if ("certificate".equals(node.getSecurityAuthc()) && !node.isSecuritySslTls()) {
-        throw new IllegalArgumentException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
+        throw new MalformedClusterException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
             SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
       }
       if ((node.getSecurityAuthc() != null && node.getSecurityDir() == null)
           || (node.getSecurityAuditLogDir() != null && node.getSecurityDir() == null)
           || (node.isSecuritySslTls() && node.getSecurityDir() == null)
           || (node.isSecurityWhitelist() && node.getSecurityDir() == null)) {
-        throw new IllegalArgumentException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
+        throw new MalformedClusterException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
             SECURITY_DIR + " is mandatory for any of the security configuration");
       }
       if (node.getSecurityDir() != null && !node.isSecuritySslTls() && node.getSecurityAuthc() == null && !node.isSecurityWhitelist()) {
-        throw new IllegalArgumentException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
+        throw new MalformedClusterException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
             "One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
       }
     });
