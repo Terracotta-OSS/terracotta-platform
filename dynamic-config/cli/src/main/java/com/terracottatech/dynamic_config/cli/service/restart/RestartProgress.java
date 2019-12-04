@@ -4,11 +4,12 @@
  */
 package com.terracottatech.dynamic_config.cli.service.restart;
 
+import com.terracottatech.tools.detailed.state.LogicalServerState;
+
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * @author Mathieu Carbou
@@ -26,12 +27,12 @@ public interface RestartProgress {
    * <p>
    * If all nodes are restarted before the timeout expires, the list will contain all the nodes that were asked to restart
    */
-  Collection<InetSocketAddress> await(Duration duration) throws InterruptedException;
+  Map<InetSocketAddress, LogicalServerState> await(Duration duration) throws InterruptedException;
 
   /**
    * Register a callback that will be called when a node has been restarted
    */
-  void onRestarted(Consumer<InetSocketAddress> c);
+  void onRestarted(BiConsumer<InetSocketAddress, LogicalServerState> c);
 
   /**
    * Get all nodes for which we have failed to ask for a restart

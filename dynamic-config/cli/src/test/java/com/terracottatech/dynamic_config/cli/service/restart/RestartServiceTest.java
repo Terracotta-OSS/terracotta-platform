@@ -12,6 +12,7 @@ import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.tools.detailed.state.LogicalServerState;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +20,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.Collection;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
@@ -80,7 +81,7 @@ public class RestartServiceTest extends BaseTest {
     RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Collection<InetSocketAddress> restarted = restartProgress.await(Duration.ofSeconds(10));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(6)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -102,7 +103,7 @@ public class RestartServiceTest extends BaseTest {
     RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
-    Collection<InetSocketAddress> restarted = restartProgress.await(Duration.ofSeconds(10));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -121,7 +122,7 @@ public class RestartServiceTest extends BaseTest {
     RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
-    Collection<InetSocketAddress> restarted = restartProgress.await(Duration.ofSeconds(10));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -139,7 +140,7 @@ public class RestartServiceTest extends BaseTest {
     RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Collection<InetSocketAddress> restarted = restartProgress.await(Duration.ofSeconds(2));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(5)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -163,7 +164,7 @@ public class RestartServiceTest extends BaseTest {
     RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Collection<InetSocketAddress> restarted = restartProgress.await(Duration.ofSeconds(2));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {

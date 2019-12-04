@@ -17,18 +17,17 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -80,26 +79,26 @@ public class RestartService {
     CountDownLatch done = new CountDownLatch(restartRequested.size());
 
     // record restarted nodes
-    Collection<InetSocketAddress> restartedNodes = new CopyOnWriteArrayList<>();
+    Map<InetSocketAddress, LogicalServerState> restartedNodes = new ConcurrentHashMap<>();
 
     // this is an optional callback the requestor can add to be made aware in real time about the nodes that have been restarted
-    AtomicReference<Consumer<InetSocketAddress>> progressCallback = new AtomicReference<>();
+    AtomicReference<BiConsumer<InetSocketAddress, LogicalServerState>> progressCallback = new AtomicReference<>();
 
     // stop all threads ?
     AtomicBoolean continuePolling = new AtomicBoolean(true);
 
     ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, getClass().getName()));
     restartRequested.forEach(address -> executorService.submit(() -> {
-      boolean hasRestarted = false;
-      while (!hasRestarted && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
+      LogicalServerState state = null;
+      while (state == null && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
         try {
-          hasRestarted = isRestarted(address);
-          if (hasRestarted) {
+          state = isRestarted(address);
+          if (state != null) {
             LOGGER.debug("Node: {} has restarted", address);
-            restartedNodes.add(address);
-            Consumer<InetSocketAddress> cb = progressCallback.get();
+            restartedNodes.put(address, state);
+            BiConsumer<InetSocketAddress, LogicalServerState> cb = progressCallback.get();
             if (cb != null) {
-              cb.accept(address);
+              cb.accept(address, state);
             }
             done.countDown();
           } else {
@@ -125,10 +124,10 @@ public class RestartService {
 
       @Override
       @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
-      public Collection<InetSocketAddress> await(Duration duration) throws InterruptedException {
+      public Map<InetSocketAddress, LogicalServerState> await(Duration duration) throws InterruptedException {
         try {
           done.await(duration.toMillis(), MILLISECONDS);
-          return new ArrayList<>(restartedNodes);
+          return new HashMap<>(restartedNodes);
         } finally {
           continuePolling.set(false);
           shutdown(executorService);
@@ -136,7 +135,7 @@ public class RestartService {
       }
 
       @Override
-      public void onRestarted(Consumer<InetSocketAddress> c) {
+      public void onRestarted(BiConsumer<InetSocketAddress, LogicalServerState> c) {
         progressCallback.set(c);
         // call the callback with previously restarted servers if the callback was setup after some servers were recorded
         restartedNodes.forEach(c);
@@ -166,18 +165,18 @@ public class RestartService {
    * Also, the connect timeout must not be to low, otherwise the poll will return false in case of a slow network.
    * Using the default connect timeout provided by user should be enough. If not, the user can increase it and it will apply to all connections.
    */
-  private boolean isRestarted(InetSocketAddress addr) {
+  private LogicalServerState isRestarted(InetSocketAddress addr) {
     LOGGER.debug("Checking if node: {} has restarted", addr);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
       LogicalServerState state = diagnosticService.getLogicalServerState();
       // STARTING is the state when server hasn't finished its startup yet
-      return state != null && (state.isPassive() || state.isActive());
+      return state != null && (state.isPassive() || state.isActive()) ? state : null;
     } catch (DiagnosticServiceProviderException | DiagnosticException e) {
       LOGGER.debug("Status query for node: {} failed", addr, e);
-      return false;
+      return null;
     } catch (Exception e) {
       LOGGER.error("Unexpected error during status query for node: {}", addr, e);
-      return false;
+      return null;
     }
   }
 }

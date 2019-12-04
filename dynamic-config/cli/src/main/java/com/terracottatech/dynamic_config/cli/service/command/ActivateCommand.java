@@ -107,6 +107,8 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
+    logger.info("Activating cluster: {} formed with nodes: {}", clusterName, toString(runtimePeers));
+
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
@@ -119,7 +121,7 @@ public class ActivateCommand extends RemoteCommand {
 
     logger.info("Restarting nodes: {}", toString(runtimePeers));
     restartNodes(runtimePeers, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
-    logger.info("All nodes: {} came back up", toString(runtimePeers));
+    logger.info("All nodes came back up");
 
     logger.info("Command successful!" + lineSeparator());
   }

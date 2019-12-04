@@ -113,13 +113,13 @@ public abstract class RemoteCommand extends Command {
     try {
       RestartProgress progress = restartService.restartNodes(addresses);
       progress.getErrors().forEach((address, e) -> logger.warn("Unable to ask node: {} to restart: please restart it manually.", address));
-      progress.onRestarted(address -> logger.info("Node: {} has restarted.", address));
-      Collection<InetSocketAddress> restarted = progress.await(maximumWaitTime);
+      progress.onRestarted((address, state) -> logger.info("Node: {} has restarted in state: {}", address, state));
+      Map<InetSocketAddress, LogicalServerState> restarted = progress.await(maximumWaitTime);
       // check where we are
       Collection<InetSocketAddress> missing = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
       missing.addAll(addresses);
       missing.removeAll(progress.getErrors().keySet()); // remove nodes that we were not able to contact
-      missing.removeAll(restarted); // remove nodes that have been restarted
+      missing.removeAll(restarted.keySet()); // remove nodes that have been restarted
       if (!missing.isEmpty()) {
         throw new IllegalStateException("Some nodes failed to restart within " + maximumWaitTime.getSeconds() + " seconds:" + lineSeparator()
             + " - " + missing.stream().map(InetSocketAddress::toString).collect(joining(lineSeparator() + " - ")));
