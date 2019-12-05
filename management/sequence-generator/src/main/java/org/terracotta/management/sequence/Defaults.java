@@ -93,53 +93,7 @@ class Defaults {
   };
 
   static byte[] readMacAddress() {
-    List<NetworkInterface> networkInterfaces;
-    try {
-      networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-    } catch (SocketException e) {
-      // this can only occur while testing in a computer locally with no network.
-      // So mac address will be irrelevant because the system time will be the same across all started servers
-      return NO_MAC;
-    }
-
-    // order interfaces by name
-    Collections.sort(networkInterfaces, NETWORK_INTERFACE_COMPARATOR);
-
-    // find the first accessible non-loopback interface having a mac address
-    // we try first to skip all virtual interfaces since they can be easily dynamically created on-demand
-    // the goal of this method is to try return the same value each time as possible
-    // we consider only "parent" interfaces
-    for (NetworkInterface networkInterface : networkInterfaces) {
-      try {
-        byte[] mac;
-        if (!networkInterface.isLoopback()
-            && !networkInterface.isPointToPoint()
-            && !networkInterface.isVirtual()
-            && networkInterface.getParent() == null
-            && (mac = networkInterface.getHardwareAddress()) != null
-            && mac.length >= 6) {
-          return mac;
-        }
-      } catch (SocketException ignored) {
-      }
-    }
-
-    // if we do not succeed, we enlarge our search
-    for (NetworkInterface networkInterface : networkInterfaces) {
-      try {
-        byte[] mac;
-        if (!networkInterface.isLoopback()
-            && (mac = networkInterface.getHardwareAddress()) != null
-            && mac.length >= 6) {
-          return mac;
-        }
-      } catch (SocketException ignored) {
-      }
-    }
-
-    // this can only occur while testing in a computer locally with no network.
-    // So mac address will be irrelevant because the system time will be the same across all started servers
-    return NO_MAC;
+    return MacAddress.MAC_ADDRESS;
   }
 
   static long readPID() {
@@ -171,4 +125,76 @@ class Defaults {
     return def;
   }
 
+  /**
+   * Manages determination of a MAC address for the host.
+   * <p>
+   * Because (1) network interface access is particularly expensive on Windows and (2) a network interface's MAC address
+   * is unlikely to change while a JVM is active, using a singleton pattern for MAC address is beneficial and
+   * expected to be safe.
+   * This nested class implements the <i>lazy initialization holder class idiom</i> singleton pattern described in
+   * <a href="https://www.pearson.com/us/higher-education/program/Bloch-Effective-Java-2nd-Edition/PGM310651.html"><i>Effective Java, 2ed; Bloch</i></a>.
+   * This pattern results in calculation of the MAC address once per JVM/classloader and delays that calculation
+   * until actually needed.
+   */
+  private static final class MacAddress {
+
+    /** The MAC address for this machine/JVM. */
+    static final byte[] MAC_ADDRESS = readMacAddressInternal();
+
+    /**
+     * DO NOT INSTANTIATE.
+     */
+    private MacAddress() {
+    }
+
+    private static byte[] readMacAddressInternal() {
+      List<NetworkInterface> networkInterfaces;
+      try {
+        networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+      } catch (SocketException e) {
+        // this can only occur while testing in a computer locally with no network.
+        // So mac address will be irrelevant because the system time will be the same across all started servers
+        return NO_MAC;
+      }
+
+      // order interfaces by name
+      Collections.sort(networkInterfaces, NETWORK_INTERFACE_COMPARATOR);
+
+      // find the first accessible non-loopback interface having a mac address
+      // we try first to skip all virtual interfaces since they can be easily dynamically created on-demand
+      // the goal of this method is to try return the same value each time as possible
+      // we consider only "parent" interfaces
+      for (NetworkInterface networkInterface : networkInterfaces) {
+        try {
+          byte[] mac;
+          if (!networkInterface.isLoopback()
+              && !networkInterface.isPointToPoint()
+              && !networkInterface.isVirtual()
+              && networkInterface.getParent() == null
+              && (mac = networkInterface.getHardwareAddress()) != null
+              && mac.length >= 6) {
+            return mac;
+          }
+        } catch (SocketException ignored) {
+        }
+      }
+
+      // if we do not succeed, we enlarge our search
+      for (NetworkInterface networkInterface : networkInterfaces) {
+        try {
+          byte[] mac;
+          if (!networkInterface.isLoopback()
+              && (mac = networkInterface.getHardwareAddress()) != null
+              && mac.length >= 6) {
+            return mac;
+          }
+        } catch (SocketException ignored) {
+        }
+      }
+
+      // this can only occur while testing in a computer locally with no network.
+      // So mac address will be irrelevant because the system time will be the same across all started servers
+      return NO_MAC;
+    }
+  }
 }

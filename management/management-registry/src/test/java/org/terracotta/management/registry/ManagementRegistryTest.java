@@ -61,7 +61,6 @@ public class ManagementRegistryTest {
     mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
 
     String actual = mapper.writeValueAsString(registry.getCapabilities());
-    actual = actual.replaceAll("\\r\\n", "\n");
     assertEquals(expectedJson, actual);
 
     ContextualReturn<?> cr = registry.withCapability("TheActionProvider")
