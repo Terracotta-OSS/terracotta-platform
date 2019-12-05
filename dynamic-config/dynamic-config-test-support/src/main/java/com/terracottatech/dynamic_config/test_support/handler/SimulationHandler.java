@@ -52,7 +52,7 @@ public class SimulationHandler implements ConfigChangeHandler {
 
     try {
       Cluster updatedCluster = baseConfig.getCluster();
-      change.apply(updatedCluster, parameterSubstitutor);
+      change.apply(updatedCluster);
       return updatedCluster;
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);

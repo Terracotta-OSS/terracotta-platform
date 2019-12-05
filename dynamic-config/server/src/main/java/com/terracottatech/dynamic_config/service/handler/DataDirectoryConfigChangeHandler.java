@@ -37,7 +37,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
       dataDirectoriesConfig.validateDataDirectory(dataDirectoryName, dataDirectoryPath);
 
       Cluster updatedCluster = baseConfig.getCluster();
-      change.apply(updatedCluster, parameterSubstitutor);
+      change.apply(updatedCluster);
       return updatedCluster;
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
@@ -47,7 +47,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
   @Override
   public boolean apply(Configuration change) {
     String dataDirectoryName = change.getKey();
-    String dataDirectoryPath = change.getValue();
+    String dataDirectoryPath = parameterSubstitutor.substitute(change.getValue());
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
     return true;
   }

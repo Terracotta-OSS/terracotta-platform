@@ -120,7 +120,7 @@ public class NomadBootstrapper {
             // So we create an empty cluster / node topology
             .orElseGet(() -> new NodeContext(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue()))));
 
-        this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this, parameterSubstitutor);
+        this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this);
 
         registerDiagnosticService();
         LOGGER.info("Successfully initialized NomadServerManager");
@@ -137,7 +137,7 @@ public class NomadBootstrapper {
         this.repositoryManager.createDirectories();
         this.nomadServer = createServer(repositoryManager, nodeContext.getNodeName(), parameterSubstitutor, (version, updatedNodeContext) -> dynamicConfigService.newTopologyCommitted(version, updatedNodeContext));
 
-        this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this, parameterSubstitutor);
+        this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this);
 
         registerDiagnosticService();
         LOGGER.info("Successfully initialized NomadServerManager");
@@ -177,7 +177,7 @@ public class NomadBootstrapper {
       }
 
       RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
-          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, parameterSubstitutor, dynamicConfigService::newConfigurationChange))
+          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, dynamicConfigService::newConfigurationChange))
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));

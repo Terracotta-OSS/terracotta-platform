@@ -161,7 +161,7 @@ public class ClusterValidatorTest {
     setNodeProperties(node1);
     setNodeProperties(node2);
 
-    new ClusterValidator(SERVER_SUBSTITUTOR_SIMULATOR, createCluster(node1, node2)).validate();
+    new ClusterValidator(createCluster(node1, node2)).validate();
   }
 
   @Test
@@ -531,12 +531,12 @@ public class ClusterValidatorTest {
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(message);
     final Cluster cluster = ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
-    new ClusterValidator(SERVER_SUBSTITUTOR_SIMULATOR, cluster).validate();
+    new ClusterValidator(cluster).validate();
   }
 
   private void testThrowsWithMessage(Node node1, Node node2, String message) {
     exception.expect(MalformedClusterException.class);
     exception.expectMessage(message);
-    new ClusterValidator(SERVER_SUBSTITUTOR_SIMULATOR, createCluster(node1, node2)).validate();
+    new ClusterValidator(createCluster(node1, node2)).validate();
   }
 }

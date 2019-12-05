@@ -44,13 +44,25 @@ public class SettingValidatorTest {
 
   @Test
   public void test_defaults() {
-    Stream.of(NODE_NAME, CLUSTER_NAME).forEach(setting -> {
-      validateDefaults(setting);
+    validateDefaults(CLUSTER_NAME);
+    assertThat(
+        () -> CLUSTER_NAME.validate(null),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(CLUSTER_NAME + " cannot be null")))));
+    CLUSTER_NAME.validate("foo");
+  }
+
+  @Test
+  public void test_NODE_NAME() {
+    validateDefaults(NODE_NAME);
+    assertThat(
+        () -> NODE_NAME.validate(null),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot be null")))));
+    Stream.of("d", "D", "h", "c", "i", "H", "n", "o", "a", "v", "t", "(").forEach(c -> {
       assertThat(
-          () -> setting.validate(null),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null")))));
-      setting.validate("foo");
+          () -> NODE_NAME.validate("%" + c),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot contain substitution parameters")))));
     });
+    NODE_NAME.validate("foo");
   }
 
   @Test

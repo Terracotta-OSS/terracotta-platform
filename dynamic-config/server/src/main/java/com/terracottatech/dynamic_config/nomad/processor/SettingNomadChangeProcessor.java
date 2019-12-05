@@ -12,7 +12,6 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.server.NomadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,13 +31,11 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   private final TopologyService topologyService;
   private final ConfigChangeHandlerManager manager;
-  private final IParameterSubstitutor parameterSubstitutor;
   private final BiConsumer<Configuration, Boolean> changeListener;
 
-  public SettingNomadChangeProcessor(TopologyService topologyService, ConfigChangeHandlerManager manager, IParameterSubstitutor parameterSubstitutor, BiConsumer<Configuration, Boolean> changeListener) {
+  public SettingNomadChangeProcessor(TopologyService topologyService, ConfigChangeHandlerManager manager, BiConsumer<Configuration, Boolean> changeListener) {
     this.topologyService = requireNonNull(topologyService);
     this.manager = requireNonNull(manager);
-    this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.changeListener = requireNonNull(changeListener);
   }
 
@@ -48,7 +45,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
       // Note the call to baseConfig.clone() which is important
       NodeContext clone = baseConfig.clone();
       Configuration configuration = change.toConfiguration(clone.getCluster());
-      configuration.validate(change.getOperation(), parameterSubstitutor);
+      configuration.validate(change.getOperation());
 
       ConfigChangeHandler configChangeHandler = getConfigChangeHandlerManager(change);
       LOGGER.debug("NodeContext before tryApply(): {}", clone);

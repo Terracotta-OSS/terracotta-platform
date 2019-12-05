@@ -10,12 +10,10 @@ import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.MultiConfigCommaSplitter;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 
-import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static java.util.Objects.requireNonNull;
 
 public abstract class ConfigurationCommand extends RemoteCommand {
@@ -27,7 +25,6 @@ public abstract class ConfigurationCommand extends RemoteCommand {
   List<Configuration> configurations;
 
   protected final Operation operation;
-  protected final IParameterSubstitutor parameterSubstitutor = identity();
 
   protected ConfigurationCommand(Operation operation) {
     this.operation = operation;
@@ -38,7 +35,7 @@ public abstract class ConfigurationCommand extends RemoteCommand {
     requireNonNull(node);
     requireNonNull(configurations);
     for (Configuration configuration : configurations) {
-      configuration.validate(operation, parameterSubstitutor);
+      configuration.validate(operation);
     }
     ensureAddressWithinCluster(node);
   }

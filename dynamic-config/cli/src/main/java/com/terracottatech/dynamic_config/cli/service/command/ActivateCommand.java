@@ -15,7 +15,6 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.TimeUnit;
 import com.terracottatech.utilities.Tuple2;
@@ -52,8 +51,6 @@ public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Restart wait time", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(1, TimeUnit.MINUTES);
-
-  private final IParameterSubstitutor substitutor = identity();
 
   private Cluster cluster;
   private Collection<InetSocketAddress> runtimePeers;
@@ -96,7 +93,7 @@ public class ActivateCommand extends RemoteCommand {
     }
 
     // validate the topology
-    new ClusterValidator(substitutor, cluster).validate();
+    new ClusterValidator(cluster).validate();
 
     // verify the activated state of the nodes
     boolean isClusterActive = areAllNodesActivated(runtimePeers);
@@ -161,7 +158,7 @@ public class ActivateCommand extends RemoteCommand {
       cluster = getUpcomingCluster(node);
       logger.debug("Cluster topology validation successful");
     } else {
-      ClusterFactory clusterCreator = new ClusterFactory(substitutor);
+      ClusterFactory clusterCreator = new ClusterFactory(identity());
       cluster = clusterCreator.create(configPropertiesFile, clusterName);
       logger.debug("Config property file parsed and cluster topology validation successful");
     }

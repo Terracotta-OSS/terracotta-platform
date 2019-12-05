@@ -52,9 +52,9 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
-      c.apply(updatedCluster, parameterSubstitutor);
+      c.apply(updatedCluster);
     }
-    new ClusterValidator(parameterSubstitutor, updatedCluster).validate();
+    new ClusterValidator(updatedCluster).validate();
 
     // get the current state of the nodes
     // this call can take some time and we can have some timeout
@@ -155,7 +155,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     // MultipleNomadChanges will apply to whole change set given by the user as an atomic operation
     return new MultipleNomadChanges(configurations.stream()
         .map(configuration -> {
-          configuration.validate(operation, parameterSubstitutor);
+          configuration.validate(operation);
           return SettingNomadChange.fromConfiguration(configuration, operation, cluster);
         })
         .collect(toList()));

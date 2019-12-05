@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -42,6 +43,14 @@ class SettingValidator {
     }
     if (!s.allowsValue(kv.t2)) {
       throw new IllegalArgumentException(s + " should be one of: " + s.getAllowedValues());
+    }
+  };
+
+  static final BiConsumer<String, Tuple2<String, String>> NODE_NAME_VALIDATOR = (setting, kv) -> {
+    DEFAULT_VALIDATOR.accept(setting, kv);
+    Setting s = Setting.fromName(setting);
+    if (IParameterSubstitutor.containsSubstitutionParams(kv.t2)) {
+      throw new IllegalArgumentException(setting + " cannot contain substitution parameters");
     }
   };
 

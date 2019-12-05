@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Validator;
 
 import java.util.Collection;
@@ -23,11 +22,9 @@ import static java.util.stream.Collectors.groupingBy;
 
 public class ClusterValidator implements Validator {
   private final Cluster cluster;
-  private final IParameterSubstitutor parameterSubstitutor;
 
-  public ClusterValidator(IParameterSubstitutor parameterSubstitutor, Cluster cluster) {
+  public ClusterValidator(Cluster cluster) {
     this.cluster = cluster;
-    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
@@ -40,12 +37,6 @@ public class ClusterValidator implements Validator {
   }
 
   private void validateNodeName() {
-    cluster.nodeContexts().forEach(nodeContext -> {
-      Node node = nodeContext.getNode();
-      if (node.getNodeName() != null && parameterSubstitutor.containsSubstitutionParams(node.getNodeName())) {
-        throw new IllegalArgumentException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: <node-name> cannot contain substitution parameters");
-      }
-    });
     for (int i = 0; i < cluster.getStripeCount(); i++) {
       int stripeId = i + 1;
       cluster.getStripes().get(i).getNodes()

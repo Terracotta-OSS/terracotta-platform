@@ -36,6 +36,7 @@ import static com.terracottatech.dynamic_config.model.SettingValidator.ADDRESS_V
 import static com.terracottatech.dynamic_config.model.SettingValidator.DATA_DIRS_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.DEFAULT_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.HOST_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.NODE_NAME_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.OFFHEAP_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.PATH_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.PORT_VALIDATOR;
@@ -71,7 +72,8 @@ public enum Setting {
       of(GET, CONFIG),
       noneOf(Requirement.class),
       emptyList(),
-      emptyList()
+      emptyList(),
+      (key, value) -> NODE_NAME_VALIDATOR.accept(SettingName.NODE_NAME, tuple2(key, value))
   ),
   NODE_HOSTNAME(SettingName.NODE_HOSTNAME,
       false,

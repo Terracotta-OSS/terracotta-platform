@@ -27,7 +27,7 @@ public interface IParameterSubstitutor {
     return Paths.get(substitute(source.toString()));
   }
 
-  default boolean containsSubstitutionParams(String source) {
+  static boolean containsSubstitutionParams(String source) {
     // Tries to find in the string some characters to be substituted
     // See org.terracotta.config.util.ParameterSubstitutor.substitute(source) for the supported variables
     return Stream.of("d", "D", "h", "c", "i", "H", "n", "o", "a", "v", "t", "(")

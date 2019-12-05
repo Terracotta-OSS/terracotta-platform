@@ -95,7 +95,7 @@ public class ClusterFactory {
   }
 
   private Cluster validated(Cluster cluster) {
-    new ClusterValidator(parameterSubstitutor, cluster).validate();
+    new ClusterValidator(cluster).validate();
     return cluster;
   }
 

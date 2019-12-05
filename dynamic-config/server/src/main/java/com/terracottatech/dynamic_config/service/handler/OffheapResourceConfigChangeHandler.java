@@ -11,7 +11,6 @@ import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import org.slf4j.Logger;
@@ -27,11 +26,9 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(OffheapResourceConfigChangeHandler.class);
 
   private final OffHeapResources offHeapResources;
-  private final IParameterSubstitutor parameterSubstitutor;
 
-  public OffheapResourceConfigChangeHandler(OffHeapResources offHeapResources, IParameterSubstitutor parameterSubstitutor) {
+  public OffheapResourceConfigChangeHandler(OffHeapResources offHeapResources) {
     this.offHeapResources = offHeapResources;
-    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
@@ -53,7 +50,7 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
       }
 
       Cluster updatedCluster = baseConfig.getCluster();
-      change.apply(updatedCluster, parameterSubstitutor);
+      change.apply(updatedCluster);
 
       LOGGER.debug("Validating the update cluster: {} against the license", updatedCluster);
       DiagnosticServices.findService(DynamicConfigService.class)

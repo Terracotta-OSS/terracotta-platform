@@ -262,8 +262,8 @@ public class Configuration {
     }
   }
 
-  public void validate(Operation operation, IParameterSubstitutor substitutor) {
-    if (value != null && !substitutor.containsSubstitutionParams(value)) {
+  public void validate(Operation operation) {
+    if (value != null && !IParameterSubstitutor.containsSubstitutionParams(value)) {
       try {
         setting.validate(key, value);
       } catch (RuntimeException e) {
@@ -328,7 +328,7 @@ public class Configuration {
   /**
    * Apply the value in this configuration in the given cluster
    */
-  public void apply(Cluster cluster, IParameterSubstitutor substitutor) {
+  public void apply(Cluster cluster) {
     Stream<NodeContext> targetContexts;
     switch (scope) {
       case CLUSTER:
@@ -372,13 +372,7 @@ public class Configuration {
         return;
       }
 
-      targetContexts.forEach(ctx -> {
-        if (setting.requiresEagerSubstitution()) {
-          setting.setProperty(ctx.getNode(), key, substitutor.substitute(value));
-        } else {
-          setting.setProperty(ctx.getNode(), key, value);
-        }
-      });
+      targetContexts.forEach(ctx -> setting.setProperty(ctx.getNode(), key, value));
     }
   }
 

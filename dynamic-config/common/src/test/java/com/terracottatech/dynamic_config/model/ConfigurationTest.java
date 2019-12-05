@@ -28,7 +28,6 @@ import static com.terracottatech.dynamic_config.model.Setting.NODE_PORT;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_WHITELIST;
-import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.Tuple2.tuple2;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.containsString;
@@ -188,7 +187,7 @@ public class ConfigurationTest {
           tuple2("blah.main", ERROR_SETTING + "blah")
       ).forEach(tupe -> assertThat(
           tupe.t1,
-          () -> Configuration.valueOf(tupe.t1).validate(GET, identity()),
+          () -> Configuration.valueOf(tupe.t1).validate(GET),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'." + tupe.t2))))));
 
       Stream.of(
@@ -233,7 +232,7 @@ public class ConfigurationTest {
           tuple2("blah.main=512MB", ERROR_SETTING + "blah")
       ).forEach(tupe -> assertThat(
           tupe.t1,
-          () -> Configuration.valueOf(tupe.t1).validate(SET, identity()),
+          () -> Configuration.valueOf(tupe.t1).validate(SET),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + tupe.t1 + "'." + tupe.t2))))));
     });
   }
@@ -265,70 +264,70 @@ public class ConfigurationTest {
     Stream.of(NODE_NAME, NODE_REPOSITORY_DIR)
         .forEach(s -> assertThat(
             s.toString(),
-            () -> Configuration.valueOf(s + "=foo").validate(SET, identity()),
+            () -> Configuration.valueOf(s + "=foo").validate(SET),
             is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(s + " does not allow operation set"))))));
 
     Stream.of(NODE_NAME, NODE_REPOSITORY_DIR, NODE_PORT, NODE_GROUP_PORT, NODE_BIND_ADDRESS, NODE_GROUP_BIND_ADDRESS, NODE_METADATA_DIR, NODE_LOG_DIR)
         .forEach(s -> assertThat(
             s.toString(),
-            () -> Configuration.valueOf("stripe.1.node.1." + s).validate(UNSET, identity()),
+            () -> Configuration.valueOf("stripe.1.node.1." + s).validate(UNSET),
             is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(s + " does not allow operation unset"))))));
 
     Stream.of(CLIENT_RECONNECT_WINDOW, FAILOVER_PRIORITY, CLIENT_LEASE_DURATION, LICENSE_FILE, SECURITY_SSL_TLS, SECURITY_WHITELIST)
         .forEach(s -> assertThat(
             s.toString(),
-            () -> Configuration.valueOf(s.toString()).validate(UNSET, identity()),
+            () -> Configuration.valueOf(s.toString()).validate(UNSET),
             is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + s + "'. Reason: " + s + " does not allow operation unset"))))));
 
-    Configuration.valueOf("offheap-resources").validate(GET, identity());
-    Configuration.valueOf("offheap-resources.main").validate(GET, identity());
-    Configuration.valueOf("offheap-resources").validate(UNSET, identity());
-    Configuration.valueOf("offheap-resources.main").validate(UNSET, identity());
-    Configuration.valueOf("offheap-resources=main:1GB").validate(SET, identity());
-    Configuration.valueOf("offheap-resources.main=1GB").validate(SET, identity());
+    Configuration.valueOf("offheap-resources").validate(GET);
+    Configuration.valueOf("offheap-resources.main").validate(GET);
+    Configuration.valueOf("offheap-resources").validate(UNSET);
+    Configuration.valueOf("offheap-resources.main").validate(UNSET);
+    Configuration.valueOf("offheap-resources=main:1GB").validate(SET);
+    Configuration.valueOf("offheap-resources.main=1GB").validate(SET);
     assertThat(
-        () -> Configuration.valueOf("offheap-resources").validate(SET, identity()),
+        () -> Configuration.valueOf("offheap-resources").validate(SET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'offheap-resources'. Reason: Operation set requires a value")))));
     assertThat(
-        () -> Configuration.valueOf("offheap-resources=main:1GB").validate(GET, identity()),
+        () -> Configuration.valueOf("offheap-resources=main:1GB").validate(GET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'offheap-resources=main:1GB'. Reason: Operation get must not have a value")))));
     assertThat(
-        () -> Configuration.valueOf("offheap-resources=main:1GB").validate(UNSET, identity()),
+        () -> Configuration.valueOf("offheap-resources=main:1GB").validate(UNSET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'offheap-resources=main:1GB'. Reason: Operation unset must not have a value")))));
 
     assertThat(
-        () -> Configuration.valueOf("offheap-resources.main").validate(SET, identity()),
+        () -> Configuration.valueOf("offheap-resources.main").validate(SET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'offheap-resources.main'. Reason: Operation set requires a value")))));
     assertThat(
-        () -> Configuration.valueOf("offheap-resources.main=1GB").validate(GET, identity()),
+        () -> Configuration.valueOf("offheap-resources.main=1GB").validate(GET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'offheap-resources.main=1GB'. Reason: Operation get must not have a value")))));
     assertThat(
-        () -> Configuration.valueOf("offheap-resources.main=1GB").validate(UNSET, identity()),
+        () -> Configuration.valueOf("offheap-resources.main=1GB").validate(UNSET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'offheap-resources.main=1GB'. Reason: Operation unset must not have a value")))));
 
-    Configuration.valueOf("data-dirs").validate(GET, identity());
-    Configuration.valueOf("data-dirs.main").validate(GET, identity());
-    Configuration.valueOf("data-dirs").validate(UNSET, identity());
-    Configuration.valueOf("data-dirs.main").validate(UNSET, identity());
-    Configuration.valueOf("data-dirs=main:foo/bar").validate(SET, identity());
-    Configuration.valueOf("data-dirs.main=foo/bar").validate(SET, identity());
+    Configuration.valueOf("data-dirs").validate(GET);
+    Configuration.valueOf("data-dirs.main").validate(GET);
+    Configuration.valueOf("data-dirs").validate(UNSET);
+    Configuration.valueOf("data-dirs.main").validate(UNSET);
+    Configuration.valueOf("data-dirs=main:foo/bar").validate(SET);
+    Configuration.valueOf("data-dirs.main=foo/bar").validate(SET);
     assertThat(
-        () -> Configuration.valueOf("data-dirs").validate(SET, identity()),
+        () -> Configuration.valueOf("data-dirs").validate(SET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'data-dirs'. Reason: Operation set requires a value")))));
     assertThat(
-        () -> Configuration.valueOf("data-dirs=main:foo/bar").validate(GET, identity()),
+        () -> Configuration.valueOf("data-dirs=main:foo/bar").validate(GET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'data-dirs=main:foo/bar'. Reason: Operation get must not have a value")))));
     assertThat(
-        () -> Configuration.valueOf("data-dirs=main:foo/bar").validate(UNSET, identity()),
+        () -> Configuration.valueOf("data-dirs=main:foo/bar").validate(UNSET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'data-dirs=main:foo/bar'. Reason: Operation unset must not have a value")))));
     assertThat(
-        () -> Configuration.valueOf("data-dirs.main").validate(SET, identity()),
+        () -> Configuration.valueOf("data-dirs.main").validate(SET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'data-dirs.main'. Reason: Operation set requires a value")))));
     assertThat(
-        () -> Configuration.valueOf("data-dirs.main=foo/bar").validate(GET, identity()),
+        () -> Configuration.valueOf("data-dirs.main=foo/bar").validate(GET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'data-dirs.main=foo/bar'. Reason: Operation get must not have a value")))));
     assertThat(
-        () -> Configuration.valueOf("data-dirs.main=foo/bar").validate(UNSET, identity()),
+        () -> Configuration.valueOf("data-dirs.main=foo/bar").validate(UNSET),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'data-dirs.main=foo/bar'. Reason: Operation unset must not have a value")))));
   }
 

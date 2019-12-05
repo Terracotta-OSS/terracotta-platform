@@ -29,8 +29,6 @@ import static java.util.function.Predicate.isEqual;
 
 public class Node implements Cloneable {
 
-  private static final IParameterSubstitutor CHECKER = IParameterSubstitutor.identity();
-
   // Note: primitive fields need to be initialized with their default value,
   // otherwise we will wrongly detect that they have been initialized (Setting.getPropertyValue will return 0 for a port for example)
 
@@ -305,7 +303,7 @@ public class Node implements Cloneable {
 
   @JsonIgnore
   public InetSocketAddress getNodeAddress() {
-    if (nodeHostname == null || CHECKER.containsSubstitutionParams(nodeHostname)) {
+    if (nodeHostname == null || IParameterSubstitutor.containsSubstitutionParams(nodeHostname)) {
       throw new AssertionError("Node " + nodeName + " is not correctly defined with address: " + nodeHostname + ":" + nodePort);
     }
     return InetSocketAddress.createUnresolved(nodeHostname, nodePort);

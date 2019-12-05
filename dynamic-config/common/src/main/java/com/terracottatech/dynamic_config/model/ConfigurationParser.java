@@ -187,9 +187,9 @@ class ConfigurationParser implements Parser<Cluster> {
           throw new IllegalArgumentException("Invalid property: " + configuration);
         }
         // validate the config object
-        configuration.validate(CONFIG, paramSubstitutor);
+        configuration.validate(CONFIG);
         // ensure that properties requiring an eager resolve are resolved
-        if (configuration.getSetting().requiresEagerSubstitution() && paramSubstitutor.containsSubstitutionParams(configuration.getValue())) {
+        if (configuration.getSetting().requiresEagerSubstitution() && IParameterSubstitutor.containsSubstitutionParams(configuration.getValue())) {
           throw new IllegalArgumentException("Invalid property: " + configuration + ". Placeholders are not allowed.");
         }
       });
@@ -212,7 +212,7 @@ class ConfigurationParser implements Parser<Cluster> {
     });
 
     // install all the "settings" inside the cluster
-    configurations.forEach(configuration -> configuration.apply(cluster, paramSubstitutor));
+    configurations.forEach(configuration -> configuration.apply(cluster));
 
     return cluster;
   }
@@ -267,7 +267,7 @@ class ConfigurationParser implements Parser<Cluster> {
       properties.setProperty(key, hostname);
       defaultAddedListener.accept(Configuration.valueOf(key + "=" + hostname));
     } else {
-      hostname = parameterSubstitutor.substitute(hostname);
+                hostname = parameterSubstitutor.substitute(hostname);
       properties.setProperty(key, hostname);
       consoleParameters.put(NODE_HOSTNAME, parameterSubstitutor.substitute(hostname));
     }

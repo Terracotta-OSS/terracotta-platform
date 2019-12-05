@@ -67,27 +67,27 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         throw new UnsupportedOperationException("Multiple " + OffHeapResources.class.getSimpleName() + " not supported");
       }
       if (!offHeapResources.isEmpty()) {
-        ConfigChangeHandler configChangeHandler = new OffheapResourceConfigChangeHandler(offHeapResources.iterator().next(), substitutor);
+        ConfigChangeHandler configChangeHandler = new OffheapResourceConfigChangeHandler(offHeapResources.iterator().next());
         addToManager(manager, configChangeHandler, OFFHEAP_RESOURCES);
       }
 
       // client-reconnect-window
-      ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler(substitutor);
+      ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
       addToManager(manager, clientReconnectWindowHandler, CLIENT_RECONNECT_WINDOW);
 
       // server attributes
-      ConfigChangeHandler serverAttributeConfigChangeHandler = new ServerAttributeConfigChangeHandler(substitutor);
+      ConfigChangeHandler serverAttributeConfigChangeHandler = new ServerAttributeConfigChangeHandler();
       addToManager(manager, serverAttributeConfigChangeHandler, NODE_LOG_DIR);
       addToManager(manager, serverAttributeConfigChangeHandler, NODE_BIND_ADDRESS);
       addToManager(manager, serverAttributeConfigChangeHandler, NODE_GROUP_BIND_ADDRESS);
 
       // failover-priority
-      addToManager(manager, applyAfterRestart(substitutor), FAILOVER_PRIORITY);
+      addToManager(manager, applyAfterRestart(), FAILOVER_PRIORITY);
 
       // tc-properties
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
           .selector(Configuration::getKey)
-          .fallback(applyAfterRestart(substitutor)));
+          .fallback(applyAfterRestart()));
     }
     return true;
   }

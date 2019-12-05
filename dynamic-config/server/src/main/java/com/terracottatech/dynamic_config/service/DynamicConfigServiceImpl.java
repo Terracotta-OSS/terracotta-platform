@@ -15,7 +15,6 @@ import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
 import org.slf4j.Logger;
@@ -42,7 +41,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private static final String LICENSE_FILE_NAME = "license.xml";
 
   private final NomadServerManager nomadServerManager;
-  private final IParameterSubstitutor substitutor;
   private final List<BiConsumer<NodeContext, Configuration>> callbacks_onNewRuntimeConfiguration = new CopyOnWriteArrayList<>();
   private final List<BiConsumer<NodeContext, Configuration>> callbacks_onNewUpcomingConfiguration = new CopyOnWriteArrayList<>();
   private final List<BiConsumer<Long, NodeContext>> callbacks_onNewTopologyCommitted = new CopyOnWriteArrayList<>();
@@ -52,11 +50,10 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private volatile License license;
   private volatile boolean clusterActivated;
 
-  public DynamicConfigServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager, IParameterSubstitutor substitutor) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, NomadServerManager nomadServerManager) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
     this.runtimeNodeContext = requireNonNull(nodeContext);
     this.nomadServerManager = requireNonNull(nomadServerManager);
-    this.substitutor = requireNonNull(substitutor);
     if (loadLicense()) {
       validateAgainstLicense();
     }
@@ -118,7 +115,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     }
     if (changeAppliedAtRuntime) {
       synchronized (this) {
-        configuration.apply(runtimeNodeContext.getCluster(), substitutor);
+        configuration.apply(runtimeNodeContext.getCluster());
       }
       // do not fire events within a synchronized block
       NodeContext update = runtimeNodeContext.clone();
@@ -182,7 +179,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     requireNonNull(updatedCluster);
 
-    new ClusterValidator(substitutor, updatedCluster).validate();
+    new ClusterValidator(updatedCluster).validate();
 
     Node oldMe = upcomingNodeContext.getNode();
     Node newMe = findMe(updatedCluster);

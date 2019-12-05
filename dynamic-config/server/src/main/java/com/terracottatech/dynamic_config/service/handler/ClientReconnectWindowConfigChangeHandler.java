@@ -9,7 +9,6 @@ import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.TimeUnit;
 import org.slf4j.Logger;
@@ -27,12 +26,6 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientReconnectWindowConfigChangeHandler.class);
   private static final String ATTR_NAME = "ReconnectWindowTimeout";
 
-  private final IParameterSubstitutor parameterSubstitutor;
-
-  public ClientReconnectWindowConfigChangeHandler(IParameterSubstitutor parameterSubstitutor) {
-    this.parameterSubstitutor = parameterSubstitutor;
-  }
-
   @Override
   public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
@@ -44,7 +37,7 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
     Cluster updatedCluster = nodeContext.getCluster();
     try {
       Measure.parse(change.getValue(), TimeUnit.class);
-      change.apply(updatedCluster, parameterSubstitutor);
+      change.apply(updatedCluster);
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }
