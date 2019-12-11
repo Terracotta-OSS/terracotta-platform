@@ -18,5 +18,11 @@ public enum Scope {
   /**
    * Setting can be changed for all the nodes of a cluster
    */
-  CLUSTER
+  CLUSTER;
+
+
+  @Override
+  public String toString() {
+    return name().toLowerCase();
+  }
 }

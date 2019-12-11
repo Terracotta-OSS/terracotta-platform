@@ -9,6 +9,7 @@ import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.parsing.Options;
+import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,19 +24,23 @@ public class ConsoleParamsStarter implements NodeStarter {
   private final Map<Setting, String> paramValueMap;
   private final ClusterFactory clusterCreator;
   private final StartupManager startupManager;
+  private final IParameterSubstitutor parameterSubstitutor;
 
-  ConsoleParamsStarter(Options options, Map<Setting, String> paramValueMap, ClusterFactory clusterCreator,
-                       StartupManager startupManager) {
+  ConsoleParamsStarter(Options options, Map<Setting, String> paramValueMap,
+                       ClusterFactory clusterCreator,
+                       StartupManager startupManager,
+                       IParameterSubstitutor parameterSubstitutor) {
     this.options = options;
     this.paramValueMap = paramValueMap;
     this.clusterCreator = clusterCreator;
     this.startupManager = startupManager;
+    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
   public boolean startNode() {
     LOGGER.info("Starting node from command-line parameters");
-    Cluster cluster = clusterCreator.create(paramValueMap);
+    Cluster cluster = clusterCreator.create(paramValueMap, parameterSubstitutor);
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {

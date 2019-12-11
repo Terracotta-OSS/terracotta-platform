@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
@@ -29,7 +30,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static com.terracottatech.utilities.Assertions.assertNonNull;
 import static java.lang.System.lineSeparator;
 
@@ -78,14 +78,16 @@ public class ActivateCommand extends RemoteCommand {
     assertNonNull(nomadManager, "nomadManager must not be null");
     assertNonNull(restartService, "restartService must not be null");
 
+    if (!Files.exists(licenseFile)) {
+      throw new ParameterException("License file not found: " + licenseFile);
+    }
+
     cluster = loadCluster();
     runtimePeers = node == null ? cluster.getNodeAddresses() : findRuntimePeers(node);
 
     // check if we want to override the cluster name
     if (clusterName != null) {
       cluster.setName(clusterName);
-    } else {
-      clusterName = cluster.getName();
     }
 
     if (cluster.getName() == null) {
@@ -104,7 +106,7 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
-    logger.info("Activating cluster: {} formed with nodes: {}", clusterName, toString(runtimePeers));
+    logger.info("Activating cluster: {} formed with nodes: {}", cluster.getName(), toString(runtimePeers));
 
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
       dynamicConfigServices(diagnosticServices)
@@ -148,18 +150,14 @@ public class ActivateCommand extends RemoteCommand {
     return this;
   }
 
-  String getClusterName() {
-    return clusterName;
-  }
-
   private Cluster loadCluster() {
     Cluster cluster;
     if (node != null) {
       cluster = getUpcomingCluster(node);
       logger.debug("Cluster topology validation successful");
     } else {
-      ClusterFactory clusterCreator = new ClusterFactory(identity());
-      cluster = clusterCreator.create(configPropertiesFile, clusterName);
+      ClusterFactory clusterCreator = new ClusterFactory();
+      cluster = clusterCreator.create(configPropertiesFile);
       logger.debug("Config property file parsed and cluster topology validation successful");
     }
     return cluster;

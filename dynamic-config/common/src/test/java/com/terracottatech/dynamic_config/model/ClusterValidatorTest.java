@@ -260,7 +260,7 @@ public class ClusterValidatorTest {
       node.setSecurityAuthc("certificate");
     }).toArray(Node[]::new);
 
-    assertClusterValidationFails("Node 1 of stripe 1 is invalid: security-ssl-tls is required for security-authc=certificate", nodes);
+    assertClusterValidationFails("security-ssl-tls is required for security-authc=certificate", nodes);
   }
 
   @Test
@@ -270,7 +270,7 @@ public class ClusterValidatorTest {
       node.setSecurityAuthc("certificate");
     }).toArray(Node[]::new);
 
-    assertClusterValidationFails("Node 1 of stripe 1 is invalid: security-dir is mandatory for any of the security configuration", nodes);
+    assertClusterValidationFails("security-dir is mandatory for any of the security configuration", nodes);
   }
 
   @Test
@@ -279,7 +279,7 @@ public class ClusterValidatorTest {
       node.setSecuritySslTls(true);
     }).toArray(Node[]::new);
 
-    assertClusterValidationFails("Node 1 of stripe 1 is invalid: security-dir is mandatory for any of the security configuration", nodes);
+    assertClusterValidationFails("security-dir is mandatory for any of the security configuration", nodes);
   }
 
   @Test
@@ -288,7 +288,7 @@ public class ClusterValidatorTest {
       node.setSecurityAuthc("file");
     }).toArray(Node[]::new);
 
-    assertClusterValidationFails("Node 1 of stripe 1 is invalid: security-dir is mandatory for any of the security configuration", nodes);
+    assertClusterValidationFails("security-dir is mandatory for any of the security configuration", nodes);
   }
 
   @Test
@@ -297,7 +297,7 @@ public class ClusterValidatorTest {
       node.setSecurityAuditLogDir(Paths.get("."));
     }).toArray(Node[]::new);
 
-    assertClusterValidationFails("Node 1 of stripe 1 is invalid: security-dir is mandatory for any of the security configuration", nodes);
+    assertClusterValidationFails("security-dir is mandatory for any of the security configuration", nodes);
   }
 
   @Test
@@ -306,7 +306,7 @@ public class ClusterValidatorTest {
       node.setSecurityWhitelist(true);
     }).toArray(Node[]::new);
 
-    assertClusterValidationFails("Node 1 of stripe 1 is invalid: security-dir is mandatory for any of the security configuration", nodes);
+    assertClusterValidationFails("security-dir is mandatory for any of the security configuration", nodes);
   }
 
   @Test
@@ -315,7 +315,7 @@ public class ClusterValidatorTest {
       node.setSecurityDir(Paths.get("."));
     }).toArray(Node[]::new);
 
-    assertClusterValidationFails("Node 1 of stripe 1 is invalid: One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration", nodes);
+    assertClusterValidationFails("One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration", nodes);
   }
 
   private void setNodeProperties(Node node) {

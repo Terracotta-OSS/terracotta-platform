@@ -146,7 +146,7 @@ public class Options {
     NodeProcessor nodeProcessor = new NodeProcessor(
         this,
         buildParamValueMap(jCommander),
-        new ClusterFactory(parameterSubstitutor),
+        new ClusterFactory(),
         new StartupManager(parameterSubstitutor, changeHandlerManager),
         parameterSubstitutor
     );

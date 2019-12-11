@@ -11,10 +11,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
@@ -37,12 +39,19 @@ class ConfigurationParser implements Parser<Cluster> {
 
   private final List<Configuration> configurations;
   private final Consumer<Configuration> defaultAddedListener;
-  private final IParameterSubstitutor paramSubstitutor;
 
-  private ConfigurationParser(IParameterSubstitutor paramSubstitutor, List<Configuration> configurations, Consumer<Configuration> defaultAddedListener) {
-    this.paramSubstitutor = requireNonNull(paramSubstitutor);
+  private ConfigurationParser(List<Configuration> configurations, Consumer<Configuration> defaultAddedListener) {
     this.configurations = new ArrayList<>(requireNonNull(configurations));
     this.defaultAddedListener = requireNonNull(defaultAddedListener);
+    if (configurations.isEmpty()) {
+      throw new IllegalArgumentException("No configuration provided");
+    }
+    if (configurations.stream().noneMatch(configuration -> configuration.getSetting() == NODE_HOSTNAME)) {
+      throw new IllegalArgumentException(NODE_HOSTNAME + " is missing");
+    }
+    if (configurations.stream().anyMatch(configuration -> configuration.getSetting() == NODE_HOSTNAME && IParameterSubstitutor.containsSubstitutionParams(configuration.getValue()))) {
+      throw new IllegalArgumentException(NODE_HOSTNAME + " cannot contain any placeholders");
+    }
   }
 
   /**
@@ -80,11 +89,11 @@ class ConfigurationParser implements Parser<Cluster> {
           .collect(toSet());
       if (actual.size() > expected.size()) {
         actual.removeAll(expected);
-        throw new IllegalArgumentException("Invalid settings: " + actual);
+        throw new IllegalArgumentException("Invalid settings found at cluster level: " + actual.stream().map(Objects::toString).collect(Collectors.joining(", ")));
       }
       if (actual.size() < expected.size()) {
         expected.removeAll(actual);
-        throw new IllegalArgumentException("Missing settings: " + expected);
+        throw new IllegalArgumentException("Missing settings at cluster level: " + expected.stream().map(Objects::toString).collect(Collectors.joining(", ")));
       }
     }
 
@@ -135,7 +144,7 @@ class ConfigurationParser implements Parser<Cluster> {
         int nodeId = nodeEntry.getKey();
         List<Configuration> nodeConfigurations = nodeEntry.getValue();
 
-        // adds missing node configurations
+        // add missing node configurations
         {
           final Collection<Setting> defined = nodeConfigurations.stream().map(Configuration::getSetting).collect(toSet());
           // search amongst all the settings allowed to be set at configuration level for a node,
@@ -144,7 +153,7 @@ class ConfigurationParser implements Parser<Cluster> {
               .filter(setting -> setting.isScope(NODE))
               .filter(setting -> setting.allowsOperation(CONFIG))
               .filter(setting -> !defined.contains(setting))
-              .map(setting -> Configuration.valueOf(stripeId, nodeId, setting))
+              .map(setting -> Configuration.valueOf(setting, stripeId, nodeId))
               .forEach(configuration -> {
                 // we add the missing configuration to both the global list, plus the temporary list within the map used for validation
                 nodeConfigurations.add(configuration);
@@ -154,6 +163,7 @@ class ConfigurationParser implements Parser<Cluster> {
         }
 
         // Supplementary validation that ensures that our configuration list contains all the settings for the node, no more, no less
+        // Note: we should in theory never throw here: this is a safe check to prevent any programming error
         {
           final Set<Setting> actual = nodeConfigurations.stream()
               .filter(configuration -> configuration.getScope() == NODE)
@@ -180,17 +190,17 @@ class ConfigurationParser implements Parser<Cluster> {
       configurations.forEach(configuration -> {
         // verify that the line is a supported config
         if (!configuration.getSetting().allowsOperation(CONFIG)) {
-          throw new IllegalArgumentException("Invalid property: " + configuration);
+          throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: now allowed");
         }
         // verify that we only have cluster or node scope
         if (configuration.getScope() == STRIPE) {
-          throw new IllegalArgumentException("Invalid property: " + configuration);
+          throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: stripe level configuration not allowed");
         }
         // validate the config object
         configuration.validate(CONFIG);
         // ensure that properties requiring an eager resolve are resolved
         if (configuration.getSetting().requiresEagerSubstitution() && IParameterSubstitutor.containsSubstitutionParams(configuration.getValue())) {
-          throw new IllegalArgumentException("Invalid property: " + configuration + ". Placeholders are not allowed.");
+          throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Placeholders are not allowed");
         }
       });
     }
@@ -217,23 +227,13 @@ class ConfigurationParser implements Parser<Cluster> {
     return cluster;
   }
 
-  static Cluster parsePropertyConfiguration(IParameterSubstitutor substitutor, Properties properties) {
-    return parsePropertyConfiguration(substitutor, properties, configuration -> {
-    });
+  static Cluster parsePropertyConfiguration(Properties properties, Consumer<Configuration> defaultAddedListener) {
+    return new ConfigurationParser(propertiesToConfigurations(properties), defaultAddedListener).parse();
   }
 
-  static Cluster parsePropertyConfiguration(IParameterSubstitutor substitutor, Properties properties, Consumer<Configuration> defaultAddedListener) {
-    return new ConfigurationParser(substitutor, propertiesToConfigurations(properties), defaultAddedListener).parse();
-  }
-
-  static Cluster parseCommandLineParameters(IParameterSubstitutor substitutor, Map<Setting, String> userConsoleParameters) {
-    return parseCommandLineParameters(substitutor, userConsoleParameters, configuration -> {
-    });
-  }
-
-  static Cluster parseCommandLineParameters(IParameterSubstitutor substitutor, Map<Setting, String> userConsoleParameters, Consumer<Configuration> defaultAddedListener) {
-    final Properties properties = cliToProperties(substitutor, userConsoleParameters, defaultAddedListener);
-    return parsePropertyConfiguration(substitutor, properties, defaultAddedListener);
+  static Cluster parseCommandLineParameters(Map<Setting, String> userConsoleParameters, IParameterSubstitutor substitutor, Consumer<Configuration> defaultAddedListener) {
+    final Properties properties = cliToProperties(userConsoleParameters, substitutor, defaultAddedListener);
+    return parsePropertyConfiguration(properties, defaultAddedListener);
   }
 
   /**
@@ -251,7 +251,7 @@ class ConfigurationParser implements Parser<Cluster> {
   /**
    * Transform the user input CLI into properties
    */
-  private static Properties cliToProperties(IParameterSubstitutor parameterSubstitutor, Map<Setting, String> consoleParameters, Consumer<Configuration> defaultAddedListener) {
+  private static Properties cliToProperties(Map<Setting, String> consoleParameters, IParameterSubstitutor parameterSubstitutor, Consumer<Configuration> defaultAddedListener) {
     requireNonNull(consoleParameters);
 
     // transform the user input in CLI in a property config
@@ -264,13 +264,11 @@ class ConfigurationParser implements Parser<Cluster> {
       // We can't have hostname null during Node construction from the client side (e.g. during parsing a config properties
       // file in activate command). Therefore, this logic is here, and not in Node::fillDefaults
       hostname = parameterSubstitutor.substitute(NODE_HOSTNAME.getDefaultValue());
-      properties.setProperty(key, hostname);
       defaultAddedListener.accept(Configuration.valueOf(key + "=" + hostname));
     } else {
-                hostname = parameterSubstitutor.substitute(hostname);
-      properties.setProperty(key, hostname);
-      consoleParameters.put(NODE_HOSTNAME, parameterSubstitutor.substitute(hostname));
+      hostname = parameterSubstitutor.substitute(hostname);
     }
+    properties.setProperty(key, hostname);
 
     // delegate back to the parsing of a config file
     return properties;

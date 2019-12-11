@@ -52,6 +52,7 @@ public class NodeProcessorTest {
   private ClusterFactory clusterCreator;
   private StartupManager startupManager;
   private NodeProcessor nodeProcessor;
+  private IParameterSubstitutor parameterSubstitutor;
 
   @Before
   public void setUp() {
@@ -61,7 +62,7 @@ public class NodeProcessorTest {
     paramValueMap = new HashMap<>();
     clusterCreator = mock(ClusterFactory.class);
     startupManager = mock(StartupManager.class);
-    IParameterSubstitutor parameterSubstitutor = mock(IParameterSubstitutor.class);
+    parameterSubstitutor = mock(IParameterSubstitutor.class);
     nodeProcessor = new NodeProcessor(options, paramValueMap, clusterCreator, startupManager, parameterSubstitutor);
   }
 
@@ -102,7 +103,7 @@ public class NodeProcessorTest {
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
-    when(clusterCreator.create(Paths.get(CONFIG_FILE), null)).thenReturn(cluster);
+    when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(startupManager.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node);
     when(cluster.getNodeCount()).thenReturn(1);
     doAnswer(invocation -> true).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
@@ -122,7 +123,7 @@ public class NodeProcessorTest {
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
-    when(clusterCreator.create(Paths.get(CONFIG_FILE), null)).thenReturn(cluster);
+    when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(startupManager.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node);
     when(cluster.getNodeCount()).thenReturn(1);
     doAnswer(invocation -> true).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
@@ -142,7 +143,7 @@ public class NodeProcessorTest {
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
-    when(clusterCreator.create(Paths.get(CONFIG_FILE), null)).thenReturn(cluster);
+    when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(startupManager.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node);
     when(cluster.getNodeCount()).thenReturn(2);
 
@@ -161,7 +162,7 @@ public class NodeProcessorTest {
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
-    when(clusterCreator.create(Paths.get(CONFIG_FILE), null)).thenReturn(cluster);
+    when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(startupManager.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node);
     when(cluster.getNodeCount()).thenReturn(2);
     doAnswer(invocation -> true).when(startupManager).startUnconfigured(cluster, node, null);
@@ -181,7 +182,7 @@ public class NodeProcessorTest {
     when(startupManager.findNodeName(Paths.get(NODE_REPOSITORY_DIR))).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getClusterName()).thenReturn(CLUSTER_NAME);
-    when(clusterCreator.create(paramValueMap)).thenReturn(cluster);
+    when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
     when(cluster.getSingleNode()).thenReturn(Optional.of(node));
     doAnswer(invocation -> true).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
 
@@ -197,7 +198,7 @@ public class NodeProcessorTest {
   public void testPreactivatedWithCliParams_ok() {
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getClusterName()).thenReturn(CLUSTER_NAME);
-    when(clusterCreator.create(paramValueMap)).thenReturn(cluster);
+    when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
     when(cluster.getSingleNode()).thenReturn(Optional.of(node));
     doAnswer(invocation -> true).when(startupManager).startActivated(cluster, node, LICENSE_FILE, null);
 
@@ -212,7 +213,7 @@ public class NodeProcessorTest {
   @Test
   public void testPreactivatedWithCliParams_absentClusterName() {
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
-    when(clusterCreator.create(paramValueMap)).thenReturn(cluster);
+    when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
     when(cluster.getSingleNode()).thenReturn(Optional.of(node));
 
     expectedException.expect(NullPointerException.class);
@@ -225,7 +226,7 @@ public class NodeProcessorTest {
 
   @Test
   public void testUnconfiguredWithCliParams() {
-    when(clusterCreator.create(paramValueMap)).thenReturn(cluster);
+    when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
     when(cluster.getSingleNode()).thenReturn(Optional.of(node));
     doAnswer(invocation -> true).when(startupManager).startUnconfigured(cluster, node, null);
 

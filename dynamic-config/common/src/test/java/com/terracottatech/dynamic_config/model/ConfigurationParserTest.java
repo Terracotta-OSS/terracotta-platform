@@ -5,418 +5,431 @@
 package com.terracottatech.dynamic_config.model;
 
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.utilities.Measure;
-import org.junit.Rule;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
+import java.io.File;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
-import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
-import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
-import static com.terracottatech.utilities.MemoryUnit.GB;
-import static com.terracottatech.utilities.MemoryUnit.MB;
-import static com.terracottatech.utilities.TimeUnit.SECONDS;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
-import static java.io.File.separator;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+/**
+ * @author Mathieu Carbou
+ */
+@RunWith(MockitoJUnitRunner.class)
 public class ConfigurationParserTest {
 
-  private static final IParameterSubstitutor SERVER_SUBSTITUTOR_SIMULATOR = source -> "%h".equals(source) ? "localhost" : source;
+  private final List<Configuration> added = new ArrayList<>();
 
-  private static boolean WINDOWS = System.getProperty("os.name", "unknown").toLowerCase().contains("win");
+  @Mock public IParameterSubstitutor substitutor;
 
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
-
-  private final Properties properties = new Properties();
-
-  @Test
-  public void testClusterName() throws Exception {
-    String fileName = "single-stripe.properties";
-    final Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
-    assertThat(cluster.getName(), is(equalTo("my-cluster")));
+  @Before
+  public void setUp() {
+    lenient().when(substitutor.substitute("%h")).thenReturn("localhost");
+    lenient().when(substitutor.substitute("%c")).thenReturn("localhost.home");
+    lenient().when(substitutor.substitute("%H")).thenReturn("home");
+    lenient().when(substitutor.substitute("foo")).thenReturn("foo");
   }
 
   @Test
-  public void testParse_singleStripe() throws Exception {
-    String fileName = "single-stripe.properties";
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
-    assertThat(cluster.getStripeCount(), is(1));
-    assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
-
-    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeName(), is("node-1"));
-    assertThat(node.getNodeHostname(), is("node-1.company.internal"));
-    assertThat(node.getNodePort(), is(19410));
-    assertThat(node.getNodeGroupPort(), is(19430));
-    assertThat(node.getNodeBindAddress(), is("10.10.10.10"));
-    assertThat(node.getNodeGroupBindAddress(), is("10.10.10.10"));
-    assertThat(node.getOffheapResources(), allOf(
-        hasEntry("main", Measure.of(512L, MB)),
-        hasEntry("second", Measure.of(1L, GB)))
+  public void test_cliToProperties_1() {
+    // node name should be resolved from default value (%h) if not given
+    assertCliEquals(
+        cli(),
+        new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))),
+        "stripe.1.node.1.node-hostname=localhost",
+        "cluster-name=",
+        "client-reconnect-window=120s",
+        "failover-priority=availability",
+        "client-lease-duration=150s",
+        "security-authc=",
+        "security-ssl-tls=false",
+        "security-whitelist=false",
+        "offheap-resources=main:512MB",
+        "stripe.1.node.1.node-name=<GENERATED>",
+        "stripe.1.node.1.node-port=9410",
+        "stripe.1.node.1.node-group-port=9430",
+        "stripe.1.node.1.node-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.tc-properties=",
+        "stripe.1.node.1.security-dir=",
+        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
-
-    assertThat(node.getNodeBackupDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "backup"));
-    assertThat(node.getNodeLogDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "logs"));
-    assertThat(node.getNodeMetadataDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "metadata"));
-    assertThat(node.getSecurityDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "security"));
-    assertThat(node.getSecurityAuditLogDir().toString(), is(separator + "home" + separator + "terracotta" + separator + "audit"));
-    assertThat(node.getTcProperties(), allOf(
-        hasEntry("topology.validate", "true"),
-        hasEntry("server.entity.processor.threads", "64")
-    ));
-    assertThat(node.getDataDirs(), allOf(
-        hasEntry("main", Paths.get(separator + "home" + separator + "terracotta" + separator + "user-data" + separator + "main")),
-        hasEntry("second", Paths.get(separator + "home" + separator + "terracotta" + separator + "user-data" + separator + "second"))
-    ));
-
-    assertTrue(node.isSecurityWhitelist());
-    assertTrue(node.isSecuritySslTls());
-    assertThat(node.getSecurityAuthc(), is("file"));
-
-    assertThat(node.getFailoverPriority(), is(consistency(2)));
-    assertThat(node.getClientReconnectWindow(), is(Measure.of(100L, SECONDS)));
-    assertThat(node.getClientLeaseDuration(), is(Measure.of(50L, SECONDS)));
+    verify(substitutor, times(1)).substitute("%h");
+    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
-  public void testParseMinimal_singleStripe() throws Exception {
-    String fileName = "single-stripe_minimal.properties";
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
-    assertThat(cluster.getStripeCount(), is(1));
-    assertThat(cluster.getStripes().get(0).getNodes().size(), is(1));
-
-    Node node = cluster.getStripes().get(0).getNodes().iterator().next();
-    assertThat(node.getNodeName(), is("node-1"));
-    assertThat(node.getNodeHostname(), is("localhost"));
-    assertThat(node.getNodePort(), is(9410));
-    assertThat(node.getNodeGroupPort(), is(9430));
-    assertThat(node.getNodeBindAddress(), is("0.0.0.0"));
-    assertThat(node.getNodeGroupBindAddress(), is("0.0.0.0"));
-    assertThat(node.getOffheapResources(), hasEntry("main", Measure.of(512L, MB)));
-
-    assertNull(node.getNodeBackupDir());
-    assertNull(node.getSecurityDir());
-    assertNull(node.getSecurityAuditLogDir());
-
-    assertThat(node.getNodeMetadataDir(), is(Paths.get("metadata")));
-    assertThat(node.getNodeLogDir(), is(Paths.get("%H", "terracotta", "logs"))); // No substitution here
-    assertThat(node.getDataDirs(), hasEntry("main", Paths.get("%H", "terracotta", "user-data", "main")));
-
-    assertFalse(node.isSecurityWhitelist());
-    assertFalse(node.isSecuritySslTls());
-    assertNull(node.getSecurityAuthc());
-
-    assertThat(node.getFailoverPriority(), is(availability()));
-    assertThat(node.getClientReconnectWindow(), is(Measure.of(120L, SECONDS)));
-    assertThat(node.getClientLeaseDuration(), is(Measure.of(20L, SECONDS)));
+  public void test_cliToProperties_2() {
+    // placeholder in node name should be resolved eagerly
+    assertCliEquals(
+        cli("node-hostname=%c"),
+        new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))),
+        "cluster-name=",
+        "client-reconnect-window=120s",
+        "failover-priority=availability",
+        "client-lease-duration=150s",
+        "security-authc=",
+        "security-ssl-tls=false",
+        "security-whitelist=false",
+        "offheap-resources=main:512MB",
+        "stripe.1.node.1.node-name=<GENERATED>",
+        "stripe.1.node.1.node-port=9410",
+        "stripe.1.node.1.node-group-port=9430",
+        "stripe.1.node.1.node-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.tc-properties=",
+        "stripe.1.node.1.security-dir=",
+        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+    );
+    verify(substitutor).substitute("%c");
+    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
-  public void testParse_multiStripe() throws Exception {
-    String fileName = "multi-stripe.properties";
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), loadProperties(fileName));
-    assertThat(cluster.getStripeCount(), is(2));
-    assertThat(cluster.getStripes().get(0).getNodes().size(), is(2));
-    assertThat(cluster.getStripes().get(1).getNodes().size(), is(2));
+  public void test_cliToProperties_3() {
+    // node name without placeholder triggers no resolve
+    assertCliEquals(
+        cli("node-hostname=foo"),
+        new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))),
+        "cluster-name=",
+        "client-reconnect-window=120s",
+        "failover-priority=availability",
+        "client-lease-duration=150s",
+        "security-authc=",
+        "security-ssl-tls=false",
+        "security-whitelist=false",
+        "offheap-resources=main:512MB",
+        "stripe.1.node.1.node-name=<GENERATED>",
+        "stripe.1.node.1.node-port=9410",
+        "stripe.1.node.1.node-group-port=9430",
+        "stripe.1.node.1.node-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.tc-properties=",
+        "stripe.1.node.1.security-dir=",
+        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+    );
+    verify(substitutor).substitute("foo");
+    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
-  public void testInsufficientKeys() {
-    properties.put("one.two.three", "something");
-    testThrowsWithMessage("Invalid input: 'one.two.three=something'.");
+  public void test_parsing_invalid() {
+    // node-hostname required
+    assertConfigFail(config(), "No configuration provided");
+    assertConfigFail(config("security-ssl-tls=false"), "node-hostname is missing");
+
+    // placeholder forbidden for node-hostname
+    assertConfigFail(config("stripe.1.node.1.node-hostname=%h"), "node-hostname cannot contain any placeholders");
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node.2.node-name=foo"
+    ), "Invalid input: 'stripe.1.node.2.node-hostname=%h'. Placeholders are not allowed");
+
+    // scope
+    assertConfigFail(config("node-hostname=foo"), "Invalid input: 'node-hostname=foo'. Reason: node-hostname cannot be set at cluster level");
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node-backup-dir=foo/bar"
+    ), "Invalid input: 'stripe.1.node-backup-dir=foo/bar'. Reason: stripe level configuration not allowed");
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "node-backup-dir=foo/bar"
+    ), "Invalid settings found at cluster level: node-backup-dir");
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node.1.failover-priority=availability"
+    ), "Invalid input: 'stripe.1.node.1.failover-priority=availability'. Reason: failover-priority does not allow any operation at node level");
+
+    // node and stripe ids
+    assertConfigFail(config("stripe.1.node.2.node-hostname=localhost"), "Node ID must start at 1 in stripe 1");
+    assertConfigFail(config("stripe.2.node.1.node-hostname=localhost"), "Stripe ID must start at 1");
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node.2.node-hostname=localhost",
+        "stripe.1.node.4.node-hostname=localhost"
+    ), "Node ID must end at 3 in stripe 1");
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.2.node.1.node-hostname=localhost",
+        "stripe.4.node.1.node-hostname=localhost"
+    ), "Stripe ID must end at 3");
+
+    // not allowed in config
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node.1.node-repository-dir=foo/bar"
+    ), "Invalid input: 'stripe.1.node.1.node-repository-dir=foo/bar'. Reason: node-repository-dir does not allow any operation at node level");
+    assertConfigFail(config(
+        "stripe.1.node.1.node-hostname=localhost",
+        "license-file=foo/bar"
+    ), "Invalid settings found at cluster level: license-file");
   }
 
   @Test
-  public void testExtraKeys() {
-    properties.put("stripe.0.node.0.property.foo", "bar");
-    testThrowsWithMessage("Invalid input: 'stripe.0.node.0.property.foo=bar'. Reason: Illegal setting name: property");
+  public void test_parsing_allows_duplicates() {
+    // Note about duplicate entries: we do not test them, because they made a property file invalid
+    // and we support the fact that the last one will override the previous one
+    assertConfigEquals(
+        config(
+            "stripe.1.node.1.node-name=node1",
+            "stripe.1.node.1.node-name=real",
+            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.1.node-hostname=foo"
+        ),
+        new Cluster(new Stripe(Node.newDefaultNode("real", "foo"))),
+        "cluster-name=",
+        "client-reconnect-window=120s",
+        "failover-priority=availability",
+        "client-lease-duration=150s",
+        "security-authc=",
+        "security-ssl-tls=false",
+        "security-whitelist=false",
+        "offheap-resources=main:512MB",
+        "stripe.1.node.1.node-port=9410",
+        "stripe.1.node.1.node-group-port=9430",
+        "stripe.1.node.1.node-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.tc-properties=",
+        "stripe.1.node.1.security-dir=",
+        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+    );
+    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
-  public void testUnknownNodeProperty() {
-    properties.put("stripe.0.node.0.blah", "something");
-    testThrowsWithMessage("Invalid input: 'stripe.0.node.0.blah=something'. Reason: Illegal setting name: blah");
+  public void test_parsing_minimal() {
+    // minimal config is to only have node-hostname, but to facilitate testing we add node-name
+    assertConfigEquals(
+        config(
+            "stripe.1.node.1.node-name=node1",
+            "stripe.1.node.1.node-hostname=localhost"
+        ),
+        new Cluster(new Stripe(Node.newDefaultNode("node1", "localhost"))),
+        "cluster-name=",
+        "client-reconnect-window=120s",
+        "failover-priority=availability",
+        "client-lease-duration=150s",
+        "security-authc=",
+        "security-ssl-tls=false",
+        "security-whitelist=false",
+        "offheap-resources=main:512MB",
+        "stripe.1.node.1.node-port=9410",
+        "stripe.1.node.1.node-group-port=9430",
+        "stripe.1.node.1.node-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.tc-properties=",
+        "stripe.1.node.1.security-dir=",
+        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+    );
+    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
-  public void test_cluster_creation_omitting_defaults() throws IOException, URISyntaxException {
+  public void test_parsing_minimal_2x2() {
+    assertConfigEquals(
+        config(
+            "stripe.1.node.1.node-name=node1",
+            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.2.node-name=node2",
+            "stripe.1.node.2.node-hostname=localhost",
+            "stripe.2.node.1.node-name=node1",
+            "stripe.2.node.1.node-hostname=localhost",
+            "stripe.2.node.2.node-name=node2",
+            "stripe.2.node.2.node-hostname=localhost"
+        ),
+        new Cluster(
+            new Stripe(
+                Node.newDefaultNode("node1", "localhost"),
+                Node.newDefaultNode("node2", "localhost")),
+            new Stripe(
+                Node.newDefaultNode("node1", "localhost"),
+                Node.newDefaultNode("node2", "localhost"))
+        ),
+        "cluster-name=",
+        "client-reconnect-window=120s",
+        "failover-priority=availability",
+        "client-lease-duration=150s",
+        "security-authc=",
+        "security-ssl-tls=false",
+        "security-whitelist=false",
+        "offheap-resources=main:512MB",
+        "stripe.1.node.1.node-port=9410",
+        "stripe.1.node.1.node-group-port=9430",
+        "stripe.1.node.1.node-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.tc-properties=",
+        "stripe.1.node.1.security-dir=",
+        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main",
+        "stripe.1.node.2.node-port=9410",
+        "stripe.1.node.2.node-group-port=9430",
+        "stripe.1.node.2.node-bind-address=0.0.0.0",
+        "stripe.1.node.2.node-group-bind-address=0.0.0.0",
+        "stripe.1.node.2.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.2.node-log-dir=%H/terracotta/logs",
+        "stripe.1.node.2.node-backup-dir=",
+        "stripe.1.node.2.tc-properties=",
+        "stripe.1.node.2.security-dir=",
+        "stripe.1.node.2.security-audit-log-dir=",
+        "stripe.1.node.2.data-dirs=main:%H/terracotta/user-data/main",
+        "stripe.2.node.1.node-port=9410",
+        "stripe.2.node.1.node-group-port=9430",
+        "stripe.2.node.1.node-bind-address=0.0.0.0",
+        "stripe.2.node.1.node-group-bind-address=0.0.0.0",
+        "stripe.2.node.1.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.2.node.1.node-log-dir=%H/terracotta/logs",
+        "stripe.2.node.1.node-backup-dir=",
+        "stripe.2.node.1.tc-properties=",
+        "stripe.2.node.1.security-dir=",
+        "stripe.2.node.1.security-audit-log-dir=",
+        "stripe.2.node.1.data-dirs=main:%H/terracotta/user-data/main",
+        "stripe.2.node.2.node-port=9410",
+        "stripe.2.node.2.node-group-port=9430",
+        "stripe.2.node.2.node-bind-address=0.0.0.0",
+        "stripe.2.node.2.node-group-bind-address=0.0.0.0",
+        "stripe.2.node.2.node-metadata-dir=%H/terracotta/metadata",
+        "stripe.2.node.2.node-log-dir=%H/terracotta/logs",
+        "stripe.2.node.2.node-backup-dir=",
+        "stripe.2.node.2.tc-properties=",
+        "stripe.2.node.2.security-dir=",
+        "stripe.2.node.2.security-audit-log-dir=",
+        "stripe.2.node.2.data-dirs=main:%H/terracotta/user-data/main"
+    );
+    verifyNoMoreInteractions(substitutor);
+  }
+
+  @Test
+  public void test_parsing_complete_1x1() {
+    // minimal config is to only have node-hostname, but to facilitate testing we add node-name
+    assertConfigEquals(
+        config(
+            "stripe.1.node.1.node-name=node1",
+            "stripe.1.node.1.node-hostname=localhost",
+            "cluster-name=foo",
+            "client-reconnect-window=120s",
+            "failover-priority=availability",
+            "client-lease-duration=150s",
+            "security-authc=",
+            "security-ssl-tls=false",
+            "security-whitelist=false",
+            "offheap-resources=main:512MB",
+            "stripe.1.node.1.node-port=9410",
+            "stripe.1.node.1.node-group-port=9430",
+            "stripe.1.node.1.node-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.tc-properties=",
+            "stripe.1.node.1.security-dir=",
+            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+        ),
+        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+    verifyNoMoreInteractions(substitutor);
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  private void assertCliEquals(Map<Setting, String> params, Cluster cluster, String... addedConfigurations) {
+    Cluster built = ConfigurationParser.parseCommandLineParameters(params, substitutor, added::add);
+
+    // since node name is generated when not given,
+    // this is a hack that will reset to null only the node names that have been generated
+    String nodeName = built.getSingleNode().get().getNodeName();
+    cluster.getSingleNode()
+        .filter(node -> node.getNodeName().equals("<GENERATED>"))
+        .ifPresent(node -> node.setNodeName(nodeName));
+
+    Configuration[] configurations = Stream.of(addedConfigurations)
+        .map(string -> string.replace("<GENERATED>", nodeName))
+        .map(string -> string.replace("/", File.separator)) // unix/win compat'
+        .map(Configuration::valueOf)
+        .toArray(Configuration[]::new);
+
+    assertThat(built, is(equalTo(cluster)));
+    assertThat(added.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(",\n")), added.size(), is(equalTo(configurations.length)));
+    assertThat(added, hasItems(configurations));
+    added.clear();
+  }
+
+  private void assertConfigEquals(Properties config, Cluster cluster, String... addedConfigurations) {
+    Cluster built = ConfigurationParser.parsePropertyConfiguration(config, added::add);
+    Configuration[] configurations = Stream.of(addedConfigurations)
+        .map(string -> string.replace("/", File.separator)) // unix/win compat'
+        .map(Configuration::valueOf)
+        .toArray(Configuration[]::new);
+    assertThat(built, is(equalTo(cluster)));
+    assertThat(added.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(",\n")), added.size(), is(equalTo(configurations.length)));
+    assertThat(added, hasItems(configurations));
+    added.clear();
+  }
+
+  private void assertConfigFail(Properties config, String err) {
+    err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
-        () -> ConfigurationParser.parsePropertyConfiguration(identity(), new Properties()),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid property: stripe.1.node.1.node-hostname=%h. Placeholders are not allowed.")))));
-
-    Properties properties = new Properties();
-    properties.setProperty("stripe.1.node.1.node-hostname", "localhost");
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(identity(), properties);
-
-    Properties expected = loadProperties("minimal_with_default.properties");
-    expected.put("stripe.1.node.1.node-name", cluster.getSingleNode().get().getNodeName()); // because node name is generated
-    if (WINDOWS) {
-      expected.stringPropertyNames().forEach(key -> expected.setProperty(key, expected.getProperty(key).replace('/', '\\'))); // windows compat'
-    }
-
-    assertThat(cluster.toProperties(false, true), is(equalTo(expected)));
-
-
-    //TODO
-    //    Cluster rebuilt = ConfigurationParser.parsePropertyConfiguration(identity(), actual);
-//    assertThat(rebuilt, is(equalTo(cluster)));
-
+        () -> ConfigurationParser.parsePropertyConfiguration(config, added::add),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(err)))));
   }
 
-  @Test
-  public void testBadOffheap_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.OFFHEAP_RESOURCES, "blah");
-    testThrowsWithMessage(paramValueMap, "should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...");
+  private static Map<Setting, String> cli(String... params) {
+    return Stream.of(params)
+        .map(string -> string.replace("/", File.separator)) // unix/win compat'
+        .map(p -> p.split("="))
+        .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv[1]))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
-  @Test
-  public void testBadOffheap_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.OFFHEAP_RESOURCES, "blah:foo");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: 'foo'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
-  }
-
-  @Test
-  public void testBadOffheap_3() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.OFFHEAP_RESOURCES, "blah:200blah");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: '200blah'. <unit> must be one of [B, KB, MB, GB, TB, PB].");
-  }
-
-  @Test
-  public void testBadOffheap_4() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.OFFHEAP_RESOURCES, "blah:200MB;blah-2:200MB");
-    testThrowsWithMessage(paramValueMap, "should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...");
-  }
-
-  @Test
-  public void testBadNodePort_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_PORT, "blah");
-    testThrowsWithMessage(paramValueMap, "must be an integer between 1 and 65535");
-  }
-
-  @Test
-  public void testBadNodePort_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_PORT, "0");
-    testThrowsWithMessage(paramValueMap, "must be an integer between 1 and 65535");
-  }
-
-  @Test
-  public void testBadNodePort_3() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_PORT, "100000");
-    testThrowsWithMessage(paramValueMap, "must be an integer between 1 and 65535");
-  }
-
-  @Test
-  public void testBadNodeGroupPort_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_GROUP_PORT, "blah");
-    testThrowsWithMessage(paramValueMap, "must be an integer between 1 and 65535");
-  }
-
-  @Test
-  public void testBadNodeGroupPort_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_GROUP_PORT, "0");
-    testThrowsWithMessage(paramValueMap, "must be an integer between 1 and 65535");
-  }
-
-  @Test
-  public void testBadNodeGroupPort_3() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_GROUP_PORT, "100000");
-    testThrowsWithMessage(paramValueMap, "must be an integer between 1 and 65535");
-  }
-
-  @Test
-  public void testBadHostname_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_HOSTNAME, "$$$$$$$$$$$");
-    testThrowsWithMessage(paramValueMap, "must be a valid hostname or IP address");
-  }
-
-  @Test
-  public void testBadHostname_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_HOSTNAME, "10..10..10..10");
-    testThrowsWithMessage(paramValueMap, "must be a valid hostname or IP address");
-  }
-
-  @Test
-  public void testBadHostname_3() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_HOSTNAME, "10:10::10:zz");
-    testThrowsWithMessage(paramValueMap, "must be a valid hostname or IP address");
-  }
-
-  @Test
-  public void testBadNodeBindAddresses_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_BIND_ADDRESS, "10:10::10:zz");
-    testThrowsWithMessage(paramValueMap, "must be a valid IP address");
-  }
-
-  @Test
-  public void testBadNodeBindAddresses_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_BIND_ADDRESS, "localhost");
-    testThrowsWithMessage(paramValueMap, "must be a valid IP address");
-  }
-
-  @Test
-  public void testBadNodeGroupBindAddresses_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_GROUP_BIND_ADDRESS, "10:10::10:zz");
-    testThrowsWithMessage(paramValueMap, "must be a valid IP address");
-  }
-
-  @Test
-  public void testBadNodeGroupBindAddresses_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.NODE_GROUP_BIND_ADDRESS, "localhost");
-    testThrowsWithMessage(paramValueMap, "must be a valid IP address");
-  }
-
-  @Test
-  public void testBadFailoverSettings_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.FAILOVER_PRIORITY, "blah");
-    testThrowsWithMessage(paramValueMap, "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
-  }
-
-  @Test
-  public void testBadFailoverSettings_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.FAILOVER_PRIORITY, "availability:3");
-    testThrowsWithMessage(paramValueMap, "should be either 'availability', 'consistency', or 'consistency:N'");
-  }
-
-  @Test
-  public void testBadFailoverSettings_3() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.FAILOVER_PRIORITY, "availability:blah");
-    testThrowsWithMessage(paramValueMap, "should be either 'availability', 'consistency', or 'consistency:N'");
-  }
-
-  @Test
-  public void testBadFailoverSettings_4() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.FAILOVER_PRIORITY, "consistency:blah");
-    testThrowsWithMessage(paramValueMap, "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
-  }
-
-  @Test
-  public void testBadFailoverSettings_5() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.FAILOVER_PRIORITY, "consistency;4");
-    testThrowsWithMessage(paramValueMap, "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
-  }
-
-  @Test
-  public void testBadFailoverSettings_6() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.FAILOVER_PRIORITY, "consistency:0");
-    testThrowsWithMessage(paramValueMap, "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
-  }
-
-  @Test
-  public void testBadClientReconnectWindow_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_RECONNECT_WINDOW, "blah");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: 'blah'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
-  }
-
-  @Test
-  public void testBadClientReconnectWindow_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_RECONNECT_WINDOW, "20");
-    testThrowsWithMessage(paramValueMap, "should be specified in <quantity><unit> format");
-  }
-
-  @Test
-  public void testBadClientReconnectWindow_3() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_RECONNECT_WINDOW, "MB");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: 'MB'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
-  }
-
-  @Test
-  public void testBadClientReconnectWindow_4() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_RECONNECT_WINDOW, "100blah");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: '100blah'. <unit> must be one of [s, m, h].");
-  }
-
-  @Test
-  public void testBadClientLeaseDuration_1() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_LEASE_DURATION, "blah");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: 'blah'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
-  }
-
-  @Test
-  public void testBadClientLeaseDuration_2() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_LEASE_DURATION, "20");
-    testThrowsWithMessage(paramValueMap, "should be specified in <quantity><unit> format");
-  }
-
-  @Test
-  public void testBadClientLeaseDuration_3() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_LEASE_DURATION, "MB");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: 'MB'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
-  }
-
-  @Test
-  public void testBadClientLeaseDuration_4() {
-    Map<Setting, String> paramValueMap = new HashMap<>();
-    paramValueMap.put(Setting.CLIENT_LEASE_DURATION, "100blah");
-    testThrowsWithMessage(paramValueMap, "Invalid measure: '100blah'. <unit> must be one of [ms, s, m, h].");
-  }
-
-  private void testThrowsWithMessage(Map<Setting, String> paramValueMap, String message) {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage(message);
-    Cluster cluster = ConfigurationParser.parseCommandLineParameters(SERVER_SUBSTITUTOR_SIMULATOR, paramValueMap);
-    new ClusterValidator(cluster).validate();
-  }
-
-  private void testThrowsWithMessage(String message) {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage(message);
-    ConfigurationParser.parsePropertyConfiguration(identity(), properties);
-  }
-
-  private Properties loadProperties(String fileName) throws IOException, URISyntaxException {
-    try (InputStream inputStream = Files.newInputStream(Paths.get(getClass().getResource("/config-property-files/" + fileName).toURI()))) {
-      Properties properties = new Properties();
-      properties.load(inputStream);
-      return properties;
-    }
+  private static Properties config(String... params) {
+    return Stream.of(params)
+        .map(string -> string.replace("/", File.separator)) // unix/win compat'
+        .map(p -> p.split("="))
+        .reduce(new Properties(), (props, kv) -> {
+          props.setProperty(kv[0], kv.length == 1 ? "" : kv[1]);
+          return props;
+        }, (p1, p2) -> {
+          throw new UnsupportedOperationException();
+        });
   }
 }

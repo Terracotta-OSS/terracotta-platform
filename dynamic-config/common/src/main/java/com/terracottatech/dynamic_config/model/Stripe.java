@@ -154,6 +154,16 @@ public class Stripe implements Cloneable {
     return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findFirst();
   }
 
+  public Optional<Node> getNode(int nodeId) {
+    if (nodeId < 1) {
+      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
+    }
+    if (nodeId > nodes.size()) {
+      return Optional.empty();
+    }
+    return Optional.of(nodes.get(nodeId - 1));
+  }
+
   public OptionalInt getNodeId(String nodeName) {
     return IntStream.range(0, nodes.size())
         .filter(idx -> nodeName.equals(nodes.get(idx).getNodeName()))

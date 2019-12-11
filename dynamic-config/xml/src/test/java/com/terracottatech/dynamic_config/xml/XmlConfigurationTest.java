@@ -27,13 +27,12 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
-import static com.terracottatech.dynamic_config.util.IParameterSubstitutor.identity;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.config.util.ParameterSubstitutor.substitute;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 public class XmlConfigurationTest {
-  private final ClusterFactory clusterFactory = new ClusterFactory(identity());
+  private final ClusterFactory clusterFactory = new ClusterFactory();
 
   @Rule
   public TmpDir temporaryFolder = new TmpDir();
@@ -73,7 +72,7 @@ public class XmlConfigurationTest {
   @Test
   public void testSingleStripe() throws Exception {
     String fileName = "single-stripe-config.properties";
-    Cluster cluster = clusterFactory.create(loadProperties(fileName), "my-cluster");
+    Cluster cluster = clusterFactory.create(loadProperties(fileName));
 
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "single-stripe-config.xml");
@@ -82,7 +81,7 @@ public class XmlConfigurationTest {
   @Test
   public void testMultiStripe() throws Exception {
     String fileName = "multi-stripe-config.properties";
-    Cluster cluster = clusterFactory.create(loadProperties(fileName), "my-cluster");
+    Cluster cluster = clusterFactory.create(loadProperties(fileName));
 
     String actual = new XmlConfiguration(cluster, 1, "node-1", pathResolver).toString();
     assertXml(actual, "multi-stripe-config.xml");

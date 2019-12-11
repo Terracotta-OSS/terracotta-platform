@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.terracottatech.dynamic_config.cli.common.ConfigurationConverter;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.MultiConfigCommaSplitter;
@@ -34,9 +35,23 @@ public abstract class ConfigurationCommand extends RemoteCommand {
   public void validate() {
     requireNonNull(node);
     requireNonNull(configurations);
+
+    // validate all configurations passes on CLI
     for (Configuration configuration : configurations) {
       configuration.validate(operation);
     }
+
+    // once valid, check for duplicates
+    for (int i = 0; i < configurations.size(); i++) {
+      Configuration first = configurations.get(i);
+      for (int j = i + 1; j < configurations.size(); j++) {
+        Configuration second = configurations.get(j);
+        if (second.duplicates(first)) {
+          throw new ParameterException("Duplicate configurations found: " + first + " and " + second);
+        }
+      }
+    }
+
     ensureAddressWithinCluster(node);
   }
 }

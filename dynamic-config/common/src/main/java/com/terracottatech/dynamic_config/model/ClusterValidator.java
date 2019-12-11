@@ -44,10 +44,11 @@ public class ClusterValidator implements Validator {
     validateSecurityDir();
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   private void validateNodeName() {
     for (int i = 0; i < cluster.getStripeCount(); i++) {
       int stripeId = i + 1;
-      cluster.getStripes().get(i).getNodes()
+      cluster.getStripe(stripeId).get().getNodes()
           .stream()
           .map(Node::getNodeName)
           .filter(Objects::nonNull)
@@ -90,19 +91,16 @@ public class ClusterValidator implements Validator {
     cluster.nodeContexts().forEach(nodeContext -> {
       Node node = nodeContext.getNode();
       if ("certificate".equals(node.getSecurityAuthc()) && !node.isSecuritySslTls()) {
-        throw new MalformedClusterException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
-            SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
+        throw new MalformedClusterException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
       }
       if ((node.getSecurityAuthc() != null && node.getSecurityDir() == null)
           || (node.getSecurityAuditLogDir() != null && node.getSecurityDir() == null)
           || (node.isSecuritySslTls() && node.getSecurityDir() == null)
           || (node.isSecurityWhitelist() && node.getSecurityDir() == null)) {
-        throw new MalformedClusterException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
-            SECURITY_DIR + " is mandatory for any of the security configuration");
+        throw new MalformedClusterException(SECURITY_DIR + " is mandatory for any of the security configuration");
       }
       if (node.getSecurityDir() != null && !node.isSecuritySslTls() && node.getSecurityAuthc() == null && !node.isSecurityWhitelist()) {
-        throw new MalformedClusterException("Node " + nodeContext.getNodeId() + " of stripe " + nodeContext.getStripeId() + " is invalid: " +
-            "One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
+        throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
       }
     });
   }

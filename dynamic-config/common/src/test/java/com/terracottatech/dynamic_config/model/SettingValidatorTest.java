@@ -45,9 +45,7 @@ public class SettingValidatorTest {
   @Test
   public void test_defaults() {
     validateDefaults(CLUSTER_NAME);
-    assertThat(
-        () -> CLUSTER_NAME.validate(null),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(CLUSTER_NAME + " cannot be null")))));
+    CLUSTER_NAME.validate(null); // cluster name can be set to null when loading config file
     CLUSTER_NAME.validate("foo");
   }
 

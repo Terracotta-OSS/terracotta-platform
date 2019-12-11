@@ -250,8 +250,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   private synchronized void installLicense(String licenseContent) {
-    LOGGER.info("Installing license");
-
     License backup = this.license;
     Path tempFile = null;
 
@@ -261,7 +259,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       this.license = new LicenseParser(tempFile).parse();
 
       validateAgainstLicense();
+      LOGGER.info("License validated");
       moveLicense(tempFile);
+      LOGGER.info("License installed");
     } catch (IOException e) {
       // rollback to previous license (or null) on IO error
       this.license = backup;

@@ -19,6 +19,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
+import static java.util.Map.Entry.comparingByKey;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -28,30 +29,19 @@ public class ClusterFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterFactory.class);
 
-  private final IParameterSubstitutor parameterSubstitutor;
-
-  public ClusterFactory(IParameterSubstitutor parameterSubstitutor) {
-    this.parameterSubstitutor = parameterSubstitutor;
-  }
-
   /**
    * Creates a {@code Cluster} object from a config properties file
    *
-   * @param configFile  the path to the config properties file, non-null
-   * @param clusterName the intended name of the cluster, may be null
+   * @param configFile the path to the config properties file, non-null
    * @return a {@code Cluster} object
    */
-  public Cluster create(Path configFile, String clusterName) {
-    return create(Props.load(configFile), clusterName);
+  public Cluster create(Path configFile) {
+    return create(Props.load(configFile));
   }
 
-  public Cluster create(Properties properties, String clusterName) {
+  public Cluster create(Properties properties) {
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(parameterSubstitutor, properties, defaultsAdded::add);
-
-    if (clusterName != null) {
-      cluster.setName(clusterName);
-    }
+    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(properties, defaultsAdded::add);
 
     LOGGER.info(
         String.format(
@@ -72,22 +62,23 @@ public class ClusterFactory {
    * @param paramValueMap parameter-value mapping
    * @return a {@code Cluster} object
    */
-  public Cluster create(Map<Setting, String> paramValueMap) {
+  public Cluster create(Map<Setting, String> paramValueMap, IParameterSubstitutor parameterSubstitutor) {
     // safe copy
     paramValueMap = new HashMap<>(paramValueMap);
 
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
-    Cluster cluster = ConfigurationParser.parseCommandLineParameters(parameterSubstitutor, paramValueMap, defaultsAdded::add);
+    Cluster cluster = ConfigurationParser.parseCommandLineParameters(paramValueMap, parameterSubstitutor, defaultsAdded::add);
 
     LOGGER.info(
         String.format(
             "%sRead the following parameters: %s%sAdded the following defaults: %s",
             lineSeparator(),
-            toDisplayParams("--", paramValueMap),
+            toDisplayParams("--", paramValueMap, parameterSubstitutor),
             lineSeparator(),
             toDisplayParams("--", defaultsAdded.stream()
-                .filter(configuration -> configuration.getValue() != null)
-                .collect(toMap(Configuration::getSetting, Configuration::getValue)))
+                    .filter(configuration -> configuration.getValue() != null)
+                    .collect(toMap(Configuration::getSetting, Configuration::getValue)),
+                parameterSubstitutor)
         )
     );
 
@@ -99,11 +90,11 @@ public class ClusterFactory {
     return cluster;
   }
 
-  private String toDisplayParams(String prefix, Map<Setting, String> supplied) {
+  private String toDisplayParams(String prefix, Map<Setting, String> supplied, IParameterSubstitutor parameterSubstitutor) {
     String suppliedParameters = supplied.entrySet()
         .stream()
         .filter(e -> e.getValue() != null)
-        .sorted(Comparator.comparing(Map.Entry::getKey))
+        .sorted(comparingByKey())
         .map(entry -> prefix + entry.getKey() + "=" + parameterSubstitutor.substitute(entry.getValue()))
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {

@@ -93,9 +93,10 @@ public class NodeContext implements Cloneable {
     return node;
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @JsonIgnore
   public Stripe getStripe() {
-    return cluster.getStripes().get(stripeId - 1);
+    return cluster.getStripe(stripeId).get();
   }
 
   @Override

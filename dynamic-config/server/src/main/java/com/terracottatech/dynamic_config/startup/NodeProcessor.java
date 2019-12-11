@@ -18,8 +18,10 @@ public class NodeProcessor {
   private final ClusterFactory clusterCreator;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public NodeProcessor(Options options, Map<Setting, String> paramValueMap, ClusterFactory clusterCreator,
-                       StartupManager startupManager, IParameterSubstitutor parameterSubstitutor) {
+  public NodeProcessor(Options options, Map<Setting, String> paramValueMap,
+                       ClusterFactory clusterCreator,
+                       StartupManager startupManager,
+                       IParameterSubstitutor parameterSubstitutor) {
     this.options = options;
     this.paramValueMap = paramValueMap;
     this.clusterCreator = clusterCreator;
@@ -29,7 +31,7 @@ public class NodeProcessor {
 
   public void process() {
     // Each NodeStarter either handles the startup itself or hands over to the next NodeStarter, following the chain-of-responsibility pattern
-    NodeStarter third = new ConsoleParamsStarter(options, paramValueMap, clusterCreator, startupManager);
+    NodeStarter third = new ConsoleParamsStarter(options, paramValueMap, clusterCreator, startupManager, parameterSubstitutor);
     NodeStarter second = new ConfigFileStarter(options, clusterCreator, startupManager, third);
     NodeStarter first = new ConfigRepoStarter(options, startupManager, second, parameterSubstitutor);
     boolean started = first.startNode();

@@ -522,12 +522,53 @@ public enum Setting {
     return requirements.contains(requirement);
   }
 
+  /**
+   * @return true if this setting supports some operations (get, set, unset, config) to be called with a scope passed as parameter.
+   * Example: node-name is defined as scope NODE, but we could execute "get node-name"
+   */
+  public boolean allowsAnyOperationInScope(Scope scope) {
+    if (operations.isEmpty()) {
+      return false;
+    }
+    if (allowsOperation(SET) || allowsOperation(UNSET) || allowsOperation(GET)) {
+      if (this.scope == CLUSTER) {
+        // if the setting scope is CLUSTER, we only allow commands to work at the same level
+        return scope == CLUSTER;
+      }
+      if (this.scope == NODE) {
+        // if a setting is at node scope, we allow "batch" get or set of settings over all the cluster or stripe
+        return true;
+      }
+    } else if (allowsOperation(CONFIG)) {
+      return scope == this.scope;
+    }
+    // this.scope cannot be STRIPE (validation in constructor)
+    throw new AssertionError("Invalid scope for setting definition: " + this + ". Must be " + NODE + " or " + CLUSTER);
+  }
+
   public boolean allowsOperation(Operation operation) {
     return this.operations.contains(operation);
   }
 
+  public boolean allowsOperationInScope(Operation operation, Scope scope) {
+    if (!allowsOperation(operation) || !allowsAnyOperationInScope(scope)) {
+      return false;
+    }
+    switch (operation) {
+      case GET:
+        return true; // allow any scope for get
+      case CONFIG:
+        return scope == this.scope;
+      case SET:
+      case UNSET:
+        return this.scope == CLUSTER ? scope == CLUSTER : this.scope == NODE; // note: this.scope cannot be STRIPE
+      default:
+        throw new AssertionError(operation);
+    }
+  }
+
   public boolean isRequired() {
-    return !allowsOperation(UNSET);
+    return !allowsOperation(UNSET) && (!allowsOperation(CONFIG) || getDefaultValue() != null);
   }
 
   public boolean isReadOnly() {
@@ -538,25 +579,12 @@ public enum Setting {
     return this.scope == scope;
   }
 
-  public boolean allowsOperationsWithScope(Scope scope) {
-    if (this.scope == CLUSTER) {
-      // if the setting scope is CLUSTER, we only allow commands to work at the same level
-      return scope == CLUSTER;
-    }
-    if (this.scope == NODE) {
-      // if a setting is at node scope, we allow "batch" get or set of settings over all the cluster or stripe
-      return true;
-    }
-    // this.scope cannot be STRIPE (validation in constructor)
-    throw new AssertionError("Invalid scope for setting definition: " + this + ". Must be " + NODE + " or " + CLUSTER);
-  }
-
   public String getConfigPrefix(int stripeId, int nodeId) {
     return (isScope(NODE) ? "stripe." + stripeId + ".node." + nodeId + "." : "") + this;
   }
 
   public void validate(String key, String value) {
-    // do not validate if value os null and setting optional
+    // do not validate if value is null and setting optional
     if (key == null && value == null && !isRequired()) {
       return;
     }

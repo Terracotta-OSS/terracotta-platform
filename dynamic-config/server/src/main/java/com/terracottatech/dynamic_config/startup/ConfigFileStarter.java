@@ -42,7 +42,13 @@ public class ConfigFileStarter implements NodeStarter {
 
     Path substitutedConfigFile = Paths.get(PARAMETER_SUBSTITUTOR.substitute(options.getConfigFile()));
     LOGGER.info("Starting node from config file: {}", substitutedConfigFile);
-    Cluster cluster = clusterCreator.create(substitutedConfigFile, options.getClusterName());
+    Cluster cluster = clusterCreator.create(substitutedConfigFile);
+
+    // overwrite the cluster name if given in CLI on top of within the config file
+    if (options.getClusterName() != null) {
+      cluster.setName(options.getClusterName());
+    }
+
     Node node = startupManager.getMatchingNodeFromConfigFile(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
 
     if (options.getLicenseFile() != null) {

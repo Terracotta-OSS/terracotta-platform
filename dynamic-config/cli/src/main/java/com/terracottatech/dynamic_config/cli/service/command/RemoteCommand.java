@@ -197,7 +197,7 @@ public abstract class RemoteCommand extends Command {
               tuple.t2.upgradeLicense(xml);
               return null;
             } catch (RuntimeException e) {
-              logger.warn("License upgrade failed on node {}: {}", tuple.t1, e.getMessage());
+              logger.debug("License upgrade failed on node {}: {}", tuple.t1, e.getMessage());
               return e;
             }
           })

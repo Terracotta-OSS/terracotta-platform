@@ -192,17 +192,22 @@ public class Cluster implements Cloneable {
   }
 
   public OptionalInt getNodeId(int stripeId, String nodeName) {
+    return getStripe(stripeId)
+        .map(stripe -> IntStream.range(0, stripe.getNodeCount())
+            .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getNodeName()))
+            .map(idx -> idx + 1)
+            .findFirst())
+        .orElse(OptionalInt.empty());
+  }
+
+  public Optional<Stripe> getStripe(int stripeId) {
     if (stripeId < 1) {
       throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
     }
     if (stripeId > stripes.size()) {
-      return OptionalInt.empty();
+      return Optional.empty();
     }
-    Stripe stripe = stripes.get(stripeId - 1);
-    return IntStream.range(0, stripe.getNodeCount())
-        .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getNodeName()))
-        .map(idx -> idx + 1)
-        .findFirst();
+    return Optional.of(stripes.get(stripeId - 1));
   }
 
   @JsonIgnore
@@ -221,30 +226,11 @@ public class Cluster implements Cloneable {
   }
 
   public Optional<Node> getNode(int stripeId, String nodeName) {
-    if (stripeId < 1) {
-      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
-    }
-    if (stripeId > stripes.size()) {
-      return Optional.empty();
-    }
-    return stripes.get(stripeId - 1).getNode(nodeName);
+    return getStripe(stripeId).flatMap(stripe -> stripe.getNode(nodeName));
   }
 
   public Optional<Node> getNode(int stripeId, int nodeId) {
-    if (stripeId < 1) {
-      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
-    }
-    if (nodeId < 1) {
-      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
-    }
-    if (stripeId > stripes.size()) {
-      return Optional.empty();
-    }
-    Stripe stripe = stripes.get(stripeId - 1);
-    if (nodeId > stripe.getNodeCount()) {
-      return Optional.empty();
-    }
-    return Optional.of(stripe.getNodes().get(nodeId - 1));
+    return getStripe(stripeId).flatMap(stripe -> stripe.getNode(nodeId));
   }
 
   public Stream<NodeContext> nodeContexts() {
