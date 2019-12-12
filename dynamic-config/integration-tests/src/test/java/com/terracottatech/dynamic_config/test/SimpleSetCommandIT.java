@@ -13,8 +13,6 @@ import org.junit.rules.ExpectedException;
 
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 public class SimpleSetCommandIT extends BaseStartupIT {
@@ -39,20 +37,6 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   }
 
   /*<--Single Node Tests-->*/
-  @Test
-  public void set_stripeIdInvalid() {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage(is(equalTo("Invalid input: 'stripe.2.node.1.node-backup-dir=foo'. Reason: Specified stripe ID: 2, but cluster contains: 1 stripe(s) only")));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.2.node.1.node-backup-dir=foo");
-  }
-
-  @Test
-  public void set_nodeIdInvalid() {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage(is(equalTo("Invalid input: 'stripe.1.node.2.node-backup-dir=foo'. Reason: Specified node ID: 2, but stripe ID: 1 contains: 1 node(s) only")));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.2.node-backup-dir=foo");
-  }
-
   @Test
   public void setOffheapResource() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=512MB");
@@ -123,39 +107,6 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
     waitedAssert(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
-  }
-
-  @Test
-  public void setOffheapResources_postActivation_duplicateSpecification() throws Exception {
-    activateCluster();
-
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:1GB,second:1GB");
-    assertCommandSuccessful();
-
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
-    waitedAssert(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
-  }
-
-  @Test
-  public void setOffheapResources_postActivation_sameKeysRepeated() throws Exception {
-    activateCluster();
-
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:2GB,second:2GB");
-    assertCommandSuccessful();
-
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
-    waitedAssert(out::getLog, containsString("offheap-resources=main:2GB,second:2GB"));
-  }
-
-  @Test
-  public void setOffheapResources_postActivation_sameKeysRepeated_secondSmallerThanFirst() throws Exception {
-    activateCluster();
-
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB", "-c", "offheap-resources=main:750MB,second:750MB");
-    assertCommandSuccessful();
-
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
-    waitedAssert(out::getLog, containsString("offheap-resources=main:750MB,second:750MB"));
   }
 
   @Test
