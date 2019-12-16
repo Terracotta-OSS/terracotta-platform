@@ -31,9 +31,9 @@
     <logback.version>1.2.3</logback.version>
     <terracotta-apis.version>1.7.0-pre1</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre1</terracotta-configuration.version>
-    <passthrough-testing.version>1.7.0-pre4</passthrough-testing.version>
-    <terracotta-core.version>5.7.0-pre8</terracotta-core.version>
-    <tripwire.version>1.0.0-pre4</tripwire.version>
+    <passthrough-testing.version>1.7.0-pre5</passthrough-testing.version>
+    <terracotta-core.version>5.7.0-pre10</terracotta-core.version>
+    <tripwire.version>1.0.0-pre6</tripwire.version>
     <statistics.version>2.1</statistics.version>
     <jackson-databind.version>2.9.9</jackson-databind.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
