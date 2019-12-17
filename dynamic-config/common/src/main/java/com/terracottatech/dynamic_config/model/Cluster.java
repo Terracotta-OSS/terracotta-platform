@@ -73,7 +73,7 @@ public class Cluster implements Cloneable {
 
   @JsonIgnore
   public boolean isEmpty() {
-    return getNodeAddresses().isEmpty();
+    return stripes.isEmpty() || getNodeAddresses().isEmpty();
   }
 
   /**
@@ -172,7 +172,7 @@ public class Cluster implements Cloneable {
   public Optional<Node> getNode(InetSocketAddress nodeAddress) {
     return stripes.stream()
         .flatMap(stripe -> stripe.getNodes().stream())
-        .filter(node -> node.getNodeAddress().equals(nodeAddress))
+        .filter(node -> node.hasAddress(nodeAddress))
         .findFirst();
   }
 

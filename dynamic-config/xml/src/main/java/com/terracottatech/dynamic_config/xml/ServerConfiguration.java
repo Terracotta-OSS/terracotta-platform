@@ -32,12 +32,12 @@ import java.io.StringWriter;
 public class ServerConfiguration {
   private static final ObjectFactory FACTORY = new ObjectFactory();
 
-  private final String serverName;
+  private final Node node;
   private final PathResolver pathResolver;
   private final TcConfig tcConfig;
 
   ServerConfiguration(Node node, Servers servers, PathResolver pathResolver) {
-    this.serverName = node.getNodeName();
+    this.node = node;
     this.pathResolver = pathResolver;
     this.tcConfig = createTcConfig(node, servers);
   }
@@ -176,12 +176,14 @@ public class ServerConfiguration {
 
   TcNode
   getClusterConfigNode(com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory factory) {
-    TcNode node = factory.createTcNode();
-    node.setName(this.serverName);
+    TcNode tcNode = factory.createTcNode();
+    tcNode.setName(node.getNodeName());
+    tcNode.setPublicHostname(node.getNodePublicHostname());
+    tcNode.setPublicPort(node.getNodePublicPort());
     TcServerConfig serverConfig = factory.createTcServerConfig();
     serverConfig.setTcConfig(this.tcConfig);
-    node.setServerConfig(serverConfig);
+    tcNode.setServerConfig(serverConfig);
 
-    return node;
+    return tcNode;
   }
 }

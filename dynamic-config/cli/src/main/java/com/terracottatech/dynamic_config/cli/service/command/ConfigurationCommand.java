@@ -52,6 +52,6 @@ public abstract class ConfigurationCommand extends RemoteCommand {
       }
     }
 
-    ensureAddressWithinCluster(node);
+    validateAddress(node);
   }
 }

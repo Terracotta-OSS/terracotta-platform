@@ -8,6 +8,7 @@ import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 import org.junit.Test;
 
+import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
@@ -98,18 +99,72 @@ public class NodeTest {
   }
 
   @Test
+  public void test_getNodeInternalAddress() {
+    assertThat(
+        () -> new Node().getNodeInternalAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with internal address: null:9410")))));
+
+    assertThat(
+        () -> newDefaultNode(null).getNodeInternalAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
+
+    assertThat(
+        () -> newDefaultNode("%h").getNodeInternalAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: %h:9410")))));
+  }
+
+  @Test
+  public void test_getNodePublicAddress() {
+    assertThat(
+        newDefaultNode("localhost").getNodePublicAddress().isPresent(),
+        is(false));
+    assertThat(
+        newDefaultNode("localhost").setNodePublicHostname("foo").getNodePublicAddress().isPresent(),
+        is(false));
+    assertThat(
+        newDefaultNode("localhost").setNodePublicPort(1234).getNodePublicAddress().isPresent(),
+        is(false));
+
+    assertThat(
+        () -> newDefaultNode("localhost").setNodePublicHostname("%h").setNodePublicPort(1234).getNodePublicAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with public address: %h:1234")))));
+
+    assertThat(
+        newDefaultNode("localhost").setNodePublicHostname("foo").setNodePublicPort(1234).getNodePublicAddress().get(),
+        is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
+  }
+
+  @Test
   public void test_getNodeAddress() {
     assertThat(
-        () -> new Node().getNodeAddress(),
-        is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with address: null:9410")))));
-
+        newDefaultNode("localhost").getNodeAddress(),
+        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
     assertThat(
-        () -> newDefaultNode(null).getNodeAddress(),
-        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with address: null:9410")))));
-
+        newDefaultNode("localhost").setNodePublicHostname("foo").getNodeAddress(),
+        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
     assertThat(
-        () -> newDefaultNode("%h").getNodeAddress(),
-        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with address: %h:9410")))));
+        newDefaultNode("localhost").setNodePublicPort(1234).getNodeAddress(),
+        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
+    assertThat(
+        newDefaultNode("localhost").setNodePublicHostname("foo").setNodePublicPort(1234).getNodeAddress(),
+        is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
+  }
+
+  @Test
+  public void test_hasAddress() {
+    assertThat(
+        newDefaultNode("localhost").hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
+        is(true));
+    assertThat(
+        newDefaultNode("localhost")
+            .setNodePublicHostname("foo").setNodePublicPort(1234)
+            .hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
+        is(true));
+    assertThat(
+        newDefaultNode("localhost")
+            .setNodePublicHostname("foo").setNodePublicPort(1234)
+            .hasAddress(InetSocketAddress.createUnresolved("foo", 1234)),
+        is(true));
   }
 
   @Test

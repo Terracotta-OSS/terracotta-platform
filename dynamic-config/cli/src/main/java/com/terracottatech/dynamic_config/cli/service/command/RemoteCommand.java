@@ -63,7 +63,10 @@ public abstract class RemoteCommand extends Command {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  protected final void ensureAddressWithinCluster(InetSocketAddress expectedOnlineNode) {
+  /**
+   * Ensure that the input address is really an address that can be used to connect to a node of a cluster
+   */
+  protected final void validateAddress(InetSocketAddress expectedOnlineNode) {
     logger.trace("ensureAddressWithinCluster({})", expectedOnlineNode);
     getRuntimeCluster(expectedOnlineNode).getNode(expectedOnlineNode)
         .orElseGet(() -> getUpcomingCluster(expectedOnlineNode).getNode(expectedOnlineNode)
@@ -132,10 +135,7 @@ public abstract class RemoteCommand extends Command {
 
   protected final Collection<InetSocketAddress> findRuntimePeers(InetSocketAddress expectedOnlineNode) {
     logger.trace("findRuntimePeers({})", expectedOnlineNode);
-    final Collection<InetSocketAddress> peers = getRuntimeCluster(expectedOnlineNode).getNodeAddresses();
-    if (!peers.contains(expectedOnlineNode)) {
-      throw new IllegalArgumentException("Node address " + expectedOnlineNode + " used to connect does not match any known node in cluster " + peers);
-    }
+    Collection<InetSocketAddress> peers = getRuntimeCluster(expectedOnlineNode).getNodeAddresses();
     if (logger.isDebugEnabled()) {
       logger.debug("Discovered nodes:{} through: {}", toString(peers), expectedOnlineNode);
     }

@@ -29,6 +29,8 @@
             "nodeMetadataDir": "metadata",
             "nodeName": "node-1",
             "nodePort": 19410,
+            "nodePublicHostname": "node-1.sag",
+            "nodePublicPort": 1234,
             "offheapResources": {
               "main": {
                 "quantity": 512,
@@ -45,7 +47,8 @@
             "securityAuthc": "file",
             "securityDir": "security",
             "securitySslTls": true,
-            "securityWhitelist": true
+            "securityWhitelist": true,
+            "tcProperties": {}
           },
           {
             "clientLeaseDuration": {
@@ -88,7 +91,8 @@
             "securityAuthc": "file",
             "securityDir": "security",
             "securitySslTls": true,
-            "securityWhitelist": true
+            "securityWhitelist": true,
+            "tcProperties": {}
           }
         ]
       },
@@ -135,7 +139,8 @@
             "securityAuthc": "file",
             "securityDir": "security",
             "securitySslTls": true,
-            "securityWhitelist": true
+            "securityWhitelist": true,
+            "tcProperties": {}
           },
           {
             "clientLeaseDuration": {
@@ -178,12 +183,14 @@
             "securityAuthc": "file",
             "securityDir": "security",
             "securitySslTls": true,
-            "securityWhitelist": true
+            "securityWhitelist": true,
+            "tcProperties": {}
           }
         ]
       }
     ]
   },
   "nodeName": "node-1",
-  "stripeId": 1
+  "stripeId": 1,
+  "nodeId": 1
 }

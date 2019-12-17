@@ -38,12 +38,11 @@ public class XmlConfigMapperTest {
 
   private NodeContext nodeContext1, nodeContext2;
   private String xml1, xml2;
-  private PathResolver pathResolver;
   private XmlConfigMapper xmlConfig;
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
-    pathResolver = new PathResolver(
+    PathResolver pathResolver = new PathResolver(
         Paths.get("%(user.dir)"),
         path -> path == null ? null : Paths.get(ParameterSubstitutor.substitute(path.toString())));
     xmlConfig = new XmlConfigMapper(pathResolver);

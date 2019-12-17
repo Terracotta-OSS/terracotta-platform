@@ -39,6 +39,8 @@ import static com.terracottatech.dynamic_config.model.SettingName.NODE_LOG_DIR;
 import static com.terracottatech.dynamic_config.model.SettingName.NODE_METADATA_DIR;
 import static com.terracottatech.dynamic_config.model.SettingName.NODE_NAME;
 import static com.terracottatech.dynamic_config.model.SettingName.NODE_PORT;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_PUBLIC_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.SettingName.NODE_PUBLIC_PORT;
 import static com.terracottatech.dynamic_config.model.SettingName.NODE_REPOSITORY_DIR;
 import static com.terracottatech.dynamic_config.model.SettingName.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.SettingName.SECURITY_AUDIT_LOG_DIR;
@@ -55,10 +57,16 @@ public class Options {
   @Parameter(names = {"-s", "--" + NODE_HOSTNAME})
   private String nodeHostname;
 
+  @Parameter(names = {"-S", "--" + NODE_PUBLIC_HOSTNAME})
+  private String nodePublicHostname;
+
   @Parameter(names = {"-p", "--" + NODE_PORT})
   private String nodePort;
 
-  @Parameter(names = {"-P", "--" + NODE_GROUP_PORT})
+  @Parameter(names = {"-P", "--" + NODE_PUBLIC_PORT})
+  private String nodePublicPort;
+
+  @Parameter(names = {"-g", "--" + NODE_GROUP_PORT})
   private String nodeGroupPort;
 
   @Parameter(names = {"-n", "--" + NODE_NAME})
@@ -221,8 +229,16 @@ public class Options {
     return nodeHostname;
   }
 
+  public String getNodePublicHostname() {
+    return nodePublicHostname;
+  }
+
   public String getNodePort() {
     return nodePort;
+  }
+
+  public String getNodePublicPort() {
+    return nodePublicPort;
   }
 
   public String getNodeGroupPort() {

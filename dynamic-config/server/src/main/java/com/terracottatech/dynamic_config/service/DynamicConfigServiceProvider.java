@@ -30,12 +30,15 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.applyAfterRestart;
+import static com.terracottatech.dynamic_config.handler.ConfigChangeHandler.applyAtRuntime;
 import static com.terracottatech.dynamic_config.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_LOG_DIR;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_PUBLIC_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_PUBLIC_PORT;
 import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
 
@@ -83,6 +86,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
       // failover-priority
       addToManager(manager, applyAfterRestart(), FAILOVER_PRIORITY);
+
+      // public hostname/port
+      addToManager(manager, applyAtRuntime(), NODE_PUBLIC_HOSTNAME);
+      addToManager(manager, applyAtRuntime(), NODE_PUBLIC_PORT);
 
       // tc-properties
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()

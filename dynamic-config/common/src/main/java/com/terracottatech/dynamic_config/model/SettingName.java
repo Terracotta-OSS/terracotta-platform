@@ -12,7 +12,9 @@ public class SettingName {
   public static final String CLUSTER_NAME = "cluster-name";
   public static final String NODE_NAME = "node-name";
   public static final String NODE_HOSTNAME = "node-hostname";
+  public static final String NODE_PUBLIC_HOSTNAME = "node-public-hostname";
   public static final String NODE_PORT = "node-port";
+  public static final String NODE_PUBLIC_PORT = "node-public-port";
   public static final String NODE_GROUP_PORT = "node-group-port";
   public static final String NODE_BIND_ADDRESS = "node-bind-address";
   public static final String NODE_GROUP_BIND_ADDRESS = "node-group-bind-address";

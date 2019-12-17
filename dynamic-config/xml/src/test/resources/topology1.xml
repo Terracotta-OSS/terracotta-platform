@@ -45,6 +45,8 @@
         <stripe>
           <node>
             <name>node-1</name>
+            <publicHostname>node-1.sag</publicHostname>
+            <publicPort>1234</publicPort>
             <server-config>
               <ns2:tc-config>
                 <ns2:plugins>

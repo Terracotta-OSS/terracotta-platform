@@ -48,13 +48,36 @@ public interface ConfigChangeHandler {
    * Handler that will just apply the change after a restart
    */
   static ConfigChangeHandler applyAfterRestart() {
-    return (baseConfig, change) -> {
+    return (nodeContext, change) -> {
       try {
-        Cluster updatedCluster = baseConfig.getCluster();
+        Cluster updatedCluster = nodeContext.getCluster();
         change.apply(updatedCluster);
         return updatedCluster;
       } catch (RuntimeException e) {
         throw new InvalidConfigChangeException(e.getMessage(), e);
+      }
+    };
+  }
+
+  /**
+   * Handler that will just apply the change at runtime
+   */
+  static ConfigChangeHandler applyAtRuntime() {
+    return new ConfigChangeHandler() {
+      @Override
+      public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
+        try {
+          Cluster updatedCluster = nodeContext.getCluster();
+          change.apply(updatedCluster);
+          return updatedCluster;
+        } catch (RuntimeException e) {
+          throw new InvalidConfigChangeException(e.getMessage(), e);
+        }
+      }
+
+      @Override
+      public boolean apply(Configuration change) {
+        return true;
       }
     };
   }

@@ -30,6 +30,8 @@
   <xs:complexType name="tc-node">
     <xs:sequence>
       <xs:element name="name" type="tc:non-blank-token" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="publicHostname" type="tc:host" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="publicPort" type="tc:port" minOccurs="0" maxOccurs="1"/>
       <xs:element name="server-config" type="cl:tc-server-config" minOccurs="1" maxOccurs="1"/>
     </xs:sequence>
   </xs:complexType>

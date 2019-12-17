@@ -131,6 +131,8 @@ public class XmlConfigMapper {
         .setNodeName(xmlNode.getName())
         .setNodeHostname(xmlServer.getHost())
         .setNodePort(xmlServer.getTsaPort().getValue())
+        .setNodePublicHostname(xmlNode.getPublicHostname())
+        .setNodePublicPort(xmlNode.getPublicPort())
         .setNodeBindAddress(moreRestrictive(xmlServer.getTsaPort().getBind(), xmlServer.getBind()))
         .setNodeGroupPort(xmlServer.getTsaGroupPort().getValue())
         .setNodeGroupBindAddress(moreRestrictive(xmlServer.getTsaGroupPort().getBind(), xmlServer.getBind()))

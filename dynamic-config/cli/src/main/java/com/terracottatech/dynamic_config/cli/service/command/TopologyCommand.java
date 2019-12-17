@@ -67,8 +67,8 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (sources.contains(destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
-    ensureAddressWithinCluster(destination);
-    sources.forEach(this::ensureAddressWithinCluster);
+    validateAddress(destination);
+    sources.forEach(this::validateAddress);
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
     if (isRestartRequired(destination)) {
       throw new IllegalStateException("Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes.");

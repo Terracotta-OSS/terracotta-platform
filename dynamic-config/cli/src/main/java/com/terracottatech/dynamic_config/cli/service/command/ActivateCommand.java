@@ -70,7 +70,7 @@ public class ActivateCommand extends RemoteCommand {
     }
 
     if (node != null) {
-      ensureAddressWithinCluster(node);
+      validateAddress(node);
     }
 
     assertNonNull(licenseFile, "licenseFile must not be null");

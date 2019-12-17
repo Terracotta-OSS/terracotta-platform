@@ -22,7 +22,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.toList;
 
 
@@ -83,11 +82,11 @@ public class Stripe implements Cloneable {
   }
 
   public Optional<Node> getNode(InetSocketAddress address) {
-    return nodes.stream().filter(node -> node.getNodeAddress().equals(address)).findFirst();
+    return nodes.stream().filter(node -> node.hasAddress(address)).findFirst();
   }
 
   public boolean containsNode(InetSocketAddress address) {
-    return nodes.stream().map(Node::getNodeAddress).anyMatch(isEqual(address));
+    return nodes.stream().anyMatch(node -> node.hasAddress(address));
   }
 
   @Override
@@ -100,7 +99,7 @@ public class Stripe implements Cloneable {
   // please keep this package-local:
   // detachment of a node should be handled by cluster object
   boolean detachNode(InetSocketAddress address) {
-    return nodes.removeIf(node -> Objects.equals(node.getNodeAddress(), address));
+    return nodes.removeIf(node -> node.hasAddress(address));
   }
 
   @JsonIgnore
@@ -173,7 +172,7 @@ public class Stripe implements Cloneable {
 
   public OptionalInt getNodeId(InetSocketAddress nodeAddress) {
     return IntStream.range(0, nodes.size())
-        .filter(idx -> nodeAddress.equals(nodes.get(idx).getNodeAddress()))
+        .filter(idx -> nodes.get(idx).hasAddress(nodeAddress))
         .map(idx -> idx + 1)
         .findFirst();
   }

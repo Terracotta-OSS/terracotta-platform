@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +35,9 @@ public class Node implements Cloneable {
 
   private String nodeName;
   private String nodeHostname;
+  private String nodePublicHostname;
   private int nodePort = Integer.parseInt(Setting.NODE_PORT.getDefaultValue());
+  private Integer nodePublicPort;
   private int nodeGroupPort = Integer.parseInt(Setting.NODE_GROUP_PORT.getDefaultValue());
   private String nodeBindAddress;
   private String nodeGroupBindAddress;
@@ -64,8 +67,16 @@ public class Node implements Cloneable {
     return nodeHostname;
   }
 
+  public String getNodePublicHostname() {
+    return nodePublicHostname;
+  }
+
   public int getNodePort() {
     return nodePort;
+  }
+
+  public Integer getNodePublicPort() {
+    return nodePublicPort;
   }
 
   public int getNodeGroupPort() {
@@ -161,8 +172,18 @@ public class Node implements Cloneable {
     return this;
   }
 
+  public Node setNodePublicHostname(String nodePublicHostname) {
+    this.nodePublicHostname = nodePublicHostname;
+    return this;
+  }
+
   public Node setNodePort(int nodePort) {
     this.nodePort = nodePort;
+    return this;
+  }
+
+  public Node setNodePublicPort(Integer nodePublicPort) {
+    this.nodePublicPort = nodePublicPort;
     return this;
   }
 
@@ -301,12 +322,36 @@ public class Node implements Cloneable {
     return this;
   }
 
+  /**
+   * @return true if this node has this public or internal address
+   */
+  public boolean hasAddress(InetSocketAddress address) {
+    return address.equals(getNodeInternalAddress())
+        || getNodePublicAddress().map(address::equals).orElse(false);
+  }
+
   @JsonIgnore
   public InetSocketAddress getNodeAddress() {
+    return getNodePublicAddress().orElseGet(this::getNodeInternalAddress);
+  }
+
+  @JsonIgnore
+  public InetSocketAddress getNodeInternalAddress() {
     if (nodeHostname == null || IParameterSubstitutor.containsSubstitutionParams(nodeHostname)) {
-      throw new AssertionError("Node " + nodeName + " is not correctly defined with address: " + nodeHostname + ":" + nodePort);
+      throw new AssertionError("Node " + nodeName + " is not correctly defined with internal address: " + nodeHostname + ":" + nodePort);
     }
     return InetSocketAddress.createUnresolved(nodeHostname, nodePort);
+  }
+
+  @JsonIgnore
+  public Optional<InetSocketAddress> getNodePublicAddress() {
+    if (nodePublicHostname == null || nodePublicPort == null) {
+      return Optional.empty();
+    }
+    if (IParameterSubstitutor.containsSubstitutionParams(nodePublicHostname)) {
+      throw new AssertionError("Node " + nodeName + " is not correctly defined with public address: " + nodePublicHostname + ":" + nodePublicPort);
+    }
+    return Optional.of(InetSocketAddress.createUnresolved(nodePublicHostname, nodePublicPort));
   }
 
   @Override
@@ -323,10 +368,12 @@ public class Node implements Cloneable {
         .setNodeGroupBindAddress(nodeGroupBindAddress)
         .setNodeGroupPort(nodeGroupPort)
         .setNodeHostname(nodeHostname)
+        .setNodePublicHostname(nodePublicHostname)
         .setNodeLogDir(nodeLogDir)
         .setNodeMetadataDir(nodeMetadataDir)
         .setNodeName(nodeName)
         .setNodePort(nodePort)
+        .setNodePublicPort(nodePublicPort)
         .setTcProperties(tcProperties)
         .setOffheapResources(offheapResources)
         .setSecurityAuditLogDir(securityAuditLogDir)
@@ -347,6 +394,8 @@ public class Node implements Cloneable {
         securityWhitelist == node.securityWhitelist &&
         Objects.equals(nodeName, node.nodeName) &&
         Objects.equals(nodeHostname, node.nodeHostname) &&
+        Objects.equals(nodePublicHostname, node.nodePublicHostname) &&
+        Objects.equals(nodePublicPort, node.nodePublicPort) &&
         Objects.equals(nodeBindAddress, node.nodeBindAddress) &&
         Objects.equals(nodeGroupBindAddress, node.nodeGroupBindAddress) &&
         Objects.equals(nodeMetadataDir, node.nodeMetadataDir) &&
@@ -365,7 +414,7 @@ public class Node implements Cloneable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, tcProperties,
+    return Objects.hash(nodeName, nodeHostname, nodePublicHostname, nodePort, nodePublicPort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, tcProperties,
         nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls,
         securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs);
   }
@@ -376,6 +425,8 @@ public class Node implements Cloneable {
         "nodeName='" + nodeName + '\'' +
         ", nodeHostname='" + nodeHostname + '\'' +
         ", nodePort=" + nodePort +
+        ", nodePublicHostname='" + nodePublicHostname + '\'' +
+        ", nodePublicPort=" + nodePublicPort +
         ", nodeGroupPort=" + nodeGroupPort +
         ", nodeBindAddress='" + nodeBindAddress + '\'' +
         ", nodeGroupBindAddress='" + nodeGroupBindAddress + '\'' +

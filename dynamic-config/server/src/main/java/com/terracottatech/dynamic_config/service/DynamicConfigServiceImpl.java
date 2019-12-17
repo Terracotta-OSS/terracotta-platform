@@ -314,7 +314,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    */
   private Node findMe(Cluster updatedCluster) {
     final Node me = upcomingNodeContext.getNode();
-    return updatedCluster.getNode(me.getNodeAddress())
+    return updatedCluster.getNode(me.getNodeInternalAddress()) // important to use the internal address
         .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())
             .orElse(null));
   }

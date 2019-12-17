@@ -5,6 +5,7 @@ import org.gradle.api.JavaVersion
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
+// NOTE: DO NOT DELETE THE FOLLOWING. IT WILL BE USEFUL TO REGENERATE CLASSES IN XMLOBJECTS PACKAGE
 //plugins {
 //  id 'org.unbroken-dome.xjc' version '1.2.0'
 //}
@@ -12,7 +13,10 @@ import org.gradle.api.JavaVersion
 apply plugin: TcDeploy
 
 dependencies {
+
+  // NOTE: DO NOT DELETE THE FOLLOWING. IT WILL BE USEFUL TO REGENERATE CLASSES IN XMLOBJECTS PACKAGE
 //  xjcEpisode "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
+
   compile project(':utilities')
   compileOnly "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
