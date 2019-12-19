@@ -9,7 +9,7 @@ import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProviderException;
 import com.terracottatech.diagnostic.common.DiagnosticException;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;

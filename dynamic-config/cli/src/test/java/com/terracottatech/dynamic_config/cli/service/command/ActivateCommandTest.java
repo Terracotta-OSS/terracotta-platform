@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.cli.service.NomadTestHelper;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;

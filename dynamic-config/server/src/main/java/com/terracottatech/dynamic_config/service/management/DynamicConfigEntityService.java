@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.service.management;
 
 import com.tc.classloader.PermanentEntity;
-import com.terracottatech.dynamic_config.service.DynamicConfigEventing;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -41,8 +41,8 @@ public class DynamicConfigEntityService implements EntityServerService<EntityMes
   public ActiveServerEntity<EntityMessage, EntityResponse> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, true));
-      DynamicConfigEventing dynamicConfigEventing = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventing.class));
-      return new DynamicConfigActiveEntity(managementRegistry, dynamicConfigEventing);
+      DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
+      return new DynamicConfigActiveEntity(managementRegistry, dynamicConfigEventService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }
@@ -52,8 +52,8 @@ public class DynamicConfigEntityService implements EntityServerService<EntityMes
   public PassiveServerEntity<EntityMessage, EntityResponse> createPassiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, false));
-      DynamicConfigEventing dynamicConfigEventing = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventing.class));
-      return new DynamicConfigPassiveEntity(managementRegistry, dynamicConfigEventing);
+      DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
+      return new DynamicConfigPassiveEntity(managementRegistry, dynamicConfigEventService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }

@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.service.handler;
 
 import com.terracottatech.diagnostic.server.DiagnosticServices;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;

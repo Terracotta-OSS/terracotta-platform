@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.model.Configuration;

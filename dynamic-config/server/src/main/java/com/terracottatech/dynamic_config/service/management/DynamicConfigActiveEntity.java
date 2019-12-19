@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.service.management;
 
-import com.terracottatech.dynamic_config.service.DynamicConfigEventing;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
@@ -15,8 +15,8 @@ import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 
 public class DynamicConfigActiveEntity extends DynamicConfigCommonEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {
 
-  DynamicConfigActiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventing dynamicConfigEventing) {
-    super(managementRegistry, dynamicConfigEventing);
+  DynamicConfigActiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
+    super(managementRegistry, dynamicConfigEventService);
   }
 
   @Override

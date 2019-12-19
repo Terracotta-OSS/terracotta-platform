@@ -72,7 +72,7 @@ Run the TMS:
 ```
 
 Do an offheap addition at runtime:
-- We should see from the ReadNotifications program the notifications: DYNAMIC_CONFIG_COMMITTED and DYNAMIC_CONFIG_SET
+- We should see from the ReadNotifications program the notifications: DYNAMIC_CONFIG_SAVED and DYNAMIC_CONFIG_SET
 - We should see 2 events in the TMC
 
 ```
@@ -83,7 +83,7 @@ Do an offheap addition at runtime:
 
 
 Do a change that requires a restart:
-- We should see from the ReadNotifications program the notifications: DYNAMIC_CONFIG_COMMITTED and DYNAMIC_CONFIG_SET
+- We should see from the ReadNotifications program the notifications: DYNAMIC_CONFIG_SAVED and DYNAMIC_CONFIG_SET
 - We should see 2 events in the TMC, and one should be of type alert to tell the user it needs a restart
 
 ```

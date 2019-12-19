@@ -7,12 +7,13 @@ package com.terracottatech.dynamic_config.service;
 import com.tc.classloader.BuiltinService;
 import com.terracottatech.config.data_roots.DataDirectoriesConfig;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Setting;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigEventService;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.service.handler.ClientReconnectWindowConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.DataDirectoryConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
@@ -107,7 +108,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     if (configuration.getServiceType() == ConfigChangeHandlerManager.class) {
       return configuration.getServiceType().cast(getManager());
     }
-    if (configuration.getServiceType() == DynamicConfigEventing.class) {
+    if (configuration.getServiceType() == DynamicConfigEventService.class) {
       return configuration.getServiceType().cast(getEventingSupport());
     }
     if (configuration.getServiceType() == TopologyService.class) {
@@ -118,7 +119,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(IParameterSubstitutor.class, ConfigChangeHandlerManager.class, DynamicConfigEventing.class, TopologyService.class);
+    return Arrays.asList(IParameterSubstitutor.class, ConfigChangeHandlerManager.class, DynamicConfigEventService.class, TopologyService.class);
   }
 
   @Override
@@ -134,8 +135,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     return DiagnosticServices.findService(ConfigChangeHandlerManager.class).orElse(null);
   }
 
-  private DynamicConfigEventing getEventingSupport() {
-    return DiagnosticServices.findService(DynamicConfigEventing.class).orElse(null);
+  private DynamicConfigEventService getEventingSupport() {
+    return DiagnosticServices.findService(DynamicConfigEventService.class).orElse(null);
   }
 
   private TopologyService getTopologyService() {

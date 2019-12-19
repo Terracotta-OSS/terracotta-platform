@@ -14,6 +14,8 @@ dependencies {
   compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
   compile "io.github.classgraph:classgraph:$classgraphVersion"
 
+  compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"
+
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"
 }

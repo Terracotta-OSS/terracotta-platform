@@ -8,8 +8,6 @@ package com.terracottatech.dynamic_config.nomad;
 import com.terracottatech.diagnostic.common.DiagnosticConstants;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.diagnostic.server.DiagnosticServicesRegistration;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
@@ -20,8 +18,12 @@ import com.terracottatech.dynamic_config.nomad.processor.ClusterActivationNomadC
 import com.terracottatech.dynamic_config.nomad.processor.RoutingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.nomad.processor.SettingNomadChangeProcessor;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
-import com.terracottatech.dynamic_config.service.DynamicConfigEventing;
 import com.terracottatech.dynamic_config.service.DynamicConfigServiceImpl;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigEventService;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigListener;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigListenerAdapter;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
@@ -40,7 +42,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -91,6 +93,7 @@ public class NomadBootstrapper {
     private volatile ConfigChangeHandlerManager configChangeHandlerManager;
     private volatile IParameterSubstitutor parameterSubstitutor;
     private volatile DynamicConfigServiceImpl dynamicConfigService;
+    private volatile DynamicConfigListener listener;
 
     public UpgradableNomadServer<NodeContext> getNomadServer() {
       return nomadServer;
@@ -107,43 +110,29 @@ public class NomadBootstrapper {
      * @throws NomadConfigurationException if initialization of underlying server fails.
      */
     private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, String nodeName) throws NomadConfigurationException {
-      try {
-        this.parameterSubstitutor = parameterSubstitutor;
-        this.configChangeHandlerManager = manager;
-        this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
-        this.repositoryManager.createDirectories();
-        this.nomadServer = createServer(repositoryManager, nodeName, parameterSubstitutor, (version, updatedNodeContext) -> dynamicConfigService.newTopologyCommitted(version, updatedNodeContext));
-
-        NodeContext nodeContext = getConfiguration()
-            // Case where Nomad is bootstrapped from the EnterpriseConfigurationProvider using the old startup script with --node-name and -r.
-            // We only know the node name, the the node will start in diagnostic mode
-            // So we create an empty cluster / node topology
-            .orElseGet(() -> new NodeContext(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue()))));
-
-        this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this);
-
-        registerDiagnosticService();
-        LOGGER.info("Successfully initialized NomadServerManager");
-      } catch (Exception e) {
-        throw new NomadConfigurationException("Exception initializing Nomad Server: " + e.getMessage(), e);
-      }
+      // Case where Nomad is bootstrapped from the EnterpriseConfigurationProvider using the old startup script with --node-name and -r.
+      // We only know the node name, the the node will start in diagnostic mode
+      // So we create an empty cluster / node topology
+      init(repositoryPath, parameterSubstitutor, manager,
+          () -> nodeName,
+          () -> getConfiguration().orElseGet(
+              () -> new NodeContext(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue())))));
     }
 
     private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, NodeContext nodeContext) throws NomadConfigurationException {
-      try {
-        this.parameterSubstitutor = parameterSubstitutor;
-        this.configChangeHandlerManager = manager;
-        this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
-        this.repositoryManager.createDirectories();
-        this.nomadServer = createServer(repositoryManager, nodeContext.getNodeName(), parameterSubstitutor, (version, updatedNodeContext) -> dynamicConfigService.newTopologyCommitted(version, updatedNodeContext));
+      init(repositoryPath, parameterSubstitutor, manager, nodeContext::getNodeName, () -> nodeContext);
+    }
 
-        this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, this);
-
-        registerDiagnosticService();
-        LOGGER.info("Successfully initialized NomadServerManager");
-      } catch (Exception e) {
-        throw new NomadConfigurationException("Exception initializing Nomad Server: " + e.getMessage(), e);
-      }
+    private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws NomadConfigurationException {
+      this.parameterSubstitutor = parameterSubstitutor;
+      this.configChangeHandlerManager = manager;
+      this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
+      this.repositoryManager.createDirectories();
+      this.listener = new DynamicConfigListenerAdapter(this::getDynamicConfigService);
+      this.nomadServer = createServer(repositoryManager, nodeName.get(), parameterSubstitutor, listener);
+      this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), this);
+      registerDiagnosticService();
+      LOGGER.info("Successfully initialized NomadServerManager");
     }
 
     @SuppressWarnings("unchecked")
@@ -152,7 +141,7 @@ public class NomadBootstrapper {
       DiagnosticServices.register(ConfigChangeHandlerManager.class, configChangeHandlerManager);
       DiagnosticServices.register(TopologyService.class, dynamicConfigService);
       DiagnosticServices.register(DynamicConfigService.class, dynamicConfigService);
-      DiagnosticServices.register(DynamicConfigEventing.class, dynamicConfigService);
+      DiagnosticServices.register(DynamicConfigEventService.class, dynamicConfigService);
       DiagnosticServicesRegistration<NomadServer<String>> registration = (DiagnosticServicesRegistration<NomadServer<String>>) (DiagnosticServicesRegistration) DiagnosticServices.register(NomadServer.class, nomadServer);
       registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
     }
@@ -177,7 +166,7 @@ public class NomadBootstrapper {
       }
 
       RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
-          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, dynamicConfigService::newConfigurationChange))
+          .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, listener))
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));
@@ -246,8 +235,12 @@ public class NomadBootstrapper {
     private UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
                                                             String nodeName,
                                                             IParameterSubstitutor parameterSubstitutor,
-                                                            BiConsumer<Long, NodeContext> changeCommitted) throws SanskritException, NomadException {
-      return UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName, parameterSubstitutor, changeCommitted);
+                                                            DynamicConfigListener listener) {
+      try {
+        return UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName, parameterSubstitutor, listener);
+      } catch (SanskritException | NomadException e) {
+        throw new NomadConfigurationException("Exception initializing Nomad Server: " + e.getMessage(), e);
+      }
     }
 
     private NomadRepositoryManager createNomadRepositoryManager(Path repositoryPath, IParameterSubstitutor parameterSubstitutor) {

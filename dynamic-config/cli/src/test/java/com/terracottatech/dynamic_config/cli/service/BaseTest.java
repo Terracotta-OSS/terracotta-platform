@@ -12,8 +12,8 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServicePro
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.server.NomadServer;

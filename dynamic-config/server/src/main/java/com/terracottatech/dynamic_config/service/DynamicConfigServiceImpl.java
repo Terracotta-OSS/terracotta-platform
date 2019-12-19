@@ -6,8 +6,6 @@ package com.terracottatech.dynamic_config.service;
 
 import com.tc.server.TCServerMain;
 import com.terracottatech.License;
-import com.terracottatech.dynamic_config.diagnostic.DynamicConfigService;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.model.Configuration;
@@ -15,8 +13,17 @@ import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerManager;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigEventService;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigListener;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
+import com.terracottatech.dynamic_config.service.api.EventRegistration;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.validation.LicenseValidator;
 import com.terracottatech.licensing.LicenseParser;
+import com.terracottatech.nomad.messages.AcceptRejectResponse;
+import com.terracottatech.nomad.messages.CommitMessage;
+import com.terracottatech.nomad.messages.PrepareMessage;
+import com.terracottatech.nomad.messages.RollbackMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformService;
@@ -31,19 +38,16 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;
 
-public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventing {
+public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
   private final NomadServerManager nomadServerManager;
-  private final List<BiConsumer<NodeContext, Configuration>> callbacks_onNewRuntimeConfiguration = new CopyOnWriteArrayList<>();
-  private final List<BiConsumer<NodeContext, Configuration>> callbacks_onNewUpcomingConfiguration = new CopyOnWriteArrayList<>();
-  private final List<BiConsumer<Long, NodeContext>> callbacks_onNewTopologyCommitted = new CopyOnWriteArrayList<>();
+  private final List<DynamicConfigListener> listeners = new CopyOnWriteArrayList<>();
 
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
@@ -57,24 +61,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (loadLicense()) {
       validateAgainstLicense();
     }
-  }
-
-  @Override
-  public EventRegistration onNewRuntimeConfiguration(BiConsumer<NodeContext, Configuration> consumer) {
-    callbacks_onNewRuntimeConfiguration.add(consumer);
-    return () -> callbacks_onNewRuntimeConfiguration.remove(consumer);
-  }
-
-  @Override
-  public EventRegistration onNewUpcomingConfiguration(BiConsumer<NodeContext, Configuration> consumer) {
-    callbacks_onNewUpcomingConfiguration.add(consumer);
-    return () -> callbacks_onNewUpcomingConfiguration.remove(consumer);
-  }
-
-  @Override
-  public EventRegistration onNewTopologyCommitted(BiConsumer<Long, NodeContext> consumer) {
-    callbacks_onNewTopologyCommitted.add(consumer);
-    return () -> callbacks_onNewTopologyCommitted.remove(consumer);
   }
 
   /**
@@ -92,51 +78,78 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Node activation successful");
   }
 
-  /**
-   * called from Nomad just after a config repository change has been committed and persisted
-   */
-  public void newTopologyCommitted(long version, NodeContext updatedNodeContext) {
-    if (!isActivated()) {
-      throw new AssertionError("Not activated");
-    }
+
+  @Override
+  public EventRegistration register(DynamicConfigListener listener) {
+    listeners.add(listener);
+    return () -> listeners.remove(listener);
+  }
+
+  @Override
+  public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
     LOGGER.info("New config repository version: {} has been saved", version);
-    this.upcomingNodeContext = updatedNodeContext.clone();
+    synchronized (this) {
+      this.upcomingNodeContext = nodeContext.clone();
+    }
     // do not fire events within a synchronized block
-    NodeContext update = upcomingNodeContext.clone();
-    callbacks_onNewTopologyCommitted.forEach(c -> c.accept(version, update));
+    NodeContext upcoming = getUpcomingNodeContext();
+    listeners.forEach(c -> c.onNewConfigurationSaved(upcoming, version));
   }
 
-  /**
-   * called from Nomad just after change has been applied at runtime
-   */
-  public void newConfigurationChange(Configuration configuration, boolean changeAppliedAtRuntime) {
-    if (!isActivated()) {
-      throw new AssertionError("Not activated");
+  @Override
+  public void onNewConfigurationAppliedAtRuntime(NodeContext nodeContext, Configuration configuration) {
+    LOGGER.info("Change: {} applied at runtime", configuration);
+    synchronized (this) {
+      configuration.apply(runtimeNodeContext.getCluster());
     }
-    if (changeAppliedAtRuntime) {
-      synchronized (this) {
-        configuration.apply(runtimeNodeContext.getCluster());
-      }
-      // do not fire events within a synchronized block
-      NodeContext update = runtimeNodeContext.clone();
-      callbacks_onNewRuntimeConfiguration.forEach(c -> c.accept(update, configuration));
-      LOGGER.info("Change: {} applied at runtime", configuration);
+    // do not fire events within a synchronized block
+    NodeContext runtime = getRuntimeNodeContext();
+    listeners.forEach(c -> c.onNewConfigurationAppliedAtRuntime(runtime, configuration));
+  }
+
+  @Override
+  public void onNewConfigurationPendingRestart(NodeContext nodeContext, Configuration configuration) {
+    LOGGER.info("Change: {} will be applied after restart", configuration);
+    // do not fire events within a synchronized block
+    NodeContext upcoming = getUpcomingNodeContext();
+    listeners.forEach(c -> c.onNewConfigurationPendingRestart(upcoming, configuration));
+  }
+
+  @Override
+  public void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response) {
+    if (response.isAccepted()) {
+      LOGGER.info("Nomad prepare for: {}", message);
     } else {
-      // do not fire events within a synchronized block
-      NodeContext update = upcomingNodeContext.clone();
-      callbacks_onNewUpcomingConfiguration.forEach(c -> c.accept(update, configuration));
-      LOGGER.info("Change: {} will be applied after restart", configuration);
+      LOGGER.warn("Nomad prepare failed for: {}. Reason: {}: {}", message, response.getRejectionReason(), response.getRejectionMessage());
     }
   }
 
   @Override
-  public NodeContext getUpcomingNodeContext() {
-    return upcomingNodeContext;
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response) {
+    if (response.isAccepted()) {
+      LOGGER.info("Nomad commit for: {}", message);
+    } else {
+      LOGGER.warn("Nomad commit failed for: {}. Reason: {}: {}", message, response.getRejectionReason(), response.getRejectionMessage());
+    }
   }
 
   @Override
-  public NodeContext getRuntimeNodeContext() {
-    return runtimeNodeContext;
+  public void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {
+    if (response.isAccepted()) {
+      LOGGER.info("Nomad rollback for: {}", message);
+    } else {
+      LOGGER.warn("Nomad rollback failed for: {}. Reason: {}: {}", message, response.getRejectionReason(), response.getRejectionMessage());
+    }
+  }
+
+  @Override
+  public synchronized NodeContext getUpcomingNodeContext() {
+    return upcomingNodeContext.clone();
+  }
+
+  @Override
+  public synchronized NodeContext getRuntimeNodeContext() {
+    return runtimeNodeContext.clone();
   }
 
   @Override
@@ -167,7 +180,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public boolean isRestartRequired() {
+  public synchronized boolean isRestartRequired() {
     return !runtimeNodeContext.equals(upcomingNodeContext);
   }
 
@@ -245,7 +258,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.debug("License is valid for cluster: {}", cluster);
   }
 
-  private void validateAgainstLicense() {
+  private synchronized void validateAgainstLicense() {
     validateAgainstLicense(upcomingNodeContext.getCluster());
   }
 
@@ -312,7 +325,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    * <p>
    * So we try to find the best match we can...
    */
-  private Node findMe(Cluster updatedCluster) {
+  private synchronized Node findMe(Cluster updatedCluster) {
     final Node me = upcomingNodeContext.getNode();
     return updatedCluster.getNode(me.getNodeInternalAddress()) // important to use the internal address
         .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())

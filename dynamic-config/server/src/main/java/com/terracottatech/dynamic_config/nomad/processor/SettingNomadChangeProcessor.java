@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.nomad.processor;
 
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
@@ -12,11 +11,11 @@ import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigListener;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.nomad.server.NomadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;
 
@@ -31,12 +30,12 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   private final TopologyService topologyService;
   private final ConfigChangeHandlerManager manager;
-  private final BiConsumer<Configuration, Boolean> changeListener;
+  private final DynamicConfigListener listener;
 
-  public SettingNomadChangeProcessor(TopologyService topologyService, ConfigChangeHandlerManager manager, BiConsumer<Configuration, Boolean> changeListener) {
+  public SettingNomadChangeProcessor(TopologyService topologyService, ConfigChangeHandlerManager manager, DynamicConfigListener listener) {
     this.topologyService = requireNonNull(topologyService);
     this.manager = requireNonNull(manager);
-    this.changeListener = requireNonNull(changeListener);
+    this.listener = requireNonNull(listener);
   }
 
   @Override
@@ -72,11 +71,23 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public void apply(SettingNomadChange change) throws NomadException {
     try {
+      // try to apply the change on the runtime configuration
       NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
       Configuration configuration = change.toConfiguration(runtimeNodeContext.getCluster());
       boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
       LOGGER.debug("Change: {} applied at runtime ? {}", change.getSummary(), changeAppliedAtRuntime);
-      changeListener.accept(configuration, changeAppliedAtRuntime);
+
+      if (changeAppliedAtRuntime) {
+        // configuration was saved following tryApply call, and applied at runtime
+        configuration.apply(runtimeNodeContext.getCluster());
+        listener.onNewConfigurationAppliedAtRuntime(runtimeNodeContext, configuration);
+
+      } else {
+        // configuration was saved following tryApply call, but not applied at runtime because requires a restart
+        NodeContext upcomingNodeContext = topologyService.getUpcomingNodeContext();
+        Configuration cfg = change.toConfiguration(upcomingNodeContext.getCluster());
+        listener.onNewConfigurationPendingRestart(runtimeNodeContext, cfg);
+      }
     } catch (RuntimeException e) {
       throw new NomadException(e);
     }

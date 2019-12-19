@@ -2,8 +2,9 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.diagnostic;
+package com.terracottatech.dynamic_config.service.api;
 
+import com.tc.classloader.CommonComponent;
 import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.NodeContext;
 
@@ -12,10 +13,11 @@ import java.util.Optional;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public interface TopologyService {
 
   /**
-   * Returns the information about this node, including stripe and cluster topology.
+   * Returns a copy of the information about this node, including stripe and cluster topology.
    * <p>
    * - If the node is not activated: returns the topology that is currently being built and will be effective after node activation and restart
    * <p>
@@ -29,7 +31,7 @@ public interface TopologyService {
   NodeContext getUpcomingNodeContext();
 
   /**
-   * Returns the information about this node, including stripe and cluster topology.
+   * Returns a copy of the information about this node, including stripe and cluster topology.
    * <p>
    * - If the node is not activated: has the same effect as {@link #getUpcomingNodeContext()}
    * <p>

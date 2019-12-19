@@ -41,4 +41,16 @@ public class PrepareMessage extends MutativeMessage {
   public NomadChange getChange() {
     return change;
   }
+
+  @Override
+  public String toString() {
+    return "PrepareMessage{" +
+        "changeUuid=" + changeUuid +
+        ", versionNumber=" + versionNumber +
+        ", change=" + change +
+        ", expectedMutativeMessageCount=" + getExpectedMutativeMessageCount() +
+        ", mutationHost='" + getMutationHost() + '\'' +
+        ", mutationUser='" + getMutationUser() + '\'' +
+        '}';
+  }
 }

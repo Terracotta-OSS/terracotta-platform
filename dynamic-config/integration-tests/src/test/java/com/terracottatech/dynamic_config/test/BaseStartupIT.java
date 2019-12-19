@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.test;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
 import com.terracottatech.dynamic_config.cli.ConfigTool;
-import com.terracottatech.dynamic_config.diagnostic.TopologyService;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
 import com.terracottatech.dynamic_config.test.util.Kit;

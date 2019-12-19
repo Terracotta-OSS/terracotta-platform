@@ -26,4 +26,14 @@ public class RollbackMessage extends MutativeMessage {
   public UUID getChangeUuid() {
     return changeUuid;
   }
+
+  @Override
+  public String toString() {
+    return "PrepareMessage{" +
+        "changeUuid=" + changeUuid +
+        ", expectedMutativeMessageCount=" + getExpectedMutativeMessageCount() +
+        ", mutationHost='" + getMutationHost() + '\'' +
+        ", mutationUser='" + getMutationUser() + '\'' +
+        '}';
+  }
 }
