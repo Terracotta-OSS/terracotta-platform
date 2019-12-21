@@ -9,8 +9,8 @@ import com.terracottatech.dynamic_config.parsing.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Main {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+public class TerracottaNode {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TerracottaNode.class);
 
   public static void main(String[] args) {
     Options command = new Options();
@@ -19,7 +19,7 @@ public class Main {
       jCommander.parse(args);
       command.process(jCommander);
     } catch (Throwable e) {
-      LOGGER.error(e.getMessage(), e);
+      LOGGER.error("Error:", e);
     }
   }
 }

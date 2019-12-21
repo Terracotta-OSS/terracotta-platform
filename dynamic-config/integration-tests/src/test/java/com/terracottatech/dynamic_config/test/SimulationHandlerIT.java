@@ -10,9 +10,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static java.lang.System.lineSeparator;
 import static org.hamcrest.Matchers.containsString;
 
+/**
+ * @author Mathieu Carbou
+ */
 public class SimulationHandlerIT extends BaseStartupIT {
 
   @Rule
@@ -54,14 +56,13 @@ public class SimulationHandlerIT extends BaseStartupIT {
   @Test
   public void test_commit_fails() {
     exception.expect(IllegalStateException.class);
-    exception.expectMessage(containsString("Commit failed for server localhost:" + ports.getPort() + ": com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"));
+    exception.expectMessage(containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"));
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
   }
 
   @Test
   public void test_requires_restart() {
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=restart-required");
-    waitedAssert(out::getLog, containsString("A restart of the cluster is required to apply the following changes:" + lineSeparator() +
-        " - stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=restart-required"));
+    waitedAssert(out::getLog, containsString("IMPORTANT: A restart of the cluster is required to apply the changes"));
   }
 }

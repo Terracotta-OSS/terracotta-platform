@@ -44,7 +44,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
           return reject("Change rejected: " + change);
         }
       } catch (NomadException e) {
-        LOGGER.warn(e.getMessage(), e);
+        LOGGER.warn("Error:", e);
         return reject(e.getMessage());
       }
     }

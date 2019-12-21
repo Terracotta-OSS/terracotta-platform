@@ -10,10 +10,10 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
-public interface DiscoverResultsReceiver<T> {
+public interface DiscoverResultsReceiver<T> extends WrapUpResultsReceiver {
   default void startDiscovery(Collection<InetSocketAddress> endpoints) {}
 
-  default void discovered(InetSocketAddress endpoint, DiscoverResponse<T> discovery) {};
+  default void discovered(InetSocketAddress endpoint, DiscoverResponse<T> discovery) {}
 
   default void discoverFail(InetSocketAddress endpoint, String reason) {}
 

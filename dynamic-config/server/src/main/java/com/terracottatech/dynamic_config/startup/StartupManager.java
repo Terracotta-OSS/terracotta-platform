@@ -18,7 +18,7 @@ import com.terracottatech.dynamic_config.service.DynamicConfigServiceImpl;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.NomadEndpoint;
-import com.terracottatech.nomad.client.results.NomadFailureRecorder;
+import com.terracottatech.nomad.client.results.NomadFailureReceiver;
 import com.terracottatech.utilities.PathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,7 +148,7 @@ public class StartupManager {
   private void runNomadChange(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
     requireNonNull(nodeRepositoryDir);
     NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), node.getNodeHostname(), "SYSTEM");
-    NomadFailureRecorder<NodeContext> failureRecorder = new NomadFailureRecorder<>();
+    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrow();
     logger.debug("Nomad change run successful");

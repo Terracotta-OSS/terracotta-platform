@@ -6,37 +6,27 @@ package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
-import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.ClusterValidator;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Operation;
-import com.terracottatech.dynamic_config.model.Setting;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import static com.terracottatech.dynamic_config.model.Requirement.ALL_NODES_ONLINE;
-import static com.terracottatech.dynamic_config.model.Requirement.RESTART;
 import static java.lang.System.lineSeparator;
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 public abstract class ConfigurationMutationCommand extends ConfigurationCommand {
-
-  private static final Collection<String> TC_PROPERTY_NAMES_NO_RESTART = Collections.emptyList();
 
   protected ConfigurationMutationCommand(Operation operation) {
     super(operation);
@@ -58,8 +48,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     // get the current state of the nodes
     // this call can take some time and we can have some timeout
-    Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(node);
-    Map<InetSocketAddress, LogicalServerState> onlineNodes = filterOnlineRuntimePeers(allNodes);
+    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineRuntimePeers(node);
     logger.debug("Online nodes: {}", onlineNodes);
 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
@@ -88,16 +77,12 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
       runNomadChange(onlineNodes, getNomadChanges(updatedCluster));
 
-      // do we need to restart to apply the serie fo change ?
-      Collection<String> settingsRequiringRestart = findSettingsRequiringRestart();
-      if (!settingsRequiringRestart.isEmpty()) {
+      // do we need to restart to apply the changes ?
+      if (isRestartRequired(node)) {
         logger.warn(lineSeparator() +
-                "=========" + lineSeparator() +
-                "IMPORTANT" + lineSeparator() +
-                "=========" + lineSeparator() + lineSeparator() +
-                "A restart of the cluster is required to apply the following changes:" + lineSeparator() +
-                " - {}" + lineSeparator(),
-            String.join(lineSeparator() + " - ", settingsRequiringRestart));
+            "====================================================================" + lineSeparator() +
+            "IMPORTANT: A restart of the cluster is required to apply the changes" + lineSeparator() +
+            "====================================================================" + lineSeparator() + lineSeparator());
       }
 
     } else {
@@ -163,27 +148,5 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   private boolean requiresAllNodesAlive() {
     return configurations.stream().map(Configuration::getSetting).anyMatch(setting -> setting.requires(ALL_NODES_ONLINE));
-  }
-
-  private Collection<String> findSettingsRequiringRestart() {
-    return configurations.stream()
-        // Default behaviour is to check if we need a restart for a setting.
-        // but for a tc-property where we support runtime dynamic change, we check if we do not need a restart
-        .filter(config -> (config.getSetting() != Setting.TC_PROPERTIES || !TC_PROPERTY_NAMES_NO_RESTART.contains(config.getKey())) && config.getSetting().requires(RESTART))
-        .map(Configuration::toString)
-        .collect(toCollection(TreeSet::new));
-  }
-
-  private static Map<InetSocketAddress, LogicalServerState> filterOnlineRuntimePeers(Map<InetSocketAddress, LogicalServerState> allNodes) {
-    return allNodes.entrySet()
-        .stream()
-        .filter(e -> !e.getValue().isUnknown() && !e.getValue().isUnreacheable())
-        .collect(toMap(
-            Map.Entry::getKey,
-            Map.Entry::getValue,
-            (o1, o2) -> {
-              throw new UnsupportedOperationException();
-            },
-            LinkedHashMap::new));
   }
 }

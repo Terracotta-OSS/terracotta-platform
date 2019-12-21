@@ -336,7 +336,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     activateCluster();
 
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo=bar");
-    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    waitedAssert(out::getLog, containsString("IMPORTANT: A restart of the cluster is required to apply the changes"));
     assertCommandSuccessful();
 
     ConfigTool.start("get", "-r", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
@@ -348,7 +348,6 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     out.clearLog();
     ConfigTool.start("unset", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo");
-    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
     assertCommandSuccessful();
 
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");

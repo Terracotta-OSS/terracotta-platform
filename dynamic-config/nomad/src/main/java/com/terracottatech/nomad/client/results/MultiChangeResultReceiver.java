@@ -2,9 +2,10 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.nomad.client.change;
+package com.terracottatech.nomad.client.results;
 
 import com.terracottatech.nomad.client.Consistency;
+import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
@@ -14,11 +15,11 @@ import java.util.UUID;
 /**
  * @author Mathieu Carbou
  */
-public class DelegatingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
+public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
 
   private final Collection<ChangeResultReceiver<T>> changeResultReceivers;
 
-  public DelegatingChangeResultReceiver(Collection<ChangeResultReceiver<T>> changeResultReceivers) {
+  public MultiChangeResultReceiver(Collection<ChangeResultReceiver<T>> changeResultReceivers) {
     this.changeResultReceivers = changeResultReceivers;
   }
 

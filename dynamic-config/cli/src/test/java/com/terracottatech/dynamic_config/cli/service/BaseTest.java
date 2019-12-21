@@ -12,9 +12,9 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServicePro
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
+import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
-import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.utilities.cache.Cache;
@@ -73,7 +73,7 @@ public abstract class BaseTest {
       }
     };
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
-    nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()), false);
+    nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()));
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, timeout);
   }
 

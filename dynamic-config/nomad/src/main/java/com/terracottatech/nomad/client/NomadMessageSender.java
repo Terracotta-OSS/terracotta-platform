@@ -17,11 +17,8 @@ import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RejectionReason;
 import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.terracottatech.nomad.server.NomadException;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
@@ -32,11 +29,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
 
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageSender.class);
 
   private final List<NomadEndpoint<T>> servers;
   private final String host;
@@ -59,10 +54,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
       runSync(
           server::discover,
           discovery -> results.discovered(server.getAddress(), discovery),
-          e -> {
-            LOGGER.error("Discover failed: " + e.getMessage(), e);
-            results.discoverFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
-          }
+          unwrap(e -> results.discoverFail(server.getAddress(), stringify(e)))
       );
     }
 
@@ -86,10 +78,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               results.discoverOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
             }
           },
-          e -> {
-            LOGGER.debug("Discover failed: " + e.getMessage(), e);
-            results.discoverFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
-          }
+          unwrap(e -> results.discoverFail(server.getAddress(), stringify(e)))
       );
     }
 
@@ -137,10 +126,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> {
-            LOGGER.debug("Prepare failed: " + e.getMessage(), e);
-            results.prepareFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
-          }
+          unwrap(e -> results.prepareFail(server.getAddress(), stringify(e)))
       );
     }
 
@@ -181,10 +167,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> {
-            LOGGER.debug("Commit failed: " + e.getMessage(), e);
-            results.commitFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
-          }
+          unwrap(e -> results.commitFail(server.getAddress(), stringify(e)))
       );
     }
 
@@ -225,10 +208,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> {
-            LOGGER.debug("Rollback failed: " + e.getMessage(), e);
-            results.rollbackFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
-          }
+          unwrap(e -> results.rollbackFail(server.getAddress(), stringify(e)))
       );
     }
 
@@ -268,10 +248,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          e -> {
-            LOGGER.debug("Takeover failed: " + e.getMessage(), e);
-            results.takeoverFail(server.getAddress(), e.getMessage() + lineSeparator() + stackTrace(e));
-          }
+          unwrap(e -> results.takeoverFail(server.getAddress(), stringify(e)))
       );
     }
 
@@ -304,10 +281,11 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     }
   }
 
-  private static String stackTrace(Throwable e) {
-    StringWriter stack = new StringWriter();
-    e.printStackTrace(new PrintWriter(stack));
-    return stack.toString();
+  private static Consumer<Throwable> unwrap(Consumer<Throwable> c) {
+    return t -> c.accept(t instanceof NomadException && t.getCause() != null && t.getCause() != t ? t.getCause() : t);
   }
 
+  private static String stringify(Throwable e) {
+    return e == null ? "" : e.getMessage() == null ? "" : e.getMessage();
+  }
 }

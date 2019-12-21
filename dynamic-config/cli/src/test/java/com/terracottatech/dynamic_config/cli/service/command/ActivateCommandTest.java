@@ -7,10 +7,10 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import com.terracottatech.dynamic_config.cli.service.NomadTestHelper;
-import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RejectionReason;
@@ -34,7 +34,6 @@ import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
 import static com.terracottatech.utilities.fn.IntFn.rethrow;
 import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
-import static java.lang.System.lineSeparator;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -176,10 +175,12 @@ public class ActivateCommandTest extends BaseTest {
 
     assertThat(
         command::run,
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Two-Phase commit failed:" + lineSeparator() +
-            " - Prepare rejected for server localhost:9411. Reason: error" + lineSeparator() +
-            " - Prepare rejected for server localhost:9421. Reason: error" + lineSeparator() +
-            " - Prepare rejected for server localhost:9422. Reason: error")))));
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(allOf(
+            containsString("Two-Phase commit failed with 3 messages(s):"),
+            containsString("Prepare rejected for server localhost:9411. Reason: error"),
+            containsString("Prepare rejected for server localhost:9421. Reason: error"),
+            containsString("Prepare rejected for server localhost:9422. Reason: error")
+        ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
       verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
@@ -212,10 +213,10 @@ public class ActivateCommandTest extends BaseTest {
     assertThat(
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(allOf(
-            containsString("Two-Phase commit failed:"),
-            containsString(" - Commit failed for server localhost:9411: an error"),
-            containsString(" - Commit failed for server localhost:9421: an error"),
-            containsString(" - Commit failed for server localhost:9422: an error")
+            containsString("Two-Phase commit failed with 4 messages(s):"),
+            containsString("Commit failed for server localhost:9411. Reason: an error"),
+            containsString("Commit failed for server localhost:9421. Reason: an error"),
+            containsString("Commit failed for server localhost:9422. Reason: an error")
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {

@@ -9,6 +9,8 @@ import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.recovery.RecoveryProcess;
 import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
+import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
+import com.terracottatech.nomad.client.status.DiscoveryProcess;
 
 import java.util.List;
 
@@ -40,5 +42,10 @@ public class NomadClient<T> {
   public void tryRecovery(RecoveryResultReceiver<T> results) {
     RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user);
     recoveryProcess.recover(results);
+  }
+
+  public void tryDiscovery(DiscoverResultsReceiver<T> results) {
+    DiscoveryProcess<T> discoveryProcess = new DiscoveryProcess<>(servers, host, user);
+    discoveryProcess.discover(results);
   }
 }

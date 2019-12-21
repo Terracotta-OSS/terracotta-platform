@@ -15,6 +15,8 @@ import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.TimeUnit;
 import org.slf4j.LoggerFactory;
 
+import java.util.stream.Stream;
+
 @Parameters(commandNames = MainCommand.NAME)
 public class MainCommand extends Command {
   public static final String NAME = "main";
@@ -41,21 +43,23 @@ public class MainCommand extends Command {
       rootLogger.setLevel(Level.INFO);
       Appender<ILoggingEvent> detailAppender = rootLogger.getAppender("STDOUT-DETAIL");
 
-      Logger configToolLogger = (Logger) LoggerFactory.getLogger("com.terracottatech.dynamic_config");
-      configToolLogger.setLevel(Level.TRACE);
-      //Detach the STDOUT appender which logs in a minimal pattern and attached STDOUT-DETAIL appender
-      configToolLogger.detachAppender("STDOUT");
-      configToolLogger.addAppender(detailAppender);
+      Stream.of(
+          "com.terracottatech.dynamic_config",
+          "com.terracottatech.nomad",
+          "com.terracottatech.persistence.sanskrit"
+      ).forEach(name -> {
+        Logger logger = (Logger) LoggerFactory.getLogger(name);
+        logger.setLevel(Level.TRACE);
+        //Detach the STDOUT appender which logs in a minimal pattern and attached STDOUT-DETAIL appender
+        logger.detachAppender("STDOUT");
+        logger.addAppender(detailAppender);
+      });
     }
   }
 
   @Override
   public void validate() {
     // Do nothing
-  }
-
-  public boolean isVerbose() {
-    return verbose;
   }
 
   public Measure<TimeUnit> getRequestTimeout() {

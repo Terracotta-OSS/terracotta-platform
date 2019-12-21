@@ -9,23 +9,23 @@ import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
 import com.terracottatech.dynamic_config.test_support.handler.SimulationHandler;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.EntityServerService;
-import org.terracotta.entity.ActiveServerEntity;
-import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.NoConcurrencyStrategy;
-import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.entity.BasicServiceConfiguration;
-import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.NoConcurrencyStrategy;
+import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceException;
-import org.terracotta.entity.ConfigurationException;
+import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.entity.SyncMessageCodec;
+
+import java.util.Optional;
 
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
-import static com.terracottatech.utilities.Tuple2.tuple2;
 
 
 @PermanentEntity(type = "entity.TestSimulationEntity", names = {"TEST_ENTITY"})
@@ -73,15 +73,13 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
   @SuppressWarnings("unchecked")
   protected void wireChangeHandler(ServiceRegistry serviceRegistry) throws ConfigurationException {
     try {
-      tuple2(
-          serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class)),
-          serviceRegistry.getService(new BasicServiceConfiguration<>(IParameterSubstitutor.class)))
-          .ifAllPresent(tuple -> {
-            final ConfigChangeHandlerManager manager = tuple.t1;
+      Optional.ofNullable(
+          serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class)))
+          .ifPresent(manager -> {
             final ConfigChangeHandler handler = manager.findConfigChangeHandler(TC_PROPERTIES).get();
             if (handler instanceof SelectingConfigChangeHandler) {
               SelectingConfigChangeHandler<String> selectingConfigChangeHandler = (SelectingConfigChangeHandler<String>) handler;
-              selectingConfigChangeHandler.add("com.terracottatech.dynamic-config.simulate", new SimulationHandler(tuple.t2));
+              selectingConfigChangeHandler.add("com.terracottatech.dynamic-config.simulate", new SimulationHandler());
             }
           });
     } catch (ServiceException e) {

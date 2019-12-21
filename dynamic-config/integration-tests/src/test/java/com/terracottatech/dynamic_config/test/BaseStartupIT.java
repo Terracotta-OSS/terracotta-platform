@@ -7,8 +7,8 @@ package com.terracottatech.dynamic_config.test;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
 import com.terracottatech.dynamic_config.cli.ConfigTool;
-import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
@@ -185,7 +185,7 @@ public class BaseStartupIT {
     return nodeRepositoryDir;
   }
 
-  Cluster getCluster(String host, int port) throws Exception {
+  Cluster getUpcomingCluster(String host, int port) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -193,6 +193,17 @@ public class BaseStartupIT {
         java.time.Duration.ofSeconds(5),
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
+    }
+  }
+
+  Cluster getRuntimeCluster(String host, int port) throws Exception {
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        InetSocketAddress.createUnresolved(host, port),
+        getClass().getSimpleName(),
+        java.time.Duration.ofSeconds(5),
+        java.time.Duration.ofSeconds(5),
+        null)) {
+      return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
     }
   }
 

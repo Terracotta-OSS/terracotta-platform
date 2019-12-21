@@ -12,12 +12,13 @@ import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServicePro
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartProgress;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
-import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
-import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.nomad.client.change.NomadChange;
-import com.terracottatech.nomad.client.results.NomadFailureRecorder;
+import com.terracottatech.nomad.client.results.ConsistencyReceiver;
+import com.terracottatech.nomad.client.results.NomadFailureReceiver;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
@@ -38,10 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
 import static java.lang.System.lineSeparator;
 import static java.util.function.Function.identity;
@@ -80,19 +81,54 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
+  /**
+   * Returns the current consistency of teh configuration in the cluster
+   */
+  protected final ConsistencyReceiver<NodeContext> getNomadConsistency(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
+    logger.trace("getNomadConsistency({})", expectedOnlineNodes);
+    // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
+    List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
+    ConsistencyReceiver<NodeContext> consistencyReceiver = new ConsistencyReceiver<>();
+    nomadManager.runDiscovery(orderedList, consistencyReceiver);
+    return consistencyReceiver;
+  }
+
+  /**
+   * Runs a Nomad recovery by providing a map of activated nodes plus their state.
+   * This method will create an ordered list of nodes to contact by moving the passives first and actives last.
+   * <p>
+   * Nodes are expected to be online.
+   */
+  protected final void runNomadRecovery(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
+    logger.trace("runNomadRecovery({})", expectedOnlineNodes);
+    // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
+    List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
+    NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
+    nomadManager.runRecovery(orderedList, failures);
+    failures.reThrow();
+  }
+
+  /**
+   * Runs a Nomad change by providing a map of activated nodes plus their state.
+   * This method will create an ordered list of nodes to contact by moving the passives first and actives last.
+   * <p>
+   * Nodes are expected to be online.
+   */
   protected final void runNomadChange(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes, NomadChange change) {
     logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
-    List<InetSocketAddress> orderedList = Stream.concat(
-        expectedOnlineNodes.entrySet().stream().filter(e -> e.getValue() == PASSIVE),
-        expectedOnlineNodes.entrySet().stream().filter(e -> e.getValue().isActive())
-    ).map(Map.Entry::getKey).collect(Collectors.toList());
+    List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
     runNomadChange(orderedList, change);
   }
 
+  /**
+   * Runs a Nomad change by providing an ordered list of nodes, to send them the change in order
+   * <p>
+   * Nodes are expected to be online.
+   */
   protected final void runNomadChange(List<InetSocketAddress> expectedOnlineNodes, NomadChange change) {
     logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);
-    NomadFailureRecorder<NodeContext> failures = new NomadFailureRecorder<>();
+    NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runChange(expectedOnlineNodes, change, failures);
     failures.reThrow();
   }
@@ -143,7 +179,7 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final Map<InetSocketAddress, LogicalServerState> findRuntimePeersStatus(InetSocketAddress expectedOnlineNode) {
-    logger.trace("findOnlineRuntimePeers({})", expectedOnlineNode);
+    logger.trace("findRuntimePeersStatus({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
     logger.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(cluster.getNodeAddresses()));
     Collection<InetSocketAddress> addresses = cluster.getNodeAddresses();
@@ -163,6 +199,21 @@ public abstract class RemoteCommand extends Command {
       });
       return status;
     }
+  }
+
+  protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress expectedOnlineNode) {
+    logger.trace("findOnlineRuntimePeers({})", expectedOnlineNode);
+    Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(expectedOnlineNode);
+    return allNodes.entrySet()
+        .stream()
+        .filter(e -> !e.getValue().isUnknown() && !e.getValue().isUnreacheable())
+        .collect(toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (o1, o2) -> {
+              throw new UnsupportedOperationException();
+            },
+            LinkedHashMap::new));
   }
 
   protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {
@@ -222,5 +273,13 @@ public abstract class RemoteCommand extends Command {
 
   protected static String toString(Collection<InetSocketAddress> addresses) {
     return addresses.stream().map(InetSocketAddress::toString).sorted().collect(Collectors.joining(", "));
+  }
+
+  private static List<InetSocketAddress> order(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
+    Predicate<Map.Entry<InetSocketAddress, LogicalServerState>> actives = e -> e.getValue().isActive();
+    return Stream.concat(
+        expectedOnlineNodes.entrySet().stream().filter(actives.negate()),
+        expectedOnlineNodes.entrySet().stream().filter(actives)
+    ).map(Map.Entry::getKey).collect(Collectors.toList());
   }
 }

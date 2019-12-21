@@ -9,7 +9,6 @@ import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 
 /**
  * Handler for <pre>com.terracottatech.dynamic-config.simulate</pre>
@@ -34,11 +33,7 @@ import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
  */
 public class SimulationHandler implements ConfigChangeHandler {
 
-  private final IParameterSubstitutor parameterSubstitutor;
-
-  public SimulationHandler(IParameterSubstitutor parameterSubstitutor) {
-    this.parameterSubstitutor = parameterSubstitutor;
-  }
+  private volatile String state = "";
 
   @Override
   public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
@@ -61,14 +56,29 @@ public class SimulationHandler implements ConfigChangeHandler {
 
   @Override
   public boolean apply(Configuration change) {
-    if ("commit-failure".equals(change.getValue())) {
-      throw new IllegalStateException("Simulate commit failure");
-    }
+    switch (change.getValue()) {
 
-    if ("restart-required".equals(change.getValue())) {
-      return false;
-    }
+      case "recover-needed":
+        if (state.equals("failed")) {
+          state = "recovered";
+          return true;
+        } else {
+          state = "failed";
+          throw new IllegalStateException("Simulate commit failure");
+        }
 
-    return true;
+      case "commit-failure":
+        throw new IllegalStateException("Simulate commit failure");
+
+      case "restart-required":
+        return false;
+
+      case "runtime-applied":
+        return true;
+
+      default:
+        // we do not change state
+        return true;
+    }
   }
 }

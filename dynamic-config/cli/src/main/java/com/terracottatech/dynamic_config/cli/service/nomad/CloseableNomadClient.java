@@ -9,6 +9,7 @@ import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
+import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 
 public class CloseableNomadClient<T> implements AutoCloseable {
   private final NomadClient<T> client;
@@ -25,6 +26,10 @@ public class CloseableNomadClient<T> implements AutoCloseable {
 
   public void tryRecovery(RecoveryResultReceiver<T> results) {
     client.tryRecovery(results);
+  }
+
+  public void tryDiscovery(DiscoverResultsReceiver<T> results) {
+    client.tryDiscovery(results);
   }
 
   @Override

@@ -26,11 +26,7 @@ import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.NomadEnvironment;
-import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.ChangeDetails;
-import com.terracottatech.nomad.messages.CommitMessage;
-import com.terracottatech.nomad.messages.DiscoverResponse;
-import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
@@ -40,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -135,7 +130,7 @@ public class NomadBootstrapper {
       LOGGER.info("Successfully initialized NomadServerManager");
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void registerDiagnosticService() {
       DiagnosticServices.register(IParameterSubstitutor.class, parameterSubstitutor);
       DiagnosticServices.register(ConfigChangeHandlerManager.class, configChangeHandlerManager);
@@ -197,39 +192,6 @@ public class NomadBootstrapper {
       }
 
       return Optional.of(configuration);
-    }
-
-    /**
-     * Used for overriding corrupted repository content
-     *
-     * @param configuration Configuration string which will override the existing configuration (if any)
-     * @param version       Version of the configuration. This can be used to keep the configuration version in sync with other
-     *                      servers.
-     * @throws NomadConfigurationException if underlying server fails to override corrupted repository content
-     */
-    public void repairConfiguration(Cluster configuration, long version) throws NomadConfigurationException {
-      try {
-        UUID nomadRequestId = UUID.randomUUID();
-        DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
-        long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
-        PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), nomadRequestId,
-            version, new ConfigRepairNomadChange(configuration));
-
-        AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
-        if (!response.isAccepted()) {
-          throw new NomadConfigurationException("Repair message is rejected by Nomad. Reason for rejection is "
-              + response.getRejectionReason().name());
-        }
-        long nextMutativeMessageCount = mutativeMessageCount + 1;
-        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, getHost(), getUser(), nomadRequestId);
-        AcceptRejectResponse commitResponse = nomadServer.commit(commitMessage);
-        if (!commitResponse.isAccepted()) {
-          throw new NomadConfigurationException("Unexpected commit failure. Reason for failure is "
-              + commitResponse.getRejectionReason().name());
-        }
-      } catch (NomadException e) {
-        throw new NomadConfigurationException("Unable to repair configuration", e);
-      }
     }
 
     private UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,

@@ -11,6 +11,7 @@ import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.cli.service.command.ActivateCommand;
 import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
+import com.terracottatech.dynamic_config.cli.service.command.CheckCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.ExportCommand;
 import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
@@ -30,6 +31,8 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import static java.lang.System.lineSeparator;
+
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
   private static final MainCommand MAIN = new MainCommand();
@@ -40,14 +43,14 @@ public class ConfigTool {
     } catch (Exception e) {
       String message = e.getMessage();
       if (message != null && !message.isEmpty()) {
-        String errorMessage = String.format("Error: %s%s", message, System.lineSeparator());
+        String errorMessage = String.format("%sError:%s%s%s", lineSeparator(), lineSeparator(), message, lineSeparator());
         if (LOGGER.isDebugEnabled()) {
-          LOGGER.error(errorMessage, e);
+          LOGGER.error("{}Error:", lineSeparator(), e); // do not output e.getMassage() because it duplicates the output
         } else {
           LOGGER.error(errorMessage);
         }
       } else {
-        LOGGER.error("Internal error: {}", e.getClass().getName(), e);
+        LOGGER.error("{}Internal error:", lineSeparator(), e);
       }
       System.exit(1);
     }
@@ -66,7 +69,8 @@ public class ConfigTool {
                 new ExportCommand(),
                 new GetCommand(),
                 new SetCommand(),
-                new UnsetCommand()
+                new UnsetCommand(),
+                new CheckCommand()
             )
         )
     );
@@ -85,7 +89,7 @@ public class ConfigTool {
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
-    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()), MAIN.isVerbose());
+    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()));
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing, restartDelay);
 
     LOGGER.debug("Injecting services in CommandRepository");

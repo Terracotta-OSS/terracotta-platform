@@ -4,20 +4,34 @@
  */
 package com.terracottatech.nomad.client.results;
 
+import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
+import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.lang.System.lineSeparator;
 
-public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
+/**
+ * @author Mathieu Carbou
+ */
+public class NomadFailureReceiver<T> implements ChangeResultReceiver<T>, RecoveryResultReceiver<T> {
 
   private volatile List<String> failures = new CopyOnWriteArrayList<>();
+
+  @Override
+  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+    failures.add("Takeover by other client on server: " + server + ". Host: " + lastMutationHost + ", User: " + lastMutationUser);
+  }
+
+  @Override
+  public void takeoverFail(InetSocketAddress server, String reason) {
+    failures.add("Takeover failed on server: " + server + ". Reason: " + reason);
+  }
 
   @Override
   public void discoverFail(InetSocketAddress server, String reason) {
@@ -27,6 +41,11 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
   @Override
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     failures.add("Inconsistent cluster: servers " + committedServers + " committed change " + changeUuid + " but servers " + rolledBackServers + " have rolled back");
+  }
+
+  @Override
+  public void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUUID, String creationHost, String creationUser) {
+    failures.add("Another change (with UUID " + changeUUID + " is already underway on " + server + ". It was started by " + creationUser + " on " + creationHost);
   }
 
   @Override
@@ -51,7 +70,7 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
 
   @Override
   public void commitFail(InetSocketAddress server, String reason) {
-    failures.add("Commit failed for server " + server + ": " + reason);
+    failures.add("Commit failed for server " + server + ". Reason: " + reason);
   }
 
   @Override
@@ -75,7 +94,29 @@ public class NomadFailureRecorder<T> implements ChangeResultReceiver<T> {
 
   public void reThrow() throws IllegalStateException {
     if (!isEmpty()) {
-      throw new IllegalStateException("Two-Phase commit failed:" + lineSeparator() + " - " + String.join(lineSeparator() + " - ", new TreeSet<>(failures)));
+      StringBuilder msg = new StringBuilder("Two-Phase commit failed with " + failures.size() + " messages(s):" + lineSeparator() + lineSeparator());
+      for (int i = 0; i < failures.size(); i++) {
+        if (msg.charAt(msg.length() - 1) != '\n') {
+          msg.append(lineSeparator());
+        }
+        msg.append("(").append(i + 1).append(") ").append(failures.get(i));
+      }
+      throw new IllegalStateException(msg.toString());
+    }
+  }
+
+  @Override
+  public void done(Consistency consistency) {
+    switch (consistency) {
+      case MAY_NEED_RECOVERY:
+      case UNKNOWN_BUT_NO_CHANGE:
+        failures.add("Possible fix: The recovery process may need to be run");
+        break;
+      case UNRECOVERABLY_INCONSISTENT:
+        failures.add("Please seek support. The cluster is inconsistent and cannot be trivially recovered.");
+        break;
+      default:
+        // do nothing
     }
   }
 }

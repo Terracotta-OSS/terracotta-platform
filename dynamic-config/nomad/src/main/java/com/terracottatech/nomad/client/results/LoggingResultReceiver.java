@@ -6,6 +6,7 @@ package com.terracottatech.nomad.client.results;
 
 import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.client.change.ChangeResultReceiver;
+import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +15,33 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
-public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LoggingChangeResultReceiver.class);
+public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, RecoveryResultReceiver<T> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(LoggingResultReceiver.class);
+
+  @Override
+  public void startTakeover() {
+    print("Start takeover");
+  }
+
+  @Override
+  public void takeover(InetSocketAddress server) {
+    print("Takeover: " + server);
+  }
+
+  @Override
+  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+    printError("Takeover of other client: server=" + server + ", lastMutationHost=" + lastMutationHost + ", lastMutationUser=" + lastMutationUser);
+  }
+
+  @Override
+  public void takeoverFail(InetSocketAddress server, String reason) {
+    printError("Takeover has failed: " + server + ": " + reason);
+  }
+
+  @Override
+  public void endTakeover() {
+    print("End takeover");
+  }
 
   @Override
   public void startDiscovery(Collection<InetSocketAddress> servers) {
@@ -157,7 +183,7 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
         printError("The recovery process may need to be run");
         break;
       case UNKNOWN_BUT_NO_CHANGE:
-        printError("Could not fully gather the state of the servers");
+        printError("Could not fully gather the state of the nodes: the recovery process may need to be run");
         break;
       case UNRECOVERABLY_INCONSISTENT:
         throw new AssertionError("Please seek support. The cluster is inconsistent and cannot be trivially recovered.");
@@ -167,10 +193,13 @@ public class LoggingChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   private void printError(String line) {
-    LOGGER.error(line);
+    // debug level is normal hereL this class is used to "trace" all Nomad callbacks and print them to the console
+    // if we are in verbose mode (trace level)
+    // the errors occuring in nomad are handled at another place
+    LOGGER.debug(line);
   }
 
   private void print(String line) {
-    LOGGER.info(line);
+    LOGGER.debug(line);
   }
 }
