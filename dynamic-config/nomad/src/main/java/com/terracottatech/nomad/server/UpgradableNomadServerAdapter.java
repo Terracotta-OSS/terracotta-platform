@@ -44,4 +44,9 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
 
   @Override
   public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {return delegate.takeover(message);}
+
+  @Override
+  public boolean hasPreparedConfigurationChange() {
+    return delegate.hasPreparedConfigurationChange();
+  }
 }

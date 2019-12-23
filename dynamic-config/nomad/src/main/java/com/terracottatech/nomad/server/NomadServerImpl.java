@@ -28,6 +28,7 @@ import static com.terracottatech.nomad.messages.RejectionReason.BAD;
 import static com.terracottatech.nomad.messages.RejectionReason.DEAD;
 import static com.terracottatech.nomad.messages.RejectionReason.UNACCEPTABLE;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
+import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
@@ -47,10 +48,6 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
           .setHighestVersion(0)
           .setInitialized()
       );
-    } else if (!state.isLatestChangeCommittedOrRolledBack()) {
-      String errMsg = "Latest configuration change was not committed or rolled back in the configuration repository, " +
-                      "restart the server in recovery mode to commit/rollback the configuration change";
-      throw new NomadException(errMsg);
     }
   }
 
@@ -92,6 +89,25 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       }
     }
     return allNomadChanges;
+  }
+
+  @Override
+  public boolean hasPreparedConfigurationChange() {
+    if (!state.isInitialized()) {
+      return false;
+    }
+    if (state.getMode() == NomadServerMode.PREPARED) {
+      return true;
+    }
+    try {
+      ChangeDetails<T> latestChange = discover().getLatestChange();
+      if (latestChange == null) {
+        return false;
+      }
+      return latestChange.getState() == PREPARED;
+    } catch (NomadException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override
@@ -198,11 +214,11 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     }
 
     if (isDead(message)) {
-      return reject(DEAD);
+      return reject(DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount");
     }
 
     if (isWrongMode(message, NomadServerMode.PREPARED)) {
-      return reject(BAD);
+      return reject(BAD, "Expected mode: " + PREPARED + ". Was: " + state.getMode());
     }
 
     UUID changeUuid = message.getChangeUuid();

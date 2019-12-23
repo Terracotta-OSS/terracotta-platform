@@ -50,7 +50,14 @@ public interface TopologyService {
    * @return true if some dynamic changes have been done which cannot be applied at runtime and need a restart to be applied
    * This means that {@link #getUpcomingNodeContext()} will contains these changes whereas {@link #getRuntimeNodeContext()} wont'.
    */
-  boolean isRestartRequired();
+  boolean mustBeRestarted();
+
+  /**
+   * @return true if a configuration as been prepared on this node, but it has not yet been committed or rolled back.
+   * In this state, the nodes are currently within a Nomad transaction, or, a partial commit/rollback occured and the node
+   * needs a check/repair
+   */
+  boolean hasPreparedConfigurationChange();
 
   /**
    * Get the current installed license information if any

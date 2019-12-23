@@ -17,5 +17,9 @@ public interface NomadDecider<T> extends AllResultsReceiver<T> {
 
   boolean shouldDoCommit();
 
+  default boolean shouldDoRollback() {
+    return !shouldDoCommit();
+  }
+
   Consistency getConsistency();
 }

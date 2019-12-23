@@ -113,6 +113,10 @@ public class BaseStartupIT {
     return process;
   }
 
+  final NodeProcess getNodeProcess() {
+    return nodeProcesses.stream().findFirst().get();
+  }
+
   Path getBaseDir() {
     return tmpDir.getRoot();
   }

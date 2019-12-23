@@ -180,13 +180,12 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
         print("The change has been made successfully");
         break;
       case MAY_NEED_RECOVERY:
-        printError("The recovery process may need to be run");
-        break;
       case UNKNOWN_BUT_NO_CHANGE:
-        printError("Could not fully gather the state of the nodes: the recovery process may need to be run");
+        printError("Please run the check command to diagnose the configuration state.");
         break;
       case UNRECOVERABLY_INCONSISTENT:
-        throw new AssertionError("Please seek support. The cluster is inconsistent and cannot be trivially recovered.");
+        printError("Please run the check command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");
+        break;
       default:
         throw new AssertionError("Unknown Consistency: " + consistency);
     }

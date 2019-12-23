@@ -9,10 +9,10 @@ import com.beust.jcommander.Parameter;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.TypeConverter;
-import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.utilities.Json;
 import com.terracottatech.utilities.Tuple2;
 
@@ -70,7 +70,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     validateAddress(destination);
     sources.forEach(this::validateAddress);
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
-    if (isRestartRequired(destination)) {
+    if (mustBeRestarted(destination)) {
       throw new IllegalStateException("Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes.");
     }
   }

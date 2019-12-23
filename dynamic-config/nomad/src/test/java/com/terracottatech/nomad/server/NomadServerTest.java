@@ -253,7 +253,7 @@ public class NomadServerTest {
         uuid
     ));
 
-    assertRejection(response, DEAD, null, "testhost1", "testuser1");
+    assertRejection(response, DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount", "testhost1", "testuser1");
     assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }

@@ -14,4 +14,9 @@ public class DiscoveryProcessDecider<T> extends BaseNomadDecider<T> {
   public boolean shouldDoCommit() {
     return false;
   }
+
+  @Override
+  public boolean shouldDoRollback() {
+    return false;
+  }
 }

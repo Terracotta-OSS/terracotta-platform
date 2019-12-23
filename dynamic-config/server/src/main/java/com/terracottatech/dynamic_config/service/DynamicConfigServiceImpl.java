@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener {
@@ -76,6 +77,14 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     clusterActivated = true;
     LOGGER.info("Node activation successful");
+
+    if (nomadServerManager.getNomadServer().hasPreparedConfigurationChange()) {
+      LOGGER.error(lineSeparator() + lineSeparator()
+          + "=======================================================================================================================================" + lineSeparator()
+          + "The configuration of this node has not been committed or rolled back. Please run the check command to diagnose the configuration state." + lineSeparator()
+          + "=======================================================================================================================================" + lineSeparator()
+      );
+    }
   }
 
 
@@ -180,8 +189,13 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized boolean isRestartRequired() {
+  public synchronized boolean mustBeRestarted() {
     return !runtimeNodeContext.equals(upcomingNodeContext);
+  }
+
+  @Override
+  public boolean hasPreparedConfigurationChange() {
+    return nomadServerManager.getNomadServer().hasPreparedConfigurationChange();
   }
 
   @Override

@@ -10,4 +10,6 @@ public interface UpgradableNomadServer<T> extends NomadServer<T> {
   void setChangeApplicator(ChangeApplicator<T> changeApplicator);
 
   List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
+
+  boolean hasPreparedConfigurationChange();
 }

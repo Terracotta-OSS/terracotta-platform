@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -24,6 +23,7 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.stringContainsInOrder;
@@ -40,264 +40,120 @@ public class ConfigSyncIT extends BaseStartupIT {
 
   @Test
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
-    int firstNodeId = 1;
-    int stripeId = 1;
-    int secondNodeId = 2;
-    NodeProcess nodeProcess = startNode(
-        "--node-name", "node-" + firstNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPort()),
-        "--node-group-port", String.valueOf(ports.getPorts()[1]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + firstNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + firstNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
+    Shape shape = createCluster();
+    shape.passive.close();
 
-    NodeProcess secondNodeProcess = startNode(
-        "--node-name", "node-" + secondNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPorts()[2]),
-        "--node-group-port", String.valueOf(ports.getPorts()[3]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + secondNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + secondNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
-
-    waitForAssert(out::getLog, stringContainsInOrder(
-        Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
-    ));
-
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    assertCommandSuccessful();
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    assertCommandSuccessful();
-
-    secondNodeProcess.close();
+    out.clearLog();
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB");
     assertCommandSuccessful();
 
-    Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + firstNodeId + "/sanskrit");
-    Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
+    Path activePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.activeId + "/sanskrit");
+    Path passivePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.passiveId + "/sanskrit");
     List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
     List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
     assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 3);
-    startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
 
+    out.clearLog();
+    startNode("-r", "repository/stripe1/node-" + shape.passiveId);
     waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+
     passiveChanges = AppendLogCapturer.getChanges(passivePath);
     assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 5);
   }
 
   @Test
-  public void testPassiveZapsActiveHasSomeUnCommittedChanges() throws Exception {
-    int firstNodeId = 1;
-    int stripeId = 1;
-    int secondNodeId = 2;
-    NodeProcess nodeProcess = startNode(
-        "--node-name", "node-" + firstNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPort()),
-        "--node-group-port", String.valueOf(ports.getPorts()[1]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + firstNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + firstNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
+  public void testPassiveZapsWhenActiveHasSomeUnCommittedChanges() throws Exception {
+    Shape shape = createCluster();
+    shape.passive.close();
 
-    NodeProcess secondNodeProcess = startNode(
-        "--node-name", "node-" + secondNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPorts()[2]),
-        "--node-group-port", String.valueOf(ports.getPorts()[3]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + secondNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + secondNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
-
-    waitForAssert(out::getLog, stringContainsInOrder(
-        Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
-    ));
-
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    assertCommandSuccessful();
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    assertCommandSuccessful();
-    secondNodeProcess.close();
+    // trigger commit failure on active
+    // the passive should zap when restarting
     try {
-      ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
+      out.clearLog();
+      ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node." + shape.activeId + ".tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
       fail("Expected to throw exception");
     } catch (IllegalStateException e) {
-      Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + firstNodeId + "/sanskrit");
-      Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
-      List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
-      List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-      assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 3);
-      out.clearLog();
-      startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
-
-      waitForAssert(out::getLog, containsString("Active has some PREPARED changes that is not yet committed."));
-      passiveChanges = AppendLogCapturer.getChanges(passivePath);
-      assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 3);
+      e.printStackTrace(System.out);
     }
+
+    Path activePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.activeId + "/sanskrit");
+    Path passivePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.passiveId + "/sanskrit");
+    List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
+    List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 3);
+
+    out.clearLog();
+    startNode("-r", "repository/stripe1/node-" + shape.passiveId);
+    waitForAssert(out::getLog, containsString("Active has some PREPARED configuration changes that is not yet committed."));
+
+    passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 3);
   }
 
   @Test
   public void testPassiveZapsAppendLogHistoryMismatch() throws Exception {
-    int firstNodeId = 1;
-    int stripeId = 1;
-    int secondNodeId = 2;
-    NodeProcess firstNodeProcess = startNode(
-        "--node-name", "node-" + firstNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPorts()[0]),
-        "--node-group-port", String.valueOf(ports.getPorts()[1]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + firstNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + firstNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
+    Shape shape = createCluster();
 
-    NodeProcess secondNodeProcess = startNode(
-        "--node-name", "node-" + secondNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPorts()[2]),
-        "--node-group-port", String.valueOf(ports.getPorts()[3]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + secondNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + secondNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
-
-    waitForAssert(out::getLog, stringContainsInOrder(
-        Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
-    ));
-
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    assertCommandSuccessful();
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    assertCommandSuccessful();
-
-    boolean isFirstNodePassive = false;
-    if (firstNodeProcess.getServerState().toString().equals("PASSIVE")) {
-      isFirstNodePassive = true;
+    // trigger commit failure on active
+    // but passive is fine
+    // when passive restarts, its history is greater and not equal to the active, so it zaps
+    try {
+      ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node." + shape.activeId + ".tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
+      fail("Expected to throw exception");
+    } catch (IllegalStateException e) {
+      e.printStackTrace(System.out);
     }
-    if (isFirstNodePassive) {
-      try {
-        ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.2.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
-        fail("Expected to throw exception");
-      } catch (IllegalStateException e) {
-        Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + firstNodeId + "/sanskrit");
-        Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
-        List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
-        List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
-        firstNodeProcess.close();
-        out.clearLog();
-        startNode("-r", "repository/stripe" + stripeId + "/node-" + firstNodeId);
 
-        waitForAssert(out::getLog, containsString("Passive cannot sync because the change history does not match"));
-        passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
-      }
-    } else {
-      try {
-        ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
-        fail("Expected to throw exception");
-      } catch (IllegalStateException e) {
-        Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + firstNodeId + "/sanskrit");
-        Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
-        List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
-        List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
-        secondNodeProcess.close();
-        out.clearLog();
-        startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
+    Path passivePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.passiveId + "/sanskrit");
+    Path activePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.activeId + "/sanskrit");
+    List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
+    List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
 
-        waitForAssert(out::getLog, containsString("Passive cannot sync because the change history does not match"));
-        passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
-      }
-    }
+    shape.passive.close();
+
+    out.clearLog();
+    startNode("-r", "repository/stripe1/node-" + shape.passiveId);
+    waitForAssert(out::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
+
+    passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 5);
   }
 
   @Test
-  public void testPassiveZapsDueToLatestChangeNotCommittedOnPassive() throws Exception {
-    int firstNodeId = 1;
-    int stripeId = 1;
-    int secondNodeId = 2;
-    NodeProcess firstNodeProcess = startNode(
-        "--node-name", "node-" + firstNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPorts()[0]),
-        "--node-group-port", String.valueOf(ports.getPorts()[1]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + firstNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + firstNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
+  public void testPassiveCanSyncAndRepairIfLatestChangeNotCommitted() throws Exception {
+    Shape shape = createCluster();
 
-    NodeProcess secondNodeProcess = startNode(
-        "--node-name", "node-" + secondNodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(ports.getPorts()[2]),
-        "--node-group-port", String.valueOf(ports.getPorts()[3]),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + secondNodeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + secondNodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId);
-
-    waitForAssert(out::getLog, stringContainsInOrder(
-        Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
-    ));
-
-    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
-    assertCommandSuccessful();
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    assertCommandSuccessful();
-
-    boolean isFirstNodePassive = false;
-    if (firstNodeProcess.getServerState().toString().equals("PASSIVE")) {
-      isFirstNodePassive = true;
+    // run a non committed configuration change on the passive
+    // the active is OK
+    // the passive should restart fine
+    try {
+      ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node." + shape.passiveId + ".tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed");
+      fail("Expected to throw exception");
+    } catch (IllegalStateException e) {
+      e.printStackTrace(System.out);
     }
-    if (isFirstNodePassive) {
-      try {
-        ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
-        fail("Expected to throw exception");
-      } catch (IllegalStateException e) {
-        Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + firstNodeId + "/sanskrit");
-        Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
-        List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
-        List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
-        firstNodeProcess.close();
-        out.clearLog();
-        startNode("-r", "repository/stripe" + stripeId + "/node-" + firstNodeId);
 
-        waitForAssert(out::getLog, containsString("Latest configuration change was not committed"));
-        passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
-      }
-    } else {
-      try {
-        ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.2.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
-        fail("Expected to throw exception");
-      } catch (IllegalStateException e) {
-        Path activePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + firstNodeId + "/sanskrit");
-        Path passivePath = Paths.get(getBaseDir() + "/repository/stripe" + stripeId + "/node-" + secondNodeId + "/sanskrit");
-        List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
-        List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
-        secondNodeProcess.close();
-        out.clearLog();
-        startNode("-r", "repository/stripe" + stripeId + "/node-" + secondNodeId);
+    Path passivePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.passiveId + "/sanskrit");
+    Path activePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.activeId + "/sanskrit");
+    List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
+    List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
 
-        waitForAssert(out::getLog, containsString("Latest configuration change was not committed"));
-        passiveChanges = AppendLogCapturer.getChanges(passivePath);
-        assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 4);
-      }
-    }
+    shape.passive.close();
+
+    out.clearLog();
+    startNode("-r", "repository/stripe1/node-" + shape.passiveId);
+    waitForAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+
+    passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 5, 5);
   }
 
   private void assertContentsBeforeOrAfterSync(List<SanskritObject> activeChanges,
-                                       List<SanskritObject> passiveChanges,
-                                       int activeChangesSize,
-                                       int passiveChangesSize
+                                               List<SanskritObject> passiveChanges,
+                                               int activeChangesSize,
+                                               int passiveChangesSize
   ) {
     assertThat(activeChanges.size(), is(activeChangesSize));
     assertThat(passiveChanges.size(), is(passiveChangesSize));
@@ -327,6 +183,60 @@ public class ConfigSyncIT extends BaseStartupIT {
 
   private void waitForAssert(Callable<String> callable, Matcher<? super String> matcher) {
     waitedAssert(callable, matcher, TIMEOUT);
+  }
+
+  private Shape createCluster() throws Exception {
+    NodeProcess[] nodes = {
+        startNode(
+            "--node-name", "node-1",
+            "--node-hostname", "localhost",
+            "--node-port", String.valueOf(ports.getPort()),
+            "--node-group-port", String.valueOf(ports.getPorts()[1]),
+            "--node-log-dir", "logs/stripe1/node-1",
+            "--node-metadata-dir", "metadata/stripe1",
+            "--node-repository-dir", "repository/stripe1/node-1",
+            "--data-dirs", "main:user-data/main/stripe1"),
+        startNode(
+            "--node-name", "node-2",
+            "--node-hostname", "localhost",
+            "--node-port", String.valueOf(ports.getPorts()[2]),
+            "--node-group-port", String.valueOf(ports.getPorts()[3]),
+            "--node-log-dir", "logs/stripe1/node-2",
+            "--node-metadata-dir", "metadata/stripe1",
+            "--node-repository-dir", "repository/stripe1/node-2",
+            "--data-dirs", "main:user-data/main/stripe1")
+    };
+
+    waitForAssert(out::getLog, stringContainsInOrder(asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")));
+
+    out.clearLog();
+    ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
+    assertCommandSuccessful();
+
+    out.clearLog();
+    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
+    assertCommandSuccessful();
+
+    Shape shape = new Shape();
+    if (nodes[0].getServerState().isPassive()) {
+      shape.passive = nodes[0];
+      shape.passiveId = 1;
+      shape.active = nodes[1];
+      shape.activeId = 2;
+    } else {
+      shape.passive = nodes[1];
+      shape.passiveId = 2;
+      shape.active = nodes[0];
+      shape.activeId = 1;
+    }
+    return shape;
+  }
+
+  static class Shape {
+    int activeId;
+    int passiveId;
+    NodeProcess active;
+    NodeProcess passive;
   }
 }
 

@@ -70,7 +70,7 @@ public class ConfigurationSyncManagerTest {
 
     ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
     exceptionRule.expect(TCShutdownServerException.class);
-    exceptionRule.expectMessage("Passive has more changes");
+    exceptionRule.expectMessage("Passive has more configuration changes");
     syncManager.sync(active);
   }
 
@@ -94,7 +94,7 @@ public class ConfigurationSyncManagerTest {
 
     ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
     exceptionRule.expect(TCShutdownServerException.class);
-    exceptionRule.expectMessage("Passive cannot sync because the change history does not match");
+    exceptionRule.expectMessage("Passive cannot sync because the configuration change history does not match");
     syncManager.sync(active);
   }
 
@@ -121,7 +121,7 @@ public class ConfigurationSyncManagerTest {
 
     ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
     exceptionRule.expect(TCShutdownServerException.class);
-    exceptionRule.expectMessage("Active has some PREPARED changes that is not yet committed.");
+    exceptionRule.expectMessage("Active has some PREPARED configuration changes that is not yet committed.");
     syncManager.sync(active);
   }
 

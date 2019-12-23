@@ -21,17 +21,17 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
 
   private final Map<InetSocketAddress, DiscoverResponse<T>> responses = new HashMap<>(0);
 
-  private volatile boolean discoverFail;
-  private volatile boolean discoveryInconsistentCluster;
-  private volatile boolean discoverOtherClient;
+  private volatile boolean discoverFailed;
+  private volatile boolean discoveredInconsistentCluster;
+  private volatile boolean discoveredOtherClient;
 
-  private volatile UUID changeUuid;
+  private volatile UUID inconsistentChangeUuid;
   private volatile Collection<InetSocketAddress> committedServers;
   private volatile Collection<InetSocketAddress> rolledBackServers;
 
-  private volatile InetSocketAddress server;
-  private volatile String lastMutationHost;
-  private volatile String lastMutationUser;
+  private volatile InetSocketAddress serverProcessingOtherClient;
+  private volatile String otherClientHost;
+  private volatile String otherClientUser;
 
   @Override
   public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
@@ -40,66 +40,64 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
 
   @Override
   public void discoverFail(InetSocketAddress server, String reason) {
-    discoverFail = true;
+    discoverFailed = true;
   }
 
   @Override
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
-    this.changeUuid = changeUuid;
+    this.inconsistentChangeUuid = changeUuid;
     this.committedServers = committedServers;
     this.rolledBackServers = rolledBackServers;
-    this.discoveryInconsistentCluster = true;
+    this.discoveredInconsistentCluster = true;
   }
 
   @Override
   public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
-    this.server = server;
-    this.lastMutationHost = lastMutationHost;
-    this.lastMutationUser = lastMutationUser;
-    this.discoverOtherClient = true;
+    this.serverProcessingOtherClient = server;
+    this.otherClientHost = lastMutationHost;
+    this.otherClientUser = lastMutationUser;
+    this.discoveredOtherClient = true;
   }
 
   public Map<InetSocketAddress, DiscoverResponse<T>> getResponses() {
     return responses;
   }
 
-  public boolean isDiscoverFail() {
-    return discoverFail;
+  public boolean hasDiscoverFailed() {
+    return discoverFailed;
   }
 
-  public boolean isDiscoveryInconsistentCluster() {
-    return discoveryInconsistentCluster;
+  public boolean areAllAccepting() {
+    return responses.values().stream().map(DiscoverResponse::getMode).allMatch(Predicate.isEqual(NomadServerMode.ACCEPTING));
   }
 
-  public boolean isDiscoverOtherClient() {
-    return discoverOtherClient;
-  }
+  // discoverClusterInconsistent
 
-  public UUID getChangeUuid() {
-    return changeUuid;
+  public boolean hasDiscoveredInconsistentCluster() {
+    return discoveredInconsistentCluster;
   }
-
+  public UUID getInconsistentChangeUuid() {
+    return inconsistentChangeUuid;
+  }
   public Collection<InetSocketAddress> getCommittedServers() {
     return committedServers;
   }
-
   public Collection<InetSocketAddress> getRolledBackServers() {
     return rolledBackServers;
   }
 
-  public InetSocketAddress getServer() {
-    return server;
-  }
+  // discoverOtherClient
 
-  public String getLastMutationHost() {
-    return lastMutationHost;
+  public boolean hasDiscoveredOtherClient() {
+    return discoveredOtherClient;
   }
-
-  public String getLastMutationUser() {
-    return lastMutationUser;
+  public InetSocketAddress getServerProcessingOtherClient() {
+    return serverProcessingOtherClient;
   }
-
-  public boolean isConsistent() {
-    return responses.values().stream().map(DiscoverResponse::getMode).allMatch(Predicate.isEqual(NomadServerMode.ACCEPTING));
+  public String getOtherClientHost() {
+    return otherClientHost;
+  }
+  public String getOtherClientUser() {
+    return otherClientUser;
   }
 }

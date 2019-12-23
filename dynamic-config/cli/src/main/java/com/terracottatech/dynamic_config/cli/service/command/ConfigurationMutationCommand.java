@@ -78,7 +78,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       runNomadChange(onlineNodes, getNomadChanges(updatedCluster));
 
       // do we need to restart to apply the changes ?
-      if (isRestartRequired(node)) {
+      if (mustBeRestarted(node)) {
         logger.warn(lineSeparator() +
             "====================================================================" + lineSeparator() +
             "IMPORTANT: A restart of the cluster is required to apply the changes" + lineSeparator() +

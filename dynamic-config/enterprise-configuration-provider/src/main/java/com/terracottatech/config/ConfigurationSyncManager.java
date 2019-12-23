@@ -9,14 +9,14 @@ import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.NomadConfigurationException;
-import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.messages.AcceptRejectResponse;
-import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.CommitMessage;
+import com.terracottatech.nomad.messages.DiscoverResponse;
+import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.server.ChangeRequestState;
-import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadChangeInfo;
+import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
 
 import java.util.List;
@@ -57,17 +57,30 @@ class ConfigurationSyncManager {
     int passiveChangesSize = passiveNomadChanges.size();
 
     if (passiveChangesSize > activeChangesSize) {
-      throw new TCShutdownServerException("Passive has more changes");
+      throw new TCShutdownServerException("Passive has more configuration changes");
     }
 
-    while (passiveInd < passiveChangesSize) {
-      if (!passiveNomadChanges.get(passiveInd++).equals(activeNomadChanges.get(activeInd++))) {
-        throw new TCShutdownServerException("Passive cannot sync because the change history does not match");
+    boolean restartRequired = false;
+
+    for (; passiveInd < passiveChangesSize; passiveInd++, activeInd++) {
+      NomadChangeInfo passiveChange = passiveNomadChanges.get(passiveInd);
+      NomadChangeInfo activeChange = activeNomadChanges.get(activeInd);
+      if (!passiveChange.equals(activeChange)) {
+        // if the change is not the same, we check if this is because the latest change on the passive server is PREPARED and
+        // on the active server it has been rolled back or committed. If yes, we do not prevent the sync, because it will fix
+        // the last change on the passive server following a partial commit or rollback
+        if (passiveInd != passiveChangesSize - 1
+            || !passiveChange.getChangeUuid().equals(activeChange.getChangeUuid())
+            || passiveChange.getChangeRequestState() != ChangeRequestState.PREPARED
+            || activeChange.getChangeRequestState() == ChangeRequestState.PREPARED) {
+          throw new TCShutdownServerException("Passive cannot sync because the configuration change history does not match: no match on active for this change on passive:" + passiveChange);
+        } else {
+          restartRequired |= fixPreparedChange(activeChange);
+        }
       }
     }
 
     //Apply all the remaining changes from active
-    boolean restartRequired = false;
     while (activeInd < activeChangesSize) {
       restartRequired |= tryCommitingChanges(activeNomadChanges.get(activeInd++));
     }
@@ -83,8 +96,7 @@ class ConfigurationSyncManager {
 
     AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
     if (!response.isAccepted()) {
-      throw new NomadConfigurationException("Prepare message is rejected by Nomad. Reason for rejection is "
-          + response.getRejectionReason().name() + nomadChangeInfo.toString());
+      throw new NomadConfigurationException("Prepare message is rejected by Nomad. Reason for rejection is " + response.getRejectionReason().name() + ": " + nomadChangeInfo.toString());
     }
   }
 
@@ -94,7 +106,7 @@ class ConfigurationSyncManager {
 
     switch (nomadChangeInfo.getChangeRequestState()) {
       case PREPARED:
-        throw new TCShutdownServerException("Active has some PREPARED changes that is not yet committed.");
+        throw new TCShutdownServerException("Active has some PREPARED configuration changes that is not yet committed.");
       case COMMITTED:
         sendPrepare(mutativeMessageCount, nomadServer, nomadChangeInfo);
         long nextMutativeMessageCount = mutativeMessageCount + 1;
@@ -102,8 +114,9 @@ class ConfigurationSyncManager {
 
         AcceptRejectResponse commitResponse = nomadServer.commit(commitMessage);
         if (!commitResponse.isAccepted()) {
-          throw new NomadConfigurationException("Unexpected commit failure. Reason for failure is "
-              + commitResponse.getRejectionReason().name() + nomadChangeInfo.toString());
+          throw new NomadConfigurationException("Unexpected commit failure. " +
+              "Reason for failure is " + commitResponse.getRejectionReason() + ": " + commitResponse.getRejectionMessage() + ". " +
+              "Change:" + nomadChangeInfo.toString());
         }
         return true;
       case ROLLED_BACK:
@@ -113,12 +126,46 @@ class ConfigurationSyncManager {
 
         AcceptRejectResponse rollbackResponse = nomadServer.rollback(rollbackMessage);
         if (!rollbackResponse.isAccepted()) {
-          throw new NomadConfigurationException("Unexpected rollback failure. Reason for failure is "
-              + rollbackResponse.getRejectionReason().name() + nomadChangeInfo.toString());
+          throw new NomadConfigurationException("Unexpected rollback failure. " +
+              "Reason for failure is " + rollbackResponse.getRejectionReason() + ": " + rollbackResponse.getRejectionMessage() + ". " +
+              "Change:" + nomadChangeInfo.toString());
         }
         return false;
       default:
-        throw new TCShutdownServerException("Invalid Nomad Change State");
+        throw new TCShutdownServerException("Invalid Nomad Change State: " + nomadChangeInfo.getChangeRequestState());
+    }
+  }
+
+  private boolean fixPreparedChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
+    DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
+    long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
+    if (discoverResponse.getLatestChange().getState() != ChangeRequestState.PREPARED) {
+      throw new AssertionError("Expected PREPARED state in change " + discoverResponse.getLatestChange());
+    }
+
+    switch (nomadChangeInfo.getChangeRequestState()) {
+      case COMMITTED: {
+        CommitMessage message = new CommitMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getChangeUuid());
+        AcceptRejectResponse response = nomadServer.commit(message);
+        if (!response.isAccepted()) {
+          throw new NomadConfigurationException("Unexpected commit failure. " +
+              "Reason for failure is " + response.getRejectionReason() + ": " + response.getRejectionMessage() + ". " +
+              "Change:" + nomadChangeInfo.toString());
+        }
+        return true;
+      }
+      case ROLLED_BACK: {
+        RollbackMessage message = new RollbackMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getChangeUuid());
+        AcceptRejectResponse response = nomadServer.rollback(message);
+        if (!response.isAccepted()) {
+          throw new NomadConfigurationException("Unexpected rollback failure. " +
+              "Reason for failure is " + response.getRejectionReason() + ": " + response.getRejectionMessage() + ". " +
+              "Change:" + nomadChangeInfo.toString());
+        }
+        return false;
+      }
+      default:
+        throw new TCShutdownServerException("Invalid Nomad Change State: " + nomadChangeInfo.getChangeRequestState());
     }
   }
 

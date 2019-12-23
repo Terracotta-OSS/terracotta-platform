@@ -74,10 +74,17 @@ public abstract class RemoteCommand extends Command {
             .orElseThrow(() -> new IllegalArgumentException("Targeted cluster does not contain any node with this address: " + expectedOnlineNode + ". Is it a mistake ? Are you connecting to the wrong cluster ? If not, please use the configured node hostname and port to connect.")));
   }
 
-  protected final boolean isRestartRequired(InetSocketAddress expectedOnlineNode) {
-    logger.trace("isRestartRequired({})", expectedOnlineNode);
+  protected final boolean mustBeRestarted(InetSocketAddress expectedOnlineNode) {
+    logger.trace("mustBeRestarted({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
-      return diagnosticService.getProxy(TopologyService.class).isRestartRequired();
+      return diagnosticService.getProxy(TopologyService.class).mustBeRestarted();
+    }
+  }
+
+  protected final boolean hasPreparedConfigurationChange(InetSocketAddress expectedOnlineNode) {
+    logger.trace("hasPreparedConfigurationChange({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+      return diagnosticService.getProxy(TopologyService.class).hasPreparedConfigurationChange();
     }
   }
 

@@ -50,25 +50,24 @@ public class CheckCommand extends RemoteCommand {
   @Override
   public final void run() {
     ConsistencyReceiver<NodeContext> consistencyReceiver = getNomadConsistency(onlineNodes);
-
     printCheck(consistencyReceiver);
 
-    if (consistencyReceiver.isConsistent()) {
+    if (consistencyReceiver.areAllAccepting()) {
       logger.info("Cluster configuration is healthy. No repair needed.");
 
-    } else if (consistencyReceiver.isDiscoveryInconsistentCluster()) {
+    } else if (consistencyReceiver.hasDiscoveredInconsistentCluster()) {
       logger.error("Cluster configuration is broken and cannot be automatically repaired.");
 
-    } else if (consistencyReceiver.isDiscoverOtherClient()) {
+    } else if (consistencyReceiver.hasDiscoveredOtherClient()) {
       logger.error("Unable to diagnose cluster configuration: another process is running.");
 
-    } else if (consistencyReceiver.isDiscoverFail()) {
+    } else if (consistencyReceiver.hasDiscoverFailed()) {
       logger.error("Unable to diagnose cluster configuration.");
 
     } else {
-      logger.info("Attempting an automatic repair to trigger commit phase again for uncommitted nodes...");
+      logger.info("Attempting an automatic repair of the configuration...");
       runNomadRecovery(onlineNodes);
-      logger.info("Done.");
+      logger.info("Configuration is repaired.");
       ConsistencyReceiver<NodeContext> newConsistencyReceiver = getNomadConsistency(onlineNodes);
       printCheck(newConsistencyReceiver);
     }
@@ -80,18 +79,18 @@ public class CheckCommand extends RemoteCommand {
     StringBuilder sb = new StringBuilder();
     sb.append(lineSeparator());
     sb.append("Checking configuration:").append(lineSeparator());
-    sb.append(" - Configuration discovery: ").append(consistencyReceiver.isDiscoverFail() ? "Failed" : "Success").append(lineSeparator());
-    if (consistencyReceiver.isDiscoverOtherClient()) {
+    sb.append(" - Configuration discovery: ").append(consistencyReceiver.hasDiscoverFailed() ? "Failed" : "Success").append(lineSeparator());
+    if (consistencyReceiver.hasDiscoveredOtherClient()) {
       sb.append("   Reason: Another process run on ")
-          .append(consistencyReceiver.getLastMutationHost())
+          .append(consistencyReceiver.getOtherClientHost())
           .append(" by ")
-          .append(consistencyReceiver.getLastMutationUser())
+          .append(consistencyReceiver.getOtherClientUser())
           .append(" changed the state on ")
-          .append(consistencyReceiver.getServer()).append(lineSeparator());
+          .append(consistencyReceiver.getServerProcessingOtherClient()).append(lineSeparator());
     }
-    if (consistencyReceiver.isDiscoveryInconsistentCluster()) {
+    if (consistencyReceiver.hasDiscoveredInconsistentCluster()) {
       sb.append("   Reason: Inconsistent cluster for change: ")
-          .append(consistencyReceiver.getChangeUuid())
+          .append(consistencyReceiver.getInconsistentChangeUuid())
           .append(". Committed on: ")
           .append(consistencyReceiver.getCommittedServers())
           .append("; rolled back on: ")
@@ -101,6 +100,8 @@ public class CheckCommand extends RemoteCommand {
       InetSocketAddress nodeAddress = n.getNodeAddress();
       sb.append("[").append(nodeAddress).append("]").append(lineSeparator());
       sb.append(" - Status: ").append(onlineNodes.getOrDefault(nodeAddress, UNREACHABLE)).append(lineSeparator());
+      sb.append(" - Node must be restarted to apply new configuration on disk: ").append(mustBeRestarted(node)).append(lineSeparator());
+      sb.append(" - Configuration prepared but not yet committed or rolled back: ").append(hasPreparedConfigurationChange(node)).append(lineSeparator());
       DiscoverResponse<NodeContext> discoverResponse = consistencyReceiver.getResponses().get(nodeAddress);
       if (discoverResponse != null) {
         sb.append(" - Mode: ").append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "Ready to accept new change" : "Change accepted but commit is pending").append(lineSeparator());
