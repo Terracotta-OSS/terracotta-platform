@@ -44,7 +44,7 @@ public class ConfigSyncIT extends BaseStartupIT {
     shape.passive.close();
 
     out.clearLog();
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB");
+    ConfigTool.start("set", "-s", "localhost:" + shape.activePort, "-c", "offheap-resources.main=1GB");
     assertCommandSuccessful();
 
     Path activePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + shape.activeId + "/sanskrit");
@@ -70,7 +70,7 @@ public class ConfigSyncIT extends BaseStartupIT {
     // the passive should zap when restarting
     try {
       out.clearLog();
-      ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node." + shape.activeId + ".tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
+      ConfigTool.start("set", "-s", "localhost:" + shape.activePort, "-c", "stripe.1.node." + shape.activeId + ".tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
       fail("Expected to throw exception");
     } catch (IllegalStateException e) {
       e.printStackTrace(System.out);
@@ -98,7 +98,7 @@ public class ConfigSyncIT extends BaseStartupIT {
     // but passive is fine
     // when passive restarts, its history is greater and not equal to the active, so it zaps
     try {
-      ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node." + shape.activeId + ".tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
+      ConfigTool.start("set", "-s", "localhost:" + shape.activePort, "-c", "stripe.1.node." + shape.activeId + ".tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
       fail("Expected to throw exception");
     } catch (IllegalStateException e) {
       e.printStackTrace(System.out);
@@ -128,7 +128,7 @@ public class ConfigSyncIT extends BaseStartupIT {
     // the active is OK
     // the passive should restart fine
     try {
-      ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node." + shape.passiveId + ".tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed");
+      ConfigTool.start("set", "-s", "localhost:" + shape.passivePort, "-c", "stripe.1.node." + shape.passiveId + ".tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed");
       fail("Expected to throw exception");
     } catch (IllegalStateException e) {
       e.printStackTrace(System.out);
@@ -221,13 +221,17 @@ public class ConfigSyncIT extends BaseStartupIT {
     if (nodes[0].getServerState().isPassive()) {
       shape.passive = nodes[0];
       shape.passiveId = 1;
+      shape.passivePort = ports.getPorts()[0];
       shape.active = nodes[1];
       shape.activeId = 2;
+      shape.activePort = ports.getPorts()[2];
     } else {
       shape.passive = nodes[1];
       shape.passiveId = 2;
+      shape.passivePort = ports.getPorts()[2];
       shape.active = nodes[0];
       shape.activeId = 1;
+      shape.activePort = ports.getPorts()[0];
     }
     return shape;
   }
@@ -235,6 +239,10 @@ public class ConfigSyncIT extends BaseStartupIT {
   static class Shape {
     int activeId;
     int passiveId;
+
+    int activePort;
+    int passivePort;
+
     NodeProcess active;
     NodeProcess passive;
   }
