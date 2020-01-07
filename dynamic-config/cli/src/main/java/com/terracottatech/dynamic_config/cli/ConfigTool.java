@@ -15,6 +15,7 @@ import com.terracottatech.dynamic_config.cli.service.command.CheckCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
 import com.terracottatech.dynamic_config.cli.service.command.ExportCommand;
 import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
+import com.terracottatech.dynamic_config.cli.service.command.ImportCommand;
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
 import com.terracottatech.dynamic_config.cli.service.command.SetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.UnsetCommand;
@@ -66,6 +67,7 @@ public class ConfigTool {
                 new ActivateCommand(),
                 new AttachCommand(),
                 new DetachCommand(),
+                new ImportCommand(),
                 new ExportCommand(),
                 new GetCommand(),
                 new SetCommand(),
