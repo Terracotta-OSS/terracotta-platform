@@ -33,24 +33,24 @@ import java.util.Collection;
 import static com.terracottatech.utilities.Assertions.assertNonNull;
 import static java.lang.System.lineSeparator;
 
-@Parameters(commandNames = "activate", commandDescription = "Activate the cluster")
-@Usage("activate <-s HOST[:PORT] | -f CONFIG-PROPERTIES-FILE> -n CLUSTER-NAME -l LICENSE-FILE")
+@Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
+@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) -l <license-file> [-rwt]")
 public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "Config properties file", converter = PathConverter.class)
+  @Parameter(names = {"-f"}, description = "Configuration file", converter = PathConverter.class)
   private Path configPropertiesFile;
 
   @Parameter(names = {"-n"}, description = "Cluster name")
   private String clusterName;
 
-  @Parameter(required = true, names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
+  @Parameter(required = true, names = {"-l"}, description = "License file", converter = PathConverter.class)
   private Path licenseFile;
 
-  @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Restart wait time", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> restartWaitTime = Measure.of(1, TimeUnit.MINUTES);
+  @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
   private Cluster cluster;
   private Collection<InetSocketAddress> runtimePeers;

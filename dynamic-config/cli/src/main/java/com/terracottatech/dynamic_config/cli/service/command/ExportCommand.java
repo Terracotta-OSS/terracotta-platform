@@ -28,25 +28,25 @@ import java.util.Properties;
 
 import static java.lang.System.lineSeparator;
 
-@Parameters(commandNames = "export", commandDescription = "Export the cluster topology to the console or to a file")
-@Usage("export -s HOST[:PORT] [-o DESTINATION_FILE] [-x] [-r]")
+@Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
+@Usage("export -s <hostname[:port]> [-f <config-file>] [-x] [-r]")
 public class ExportCommand extends RemoteCommand {
 
   public enum Format {JSON, PROPERTIES}
 
-  @Parameter(names = {"-s"}, required = true, description = "Node to connect to for topology information", converter = InetSocketAddressConverter.class)
+  @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-o"}, description = "Destination file", converter = PathConverter.class)
+  @Parameter(names = {"-f"}, description = "Output configuration file", converter = PathConverter.class)
   private Path outputFile;
 
-  @Parameter(names = {"-x"}, description = "Exclude default values", converter = BooleanConverter.class)
+  @Parameter(names = {"-x"}, description = "Exclude default values. Default: false", converter = BooleanConverter.class)
   private boolean excludeDefaultValues;
 
-  @Parameter(names = {"-r"}, description = "Export runtime configuration instead of upcoming configuration persisted on disk", converter = BooleanConverter.class)
+  @Parameter(names = {"-r"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-f"}, hidden = true, description = "Output format", converter = FormatConverter.class)
+  @Parameter(names = {"-t"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = FormatConverter.class)
   private Format format = Format.PROPERTIES;
 
   @Override

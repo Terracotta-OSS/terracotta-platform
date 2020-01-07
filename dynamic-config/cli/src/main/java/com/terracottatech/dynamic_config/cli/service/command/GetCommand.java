@@ -16,11 +16,11 @@ import com.terracottatech.dynamic_config.model.Operation;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-@Parameters(commandNames = "get", commandDescription = "Display properties of nodes")
-@Usage("get -s HOST -c NAMESPACE1.PROPERTY1 [-c NAMESPACE2.PROPERTY2]... [-r]")
+@Parameters(commandNames = "get", commandDescription = "Read configuration properties")
+@Usage("get -s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
 public class GetCommand extends ConfigurationCommand {
 
-  @Parameter(names = {"-r"}, description = "Export runtime configuration instead of upcoming configuration persisted on disk", converter = BooleanConverter.class)
+  @Parameter(names = {"-r"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
   public GetCommand() {

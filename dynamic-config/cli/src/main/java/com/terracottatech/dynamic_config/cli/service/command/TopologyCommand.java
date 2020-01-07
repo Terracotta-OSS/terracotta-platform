@@ -44,13 +44,13 @@ public abstract class TopologyCommand extends RemoteCommand {
     }
   }
 
-  @Parameter(names = {"-t"}, description = "Type of attachment or detachment (default: node)", converter = TypeConverter.class)
+  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = TypeConverter.class)
   private Type type = Type.NODE;
 
-  @Parameter(required = true, names = {"-d"}, description = "Node of the destination stripe or cluster", converter = InetSocketAddressConverter.class)
+  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
   private InetSocketAddress destination;
 
-  @Parameter(required = true, names = {"-s"}, description = "Selected nodes", variableArity = true, converter = InetSocketAddressConverter.class)
+  @Parameter(required = true, names = {"-s"}, description = "Source nodes or stripes", variableArity = true, converter = InetSocketAddressConverter.class)
   private List<InetSocketAddress> sources = Collections.emptyList();
 
   @Override

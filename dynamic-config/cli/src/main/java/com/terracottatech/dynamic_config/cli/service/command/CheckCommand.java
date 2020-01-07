@@ -25,7 +25,7 @@ import static java.util.Objects.requireNonNull;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "check", commandDescription = "Check and repair a cluster configuration")
-@Usage("check -s HOST[:PORT]")
+@Usage("check -s <hostname[:port]>")
 public class CheckCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
@@ -115,10 +115,5 @@ public class CheckCommand extends RemoteCommand {
       }
     });
     logger.info(sb.toString());
-  }
-
-  CheckCommand setNode(InetSocketAddress node) {
-    this.node = node;
-    return this;
   }
 }

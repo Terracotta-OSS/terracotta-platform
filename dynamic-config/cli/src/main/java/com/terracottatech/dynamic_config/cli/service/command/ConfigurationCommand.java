@@ -22,7 +22,7 @@ public abstract class ConfigurationCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-c"}, description = "Config properties to be set", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
+  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
   List<Configuration> configurations;
 
   protected final Operation operation;

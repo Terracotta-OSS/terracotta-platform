@@ -52,35 +52,35 @@ public class AttachDetachCommandIT extends BaseStartupIT {
   public void test() {
     int[] ports = this.ports.getPorts();
 
-    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-o", "build/output.json", "-f", "json");
+    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-f", "build/output.json", "-t", "json");
     Cluster cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
 
     // add a node
     ConfigTool.start("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
-    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-o", "build/output.json", "-f", "json");
+    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-f", "build/output.json", "-t", "json");
     cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // add a stripe
     ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2], "-s", "localhost:" + ports[3]);
-    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-o", "build/output.json", "-f", "json");
+    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-f", "build/output.json", "-t", "json");
     cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getNodeAddresses(), hasSize(4));
 
     // remove the previously added stripe
     ConfigTool.start("detach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
-    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-o", "build/output.json", "-f", "json");
+    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-f", "build/output.json", "-t", "json");
     cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // remove the previously added node
     ConfigTool.start("detach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
-    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-o", "build/output.json", "-f", "json");
+    ConfigTool.start("export", "-s", "localhost:" + ports[0], "-f", "build/output.json", "-t", "json");
     cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));

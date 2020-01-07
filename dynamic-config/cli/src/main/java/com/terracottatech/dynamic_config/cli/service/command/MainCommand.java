@@ -21,19 +21,19 @@ import java.util.stream.Stream;
 public class MainCommand extends Command {
   public static final String NAME = "main";
 
-  @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode")
+  @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode. Default: false")
   private boolean verbose = false;
 
-  @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-t", "--connection-timeout"}, description = "Connection timeout", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-t", "--connection-timeout"}, description = "Connection timeout. Default: 30s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> connectionTimeout = Measure.of(30, TimeUnit.SECONDS);
 
   @Parameter(names = {"-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
 
-  @Parameter(names = {"-rd", "--restart-delay"}, description = "Restart delay", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-rd", "--restart-delay"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Override

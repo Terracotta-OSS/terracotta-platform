@@ -18,8 +18,8 @@ import java.util.Collection;
 
 import static com.terracottatech.dynamic_config.model.Setting.LICENSE_FILE;
 
-@Parameters(commandNames = "set", commandDescription = "Set properties in the cluster or in a node")
-@Usage("set -s HOST -c NAMESPACE1.PROPERTY1=VALUE1 [-c NAMESPACE2.PROPERTY2=VALUE2]...")
+@Parameters(commandNames = "set", commandDescription = "Set configuration properties")
+@Usage("set -s <hostname[:port]> -c <[namespace:]property=value>,<[namespace:]property=value>...")
 public class SetCommand extends ConfigurationMutationCommand {
 
   private Path licenseFile;

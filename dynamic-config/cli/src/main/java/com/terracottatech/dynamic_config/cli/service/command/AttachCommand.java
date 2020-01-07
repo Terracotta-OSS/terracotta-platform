@@ -21,8 +21,8 @@ import static java.util.stream.Collectors.joining;
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "attach", commandDescription = "Attach a node to an existing stripe or attach a node to a new stripe")
-@Usage("attach -t <node|stripe> -d HOST[:PORT] -s HOST1[:PORT1] [-s HOST2[:PORT2]]...")
+@Parameters(commandNames = "attach", commandDescription = "Attach a node to a destination stripe or attach a stripe to a destination cluster")
+@Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]>,<hostname[:port]>...")
 public class AttachCommand extends TopologyCommand {
   @Override
   protected Cluster updateTopology(NodeContext destination, List<Node> sources) {
