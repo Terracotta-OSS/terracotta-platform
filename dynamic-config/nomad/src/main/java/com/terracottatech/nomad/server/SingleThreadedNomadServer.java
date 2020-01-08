@@ -93,10 +93,10 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public boolean hasPreparedConfigurationChange() {
+  public boolean hasIncompleteChange() {
     lock.lock();
     try {
-      return underlying.hasPreparedConfigurationChange();
+      return underlying.hasIncompleteChange();
     } finally {
       lock.unlock();
     }

@@ -21,7 +21,7 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
 
   private final Map<InetSocketAddress, DiscoverResponse<T>> responses = new HashMap<>(0);
 
-  private volatile boolean discoverFailed;
+  private volatile String discoverFailure;
   private volatile boolean discoveredInconsistentCluster;
   private volatile boolean discoveredOtherClient;
 
@@ -40,7 +40,7 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
 
   @Override
   public void discoverFail(InetSocketAddress server, String reason) {
-    discoverFailed = true;
+    discoverFailure = reason;
   }
 
   @Override
@@ -63,8 +63,8 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
     return responses;
   }
 
-  public boolean hasDiscoverFailed() {
-    return discoverFailed;
+  public String getDiscoverFailure() {
+    return discoverFailure;
   }
 
   public boolean areAllAccepting() {

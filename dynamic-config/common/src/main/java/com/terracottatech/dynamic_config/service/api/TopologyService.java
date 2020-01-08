@@ -57,7 +57,7 @@ public interface TopologyService {
    * In this state, the nodes are currently within a Nomad transaction, or, a partial commit/rollback occured and the node
    * needs a check/repair
    */
-  boolean hasPreparedConfigurationChange();
+  boolean hasIncompleteChange();
 
   /**
    * Get the current installed license information if any

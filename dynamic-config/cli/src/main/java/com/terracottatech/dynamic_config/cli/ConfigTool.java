@@ -11,8 +11,8 @@ import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.cli.service.command.ActivateCommand;
 import com.terracottatech.dynamic_config.cli.service.command.AttachCommand;
-import com.terracottatech.dynamic_config.cli.service.command.CheckCommand;
 import com.terracottatech.dynamic_config.cli.service.command.DetachCommand;
+import com.terracottatech.dynamic_config.cli.service.command.DiagnosticCommand;
 import com.terracottatech.dynamic_config.cli.service.command.ExportCommand;
 import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.ImportCommand;
@@ -72,7 +72,7 @@ public class ConfigTool {
                 new GetCommand(),
                 new SetCommand(),
                 new UnsetCommand(),
-                new CheckCommand()
+                new DiagnosticCommand()
             )
         )
     );

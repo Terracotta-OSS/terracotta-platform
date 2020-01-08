@@ -81,10 +81,10 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final boolean hasPreparedConfigurationChange(InetSocketAddress expectedOnlineNode) {
+  protected final boolean hasIncompleteChange(InetSocketAddress expectedOnlineNode) {
     logger.trace("hasPreparedConfigurationChange({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
-      return diagnosticService.getProxy(TopologyService.class).hasPreparedConfigurationChange();
+      return diagnosticService.getProxy(TopologyService.class).hasIncompleteChange();
     }
   }
 

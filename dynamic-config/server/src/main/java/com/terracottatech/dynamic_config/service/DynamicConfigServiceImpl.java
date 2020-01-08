@@ -78,7 +78,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     clusterActivated = true;
     LOGGER.info("Node activation successful");
 
-    if (nomadServerManager.getNomadServer().hasPreparedConfigurationChange()) {
+    if (nomadServerManager.getNomadServer().hasIncompleteChange()) {
       LOGGER.error(lineSeparator() + lineSeparator()
           + "=======================================================================================================================================" + lineSeparator()
           + "The configuration of this node has not been committed or rolled back. Please run the check command to diagnose the configuration state." + lineSeparator()
@@ -194,8 +194,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public boolean hasPreparedConfigurationChange() {
-    return nomadServerManager.getNomadServer().hasPreparedConfigurationChange();
+  public boolean hasIncompleteChange() {
+    return nomadServerManager.getNomadServer().hasIncompleteChange();
   }
 
   @Override

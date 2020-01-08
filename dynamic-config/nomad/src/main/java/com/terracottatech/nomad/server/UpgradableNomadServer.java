@@ -11,5 +11,5 @@ public interface UpgradableNomadServer<T> extends NomadServer<T> {
 
   List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
 
-  boolean hasPreparedConfigurationChange();
+  boolean hasIncompleteChange();
 }

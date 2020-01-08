@@ -27,7 +27,7 @@ import static org.junit.Assert.assertThat;
  * @author Mathieu Carbou
  */
 @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
-public class CheckCommandIT extends BaseStartupIT {
+public class DiagnosticCommandIT extends BaseStartupIT {
 
   @Before
   public void setUp() throws Exception {
@@ -59,7 +59,7 @@ public class CheckCommandIT extends BaseStartupIT {
                 .and(containsString("Please run the check command to diagnose the configuration state.")))));
 
     out.clearLog();
-    ConfigTool.start("check", "-s", "localhost:" + ports.getPort());
+    ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort());
     waitedAssert(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
     waitedAssert(out::getLog, containsString("Configuration is repaired"));
 
@@ -90,7 +90,7 @@ public class CheckCommandIT extends BaseStartupIT {
     // repair the newly started server once (the simulated handler needs to repair after a restart - first one will fail)
     out.clearLog();
     assertThat(
-        () -> ConfigTool.start("check", "-s", "localhost:" + ports.getPort()),
+        () -> ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort()),
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
                 containsString("Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"))
@@ -99,7 +99,7 @@ public class CheckCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, not(containsString("Configuration is repaired.")));
 
     out.clearLog();
-    ConfigTool.start("check", "-s", "localhost:" + ports.getPort());
+    ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort());
     waitedAssert(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
     waitedAssert(out::getLog, containsString("Configuration is repaired"));
 

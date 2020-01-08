@@ -92,7 +92,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public boolean hasPreparedConfigurationChange() {
+  public boolean hasIncompleteChange() {
     if (!state.isInitialized()) {
       return false;
     }
