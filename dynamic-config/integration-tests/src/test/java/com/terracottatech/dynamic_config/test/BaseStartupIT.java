@@ -10,6 +10,7 @@ import com.terracottatech.dynamic_config.cli.ConfigTool;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
+import com.terracottatech.dynamic_config.test.util.Env;
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
@@ -128,15 +129,23 @@ public class BaseStartupIT {
   Path copyConfigProperty(String configFile) throws Exception {
     Path src = Paths.get(NewServerStartupScriptIT.class.getResource(configFile).toURI());
     Path dest = getBaseDir().resolve(src.getFileName());
-    Properties properties = new Properties();
+    Properties loaded = new Properties();
     try (Reader reader = new InputStreamReader(Files.newInputStream(src), StandardCharsets.UTF_8)) {
-      properties.load(reader);
+      loaded.load(reader);
     }
     Properties variables = variables();
-    properties = new PropertyResolver(variables).resolveAll(properties);
+    Properties resolved = new PropertyResolver(variables).resolveAll(loaded);
+    if (Env.isWindows()) {
+      // Convert all / to \\ for Windows.
+      // This assumes we only use / and \\ for paths in property values
+      resolved.stringPropertyNames()
+          .stream()
+          .filter(key -> resolved.getProperty(key).contains("/"))
+          .forEach(key -> resolved.setProperty(key, resolved.getProperty(key).replace("/", "\\")));
+    }
     Files.createDirectories(getBaseDir());
     try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
-      properties.store(writer, "");
+      resolved.store(writer, "");
     }
     return dest;
   }
