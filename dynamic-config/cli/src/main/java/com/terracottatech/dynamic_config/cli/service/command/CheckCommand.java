@@ -104,7 +104,7 @@ public class CheckCommand extends RemoteCommand {
       sb.append(" - Configuration prepared but not yet committed or rolled back: ").append(hasPreparedConfigurationChange(node)).append(lineSeparator());
       DiscoverResponse<NodeContext> discoverResponse = consistencyReceiver.getResponses().get(nodeAddress);
       if (discoverResponse != null) {
-        sb.append(" - Mode: ").append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "Ready to accept new change" : "Change accepted but commit is pending").append(lineSeparator());
+        sb.append(" - Mode: ").append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "Ready to accept new change" : "Change accepted but commit or rollback is pending").append(lineSeparator());
         sb.append(" - Current version: ").append(discoverResponse.getCurrentVersion()).append(lineSeparator());
         sb.append(" - Highest version: ").append(discoverResponse.getHighestVersion()).append(lineSeparator());
         sb.append(" - Last change state: ").append(discoverResponse.getLatestChange().getState()).append(lineSeparator());
