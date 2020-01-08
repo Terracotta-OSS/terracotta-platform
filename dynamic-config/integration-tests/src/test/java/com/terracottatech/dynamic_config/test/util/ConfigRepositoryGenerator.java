@@ -49,6 +49,10 @@ public class ConfigRepositoryGenerator {
     migrate(singletonList("1," + substituteParams(2, "/tc-configs/stripe1-2-nodes.xml")));
   }
 
+  public void generate1Stripe1NodeIpv6() {
+    migrate(singletonList("1," + substituteParams(1, "/tc-configs/stripe1-1-node_ipv6.xml")));
+  }
+
   public void generate1Stripe1Node() {
     migrate(singletonList("1," + substituteParams(1, "/tc-configs/stripe1-1-node.xml")));
   }

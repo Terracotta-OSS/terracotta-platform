@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.utilities.InetSocketAddressUtils;
 import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
@@ -352,8 +353,8 @@ public class Node implements Cloneable {
    * @return true if this node has this public or internal address
    */
   public boolean hasAddress(InetSocketAddress address) {
-    return address.equals(getNodeInternalAddress())
-        || getNodePublicAddress().map(address::equals).orElse(false);
+    return InetSocketAddressUtils.areEqual(address, getNodeInternalAddress()) ||
+        getNodePublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
   }
 
   @JsonIgnore

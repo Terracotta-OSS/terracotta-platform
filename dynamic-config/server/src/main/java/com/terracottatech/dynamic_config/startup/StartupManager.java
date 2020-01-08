@@ -19,12 +19,14 @@ import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.results.NomadFailureReceiver;
+import com.terracottatech.utilities.InetSocketAddressUtils;
 import com.terracottatech.utilities.PathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -101,10 +103,11 @@ public class StartupManager {
 
     String substitutedHost = parameterSubstitutor.substitute(isHostnameSpecified ? specifiedHostName : Setting.NODE_HOSTNAME.getDefaultValue());
     int port = Integer.parseInt(isPortSpecified ? specifiedPort : Setting.NODE_PORT.getDefaultValue());
+    InetSocketAddress specifiedSockAddr = InetSocketAddress.createUnresolved(substitutedHost, port);
 
     Collection<Node> allNodes = cluster.getNodes();
     Optional<Node> matchingNode = allNodes.stream()
-        .filter(node1 -> substitutedHost.equals(node1.getNodeHostname()) && node1.getNodePort() == port)
+        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getNodeInternalAddress(), specifiedSockAddr))
         .findAny();
 
     Node node;
