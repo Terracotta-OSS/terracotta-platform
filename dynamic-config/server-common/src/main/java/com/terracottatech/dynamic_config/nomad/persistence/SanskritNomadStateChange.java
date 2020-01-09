@@ -15,9 +15,11 @@ import com.terracottatech.persistence.sanskrit.SanskritObject;
 import com.terracottatech.persistence.sanskrit.change.SanskritChange;
 import com.terracottatech.persistence.sanskrit.change.SanskritChangeBuilder;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_HOST;
+import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_TIMESTAMP;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_USER;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_RESULT_HASH;
@@ -26,6 +28,7 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CURRENT_VERSION;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.HIGHEST_VERSION;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LAST_MUTATION_HOST;
+import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LAST_MUTATION_TIMESTAMP;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LAST_MUTATION_USER;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
@@ -87,6 +90,12 @@ public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   }
 
   @Override
+  public NomadStateChange<T> setLastMutationTimestamp(Instant lastMutationTimestamp) {
+    changeBuilder.setString(LAST_MUTATION_TIMESTAMP, lastMutationTimestamp.toString());
+    return this;
+  }
+
+  @Override
   public NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest) {
     changeVersion = changeRequest.getVersion();
     changeResult = changeRequest.getChangeResult();
@@ -102,6 +111,7 @@ public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
     child.setString(CHANGE_RESULT_HASH, resultHash);
     child.setString(CHANGE_CREATION_HOST, changeRequest.getCreationHost());
     child.setString(CHANGE_CREATION_USER, changeRequest.getCreationUser());
+    child.setString(CHANGE_CREATION_TIMESTAMP, changeRequest.getCreationTimestamp().toString());
 
     changeBuilder.setObject(changeUuid.toString(), child);
 

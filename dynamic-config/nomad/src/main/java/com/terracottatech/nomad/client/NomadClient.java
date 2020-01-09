@@ -12,19 +12,22 @@ import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.status.DiscoveryProcess;
 
+import java.time.Clock;
 import java.util.List;
 
 public class NomadClient<T> {
   private final List<NomadEndpoint<T>> servers;
   private final String host;
   private final String user;
+  private final Clock clock;
 
   /**
    * @param servers the set of servers to run the Nomad protocol across
    * @param host    the name of the local machine
    * @param user    the name of the user the current process is running as
    */
-  public NomadClient(List<NomadEndpoint<T>> servers, String host, String user) {
+  public NomadClient(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
+    this.clock = clock;
     if (servers.isEmpty()) {
       throw new IllegalArgumentException("There must be at least one server");
     }
@@ -35,17 +38,17 @@ public class NomadClient<T> {
   }
 
   public void tryApplyChange(ChangeResultReceiver<T> results, NomadChange change) {
-    ChangeProcess<T> changeProcess = new ChangeProcess<>(servers, host, user);
+    ChangeProcess<T> changeProcess = new ChangeProcess<>(servers, host, user, clock);
     changeProcess.applyChange(results, change);
   }
 
   public void tryRecovery(RecoveryResultReceiver<T> results) {
-    RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user);
+    RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user, clock);
     recoveryProcess.recover(results);
   }
 
   public void tryDiscovery(DiscoverResultsReceiver<T> results) {
-    DiscoveryProcess<T> discoveryProcess = new DiscoveryProcess<>(servers, host, user);
+    DiscoveryProcess<T> discoveryProcess = new DiscoveryProcess<>(servers, host, user, clock);
     discoveryProcess.discover(results);
   }
 }

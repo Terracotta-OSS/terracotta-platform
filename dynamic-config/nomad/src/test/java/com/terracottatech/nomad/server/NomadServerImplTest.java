@@ -13,6 +13,7 @@ import com.terracottatech.nomad.server.state.MemoryNomadServerState;
 import com.terracottatech.nomad.server.state.NomadServerState;
 import org.junit.Test;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,6 +68,7 @@ public class NomadServerImplTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         firstChangeUuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -76,6 +78,7 @@ public class NomadServerImplTest {
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
+        Clock.systemDefaultZone().instant(),
         firstChangeUuid
     ));
 
@@ -92,6 +95,7 @@ public class NomadServerImplTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         nextChangeUuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change1", "summary1")
@@ -101,6 +105,7 @@ public class NomadServerImplTest {
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
+        Clock.systemDefaultZone().instant(),
         nextChangeUuid
     ));
 

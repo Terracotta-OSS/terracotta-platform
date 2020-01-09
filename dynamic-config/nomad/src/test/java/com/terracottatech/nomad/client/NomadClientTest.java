@@ -6,11 +6,12 @@ package com.terracottatech.nomad.client;
 
 import org.junit.Test;
 
+import java.time.Clock;
 import java.util.Collections;
 
 public class NomadClientTest {
   @Test(expected = IllegalArgumentException.class)
   public void mustSpecifyServers() {
-    new NomadClient<>(Collections.emptyList(), "host", "user");
+    new NomadClient<>(Collections.emptyList(), "host", "user", Clock.systemUTC());
   }
 }

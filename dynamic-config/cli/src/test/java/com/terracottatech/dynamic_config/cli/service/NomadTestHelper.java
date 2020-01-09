@@ -10,6 +10,7 @@ import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -48,6 +49,7 @@ public class NomadTestHelper {
         mutativeMessageCount,
         "testMutationHost",
         "testMutationUser",
+        Instant.now(),
         1,
         1,
         new ChangeDetails<>(
@@ -57,7 +59,8 @@ public class NomadTestHelper {
             new SimpleNomadChange("testChange", "testSummary"),
             "testChangeResult",
             "testCreationHost",
-            "testCreationUser"
+            "testCreationUser",
+            Instant.now()
         )
     );
   }

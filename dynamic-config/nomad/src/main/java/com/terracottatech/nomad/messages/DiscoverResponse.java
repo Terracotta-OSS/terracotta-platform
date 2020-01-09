@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.terracottatech.nomad.server.NomadServerMode;
 
+import java.time.Instant;
+
 import static java.util.Objects.requireNonNull;
 
 public class DiscoverResponse<T> {
@@ -15,6 +17,7 @@ public class DiscoverResponse<T> {
   private final long mutativeMessageCount;
   private final String lastMutationHost;
   private final String lastMutationUser;
+  private final Instant lastMutationTimestamp;
   private final long currentVersion;
   private final long highestVersion;
   private ChangeDetails<T> latestChange;
@@ -24,6 +27,7 @@ public class DiscoverResponse<T> {
                           @JsonProperty(value = "mutativeMessageCount", required = true) long mutativeMessageCount,
                           @JsonProperty(value = "lastMutationHost") String lastMutationHost,
                           @JsonProperty(value = "lastMutationUser") String lastMutationUser,
+                          @JsonProperty(value = "lastMutationTimestamp") Instant lastMutationTimestamp,
                           @JsonProperty(value = "currentVersion", required = true) long currentVersion,
                           @JsonProperty(value = "highestVersion", required = true) long highestVersion,
                           @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange) {
@@ -31,6 +35,7 @@ public class DiscoverResponse<T> {
     this.mutativeMessageCount = mutativeMessageCount;
     this.lastMutationHost = lastMutationHost;
     this.lastMutationUser = lastMutationUser;
+    this.lastMutationTimestamp = lastMutationTimestamp;
     this.currentVersion = currentVersion;
     this.highestVersion = highestVersion;
     this.latestChange = latestChange;
@@ -50,6 +55,10 @@ public class DiscoverResponse<T> {
 
   public String getLastMutationUser() {
     return lastMutationUser;
+  }
+
+  public Instant getLastMutationTimestamp() {
+    return lastMutationTimestamp;
   }
 
   public long getCurrentVersion() {

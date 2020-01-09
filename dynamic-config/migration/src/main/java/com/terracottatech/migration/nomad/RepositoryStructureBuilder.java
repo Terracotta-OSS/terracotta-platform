@@ -28,6 +28,7 @@ import com.terracottatech.utilities.Tuple2;
 import org.w3c.dom.Node;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -59,7 +60,7 @@ public class RepositoryStructureBuilder {
         long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
         long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
 
-        PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), nomadRequestId,
+        PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), Instant.now(), nomadRequestId,
             nextVersionNumber, new ConfigMigrationNomadChange(nodeContext.getCluster()));
         AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
         if (!response.isAccepted()) {
@@ -67,7 +68,7 @@ public class RepositoryStructureBuilder {
         }
 
         long nextMutativeMessageCount = mutativeMessageCount + 1;
-        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, getHost(), getUser(), nomadRequestId);
+        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, getHost(), getUser(), Instant.now(), nomadRequestId);
         nomadServer.commit(commitMessage);
       } catch (RuntimeException e) {
         throw e;

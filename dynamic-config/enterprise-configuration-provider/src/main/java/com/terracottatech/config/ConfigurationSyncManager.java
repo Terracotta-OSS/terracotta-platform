@@ -91,7 +91,7 @@ class ConfigurationSyncManager {
   }
 
   private void sendPrepare(long mutativeMessageCount, UpgradableNomadServer<NodeContext> nomadServer, NomadChangeInfo nomadChangeInfo) throws NomadException {
-    PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getChangeUuid(),
+    PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid(),
         nomadChangeInfo.getVersion(), nomadChangeInfo.getNomadChange());
 
     AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
@@ -110,7 +110,7 @@ class ConfigurationSyncManager {
       case COMMITTED:
         sendPrepare(mutativeMessageCount, nomadServer, nomadChangeInfo);
         long nextMutativeMessageCount = mutativeMessageCount + 1;
-        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getChangeUuid());
+        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
 
         AcceptRejectResponse commitResponse = nomadServer.commit(commitMessage);
         if (!commitResponse.isAccepted()) {
@@ -122,7 +122,7 @@ class ConfigurationSyncManager {
       case ROLLED_BACK:
         sendPrepare(mutativeMessageCount, nomadServer, nomadChangeInfo);
         nextMutativeMessageCount = mutativeMessageCount + 1;
-        RollbackMessage rollbackMessage = new RollbackMessage(nextMutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getChangeUuid());
+        RollbackMessage rollbackMessage = new RollbackMessage(nextMutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
 
         AcceptRejectResponse rollbackResponse = nomadServer.rollback(rollbackMessage);
         if (!rollbackResponse.isAccepted()) {
@@ -145,7 +145,7 @@ class ConfigurationSyncManager {
 
     switch (nomadChangeInfo.getChangeRequestState()) {
       case COMMITTED: {
-        CommitMessage message = new CommitMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getChangeUuid());
+        CommitMessage message = new CommitMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
         AcceptRejectResponse response = nomadServer.commit(message);
         if (!response.isAccepted()) {
           throw new NomadConfigurationException("Unexpected commit failure. " +
@@ -155,7 +155,7 @@ class ConfigurationSyncManager {
         return true;
       }
       case ROLLED_BACK: {
-        RollbackMessage message = new RollbackMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getChangeUuid());
+        RollbackMessage message = new RollbackMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
         AcceptRejectResponse response = nomadServer.rollback(message);
         if (!response.isAccepted()) {
           throw new NomadConfigurationException("Unexpected rollback failure. " +

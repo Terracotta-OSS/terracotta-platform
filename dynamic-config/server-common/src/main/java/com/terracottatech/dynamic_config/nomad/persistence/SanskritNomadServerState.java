@@ -16,9 +16,11 @@ import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.SanskritObject;
 import com.terracottatech.persistence.sanskrit.change.SanskritChangeBuilder;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_HOST;
+import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_TIMESTAMP;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_USER;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_RESULT_HASH;
@@ -27,6 +29,7 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CURRENT_VERSION;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.HIGHEST_VERSION;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LAST_MUTATION_HOST;
+import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LAST_MUTATION_TIMESTAMP;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LAST_MUTATION_USER;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
@@ -75,6 +78,12 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
   }
 
   @Override
+  public Instant getLastMutationTimestamp() {
+    final String s = getString(LAST_MUTATION_TIMESTAMP);
+    return s == null ? null : Instant.parse(s);
+  }
+
+  @Override
   public UUID getLatestChangeUuid() {
     String uuidString = getString(LATEST_CHANGE_UUID);
     if (uuidString == null) {
@@ -105,17 +114,18 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
 
       ChangeRequestState state = ChangeRequestState.valueOf(child.getString(CHANGE_STATE));
       long version = child.getLong(CHANGE_VERSION);
-      NomadChange change = child.getExternal(CHANGE_OPERATION, NomadChange.class);
+      NomadChange change = child.getObject(CHANGE_OPERATION, NomadChange.class);
       String prevChangeUuid = child.getString(PREV_CHANGE_UUID);
       String expectedHash = child.getString(CHANGE_RESULT_HASH);
       String creationHost = child.getString(CHANGE_CREATION_HOST);
       String creationUser = child.getString(CHANGE_CREATION_USER);
+      Instant creationTimestamp = Instant.parse(child.getString(CHANGE_CREATION_TIMESTAMP));
 
       T newConfiguration = configStorage.getConfig(version);
       String actualHash = hashComputer.computeHash(newConfiguration);
       checkHash(changeUuid, actualHash, expectedHash);
 
-      return new ChangeRequest<>(state, version, prevChangeUuid, change, newConfiguration, creationHost, creationUser);
+      return new ChangeRequest<>(state, version, prevChangeUuid, change, newConfiguration, creationHost, creationUser, creationTimestamp);
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }

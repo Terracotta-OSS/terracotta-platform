@@ -326,8 +326,8 @@ public class SanskritTest {
       assertNull(object.getLong("subkey2"));
       assertEquals(2L, (long) object.getLong("subkey3"));
       assertEquals("overwrite", object.getString("key"));
-      assertEquals(tomato, object.getExternal("tomato", TestData.Tomato.class));
-      assertEquals(pepper, object.getExternal("pepper", TestData.Pepper.class));
+      assertEquals(tomato, object.getObject("tomato", TestData.Tomato.class));
+      assertEquals(pepper, object.getObject("pepper", TestData.Pepper.class));
       //System.out.println(getFileText("append.log"));
     }
   }

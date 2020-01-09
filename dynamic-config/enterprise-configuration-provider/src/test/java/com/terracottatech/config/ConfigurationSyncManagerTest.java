@@ -21,6 +21,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -37,12 +38,13 @@ import static org.mockito.Mockito.when;
 public class ConfigurationSyncManagerTest {
   @Rule
   public ExpectedException exceptionRule = ExpectedException.none();
+  private Instant now = Instant.now();
 
   @Test
   public void testCodec() {
     List<NomadChangeInfo> nomadChanges = new ArrayList<>();
-    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
-    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
 
     List<NomadChangeInfo> decodedChanges = decode(encode(nomadChanges));
     System.out.println(new String(encode(nomadChanges)));
@@ -54,7 +56,7 @@ public class ConfigurationSyncManagerTest {
   public void testSyncWhenPassiveHasMoreChanges() throws NomadException {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     UUID firstChange = UUID.randomUUID();
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
@@ -62,8 +64,8 @@ public class ConfigurationSyncManagerTest {
     byte[] active = activeSyncManager.getSyncData();
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
-    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
@@ -78,8 +80,8 @@ public class ConfigurationSyncManagerTest {
   @Test
   public void testSyncWhenPassiveChangeHistoryNotMatchWithActive() throws NomadException {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
@@ -87,7 +89,7 @@ public class ConfigurationSyncManagerTest {
     byte[] active = activeSyncManager.getSyncData();
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
-    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
@@ -103,8 +105,8 @@ public class ConfigurationSyncManagerTest {
   public void testSyncWhenActiveHasChangesWhichIsNotCommitted() throws NomadException {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     UUID firstChange = UUID.randomUUID();
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.PREPARED, 2L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.PREPARED, 2L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
@@ -112,7 +114,7 @@ public class ConfigurationSyncManagerTest {
     byte[] active = activeSyncManager.getSyncData();
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
@@ -130,8 +132,8 @@ public class ConfigurationSyncManagerTest {
   public void testForRestartWhenPassiveSyncDataFromActive() throws NomadException {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     UUID firstChange = UUID.randomUUID();
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
@@ -139,7 +141,7 @@ public class ConfigurationSyncManagerTest {
     byte[] active = activeSyncManager.getSyncData();
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
@@ -162,8 +164,8 @@ public class ConfigurationSyncManagerTest {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     UUID firstChange = UUID.randomUUID();
     UUID secondChange = UUID.randomUUID();
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
-    activeNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     ConfigurationSyncManager activeSyncManager = new ConfigurationSyncManager(activeNomadServer);
@@ -171,8 +173,8 @@ public class ConfigurationSyncManagerTest {
     byte[] active = activeSyncManager.getSyncData();
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM"));
-    passiveNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM"));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    passiveNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
     AcceptRejectResponse acceptRejectResponse = mock(AcceptRejectResponse.class);

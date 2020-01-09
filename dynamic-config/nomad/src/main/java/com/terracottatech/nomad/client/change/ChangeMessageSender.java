@@ -8,12 +8,13 @@ import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
 
 import java.net.InetSocketAddress;
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 
 public class ChangeMessageSender<T> extends NomadMessageSender<T> {
-  public ChangeMessageSender(List<NomadEndpoint<T>> servers, String host, String user) {
-    super(servers, host, user);
+  public ChangeMessageSender(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
+    super(servers, host, user, clock);
   }
 
   @Override

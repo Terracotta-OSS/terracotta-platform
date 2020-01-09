@@ -8,6 +8,7 @@ import com.terracottatech.nomad.server.ChangeRequest;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public interface NomadStateChange<T> {
@@ -24,6 +25,8 @@ public interface NomadStateChange<T> {
   NomadStateChange<T> setLastMutationHost(String lastMutationHost);
 
   NomadStateChange<T> setLastMutationUser(String lastMutationUser);
+
+  NomadStateChange<T> setLastMutationTimestamp(Instant timestamp);
 
   NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest);
 

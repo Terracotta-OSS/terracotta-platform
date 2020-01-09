@@ -98,8 +98,7 @@ public class ActivateCommand extends RemoteCommand {
     new ClusterValidator(cluster).validate();
 
     // verify the activated state of the nodes
-    boolean isClusterActive = areAllNodesActivated(runtimePeers);
-    if (isClusterActive) {
+    if (areAllNodesActivated(runtimePeers)) {
       throw new IllegalStateException("Cluster is already activated");
     }
   }

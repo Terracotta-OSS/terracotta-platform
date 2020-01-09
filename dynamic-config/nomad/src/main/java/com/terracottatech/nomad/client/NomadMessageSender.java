@@ -20,6 +20,8 @@ import com.terracottatech.nomad.messages.TakeoverMessage;
 import com.terracottatech.nomad.server.NomadException;
 
 import java.net.InetSocketAddress;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,6 +36,7 @@ import static java.util.stream.Collectors.toList;
 public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
   private final List<NomadEndpoint<T>> servers;
+  private final Clock clock;
   private final String host;
   private final String user;
   private final Map<InetSocketAddress, Long> mutativeMessageCounts = new ConcurrentHashMap<>();
@@ -42,10 +45,11 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   private final List<NomadEndpoint<T>> preparedServers = new CopyOnWriteArrayList<>();
   protected volatile UUID changeUuid;
 
-  public NomadMessageSender(List<NomadEndpoint<T>> servers, String host, String user) {
+  public NomadMessageSender(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
     this.host = host;
     this.user = user;
     this.servers = servers;
+    this.clock = clock;
   }
 
   public void sendDiscovers(DiscoverResultsReceiver<T> results) {
@@ -89,6 +93,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     results.startPrepare(changeUuid);
 
     long newVersionNumber = maxVersionNumber.get() + 1;
+    Instant now = clock.instant();
 
     for (NomadEndpoint<T> server : servers) {
       long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
@@ -98,6 +103,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                   mutativeMessageCount,
                   host,
                   user,
+                  now,
                   changeUuid,
                   newVersionNumber,
                   change
@@ -136,17 +142,22 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendCommits(CommitResultsReceiver results) {
     results.startCommit();
 
+    Instant now = clock.instant();
+
     for (NomadEndpoint<T> server : preparedServers) {
       long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
       runSync(
-          () -> server.commit(
-              new CommitMessage(
-                  mutativeMessageCount + 1,
-                  host,
-                  user,
-                  changeUuid
-              )
-          ),
+          () -> {
+            return server.commit(
+                new CommitMessage(
+                    mutativeMessageCount + 1,
+                    host,
+                    user,
+                    now,
+                    changeUuid
+                )
+            );
+          },
           response -> {
             if (response.isAccepted()) {
               results.committed(server.getAddress());
@@ -177,6 +188,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendRollbacks(RollbackResultsReceiver results) {
     results.startRollback();
 
+    Instant now = clock.instant();
+
     for (NomadEndpoint<T> server : preparedServers) {
       long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
       runSync(
@@ -185,6 +198,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                   mutativeMessageCount + 1,
                   host,
                   user,
+                  now,
                   changeUuid
               )
           ),
@@ -218,6 +232,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   public void sendTakeovers(TakeoverResultsReceiver results) {
     results.startTakeover();
 
+    Instant now = clock.instant();
+
     for (NomadEndpoint<T> server : servers) {
       long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
       runSync(
@@ -225,7 +241,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               new TakeoverMessage(
                   mutativeMessageCount,
                   host,
-                  user
+                  user,
+                  now
               )
           ),
           response -> {

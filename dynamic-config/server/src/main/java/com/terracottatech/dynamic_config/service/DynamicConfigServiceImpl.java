@@ -24,6 +24,8 @@ import com.terracottatech.nomad.messages.AcceptRejectResponse;
 import com.terracottatech.nomad.messages.CommitMessage;
 import com.terracottatech.nomad.messages.PrepareMessage;
 import com.terracottatech.nomad.messages.RollbackMessage;
+import com.terracottatech.nomad.server.NomadChangeInfo;
+import com.terracottatech.nomad.server.NomadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformService;
@@ -260,6 +262,15 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public synchronized Optional<License> getLicense() {
     return Optional.ofNullable(license);
+  }
+
+  @Override
+  public NomadChangeInfo[] getChangeHistory() {
+    try {
+      return nomadServerManager.getNomadServer().getAllNomadChanges().toArray(new NomadChangeInfo[0]);
+    } catch (NomadException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override

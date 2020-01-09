@@ -15,6 +15,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.time.Clock;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.client.Consistency.CONSISTENT;
@@ -348,7 +349,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   }
 
   private void runTest() {
-    NomadClient<String> client = new NomadClient<>(servers, "host", "user");
+    NomadClient<String> client = new NomadClient<>(servers, "host", "user", Clock.systemUTC());
     client.tryRecovery(results);
   }
 }

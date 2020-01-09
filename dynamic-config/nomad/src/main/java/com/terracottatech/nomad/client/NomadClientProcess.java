@@ -9,6 +9,7 @@ import com.terracottatech.nomad.client.results.CommitRollbackResultsReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.results.MuxAllResultsReceiver;
 
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,11 +17,13 @@ public abstract class NomadClientProcess<C, R> {
   protected final List<NomadEndpoint<R>> servers;
   protected final String host;
   protected final String user;
+  protected final Clock clock;
 
-  public NomadClientProcess(List<NomadEndpoint<R>> servers, String host, String user) {
+  public NomadClientProcess(List<NomadEndpoint<R>> servers, String host, String user, Clock clock) {
     this.servers = servers;
     this.host = host;
     this.user = user;
+    this.clock = clock;
   }
 
   protected abstract boolean act(AllResultsReceiver<R> results, NomadDecider<R> decider, NomadMessageSender<R> messageSender, C data);

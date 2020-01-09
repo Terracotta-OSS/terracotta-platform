@@ -12,6 +12,7 @@ import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class NomadClientFactory<T> {
   public CloseableNomadClient<T> createClient(Collection<InetSocketAddress> expectedOnlineNodes) {
     String host = environment.getHost();
     String user = environment.getUser();
+    Clock clock = environment.getClock();
 
     // connect and concurrently open a diagnostic connection
     DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes);
@@ -43,7 +45,7 @@ public class NomadClientFactory<T> {
             .get())
         .collect(toList());
 
-    NomadClient<T> client = new NomadClient<>(nomadEndpoints, host, user);
+    NomadClient<T> client = new NomadClient<>(nomadEndpoints, host, user, clock);
 
     return new CloseableNomadClient<>(client, diagnosticServices);
   }

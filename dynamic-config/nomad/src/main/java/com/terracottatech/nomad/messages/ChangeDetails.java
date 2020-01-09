@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.server.ChangeRequestState;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
@@ -23,6 +24,7 @@ public class ChangeDetails<T> {
   private final T result;
   private final String creationHost;
   private final String creationUser;
+  private final Instant creationTimestamp;
 
   @JsonCreator
   public ChangeDetails(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
@@ -31,7 +33,8 @@ public class ChangeDetails<T> {
                        @JsonProperty(value = "operation", required = true) NomadChange operation,
                        @JsonProperty(value = "result") T result,
                        @JsonProperty(value = "creationHost", required = true) String creationHost,
-                       @JsonProperty(value = "creationUser", required = true) String creationUser) {
+                       @JsonProperty(value = "creationUser", required = true) String creationUser,
+                       @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
     this.changeUuid = requireNonNull(changeUuid);
     this.state = requireNonNull(state);
     this.version = version;
@@ -39,6 +42,11 @@ public class ChangeDetails<T> {
     this.result = result;
     this.creationHost = requireNonNull(creationHost);
     this.creationUser = requireNonNull(creationUser);
+    this.creationTimestamp = creationTimestamp;
+  }
+
+  public Instant getCreationTimestamp() {
+    return creationTimestamp;
   }
 
   public UUID getChangeUuid() {

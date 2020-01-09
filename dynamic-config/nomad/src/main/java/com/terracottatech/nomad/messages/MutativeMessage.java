@@ -7,20 +7,25 @@ package com.terracottatech.nomad.messages;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.Instant;
+
 import static java.util.Objects.requireNonNull;
 
 public abstract class MutativeMessage {
   private final long expectedMutativeMessageCount;
   private final String mutationHost;
   private final String mutationUser;
+  private Instant mutationTimestamp;
 
   @JsonCreator
   MutativeMessage(@JsonProperty(value = "expectedMutativeMessageCount", required = true) long expectedMutativeMessageCount,
                   @JsonProperty(value = "mutationHost", required = true) String mutationHost,
-                  @JsonProperty(value = "mutationUser", required = true) String mutationUser) {
+                  @JsonProperty(value = "mutationUser", required = true) String mutationUser,
+                  @JsonProperty(value = "mutationTimestamp", required = true) Instant mutationTimestamp) {
     this.expectedMutativeMessageCount = expectedMutativeMessageCount;
     this.mutationHost = requireNonNull(mutationHost);
     this.mutationUser = requireNonNull(mutationUser);
+    this.mutationTimestamp = mutationTimestamp;
   }
 
   public long getExpectedMutativeMessageCount() {
@@ -33,5 +38,9 @@ public abstract class MutativeMessage {
 
   public String getMutationUser() {
     return mutationUser;
+  }
+
+  public Instant getMutationTimestamp() {
+    return mutationTimestamp;
   }
 }

@@ -23,6 +23,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
@@ -33,9 +34,9 @@ import static com.terracottatech.nomad.server.NomadServerMode.PREPARED;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,6 +52,7 @@ public class SanskritNomadServerStateTest {
   private ArgumentCaptor<SanskritChange> sanskritChangeCaptor;
 
   private SanskritNomadServerState<String> state;
+  private Instant now = Instant.now();
 
   @Before
   public void before() {
@@ -121,6 +123,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setString("changeResultHash", "c2c9b194778150614a8a1b127842fc6f42b1a5f4");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
+    changeObject.setString("creationTimestamp", now.toString());
     changeObject.setString("summary", "description");
 
     when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
@@ -135,6 +138,7 @@ public class SanskritNomadServerStateTest {
     assertEquals("config", changeRequest.getChangeResult());
     assertEquals("host", changeRequest.getCreationHost());
     assertEquals("user", changeRequest.getCreationUser());
+    assertEquals(now, changeRequest.getCreationTimestamp());
     assertNull(changeRequest.getPrevChangeId());
     assertEquals("set offheap-resources.primary-server-resource=2GB", change.getSummary());
   }
@@ -153,6 +157,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setString("changeResultHash", "c2c9b194778150614a8a1b127842fc6f42b1a5f4");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
+    changeObject.setString("creationTimestamp", now.toString());
     changeObject.setString("summary", "description");
 
     when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
@@ -167,6 +172,7 @@ public class SanskritNomadServerStateTest {
     assertEquals("config", changeRequest.getChangeResult());
     assertEquals("host", changeRequest.getCreationHost());
     assertEquals("user", changeRequest.getCreationUser());
+    assertEquals(now, changeRequest.getCreationTimestamp());
     assertEquals(prevuuid.toString(), changeRequest.getPrevChangeId());
     assertEquals("set offheap-resources.primary-server-resource=2GB", change.getSummary());
   }
@@ -194,7 +200,8 @@ public class SanskritNomadServerStateTest {
         settingNomadChange,
         "config",
         "host1",
-        "user1"
+        "user1",
+        now
     );
 
     state.applyStateChange(state.newStateChange()
@@ -204,6 +211,7 @@ public class SanskritNomadServerStateTest {
         .setHighestVersion(3L)
         .setLastMutationHost("host2")
         .setLastMutationUser("user2")
+        .setLastMutationTimestamp(now)
         .createChange(uuid, changeRequest)
     );
 
@@ -220,14 +228,16 @@ public class SanskritNomadServerStateTest {
     assertThat(sanskritChangeValues.getLong("highestVersion"), is(3L));
     assertThat(sanskritChangeValues.getString("lastMutationHost"), is("host2"));
     assertThat(sanskritChangeValues.getString("lastMutationUser"), is("user2"));
+    assertThat(sanskritChangeValues.getString("lastMutationTimestamp"), is(now.toString()));
 
     SanskritObject changeDetails = sanskritChangeValues.getObject(uuid.toString());
     assertThat(changeDetails.getString("state"), is("COMMITTED"));
     assertThat(changeDetails.getLong("version"), is(4L));
-    assertThat(changeDetails.getExternal("operation", NomadChange.class), is(settingNomadChange));
+    assertThat(changeDetails.getObject("operation", NomadChange.class), is(settingNomadChange));
     assertThat(changeDetails.getString("changeResultHash"), is("c2c9b194778150614a8a1b127842fc6f42b1a5f4"));
     assertThat(changeDetails.getString("creationHost"), is("host1"));
     assertThat(changeDetails.getString("creationUser"), is("user1"));
+    assertThat(changeDetails.getString("creationTimestamp"), is(now.toString()));
 
     verify(configStorage).saveConfig(4L, "config");
   }

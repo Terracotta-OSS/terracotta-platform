@@ -9,6 +9,7 @@ public interface NomadSanskritKeys {
   String MUTATIVE_MESSAGE_COUNT = "mutativeMessageCount";
   String LAST_MUTATION_HOST = "lastMutationHost";
   String LAST_MUTATION_USER = "lastMutationUser";
+  String LAST_MUTATION_TIMESTAMP = "lastMutationTimestamp";
   String LATEST_CHANGE_UUID = "latestChangeUuid";
   String CURRENT_VERSION = "currentVersion";
   String HIGHEST_VERSION = "highestVersion";
@@ -18,5 +19,6 @@ public interface NomadSanskritKeys {
   String CHANGE_RESULT_HASH = "changeResultHash";
   String CHANGE_CREATION_HOST = "creationHost";
   String CHANGE_CREATION_USER = "creationUser";
+  String CHANGE_CREATION_TIMESTAMP = "creationTimestamp";
   String PREV_CHANGE_UUID = "prevChangeUuid";
 }

@@ -12,21 +12,22 @@ import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 
+import java.time.Clock;
 import java.util.List;
 
 /**
  * @author Mathieu Carbou
  */
 public class DiscoveryProcess<T> extends NomadClientProcess<NomadChange, T> {
-  public DiscoveryProcess(List<NomadEndpoint<T>> servers, String host, String user) {
-    super(servers, host, user);
+  public DiscoveryProcess(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
+    super(servers, host, user, clock);
   }
 
   public void discover(DiscoverResultsReceiver<T> results) {
     runProcess(
         new DiscoveryAllResultsReceiverAdapter<>(results),
         new DiscoveryProcessDecider<>(),
-        new DiscoveryMessageSender<>(servers, host, user),
+        new DiscoveryMessageSender<>(servers, host, user, clock),
         null
     );
   }

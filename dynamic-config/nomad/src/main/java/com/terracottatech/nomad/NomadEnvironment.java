@@ -6,6 +6,7 @@ package com.terracottatech.nomad;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Clock;
 
 public class NomadEnvironment {
   private static final String USER_NAME_PROPERTY = "user.name";
@@ -21,5 +22,9 @@ public class NomadEnvironment {
 
   public String getUser() {
     return System.getProperty(USER_NAME_PROPERTY, UNKNOWN);
+  }
+
+  public Clock getClock() {
+    return Clock.systemUTC();
   }
 }

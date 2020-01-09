@@ -9,6 +9,7 @@ import com.terracottatech.nomad.server.ChangeRequest;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import static com.terracottatech.nomad.server.state.StateKeys.CURRENT_VERSION;
 import static com.terracottatech.nomad.server.state.StateKeys.HIGHEST_VERSION;
 import static com.terracottatech.nomad.server.state.StateKeys.INITIALIZED;
 import static com.terracottatech.nomad.server.state.StateKeys.LAST_MUTATION_HOST;
+import static com.terracottatech.nomad.server.state.StateKeys.LAST_MUTATION_TIMESTAMP;
 import static com.terracottatech.nomad.server.state.StateKeys.LAST_MUTATION_USER;
 import static com.terracottatech.nomad.server.state.StateKeys.LATEST_CHANGE_UUID;
 import static com.terracottatech.nomad.server.state.StateKeys.MODE;
@@ -84,6 +86,12 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
   }
 
   @Override
+  public Instant getLastMutationTimestamp() {
+    final String s = (String) state.get(LAST_MUTATION_TIMESTAMP);
+    return s == null ? null : Instant.parse(s);
+  }
+
+  @Override
   public UUID getLatestChangeUuid() {
     String latestChangeUuid = (String) state.get(LATEST_CHANGE_UUID);
 
@@ -118,9 +126,10 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
     NomadChange change = (NomadChange) changeRequestState.get(StateKeys.CHANGE);
     String creationHost = (String) changeRequestState.get(StateKeys.CREATION_HOST);
     String creationUser = (String) changeRequestState.get(StateKeys.CREATION_USER);
+    Instant creationTimestamp = (Instant) changeRequestState.get(StateKeys.CREATION_TIMESTAMP);
     String prevChangeUuid = (String) changeRequestState.get(StateKeys.PREV_CHANGE_UUID);
     T changeResult = (T) state.get(Long.toString(version));
 
-    return new ChangeRequest<>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser);
+    return new ChangeRequest<>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp);
   }
 }

@@ -15,6 +15,9 @@ import com.terracottatech.nomad.server.NomadServerMode;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 
 import java.net.InetSocketAddress;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
@@ -71,8 +74,6 @@ public class DiagnosticCommand extends RemoteCommand {
       ConsistencyReceiver<NodeContext> newConsistencyReceiver = getNomadConsistency(onlineNodes);
       printCheck(newConsistencyReceiver);
     }
-
-    logger.info("Command successful!" + lineSeparator());
   }
 
   private void printCheck(ConsistencyReceiver<NodeContext> consistencyReceiver) {
@@ -81,6 +82,7 @@ public class DiagnosticCommand extends RemoteCommand {
     sb.append(lineSeparator());
 
     sb.append("Diagnostic result:")
+        .append(lineSeparator())
         .append(lineSeparator());
 
     sb.append("[Cluster]")
@@ -100,6 +102,10 @@ public class DiagnosticCommand extends RemoteCommand {
             "NO" :
             ("YES (Host: " + consistencyReceiver.getOtherClientHost() + ", By: " + consistencyReceiver.getOtherClientUser() + ", On: " + consistencyReceiver.getServerProcessingOtherClient() + ")"))
         .append(lineSeparator());
+
+    Clock clock = Clock.systemDefaultZone();
+    ZoneId zoneId = clock.getZone();
+    DateTimeFormatter ISO_8601 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     getUpcomingCluster(node).getNodes().forEach(n -> {
       InetSocketAddress nodeAddress = n.getNodeAddress();
@@ -135,11 +141,23 @@ public class DiagnosticCommand extends RemoteCommand {
         sb.append(" - Node last configuration state: ")
             .append(discoverResponse.getLatestChange().getState())
             .append(lineSeparator());
-        sb.append(" - Node last configuration changed from: ")
+        sb.append(" - Node last configuration created at: ")
+            .append(discoverResponse.getLatestChange().getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601))
+            .append(lineSeparator());
+        sb.append(" - Node last configuration created from: ")
             .append(discoverResponse.getLatestChange().getCreationHost())
             .append(lineSeparator());
-        sb.append(" - Node last configuration changed by: ")
+        sb.append(" - Node last configuration created by: ")
             .append(discoverResponse.getLatestChange().getCreationUser())
+            .append(lineSeparator());
+        sb.append(" - Node last configuration mutated at: ")
+            .append(discoverResponse.getLastMutationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601))
+            .append(lineSeparator());
+        sb.append(" - Node last configuration mutated from: ")
+            .append(discoverResponse.getLastMutationHost())
+            .append(lineSeparator());
+        sb.append(" - Node last configuration mutated by: ")
+            .append(discoverResponse.getLastMutationUser())
             .append(lineSeparator());
         sb.append(" - Node last configuration change details: ")
             .append(discoverResponse.getLatestChange().getOperation().getSummary())

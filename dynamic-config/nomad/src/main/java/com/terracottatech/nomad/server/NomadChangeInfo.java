@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.terracottatech.nomad.client.change.NomadChange;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -18,6 +19,7 @@ public class NomadChangeInfo {
   private final long version;
   private final String creationHost;
   private final String creationUser;
+  private final Instant creationTimestamp;
 
   @JsonCreator
   public NomadChangeInfo(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
@@ -25,13 +27,19 @@ public class NomadChangeInfo {
                          @JsonProperty(value = "changeRequestState", required = true) ChangeRequestState changeRequestState,
                          @JsonProperty(value = "version", required = true) long version,
                          @JsonProperty(value = "creationHost", required = true) String creationHost,
-                         @JsonProperty(value = "creationUser", required = true) String creationUser) {
+                         @JsonProperty(value = "creationUser", required = true) String creationUser,
+                         @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
     this.changeUuid = changeUuid;
     this.nomadChange = nomadChange;
     this.changeRequestState = changeRequestState;
     this.version = version;
     this.creationHost = creationHost;
     this.creationUser = creationUser;
+    this.creationTimestamp = creationTimestamp;
+  }
+
+  public Instant getCreationTimestamp() {
+    return creationTimestamp;
   }
 
   public UUID getChangeUuid() {
@@ -68,12 +76,13 @@ public class NomadChangeInfo {
         Objects.equals(nomadChange, that.nomadChange) &&
         changeRequestState == that.changeRequestState &&
         Objects.equals(creationHost, that.creationHost) &&
-        Objects.equals(creationUser, that.creationUser);
+        Objects.equals(creationUser, that.creationUser) &&
+        Objects.equals(creationTimestamp, that.creationTimestamp);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser);
+    return Objects.hash(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp);
   }
 
   @Override
@@ -85,6 +94,7 @@ public class NomadChangeInfo {
         ", version=" + version +
         ", creationHost=" + creationHost +
         ", creationUser=" + creationUser +
+        ", creationTimestamp=" + creationTimestamp +
         '}';
   }
 }

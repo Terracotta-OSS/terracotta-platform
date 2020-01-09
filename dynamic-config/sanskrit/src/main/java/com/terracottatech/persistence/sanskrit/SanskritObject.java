@@ -10,7 +10,7 @@ package com.terracottatech.persistence.sanskrit;
 public interface SanskritObject {
   void accept(SanskritVisitor visitor);
 
-  <T> T getExternal(String key, Class<T> type);
+  <T> T getObject(String key, Class<T> type);
 
   String getString(String key);
 

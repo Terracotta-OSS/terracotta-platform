@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.service.api;
 import com.tc.classloader.CommonComponent;
 import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.nomad.server.NomadChangeInfo;
 
 import java.util.Optional;
 
@@ -63,4 +64,9 @@ public interface TopologyService {
    * Get the current installed license information if any
    */
   Optional<License> getLicense();
+
+  /**
+   * @return the append log change history
+   */
+  NomadChangeInfo[] getChangeHistory();
 }

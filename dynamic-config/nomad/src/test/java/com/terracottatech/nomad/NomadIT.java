@@ -29,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -92,7 +93,7 @@ public class NomadIT {
     NomadEndpoint<String> server3 = new NomadEndpoint<>(address3, serverImpl3);
 
     servers = new ArrayList<>(Arrays.asList(server1, server2, server3));
-    client = new NomadClient<>(servers, "host", "user");
+    client = new NomadClient<>(servers, "host", "user", Clock.systemUTC());
   }
 
   @After

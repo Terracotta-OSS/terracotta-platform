@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -147,7 +148,7 @@ public class StartupManager {
 
   private void runNomadChange(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
     requireNonNull(nodeRepositoryDir);
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), node.getNodeHostname(), "SYSTEM");
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), node.getNodeHostname(), "SYSTEM", Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrow();

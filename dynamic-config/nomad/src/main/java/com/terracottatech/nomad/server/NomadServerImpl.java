@@ -19,6 +19,7 @@ import com.terracottatech.nomad.server.state.NomadStateChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -79,7 +80,8 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
               changeRequest.getState(),
               changeRequest.getVersion(),
               changeRequest.getCreationHost(),
-              changeRequest.getCreationUser()
+              changeRequest.getCreationUser(),
+              changeRequest.getCreationTimestamp()
           )
       );
       if (changeRequest.getPrevChangeId() != null) {
@@ -116,6 +118,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     long mutativeMessageCount = state.getMutativeMessageCount();
     String lastMutationHost = state.getLastMutationHost();
     String lastMutationUser = state.getLastMutationUser();
+    Instant lastMutationTimestamp = state.getLastMutationTimestamp();
     long currentVersion = state.getCurrentVersion();
     long highestVersion = state.getHighestVersion();
     UUID latestChangeUuid = state.getLatestChangeUuid();
@@ -129,6 +132,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       T changeResult = changeRequest.getChangeResult();
       String changeCreationHost = changeRequest.getCreationHost();
       String changeCreationUser = changeRequest.getCreationUser();
+      Instant changeCreationTimestamp = changeRequest.getCreationTimestamp();
 
       latestChange = new ChangeDetails<>(
           latestChangeUuid,
@@ -137,7 +141,8 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
           change,
           changeResult,
           changeCreationHost,
-          changeCreationUser
+          changeCreationUser,
+          changeCreationTimestamp
       );
     }
 
@@ -146,6 +151,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
         mutativeMessageCount,
         lastMutationHost,
         lastMutationUser,
+        lastMutationTimestamp,
         currentVersion,
         highestVersion,
         latestChange
@@ -189,12 +195,13 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     T newConfiguration = result.getNewConfiguration();
     String mutationHost = message.getMutationHost();
     String mutationUser = message.getMutationUser();
+    Instant mutationTimestamp = message.getMutationTimestamp();
     UUID prevChangeUuid = state.getLatestChangeUuid();
     String prevChangeId = null;
     if (prevChangeUuid != null) {
       prevChangeId = prevChangeUuid.toString();
     }
-    ChangeRequest<T> changeRequest = new ChangeRequest<>(ChangeRequestState.PREPARED, versionNumber, prevChangeId, change, newConfiguration, mutationHost, mutationUser);
+    ChangeRequest<T> changeRequest = new ChangeRequest<>(ChangeRequestState.PREPARED, versionNumber, prevChangeId, change, newConfiguration, mutationHost, mutationUser, mutationTimestamp);
 
     applyStateChange(state.newStateChange()
         .setMode(NomadServerMode.PREPARED)
@@ -202,6 +209,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
         .setHighestVersion(versionNumber)
         .setLastMutationHost(mutationHost)
         .setLastMutationUser(mutationUser)
+        .setLastMutationTimestamp(mutationTimestamp)
         .createChange(changeUuid, changeRequest)
     );
 
@@ -224,6 +232,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     UUID changeUuid = message.getChangeUuid();
     String mutationHost = message.getMutationHost();
     String mutationUser = message.getMutationUser();
+    Instant mutationTimestamp = message.getMutationTimestamp();
 
     ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
     if (changeRequest == null) {
@@ -242,6 +251,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
         .setCurrentVersion(changeVersion)
         .setLastMutationHost(mutationHost)
         .setLastMutationUser(mutationUser)
+        .setLastMutationTimestamp(mutationTimestamp)
         .updateChangeRequestState(changeUuid, COMMITTED)
     );
 
@@ -260,11 +270,13 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     UUID changeUuid = message.getChangeUuid();
     String mutationHost = message.getMutationHost();
     String mutationUser = message.getMutationUser();
+    Instant mutationTimestamp = message.getMutationTimestamp();
 
     applyStateChange(state.newStateChange()
         .setMode(NomadServerMode.ACCEPTING)
         .setLastMutationHost(mutationHost)
         .setLastMutationUser(mutationUser)
+        .setLastMutationTimestamp(mutationTimestamp)
         .updateChangeRequestState(changeUuid, ROLLED_BACK)
     );
 
@@ -278,10 +290,12 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
     String mutationHost = message.getMutationHost();
     String mutationUser = message.getMutationUser();
+    Instant mutationTimestamp = message.getMutationTimestamp();
 
     applyStateChange(state.newStateChange()
         .setLastMutationHost(mutationHost)
         .setLastMutationUser(mutationUser)
+        .setLastMutationTimestamp(mutationTimestamp)
     );
 
     return accept();

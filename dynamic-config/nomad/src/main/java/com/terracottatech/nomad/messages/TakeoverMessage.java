@@ -7,11 +7,14 @@ package com.terracottatech.nomad.messages;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.Instant;
+
 public class TakeoverMessage extends MutativeMessage {
   @JsonCreator
   public TakeoverMessage(@JsonProperty(value = "expectedMutativeMessageCount", required = true) long expectedMutativeMessageCount,
                          @JsonProperty(value = "mutationHost", required = true) String mutationHost,
-                         @JsonProperty(value = "mutationUser", required = true) String mutationUser) {
-    super(expectedMutativeMessageCount, mutationHost, mutationUser);
+                         @JsonProperty(value = "mutationUser", required = true) String mutationUser,
+                         @JsonProperty(value = "mutationTimestamp", required = true) Instant mutationTimestamp) {
+    super(expectedMutativeMessageCount, mutationHost, mutationUser, mutationTimestamp);
   }
 }

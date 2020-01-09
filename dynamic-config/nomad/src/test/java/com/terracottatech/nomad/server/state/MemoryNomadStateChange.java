@@ -8,6 +8,7 @@ import com.terracottatech.nomad.server.ChangeRequest;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -68,6 +69,12 @@ public class MemoryNomadStateChange<T> implements NomadStateChange<T> {
   }
 
   @Override
+  public NomadStateChange<T> setLastMutationTimestamp(Instant lastMutationTimestamp) {
+    changes.put(StateKeys.LAST_MUTATION_TIMESTAMP, lastMutationTimestamp.toString());
+    return this;
+  }
+
+  @Override
   public NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest) {
     long version = changeRequest.getVersion();
 
@@ -80,6 +87,7 @@ public class MemoryNomadStateChange<T> implements NomadStateChange<T> {
     changeRequestState.put(StateKeys.CHANGE, changeRequest.getChange());
     changeRequestState.put(StateKeys.CREATION_HOST, changeRequest.getCreationHost());
     changeRequestState.put(StateKeys.CREATION_USER, changeRequest.getCreationUser());
+    changeRequestState.put(StateKeys.CREATION_TIMESTAMP, changeRequest.getCreationTimestamp());
 
     changes.put(changeUuid.toString(), changeRequestState);
     changes.put(Long.toString(version), changeRequest.getChangeResult());

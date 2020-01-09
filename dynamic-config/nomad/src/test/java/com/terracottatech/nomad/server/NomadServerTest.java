@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Clock;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.messages.RejectionReason.DEAD;
@@ -79,6 +80,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost",
         "testuser",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -101,6 +103,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -110,6 +113,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
+        Clock.systemDefaultZone().instant(),
         uuid
     ));
 
@@ -131,6 +135,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -140,6 +145,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
+        Clock.systemDefaultZone().instant(),
         uuid
     ));
 
@@ -160,6 +166,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -168,7 +175,8 @@ public class NomadServerTest {
     AcceptRejectResponse response = server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
-        "testuser2"
+        "testuser2",
+        Clock.systemDefaultZone().instant()
     ));
 
     assertTrue(response.isAccepted());
@@ -183,7 +191,8 @@ public class NomadServerTest {
     AcceptRejectResponse response = server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
-        "testuser1"
+        "testuser1",
+        Clock.systemDefaultZone().instant()
     ));
 
     assertTrue(response.isAccepted());
@@ -197,7 +206,8 @@ public class NomadServerTest {
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
-        "testuser1"
+        "testuser1",
+        Clock.systemDefaultZone().instant()
     ));
 
     UUID uuid = UUID.randomUUID();
@@ -206,6 +216,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost2",
         "testuser2",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -235,6 +246,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -243,14 +255,15 @@ public class NomadServerTest {
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost1",
-        "testuser1"
+        "testuser1",
+        Clock.systemDefaultZone().instant()
     ));
 
     AcceptRejectResponse response = server.commit(new CommitMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
-        uuid
+        Clock.systemDefaultZone().instant(), uuid
     ));
 
     assertRejection(response, DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount", "testhost1", "testuser1");
@@ -270,6 +283,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -278,14 +292,15 @@ public class NomadServerTest {
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost1",
-        "testuser1"
+        "testuser1",
+        Clock.systemDefaultZone().instant()
     ));
 
     AcceptRejectResponse response = server.rollback(new RollbackMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
-        uuid
+        Clock.systemDefaultZone().instant(), uuid
     ));
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
@@ -305,6 +320,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -313,13 +329,15 @@ public class NomadServerTest {
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost1",
-        "testuser1"
+        "testuser1",
+        Clock.systemDefaultZone().instant()
     ));
 
     AcceptRejectResponse response = server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
-        "testuser2"
+        "testuser2",
+        Clock.systemDefaultZone().instant()
     ));
 
     assertRejection(response, DEAD, null, "testhost1", "testuser1");
@@ -339,6 +357,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost",
         "testuser",
+        Clock.systemDefaultZone().instant(),
         uuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -361,6 +380,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         firstChangeUuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
@@ -370,6 +390,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
+        Clock.systemDefaultZone().instant(),
         firstChangeUuid
     ));
 
@@ -387,6 +408,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
         "testuser1",
+        Clock.systemDefaultZone().instant(),
         nextChangeUuid,
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change1", "summary1")
@@ -396,6 +418,7 @@ public class NomadServerTest {
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
         "testuser2",
+        Clock.systemDefaultZone().instant(),
         nextChangeUuid
     ));
 

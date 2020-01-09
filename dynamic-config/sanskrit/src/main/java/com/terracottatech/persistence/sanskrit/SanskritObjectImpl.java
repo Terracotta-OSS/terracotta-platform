@@ -72,7 +72,7 @@ public class SanskritObjectImpl implements MutableSanskritObject {
   }
 
   @Override
-  public <T> T getExternal(String key, Class<T> type) {
+  public <T> T getObject(String key, Class<T> type) {
     JsonNode jsonNode = mappings.get(key);
     if (jsonNode == null) {
       return null;

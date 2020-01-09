@@ -10,19 +10,20 @@ import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 
 public class ChangeProcess<T> extends NomadClientProcess<NomadChange, T> {
-  public ChangeProcess(List<NomadEndpoint<T>> servers, String host, String user) {
-    super(servers, host, user);
+  public ChangeProcess(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
+    super(servers, host, user, clock);
   }
 
   public void applyChange(ChangeResultReceiver<T> results, NomadChange change) {
     runProcess(
         new ChangeAllResultsReceiverAdapter<>(results),
         new ChangeProcessDecider<>(),
-        new ChangeMessageSender<>(servers, host, user),
+        new ChangeMessageSender<>(servers, host, user, clock),
         change
     );
   }

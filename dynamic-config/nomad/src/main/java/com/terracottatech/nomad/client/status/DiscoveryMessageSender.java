@@ -12,6 +12,7 @@ import com.terracottatech.nomad.client.results.PrepareResultsReceiver;
 import com.terracottatech.nomad.client.results.RollbackResultsReceiver;
 import com.terracottatech.nomad.client.results.TakeoverResultsReceiver;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,8 +20,8 @@ import java.util.UUID;
  * @author Mathieu Carbou
  */
 public class DiscoveryMessageSender<T> extends NomadMessageSender<T> {
-  public DiscoveryMessageSender(List<NomadEndpoint<T>> servers, String host, String user) {
-    super(servers, host, user);
+  public DiscoveryMessageSender(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
+    super(servers, host, user, clock);
   }
 
   @Override
