@@ -25,6 +25,7 @@
             "nodeGroupPort": 9430,
             "nodeHostname": "localhost",
             "nodeLogDir": "%H/terracotta/logs",
+            "nodeLoggerOverrides": {},
             "nodeMetadataDir": "%H/terracotta/metadata",
             "nodeName": "foo",
             "nodePort": 9410,

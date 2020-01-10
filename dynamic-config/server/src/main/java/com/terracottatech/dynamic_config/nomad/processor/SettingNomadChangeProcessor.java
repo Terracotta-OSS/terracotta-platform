@@ -64,7 +64,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
         }
       }
     } catch (InvalidConfigChangeException | RuntimeException e) {
-      throw new NomadException(e.getMessage(), e);
+      throw new NomadException("Error when trying to apply setting change '" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
 
@@ -89,7 +89,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
         listener.onNewConfigurationPendingRestart(runtimeNodeContext, cfg);
       }
     } catch (RuntimeException e) {
-      throw new NomadException(e);
+      throw new NomadException("Error when applying setting change '" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
 

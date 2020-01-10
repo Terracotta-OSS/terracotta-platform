@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  *         &lt;element name="name" type="{http://www.terracotta.org/config}non-blank-token"/&gt;
  *         &lt;element name="publicHostname" type="{http://www.terracotta.org/config}host" minOccurs="0"/&gt;
  *         &lt;element name="publicPort" type="{http://www.terracotta.org/config}port" minOccurs="0"/&gt;
+ *         &lt;element name="loggerOverrides" type="{http://www.terracotta.org/config/cluster}loggers"/&gt;
  *         &lt;element name="server-config" type="{http://www.terracotta.org/config/cluster}tc-server-config"/&gt;
  *       &lt;/sequence&gt;
  *     &lt;/restriction&gt;
@@ -38,6 +39,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
     "name",
     "publicHostname",
     "publicPort",
+    "loggerOverrides",
     "serverConfig"
 })
 public class TcNode {
@@ -49,6 +51,8 @@ public class TcNode {
   protected String publicHostname;
   @XmlSchemaType(name = "nonNegativeInteger")
   protected Integer publicPort;
+  @XmlElement
+  protected Loggers loggerOverrides;
   @XmlElement(name = "server-config", required = true)
   protected TcServerConfig serverConfig;
 
@@ -110,6 +114,26 @@ public class TcNode {
    */
   public void setPublicPort(Integer value) {
     this.publicPort = value;
+  }
+
+  /**
+   * Gets the value of the loggerOverrides property.
+   *
+   * @return possible object is
+   * {@link Loggers }
+   */
+  public Loggers getLoggerOverrides() {
+    return loggerOverrides;
+  }
+
+  /**
+   * Sets the value of the loggerOverrides property.
+   *
+   * @param value allowed object is
+   *              {@link Loggers }
+   */
+  public void setLoggerOverrides(Loggers value) {
+    this.loggerOverrides = value;
   }
 
   /**

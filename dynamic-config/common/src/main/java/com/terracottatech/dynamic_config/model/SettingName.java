@@ -22,6 +22,7 @@ public class SettingName {
   public static final String NODE_METADATA_DIR = "node-metadata-dir";
   public static final String NODE_LOG_DIR = "node-log-dir";
   public static final String NODE_BACKUP_DIR = "node-backup-dir";
+  public static final String NODE_LOGGER_OVERRIDES = "node-logger-overrides";
   public static final String SECURITY_DIR = "security-dir";
   public static final String SECURITY_AUDIT_LOG_DIR = "security-audit-log-dir";
   public static final String SECURITY_AUTHC = "security-authc";

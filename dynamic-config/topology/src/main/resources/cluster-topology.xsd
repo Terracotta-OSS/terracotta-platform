@@ -32,6 +32,7 @@
       <xs:element name="name" type="tc:non-blank-token" minOccurs="1" maxOccurs="1"/>
       <xs:element name="publicHostname" type="tc:host" minOccurs="0" maxOccurs="1"/>
       <xs:element name="publicPort" type="tc:port" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="loggerOverrides" type="cl:loggers" minOccurs="0" maxOccurs="1"/>
       <xs:element name="server-config" type="cl:tc-server-config" minOccurs="1" maxOccurs="1"/>
     </xs:sequence>
   </xs:complexType>
@@ -59,4 +60,27 @@
       </xs:element>
     </xs:all>
   </xs:complexType>
+
+  <xs:complexType name="loggers">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="logger" type="cl:logger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="logger">
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="level" type="cl:level" use="required"/>
+  </xs:complexType>
+
+  <xs:simpleType name="level">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="TRACE"/>
+      <xs:enumeration value="DEBUG"/>
+      <xs:enumeration value="INFO"/>
+      <xs:enumeration value="WARN"/>
+      <xs:enumeration value="ERROR"/>
+      <xs:minLength value="4"/>
+      <xs:maxLength value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
 </xs:schema>

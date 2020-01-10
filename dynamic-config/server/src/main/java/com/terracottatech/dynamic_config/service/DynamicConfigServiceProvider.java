@@ -16,6 +16,7 @@ import com.terracottatech.dynamic_config.service.api.DynamicConfigEventService;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.service.handler.ClientReconnectWindowConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.DataDirectoryConfigChangeHandler;
+import com.terracottatech.dynamic_config.service.handler.LoggerOverrideConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.OffheapResourceConfigChangeHandler;
 import com.terracottatech.dynamic_config.service.handler.ServerAttributeConfigChangeHandler;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
@@ -37,6 +38,7 @@ import static com.terracottatech.dynamic_config.model.Setting.DATA_DIRS;
 import static com.terracottatech.dynamic_config.model.Setting.FAILOVER_PRIORITY;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_LOGGER_OVERRIDES;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_LOG_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_PUBLIC_PORT;
@@ -52,8 +54,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     // If the server is started without the startup manager, with the old script but not with not start-node.sh, then the diagnostic services won't be there.
     ConfigChangeHandlerManager manager = getManager();
+
     if (manager != null) {
       IParameterSubstitutor substitutor = getSubstitutor();
+      TopologyService topologyService = getTopologyService();
 
       // data-dirs
       Collection<DataDirectoriesConfig> dataDirectoriesConfigs = platformConfiguration.getExtendedConfiguration(DataDirectoriesConfig.class);
@@ -92,10 +96,17 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       addToManager(manager, applyAtRuntime(), NODE_PUBLIC_HOSTNAME);
       addToManager(manager, applyAtRuntime(), NODE_PUBLIC_PORT);
 
+      // tc-logging
+      LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);
+      addToManager(manager, loggerOverrideConfigChangeHandler, NODE_LOGGER_OVERRIDES);
+
       // tc-properties
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
           .selector(Configuration::getKey)
           .fallback(applyAfterRestart()));
+
+      // initialize the config handlers that need do to something at startup
+      loggerOverrideConfigChangeHandler.init();
     }
     return true;
   }
@@ -147,6 +158,6 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     if (!manager.add(setting, configChangeHandler)) {
       throw new AssertionError("Duplicate " + ConfigChangeHandler.class.getSimpleName() + " for " + setting);
     }
-    LOGGER.debug("Registered dynamic configuration change handler: {} for setting: {}", configChangeHandler.getClass().getSimpleName(), setting);
+    LOGGER.debug("Registered dynamic configuration change handler for setting {}: {}", setting, configChangeHandler);
   }
 }

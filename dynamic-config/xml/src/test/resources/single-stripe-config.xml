@@ -47,6 +47,9 @@
             <name>node-1</name>
             <publicHostname>node-1.sag</publicHostname>
             <publicPort>1234</publicPort>
+            <loggerOverrides>
+              <logger name="com.terracottatech.dynamic_config" level="TRACE"/>
+            </loggerOverrides>
             <server-config>
               <ns2:tc-config>
                 <ns2:plugins>

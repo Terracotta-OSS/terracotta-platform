@@ -10,6 +10,7 @@ import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.event.Level;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
@@ -51,6 +52,7 @@ public class Node implements Cloneable {
   private boolean securityWhitelist = Boolean.parseBoolean(Setting.SECURITY_WHITELIST.getDefaultValue());
   private FailoverPriority failoverPriority;
   private Map<String, String> tcProperties = new ConcurrentHashMap<>();
+  private Map<String, Level> nodeLoggerOverrides = new ConcurrentHashMap<>();
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
   private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
@@ -141,6 +143,30 @@ public class Node implements Cloneable {
 
   public Map<String, Path> getDataDirs() {
     return Collections.unmodifiableMap(dataDirs);
+  }
+
+  public Map<String, Level> getNodeLoggerOverrides() {
+    return Collections.unmodifiableMap(nodeLoggerOverrides);
+  }
+
+  public Node setNodeLoggerOverrides(Map<String, Level> nodeLoggerOverrides) {
+    this.nodeLoggerOverrides.putAll(nodeLoggerOverrides);
+    return this;
+  }
+
+  public Node setNodeLoggerOverride(String logger, Level level) {
+    this.nodeLoggerOverrides.put(logger, level);
+    return this;
+  }
+
+  public Node removeNodeLoggerOverride(String logger) {
+    this.nodeLoggerOverrides.remove(logger);
+    return this;
+  }
+
+  public Node clearNodeLoggerOverrides() {
+    nodeLoggerOverrides.clear();
+    return this;
   }
 
   public Map<String, String> getTcProperties() {
@@ -375,6 +401,7 @@ public class Node implements Cloneable {
         .setNodePort(nodePort)
         .setNodePublicPort(nodePublicPort)
         .setTcProperties(tcProperties)
+        .setNodeLoggerOverrides(nodeLoggerOverrides)
         .setOffheapResources(offheapResources)
         .setSecurityAuditLogDir(securityAuditLogDir)
         .setSecurityAuthc(securityAuthc)
@@ -401,6 +428,7 @@ public class Node implements Cloneable {
         Objects.equals(nodeMetadataDir, node.nodeMetadataDir) &&
         Objects.equals(nodeLogDir, node.nodeLogDir) &&
         Objects.equals(nodeBackupDir, node.nodeBackupDir) &&
+        Objects.equals(nodeLoggerOverrides, node.nodeLoggerOverrides) &&
         Objects.equals(tcProperties, node.tcProperties) &&
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
@@ -414,9 +442,10 @@ public class Node implements Cloneable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePublicHostname, nodePort, nodePublicPort, nodeGroupPort, nodeBindAddress, nodeGroupBindAddress, tcProperties,
-        nodeMetadataDir, nodeLogDir, nodeBackupDir, securityDir, securityAuditLogDir, securityAuthc, securitySslTls,
-        securityWhitelist, failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs);
+    return Objects.hash(nodeName, nodeHostname, nodePublicHostname, nodePort, nodePublicPort, nodeGroupPort,
+        nodeBindAddress, nodeGroupBindAddress, tcProperties, nodeLoggerOverrides, nodeMetadataDir, nodeLogDir, nodeBackupDir,
+        securityDir, securityAuditLogDir, securityAuthc, securitySslTls, securityWhitelist,
+        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs);
   }
 
   @Override
@@ -433,6 +462,7 @@ public class Node implements Cloneable {
         ", nodeMetadataDir='" + nodeMetadataDir + '\'' +
         ", nodeLogDir='" + nodeLogDir + '\'' +
         ", nodeBackupDir='" + nodeBackupDir + '\'' +
+        ", nodeLoggers='" + nodeLoggerOverrides + '\'' +
         ", tcProperties='" + tcProperties + '\'' +
         ", securityDir='" + securityDir + '\'' +
         ", securityAuditLogDir='" + securityAuditLogDir + '\'' +

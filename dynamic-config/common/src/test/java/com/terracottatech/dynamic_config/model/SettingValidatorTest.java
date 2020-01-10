@@ -19,6 +19,7 @@ import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_PORT;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_HOSTNAME;
+import static com.terracottatech.dynamic_config.model.Setting.NODE_LOGGER_OVERRIDES;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_LOG_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_METADATA_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_NAME;
@@ -288,6 +289,42 @@ public class SettingValidatorTest {
     assertThat(
         () -> TC_PROPERTIES.validate(null, " :value"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("tc-properties should be specified in the format <key>:<value>,<key>:<value>...")))));
+  }
+
+  @Test
+  public void test_NODE_LOGGER_OVERRIDES() {
+    NODE_LOGGER_OVERRIDES.validate(null);
+    NODE_LOGGER_OVERRIDES.validate(null, null);
+    NODE_LOGGER_OVERRIDES.validate("key", null);
+    NODE_LOGGER_OVERRIDES.validate("key", "INFO");
+    NODE_LOGGER_OVERRIDES.validate(null, "key:INFO");
+    NODE_LOGGER_OVERRIDES.validate(null, "key1:INFO,key2:WARN");
+
+    NODE_LOGGER_OVERRIDES.validate("com.foo", "TRACE");
+    NODE_LOGGER_OVERRIDES.validate("com.foo", "DEBUG");
+    NODE_LOGGER_OVERRIDES.validate("com.foo", "INFO");
+    NODE_LOGGER_OVERRIDES.validate("com.foo", "WARN");
+    NODE_LOGGER_OVERRIDES.validate("com.foo", "ERROR");
+
+    assertThat(
+        () -> NODE_LOGGER_OVERRIDES.validate(null, "key:"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+    assertThat(
+        () -> NODE_LOGGER_OVERRIDES.validate(null, "key: "),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+    assertThat(
+        () -> NODE_LOGGER_OVERRIDES.validate(null, ":value"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+    assertThat(
+        () -> NODE_LOGGER_OVERRIDES.validate(null, " :value"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+
+    assertThat(
+        () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "FATAL"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides.com.foo is invalid: Bad level: FATAL")))));
+    assertThat(
+        () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "OFF"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides.com.foo is invalid: Bad level: OFF")))));
   }
 
   private void validateDefaults(Setting setting) {

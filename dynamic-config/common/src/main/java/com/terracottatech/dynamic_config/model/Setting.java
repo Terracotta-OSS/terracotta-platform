@@ -10,6 +10,7 @@ import com.terracottatech.utilities.TimeUnit;
 import com.terracottatech.utilities.Tuple2;
 import com.terracottatech.utilities.Unit;
 import com.terracottatech.utilities.Uuid;
+import org.slf4j.event.Level;
 
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -36,6 +37,7 @@ import static com.terracottatech.dynamic_config.model.SettingValidator.ADDRESS_V
 import static com.terracottatech.dynamic_config.model.SettingValidator.DATA_DIRS_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.DEFAULT_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.HOST_VALIDATOR;
+import static com.terracottatech.dynamic_config.model.SettingValidator.LOGGER_LEVEL_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.NODE_NAME_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.OFFHEAP_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.PATH_VALIDATOR;
@@ -246,6 +248,30 @@ public enum Setting {
       emptyList(),
       emptyList(),
       (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))
+  ),
+  NODE_LOGGER_OVERRIDES(SettingName.NODE_LOGGER_OVERRIDES,
+      true,
+      null,
+      NODE,
+      extractor(Node::getNodeLoggerOverrides),
+      mapSetter((node, tuple) -> {
+        if (tuple.allNulls()) {
+          node.clearNodeLoggerOverrides();
+        } else if (tuple.t1 != null && tuple.t2 == null) {
+          node.removeNodeLoggerOverride(tuple.t1);
+        } else if (tuple.t1 == null) {
+          // tuple.t2 != null
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setNodeLoggerOverride(kv[0], Level.valueOf(kv[1].toUpperCase())));
+        } else {
+          // tuple.t1 != null && tuple.t2 != null
+          node.setNodeLoggerOverride(tuple.t1, Level.valueOf(tuple.t2.toUpperCase()));
+        }
+      }),
+      of(GET, SET, UNSET, CONFIG),
+      of(ACTIVES_ONLINE),
+      emptyList(),
+      emptyList(),
+      (key, value) -> LOGGER_LEVEL_VALIDATOR.accept(SettingName.NODE_LOGGER_OVERRIDES, tuple2(key, value))
   ),
   CLIENT_RECONNECT_WINDOW(SettingName.CLIENT_RECONNECT_WINDOW,
       false,
@@ -668,6 +694,7 @@ public enum Setting {
     return Stream.of(values()).filter(setting -> setting.name.equals(name)).findFirst();
   }
 
+  @SuppressWarnings("unchecked")
   private static Function<Node, Stream<Tuple2<String, String>>> extractor(Function<Node, Object> extractor) {
     return node -> {
       Object o = extractor.apply(node);
@@ -675,10 +702,11 @@ public enum Setting {
         return Stream.empty();
       }
       if (o instanceof Map) {
-        return ((Map<?, ?>) o).entrySet()
+        return ((Map<String, ?>) o).entrySet()
             .stream()
             .filter(e -> e.getValue() != null)
-            .map(e -> tuple2(e.getKey().toString(), e.getValue().toString()));
+            .sorted(Map.Entry.comparingByKey())
+            .map(e -> tuple2(e.getKey(), e.getValue().toString()));
       }
       return Stream.of(tuple2(null, String.valueOf(o)));
     };

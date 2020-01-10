@@ -376,6 +376,23 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     }
   }
 
+  @Test
+  public void testSetLogger() throws Exception {
+    activateCluster();
+
+    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-logger-overrides=com.terracottatech:TRACE,com.tc:TRACE");
+    assertCommandSuccessful();
+
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-logger-overrides");
+    waitedAssert(out::getLog, containsString("node-logger-overrides=com.tc:TRACE,com.terracottatech:TRACE"));
+
+    ConfigTool.start("unset", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-logger-overrides.com.tc");
+    assertCommandSuccessful();
+
+    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-logger-overrides");
+    waitedAssert(out::getLog, containsString("node-logger-overrides=com.terracottatech:TRACE"));
+  }
+
   private static TopologyEntity getTopologyEntity(Connection base) throws ConnectionException {
     try {
       EntityRef<TopologyEntity, Void, Void> ref = base.getEntityRef(TopologyEntity.class, TopologyEntityProvider.ENTITY_VERSION, TopologyEntityProvider.ENTITY_NAME);

@@ -11,6 +11,9 @@ import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
 import com.terracottatech.dynamic_config.xml.plugins.Lease;
 import com.terracottatech.dynamic_config.xml.plugins.OffheapResources;
 import com.terracottatech.dynamic_config.xml.plugins.Security;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Level;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Logger;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Loggers;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
 import com.terracottatech.utilities.PathResolver;
@@ -177,9 +180,22 @@ public class ServerConfiguration {
   TcNode
   getClusterConfigNode(com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory factory) {
     TcNode tcNode = factory.createTcNode();
+
     tcNode.setName(node.getNodeName());
     tcNode.setPublicHostname(node.getNodePublicHostname());
     tcNode.setPublicPort(node.getNodePublicPort());
+
+    if (!node.getNodeLoggerOverrides().isEmpty()) {
+      Loggers loggers = new Loggers();
+      node.getNodeLoggerOverrides().forEach((name, level) -> {
+        Logger logger = new Logger();
+        logger.setName(name);
+        logger.setLevel(Level.valueOf(level.name()));
+        loggers.getLogger().add(logger);
+      });
+      tcNode.setLoggerOverrides(loggers);
+    }
+
     TcServerConfig serverConfig = factory.createTcServerConfig();
     serverConfig.setTcConfig(this.tcConfig);
     tcNode.setServerConfig(serverConfig);

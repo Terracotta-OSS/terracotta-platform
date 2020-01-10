@@ -14,6 +14,7 @@ import com.terracottatech.dynamic_config.model.FailoverPriority;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Logger;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
@@ -24,6 +25,7 @@ import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.PathResolver;
 import com.terracottatech.utilities.TimeUnit;
+import org.slf4j.event.Level;
 import org.terracotta.config.Config;
 import org.terracotta.config.Server;
 import org.terracotta.config.Service;
@@ -45,6 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -140,6 +143,7 @@ public class XmlConfigMapper {
         .setFailoverPriority(toFailoverPriority(xmlTcConfig.getFailoverPriority()))
         .setClientReconnectWindow(xmlTcConfig.getServers().getClientReconnectWindow(), SECONDS)
         .setTcProperties(toProperties(xmlTcConfig))
+        .setNodeLoggerOverrides(toLoggers(xmlNode))
         // plugins
         .setNodeMetadataDir(toNodeMetadataDir(xmlPlugins).orElse(null))
         .setDataDirs(toUserDataDirs(xmlPlugins))
@@ -166,6 +170,18 @@ public class XmlConfigMapper {
       tcProperties.getProperty().forEach(p -> properties.put(p.getName(), p.getValue()));
     }
     return properties;
+  }
+
+  private static Map<String, Level> toLoggers(TcNode xmlNode) {
+    return Optional.ofNullable(xmlNode.getLoggerOverrides())
+        .map(loggers -> loggers.getLogger()
+            .stream()
+            .collect(toMap(
+                Logger::getName,
+                logger -> Level.valueOf(logger.getLevel().name()),
+                (level1, level2) -> level2,
+                LinkedHashMap::new)))
+        .orElseGet(() -> new LinkedHashMap<>(0));
   }
 
   private static Optional<Security> toSecurity(Map<Class<?>, List<Object>> plugins) {

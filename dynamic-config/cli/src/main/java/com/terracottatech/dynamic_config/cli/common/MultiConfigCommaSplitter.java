@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.IParameterSplitter;
+import com.terracottatech.dynamic_config.model.Configuration;
 import com.terracottatech.dynamic_config.model.Setting;
 
 import java.util.Collections;
@@ -35,6 +36,11 @@ public class MultiConfigCommaSplitter implements IParameterSplitter {
       return Collections.singletonList(value);
     }
 
+    if (hasKey(keyValue[0])) {
+      // if we have a key defined, there cannot be multiple settings separated with comma in the value
+      return Collections.singletonList(value);
+    }
+
     // here we only have inputs like:
     // - data-dirs=foo:bar
     // - data-dirs=foo:bar,foo2:bar2
@@ -57,12 +63,22 @@ public class MultiConfigCommaSplitter implements IParameterSplitter {
         .collect(toList());
   }
 
-  private boolean isMap(String settingName) {
+  private boolean isMap(String key) {
     try {
       // try to get the setting name and see if this is a map
-      return Setting.fromName(settingName).isMap();
+      return Configuration.valueOf(key).getSetting().isMap();
     } catch (RuntimeException e) {
       // if we fail parsing the setting name, consider this is not a map
+      return false;
+    }
+  }
+
+  private boolean hasKey(String key) {
+    try {
+      // check if a key has been defined.
+      // Ie: data-dirs.key=bar
+      return Configuration.valueOf(key).getKey() != null;
+    } catch (RuntimeException e) {
       return false;
     }
   }

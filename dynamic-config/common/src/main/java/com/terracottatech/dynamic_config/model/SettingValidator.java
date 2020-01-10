@@ -9,6 +9,7 @@ import com.terracottatech.utilities.Measure;
 import com.terracottatech.utilities.MemoryUnit;
 import com.terracottatech.utilities.TimeUnit;
 import com.terracottatech.utilities.Tuple2;
+import org.slf4j.event.Level;
 
 import java.nio.file.Paths;
 import java.util.function.BiConsumer;
@@ -118,7 +119,22 @@ class SettingValidator {
         try {
           Paths.get(v);
         } catch (RuntimeException e) {
-          throw new IllegalArgumentException(setting + "." + k + " is invalid: Bad path: " + kv.t2);
+          throw new IllegalArgumentException(setting + "." + k + " is invalid: Bad path: " + v);
+        }
+      });
+    }
+  };
+
+  static final BiConsumer<String, Tuple2<String, String>> LOGGER_LEVEL_VALIDATOR = (setting, kv) -> {
+    if (kv.t2 != null) {
+      // we have a value, we want to set:
+      // - set loggers=com.foo.bar:TRACE
+      // - set loggers.com.foo.bar=TRACE
+      validateMappings(kv, setting + " should be specified in the format <logger>:<level>,<logger>:<level>...", (k, v) -> {
+        try {
+          Level.valueOf(v.toUpperCase());
+        } catch (RuntimeException e) {
+          throw new IllegalArgumentException(setting + "." + k + " is invalid: Bad level: " + v);
         }
       });
     }

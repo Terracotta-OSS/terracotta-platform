@@ -49,14 +49,14 @@ public class SimulationHandlerIT extends BaseStartupIT {
   @Test
   public void test_prepare_fails() {
     exception.expect(IllegalStateException.class);
-    exception.expectMessage(containsString("Prepare rejected for server localhost:" + ports.getPort() + ". Reason: Simulate prepare failure"));
+    exception.expectMessage(containsString("Prepare rejected for server localhost:" + ports.getPort() + ". Reason: Error when trying to apply setting change 'set tc-properties.com.terracottatech.dynamic-config.simulate=prepare-failure (stripe ID: 1, node: node-1)': Simulate prepare failure"));
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=prepare-failure");
   }
 
   @Test
   public void test_commit_fails() {
     exception.expect(IllegalStateException.class);
-    exception.expectMessage(containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"));
+    exception.expectMessage(containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: Error when applying setting change 'set tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure (stripe ID: 1, node: node-1)': Simulate commit failure"));
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=commit-failure");
   }
 

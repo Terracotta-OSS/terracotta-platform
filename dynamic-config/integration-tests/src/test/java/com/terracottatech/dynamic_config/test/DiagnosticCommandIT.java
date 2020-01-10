@@ -45,7 +45,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
         () -> ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed"),
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
-                containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"))
+                containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: Error when applying setting change 'set tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
                 .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
 
     assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
@@ -72,7 +72,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
         () -> ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed"),
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
-                containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"))
+                containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: Error when applying setting change 'set tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
                 .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
 
     assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
@@ -93,7 +93,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
         () -> ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort()),
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
-                containsString("Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"))
+                containsString("Reason: com.terracottatech.nomad.server.NomadException: Error when applying setting change 'set tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
                 .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
     waitedAssert(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
     waitedAssert(out::getLog, not(containsString("Configuration is repaired.")));

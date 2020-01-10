@@ -279,11 +279,11 @@ public class Cluster implements Cloneable {
             .flatMap(setting -> {
               final String currentValue = setting.getProperty(nodeContext).orElse(null);
               final String defaultValue = setting.getDefaultValue();
-              return (!includeDefaultValues && Objects.equals(defaultValue, currentValue)) ?
+              return !includeDefaultValues && Objects.equals(defaultValue, currentValue) ?
                   Stream.empty() :
-                  expanded && setting.isMap() ?
-                      setting.getExpandedProperties(nodeContext).map(property -> tuple2(setting.getConfigPrefix(stripeId, nodeId) + "." + property.t1, property.t2)) :
-                      Stream.of(tuple2(setting.getConfigPrefix(stripeId, nodeId), currentValue == null ? "" : currentValue));
+                  currentValue == null || !expanded || !setting.isMap() ?
+                      Stream.of(tuple2(setting.getConfigPrefix(stripeId, nodeId), currentValue == null ? "" : currentValue)) :
+                      setting.getExpandedProperties(nodeContext).map(property -> tuple2(setting.getConfigPrefix(stripeId, nodeId) + "." + property.t1, property.t2));
             });
       });
     }).reduce(new Properties(), (props, tupe) -> {
