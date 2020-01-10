@@ -106,7 +106,7 @@ class ConfigurationSyncManager {
 
     switch (nomadChangeInfo.getChangeRequestState()) {
       case PREPARED:
-        throw new TCShutdownServerException("Active has some PREPARED configuration changes that is not yet committed.");
+        throw new TCShutdownServerException("Active has some PREPARED configuration changes that are not yet committed.");
       case COMMITTED:
         sendPrepare(mutativeMessageCount, nomadServer, nomadChangeInfo);
         long nextMutativeMessageCount = mutativeMessageCount + 1;

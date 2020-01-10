@@ -224,7 +224,7 @@ public class SimpleNewServerStartupScriptIT extends BaseStartupIT {
   public void testStartingNodeWhenLatestChangeNotCommitted() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeAndSkipCommit);
     startSingleNode("--node-repository-dir", configurationRepo.toString());
-    waitedAssert(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the check command to diagnose the configuration state."));
+    waitedAssert(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
   }
 
   @Test

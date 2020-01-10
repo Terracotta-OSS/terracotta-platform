@@ -123,7 +123,7 @@ public class ConfigurationSyncManagerTest {
 
     ConfigurationSyncManager syncManager = new ConfigurationSyncManager(nomadServer);
     exceptionRule.expect(TCShutdownServerException.class);
-    exceptionRule.expectMessage("Active has some PREPARED configuration changes that is not yet committed.");
+    exceptionRule.expectMessage("Active has some PREPARED configuration changes that are not yet committed.");
     syncManager.sync(active);
   }
 

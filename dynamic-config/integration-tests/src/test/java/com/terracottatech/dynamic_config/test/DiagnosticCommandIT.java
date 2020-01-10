@@ -46,7 +46,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
                 containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"))
-                .and(containsString("Please run the check command to diagnose the configuration state.")))));
+                .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
 
     assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
     assertThat(getUpcomingCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), hasEntry("com.terracottatech.dynamic-config.simulate", "recover-needed"));
@@ -56,7 +56,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
                 stringContainsInOrder(Arrays.asList("Another change (with UUID ", " is already underway on ", ". It was started by ", " on ")))
-                .and(containsString("Please run the check command to diagnose the configuration state.")))));
+                .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
 
     out.clearLog();
     ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort());
@@ -73,7 +73,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
                 containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"))
-                .and(containsString("Please run the check command to diagnose the configuration state.")))));
+                .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
 
     assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
     assertThat(getUpcomingCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), hasEntry("com.terracottatech.dynamic-config.simulate", "recover-needed"));
@@ -85,7 +85,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
     out.clearLog();
     start(1, 1, ports.getPort());
     waitedAssert(out::getLog, containsString("INFO - Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitedAssert(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the check command to diagnose the configuration state."));
+    waitedAssert(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
 
     // repair the newly started server once (the simulated handler needs to repair after a restart - first one will fail)
     out.clearLog();
@@ -94,7 +94,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
                 containsString("Reason: com.terracottatech.nomad.server.NomadException: java.lang.IllegalStateException: Simulate commit failure"))
-                .and(containsString("Please run the check command to diagnose the configuration state.")))));
+                .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
     waitedAssert(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
     waitedAssert(out::getLog, not(containsString("Configuration is repaired.")));
 

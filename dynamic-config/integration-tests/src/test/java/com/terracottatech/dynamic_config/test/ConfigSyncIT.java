@@ -84,7 +84,7 @@ public class ConfigSyncIT extends BaseStartupIT {
 
     out.clearLog();
     startNode("-r", "repository/stripe1/node-" + shape.passiveId);
-    waitForAssert(out::getLog, containsString("Active has some PREPARED configuration changes that is not yet committed."));
+    waitForAssert(out::getLog, containsString("Active has some PREPARED configuration changes that are not yet committed."));
 
     passiveChanges = AppendLogCapturer.getChanges(passivePath);
     assertContentsBeforeOrAfterSync(activeChanges, passiveChanges, 4, 3);
