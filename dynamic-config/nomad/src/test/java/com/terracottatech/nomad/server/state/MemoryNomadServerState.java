@@ -12,6 +12,7 @@ import com.terracottatech.nomad.server.NomadServerMode;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.server.state.StateKeys.CURRENT_VERSION;
@@ -51,13 +52,13 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
 
   @SuppressWarnings("unchecked")
   @Override
-  public T getCurrentCommittedChangeResult() {
+  public Optional<T> getCurrentCommittedChangeResult() {
     long currentVersion = getCurrentVersion();
     if (currentVersion == 0L) {
-      return null;
+      return Optional.empty();
     }
 
-    return (T) state.get(Long.toString(currentVersion));
+    return Optional.ofNullable((T) state.get(Long.toString(currentVersion)));
   }
 
   @Override

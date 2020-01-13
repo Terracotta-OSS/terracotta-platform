@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.cli.ConfigTool;
+import com.terracottatech.dynamic_config.model.Cluster;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +68,11 @@ public class DiagnosticCommandIT extends BaseStartupIT {
   }
 
   @Test
-  public void test_node_starting_paused_when_config_not_committed_or_rollback() throws Exception {
+  public void test_node_starts_with_previous_config_when_not_committed_or_rollback() throws Exception {
+    Cluster initialCluster = getRuntimeCluster("localhost", ports.getPort());
+    assertThat(initialCluster, is(equalTo(getUpcomingCluster("localhost", ports.getPort()))));
+    assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
+
     assertThat(
         () -> ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed"),
         is(throwing(instanceOf(IllegalStateException.class))
@@ -75,7 +80,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
                 containsString("Commit failed for server localhost:" + ports.getPort() + ". Reason: com.terracottatech.nomad.server.NomadException: Error when applying setting change 'set tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
                 .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
 
-    assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
+    assertThat(getRuntimeCluster("localhost", ports.getPort()), is(equalTo(initialCluster)));
     assertThat(getUpcomingCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), hasEntry("com.terracottatech.dynamic-config.simulate", "recover-needed"));
 
     // close the server when the last change is not committed or rolled back
@@ -86,6 +91,10 @@ public class DiagnosticCommandIT extends BaseStartupIT {
     start(1, 1, ports.getPort());
     waitedAssert(out::getLog, containsString("INFO - Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
+
+    // ensure that the server has started with the last committed config
+    assertThat(getRuntimeCluster("localhost", ports.getPort()), is(equalTo(initialCluster)));
+    assertThat(getUpcomingCluster("localhost", ports.getPort()), is(equalTo(initialCluster)));
 
     // repair the newly started server once (the simulated handler needs to repair after a restart - first one will fail)
     out.clearLog();
@@ -103,6 +112,8 @@ public class DiagnosticCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
     waitedAssert(out::getLog, containsString("Configuration is repaired"));
 
+    // ensure that the server has started with the last committed config
+    assertThat(getRuntimeCluster("localhost", ports.getPort()), is(not(equalTo(initialCluster))));
     assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), hasEntry("com.terracottatech.dynamic-config.simulate", "recover-needed"));
   }
 

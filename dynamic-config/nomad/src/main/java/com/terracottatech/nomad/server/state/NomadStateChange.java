@@ -7,6 +7,7 @@ package com.terracottatech.nomad.server.state;
 import com.terracottatech.nomad.server.ChangeRequest;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
+import com.terracottatech.nomad.server.NomadServerRequest;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -15,6 +16,8 @@ public interface NomadStateChange<T> {
   NomadStateChange<T> setInitialized();
 
   NomadStateChange<T> setMode(NomadServerMode mode);
+
+  NomadStateChange<T> setRequest(NomadServerRequest request);
 
   NomadStateChange<T> setLatestChangeUuid(UUID changeUuid);
 

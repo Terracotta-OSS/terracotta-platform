@@ -7,6 +7,7 @@ package com.terracottatech.nomad.server.state;
 import com.terracottatech.nomad.server.ChangeRequest;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
+import com.terracottatech.nomad.server.NomadServerRequest;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -35,6 +36,12 @@ public class MemoryNomadStateChange<T> implements NomadStateChange<T> {
   @Override
   public NomadStateChange<T> setMode(NomadServerMode mode) {
     changes.put(StateKeys.MODE, mode.toString());
+    return this;
+  }
+
+  @Override
+  public NomadStateChange<T> setRequest(NomadServerRequest request) {
+    changes.put(StateKeys.REQUEST, request.toString());
     return this;
   }
 

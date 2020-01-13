@@ -17,6 +17,7 @@ import com.terracottatech.persistence.sanskrit.SanskritObject;
 import com.terracottatech.persistence.sanskrit.change.SanskritChangeBuilder;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_HOST;
@@ -94,7 +95,8 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
 
   @Override
   public long getCurrentVersion() {
-    return getLong(CURRENT_VERSION);
+    final Long l = getLong(CURRENT_VERSION);
+    return l == null ? 0 : l;
   }
 
   @Override
@@ -144,6 +146,9 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
     long newMutativeMessageCount = getNewMutativeMessageCount();
     changeBuilder.setLong(MUTATIVE_MESSAGE_COUNT, newMutativeMessageCount);
 
+    long currentVersion = getCurrentVersion();
+    changeBuilder.setLong(CURRENT_VERSION, currentVersion);
+
     return new SanskritNomadStateChange<>(sanskrit, changeBuilder, hashComputer);
   }
 
@@ -165,11 +170,13 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
   }
 
   @Override
-  public T getCurrentCommittedChangeResult() throws NomadException {
+  public Optional<T> getCurrentCommittedChangeResult() throws NomadException {
     long currentVersion = getCurrentVersion();
-
+    if (currentVersion == 0L) {
+      return Optional.empty();
+    }
     try {
-      return configStorage.getConfig(currentVersion);
+      return Optional.ofNullable(configStorage.getConfig(currentVersion));
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to load current configuration", e);
     }

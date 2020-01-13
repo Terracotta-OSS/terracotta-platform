@@ -12,6 +12,7 @@ import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
@@ -97,6 +98,16 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
     lock.lock();
     try {
       return underlying.hasIncompleteChange();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Optional<T> getCurrentCommittedChangeResult() throws NomadException {
+    lock.lock();
+    try {
+      return underlying.getCurrentCommittedChangeResult();
     } finally {
       lock.unlock();
     }

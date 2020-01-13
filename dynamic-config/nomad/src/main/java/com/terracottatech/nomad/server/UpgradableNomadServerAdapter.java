@@ -12,6 +12,7 @@ import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
@@ -49,4 +50,7 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   public boolean hasIncompleteChange() {
     return delegate.hasIncompleteChange();
   }
+
+  @Override
+  public Optional<T> getCurrentCommittedChangeResult() throws NomadException {return delegate.getCurrentCommittedChangeResult();}
 }

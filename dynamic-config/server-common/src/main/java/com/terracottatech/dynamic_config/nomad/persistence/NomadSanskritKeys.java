@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.nomad.persistence;
 
 public interface NomadSanskritKeys {
+  String REQUEST = "request";
   String MODE = "mode";
   String MUTATIVE_MESSAGE_COUNT = "mutativeMessageCount";
   String LAST_MUTATION_HOST = "lastMutationHost";

@@ -26,7 +26,6 @@ import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.nomad.NomadEnvironment;
-import com.terracottatech.nomad.messages.ChangeDetails;
 import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.UpgradableNomadServer;
@@ -175,23 +174,11 @@ public class NomadBootstrapper {
      * @throws NomadConfigurationException if configuration is unavailable or corrupted
      */
     public Optional<NodeContext> getConfiguration() throws NomadConfigurationException {
-      ChangeDetails<NodeContext> latestChange;
       try {
-        latestChange = nomadServer.discover().getLatestChange();
+        return nomadServer.getCurrentCommittedChangeResult();
       } catch (NomadException e) {
         throw new NomadConfigurationException("Exception while making discover call to Nomad", e);
       }
-
-      if (latestChange == null) {
-        return Optional.empty();
-      }
-
-      NodeContext configuration = latestChange.getResult();
-      if (configuration == null) {
-        return Optional.empty();
-      }
-
-      return Optional.of(configuration);
     }
 
     private UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,

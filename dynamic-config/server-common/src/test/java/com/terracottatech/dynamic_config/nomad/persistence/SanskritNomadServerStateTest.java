@@ -268,6 +268,6 @@ public class SanskritNomadServerStateTest {
   public void getCurrentCommittedChangeResult() throws Exception {
     when(sanskrit.getLong("currentVersion")).thenReturn(5L);
     when(configStorage.getConfig(5L)).thenReturn("config");
-    assertEquals("config", state.getCurrentCommittedChangeResult());
+    assertEquals("config", state.getCurrentCommittedChangeResult().get());
   }
 }

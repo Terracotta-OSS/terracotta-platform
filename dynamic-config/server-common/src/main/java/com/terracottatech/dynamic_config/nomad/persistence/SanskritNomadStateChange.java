@@ -7,6 +7,7 @@ package com.terracottatech.dynamic_config.nomad.persistence;
 import com.terracottatech.nomad.server.ChangeRequest;
 import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
+import com.terracottatech.nomad.server.NomadServerRequest;
 import com.terracottatech.nomad.server.state.NomadStateChange;
 import com.terracottatech.persistence.sanskrit.MutableSanskritObject;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
@@ -33,6 +34,7 @@ import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritK
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.MODE;
 import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
+import static com.terracottatech.dynamic_config.nomad.persistence.NomadSanskritKeys.REQUEST;
 
 public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   private final Sanskrit sanskrit;
@@ -56,6 +58,12 @@ public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   @Override
   public NomadStateChange<T> setMode(NomadServerMode mode) {
     changeBuilder.setString(MODE, mode.name());
+    return this;
+  }
+
+  @Override
+  public NomadStateChange<T> setRequest(NomadServerRequest request) {
+    changeBuilder.setString(REQUEST, request.name());
     return this;
   }
 

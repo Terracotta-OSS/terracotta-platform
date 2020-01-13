@@ -9,6 +9,7 @@ import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface NomadServerState<T> {
@@ -36,5 +37,5 @@ public interface NomadServerState<T> {
 
   void applyStateChange(NomadStateChange<T> change) throws NomadException;
 
-  T getCurrentCommittedChangeResult() throws NomadException;
+  Optional<T> getCurrentCommittedChangeResult() throws NomadException;
 }

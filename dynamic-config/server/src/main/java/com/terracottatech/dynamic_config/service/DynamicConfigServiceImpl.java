@@ -129,27 +129,27 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response) {
     if (response.isAccepted()) {
-      LOGGER.info("Nomad prepare for: {}", message);
+      LOGGER.info("Nomad change {} prepared: {}", message.getChangeUuid(), message.getChange().getSummary());
     } else {
-      LOGGER.warn("Nomad prepare failed for: {}. Reason: {}: {}", message, response.getRejectionReason(), response.getRejectionMessage());
+      LOGGER.warn("Nomad change {} failed to prepare:. Reason: {}: {}", message.getChangeUuid(), response.getRejectionReason(), response.getRejectionMessage());
     }
   }
 
   @Override
   public void onNomadCommit(CommitMessage message, AcceptRejectResponse response) {
     if (response.isAccepted()) {
-      LOGGER.info("Nomad commit for: {}", message);
+      LOGGER.info("Nomad change {} committed", message.getChangeUuid());
     } else {
-      LOGGER.warn("Nomad commit failed for: {}. Reason: {}: {}", message, response.getRejectionReason(), response.getRejectionMessage());
+      LOGGER.warn("Nomad change {} failed to commit. Reason: {}: {}", message.getChangeUuid(), response.getRejectionReason(), response.getRejectionMessage());
     }
   }
 
   @Override
   public void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {
     if (response.isAccepted()) {
-      LOGGER.info("Nomad rollback for: {}", message);
+      LOGGER.info("Nomad change {} rolled back", message.getChangeUuid());
     } else {
-      LOGGER.warn("Nomad rollback failed for: {}. Reason: {}: {}", message, response.getRejectionReason(), response.getRejectionMessage());
+      LOGGER.warn("Nomad change {} failed to rollback. Reason: {}: {}", message.getChangeUuid(), response.getRejectionReason(), response.getRejectionMessage());
     }
   }
 

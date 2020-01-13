@@ -4,15 +4,9 @@
  */
 package com.terracottatech.nomad.server;
 
-import java.util.List;
-import java.util.Optional;
-
-public interface UpgradableNomadServer<T> extends NomadServer<T> {
-  void setChangeApplicator(ChangeApplicator<T> changeApplicator);
-
-  List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
-
-  boolean hasIncompleteChange();
-
-  Optional<T> getCurrentCommittedChangeResult() throws NomadException;
+public enum NomadServerRequest {
+  PREPARE,
+  COMMIT,
+  ROLLBACK,
+  TAKEOVER
 }

@@ -6,6 +6,7 @@ package com.terracottatech.nomad.server.state;
 
 public interface StateKeys {
   String INITIALIZED = "initialized";
+  String REQUEST = "request";
   String MODE = "mode";
   String MUTATIVE_MESSAGE_COUNT = "mutativeMessageCount";
   String LAST_MUTATION_HOST = "lastMutationHost";
