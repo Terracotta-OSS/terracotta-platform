@@ -99,15 +99,18 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     if (!state.isInitialized()) {
       return false;
     }
-    if (state.getMode() == NomadServerMode.PREPARED) {
-      return true;
-    }
     try {
-      ChangeDetails<T> latestChange = discover().getLatestChange();
+      DiscoverResponse<T> discover = discover();
+      if (discover.getCurrentVersion() < 1) {
+        // there hasn't been any configuration installed yet
+        return false;
+      }
+      ChangeDetails<T> latestChange = discover.getLatestChange();
       if (latestChange == null) {
         return false;
       }
-      return latestChange.getState() == PREPARED;
+      // current configuration in force is 1 (we have activated a cluster) plus we have a prepared change at the end
+      return state.getMode() == NomadServerMode.PREPARED || latestChange.getState() == PREPARED;
     } catch (NomadException e) {
       throw new IllegalStateException(e);
     }
