@@ -129,10 +129,10 @@ public class DiagnosticCommand extends RemoteCommand {
         sb.append(" - Node can accept new changes: ")
             .append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "YES" : "NO")
             .append(lineSeparator());
-        sb.append(" - Node current configuration change version: ")
+        sb.append(" - Node current configuration version: ")
             .append(discoverResponse.getCurrentVersion())
             .append(lineSeparator());
-        sb.append(" - Node highest configuration change version: ")
+        sb.append(" - Node highest configuration version: ")
             .append(discoverResponse.getHighestVersion())
             .append(lineSeparator());
         sb.append(" - Node last configuration change UUID: ")
