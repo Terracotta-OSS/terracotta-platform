@@ -258,6 +258,7 @@ public class XmlConfigMapper {
   private static FailoverPriority toFailoverPriority(org.terracotta.config.FailoverPriority failoverPriority) {
     requireNonNull(failoverPriority);
     return failoverPriority.getConsistency() != null ?
+        failoverPriority.getConsistency().getVoter() == null ? FailoverPriority.consistency() :
         FailoverPriority.consistency(failoverPriority.getConsistency().getVoter().getCount()) :
         FailoverPriority.availability();
   }
