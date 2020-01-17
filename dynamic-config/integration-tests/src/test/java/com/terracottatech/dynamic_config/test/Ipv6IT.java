@@ -6,7 +6,6 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.cli.ConfigTool;
 import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
-import com.terracottatech.dynamic_config.test.util.Env;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
 import org.junit.Test;
 
@@ -16,7 +15,6 @@ import java.util.Collection;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.stringContainsInOrder;
-import static org.junit.Assume.assumeTrue;
 
 public class Ipv6IT extends BaseStartupIT {
   public Ipv6IT() {
@@ -25,9 +23,6 @@ public class Ipv6IT extends BaseStartupIT {
 
   @Test
   public void testSingleNodeStartupFromCliParamsAndActivateCommand() throws Exception {
-    //TODO: Remove this assumption once TDB-4774 is fixed
-    assumeTrue(Env.isWindows());
-
     startSingleNode(1);
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
 
@@ -38,9 +33,6 @@ public class Ipv6IT extends BaseStartupIT {
 
   @Test
   public void testMultiNodeStartupFromCliParamsAndActivateCommand() throws Exception {
-    //TODO: Remove this assumption once TDB-4774 is fixed
-    assumeTrue(Env.isWindows());
-
     startSingleNode(1);
     startSingleNode(2);
     waitedAssert(out::getLog, stringContainsInOrder(
@@ -58,9 +50,6 @@ public class Ipv6IT extends BaseStartupIT {
 
   @Test
   public void testStartupFromConfigFileAndExportCommand() throws Exception {
-    //TODO: Remove this assumption once TDB-4774 is fixed
-    assumeTrue(Env.isWindows());
-
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_multi-node_ipv6.properties");
     NodeProcess nodeProcess = startNode("-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(ports.getPort()), "--node-repository-dir", "repository/stripe1/node-1");
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
@@ -74,9 +63,6 @@ public class Ipv6IT extends BaseStartupIT {
 
   @Test
   public void testStartupFromMigratedConfigRepoAndGetCommand() throws Exception {
-    //TODO: Remove this assumption once TDB-4774 is fixed
-    assumeTrue(Env.isWindows());
-
     Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeIpv6);
     startNode("--node-repository-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
