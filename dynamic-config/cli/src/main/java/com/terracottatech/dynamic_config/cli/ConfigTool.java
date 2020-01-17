@@ -18,6 +18,7 @@ import com.terracottatech.dynamic_config.cli.service.command.GetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.ImportCommand;
 import com.terracottatech.dynamic_config.cli.service.command.LogCommand;
 import com.terracottatech.dynamic_config.cli.service.command.MainCommand;
+import com.terracottatech.dynamic_config.cli.service.command.RepairCommand;
 import com.terracottatech.dynamic_config.cli.service.command.SetCommand;
 import com.terracottatech.dynamic_config.cli.service.command.UnsetCommand;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
@@ -74,6 +75,7 @@ public class ConfigTool {
                 new SetCommand(),
                 new UnsetCommand(),
                 new DiagnosticCommand(),
+                new RepairCommand(),
                 new LogCommand()
             )
         )

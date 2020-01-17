@@ -28,7 +28,7 @@ import static org.junit.Assert.assertThat;
  * @author Mathieu Carbou
  */
 @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
-public class DiagnosticCommandIT extends BaseStartupIT {
+public class RepairCommandIT extends BaseStartupIT {
 
   @Before
   public void setUp() throws Exception {
@@ -60,7 +60,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
                 .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state.")))));
 
     out.clearLog();
-    ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort());
+    ConfigTool.start("repair", "-s", "localhost:" + ports.getPort());
     waitedAssert(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
     waitedAssert(out::getLog, containsString("Configuration is repaired"));
 
@@ -99,7 +99,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
     // repair the newly started server once (the simulated handler needs to repair after a restart - first one will fail)
     out.clearLog();
     assertThat(
-        () -> ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort()),
+        () -> ConfigTool.start("repair", "-s", "localhost:" + ports.getPort()),
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(both(
                 containsString("Reason: com.terracottatech.nomad.server.NomadException: Error when applying setting change 'set tc-properties.com.terracottatech.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
@@ -108,7 +108,7 @@ public class DiagnosticCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, not(containsString("Configuration is repaired.")));
 
     out.clearLog();
-    ConfigTool.start("diagnostic", "-s", "localhost:" + ports.getPort());
+    ConfigTool.start("repair", "-s", "localhost:" + ports.getPort());
     waitedAssert(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
     waitedAssert(out::getLog, containsString("Configuration is repaired"));
 

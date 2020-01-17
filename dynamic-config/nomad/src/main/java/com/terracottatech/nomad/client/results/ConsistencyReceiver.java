@@ -76,12 +76,15 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
   public boolean hasDiscoveredInconsistentCluster() {
     return discoveredInconsistentCluster;
   }
+
   public UUID getInconsistentChangeUuid() {
     return inconsistentChangeUuid;
   }
+
   public Collection<InetSocketAddress> getCommittedServers() {
     return committedServers;
   }
+
   public Collection<InetSocketAddress> getRolledBackServers() {
     return rolledBackServers;
   }
@@ -91,12 +94,15 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
   public boolean hasDiscoveredOtherClient() {
     return discoveredOtherClient;
   }
+
   public InetSocketAddress getServerProcessingOtherClient() {
     return serverProcessingOtherClient;
   }
+
   public String getOtherClientHost() {
     return otherClientHost;
   }
+
   public String getOtherClientUser() {
     return otherClientUser;
   }

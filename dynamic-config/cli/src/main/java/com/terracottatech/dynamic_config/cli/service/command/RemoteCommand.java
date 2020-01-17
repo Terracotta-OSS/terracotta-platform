@@ -106,7 +106,7 @@ public abstract class RemoteCommand extends Command {
    * <p>
    * Nodes are expected to be online.
    */
-  protected final void runNomadRecovery(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
+  protected final void runNomadRepair(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
     logger.trace("runNomadRecovery({})", expectedOnlineNodes);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
     List<InetSocketAddress> orderedList = order(expectedOnlineNodes);

@@ -27,7 +27,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "diagnostic", commandDescription = "Diagnose and repair a cluster configuration")
+@Parameters(commandNames = "diagnostic", commandDescription = "Diagnose a cluster configuration")
 @Usage("diagnostic -s <hostname[:port]>")
 public class DiagnosticCommand extends RemoteCommand {
 
@@ -53,13 +53,10 @@ public class DiagnosticCommand extends RemoteCommand {
   @Override
   public final void run() {
     ConsistencyReceiver<NodeContext> consistencyReceiver = getNomadConsistency(onlineNodes);
-    printCheck(consistencyReceiver);
+    printDiagnostic(consistencyReceiver);
 
     if (consistencyReceiver.areAllAccepting()) {
       logger.info("Cluster configuration is healthy.");
-
-    } else if (consistencyReceiver.hasDiscoveredInconsistentCluster()) {
-      logger.error("Cluster configuration is broken and cannot be automatically repaired.");
 
     } else if (consistencyReceiver.hasDiscoveredOtherClient()) {
       logger.error("Unable to diagnose cluster configuration: another process has started a configuration change.");
@@ -67,16 +64,15 @@ public class DiagnosticCommand extends RemoteCommand {
     } else if (consistencyReceiver.getDiscoverFailure() != null) {
       logger.error("Unable to diagnose cluster configuration: " + consistencyReceiver.getDiscoverFailure());
 
+    } else if (consistencyReceiver.hasDiscoveredInconsistentCluster()) {
+      logger.error("Cluster configuration is broken. Please run the 'repair' command.");
+
     } else {
-      logger.info("Attempting an automatic repair of the configuration...");
-      runNomadRecovery(onlineNodes);
-      logger.info("Configuration is repaired.");
-      ConsistencyReceiver<NodeContext> newConsistencyReceiver = getNomadConsistency(onlineNodes);
-      printCheck(newConsistencyReceiver);
+      logger.error("Cluster configuration is not fully committed or rolled back. Please run the 'repair' command.");
     }
   }
 
-  private void printCheck(ConsistencyReceiver<NodeContext> consistencyReceiver) {
+  private void printDiagnostic(ConsistencyReceiver<NodeContext> consistencyReceiver) {
     StringBuilder sb = new StringBuilder();
 
     sb.append(lineSeparator());
