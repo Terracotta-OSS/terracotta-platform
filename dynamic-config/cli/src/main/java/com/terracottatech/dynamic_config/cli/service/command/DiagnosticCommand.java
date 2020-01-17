@@ -99,6 +99,11 @@ public class DiagnosticCommand extends RemoteCommand {
             "NO" :
             ("YES (Host: " + consistencyReceiver.getOtherClientHost() + ", By: " + consistencyReceiver.getOtherClientUser() + ", On: " + consistencyReceiver.getServerProcessingOtherClient() + ")"))
         .append(lineSeparator());
+    sb.append(" - Configuration change allowed: ")
+        .append(consistencyReceiver.areAllAccepting() ?
+            "YES" :
+            ("NO (Reason: at least one server is not accepting new change)"))
+        .append(lineSeparator());
 
     Clock clock = Clock.systemDefaultZone();
     ZoneId zoneId = clock.getZone();
