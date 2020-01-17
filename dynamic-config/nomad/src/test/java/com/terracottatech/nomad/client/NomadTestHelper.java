@@ -12,6 +12,7 @@ import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.time.Clock;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
@@ -54,7 +55,8 @@ public class NomadTestHelper {
             "testCreationHost",
             "testCreationUser",
             Clock.systemDefaultZone().instant()
-        )
+        ),
+        Collections.emptyList()
     );
   }
 }

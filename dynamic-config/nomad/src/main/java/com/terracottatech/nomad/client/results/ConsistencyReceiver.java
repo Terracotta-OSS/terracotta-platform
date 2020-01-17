@@ -5,15 +5,20 @@
 package com.terracottatech.nomad.client.results;
 
 import com.terracottatech.nomad.messages.DiscoverResponse;
+import com.terracottatech.nomad.server.NomadChangeInfo;
 import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Mathieu Carbou
@@ -106,5 +111,17 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
 
   public String getOtherClientUser() {
     return otherClientUser;
+  }
+
+  public Optional<NomadChangeInfo> getCheckpoint() {
+    int nodeCount = responses.size();
+    return responses.values()
+        .stream()
+        .flatMap(response -> response.getCheckpoints().stream())
+        .collect(groupingBy(NomadChangeInfo::getChangeUuid, toList())) // Map<UUID, List<NomadChangeInfo>>
+        .entrySet().stream()
+        .filter(e -> e.getValue().size() == nodeCount) // only consider entries having the change UUID on all the nodes
+        .max(Comparator.comparing(e -> e.getValue().get(0).getVersion())) // select the UUID having the maximum version ID
+        .map(e -> e.getValue().get(0));
   }
 }

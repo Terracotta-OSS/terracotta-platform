@@ -74,6 +74,10 @@ public class DiagnosticCommand extends RemoteCommand {
   }
 
   private void printDiagnostic(ConsistencyReceiver<NodeContext> consistencyReceiver) {
+    Clock clock = Clock.systemDefaultZone();
+    ZoneId zoneId = clock.getZone();
+    DateTimeFormatter ISO_8601 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
     StringBuilder sb = new StringBuilder();
 
     sb.append(lineSeparator());
@@ -104,10 +108,11 @@ public class DiagnosticCommand extends RemoteCommand {
             "YES" :
             ("NO (Reason: at least one server is not accepting new change)"))
         .append(lineSeparator());
-
-    Clock clock = Clock.systemDefaultZone();
-    ZoneId zoneId = clock.getZone();
-    DateTimeFormatter ISO_8601 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    sb.append(" - Configuration checkpoint found across all online nodes: ")
+        .append(consistencyReceiver.getCheckpoint()
+            .map(nci -> "YES (Version: " + nci.getVersion() + ", UUID: " + nci.getChangeUuid() + ", At: " + nci.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601) + ", Details: " + nci.getNomadChange().getSummary() + ")")
+            .orElse("NO"))
+        .append(lineSeparator());
 
     allNodes.keySet().forEach(nodeAddress -> {
 

@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.accept;
 import static com.terracottatech.nomad.messages.RejectionReason.BAD;
@@ -155,6 +156,10 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       );
     }
 
+    List<NomadChangeInfo> checkpoints = getAllNomadChanges().stream()
+        .filter(nomadChangeInfo -> nomadChangeInfo.getChangeRequestState() == COMMITTED)
+        .collect(Collectors.toList());
+
     return new DiscoverResponse<>(
         mode,
         mutativeMessageCount,
@@ -163,7 +168,8 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
         lastMutationTimestamp,
         currentVersion,
         highestVersion,
-        latestChange
+        latestChange,
+        checkpoints
     );
   }
 

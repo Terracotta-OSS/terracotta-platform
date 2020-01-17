@@ -12,6 +12,7 @@ import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -61,7 +62,8 @@ public class NomadTestHelper {
             "testCreationHost",
             "testCreationUser",
             Instant.now()
-        )
+        ),
+        Collections.emptyList()
     );
   }
 }
