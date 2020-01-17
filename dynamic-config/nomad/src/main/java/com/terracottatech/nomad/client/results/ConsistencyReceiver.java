@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -59,8 +60,8 @@ public class ConsistencyReceiver<T> implements DiscoverResultsReceiver<T> {
     this.discoveredOtherClient = true;
   }
 
-  public Map<InetSocketAddress, DiscoverResponse<T>> getResponses() {
-    return responses;
+  public Optional<DiscoverResponse<T>> getDiscoveryResponse(InetSocketAddress node) {
+    return Optional.ofNullable(responses.get(node));
   }
 
   public String getDiscoverFailure() {

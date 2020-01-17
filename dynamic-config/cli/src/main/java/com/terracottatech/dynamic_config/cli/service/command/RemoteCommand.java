@@ -210,8 +210,12 @@ public abstract class RemoteCommand extends Command {
 
   protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress expectedOnlineNode) {
     logger.trace("findOnlineRuntimePeers({})", expectedOnlineNode);
-    Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(expectedOnlineNode);
-    return allNodes.entrySet()
+    Map<InetSocketAddress, LogicalServerState> nodes = findRuntimePeersStatus(expectedOnlineNode);
+    return filterOnlineNodes(nodes);
+  }
+
+  protected final LinkedHashMap<InetSocketAddress, LogicalServerState> filterOnlineNodes(Map<InetSocketAddress, LogicalServerState> nodes) {
+    return nodes.entrySet()
         .stream()
         .filter(e -> !e.getValue().isUnknown() && !e.getValue().isUnreacheable())
         .collect(toMap(
