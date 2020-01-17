@@ -8,6 +8,7 @@ import com.tc.classloader.PermanentEntity;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandlerManager;
 import com.terracottatech.dynamic_config.handler.SelectingConfigChangeHandler;
+import com.terracottatech.dynamic_config.test_support.handler.GroupPortSimulateHandler;
 import com.terracottatech.dynamic_config.test_support.handler.SimulationHandler;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
@@ -80,6 +81,7 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
             if (handler instanceof SelectingConfigChangeHandler) {
               SelectingConfigChangeHandler<String> selectingConfigChangeHandler = (SelectingConfigChangeHandler<String>) handler;
               selectingConfigChangeHandler.add("com.terracottatech.dynamic-config.simulate", new SimulationHandler());
+              selectingConfigChangeHandler.add("com.terracottatech.group-port.simulate", new GroupPortSimulateHandler());
             }
           });
     } catch (ServiceException e) {
