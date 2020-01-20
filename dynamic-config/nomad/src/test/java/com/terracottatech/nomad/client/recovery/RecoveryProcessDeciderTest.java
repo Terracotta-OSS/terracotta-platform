@@ -27,7 +27,7 @@ public class RecoveryProcessDeciderTest {
   @Mock
   private AllResultsReceiver<String> results;
 
-  RecoveryProcessDecider<String> decider = new RecoveryProcessDecider<>();
+  RecoveryProcessDecider<String> decider = new RecoveryProcessDecider<>(2, null);
   InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
   InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
 

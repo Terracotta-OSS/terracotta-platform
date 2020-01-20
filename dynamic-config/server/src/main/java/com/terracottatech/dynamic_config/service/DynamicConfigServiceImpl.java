@@ -82,9 +82,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     if (nomadServerManager.getNomadServer().hasIncompleteChange()) {
       LOGGER.error(lineSeparator() + lineSeparator()
-          + "=======================================================================================================================================" + lineSeparator()
+          + "==============================================================================================================================================" + lineSeparator()
           + "The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state." + lineSeparator()
-          + "=======================================================================================================================================" + lineSeparator()
+          + "==============================================================================================================================================" + lineSeparator()
       );
     }
   }

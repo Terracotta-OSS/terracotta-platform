@@ -11,26 +11,12 @@ import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.nomad.server.NomadServerMode;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 public class NomadTestHelper {
-  @SuppressWarnings("unchecked")
-  public static <T> Set<T> setOf(T... values) {
-    return new HashSet<>(Arrays.asList(values));
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> Set<T> matchSetOf(T... values) {
-    return (Set<T>) argThat(containsInAnyOrder(values));
-  }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState) {
     return discovery(changeState, 1L);
@@ -38,10 +24,6 @@ public class NomadTestHelper {
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount) {
     return discovery(changeState, mutativeMessageCount, UUID.randomUUID());
-  }
-
-  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID uuid) {
-    return discovery(changeState, 1L, uuid);
   }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid) {

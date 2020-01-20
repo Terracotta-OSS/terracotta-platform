@@ -17,8 +17,9 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.nomad.client.change.NomadChange;
-import com.terracottatech.nomad.client.results.ConsistencyReceiver;
+import com.terracottatech.nomad.client.results.ConsistencyAnalyzer;
 import com.terracottatech.nomad.client.results.NomadFailureReceiver;
+import com.terracottatech.nomad.server.ChangeRequestState;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
@@ -91,13 +92,14 @@ public abstract class RemoteCommand extends Command {
   /**
    * Returns the current consistency of teh configuration in the cluster
    */
-  protected final ConsistencyReceiver<NodeContext> getNomadConsistency(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
-    logger.trace("getNomadConsistency({})", expectedOnlineNodes);
+  protected final ConsistencyAnalyzer<NodeContext> analyzeNomadConsistency(Map<InetSocketAddress, LogicalServerState> allNodes) {
+    logger.trace("getNomadConsistency({})", allNodes);
+    Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes = filterOnlineNodes(allNodes);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
     List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
-    ConsistencyReceiver<NodeContext> consistencyReceiver = new ConsistencyReceiver<>();
-    nomadManager.runDiscovery(orderedList, consistencyReceiver);
-    return consistencyReceiver;
+    ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = new ConsistencyAnalyzer<>(allNodes.size());
+    nomadManager.runDiscovery(orderedList, consistencyAnalyzer);
+    return consistencyAnalyzer;
   }
 
   /**
@@ -106,12 +108,13 @@ public abstract class RemoteCommand extends Command {
    * <p>
    * Nodes are expected to be online.
    */
-  protected final void runNomadRepair(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
-    logger.trace("runNomadRecovery({})", expectedOnlineNodes);
+  protected final void runNomadRepair(Map<InetSocketAddress, LogicalServerState> allNodes, ChangeRequestState forcedState) {
+    logger.trace("runNomadRepair({})", allNodes);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
+    Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes = filterOnlineNodes(allNodes);
     List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runRecovery(orderedList, failures);
+    nomadManager.runRecovery(orderedList, failures, allNodes.size(), forcedState);
     failures.reThrow();
   }
 

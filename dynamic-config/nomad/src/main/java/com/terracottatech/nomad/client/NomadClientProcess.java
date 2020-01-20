@@ -77,10 +77,14 @@ public abstract class NomadClientProcess<C, R> {
   private void commitOrRollback(CommitRollbackResultsReceiver results, NomadDecider<R> decider, NomadMessageSender<R> messageSender) {
     if (decider.shouldDoCommit()) {
       messageSender.sendCommits(results);
+      results.done(decider.getConsistency());
+
     } else if (decider.shouldDoRollback()) {
       messageSender.sendRollbacks(results);
-    }
+      results.done(decider.getConsistency());
 
-    results.done(decider.getConsistency());
+    } else {
+      messageSender.noop(results);
+    }
   }
 }

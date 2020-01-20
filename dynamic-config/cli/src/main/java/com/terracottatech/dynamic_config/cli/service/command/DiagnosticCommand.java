@@ -9,7 +9,7 @@ import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.nomad.client.results.ConsistencyReceiver;
+import com.terracottatech.nomad.client.results.ConsistencyAnalyzer;
 import com.terracottatech.nomad.server.NomadServerMode;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 
@@ -53,27 +53,11 @@ public class DiagnosticCommand extends RemoteCommand {
 
   @Override
   public final void run() {
-    ConsistencyReceiver<NodeContext> consistencyReceiver = getNomadConsistency(onlineNodes);
-    printDiagnostic(consistencyReceiver);
-
-    if (consistencyReceiver.areAllAccepting()) {
-      logger.info("Cluster configuration is healthy.");
-
-    } else if (consistencyReceiver.hasDiscoveredOtherClient()) {
-      logger.error("Unable to diagnose cluster configuration: another process has started a configuration change.");
-
-    } else if (consistencyReceiver.getDiscoverFailure() != null) {
-      logger.error("Unable to diagnose cluster configuration: " + consistencyReceiver.getDiscoverFailure());
-
-    } else if (consistencyReceiver.hasDiscoveredInconsistentCluster()) {
-      logger.error("Cluster configuration is broken. Please run the 'repair' command.");
-
-    } else {
-      logger.error("Cluster configuration is not fully committed or rolled back. Please run the 'repair' command.");
-    }
+    ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
+    printDiagnostic(consistencyAnalyzer);
   }
 
-  private void printDiagnostic(ConsistencyReceiver<NodeContext> consistencyReceiver) {
+  private void printDiagnostic(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
     Clock clock = Clock.systemDefaultZone();
     ZoneId zoneId = clock.getZone();
     DateTimeFormatter ISO_8601 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -88,28 +72,12 @@ public class DiagnosticCommand extends RemoteCommand {
 
     sb.append("[Cluster]")
         .append(lineSeparator());
-    sb.append(" - Configuration discovery: ")
-        .append(consistencyReceiver.getDiscoverFailure() == null ?
-            "SUCCESS" :
-            ("FAILED (Reason: " + consistencyReceiver.getDiscoverFailure() + ")"))
-        .append(lineSeparator());
-    sb.append(" - Configuration consistency check: ")
-        .append(!consistencyReceiver.hasDiscoveredInconsistentCluster() ?
-            "SUCCESS" :
-            ("FAILED (Change " + consistencyReceiver.getInconsistentChangeUuid() + " is committed on " + toString(consistencyReceiver.getCommittedServers()) + " and rolled back on " + toString(consistencyReceiver.getRolledBackServers()) + ")"))
-        .append(lineSeparator());
-    sb.append(" - Configuration change in progress from other client: ")
-        .append(!consistencyReceiver.hasDiscoveredOtherClient() ?
-            "NO" :
-            ("YES (Host: " + consistencyReceiver.getOtherClientHost() + ", By: " + consistencyReceiver.getOtherClientUser() + ", On: " + consistencyReceiver.getServerProcessingOtherClient() + ")"))
-        .append(lineSeparator());
-    sb.append(" - Configuration change allowed: ")
-        .append(consistencyReceiver.areAllAccepting() ?
-            "YES" :
-            ("NO (Reason: at least one server is not accepting new change)"))
+
+    sb.append(" - Configuration state: ")
+        .append(meaningOf(consistencyAnalyzer))
         .append(lineSeparator());
     sb.append(" - Configuration checkpoint found across all online nodes: ")
-        .append(consistencyReceiver.getCheckpoint()
+        .append(consistencyAnalyzer.getCheckpoint()
             .map(nci -> "YES (Version: " + nci.getVersion() + ", UUID: " + nci.getChangeUuid() + ", At: " + nci.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601) + ", Details: " + nci.getNomadChange().getSummary() + ")")
             .orElse("NO"))
         .append(lineSeparator());
@@ -119,7 +87,7 @@ public class DiagnosticCommand extends RemoteCommand {
       // header
       sb.append("[").append(nodeAddress).append("]").append(lineSeparator());
 
-      // server status
+      // node status
       sb.append(" - Node state: ")
           .append(allNodes.getOrDefault(nodeAddress, UNREACHABLE))
           .append(lineSeparator());
@@ -136,7 +104,7 @@ public class DiagnosticCommand extends RemoteCommand {
             "NO")
             .append(lineSeparator());
 
-        consistencyReceiver.getDiscoveryResponse(nodeAddress).ifPresent(discoverResponse -> {
+        consistencyAnalyzer.getDiscoveryResponse(nodeAddress).ifPresent(discoverResponse -> {
           sb.append(" - Node can accept new changes: ")
               .append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "YES" : "NO")
               .append(lineSeparator());
@@ -177,5 +145,72 @@ public class DiagnosticCommand extends RemoteCommand {
       }
     });
     logger.info(sb.toString());
+  }
+
+  private static String meaningOf(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
+    switch (consistencyAnalyzer.getGlobalState()) {
+      case ACCEPTING:
+        return "The cluster configuration is health and is accepting new configuration changes.";
+
+      case DISCOVERY_FAILURE:
+        return "Failed to analyze cluster configuration. Reason: " + consistencyAnalyzer.getDiscoverFailure();
+
+      case CONCURRENT_ACCESS:
+        return "Failed to analyze cluster configuration. Reason: concurrent client access:"
+            + " Host: " + consistencyAnalyzer.getOtherClientHost()
+            + ", By: " + consistencyAnalyzer.getOtherClientUser()
+            + ", On: " + consistencyAnalyzer.getNodeProcessingOtherClient();
+
+      case INCONSISTENT:
+        return "Cluster configuration is inconsistent: Change " + consistencyAnalyzer.getInconsistentChangeUuid()
+            + " is committed on " + toString(consistencyAnalyzer.getCommittedNodes())
+            + " and rolled back on " + toString(consistencyAnalyzer.getRolledBackNodes());
+
+      case PREPARED:
+        return "A new  cluster configuration has been prepared but not yet committed or rolled back on all nodes."
+            + " No further configuration change can be done until the 'repair' command is run to finalize the configuration change.";
+
+      case MAYBE_PREPARED:
+        return "A new  cluster configuration has been prepared but not yet committed or rolled back on online nodes."
+            + " Some nodes are unreachable so we do not know if the last configuration change has been committed or rolled back on them."
+            + " No further configuration change can be done until the 'repair' command is run to finalize the configuration change."
+            + " If the unreachable nodes do not become available again, you might need to use the '-f' option to force a commit or rollback ";
+
+      case PARTIALLY_PREPARED:
+        return "A new  cluster configuration has been *partially* prepared (some nodes didn't get the new change)."
+            + " No further configuration change can be done until the 'repair' command is run to rollback the prepared nodes.";
+
+      case PARTIALLY_COMMITTED:
+        return "A new  cluster configuration has been *partially* committed (some nodes didn't commit)."
+            + " No further configuration change can be done until the 'repair' command is run to commit all nodes.";
+
+      case MAYBE_PARTIALLY_COMMITTED:
+        return "A new  cluster configuration has been *partially* committed (some nodes didn't commit)."
+            + " Some nodes are unreachable so we do not know their last configuration state."
+            + " No further configuration change can be done until the 'repair' command is run to commit all nodes.";
+
+      case PARTIALLY_ROLLED_BACK:
+        return "A new  cluster configuration has been *partially* rolled back (some nodes didn't rollback)."
+            + " No further configuration change can be done until the 'repair' command is run to rollback all nodes.";
+
+      case MAYBE_PARTIALLY_ROLLED_BACK:
+        return "A new  cluster configuration has been *partially* rolled back (some nodes didn't rollback)."
+            + " Some nodes are unreachable so we do not know their last configuration state."
+            + " No further configuration change can be done until the 'repair' command is run to rollback all nodes.";
+
+      case UNKNOWN:
+        return "Unable to determine the global configuration state."
+            + " There might be some configuration inconsistencies."
+            + " Please look at each node details.";
+
+      case MAYBE_UNKNOWN:
+        return "Unable to determine the global configuration state."
+            + " There might be some configuration inconsistencies."
+            + " Some nodes are unreachable so we do not know their last configuration state."
+            + " Please look at each node details.";
+
+      default:
+        throw new AssertionError(consistencyAnalyzer.getGlobalState());
+    }
   }
 }

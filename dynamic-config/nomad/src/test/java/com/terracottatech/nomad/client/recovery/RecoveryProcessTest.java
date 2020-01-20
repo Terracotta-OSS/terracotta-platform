@@ -350,6 +350,6 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
   private void runTest() {
     NomadClient<String> client = new NomadClient<>(servers, "host", "user", Clock.systemUTC());
-    client.tryRecovery(results);
+    client.tryRecovery(results, 2, null);
   }
 }

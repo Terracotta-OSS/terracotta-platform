@@ -12,6 +12,7 @@ import com.terracottatech.nomad.client.results.LoggingResultReceiver;
 import com.terracottatech.nomad.client.results.MultiChangeResultReceiver;
 import com.terracottatech.nomad.client.results.MultiRecoveryResultReceiver;
 import com.terracottatech.nomad.client.status.MultiDiscoveryResultReceiver;
+import com.terracottatech.nomad.server.ChangeRequestState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +38,11 @@ public class NomadManager<T> {
     }
   }
 
-  public void runRecovery(List<InetSocketAddress> expectedOnlineNodes, RecoveryResultReceiver<T> results) {
+  public void runRecovery(List<InetSocketAddress> expectedOnlineNodes, RecoveryResultReceiver<T> results, int expectedNodeCount, ChangeRequestState forcedState) {
     LOGGER.debug("Attempting to recover nodes: {}", expectedOnlineNodes);
 
     try (CloseableNomadClient<T> client = clientFactory.createClient(expectedOnlineNodes)) {
-      client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)));
+      client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), expectedNodeCount, forcedState);
     }
   }
 

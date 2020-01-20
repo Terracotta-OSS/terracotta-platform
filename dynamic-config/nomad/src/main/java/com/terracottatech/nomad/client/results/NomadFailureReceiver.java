@@ -108,9 +108,12 @@ public class NomadFailureReceiver<T> implements ChangeResultReceiver<T>, Recover
   @Override
   public void done(Consistency consistency) {
     switch (consistency) {
+      case MAY_NEED_FORCE_RECOVERY:
+        failures.add("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback.");
+        break;
       case MAY_NEED_RECOVERY:
       case UNKNOWN_BUT_NO_CHANGE:
-        failures.add("Please run the 'diagnostic' command to diagnose the configuration state.");
+        failures.add("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.");
         break;
       case UNRECOVERABLY_INCONSISTENT:
         failures.add("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");

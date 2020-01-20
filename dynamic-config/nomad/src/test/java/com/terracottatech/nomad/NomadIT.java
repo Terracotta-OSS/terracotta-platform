@@ -268,7 +268,7 @@ public class NomadIT {
 
     interceptionServer.setAllowCommit(true);
 
-    client.tryRecovery(recoveryResults);
+    client.tryRecovery(recoveryResults, 3, null);
 
     verify(changeApplicator1).apply(change);
     verify(recoveryResults).startDiscovery(withItems(address1, address2, address3));

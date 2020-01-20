@@ -9,6 +9,7 @@ import com.terracottatech.nomad.client.NomadDecider;
 import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
+import com.terracottatech.nomad.server.ChangeRequestState;
 
 import java.time.Clock;
 import java.util.List;
@@ -18,10 +19,10 @@ public class RecoveryProcess<T> extends NomadClientProcess<Void, T> {
     super(servers, host, user, clock);
   }
 
-  public void recover(RecoveryResultReceiver<T> results) {
+  public void recover(RecoveryResultReceiver<T> results, int expectedNodeCount, ChangeRequestState forcedState) {
     runProcess(
         new RecoveryAllResultsReceiverAdapter<>(results),
-        new RecoveryProcessDecider<>(),
+        new RecoveryProcessDecider<>(expectedNodeCount, forcedState),
         new RecoveryMessageSender<>(servers, host, user, clock),
         null
     );

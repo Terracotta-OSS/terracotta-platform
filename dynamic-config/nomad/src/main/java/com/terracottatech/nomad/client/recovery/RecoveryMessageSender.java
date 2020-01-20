@@ -4,8 +4,10 @@
  */
 package com.terracottatech.nomad.client.recovery;
 
+import com.terracottatech.nomad.client.Consistency;
 import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.NomadMessageSender;
+import com.terracottatech.nomad.client.results.CommitRollbackResultsReceiver;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServerMode;
 
@@ -28,5 +30,10 @@ public class RecoveryMessageSender<T> extends NomadMessageSender<T> {
       // getLatestChange() cannot return null if the server is PREPARED
       changeUuid = discovery.getLatestChange().getChangeUuid(); // we won't do anything with changeUuid if it doesn't match across servers
     }
+  }
+
+  @Override
+  public void noop(CommitRollbackResultsReceiver results) {
+    results.done(Consistency.MAY_NEED_FORCE_RECOVERY);
   }
 }

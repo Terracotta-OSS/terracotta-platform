@@ -179,9 +179,12 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
       case CONSISTENT:
         print("The change has been made successfully");
         break;
+      case MAY_NEED_FORCE_RECOVERY:
+        printError("Please run the 'repair' command again and force either a commit or rollback");
+        break;
       case MAY_NEED_RECOVERY:
       case UNKNOWN_BUT_NO_CHANGE:
-        printError("Please run the 'diagnostic' command to diagnose the configuration state.");
+        printError("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.");
         break;
       case UNRECOVERABLY_INCONSISTENT:
         printError("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");
@@ -194,7 +197,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   private void printError(String line) {
     // debug level is normal hereL this class is used to "trace" all Nomad callbacks and print them to the console
     // if we are in verbose mode (trace level)
-    // the errors occuring in nomad are handled at another place
+    // the errors occurring in nomad are handled at another place
     LOGGER.debug(line);
   }
 

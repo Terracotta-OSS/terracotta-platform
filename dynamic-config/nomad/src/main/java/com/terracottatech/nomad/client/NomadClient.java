@@ -11,6 +11,7 @@ import com.terracottatech.nomad.client.recovery.RecoveryProcess;
 import com.terracottatech.nomad.client.recovery.RecoveryResultReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.status.DiscoveryProcess;
+import com.terracottatech.nomad.server.ChangeRequestState;
 
 import java.time.Clock;
 import java.util.List;
@@ -42,9 +43,9 @@ public class NomadClient<T> {
     changeProcess.applyChange(results, change);
   }
 
-  public void tryRecovery(RecoveryResultReceiver<T> results) {
+  public void tryRecovery(RecoveryResultReceiver<T> results, int expectedNodeCount, ChangeRequestState forcedState) {
     RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user, clock);
-    recoveryProcess.recover(results);
+    recoveryProcess.recover(results, expectedNodeCount, forcedState);
   }
 
   public void tryDiscovery(DiscoverResultsReceiver<T> results) {

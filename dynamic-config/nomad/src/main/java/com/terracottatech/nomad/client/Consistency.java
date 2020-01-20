@@ -7,6 +7,7 @@ package com.terracottatech.nomad.client;
 public enum Consistency {
   CONSISTENT,
   MAY_NEED_RECOVERY,
+  MAY_NEED_FORCE_RECOVERY,
   UNRECOVERABLY_INCONSISTENT,
   UNKNOWN_BUT_NO_CHANGE
 }
