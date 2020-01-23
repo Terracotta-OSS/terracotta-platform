@@ -177,9 +177,9 @@ public class ActivateCommandTest extends BaseTest {
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(allOf(
             containsString("Two-Phase commit failed with 3 messages(s):"),
-            containsString("Prepare rejected for server localhost:9411. Reason: error"),
-            containsString("Prepare rejected for server localhost:9421. Reason: error"),
-            containsString("Prepare rejected for server localhost:9422. Reason: error")
+            containsString("Prepare rejected for node localhost:9411. Reason: error"),
+            containsString("Prepare rejected for node localhost:9421. Reason: error"),
+            containsString("Prepare rejected for node localhost:9422. Reason: error")
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
@@ -214,9 +214,9 @@ public class ActivateCommandTest extends BaseTest {
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(allOf(
             containsString("Two-Phase commit failed with 4 messages(s):"),
-            containsString("Commit failed for server localhost:9411. Reason: an error"),
-            containsString("Commit failed for server localhost:9421. Reason: an error"),
-            containsString("Commit failed for server localhost:9422. Reason: an error")
+            containsString("Commit failed for node localhost:9411. Reason: an error"),
+            containsString("Commit failed for node localhost:9421. Reason: an error"),
+            containsString("Commit failed for node localhost:9422. Reason: an error")
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {

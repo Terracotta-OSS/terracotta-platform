@@ -20,188 +20,188 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void startTakeover() {
-    print("Start takeover");
+    trace("Start takeover");
   }
 
   @Override
-  public void takeover(InetSocketAddress server) {
-    print("Takeover: " + server);
+  public void takeover(InetSocketAddress node) {
+    trace("Takeover: " + node);
   }
 
   @Override
-  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
-    printError("Takeover of other client: server=" + server + ", lastMutationHost=" + lastMutationHost + ", lastMutationUser=" + lastMutationUser);
+  public void takeoverOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+    error("Takeover of other client: node=" + node + ", lastMutationHost=" + lastMutationHost + ", lastMutationUser=" + lastMutationUser);
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, String reason) {
-    printError("Takeover has failed: " + server + ": " + reason);
+  public void takeoverFail(InetSocketAddress node, String reason) {
+    error("Takeover has failed: " + node + ": " + reason);
   }
 
   @Override
   public void endTakeover() {
-    print("End takeover");
+    trace("End takeover");
   }
 
   @Override
   public void startDiscovery(Collection<InetSocketAddress> servers) {
-    print("Gathering state from servers: " + servers);
+    trace("Gathering state from servers: " + servers);
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
-    print("Received server state for: " + server);
+  public void discovered(InetSocketAddress node, DiscoverResponse<T> discovery) {
+    trace("Received node state for: " + node);
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
-    printError("No response from server: " + server + ". Reason: " + reason);
+  public void discoverFail(InetSocketAddress node, String reason) {
+    error("Discover failed on node: " + node + ". Reason: " + reason);
   }
 
   @Override
-  public void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUUID, String creationHost, String creationUser) {
-    printError("Another change (with UUID " + changeUUID + " is already underway on " + server + ". It was started by " + creationUser + " on " + creationHost);
+  public void discoverAlreadyPrepared(InetSocketAddress node, UUID changeUUID, String creationHost, String creationUser) {
+    error("Another change (with UUID " + changeUUID + " is already underway on " + node + ". It was started by " + creationUser + " on " + creationHost);
   }
 
   @Override
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
-    printError("UNRECOVERABLE: Inconsistent cluster for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
+    error("UNRECOVERABLE: Inconsistent cluster for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
   }
 
   @Override
   public void endDiscovery() {
-    print("Finished first round of gathering state");
+    trace("Finished first round of gathering state");
   }
 
   @Override
   public void startSecondDiscovery() {
-    print("Starting second round of gathering state");
+    trace("Starting second round of gathering state");
   }
 
   @Override
-  public void discoverRepeated(InetSocketAddress server) {
-    print("Received server state for: " + server);
+  public void discoverRepeated(InetSocketAddress node) {
+    trace("Received node state for: " + node);
   }
 
   @Override
-  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
-    printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
+  public void discoverOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+    error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 
   @Override
   public void endSecondDiscovery() {
-    print("Finished second round of gathering state");
+    trace("Finished second round of gathering state");
   }
 
   @Override
   public void startPrepare(UUID newChangeUuid) {
-    print("No server is currently making a change. Starting a new change with UUID: " + newChangeUuid);
+    trace("No node is currently making a change. Starting a new change with UUID: " + newChangeUuid);
   }
 
   @Override
-  public void prepared(InetSocketAddress server) {
-    print("Server: " + server + " is prepared to make the change");
+  public void prepared(InetSocketAddress node) {
+    trace("Node: " + node + " is prepared to make the change");
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
-    printError("Server: " + server + " failed when asked to prepare to make the change. Reason: " + reason);
+  public void prepareFail(InetSocketAddress node, String reason) {
+    error("Node: " + node + " failed when asked to prepare to make the change. Reason: " + reason);
   }
 
   @Override
-  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
-    printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
+  public void prepareOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+    error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 
   @Override
-  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
-    printError("Server: " + server + " rejected the change as unacceptable because: " + rejectionReason);
+  public void prepareChangeUnacceptable(InetSocketAddress node, String rejectionReason) {
+    error("Prepare rejected for node " + node + ". Reason: " + rejectionReason);
   }
 
   @Override
   public void endPrepare() {
-    print("Finished asking servers to prepare to make the change");
+    trace("Finished asking servers to prepare to make the change");
   }
 
   @Override
   public void startCommit() {
-    print("Committing the change");
+    trace("Committing the change");
   }
 
   @Override
-  public void committed(InetSocketAddress server) {
-    print("Server: " + server + " has committed the change");
+  public void committed(InetSocketAddress node) {
+    trace("Node: " + node + " has committed the change");
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
-    printError("Server: " + server + " failed when asked to commit the change: " + reason);
+  public void commitFail(InetSocketAddress node, String reason) {
+    error("Commit failed for node " + node + ". Reason: " + reason);
   }
 
   @Override
-  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
-    printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
+  public void commitOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+    error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 
   @Override
   public void endCommit() {
-    print("Finished asking servers to commit the change");
+    trace("Finished asking servers to commit the change");
   }
 
   @Override
   public void startRollback() {
-    print("Rolling back the change");
+    trace("Rolling back the change");
   }
 
   @Override
-  public void rolledBack(InetSocketAddress server) {
-    print("Server: " + server + " has rolled back the change");
+  public void rolledBack(InetSocketAddress node) {
+    trace("Node: " + node + " has rolled back the change");
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
-    printError("Server: " + server + " failed when asked to roll back the change. Reason: " + reason);
+  public void rollbackFail(InetSocketAddress node, String reason) {
+    error("Rollback failed for node: " + node + ". Reason: " + reason);
   }
 
   @Override
-  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
-    printError("Another process run on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + server);
+  public void rollbackOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+    error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 
   @Override
   public void endRollback() {
-    print("Finished asking servers to rollback the change");
+    trace("Finished asking servers to rollback the change");
   }
 
   @Override
   public void done(Consistency consistency) {
     switch (consistency) {
       case CONSISTENT:
-        print("The change has been made successfully");
+        trace("The change has been made successfully");
         break;
       case MAY_NEED_FORCE_RECOVERY:
-        printError("Please run the 'repair' command again and force either a commit or rollback");
+        error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback.");
         break;
       case MAY_NEED_RECOVERY:
       case UNKNOWN_BUT_NO_CHANGE:
-        printError("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.");
+        error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.");
         break;
       case UNRECOVERABLY_INCONSISTENT:
-        printError("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");
+        error("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");
         break;
       default:
         throw new AssertionError("Unknown Consistency: " + consistency);
     }
   }
 
-  private void printError(String line) {
+  protected void error(String line) {
     // debug level is normal hereL this class is used to "trace" all Nomad callbacks and print them to the console
     // if we are in verbose mode (trace level)
     // the errors occurring in nomad are handled at another place
     LOGGER.debug(line);
   }
 
-  private void print(String line) {
+  protected void trace(String line) {
     LOGGER.debug(line);
   }
 }

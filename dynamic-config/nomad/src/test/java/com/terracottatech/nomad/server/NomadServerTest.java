@@ -23,8 +23,10 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.UUID;
 
+import static com.terracottatech.nomad.messages.RejectionReason.BAD;
 import static com.terracottatech.nomad.messages.RejectionReason.DEAD;
 import static com.terracottatech.nomad.messages.RejectionReason.UNACCEPTABLE;
 import static com.terracottatech.nomad.server.NomadServerMode.ACCEPTING;
@@ -33,6 +35,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -43,13 +47,14 @@ public class NomadServerTest {
   private ChangeApplicator<String> changeApplicator;
 
   private NomadServerState<String> state;
-  private NomadServer<String> server;
+  private NomadServerImpl<String> server;
 
   @Before
   public void before() throws Exception {
     state = new MemoryNomadServerState<>();
     assertFalse(state.isInitialized());
     server = new NomadServerImpl<>(state, changeApplicator);
+    assertFalse(server.hasIncompleteChange());
   }
 
   @After
@@ -60,6 +65,7 @@ public class NomadServerTest {
   @Test
   public void initializesState() throws Exception {
     assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
+    assertFalse(server.hasIncompleteChange());
   }
 
   @Test
@@ -89,6 +95,7 @@ public class NomadServerTest {
     assertTrue(response.isAccepted());
     assertState(PREPARED, 2L, "testhost", "testuser", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost", "testuser", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    assertTrue(server.hasIncompleteChange());
   }
 
   @Test
@@ -109,6 +116,8 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
+    assertTrue(server.hasIncompleteChange());
+
     AcceptRejectResponse response = server.commit(new CommitMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
@@ -121,6 +130,7 @@ public class NomadServerTest {
     assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 1L, 1L, ChangeRequestState.COMMITTED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
     verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
+    assertFalse(server.hasIncompleteChange());
   }
 
   @Test
@@ -141,6 +151,8 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
+    assertTrue(server.hasIncompleteChange());
+
     AcceptRejectResponse response = server.rollback(new RollbackMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
@@ -152,6 +164,7 @@ public class NomadServerTest {
     assertTrue(response.isAccepted());
     assertState(ACCEPTING, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.ROLLED_BACK, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    assertFalse(server.hasIncompleteChange());
   }
 
   @Test
@@ -172,6 +185,8 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
+    assertTrue(server.hasIncompleteChange());
+
     AcceptRejectResponse response = server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost2",
@@ -182,6 +197,7 @@ public class NomadServerTest {
     assertTrue(response.isAccepted());
     assertState(PREPARED, 3L, "testhost2", "testuser2", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    assertTrue(server.hasIncompleteChange());
   }
 
   @Test
@@ -197,6 +213,7 @@ public class NomadServerTest {
 
     assertTrue(response.isAccepted());
     assertState(ACCEPTING, 2L, "testhost1", "testuser1", null, 0L, 0L, null, null, null, null, null, null, null, null);
+    assertFalse(server.hasIncompleteChange());
   }
 
   @Test
@@ -210,6 +227,8 @@ public class NomadServerTest {
         Clock.systemDefaultZone().instant()
     ));
 
+    assertFalse(server.hasIncompleteChange());
+
     UUID uuid = UUID.randomUUID();
 
     AcceptRejectResponse response = server.prepare(new PrepareMessage(
@@ -222,8 +241,9 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
-    assertRejection(response, DEAD, null, "testhost1", "testuser1");
+    assertRejection(response, DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount", "testhost1", "testuser1");
     assertState(ACCEPTING, 2L, "testhost1", "testuser1", null, 0L, 0L, null, null, null, null, null, null, null, null);
+    assertFalse(server.hasIncompleteChange());
   }
 
   private void assertRejection(AcceptRejectResponse response, RejectionReason rejectionReason, String rejectionMessage, String host, String user) {
@@ -252,12 +272,16 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
+    assertTrue(server.hasIncompleteChange());
+
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost1",
         "testuser1",
         Clock.systemDefaultZone().instant()
     ));
+
+    assertTrue(server.hasIncompleteChange());
 
     AcceptRejectResponse response = server.commit(new CommitMessage(
         discoverResponse.getMutativeMessageCount() + 1,
@@ -269,6 +293,7 @@ public class NomadServerTest {
     assertRejection(response, DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount", "testhost1", "testuser1");
     assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    assertTrue(server.hasIncompleteChange());
   }
 
   @Test
@@ -289,12 +314,16 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
+    assertTrue(server.hasIncompleteChange());
+
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost1",
         "testuser1",
         Clock.systemDefaultZone().instant()
     ));
+
+    assertTrue(server.hasIncompleteChange());
 
     AcceptRejectResponse response = server.rollback(new RollbackMessage(
         discoverResponse.getMutativeMessageCount() + 1,
@@ -303,9 +332,10 @@ public class NomadServerTest {
         Clock.systemDefaultZone().instant(), uuid
     ));
 
-    assertRejection(response, DEAD, null, "testhost1", "testuser1");
+    assertRejection(response, DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount", "testhost1", "testuser1");
     assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    assertTrue(server.hasIncompleteChange());
   }
 
   @Test
@@ -315,6 +345,8 @@ public class NomadServerTest {
     DiscoverResponse<String> discoverResponse = server.discover();
 
     UUID uuid = UUID.randomUUID();
+
+    assertFalse(server.hasIncompleteChange());
 
     server.prepare(new PrepareMessage(
         discoverResponse.getMutativeMessageCount(),
@@ -326,12 +358,16 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
+    assertTrue(server.hasIncompleteChange());
+
     server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
         "testhost1",
         "testuser1",
         Clock.systemDefaultZone().instant()
     ));
+
+    assertTrue(server.hasIncompleteChange());
 
     AcceptRejectResponse response = server.takeover(new TakeoverMessage(
         discoverResponse.getMutativeMessageCount() + 1,
@@ -340,7 +376,9 @@ public class NomadServerTest {
         Clock.systemDefaultZone().instant()
     ));
 
-    assertRejection(response, DEAD, null, "testhost1", "testuser1");
+    assertTrue(server.hasIncompleteChange());
+
+    assertRejection(response, DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount", "testhost1", "testuser1");
     assertState(PREPARED, 3L, "testhost1", "testuser1", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
@@ -353,6 +391,8 @@ public class NomadServerTest {
 
     UUID uuid = UUID.randomUUID();
 
+    assertFalse(server.hasIncompleteChange());
+
     AcceptRejectResponse response = server.prepare(new PrepareMessage(
         discoverResponse.getMutativeMessageCount(),
         "testhost",
@@ -363,9 +403,104 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
+    assertFalse(server.hasIncompleteChange());
+
     assertRejection(response, UNACCEPTABLE, "fail", null, null);
     assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+  }
+
+  @Test
+  public void prepareWrongMode() throws Exception {
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+
+    DiscoverResponse<String> discoverResponse = server.discover();
+    UUID uuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "host",
+        "user",
+        Clock.systemDefaultZone().instant(),
+        uuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    assertState(PREPARED, 2L, "host", "user", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", "change-applied", "host", "user", "summary");
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+
+    AcceptRejectResponse response = server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost",
+        "testuser",
+        Clock.systemDefaultZone().instant(),
+        uuid,
+        discoverResponse.getHighestVersion() + 2,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    assertRejection(response, BAD, "Expected mode: ACCEPTING. Was: PREPARED", "host", "user");
+  }
+
+  @Test
+  public void prepareWrongVersion() throws Exception {
+    DiscoverResponse<String> discoverResponse = server.discover();
+    UUID uuid = UUID.randomUUID();
+
+    AcceptRejectResponse response = server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "host",
+        "user",
+        Clock.systemDefaultZone().instant(),
+        uuid,
+        0,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    assertRejection(response, BAD, "Wrong change version number", null, null);
+  }
+
+  @Test
+  public void prepareWrongUUID() throws Exception {
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+
+    DiscoverResponse<String> discoverResponse = server.discover();
+    UUID uuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        Clock.systemDefaultZone().instant(),
+        uuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+
+    server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        uuid
+    ));
+
+    verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
+
+    AcceptRejectResponse response = server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount() + 2,
+        "host",
+        "user",
+        Clock.systemDefaultZone().instant(),
+        uuid,
+        discoverResponse.getHighestVersion() + 2,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    assertRejection(response, BAD, "Received an alive PrepareMessage for a change that already exists: " + uuid, "testhost2", "testuser2");
   }
 
   @Test
@@ -376,6 +511,8 @@ public class NomadServerTest {
 
     UUID firstChangeUuid = UUID.randomUUID();
 
+    assertFalse(server.hasIncompleteChange());
+
     server.prepare(new PrepareMessage(
         discoverResponse.getMutativeMessageCount(),
         "testhost1",
@@ -385,6 +522,8 @@ public class NomadServerTest {
         discoverResponse.getHighestVersion() + 1,
         new SimpleNomadChange("change", "summary")
     ));
+
+    assertTrue(server.hasIncompleteChange());
 
     AcceptRejectResponse response = server.commit(new CommitMessage(
         discoverResponse.getMutativeMessageCount() + 1,
@@ -398,6 +537,7 @@ public class NomadServerTest {
     assertState(ACCEPTING, 3L, "testhost2", "testuser2", firstChangeUuid, 1L, 1L, ChangeRequestState.COMMITTED, 1L, null, "change", "change-applied", "testhost1", "testuser1", "summary");
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
     verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
+    assertFalse(server.hasIncompleteChange());
 
     // Apply more changes
     when(changeApplicator.tryApply("change-applied", new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("change-applied1"));
@@ -426,6 +566,212 @@ public class NomadServerTest {
     assertState(ACCEPTING, 5L, "testhost2", "testuser2", nextChangeUuid, 2L, 2L, ChangeRequestState.COMMITTED, 2L, firstChangeUuid.toString(), "change1", "change-applied1", "testhost1", "testuser1", "summary1");
     verify(changeApplicator).tryApply("change-applied", new SimpleNomadChange("change1", "summary1"));
     verify(changeApplicator).apply(new SimpleNomadChange("change1", "summary1"));
+  }
+
+  @Test
+  public void commitWrongMode() throws Exception {
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+
+    DiscoverResponse<String> discoverResponse = server.discover();
+    UUID firstChangeUuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid
+    ));
+
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
+
+    AcceptRejectResponse response = server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 2,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid
+    ));
+
+    assertRejection(response, BAD, "Expected mode: PREPARED. Was: ACCEPTING", "testhost2", "testuser2");
+  }
+
+  @Test
+  public void commitWrongChange() throws Exception {
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+
+    DiscoverResponse<String> discoverResponse = server.discover();
+    UUID firstChangeUuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+
+    UUID inexisting = UUID.randomUUID();
+
+    AcceptRejectResponse response = server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        inexisting
+    ));
+
+    assertRejection(response, BAD, "Received an alive CommitMessage for a change that does not exist: " + inexisting, "testhost1", "testuser1");
+  }
+
+  @Test
+  public void rollbackWrongMode() throws Exception {
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+
+    DiscoverResponse<String> discoverResponse = server.discover();
+    UUID firstChangeUuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid
+    ));
+
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
+
+    AcceptRejectResponse response = server.rollback(new RollbackMessage(
+        discoverResponse.getMutativeMessageCount() + 2,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid
+    ));
+
+    assertRejection(response, BAD, "Expected mode: PREPARED. Was: ACCEPTING", "testhost2", "testuser2");
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testSetChangeApplicatorAlreadySet() throws Exception {
+    NomadServerState<String> serverState = mock(NomadServerState.class);
+    when(serverState.isInitialized()).thenReturn(true);
+    NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
+    ChangeApplicator<String> changeApplicator = mock(ChangeApplicator.class);
+    nomadServer.setChangeApplicator(changeApplicator);
+    try {
+      nomadServer.setChangeApplicator(changeApplicator);
+      fail("Should have got IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      //Indirectly tests the base case of setting also
+      //If set correctly sets in first call, then only we get this exception
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test(expected = NullPointerException.class)
+  public void testSetNullChangeApplicator() throws Exception {
+    NomadServerState<String> serverState = mock(NomadServerState.class);
+    when(serverState.isInitialized()).thenReturn(true);
+    NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
+    nomadServer.setChangeApplicator(null);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testListOfNomadChanges() throws Exception {
+    ChangeApplicator<String> changeApplicator = mock(ChangeApplicator.class);
+    NomadServerState<String> state = new MemoryNomadServerState<>();
+    UpgradableNomadServer<String> server = new NomadServerImpl<>(state, changeApplicator);
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
+
+    DiscoverResponse<String> discoverResponse = server.discover();
+
+    UUID firstChangeUuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change", "summary")
+    ));
+
+    AcceptRejectResponse response = server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        firstChangeUuid
+    ));
+
+    assertTrue(response.isAccepted());
+    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
+    verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
+
+    // Apply more changes
+    when(changeApplicator.tryApply("change-applied", new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("change-applied1"));
+    discoverResponse = server.discover();
+    UUID nextChangeUuid = UUID.randomUUID();
+
+    server.prepare(new PrepareMessage(
+        discoverResponse.getMutativeMessageCount(),
+        "testhost1",
+        "testuser1",
+        Clock.systemDefaultZone().instant(),
+        nextChangeUuid,
+        discoverResponse.getHighestVersion() + 1,
+        new SimpleNomadChange("change1", "summary1")
+    ));
+
+    response = server.commit(new CommitMessage(
+        discoverResponse.getMutativeMessageCount() + 1,
+        "testhost2",
+        "testuser2",
+        Clock.systemDefaultZone().instant(),
+        nextChangeUuid
+    ));
+
+    assertTrue(response.isAccepted());
+    verify(changeApplicator).tryApply("change-applied", new SimpleNomadChange("change1", "summary1"));
+    verify(changeApplicator).apply(new SimpleNomadChange("change1", "summary1"));
+
+    //Verifying changes are as it happened
+    List<NomadChangeInfo> getAllChanges = server.getAllNomadChanges();
+    assertEquals(getAllChanges.size(), 2);
+    assertEquals(getAllChanges.get(0).getChangeUuid(), firstChangeUuid);
+    assertEquals(getAllChanges.get(0).getNomadChange(), new SimpleNomadChange("change", "summary"));
+    assertEquals(getAllChanges.get(1).getChangeUuid(), nextChangeUuid);
+    assertEquals(getAllChanges.get(1).getNomadChange(), new SimpleNomadChange("change1", "summary1"));
   }
 
   private void assertState(

@@ -38,6 +38,8 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * Can be used in conjunction with the Nomad discovery process to capture the output and analyze the state of teh cluster
+ *
  * @author Mathieu Carbou
  */
 public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {

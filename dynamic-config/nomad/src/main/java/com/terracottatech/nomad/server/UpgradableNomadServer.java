@@ -12,6 +12,10 @@ public interface UpgradableNomadServer<T> extends NomadServer<T> {
 
   List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
 
+  /**
+   * Last change has not been committed or rolled back yet.
+   * Nomad is in PREPARED mode and won't accept further changes.
+   */
   boolean hasIncompleteChange();
 
   Optional<T> getCurrentCommittedChangeResult() throws NomadException;

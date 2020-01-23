@@ -16,8 +16,6 @@ import com.terracottatech.nomad.messages.RollbackMessage;
 import com.terracottatech.nomad.messages.TakeoverMessage;
 import com.terracottatech.nomad.server.state.NomadServerState;
 import com.terracottatech.nomad.server.state.NomadStateChange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.LinkedList;
@@ -35,8 +33,6 @@ import static com.terracottatech.nomad.server.ChangeRequestState.PREPARED;
 import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerImpl.class);
-
   private final NomadServerState<T> state;
   private ChangeApplicator<T> changeApplicator;
 
@@ -102,10 +98,6 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     }
     try {
       DiscoverResponse<T> discover = discover();
-      if (discover.getCurrentVersion() < 1) {
-        // there hasn't been any configuration installed yet
-        return false;
-      }
       ChangeDetails<T> latestChange = discover.getLatestChange();
       if (latestChange == null) {
         return false;
@@ -179,22 +171,21 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     }
 
     if (isDead(message)) {
-      return reject(DEAD);
+      return reject(DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount");
     }
 
-    if (isWrongMode(message, NomadServerMode.ACCEPTING)) {
-      return reject(BAD);
+    if (isWrongMode(NomadServerMode.ACCEPTING)) {
+      return reject(BAD, "Expected mode: " + NomadServerMode.ACCEPTING + ". Was: " + state.getMode());
     }
 
     if (isLowVersionNumber(message)) {
-      return reject(BAD);
+      return reject(BAD, "Wrong change version number");
     }
 
     UUID changeUuid = message.getChangeUuid();
     ChangeRequest<T> existingChangeRequest = state.getChangeRequest(changeUuid);
     if (existingChangeRequest != null) {
-      LOGGER.debug("Received an alive PrepareMessage for a change that already exists: " + changeUuid);
-      return reject(BAD);
+      return reject(BAD, "Received an alive PrepareMessage for a change that already exists: " + changeUuid);
     }
 
     // null when preparing for teh first time, when no config is available
@@ -242,7 +233,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       return reject(DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount");
     }
 
-    if (isWrongMode(message, NomadServerMode.PREPARED)) {
+    if (isWrongMode(NomadServerMode.PREPARED)) {
       return reject(BAD, "Expected mode: " + PREPARED + ". Was: " + state.getMode());
     }
 
@@ -253,8 +244,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
     ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
     if (changeRequest == null) {
-      LOGGER.debug("Received an alive CommitMessage for a change that does not exist: " + changeUuid);
-      return reject(BAD);
+      return reject(BAD, "Received an alive CommitMessage for a change that does not exist: " + changeUuid);
     }
 
     long changeVersion = changeRequest.getVersion();
@@ -278,11 +268,11 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
   public AcceptRejectResponse rollback(RollbackMessage message) throws NomadException {
     if (isDead(message)) {
-      return reject(DEAD);
+      return reject(DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount");
     }
 
-    if (isWrongMode(message, NomadServerMode.PREPARED)) {
-      return reject(BAD);
+    if (isWrongMode(NomadServerMode.PREPARED)) {
+      return reject(BAD, "Expected mode: " + PREPARED + ". Was: " + state.getMode());
     }
 
     UUID changeUuid = message.getChangeUuid();
@@ -304,7 +294,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
   public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
     if (isDead(message)) {
-      return reject(DEAD);
+      return reject(DEAD, "expectedMutativeMessageCount != actualMutativeMessageCount");
     }
 
     String mutationHost = message.getMutationHost();
@@ -328,27 +318,15 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     return expectedMutativeMessageCount != actualMutativeMessageCount;
   }
 
-  private boolean isWrongMode(MutativeMessage message, NomadServerMode expectedMode) {
+  private boolean isWrongMode(NomadServerMode expectedMode) {
     NomadServerMode mode = state.getMode();
-    boolean correctMode = mode == expectedMode;
-
-    if (!correctMode) {
-      LOGGER.debug("Received an alive " + message.getClass().getSimpleName() + " but not in " + expectedMode + " mode");
-    }
-
-    return !correctMode;
+    return mode != expectedMode;
   }
 
   private boolean isLowVersionNumber(PrepareMessage message) {
     long versionNumber = message.getVersionNumber();
     long highestVersionNumber = state.getHighestVersion();
-
-    boolean lowVersionNumber = versionNumber <= highestVersionNumber;
-    if (lowVersionNumber) {
-      LOGGER.debug("Received an alive " + message.getClass().getSimpleName() + " with a low version number. High: " + highestVersionNumber + " received: " + versionNumber);
-    }
-
-    return lowVersionNumber;
+    return versionNumber <= highestVersionNumber;
   }
 
   private void applyStateChange(NomadStateChange<T> stateChange) throws NomadException {
@@ -361,10 +339,6 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     if (newMutativeMessageCount != expectedNewMutativeMessageCount) {
       throw new AssertionError("Expected increment in mutative message count. Expected: " + expectedNewMutativeMessageCount + " found: " + newMutativeMessageCount);
     }
-  }
-
-  private AcceptRejectResponse reject(RejectionReason rejectionReason) {
-    return AcceptRejectResponse.reject(rejectionReason, state.getLastMutationHost(), state.getLastMutationUser());
   }
 
   private AcceptRejectResponse reject(RejectionReason rejectionReason, String rejectionMessage) {

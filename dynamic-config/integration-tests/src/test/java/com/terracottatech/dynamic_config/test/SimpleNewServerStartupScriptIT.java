@@ -225,9 +225,10 @@ public class SimpleNewServerStartupScriptIT extends BaseStartupIT {
   public void testStartingNodeWhenMigrationDidNotCommit() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeAndSkipCommit);
     startSingleNode("--node-repository-dir", configurationRepo.toString());
+    waitedAssert(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
     waitedAssert(out::getLog, containsString("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
+    waitedAssert(out::getLog, containsString("com.terracotta.config.ConfigurationException: Unable to initialize EnterpriseConfigurationProvider with"));
     waitedAssert(out::getLog, not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
-    waitedAssert(out::getLog, not(containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state.")));
   }
 
   @Test
