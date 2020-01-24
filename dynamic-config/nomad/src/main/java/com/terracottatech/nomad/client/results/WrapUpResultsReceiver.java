@@ -8,4 +8,6 @@ import com.terracottatech.nomad.client.Consistency;
 
 public interface WrapUpResultsReceiver {
   default void done(Consistency consistency) {}
+
+  default void cannotDecideOverCommitOrRollback() {}
 }

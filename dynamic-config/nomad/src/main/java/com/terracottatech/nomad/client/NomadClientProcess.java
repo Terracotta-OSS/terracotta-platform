@@ -84,7 +84,7 @@ public abstract class NomadClientProcess<C, R> {
       results.done(decider.getConsistency());
 
     } else {
-      messageSender.noop(results);
+      results.cannotDecideOverCommitOrRollback();
     }
   }
 }

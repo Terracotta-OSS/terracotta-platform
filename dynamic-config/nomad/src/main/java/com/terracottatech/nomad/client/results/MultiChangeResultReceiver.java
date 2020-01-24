@@ -211,4 +211,11 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
       changeResultReceiver.done(consistency);
     }
   }
+
+  @Override
+  public void cannotDecideOverCommitOrRollback() {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
+      changeResultReceiver.cannotDecideOverCommitOrRollback();
+    }
+  }
 }

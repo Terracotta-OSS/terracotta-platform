@@ -197,4 +197,11 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
       recoveryResultReceiver.done(consistency);
     }
   }
+
+  @Override
+  public void cannotDecideOverCommitOrRollback() {
+    for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
+      recoveryResultReceiver.cannotDecideOverCommitOrRollback();
+    }
+  }
 }

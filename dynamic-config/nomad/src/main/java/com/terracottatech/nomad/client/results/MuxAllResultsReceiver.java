@@ -250,4 +250,11 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
       receiver.done(consistency);
     }
   }
+
+  @Override
+  public void cannotDecideOverCommitOrRollback() {
+    for (AllResultsReceiver<T> receiver : receivers) {
+      receiver.cannotDecideOverCommitOrRollback();
+    }
+  }
 }

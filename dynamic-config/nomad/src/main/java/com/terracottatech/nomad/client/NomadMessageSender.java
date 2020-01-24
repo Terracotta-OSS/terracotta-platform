@@ -7,7 +7,6 @@ package com.terracottatech.nomad.client;
 import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.results.AllResultsReceiver;
 import com.terracottatech.nomad.client.results.CommitResultsReceiver;
-import com.terracottatech.nomad.client.results.CommitRollbackResultsReceiver;
 import com.terracottatech.nomad.client.results.DiscoverResultsReceiver;
 import com.terracottatech.nomad.client.results.PrepareResultsReceiver;
 import com.terracottatech.nomad.client.results.RollbackResultsReceiver;
@@ -280,9 +279,6 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     mutativeMessageCounts.put(server, expectedMutativeMessageCount);
     maxVersionNumber.accumulateAndGet(highestVersionNumber, Long::max);
-  }
-
-  public void noop(CommitRollbackResultsReceiver results) {
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

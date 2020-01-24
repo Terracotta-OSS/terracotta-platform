@@ -93,10 +93,10 @@ public abstract class RemoteCommand extends Command {
    * Returns the current consistency of teh configuration in the cluster
    */
   protected final ConsistencyAnalyzer<NodeContext> analyzeNomadConsistency(Map<InetSocketAddress, LogicalServerState> allNodes) {
-    logger.trace("getNomadConsistency({})", allNodes);
+    logger.trace("analyzeNomadConsistency({})", allNodes);
     Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes = filterOnlineNodes(allNodes);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
-    List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
+    List<InetSocketAddress> orderedList = keepPassivesFirst(expectedOnlineNodes);
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = new ConsistencyAnalyzer<>(allNodes.size());
     nomadManager.runDiscovery(orderedList, consistencyAnalyzer);
     return consistencyAnalyzer;
@@ -105,14 +105,12 @@ public abstract class RemoteCommand extends Command {
   /**
    * Runs a Nomad recovery by providing a map of activated nodes plus their state.
    * This method will create an ordered list of nodes to contact by moving the passives first and actives last.
-   * <p>
-   * Nodes are expected to be online.
    */
   protected final void runNomadRepair(Map<InetSocketAddress, LogicalServerState> allNodes, ChangeRequestState forcedState) {
     logger.trace("runNomadRepair({})", allNodes);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
     Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes = filterOnlineNodes(allNodes);
-    List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
+    List<InetSocketAddress> orderedList = keepPassivesFirst(expectedOnlineNodes);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runRecovery(orderedList, failures, allNodes.size(), forcedState);
     failures.reThrow();
@@ -127,7 +125,7 @@ public abstract class RemoteCommand extends Command {
   protected final void runNomadChange(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes, NomadChange change) {
     logger.trace("runNomadChange({}, {})", expectedOnlineNodes, change);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
-    List<InetSocketAddress> orderedList = order(expectedOnlineNodes);
+    List<InetSocketAddress> orderedList = keepPassivesFirst(expectedOnlineNodes);
     runNomadChange(orderedList, change);
   }
 
@@ -289,7 +287,10 @@ public abstract class RemoteCommand extends Command {
     return addresses.stream().map(InetSocketAddress::toString).sorted().collect(Collectors.joining(", "));
   }
 
-  private static List<InetSocketAddress> order(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
+  /**
+   * Put passive firsts and then actives last
+   */
+  private static List<InetSocketAddress> keepPassivesFirst(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
     Predicate<Map.Entry<InetSocketAddress, LogicalServerState>> actives = e -> e.getValue().isActive();
     return Stream.concat(
         expectedOnlineNodes.entrySet().stream().filter(actives.negate()),

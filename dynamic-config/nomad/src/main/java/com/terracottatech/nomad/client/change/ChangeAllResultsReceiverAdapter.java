@@ -178,4 +178,9 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   public void done(Consistency consistency) {
     changeResultReceiver.done(consistency);
   }
+
+  @Override
+  public void cannotDecideOverCommitOrRollback() {
+    changeResultReceiver.cannotDecideOverCommitOrRollback();
+  }
 }

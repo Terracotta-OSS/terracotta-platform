@@ -20,7 +20,6 @@ import static com.terracottatech.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
   private final Set<UUID> latestChangeUuids = ConcurrentHashMap.newKeySet();
-  private final AtomicInteger discoveredServers = new AtomicInteger();
   private final AtomicInteger rolledBack = new AtomicInteger();
   private final AtomicInteger committed = new AtomicInteger();
   private final AtomicInteger prepared = new AtomicInteger();
@@ -45,8 +44,6 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
   @Override
   public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     super.discovered(server, discovery);
-
-    discoveredServers.incrementAndGet();
 
     UUID latestChangeUuid = getLatestChangeUuid(discovery);
     latestChangeUuids.add(latestChangeUuid);

@@ -29,6 +29,11 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
+  public void cannotDecideOverCommitOrRollback() {
+    receiver.cannotDecideOverCommitOrRollback();
+  }
+
+  @Override
   public void startDiscovery(Collection<InetSocketAddress> servers) {
     receiver.startDiscovery(servers);
   }

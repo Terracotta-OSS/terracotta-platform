@@ -84,7 +84,7 @@ public class RepairCommand extends RemoteCommand {
         if (consistencyAnalyzer.hasUnreachableNodes()) {
           logger.warn("Some nodes are not reachable.");
         } else {
-          logger.info("All nodes appear online.");
+          logger.info("All nodes are online.");
         }
 
         logger.info("Attempting an automatic repair of the configuration...");

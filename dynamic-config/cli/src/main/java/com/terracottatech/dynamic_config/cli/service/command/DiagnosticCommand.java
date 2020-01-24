@@ -150,7 +150,7 @@ public class DiagnosticCommand extends RemoteCommand {
   private static String meaningOf(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
     switch (consistencyAnalyzer.getGlobalState()) {
       case ACCEPTING:
-        return "The cluster configuration is health and is accepting new configuration changes.";
+        return "The cluster configuration is healthy. New configuration changes are possible.";
 
       case DISCOVERY_FAILURE:
         return "Failed to analyze cluster configuration. Reason: " + consistencyAnalyzer.getDiscoverFailure();

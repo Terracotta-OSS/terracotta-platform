@@ -20,12 +20,12 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void startTakeover() {
-    trace("Start takeover");
+    log("Start takeover");
   }
 
   @Override
   public void takeover(InetSocketAddress node) {
-    trace("Takeover: " + node);
+    log("Takeover: " + node);
   }
 
   @Override
@@ -40,17 +40,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endTakeover() {
-    trace("End takeover");
+    log("End takeover");
   }
 
   @Override
   public void startDiscovery(Collection<InetSocketAddress> servers) {
-    trace("Gathering state from servers: " + servers);
+    log("Gathering state from servers: " + servers);
   }
 
   @Override
   public void discovered(InetSocketAddress node, DiscoverResponse<T> discovery) {
-    trace("Received node state for: " + node);
+    log("Received node state for: " + node);
   }
 
   @Override
@@ -70,17 +70,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endDiscovery() {
-    trace("Finished first round of gathering state");
+    log("Finished first round of gathering state");
   }
 
   @Override
   public void startSecondDiscovery() {
-    trace("Starting second round of gathering state");
+    log("Starting second round of gathering state");
   }
 
   @Override
   public void discoverRepeated(InetSocketAddress node) {
-    trace("Received node state for: " + node);
+    log("Received node state for: " + node);
   }
 
   @Override
@@ -90,17 +90,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endSecondDiscovery() {
-    trace("Finished second round of gathering state");
+    log("Finished second round of gathering state");
   }
 
   @Override
   public void startPrepare(UUID newChangeUuid) {
-    trace("No node is currently making a change. Starting a new change with UUID: " + newChangeUuid);
+    log("No node is currently making a change. Starting a new change with UUID: " + newChangeUuid);
   }
 
   @Override
   public void prepared(InetSocketAddress node) {
-    trace("Node: " + node + " is prepared to make the change");
+    log("Node: " + node + " is prepared to make the change");
   }
 
   @Override
@@ -120,17 +120,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endPrepare() {
-    trace("Finished asking servers to prepare to make the change");
+    log("Finished asking servers to prepare to make the change");
   }
 
   @Override
   public void startCommit() {
-    trace("Committing the change");
+    log("Committing the change");
   }
 
   @Override
   public void committed(InetSocketAddress node) {
-    trace("Node: " + node + " has committed the change");
+    log("Node: " + node + " has committed the change");
   }
 
   @Override
@@ -145,17 +145,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endCommit() {
-    trace("Finished asking servers to commit the change");
+    log("Finished asking servers to commit the change");
   }
 
   @Override
   public void startRollback() {
-    trace("Rolling back the change");
+    log("Rolling back the change");
   }
 
   @Override
   public void rolledBack(InetSocketAddress node) {
-    trace("Node: " + node + " has rolled back the change");
+    log("Node: " + node + " has rolled back the change");
   }
 
   @Override
@@ -170,21 +170,20 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endRollback() {
-    trace("Finished asking servers to rollback the change");
+    log("Finished asking servers to rollback the change");
   }
 
   @Override
   public void done(Consistency consistency) {
     switch (consistency) {
       case CONSISTENT:
-        trace("The change has been made successfully");
-        break;
-      case MAY_NEED_FORCE_RECOVERY:
-        error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback.");
+        log("The change has been made successfully");
         break;
       case MAY_NEED_RECOVERY:
-      case UNKNOWN_BUT_NO_CHANGE:
         error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.");
+        break;
+      case UNKNOWN_BUT_NO_CHANGE:
+        log("Unable to determine new configuration consistency: configuration has not changed as no mutative operation has been performed");
         break;
       case UNRECOVERABLY_INCONSISTENT:
         error("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");
@@ -194,6 +193,11 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
     }
   }
 
+  @Override
+  public void cannotDecideOverCommitOrRollback() {
+    error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback.");
+  }
+
   protected void error(String line) {
     // debug level is normal hereL this class is used to "trace" all Nomad callbacks and print them to the console
     // if we are in verbose mode (trace level)
@@ -201,7 +205,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
     LOGGER.debug(line);
   }
 
-  protected void trace(String line) {
+  protected void log(String line) {
     LOGGER.debug(line);
   }
 }

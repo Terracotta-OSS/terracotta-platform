@@ -178,4 +178,9 @@ public class RecoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver<
   public void done(Consistency consistency) {
     recoveryResultReceiver.done(consistency);
   }
+
+  @Override
+  public void cannotDecideOverCommitOrRollback() {
+    recoveryResultReceiver.cannotDecideOverCommitOrRollback();
+  }
 }
