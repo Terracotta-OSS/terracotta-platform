@@ -5,8 +5,8 @@
 package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.cli.ConfigTool;
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.utilities.Json;
 import org.junit.Before;
 import org.junit.Test;
 

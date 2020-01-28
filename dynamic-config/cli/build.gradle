@@ -13,6 +13,7 @@ dependencies {
   compile "com.beust:jcommander:$jcommanderVersion"
   compile "ch.qos.logback:logback-classic:$logbackVersion"
 
+  testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile("org.mockito:mockito-core:$mockitoVersion")
 }

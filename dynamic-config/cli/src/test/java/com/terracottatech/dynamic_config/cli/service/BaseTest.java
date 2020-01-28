@@ -17,13 +17,15 @@ import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.nomad.NomadEnvironment;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.utilities.cache.Cache;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -40,28 +42,20 @@ public abstract class BaseTest {
   protected RestartService restartService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
 
-  private final Cache<InetSocketAddress, TopologyService> topologyServices = Cache.<InetSocketAddress, TopologyService>create()
-      .withLoader(addr -> mock(TopologyService.class, addr.toString()))
-      .build();
+  private final Cache<InetSocketAddress, TopologyService> topologyServices = new Cache<>(addr -> mock(TopologyService.class, addr.toString()));
 
-  private final Cache<InetSocketAddress, DynamicConfigService> dynamicConfigServices = Cache.<InetSocketAddress, DynamicConfigService>create()
-      .withLoader(addr -> mock(DynamicConfigService.class, addr.toString()))
-      .build();
+  private final Cache<InetSocketAddress, DynamicConfigService> dynamicConfigServices = new Cache<>(addr -> mock(DynamicConfigService.class, addr.toString()));
 
-  @SuppressWarnings("unchecked")
-  private final Cache<InetSocketAddress, NomadServer<NodeContext>> nomadServers = Cache.<InetSocketAddress, NomadServer<NodeContext>>create()
-      .withLoader(addr -> mock(NomadServer.class, addr.toString()))
-      .build();
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private final Cache<InetSocketAddress, NomadServer<NodeContext>> nomadServers = new Cache<>(addr -> mock(NomadServer.class, addr.toString()));
 
-  private final Cache<InetSocketAddress, DiagnosticService> diagnosticServices = Cache.<InetSocketAddress, DiagnosticService>create()
-      .withLoader(addr -> {
-        final DiagnosticService diagnosticService = mock(DiagnosticService.class, addr.toString());
-        lenient().when(diagnosticService.getProxy(TopologyService.class)).thenAnswer(invocation -> topologyServices.get(addr));
-        lenient().when(diagnosticService.getProxy(DynamicConfigService.class)).thenAnswer(invocation -> dynamicConfigServices.get(addr));
-        lenient().when(diagnosticService.getProxy(NomadServer.class)).thenAnswer(invocation -> nomadServers.get(addr));
-        return diagnosticService;
-      })
-      .build();
+  private final Cache<InetSocketAddress, DiagnosticService> diagnosticServices = new Cache<>(addr -> {
+    final DiagnosticService diagnosticService = mock(DiagnosticService.class, addr.toString());
+    lenient().when(diagnosticService.getProxy(TopologyService.class)).thenAnswer(invocation -> topologyServices.get(addr));
+    lenient().when(diagnosticService.getProxy(DynamicConfigService.class)).thenAnswer(invocation -> dynamicConfigServices.get(addr));
+    lenient().when(diagnosticService.getProxy(NomadServer.class)).thenAnswer(invocation -> nomadServers.get(addr));
+    return diagnosticService;
+  });
 
   @Before
   public void setUp() throws Exception {
@@ -99,5 +93,21 @@ public abstract class BaseTest {
 
   protected NomadServer<NodeContext> nomadServerMock(String host, int port) {
     return nomadServers.get(InetSocketAddress.createUnresolved(host, port));
+  }
+
+  /**
+   * @author Mathieu Carbou
+   */
+  private static class Cache<K, V> {
+    private final Function<K, V> loader;
+    private final Map<K, V> cache = new ConcurrentHashMap<>();
+
+    Cache(Function<K, V> loader) {
+      this.loader = loader;
+    }
+
+    public V get(K key) {
+      return cache.computeIfAbsent(key, loader);
+    }
   }
 }

@@ -5,7 +5,7 @@
 package com.terracottatech.migration.xml;
 
 import com.terracottatech.dynamic_config.xml.topology.config.parser.SchemaProvider;
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

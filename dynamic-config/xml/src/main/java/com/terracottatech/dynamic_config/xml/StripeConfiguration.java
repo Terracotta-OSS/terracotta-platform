@@ -4,13 +4,13 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.model.Measure;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.TimeUnit;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.PathResolver;
-import com.terracottatech.utilities.TimeUnit;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;

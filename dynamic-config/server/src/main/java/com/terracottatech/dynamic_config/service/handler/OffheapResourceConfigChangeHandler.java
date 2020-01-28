@@ -5,14 +5,14 @@
 package com.terracottatech.dynamic_config.service.handler;
 
 import com.terracottatech.diagnostic.server.DiagnosticServices;
-import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
+import com.terracottatech.dynamic_config.model.Measure;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.offheapresource.OffHeapResource;

@@ -24,16 +24,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import static com.terracottatech.dynamic_config.cli.Injector.inject;
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.accept;
 import static com.terracottatech.nomad.messages.AcceptRejectResponse.reject;
 import static com.terracottatech.nomad.server.ChangeRequestState.COMMITTED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
-import static com.terracottatech.utilities.fn.IntFn.rethrow;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -288,4 +289,30 @@ public class ActivateCommandTest extends BaseTest {
     return command;
   }
 
+  public static IntConsumer rethrow(EIntConsumer c) {
+    return t -> {
+      try {
+        c.accept(t);
+      } catch (Exception e) {
+        if (e instanceof RuntimeException) {
+          throw (RuntimeException) e;
+        }
+        throw new RuntimeException(e);
+      }
+    };
+  }
+
+  @FunctionalInterface
+  public interface EIntConsumer {
+
+    void accept(int t) throws Exception;
+
+    default EIntConsumer andThen(EIntConsumer after) {
+      requireNonNull(after);
+      return (int t) -> {
+        accept(t);
+        after.accept(t);
+      };
+    }
+  }
 }

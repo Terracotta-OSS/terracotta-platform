@@ -21,7 +21,7 @@ import static com.terracottatech.dynamic_config.nomad.Applicability.stripe;
 import static com.terracottatech.dynamic_config.nomad.SettingNomadChange.fromConfiguration;
 import static com.terracottatech.dynamic_config.nomad.SettingNomadChange.set;
 import static com.terracottatech.dynamic_config.nomad.SettingNomadChange.unset;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;

@@ -4,11 +4,10 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.model.TimeUnit;
 import org.junit.Test;
 import org.w3c.dom.Element;
-
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;

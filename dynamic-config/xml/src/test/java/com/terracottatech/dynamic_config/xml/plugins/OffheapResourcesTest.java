@@ -4,19 +4,18 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import org.junit.Test;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
-
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.MemoryUnit;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class OffheapResourcesTest {
 

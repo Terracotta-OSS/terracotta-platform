@@ -20,8 +20,8 @@ import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.results.ConsistencyAnalyzer;
 import com.terracottatech.nomad.client.results.NomadFailureReceiver;
 import com.terracottatech.nomad.server.ChangeRequestState;
+import com.terracottatech.struct.tuple.Tuple2;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
-import com.terracottatech.utilities.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -9,12 +9,12 @@ import com.beust.jcommander.Parameter;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.TypeConverter;
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.service.api.TopologyService;
-import com.terracottatech.utilities.Json;
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;

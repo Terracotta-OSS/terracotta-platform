@@ -4,11 +4,10 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
-import com.terracottatech.utilities.junit.TmpDir;
+import com.terracottatech.dynamic_config.test.util.TmpDir;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.hamcrest.CoreMatchers.is;

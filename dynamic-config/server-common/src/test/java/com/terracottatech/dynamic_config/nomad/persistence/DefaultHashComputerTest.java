@@ -6,11 +6,11 @@ package com.terracottatech.dynamic_config.nomad.persistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.utilities.Json;
 import org.junit.Test;
 
 import java.io.IOException;

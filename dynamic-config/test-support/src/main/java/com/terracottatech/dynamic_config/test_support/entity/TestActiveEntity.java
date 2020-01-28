@@ -4,10 +4,10 @@
  */
 package com.terracottatech.dynamic_config.test_support.entity;
 
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 
 public class TestActiveEntity extends TestCommonEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {

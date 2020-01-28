@@ -6,9 +6,9 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.utilities.PathResolver;
-import com.terracottatech.utilities.TimeUnit;
-import com.terracottatech.utilities.junit.TmpDir;
+import com.terracottatech.dynamic_config.model.TimeUnit;
+import com.terracottatech.dynamic_config.test.util.TmpDir;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

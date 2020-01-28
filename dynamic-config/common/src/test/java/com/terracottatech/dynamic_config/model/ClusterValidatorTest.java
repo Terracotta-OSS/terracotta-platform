@@ -14,9 +14,9 @@ import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
 import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
-import static com.terracottatech.utilities.MemoryUnit.GB;
-import static com.terracottatech.utilities.MemoryUnit.MB;
-import static com.terracottatech.utilities.TimeUnit.SECONDS;
+import static com.terracottatech.dynamic_config.model.TimeUnit.SECONDS;
+import static com.terracottatech.dynamic_config.util.MemoryUnit.GB;
+import static com.terracottatech.dynamic_config.util.MemoryUnit.MB;
 
 public class ClusterValidatorTest {
 

@@ -7,8 +7,8 @@ package com.terracottatech.config;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.NomadBootstrapper;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
-import com.terracottatech.utilities.PathResolver;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
 

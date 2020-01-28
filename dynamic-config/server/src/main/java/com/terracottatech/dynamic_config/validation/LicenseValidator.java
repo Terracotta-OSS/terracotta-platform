@@ -6,12 +6,10 @@ package com.terracottatech.dynamic_config.validation;
 
 import com.terracottatech.License;
 import com.terracottatech.dynamic_config.model.Cluster;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import com.terracottatech.licensing.LicenseConstants;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.ValidationException;
-import com.terracottatech.utilities.Validator;
 
-public class LicenseValidator implements Validator {
+public class LicenseValidator {
   private final Cluster cluster;
   private final License license;
 
@@ -20,7 +18,6 @@ public class LicenseValidator implements Validator {
     this.license = license;
   }
 
-  @Override
   public void validate() {
     long licenseOffHeapLimitInMB = license.getLimit(LicenseConstants.CAPABILITY_OFFHEAP);
     long totalOffHeapInMB = cluster.getStripes().stream()
@@ -30,7 +27,7 @@ public class LicenseValidator implements Validator {
         .sum();
 
     if (totalOffHeapInMB > licenseOffHeapLimitInMB) {
-      throw new ValidationException(
+      throw new InvalidLicenseException(
           String.format(
               "Cluster offheap-resource is not within the license limits. Provided: %d MB, but license allows: %d MB only",
               totalOffHeapInMB,

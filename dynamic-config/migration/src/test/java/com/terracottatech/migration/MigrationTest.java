@@ -10,7 +10,7 @@ import com.terracottatech.migration.exception.InvalidInputConfigurationContentEx
 import com.terracottatech.migration.exception.InvalidInputException;
 import com.terracottatech.migration.helper.ReflectionHelper;
 import com.terracottatech.migration.validators.ValidationWrapper;
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.w3c.dom.Element;

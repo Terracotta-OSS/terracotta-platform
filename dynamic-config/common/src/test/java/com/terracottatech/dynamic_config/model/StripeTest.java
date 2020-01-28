@@ -4,14 +4,13 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import org.junit.Test;
 
 import java.nio.file.Paths;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static java.net.InetSocketAddress.createUnresolved;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;

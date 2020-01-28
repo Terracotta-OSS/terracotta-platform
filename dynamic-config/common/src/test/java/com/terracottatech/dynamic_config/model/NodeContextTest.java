@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;

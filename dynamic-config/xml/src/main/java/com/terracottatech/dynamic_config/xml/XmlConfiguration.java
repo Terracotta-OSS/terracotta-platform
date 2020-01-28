@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
-import com.terracottatech.utilities.PathResolver;
+import com.terracottatech.dynamic_config.util.PathResolver;
 
 public class XmlConfiguration {
   private final ServerConfiguration serverConfiguration;

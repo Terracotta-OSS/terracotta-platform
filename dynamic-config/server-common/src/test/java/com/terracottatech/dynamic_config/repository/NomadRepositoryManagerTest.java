@@ -21,7 +21,7 @@ import static com.terracottatech.dynamic_config.repository.NomadRepositoryManage
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.NONE;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
 import static com.terracottatech.dynamic_config.repository.NomadRepositoryManager.findNodeName;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -129,7 +129,7 @@ public class NomadRepositoryManagerTest {
     doReturn(false).when(spyRepoManager).checkDirectoryExists(licenseDirPath);
     doReturn(true).when(spyRepoManager).checkDirectoryExists(sanskritDirPath);
 
-    exception.expect(MalformedRepositoryException.class);
+    exception.expect(IllegalStateException.class);
     spyRepoManager.getRepositoryDepth();
 
     doReturn(false).when(spyRepoManager).checkDirectoryExists(nomadRoot);
@@ -137,7 +137,7 @@ public class NomadRepositoryManagerTest {
     doReturn(false).when(spyRepoManager).checkDirectoryExists(licenseDirPath);
     doReturn(false).when(spyRepoManager).checkDirectoryExists(sanskritDirPath);
 
-    exception.expect(MalformedRepositoryException.class);
+    exception.expect(IllegalStateException.class);
     spyRepoManager.getRepositoryDepth();
 
     doReturn(false).when(spyRepoManager).checkDirectoryExists(nomadRoot);
@@ -145,7 +145,7 @@ public class NomadRepositoryManagerTest {
     doReturn(true).when(spyRepoManager).checkDirectoryExists(licenseDirPath);
     doReturn(false).when(spyRepoManager).checkDirectoryExists(sanskritDirPath);
 
-    exception.expect(MalformedRepositoryException.class);
+    exception.expect(IllegalStateException.class);
     spyRepoManager.getRepositoryDepth();
   }
 
@@ -156,7 +156,7 @@ public class NomadRepositoryManagerTest {
     assertThat(repoManager.checkDirectoryExists(newFolder.toPath()), is(true));
     File newFile = folder.newFile();
 
-    exception.expect(MalformedRepositoryException.class);
+    exception.expect(IllegalArgumentException.class);
     repoManager.checkDirectoryExists(newFile.toPath());
     assertThat(newFile.delete(), is(true));
     assertThat(repoManager.checkDirectoryExists(newFile.toPath()), is(false));
@@ -208,7 +208,7 @@ public class NomadRepositoryManagerTest {
     Files.createDirectory(config);
     assertThat(
         () -> findNodeName(nomadRoot),
-        is(throwing(instanceOf(MalformedRepositoryException.class)).andMessage(is(containsString("Repository is partially formed"))))
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(containsString("Repository is partially formed"))))
     );
 
     // Create the full repository now
@@ -235,7 +235,7 @@ public class NomadRepositoryManagerTest {
     Files.createFile(configFilePath);
     assertThat(
         () -> findNodeName(nomadRoot),
-        is(throwing(instanceOf(MalformedRepositoryException.class))
+        is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(is("Found versioned cluster config files for the following different nodes: node2, node1 in: " + config)))
     );
 

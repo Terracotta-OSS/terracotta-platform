@@ -10,11 +10,7 @@ plugins {
 apply plugin: TcDeploy
 
 dependencies {
-  compile project(':utilities')
-  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-  compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion"
-  compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
-  compile "io.github.classgraph:classgraph:$classgraphVersion"
+  compile project(':json-support')
 
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"

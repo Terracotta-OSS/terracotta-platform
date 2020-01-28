@@ -4,12 +4,9 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
-import com.terracottatech.utilities.Tuple2;
-import com.terracottatech.utilities.Unit;
-import com.terracottatech.utilities.Uuid;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
+import com.terracottatech.dynamic_config.util.Unit;
+import com.terracottatech.struct.tuple.Tuple2;
 import org.slf4j.event.Level;
 
 import java.nio.file.Paths;
@@ -44,12 +41,11 @@ import static com.terracottatech.dynamic_config.model.SettingValidator.PATH_VALI
 import static com.terracottatech.dynamic_config.model.SettingValidator.PORT_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.PROPS_VALIDATOR;
 import static com.terracottatech.dynamic_config.model.SettingValidator.TIME_VALIDATOR;
-import static com.terracottatech.utilities.Assertions.assertNull;
-import static com.terracottatech.utilities.TimeUnit.HOURS;
-import static com.terracottatech.utilities.TimeUnit.MILLISECONDS;
-import static com.terracottatech.utilities.TimeUnit.MINUTES;
-import static com.terracottatech.utilities.TimeUnit.SECONDS;
-import static com.terracottatech.utilities.Tuple2.tuple2;
+import static com.terracottatech.dynamic_config.model.TimeUnit.HOURS;
+import static com.terracottatech.dynamic_config.model.TimeUnit.MILLISECONDS;
+import static com.terracottatech.dynamic_config.model.TimeUnit.MINUTES;
+import static com.terracottatech.dynamic_config.model.TimeUnit.SECONDS;
+import static com.terracottatech.struct.tuple.Tuple2.tuple2;
 import static java.io.File.separator;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -714,7 +710,9 @@ public enum Setting {
 
   private static BiConsumer<Node, Tuple2<String, String>> setter(BiConsumer<Node, String> setter) {
     return (node, tuple) -> {
-      assertNull(tuple.t1, "Key must be null: parameter is not a map");
+      if (tuple.t1 != null) {
+        throw new IllegalArgumentException("Key must be null: parameter is not a map");
+      }
       setter.accept(node, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim());
     };
   }

@@ -5,14 +5,14 @@
 package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.TimeUnit;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
 import com.terracottatech.nomad.client.change.NomadChange;
-import com.terracottatech.utilities.Json;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
 import org.junit.Test;
 
 import java.io.IOException;

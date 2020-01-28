@@ -21,8 +21,8 @@ import com.terracottatech.nomad.server.UpgradableNomadServer;
 
 import java.util.List;
 
-import static com.terracottatech.utilities.Json.parse;
-import static com.terracottatech.utilities.Json.toJson;
+import static com.terracottatech.dynamic_config.json.Json.parse;
+import static com.terracottatech.dynamic_config.json.Json.toJson;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 

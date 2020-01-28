@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.containsString;

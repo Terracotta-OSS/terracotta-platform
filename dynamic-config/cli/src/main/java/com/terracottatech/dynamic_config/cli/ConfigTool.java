@@ -25,8 +25,8 @@ import com.terracottatech.dynamic_config.cli.service.nomad.NomadClientFactory;
 import com.terracottatech.dynamic_config.cli.service.nomad.NomadManager;
 import com.terracottatech.dynamic_config.cli.service.restart.RestartService;
 import com.terracottatech.dynamic_config.model.NodeContext;
+import com.terracottatech.dynamic_config.model.TimeUnit;
 import com.terracottatech.nomad.NomadEnvironment;
-import com.terracottatech.utilities.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

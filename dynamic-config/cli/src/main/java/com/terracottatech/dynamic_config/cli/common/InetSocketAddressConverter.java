@@ -5,7 +5,7 @@
 package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.IStringConverter;
-import com.terracottatech.utilities.InetSocketAddressConvertor;
+import com.terracottatech.ipv6.InetSocketAddressConvertor;
 
 import java.net.InetSocketAddress;
 

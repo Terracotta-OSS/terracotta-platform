@@ -6,8 +6,10 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.test.util.MigrationITResultProcessor;
+import com.terracottatech.dynamic_config.test.util.TmpDir;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
@@ -16,9 +18,7 @@ import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe
 import com.terracottatech.migration.MigrationImpl;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.utilities.PathResolver;
-import com.terracottatech.utilities.Tuple2;
-import com.terracottatech.utilities.junit.TmpDir;
+import com.terracottatech.struct.tuple.Tuple2;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

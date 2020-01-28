@@ -13,8 +13,8 @@ import com.terracottatech.dynamic_config.model.Operation;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
+import com.terracottatech.struct.tuple.Tuple2;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
-import com.terracottatech.utilities.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.HashSet;

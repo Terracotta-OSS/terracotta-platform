@@ -8,9 +8,9 @@ import com.terracottatech.dynamic_config.handler.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.handler.InvalidConfigChangeException;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Configuration;
+import com.terracottatech.dynamic_config.model.Measure;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.TimeUnit;
+import com.terracottatech.dynamic_config.model.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

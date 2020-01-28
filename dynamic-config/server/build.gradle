@@ -22,6 +22,7 @@ dependencies {
   compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
   compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
 
+  testCompile project(':test-utilities')
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {

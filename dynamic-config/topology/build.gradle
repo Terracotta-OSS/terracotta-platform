@@ -17,7 +17,6 @@ dependencies {
   // NOTE: DO NOT DELETE THE FOLLOWING. IT WILL BE USEFUL TO REGENERATE CLASSES IN XMLOBJECTS PACKAGE
 //  xjcEpisode "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 
-  compile project(':utilities')
   compileOnly "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
 }

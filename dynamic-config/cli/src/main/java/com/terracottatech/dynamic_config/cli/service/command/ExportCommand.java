@@ -13,9 +13,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.terracottatech.dynamic_config.cli.common.FormatConverter;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.util.Props;
-import com.terracottatech.utilities.Json;
 
 import java.io.IOException;
 import java.io.StringWriter;

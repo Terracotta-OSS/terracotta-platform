@@ -15,10 +15,10 @@ import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.ClusterFactory;
 import com.terracottatech.dynamic_config.model.ClusterValidator;
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.model.TimeUnit;
 import com.terracottatech.dynamic_config.nomad.ClusterActivationNomadChange;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.TimeUnit;
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -30,7 +30,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.terracottatech.utilities.Assertions.assertNonNull;
 import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
@@ -72,11 +71,6 @@ public class ActivateCommand extends RemoteCommand {
     if (node != null) {
       validateAddress(node);
     }
-
-    assertNonNull(licenseFile, "licenseFile must not be null");
-    assertNonNull(multiDiagnosticServiceProvider, "multiDiagnosticServiceProvider must not be null");
-    assertNonNull(nomadManager, "nomadManager must not be null");
-    assertNonNull(restartService, "restartService must not be null");
 
     if (!Files.exists(licenseFile)) {
       throw new ParameterException("License file not found: " + licenseFile);

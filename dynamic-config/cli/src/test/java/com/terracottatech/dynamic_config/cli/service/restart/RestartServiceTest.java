@@ -9,14 +9,16 @@ import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProviderException;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
-import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.model.TimeUnit;
+import com.terracottatech.dynamic_config.service.api.DynamicConfigService;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
+import static com.terracottatech.dynamic_config.model.TimeUnit.SECONDS;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.ACTIVE;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.ACTIVE_SUSPENDED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;
@@ -32,8 +35,6 @@ import static com.terracottatech.tools.detailed.state.LogicalServerState.SYNCHRO
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNINITIALIZED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNKNOWN;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.UNREACHABLE;
-import static com.terracottatech.utilities.TimeUnit.SECONDS;
-import static com.terracottatech.utilities.mockito.Mocks.sleep;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -195,4 +196,14 @@ public class RestartServiceTest extends BaseTest {
     });
   }
 
+  public static <T> Answer<T> sleep(long time, TimeUnit unit) {
+    return sleep(null, time, unit);
+  }
+
+  public static <T> Answer<T> sleep(T delayedReturn, long time, TimeUnit unit) {
+    return invocation -> {
+      Thread.sleep(unit.toMillis(time));
+      return delayedReturn;
+    };
+  }
 }

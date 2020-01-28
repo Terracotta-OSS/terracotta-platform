@@ -4,8 +4,7 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.Validator;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 
 import java.util.Collection;
 import java.util.Map;
@@ -28,14 +27,13 @@ import static java.util.stream.Collectors.toCollection;
  * <p>
  * This class will validate the complete cluster object (inter-field checks and dependency checks).
  */
-public class ClusterValidator implements Validator {
+public class ClusterValidator {
   private final Cluster cluster;
 
   public ClusterValidator(Cluster cluster) {
     this.cluster = cluster;
   }
 
-  @Override
   public void validate() throws MalformedClusterException {
     validateNodeName();
     validateSecurity();

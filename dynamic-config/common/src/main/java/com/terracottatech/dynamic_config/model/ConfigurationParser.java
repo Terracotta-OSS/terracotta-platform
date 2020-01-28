@@ -5,7 +5,6 @@
 package com.terracottatech.dynamic_config.model;
 
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.utilities.Parser;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +34,7 @@ import static java.util.stream.Collectors.toSet;
  * <p>
  * This class purpose is to be used internally in {@link ClusterFactory}
  */
-class ConfigurationParser implements Parser<Cluster> {
+class ConfigurationParser {
 
   private final List<Configuration> configurations;
   private final Consumer<Configuration> defaultAddedListener;
@@ -59,7 +58,6 @@ class ConfigurationParser implements Parser<Cluster> {
    * The cluster object is NOT validated and will need to be validated with the
    * {@link ClusterValidator}
    */
-  @Override
   public Cluster parse() {
     // adds missing configurations
     {

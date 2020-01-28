@@ -4,10 +4,9 @@
  */
 package com.terracottatech.dynamic_config.model;
 
+import com.terracottatech.dynamic_config.json.Json;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import com.terracottatech.dynamic_config.util.Props;
-import com.terracottatech.utilities.Json;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -18,14 +17,14 @@ import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
 import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
 import static com.terracottatech.dynamic_config.model.Node.newDefaultNode;
-import static com.terracottatech.utilities.Tuple2.tuple2;
-import static com.terracottatech.utilities.fn.Fn.rethrow;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
+import static com.terracottatech.struct.tuple.Tuple2.tuple2;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
@@ -291,5 +290,23 @@ public class ClusterTest {
       props.entrySet().forEach(e -> e.setValue(e.getValue().toString().replace('/', '\\')));
     }
     return props;
+  }
+
+  public static <T> Consumer<T> rethrow(EConsumer<T> c) {
+    return t -> {
+      try {
+        c.accept(t);
+      } catch (Exception e) {
+        if (e instanceof RuntimeException) {
+          throw (RuntimeException) e;
+        }
+        throw new RuntimeException(e);
+      }
+    };
+  }
+
+  @FunctionalInterface
+  public interface EConsumer<T> {
+    void accept(T t) throws Exception;
   }
 }

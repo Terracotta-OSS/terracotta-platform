@@ -4,10 +4,10 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.NodeContext;
-import com.terracottatech.utilities.Json;
-import com.terracottatech.utilities.PathResolver;
-import com.terracottatech.utilities.junit.TmpDir;
+import com.terracottatech.dynamic_config.test.util.TmpDir;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static com.terracottatech.utilities.Json.toPrettyJson;
+import static com.terracottatech.dynamic_config.json.Json.toPrettyJson;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

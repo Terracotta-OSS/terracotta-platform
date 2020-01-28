@@ -6,10 +6,10 @@ package com.terracottatech.dynamic_config.test;
 
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.DiagnosticServiceFactory;
-import com.terracottatech.dynamic_config.service.api.TopologyService;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.service.api.TopologyService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,7 +17,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
-import static com.terracottatech.utilities.MemoryUnit.MB;
+import static com.terracottatech.dynamic_config.util.MemoryUnit.MB;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;

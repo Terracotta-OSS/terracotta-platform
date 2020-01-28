@@ -4,7 +4,7 @@
  */
 package com.terracottatech.migration.exception;
 
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 
 public class InvalidInputConfigurationContentException extends InvalidInputException {
   private static final long serialVersionUID = 1L;

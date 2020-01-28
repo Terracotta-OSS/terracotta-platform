@@ -6,7 +6,7 @@ package com.terracottatech.dynamic_config.startup;
 
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.utilities.PathResolver;
+import com.terracottatech.dynamic_config.util.PathResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 
-import static com.terracottatech.utilities.XmlUtils.escapeXml;
+import static com.terracottatech.dynamic_config.startup.XmlUtils.escapeXml;
 import static java.lang.System.lineSeparator;
 
 public class TransientTcConfig {

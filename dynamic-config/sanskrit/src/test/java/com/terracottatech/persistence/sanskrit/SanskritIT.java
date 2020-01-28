@@ -4,8 +4,8 @@
  */
 package com.terracottatech.persistence.sanskrit;
 
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
-import com.terracottatech.utilities.Json;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

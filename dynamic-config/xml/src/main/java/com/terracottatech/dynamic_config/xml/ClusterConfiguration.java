@@ -6,9 +6,9 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Stripe;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.ObjectFactory;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
-import com.terracottatech.utilities.PathResolver;
 import org.w3c.dom.Element;
 
 import java.util.LinkedHashMap;

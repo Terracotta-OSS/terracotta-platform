@@ -9,6 +9,7 @@ import com.terracottatech.dynamic_config.nomad.ConfigMigrationNomadChange;
 import com.terracottatech.dynamic_config.nomad.UpgradableNomadServerFactory;
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import com.terracottatech.dynamic_config.xml.XmlConfigMapper;
 import com.terracottatech.migration.exception.MigrationException;
 import com.terracottatech.migration.xml.XmlUtility;
@@ -23,8 +24,7 @@ import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.persistence.sanskrit.SanskritException;
-import com.terracottatech.utilities.PathResolver;
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 import org.w3c.dom.Node;
 
 import java.nio.file.Path;

@@ -5,18 +5,16 @@
 package com.terracottatech.dynamic_config.model;
 
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
+import com.terracottatech.struct.tuple.Tuple2;
 import org.slf4j.event.Level;
 
 import java.nio.file.Paths;
 import java.util.function.BiConsumer;
 
-import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;
+import static com.terracottatech.ipv6.HostAndIpValidator.isValidHost;
+import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv4;
+import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv6;
 import static java.util.Objects.requireNonNull;
 
 /**

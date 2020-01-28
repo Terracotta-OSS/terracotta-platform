@@ -16,11 +16,11 @@ import com.terracottatech.dynamic_config.nomad.NomadBootstrapper.NomadServerMana
 import com.terracottatech.dynamic_config.repository.NomadRepositoryManager;
 import com.terracottatech.dynamic_config.service.DynamicConfigServiceImpl;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
+import com.terracottatech.dynamic_config.util.PathResolver;
+import com.terracottatech.ipv6.InetSocketAddressUtils;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.results.NomadFailureReceiver;
-import com.terracottatech.utilities.InetSocketAddressUtils;
-import com.terracottatech.utilities.PathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

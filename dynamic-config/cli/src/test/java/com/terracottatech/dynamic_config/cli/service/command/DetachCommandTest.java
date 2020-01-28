@@ -4,12 +4,12 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.model.Stripe;
-import com.terracottatech.utilities.Json;
-import com.terracottatech.utilities.MemoryUnit;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

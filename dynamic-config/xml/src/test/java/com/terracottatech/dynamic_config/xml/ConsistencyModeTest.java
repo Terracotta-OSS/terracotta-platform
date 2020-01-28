@@ -5,8 +5,8 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.Node;
-import com.terracottatech.utilities.PathResolver;
-import com.terracottatech.utilities.junit.TmpDir;
+import com.terracottatech.dynamic_config.test.util.TmpDir;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,9 +15,9 @@ import org.terracotta.config.Servers;
 import org.terracotta.config.TcConfig;
 
 import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class ConsistencyModeTest {

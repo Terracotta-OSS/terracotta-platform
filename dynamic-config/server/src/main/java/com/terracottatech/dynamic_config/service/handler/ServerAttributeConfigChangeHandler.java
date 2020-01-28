@@ -12,9 +12,9 @@ import com.terracottatech.dynamic_config.model.NodeContext;
 
 import static com.terracottatech.dynamic_config.model.Setting.NODE_BIND_ADDRESS;
 import static com.terracottatech.dynamic_config.model.Setting.NODE_GROUP_BIND_ADDRESS;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidHost;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv4;
-import static com.terracottatech.utilities.HostAndIpValidator.isValidIPv6;
+import static com.terracottatech.ipv6.HostAndIpValidator.isValidHost;
+import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv4;
+import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv6;
 
 public class ServerAttributeConfigChangeHandler implements ConfigChangeHandler {
 

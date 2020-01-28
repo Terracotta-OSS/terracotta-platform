@@ -12,7 +12,7 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 
 import static com.terracottatech.dynamic_config.cli.Injector.inject;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;

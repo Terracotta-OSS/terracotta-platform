@@ -13,7 +13,7 @@ import static com.terracottatech.dynamic_config.model.FailoverPriority.Type.CONS
 import static com.terracottatech.dynamic_config.model.FailoverPriority.availability;
 import static com.terracottatech.dynamic_config.model.FailoverPriority.consistency;
 import static com.terracottatech.dynamic_config.model.FailoverPriority.valueOf;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;

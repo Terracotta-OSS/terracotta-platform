@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.nomad.persistence;
 
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.nomad.Applicability;
 import com.terracottatech.dynamic_config.nomad.SettingNomadChange;
 import com.terracottatech.nomad.client.change.NomadChange;
@@ -14,7 +15,6 @@ import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritObject;
 import com.terracottatech.persistence.sanskrit.SanskritObjectImpl;
 import com.terracottatech.persistence.sanskrit.change.SanskritChange;
-import com.terracottatech.utilities.Json;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

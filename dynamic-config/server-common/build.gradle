@@ -9,6 +9,7 @@ dependencies {
   compile project(':dynamic-config-xml')
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
 
+  testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"
   testCompile 'org.xmlunit:xmlunit-core:2.6.0', 'org.xmlunit:xmlunit-matchers:2.6.0'

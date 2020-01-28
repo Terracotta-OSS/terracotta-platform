@@ -6,10 +6,8 @@ package com.terracottatech.dynamic_config.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
-import com.terracottatech.utilities.InetSocketAddressUtils;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.MemoryUnit;
-import com.terracottatech.utilities.TimeUnit;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
+import com.terracottatech.ipv6.InetSocketAddressUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.event.Level;
 

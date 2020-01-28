@@ -6,6 +6,7 @@ package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.dynamic_config.model.FailoverPriority;
 import com.terracottatech.dynamic_config.model.Node;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import com.terracottatech.dynamic_config.xml.plugins.BackupRestore;
 import com.terracottatech.dynamic_config.xml.plugins.DataDirectories;
 import com.terracottatech.dynamic_config.xml.plugins.Lease;
@@ -16,7 +17,6 @@ import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Logger;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Loggers;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
-import com.terracottatech.utilities.PathResolver;
 import org.terracotta.config.Config;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.ObjectFactory;

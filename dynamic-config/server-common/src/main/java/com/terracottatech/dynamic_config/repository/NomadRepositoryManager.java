@@ -89,13 +89,13 @@ public class NomadRepositoryManager {
     if (!nomadRootExists && !sanskritPathExists && !configPathExists && !licensePathExists) {
       return NONE;
     }
-    throw new MalformedRepositoryException("Repository is partially formed. A valid repository should contain '" + CONFIG + "', '" + LICENSE + "', and '" + SANSKRIT + "' directories");
+    throw new IllegalStateException("Repository is partially formed. A valid repository should contain '" + CONFIG + "', '" + LICENSE + "', and '" + SANSKRIT + "' directories");
   }
 
   boolean checkDirectoryExists(Path path) {
     boolean dirExists = Files.exists(path);
     if (dirExists && !Files.isDirectory(path)) {
-      throw new MalformedRepositoryException(path.getFileName() + " at path: " + path.getParent() + " is not a directory");
+      throw new IllegalArgumentException(path.getFileName() + " at path: " + path.getParent() + " is not a directory");
     }
     return dirExists;
   }
@@ -129,7 +129,7 @@ public class NomadRepositoryManager {
    *
    * @param nomadRoot repository root
    * @return {@code Optional} containing the node name, or an empty {@code Optional} if a node name couldn't be found
-   * @throws MalformedRepositoryException if the repository is malformed
+   * @throws IllegalStateException if the repository is malformed
    * @throws UncheckedIOException         if an {@code IOException} occurs while reading the configuration file
    */
   public static Optional<String> findNodeName(Path nomadRoot) {
@@ -147,7 +147,7 @@ public class NomadRepositoryManager {
             .filter(Objects::nonNull)
             .collect(toSet());
         if (nodeNames.size() > 1) {
-          throw new MalformedRepositoryException(
+          throw new IllegalStateException(
               String.format("Found versioned cluster config files for the following different nodes: %s in: %s",
                   String.join(", ", nodeNames),
                   nomadRepositoryManager.getConfigPath()

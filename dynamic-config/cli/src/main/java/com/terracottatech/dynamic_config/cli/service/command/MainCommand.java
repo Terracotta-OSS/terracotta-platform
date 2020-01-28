@@ -11,8 +11,8 @@ import ch.qos.logback.core.Appender;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.cli.common.TimeUnitConverter;
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.utilities.TimeUnit;
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.model.TimeUnit;
 import org.slf4j.LoggerFactory;
 
 import java.util.stream.Stream;

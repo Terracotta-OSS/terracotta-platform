@@ -32,7 +32,7 @@ import static com.terracottatech.dynamic_config.model.Setting.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_WHITELIST;
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;

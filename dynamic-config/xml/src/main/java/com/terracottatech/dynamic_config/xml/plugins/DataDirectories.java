@@ -6,8 +6,8 @@ package com.terracottatech.dynamic_config.xml.plugins;
 
 import com.terracottatech.data.config.DataRootMapping;
 import com.terracottatech.data.config.ObjectFactory;
+import com.terracottatech.dynamic_config.util.PathResolver;
 import com.terracottatech.dynamic_config.xml.Utils;
-import com.terracottatech.utilities.PathResolver;
 import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXBElement;

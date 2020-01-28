@@ -13,12 +13,11 @@ import com.terracottatech.dynamic_config.test.util.ConfigRepositoryGenerator;
 import com.terracottatech.dynamic_config.test.util.Env;
 import com.terracottatech.dynamic_config.test.util.Kit;
 import com.terracottatech.dynamic_config.test.util.NodeProcess;
+import com.terracottatech.dynamic_config.test.util.PropertyResolver;
+import com.terracottatech.dynamic_config.test.util.TmpDir;
 import com.terracottatech.dynamic_config.util.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.util.ParameterSubstitutor;
 import com.terracottatech.testing.lock.PortLockingRule;
-import com.terracottatech.utilities.PropertyResolver;
-import com.terracottatech.utilities.fn.IntFn.IntTriConsumer;
-import com.terracottatech.utilities.junit.TmpDir;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.hamcrest.Matcher;
@@ -332,5 +331,10 @@ public class BaseStartupIT {
     }, (p1, p2) -> {
       throw new UnsupportedOperationException();
     });
+  }
+
+  @FunctionalInterface
+  public interface IntTriConsumer {
+    void accept(int a, int b, int c);
   }
 }

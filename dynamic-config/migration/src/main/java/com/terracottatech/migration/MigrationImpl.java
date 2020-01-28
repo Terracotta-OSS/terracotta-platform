@@ -13,7 +13,7 @@ import com.terracottatech.migration.validators.ValidationWrapper;
 import com.terracottatech.migration.xml.ClusteredConfigBuilder;
 import com.terracottatech.migration.xml.ConfigurationParser;
 import com.terracottatech.migration.xml.XmlUtility;
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.TCConfigurationParser;

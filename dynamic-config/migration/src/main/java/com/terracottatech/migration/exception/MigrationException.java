@@ -4,7 +4,7 @@
  */
 package com.terracottatech.migration.exception;
 
-import com.terracottatech.utilities.Tuple2;
+import com.terracottatech.struct.tuple.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;

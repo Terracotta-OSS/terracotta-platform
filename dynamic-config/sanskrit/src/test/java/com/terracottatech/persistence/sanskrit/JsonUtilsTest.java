@@ -4,7 +4,7 @@
  */
 package com.terracottatech.persistence.sanskrit;
 
-import com.terracottatech.utilities.Json;
+import com.terracottatech.dynamic_config.json.Json;
 import org.junit.Test;
 
 import static com.terracottatech.persistence.sanskrit.MarkableLineParser.LS;

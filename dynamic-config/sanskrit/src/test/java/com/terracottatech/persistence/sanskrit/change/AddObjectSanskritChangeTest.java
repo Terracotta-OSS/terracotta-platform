@@ -4,9 +4,9 @@
  */
 package com.terracottatech.persistence.sanskrit.change;
 
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.persistence.sanskrit.SanskritObject;
 import com.terracottatech.persistence.sanskrit.SanskritObjectImpl;
-import com.terracottatech.utilities.Json;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

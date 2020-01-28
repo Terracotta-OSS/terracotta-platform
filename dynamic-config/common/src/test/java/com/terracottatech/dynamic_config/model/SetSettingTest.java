@@ -4,7 +4,6 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.utilities.Measure;
 import org.junit.Test;
 import org.slf4j.event.Level;
 
@@ -18,9 +17,9 @@ import static com.terracottatech.dynamic_config.model.Setting.OFFHEAP_RESOURCES;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.model.Setting.TC_PROPERTIES;
-import static com.terracottatech.utilities.MemoryUnit.GB;
-import static com.terracottatech.utilities.MemoryUnit.MB;
-import static com.terracottatech.utilities.hamcrest.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.test.util.ExceptionMatcher.throwing;
+import static com.terracottatech.dynamic_config.util.MemoryUnit.GB;
+import static com.terracottatech.dynamic_config.util.MemoryUnit.MB;
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;

@@ -4,9 +4,7 @@
  */
 package com.terracottatech.dynamic_config.model;
 
-import com.terracottatech.utilities.ValidationException;
-
-public class MalformedClusterException extends ValidationException {
+public class MalformedClusterException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
   public MalformedClusterException(String message) {

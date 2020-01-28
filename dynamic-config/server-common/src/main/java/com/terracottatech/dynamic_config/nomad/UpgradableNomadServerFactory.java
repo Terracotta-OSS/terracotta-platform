@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.nomad;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.dynamic_config.nomad.persistence.ConfigStorageAdapter;
 import com.terracottatech.dynamic_config.nomad.persistence.ConfigStorageException;
@@ -28,7 +29,6 @@ import com.terracottatech.nomad.server.UpgradableNomadServerAdapter;
 import com.terracottatech.persistence.sanskrit.Sanskrit;
 import com.terracottatech.persistence.sanskrit.SanskritException;
 import com.terracottatech.persistence.sanskrit.file.FileBasedFilesystemDirectory;
-import com.terracottatech.utilities.Json;
 
 public class UpgradableNomadServerFactory {
   public static UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,

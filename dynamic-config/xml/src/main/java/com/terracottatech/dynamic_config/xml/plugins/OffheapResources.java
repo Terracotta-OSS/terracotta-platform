@@ -4,19 +4,17 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
+import com.terracottatech.dynamic_config.model.Measure;
+import com.terracottatech.dynamic_config.util.MemoryUnit;
+import com.terracottatech.dynamic_config.xml.Utils;
 import org.terracotta.offheapresource.config.ObjectFactory;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
 import org.w3c.dom.Element;
 
-import com.terracottatech.utilities.Measure;
-import com.terracottatech.dynamic_config.xml.Utils;
-import com.terracottatech.utilities.MemoryUnit;
-
+import javax.xml.bind.JAXBElement;
 import java.math.BigInteger;
 import java.util.Map;
-
-import javax.xml.bind.JAXBElement;
 
 public class OffheapResources {
   private static final ObjectFactory FACTORY = new ObjectFactory();
