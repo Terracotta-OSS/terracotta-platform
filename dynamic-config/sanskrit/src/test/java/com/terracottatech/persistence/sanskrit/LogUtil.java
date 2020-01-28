@@ -4,7 +4,7 @@
  */
 package com.terracottatech.persistence.sanskrit;
 
-import com.terracottatech.dynamic_config.json.Json;
+import com.terracottatech.json.Json;
 
 import java.time.Instant;
 import java.util.ArrayList;

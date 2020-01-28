@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+
+apply plugin: TcDeploy
+
+dependencies {
+  compile project(':ipv6-support')
+  compile project(':tuples')
+  compile project(':diagnostic-common')
+  compile project(':multi-stripe:enterprise-connection-api')
+  compile "org.terracotta.internal:dso-l1:$terracottaCoreVersion"
+  compile "org.terracotta:connection-api:$terracottaApisVersion"
+
+  testCompile project(':test-utilities')
+  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  testCompile "org.mockito:mockito-core:$mockitoVersion"
+}

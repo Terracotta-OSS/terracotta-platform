@@ -1,0 +1,26 @@
+{
+  "arguments": [
+    {
+      "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$Tomato",
+      "color": "red",
+      "cookingManual": {
+        "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
+        "cookTime": 20,
+        "saltNeeded": false
+      },
+      "from": "Canada"
+    },
+    {
+      "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$Pepper",
+      "color": "spain",
+      "cookingManual": {
+        "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
+        "cookTime": 20,
+        "saltNeeded": false
+      },
+      "from": "Canada"
+    }
+  ],
+  "methodName": "prepareDiner()",
+  "serviceInterface": "java.io.Closeable"
+}

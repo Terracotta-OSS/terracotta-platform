@@ -4,7 +4,7 @@
  */
 package com.terracottatech.persistence.sanskrit.change;
 
-import com.terracottatech.dynamic_config.json.Json;
+import com.terracottatech.json.Json;
 import com.terracottatech.persistence.sanskrit.SanskritObject;
 import com.terracottatech.persistence.sanskrit.SanskritObjectImpl;
 import org.junit.Test;

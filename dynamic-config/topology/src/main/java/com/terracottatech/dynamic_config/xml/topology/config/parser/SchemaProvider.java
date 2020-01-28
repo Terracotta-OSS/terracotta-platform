@@ -6,15 +6,13 @@ package com.terracottatech.dynamic_config.xml.topology.config.parser;
 
 import org.terracotta.config.service.ServiceConfigParser;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
+import java.io.IOException;
+import java.net.URL;
 
 public class SchemaProvider {
-  public static final URI NAMESPACE_URI = URI.create("http://www.terracotta.org/config/cluster");
+
   private static final URL XML_SCHEMA = ServiceConfigParser.class.getResource("/cluster-topology.xsd");
 
   public static Source getXmlSchema() throws IOException {

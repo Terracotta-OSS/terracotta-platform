@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+  Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+  -->
+<included>
+  <!-- hide most of server logs-->
+  <logger name="com.terracottatech" level="WARN"/>
+  <logger name="com.tc" level="WARN"/>
+  <logger name="org.terracotta.lease" level="WARN"/>
+  <!-- except some -->
+  <logger name="com.tc.server.TCServerMain" level="INFO"/>
+  <logger name="com.terracottatech.dynamic_config.server.config_provider.EnterpriseConfigurationProvider" level="INFO"/>
+  <!-- project logging -->
+  <logger name="com.terracottatech.dynamic_config" level="TRACE"/>
+  <logger name="com.terracottatech.persistence.sanskrit" level="TRACE"/>
+  <logger name="com.terracottatech.nomad" level="TRACE"/>
+</included>
