@@ -25,9 +25,11 @@ import static java.util.function.Predicate.isEqual;
  */
 public class CustomJCommander extends JCommander {
   private final CommandRepository commandRepository;
+  private String toolName;
 
-  public CustomJCommander(CommandRepository commandRepository, Command command) {
+  public CustomJCommander(String toolName, CommandRepository commandRepository, Command command) {
     super(command);
+    this.toolName = toolName;
     this.commandRepository = commandRepository;
     commandRepository.getCommands()
         .stream()
@@ -62,8 +64,7 @@ public class CustomJCommander extends JCommander {
   public void usage(StringBuilder out, String indent) {
     Map<String, JCommander> commands = getCommands();
     boolean hasCommands = !commands.isEmpty();
-    String programName = "config-tool";
-    out.append(indent).append("Usage: ").append(programName).append(" [options]");
+    out.append(indent).append("Usage: ").append(toolName).append(" [options]");
     if (hasCommands) {
       out.append(indent).append(" [command] [command-options]");
     }

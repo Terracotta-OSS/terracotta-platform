@@ -5,13 +5,14 @@
 package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.converters.EnumConverter;
-import com.terracottatech.dynamic_config.cli.service.command.RepairCommand;
 
-/**
- * @author Mathieu Carbou
- */
-public class StateConverter extends EnumConverter<RepairCommand.State> {
-  public StateConverter() {
-    super("-f", RepairCommand.State.class);
+public enum Format {
+  JSON,
+  PROPERTIES;
+
+  public static class FormatConverter extends EnumConverter<Format> {
+    public FormatConverter() {
+      super("-f", Format.class);
+    }
   }
 }

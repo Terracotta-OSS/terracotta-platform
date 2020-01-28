@@ -6,7 +6,11 @@
 apply plugin: TcDeploy
 
 dependencies {
-  compile project(':dynamic-config-common-cli')
+  compile project(':diagnostic-client')
+  compile project(':dynamic-config-common')
+
+  compile "com.beust:jcommander:$jcommanderVersion"
+  compile "ch.qos.logback:logback-classic:$logbackVersion"
 
   testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"

@@ -7,7 +7,7 @@ package com.terracottatech.dynamic_config.cli.service.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
-import com.terracottatech.dynamic_config.cli.common.StateConverter;
+import com.terracottatech.dynamic_config.cli.common.State;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.model.NodeContext;
 import com.terracottatech.nomad.client.results.ConsistencyAnalyzer;
@@ -27,12 +27,10 @@ import static java.util.Objects.requireNonNull;
 @Usage("repair -s <hostname[:port]> [-f commit|rollback]")
 public class RepairCommand extends RemoteCommand {
 
-  public enum State {COMMIT, ROLLBACK}
-
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "State to force for the last prepared configuration: commit or rollback", converter = StateConverter.class)
+  @Parameter(names = {"-f"}, description = "State to force for the last prepared configuration: commit or rollback", converter = State.StateConverter.class)
   State forcedState;
 
   private Map<InetSocketAddress, LogicalServerState> allNodes;

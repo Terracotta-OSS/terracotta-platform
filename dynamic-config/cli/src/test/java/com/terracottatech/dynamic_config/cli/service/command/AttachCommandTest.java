@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
+import com.terracottatech.dynamic_config.cli.common.Type;
 import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
@@ -74,7 +75,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     DynamicConfigService mock12 = dynamicConfigServiceMock("localhost", 9412);
 
     newCommand()
-        .setType(TopologyCommand.Type.NODE)
+        .setType(Type.NODE)
         .setDestination("localhost", 9410)
         .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412))
         .run();
@@ -102,7 +103,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     DynamicConfigService mock12 = dynamicConfigServiceMock("localhost", 9412);
 
     newCommand()
-        .setType(TopologyCommand.Type.STRIPE)
+        .setType(Type.STRIPE)
         .setDestination("localhost", 9410)
         .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412))
         .run();

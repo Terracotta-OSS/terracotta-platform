@@ -46,6 +46,7 @@ public class MainCommand extends Command {
       Stream.of(
           "com.terracottatech.dynamic_config",
           "com.terracottatech.nomad",
+          "com.terracottatech.migration",
           "com.terracottatech.persistence.sanskrit"
       ).forEach(name -> {
         Logger logger = (Logger) LoggerFactory.getLogger(name);

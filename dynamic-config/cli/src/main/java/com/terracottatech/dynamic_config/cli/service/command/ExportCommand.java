@@ -10,7 +10,7 @@ import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.terracottatech.dynamic_config.cli.common.FormatConverter;
+import com.terracottatech.dynamic_config.cli.common.Format;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
 import com.terracottatech.dynamic_config.cli.common.Usage;
 import com.terracottatech.dynamic_config.json.Json;
@@ -31,9 +31,6 @@ import static java.lang.System.lineSeparator;
 @Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
 @Usage("export -s <hostname[:port]> [-f <config-file>] [-x] [-r]")
 public class ExportCommand extends RemoteCommand {
-
-  public enum Format {JSON, PROPERTIES}
-
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
@@ -46,7 +43,7 @@ public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-r"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-t"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = FormatConverter.class)
+  @Parameter(names = {"-t"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = Format.FormatConverter.class)
   private Format format = Format.PROPERTIES;
 
   @Override

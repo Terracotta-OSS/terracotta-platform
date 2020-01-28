@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
+import com.terracottatech.dynamic_config.cli.common.Type;
 import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
@@ -46,7 +47,8 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
   Cluster cluster = new Cluster(new Stripe(node0), new Stripe(node1, node2));
 
-  @Captor ArgumentCaptor<Cluster> newCluster;
+  @Captor
+  ArgumentCaptor<Cluster> newCluster;
 
   @Override
   protected DetachCommand newTopologyCommand() {
@@ -69,7 +71,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   @Test
   public void test_detach_nodes_from_stripe() {
     newCommand()
-        .setType(TopologyCommand.Type.NODE)
+        .setType(Type.NODE)
         .setDestination("localhost", 9410)
         .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412))
         .run();
@@ -90,7 +92,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   @Test
   public void test_detach_stripe() {
     newCommand()
-        .setType(TopologyCommand.Type.STRIPE)
+        .setType(Type.STRIPE)
         .setDestination("localhost", 9410)
         .setSources(createUnresolved("localhost", 9411))
         .run();

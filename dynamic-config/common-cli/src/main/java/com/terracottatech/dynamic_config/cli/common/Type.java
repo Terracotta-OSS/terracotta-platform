@@ -5,13 +5,19 @@
 package com.terracottatech.dynamic_config.cli.common;
 
 import com.beust.jcommander.converters.EnumConverter;
-import com.terracottatech.dynamic_config.cli.service.command.ExportCommand;
 
-/**
- * @author Mathieu Carbou
- */
-public class FormatConverter extends EnumConverter<ExportCommand.Format> {
-  public FormatConverter() {
-    super("-f", ExportCommand.Format.class);
+public enum Type {
+  NODE,
+  STRIPE;
+
+  @Override
+  public String toString() {
+    return name().toLowerCase();
+  }
+
+  public static class TypeConverter extends EnumConverter<Type> {
+    public TypeConverter() {
+      super("-t", Type.class);
+    }
   }
 }

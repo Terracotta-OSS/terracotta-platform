@@ -120,7 +120,7 @@ public class ConfigTool {
   }
 
   private static CustomJCommander parseArguments(CommandRepository commandRepository, String[] args) {
-    CustomJCommander jCommander = new CustomJCommander(commandRepository, MAIN);
+    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, MAIN);
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {

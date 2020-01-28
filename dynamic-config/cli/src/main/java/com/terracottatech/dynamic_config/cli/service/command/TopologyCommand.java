@@ -4,11 +4,10 @@
  */
 package com.terracottatech.dynamic_config.cli.service.command;
 
-
 import com.beust.jcommander.Parameter;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.cli.common.InetSocketAddressConverter;
-import com.terracottatech.dynamic_config.cli.common.TypeConverter;
+import com.terracottatech.dynamic_config.cli.common.Type;
 import com.terracottatech.dynamic_config.json.Json;
 import com.terracottatech.dynamic_config.model.Cluster;
 import com.terracottatech.dynamic_config.model.Node;
@@ -32,19 +31,7 @@ import static java.util.stream.Stream.concat;
  * @author Mathieu Carbou
  */
 public abstract class TopologyCommand extends RemoteCommand {
-
-  public enum Type {
-
-    NODE,
-    STRIPE;
-
-    @Override
-    public String toString() {
-      return name().toLowerCase();
-    }
-  }
-
-  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = TypeConverter.class)
+  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = Type.TypeConverter.class)
   private Type type = Type.NODE;
 
   @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)

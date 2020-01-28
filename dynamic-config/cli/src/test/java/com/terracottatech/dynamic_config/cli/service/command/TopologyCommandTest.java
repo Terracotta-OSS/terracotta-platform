@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.service.command;
 
 import com.terracottatech.dynamic_config.cli.Metadata;
+import com.terracottatech.dynamic_config.cli.common.Type;
 import com.terracottatech.dynamic_config.cli.service.BaseTest;
 import org.junit.Test;
 
@@ -27,7 +28,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   @Test
   public void test_defaults() {
     C command = newCommand();
-    assertThat(command.getType(), is(equalTo(TopologyCommand.Type.NODE)));
+    assertThat(command.getType(), is(equalTo(Type.NODE)));
     assertThat(command.getSources(), is(equalTo(Collections.emptyList())));
     assertThat(command.getDestination(), is(nullValue()));
     assertThat(Metadata.getName(command), is(equalTo(command.getClass().getSimpleName().toLowerCase().substring(0, 6))));
@@ -37,7 +38,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   public void test_validate_failures() {
     assertThat(
         () -> newCommand()
-            .setType(TopologyCommand.Type.NODE)
+            .setType(Type.NODE)
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
             .setSources(InetSocketAddress.createUnresolved("localhost", 9410), InetSocketAddress.createUnresolved("localhost", 9411))
             .validate(),
@@ -68,7 +69,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   @Test
   public void test_validate() {
     newCommand()
-        .setType(TopologyCommand.Type.NODE)
+        .setType(Type.NODE)
         .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
         .setSources(InetSocketAddress.createUnresolved("localhost", 9411))
         .validate();
