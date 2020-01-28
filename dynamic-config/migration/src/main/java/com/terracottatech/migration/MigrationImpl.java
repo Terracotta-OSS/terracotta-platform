@@ -50,15 +50,6 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
-/*
-```
-cluster-tool.sh convert-config -tt <topology-type> -tn <topology-name> -c <update-string> -c <update-string> -d <dir>
-```
-.. Input
-... <topology-name> name of the cluster
-.....<update-string> <stripe-name, path to tc-config.xml>
- */
-
 public class MigrationImpl implements Migration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MigrationImpl.class);
@@ -90,9 +81,9 @@ public class MigrationImpl implements Migration {
 
   public void processInput(String clusterName, List<String> migrationStrings) {
     //Basic validation for inputs
-    LOGGER.info("Starting to validate input command parameters");
+    LOGGER.debug("Starting to validate input command parameters");
     validateAndProcessInput(migrationStrings);
-    LOGGER.info("Validated command parameters");
+    LOGGER.debug("Validated command parameters");
     Map<Integer, Path> configFilePerStripeMap = new HashMap<>();
     Map<Tuple2<Integer, String>, Node> stripeServerConfigNodeMap = new HashMap<>();
     for (String[] inputStringArray : inputParamList) {
@@ -103,11 +94,11 @@ public class MigrationImpl implements Migration {
     for (Map.Entry<Integer, Path> stringPathEntry : configFilePerStripeMap.entrySet()) {
       createServerConfigMapFunction(stripeServerConfigNodeMap, stringPathEntry.getKey(), stringPathEntry.getValue());
     }
-    LOGGER.info("Checking if deprecated platform-persistence needs to be converted to data-directory. Will convert if found.");
+    LOGGER.debug("Checking if deprecated platform-persistence needs to be converted to data-directory. Will convert if found.");
     handlePlatformPersistence(configFileRootNodeMap);
-    LOGGER.info("Validating contents of the configuration files");
+    LOGGER.debug("Validating contents of the configuration files");
     valueValidators();
-    LOGGER.info("Building Cluster");
+    LOGGER.debug("Building Cluster");
     buildCluster(clusterName, stripeServerConfigNodeMap);
   }
 
@@ -343,7 +334,7 @@ public class MigrationImpl implements Migration {
       } else {
         throw new InvalidInputException(
             ErrorCode.INVALID_FILE_TYPE,
-            "Invalid file. Provided file is not a regular file",
+            "Provided file " + configFilePath.toString() + " is not a regular file",
             Tuple2.tuple2(ErrorParamKey.INVALID_FILE_TYPE.name(), configFilePath.toString())
         );
       }
@@ -356,7 +347,7 @@ public class MigrationImpl implements Migration {
     }
   }
 
-  protected void handlePlatformPersistence(Map<Path, Node> configurationFileFileRootNodeMap){
+  protected void handlePlatformPersistence(Map<Path, Node> configurationFileFileRootNodeMap) {
     configurationFileFileRootNodeMap.forEach(handlePlatformPersistencePerConfigurationFile());
   }
 
@@ -397,11 +388,11 @@ public class MigrationImpl implements Migration {
       String dataDirId = getAttributeValue(platformPersistenceNode, PLATFORM_PERSISTENCE_DATA_DIR_ID_ATTR_NAME);
       NodeList dataDirectories = dataRootNode.getChildNodes();
       boolean dataDirMatched = false;
-      for (int i=0; i < dataDirectories.getLength(); i++) {
+      for (int i = 0; i < dataDirectories.getLength(); i++) {
         Node currentDataRootNode = dataDirectories.item(i);
         String dataRootName = getAttributeValue(currentDataRootNode, NAME_ATTR_NAME);
         if (dataDirId.equals(dataRootName)) {
-          String useForPlatformString  = getAttributeValue(currentDataRootNode,DATA_DIR_USER_FOR_PLATFORM_ATTR_NAME, false);
+          String useForPlatformString = getAttributeValue(currentDataRootNode, DATA_DIR_USER_FOR_PLATFORM_ATTR_NAME, false);
           boolean useForPlatform = Boolean.parseBoolean(useForPlatformString);
           if (!useForPlatform) {
             setAttributeValue(currentDataRootNode, DATA_DIR_USER_FOR_PLATFORM_ATTR_NAME, Boolean.TRUE.toString());
