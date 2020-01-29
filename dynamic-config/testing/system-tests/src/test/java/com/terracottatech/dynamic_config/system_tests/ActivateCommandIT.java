@@ -5,25 +5,13 @@
 package com.terracottatech.dynamic_config.system_tests;
 
 import com.terracottatech.dynamic_config.cli.config_tool.ConfigTool;
-import com.terracottatech.store.Dataset;
-import com.terracottatech.store.DatasetWriterReader;
-import com.terracottatech.store.Type;
-import com.terracottatech.store.configuration.DatasetConfiguration;
-import com.terracottatech.store.definition.CellDefinition;
-import com.terracottatech.store.definition.StringCellDefinition;
-import com.terracottatech.store.manager.DatasetManager;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.stringContainsInOrder;
-import static org.junit.Assert.assertThat;
 
 public class ActivateCommandIT extends BaseStartupIT {
 
@@ -62,8 +50,6 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
-
-    createDatasetAndPerformAssertions(ports);
   }
 
   @Test
@@ -81,8 +67,6 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
-
-    createDatasetAndPerformAssertions(ports);
   }
 
   @Test
@@ -99,8 +83,6 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
-
-    createDatasetAndPerformAssertions(ports);
   }
 
   @Test
@@ -119,23 +101,5 @@ public class ActivateCommandIT extends BaseStartupIT {
     waitedAssert(out::getLog, containsString("License installation successful"));
     waitedAssert(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
-
-    createDatasetAndPerformAssertions(ports);
-  }
-
-  private void createDatasetAndPerformAssertions(int... ports) throws Exception {
-    Set<InetSocketAddress> node = Collections.singleton(InetSocketAddress.createUnresolved("localhost", ports[0]));
-    try (DatasetManager datasetManager = DatasetManager.clustered(node).build()) {
-      DatasetConfiguration offheapResource = datasetManager.datasetConfiguration().offheap("main").build();
-      final String datasetName = "dataset";
-      datasetManager.newDataset(datasetName, Type.LONG, offheapResource);
-      try (Dataset<Long> rawDataset = datasetManager.getDataset(datasetName, Type.LONG)) {
-        DatasetWriterReader<Long> myDataset = rawDataset.writerReader();
-        StringCellDefinition NAME_CELL = CellDefinition.defineString("name");
-        myDataset.add(123L, NAME_CELL.newCell("George"));
-        assertThat(myDataset.get(123L).get().get(NAME_CELL).get(), is("George"));
-      }
-      datasetManager.destroyDataset(datasetName);
-    }
   }
 }

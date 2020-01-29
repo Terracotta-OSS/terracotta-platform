@@ -6,17 +6,16 @@
 import org.gradle.internal.jvm.Jvm
 
 dependencies {
-  testCompile project(':diagnostic-client')
-  testCompile project(':galvan-support-ee')
-  testCompile project(':terracotta-store-clustered-client')
-  testCompile project(':nms-agent-entity-ee')
-
   testCompile project(':dynamic-config-config-tool')
   testCompile project(':dynamic-config-server')
   testCompile project(':dynamic-config-xml-ee')
   testCompile project(':dynamic-config-test-support')
-
+  testCompile project(':diagnostic-client')
   testCompile project(':test-utilities')
+
+  testCompile project(':galvan-support-ee')
+  testCompile project(':nms-agent-entity-ee')
+
   testCompile "org.terracotta.management.dist:mnm-nms-agent:$terracottaPlatformVersion"
   testCompile "org.terracotta.management.dist:mnm-nms:$terracottaPlatformVersion"
   testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
@@ -62,26 +61,5 @@ test {
 
   testLogging {
     events 'started'
-  }
-}
-
-// Helping out IDE
-plugins.withType(IdeaPlugin) {
-  sourceSets {
-    test {
-      compileClasspath += (findProject(':terracotta-common-client').configurations.compileOnly
-          + findProject(':terracotta-ehcache-client').configurations.compileOnly
-          + findProject(':terracotta-store-clustered-client').configurations.compileOnly
-          + findProject(':multi-stripe:enterprise-voter').configurations.compileOnly)
-    }
-  }
-}
-
-eclipse {
-  classpath {
-    plusConfigurations += [ findProject(':terracotta-common-client').configurations.compileOnly,
-                            findProject(':terracotta-ehcache-client').configurations.compileOnly,
-                            findProject(':terracotta-store-clustered-client').configurations.compileOnly,
-                            findProject(':multi-stripe:enterprise-voter').configurations.compileOnly ]
   }
 }
