@@ -48,6 +48,7 @@ public class MigrateCommand extends Command {
     RepositoryStructureBuilder resultProcessor = new RepositoryStructureBuilder(destinationDir);
     MigrationImpl migration = new MigrationImpl(resultProcessor::process);
     migration.processInput(newClusterName, getMigrationStrings());
+    logger.info("Configuration repositories saved under: {}", destinationDir.toAbsolutePath().normalize());
     logger.info("Command successful!" + lineSeparator());
   }
 
