@@ -16,8 +16,8 @@ import com.terracottatech.dynamic_config.system_tests.util.Env;
 import com.terracottatech.dynamic_config.system_tests.util.Kit;
 import com.terracottatech.dynamic_config.system_tests.util.NodeProcess;
 import com.terracottatech.dynamic_config.system_tests.util.PropertyResolver;
+import com.terracottatech.port_locking.PortLockingRule;
 import com.terracottatech.testing.TmpDir;
-import com.terracottatech.testing.lock.PortLockingRule;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.hamcrest.Matcher;
@@ -126,7 +126,7 @@ public class BaseStartupIT {
   }
 
   Path copyConfigProperty(String configFile) throws Exception {
-    Path src = Paths.get(NewServerStartupScriptIT.class.getResource(configFile).toURI());
+    Path src = Paths.get(BaseStartupIT.class.getResource(configFile).toURI());
     Path dest = getBaseDir().resolve(src.getFileName());
     Properties loaded = new Properties();
     try (Reader reader = new InputStreamReader(Files.newInputStream(src), StandardCharsets.UTF_8)) {

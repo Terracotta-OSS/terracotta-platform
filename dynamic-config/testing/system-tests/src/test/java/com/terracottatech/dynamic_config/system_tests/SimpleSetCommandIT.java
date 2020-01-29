@@ -4,31 +4,16 @@
  */
 package com.terracottatech.dynamic_config.system_tests;
 
-import com.terracotta.connection.api.TerracottaConnectionService;
 import com.terracottatech.diagnostic.client.DiagnosticOperationExecutionException;
 import com.terracottatech.dynamic_config.cli.config_tool.ConfigTool;
-import com.terracottatech.tools.client.TopologyEntity;
-import com.terracottatech.tools.client.TopologyEntityProvider;
-import com.terracottatech.tools.config.ClusterConfiguration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.exception.EntityException;
-
-import java.net.URI;
-import java.util.Properties;
 
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 
 public class SimpleSetCommandIT extends BaseStartupIT {
 
@@ -355,28 +340,6 @@ public class SimpleSetCommandIT extends BaseStartupIT {
   }
 
   @Test
-  public void testPublicHostPort() throws Exception {
-    activateCluster();
-
-    try (Connection connection = new TerracottaConnectionService().connect(URI.create("terracotta://localhost:" + ports.getPort()), new Properties())) {
-      ClusterConfiguration configuration = getTopologyEntity(connection).getClusterConfiguration();
-      assertThat(configuration.getHostPortsMap().size(), is(equalTo(1)));
-      assertThat(configuration.getHostPortsMap(), hasEntry("localhost:" + ports.getPort(), "localhost:" + ports.getPort()));
-    }
-
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(),
-        "-c", "stripe.1.node.1.node-public-hostname=127.0.0.1",
-        "-c", "stripe.1.node.1.node-public-port=" + ports.getPort());
-    assertCommandSuccessful();
-
-    try (Connection connection = new TerracottaConnectionService().connect(URI.create("terracotta://localhost:" + ports.getPort()), new Properties())) {
-      ClusterConfiguration configuration = getTopologyEntity(connection).getClusterConfiguration();
-      assertThat(configuration.getHostPortsMap().size(), is(equalTo(1)));
-      assertThat(configuration.getHostPortsMap(), hasEntry("localhost:" + ports.getPort(), "127.0.0.1:" + ports.getPort()));
-    }
-  }
-
-  @Test
   public void testSetLogger() throws Exception {
     activateCluster();
 
@@ -391,14 +354,5 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-logger-overrides");
     waitedAssert(out::getLog, containsString("node-logger-overrides=com.terracottatech:TRACE"));
-  }
-
-  private static TopologyEntity getTopologyEntity(Connection base) throws ConnectionException {
-    try {
-      EntityRef<TopologyEntity, Void, Void> ref = base.getEntityRef(TopologyEntity.class, TopologyEntityProvider.ENTITY_VERSION, TopologyEntityProvider.ENTITY_NAME);
-      return ref.fetchEntity(null);
-    } catch (EntityException ee) {
-      throw new ConnectionException(ee);
-    }
   }
 }

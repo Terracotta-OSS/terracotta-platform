@@ -9,7 +9,6 @@ import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
 import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.ipceventbus.proc.AnyProcess;
-import org.terracotta.testing.common.SimpleEventingStream;
 
 import java.io.Closeable;
 import java.io.IOException;
