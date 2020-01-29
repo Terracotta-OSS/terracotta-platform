@@ -14,8 +14,6 @@ dependencies {
   compile project(':port-locking')
   compile project(':test-utilities')
 
-  compile project(':nms-agent-entity-ee')
-
   compile "org.terracotta:ipc-eventbus:$ipcEventbusVersion"
   compile "org.terracotta.management.dist:mnm-nms-agent:$terracottaPlatformVersion"
   compile "org.terracotta.management.dist:mnm-nms:$terracottaPlatformVersion"
@@ -24,13 +22,20 @@ dependencies {
   compile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
   compile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
   compile "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
-  compile ("org.awaitility:awaitility:$awaitility")
+
+  compile("org.awaitility:awaitility:$awaitility")
   compile "ch.qos.logback:logback-classic:$logbackVersion"
   compile "junit:junit:$junitVersion"
   compile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   compile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
     exclude group: 'junit'
   }
+
+  testCompile "org.terracotta.internal:connection-loader:$terracottaCoreVersion"
+  testCompile "org.terracotta:packaging-support:$terracottaApisVersion"
+  testCompile "org.terracotta:connection-api:$terracottaApisVersion"
+  testCompile "org.terracotta.internal:common:$terracottaCoreVersion"
+  testCompile "org.terracotta:lease-api:$terracottaPlatformVersion"
 }
 
 apply plugin: TcDistribute
@@ -39,7 +44,7 @@ task unzipKit(type: Copy) {
   dependsOn project(':terracotta').distZip
   into('build/tc-db-kit')
   from zipTree(project(':terracotta').distZip.archivePath)
-  
+
   dependsOn project(':dynamic-config-test-support').jar
   into("terracotta-$project.version/server/plugins/lib") {
     from project(':dynamic-config-test-support').jar.archivePath.getPath()

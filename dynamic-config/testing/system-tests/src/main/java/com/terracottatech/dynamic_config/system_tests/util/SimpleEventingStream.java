@@ -35,19 +35,19 @@ public class SimpleEventingStream extends OutputStream {
 
     String lineSeparator = System.lineSeparator();
     this.twoByteLineSeparator = lineSeparator.length() == 2;
-    this.eol = (byte)lineSeparator.charAt(lineSeparator.length() - 1);
-    this.eolLeader = (byte)(this.twoByteLineSeparator ? lineSeparator.charAt(0) : '\0');
+    this.eol = (byte) lineSeparator.charAt(lineSeparator.length() - 1);
+    this.eolLeader = (byte) (this.twoByteLineSeparator ? lineSeparator.charAt(0) : '\0');
   }
 
   @Override
   public void write(int b) throws IOException {
-    if (twoByteLineSeparator && eolLeader == (byte)b) {
+    if (twoByteLineSeparator && eolLeader == (byte) b) {
       haveLeader = true;
     } else {
-      if (eol == (byte)b) {
+      if (eol == (byte) b) {
         // End of line so we process the bytes to find matches and then replace it.
         // NOTE:  This will use the platform's default encoding.
-        String oneLine = this.stream.toString();
+        String oneLine = this.stream.toString("UTF-8");
         // Determine what events to trigger by scraping the string for keys.
         for (Map.Entry<String, String> pair : this.eventMap.entrySet()) {
           if (oneLine.contains(pair.getKey())) {
