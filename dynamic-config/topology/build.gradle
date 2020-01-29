@@ -25,7 +25,7 @@ dependencies {
 //xjcGenerate {
 //  source = fileTree('src/main/resources') { include '*.xsd' }
 //  catalogs = fileTree('src/main/catalog') { include '*.cat' }
-//  targetPackage = 'com.terracottatech.dynamic_config.xml.topology.config.xmlobjects'
+//  targetPackage = 'org.terracotta.dynamic_config.xml.topology.config.xmlobjects'
 //  extension = true
 //}
 

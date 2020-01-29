@@ -32,7 +32,7 @@
             <publicHostname>node-1.sag</publicHostname>
             <publicPort>1234</publicPort>
             <loggerOverrides>
-              <logger level="TRACE" name="com.terracottatech.dynamic_config"/>
+              <logger level="TRACE" name="org.terracotta.dynamic_config"/>
             </loggerOverrides>
             <server-config>
               <ns2:tc-config>

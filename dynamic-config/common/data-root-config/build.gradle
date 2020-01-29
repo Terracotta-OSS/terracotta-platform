@@ -30,7 +30,7 @@ dependencies {
 xjcGenerate {
   source = fileTree('src/main/resources') { include '*.xsd' }
   catalogs = fileTree('src/main/catalog') { include 'catalog.cat' }
-  targetPackage = 'com.terracottatech.data.config'
+  targetPackage = 'org.terracotta.data.config'
   extension = true
 }
 

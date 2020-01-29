@@ -27,13 +27,13 @@
     <appender-ref ref="STDOUT-DETAIL"/>
   </root>
 
-  <logger name="com.terracottatech.dynamic_config" level="INFO" additivity="false">
+  <logger name="org.terracotta.dynamic_config" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="com.terracottatech.nomad" level="INFO" additivity="false">
+  <logger name="org.terracotta.nomad" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="com.terracottatech.persistence.sanskrit" level="INFO" additivity="false">
+  <logger name="org.terracotta.persistence.sanskrit" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
 </configuration>

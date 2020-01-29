@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+package org.terracotta.dynamic_config.api.service;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
+
+@FunctionalInterface
+public interface IParameterSubstitutor {
+  String substitute(String source);
+
+  static IParameterSubstitutor identity() {
+    return t -> t;
+  }
+
+  static IParameterSubstitutor unsupported() {
+    return source -> {
+      throw new UnsupportedOperationException("Parameter substitution is not supported");
+    };
+  }
+
+  default Path substitute(Path source) {
+    if (source == null) return null;
+    return Paths.get(substitute(source.toString()));
+  }
+
+  static boolean containsSubstitutionParams(String source) {
+    // Tries to find in the string some characters to be substituted
+    // See org.terracotta.config.util.ParameterSubstitutor.substitute(source) for the supported variables
+    return Stream.of("d", "D", "h", "c", "i", "H", "n", "o", "a", "v", "t", "(")
+        .map(c -> "%" + c)
+        .anyMatch(source::contains);
+  }
+}

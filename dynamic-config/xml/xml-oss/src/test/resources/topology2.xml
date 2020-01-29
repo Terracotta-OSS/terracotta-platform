@@ -27,7 +27,7 @@
           <node>
             <name>node-1</name>
             <loggerOverrides>
-              <logger level="TRACE" name="stripe.1.node.1.node-logger-overrides=com.terracottatech.dynamic_config"/>
+              <logger level="TRACE" name="stripe.1.node.1.node-logger-overrides=org.terracotta.dynamic_config"/>
             </loggerOverrides>
             <server-config>
               <ns2:tc-config>

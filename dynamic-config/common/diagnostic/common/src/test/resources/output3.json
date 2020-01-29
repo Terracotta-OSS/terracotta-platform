@@ -1,9 +1,9 @@
 {
   "body": {
-    "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$Tomato",
+    "@class": "org.terracotta.diagnostic.common.JsonDiagnosticCodecTest$Tomato",
     "color": "red",
     "cookingManual": {
-      "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
+      "@class": "org.terracotta.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
       "cookTime": 20,
       "saltNeeded": false
     },

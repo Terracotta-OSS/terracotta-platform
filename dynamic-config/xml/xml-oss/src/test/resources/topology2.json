@@ -25,7 +25,7 @@
             "nodeHostname": "localhost",
             "nodeLogDir": "%(user.dir)/logs/stripe1/node-1",
             "nodeLoggerOverrides": {
-              "stripe.1.node.1.node-logger-overrides=com.terracottatech.dynamic_config": "TRACE"
+              "stripe.1.node.1.node-logger-overrides=org.terracotta.dynamic_config": "TRACE"
             },
             "nodeName": "node-1",
             "nodePort": 27904,

@@ -3,4 +3,4 @@
 # Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
 #
 
-com.terracottatech.dynamic_config.test_support.entity.TestEntityServerService
+org.terracotta.dynamic_config.test_support.entity.TestEntityServerService

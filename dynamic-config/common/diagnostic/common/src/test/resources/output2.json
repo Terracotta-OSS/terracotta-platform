@@ -1,20 +1,20 @@
 {
   "arguments": [
     {
-      "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$Tomato",
+      "@class": "org.terracotta.diagnostic.common.JsonDiagnosticCodecTest$Tomato",
       "color": "red",
       "cookingManual": {
-        "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
+        "@class": "org.terracotta.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
         "cookTime": 20,
         "saltNeeded": false
       },
       "from": "Canada"
     },
     {
-      "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$Pepper",
+      "@class": "org.terracotta.diagnostic.common.JsonDiagnosticCodecTest$Pepper",
       "color": "spain",
       "cookingManual": {
-        "@class": "com.terracottatech.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
+        "@class": "org.terracotta.diagnostic.common.JsonDiagnosticCodecTest$TomatoCooking",
         "cookTime": 20,
         "saltNeeded": false
       },
