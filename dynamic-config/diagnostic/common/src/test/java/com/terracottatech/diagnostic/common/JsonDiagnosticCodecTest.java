@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.terracottatech.struct.tuple.Tuple2.tuple2;
+import static com.terracottatech.common.struct.Tuple2.tuple2;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

@@ -16,11 +16,11 @@ import java.nio.file.Paths;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static com.terracottatech.common.struct.MemoryUnit.GB;
+import static com.terracottatech.common.struct.MemoryUnit.MB;
+import static com.terracottatech.common.struct.TimeUnit.SECONDS;
 import static com.terracottatech.dynamic_config.api.model.FailoverPriority.availability;
 import static com.terracottatech.dynamic_config.api.model.FailoverPriority.consistency;
-import static com.terracottatech.dynamic_config.api.model.MemoryUnit.GB;
-import static com.terracottatech.dynamic_config.api.model.MemoryUnit.MB;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.SECONDS;
 
 public class ClusterValidatorTest {
 

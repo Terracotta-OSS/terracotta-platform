@@ -23,7 +23,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.terracottatech.struct.tuple.Tuple2.tuple2;
+import static com.terracottatech.common.struct.Tuple2.tuple2;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;

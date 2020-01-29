@@ -4,8 +4,8 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
-import com.terracottatech.dynamic_config.api.model.Measure;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.TimeUnit;
 import org.junit.Test;
 import org.w3c.dom.Element;
 

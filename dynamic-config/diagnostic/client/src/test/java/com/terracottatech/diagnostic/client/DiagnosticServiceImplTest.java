@@ -32,13 +32,13 @@ import java.io.Serializable;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.terracottatech.common.struct.Tuple3.tuple3;
 import static com.terracottatech.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 import static com.terracottatech.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 import static com.terracottatech.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_PERMITTED;
 import static com.terracottatech.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
 import static com.terracottatech.diagnostic.common.DiagnosticConstants.MESSAGE_REQUEST_TIMEOUT;
 import static com.terracottatech.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNOWN_COMMAND;
-import static com.terracottatech.struct.tuple.Tuple3.tuple3;
 import static com.terracottatech.testing.ExceptionMatcher.throwing;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.ACTIVE_SUSPENDED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;

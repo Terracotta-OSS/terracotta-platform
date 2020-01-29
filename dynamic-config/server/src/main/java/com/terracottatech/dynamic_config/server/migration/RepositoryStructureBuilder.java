@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.server.migration;
 
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.dynamic_config.api.model.NodeContext;
 import com.terracottatech.dynamic_config.api.model.nomad.ConfigMigrationNomadChange;
 import com.terracottatech.dynamic_config.api.service.PathResolver;
@@ -25,7 +26,6 @@ import com.terracottatech.nomad.server.NomadException;
 import com.terracottatech.nomad.server.NomadServer;
 import com.terracottatech.nomad.server.PotentialApplicationResult;
 import com.terracottatech.persistence.sanskrit.SanskritException;
-import com.terracottatech.struct.tuple.Tuple2;
 import org.w3c.dom.Node;
 
 import java.nio.file.Path;

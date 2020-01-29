@@ -4,8 +4,11 @@
  */
 package com.terracottatech.dynamic_config.api.model;
 
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.MemoryUnit;
+import com.terracottatech.common.struct.TimeUnit;
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.dynamic_config.api.service.IParameterSubstitutor;
-import com.terracottatech.struct.tuple.Tuple2;
 import org.slf4j.event.Level;
 
 import java.nio.file.Paths;

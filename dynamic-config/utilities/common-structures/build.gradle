@@ -6,4 +6,10 @@
 apply plugin: TcDeploy
 
 dependencies {
+  compile "com.fasterxml.jackson.core:jackson-annotations:$jacksonAnnotVersion"
+
+  testCompile project(':json-support')
+  testCompile project(':test-utilities')
+  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  testCompile "org.mockito:mockito-core:$mockitoVersion"
 }

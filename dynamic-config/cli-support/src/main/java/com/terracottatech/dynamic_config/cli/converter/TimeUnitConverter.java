@@ -6,8 +6,8 @@
 package com.terracottatech.dynamic_config.cli.converter;
 
 import com.beust.jcommander.IStringConverter;
-import com.terracottatech.dynamic_config.api.model.Measure;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.TimeUnit;
 
 public class TimeUnitConverter implements IStringConverter<Measure<TimeUnit>> {
   @Override

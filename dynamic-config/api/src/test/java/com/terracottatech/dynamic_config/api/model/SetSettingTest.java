@@ -4,13 +4,14 @@
  */
 package com.terracottatech.dynamic_config.api.model;
 
+import com.terracottatech.common.struct.Measure;
 import org.junit.Test;
 import org.slf4j.event.Level;
 
 import java.nio.file.Paths;
 
-import static com.terracottatech.dynamic_config.api.model.MemoryUnit.GB;
-import static com.terracottatech.dynamic_config.api.model.MemoryUnit.MB;
+import static com.terracottatech.common.struct.MemoryUnit.GB;
+import static com.terracottatech.common.struct.MemoryUnit.MB;
 import static com.terracottatech.dynamic_config.api.model.Setting.DATA_DIRS;
 import static com.terracottatech.dynamic_config.api.model.Setting.LICENSE_FILE;
 import static com.terracottatech.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;

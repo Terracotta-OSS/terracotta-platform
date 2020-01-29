@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.cli.config_tool.command;
 
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.api.model.Cluster;
@@ -13,7 +14,6 @@ import com.terracottatech.dynamic_config.api.model.nomad.SettingNomadChange;
 import com.terracottatech.dynamic_config.api.service.ClusterValidator;
 import com.terracottatech.dynamic_config.api.service.DynamicConfigService;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
-import com.terracottatech.struct.tuple.Tuple2;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 
 import java.net.InetSocketAddress;

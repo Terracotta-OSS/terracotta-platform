@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.system_tests;
 
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.dynamic_config.api.model.NodeContext;
 import com.terracottatech.dynamic_config.api.service.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.api.service.PathResolver;
@@ -18,7 +19,6 @@ import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcServer
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.TcStripe;
 import com.terracottatech.nomad.messages.DiscoverResponse;
 import com.terracottatech.nomad.server.NomadServer;
-import com.terracottatech.struct.tuple.Tuple2;
 import com.terracottatech.testing.TmpDir;
 import org.junit.Before;
 import org.junit.Rule;

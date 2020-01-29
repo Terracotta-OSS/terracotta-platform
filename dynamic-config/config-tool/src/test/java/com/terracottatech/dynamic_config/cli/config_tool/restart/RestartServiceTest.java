@@ -4,13 +4,13 @@
  */
 package com.terracottatech.dynamic_config.cli.config_tool.restart;
 
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.diagnostic.client.DiagnosticOperationTimeoutException;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProviderException;
 import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.model.Stripe;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
 import com.terracottatech.dynamic_config.api.service.DynamicConfigService;
 import com.terracottatech.dynamic_config.cli.config_tool.BaseTest;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
@@ -25,8 +25,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import static com.terracottatech.common.struct.TimeUnit.SECONDS;
 import static com.terracottatech.dynamic_config.api.model.Node.newDefaultNode;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.SECONDS;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.ACTIVE;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.ACTIVE_SUSPENDED;
 import static com.terracottatech.tools.detailed.state.LogicalServerState.PASSIVE;

@@ -4,9 +4,9 @@
  */
 package com.terracottatech.dynamic_config.xml;
 
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
+import com.terracottatech.common.struct.MemoryUnit;
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.dynamic_config.api.model.Node;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
 import com.terracottatech.dynamic_config.api.service.PathResolver;
 import com.terracottatech.testing.TmpDir;
 import org.junit.Before;

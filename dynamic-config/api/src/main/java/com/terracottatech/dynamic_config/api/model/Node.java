@@ -5,6 +5,9 @@
 package com.terracottatech.dynamic_config.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.MemoryUnit;
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.dynamic_config.api.service.IParameterSubstitutor;
 import com.terracottatech.ipv6.InetSocketAddressUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

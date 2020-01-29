@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.server.migration;
 
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.dynamic_config.server.migration.exception.ErrorCode;
 import com.terracottatech.dynamic_config.server.migration.exception.ErrorParamKey;
 import com.terracottatech.dynamic_config.server.migration.exception.InvalidInputConfigurationContentException;
@@ -13,7 +14,6 @@ import com.terracottatech.dynamic_config.server.migration.validators.ValidationW
 import com.terracottatech.dynamic_config.server.migration.xml.ClusteredConfigBuilder;
 import com.terracottatech.dynamic_config.server.migration.xml.ConfigurationParser;
 import com.terracottatech.dynamic_config.server.migration.xml.XmlUtility;
-import com.terracottatech.struct.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.TCConfigurationParser;

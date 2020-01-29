@@ -4,9 +4,9 @@
  */
 package com.terracottatech.dynamic_config.api.service;
 
+import com.terracottatech.common.struct.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.model.MalformedClusterException;
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.Node;
 import com.terracottatech.dynamic_config.api.model.Setting;
 

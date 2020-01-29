@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.dynamic_config.api.model;
+package com.terracottatech.common.struct;
 
 import com.terracottatech.json.Json;
 import org.junit.Test;
@@ -10,11 +10,11 @@ import org.junit.Test;
 import java.util.EnumSet;
 import java.util.Objects;
 
-import static com.terracottatech.dynamic_config.api.model.MemoryUnit.B;
-import static com.terracottatech.dynamic_config.api.model.MemoryUnit.GB;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.HOURS;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.MINUTES;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.SECONDS;
+import static com.terracottatech.common.struct.MemoryUnit.B;
+import static com.terracottatech.common.struct.MemoryUnit.GB;
+import static com.terracottatech.common.struct.TimeUnit.HOURS;
+import static com.terracottatech.common.struct.TimeUnit.MINUTES;
+import static com.terracottatech.common.struct.TimeUnit.SECONDS;
 import static com.terracottatech.testing.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;

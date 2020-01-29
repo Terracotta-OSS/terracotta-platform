@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.server.migration.exception;
 
-import com.terracottatech.struct.tuple.Tuple2;
+import com.terracottatech.common.struct.Tuple2;
 
 public class InvalidInputException extends MigrationException {
 

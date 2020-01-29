@@ -5,12 +5,12 @@
 package com.terracottatech.dynamic_config.cli.config_tool;
 
 import com.beust.jcommander.ParameterException;
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.diagnostic.client.connection.ConcurrencySizing;
 import com.terracottatech.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import com.terracottatech.dynamic_config.api.model.NodeContext;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
 import com.terracottatech.dynamic_config.cli.command.CommandRepository;
 import com.terracottatech.dynamic_config.cli.command.CustomJCommander;
 import com.terracottatech.dynamic_config.cli.command.MainCommand;

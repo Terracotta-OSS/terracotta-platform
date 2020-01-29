@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.model.Node;
@@ -13,7 +14,6 @@ import com.terracottatech.dynamic_config.api.service.TopologyService;
 import com.terracottatech.dynamic_config.cli.config_tool.converter.AttachmentType;
 import com.terracottatech.dynamic_config.cli.converter.InetSocketAddressConverter;
 import com.terracottatech.json.Json;
-import com.terracottatech.struct.tuple.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;

@@ -5,11 +5,11 @@
 package com.terracottatech.dynamic_config.api.model.nomad;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.terracottatech.common.struct.MemoryUnit;
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.dynamic_config.api.model.Cluster;
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.Node;
 import com.terracottatech.dynamic_config.api.model.Stripe;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
 import com.terracottatech.json.Json;
 import com.terracottatech.nomad.client.change.MultipleNomadChanges;
 import com.terracottatech.nomad.client.change.NomadChange;

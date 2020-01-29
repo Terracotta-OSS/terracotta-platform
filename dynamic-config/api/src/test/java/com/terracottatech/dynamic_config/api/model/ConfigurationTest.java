@@ -12,6 +12,8 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+import static com.terracottatech.common.struct.Tuple2.tuple2;
+import static com.terracottatech.common.struct.Tuple3.tuple3;
 import static com.terracottatech.dynamic_config.api.model.Operation.CONFIG;
 import static com.terracottatech.dynamic_config.api.model.Operation.GET;
 import static com.terracottatech.dynamic_config.api.model.Operation.SET;
@@ -42,8 +44,6 @@ import static com.terracottatech.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static com.terracottatech.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static com.terracottatech.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 import static com.terracottatech.dynamic_config.api.model.Setting.TC_PROPERTIES;
-import static com.terracottatech.struct.tuple.Tuple2.tuple2;
-import static com.terracottatech.struct.tuple.Tuple3.tuple3;
 import static com.terracottatech.testing.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.endsWith;

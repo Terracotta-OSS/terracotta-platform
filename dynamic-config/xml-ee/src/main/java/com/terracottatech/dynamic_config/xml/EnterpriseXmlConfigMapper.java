@@ -5,18 +5,18 @@
 package com.terracottatech.dynamic_config.xml;
 
 import com.terracottatech.br.config.BackupRestoreConfigurationParser;
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.MemoryUnit;
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.config.br.BackupRestore;
 import com.terracottatech.config.data_roots.DataRootConfigParser;
 import com.terracottatech.config.security.Security;
 import com.terracottatech.data.config.DataRootMapping;
 import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.model.FailoverPriority;
-import com.terracottatech.dynamic_config.api.model.Measure;
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.Node;
 import com.terracottatech.dynamic_config.api.model.NodeContext;
 import com.terracottatech.dynamic_config.api.model.Stripe;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
 import com.terracottatech.dynamic_config.api.service.PathResolver;
 import com.terracottatech.dynamic_config.api.service.XmlConfigMapper;
 import com.terracottatech.dynamic_config.xml.topology.config.xmlobjects.Logger;

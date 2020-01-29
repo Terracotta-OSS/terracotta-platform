@@ -4,11 +4,11 @@
  */
 package com.terracottatech.dynamic_config.server.service.handler;
 
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.MemoryUnit;
 import com.terracottatech.diagnostic.server.DiagnosticServices;
 import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.model.Configuration;
-import com.terracottatech.dynamic_config.api.model.Measure;
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.NodeContext;
 import com.terracottatech.dynamic_config.api.service.ConfigChangeHandler;
 import com.terracottatech.dynamic_config.api.service.DynamicConfigService;

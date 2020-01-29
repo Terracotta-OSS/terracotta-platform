@@ -16,8 +16,8 @@ import org.junit.Test;
 import java.nio.file.Paths;
 import java.time.Duration;
 
+import static com.terracottatech.common.struct.MemoryUnit.MB;
 import static com.terracottatech.dynamic_config.api.model.FailoverPriority.availability;
-import static com.terracottatech.dynamic_config.api.model.MemoryUnit.MB;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;

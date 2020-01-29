@@ -4,8 +4,8 @@
  */
 package com.terracottatech.dynamic_config.cli.config_tool.command;
 
+import com.terracottatech.common.struct.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.Cluster;
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.Node;
 import com.terracottatech.dynamic_config.api.model.NodeContext;
 import com.terracottatech.dynamic_config.api.model.Stripe;

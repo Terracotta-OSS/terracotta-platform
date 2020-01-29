@@ -10,8 +10,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.terracottatech.dynamic_config.api.model.Measure;
-import com.terracottatech.dynamic_config.api.model.TimeUnit;
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.dynamic_config.cli.converter.TimeUnitConverter;
 import org.slf4j.LoggerFactory;
 

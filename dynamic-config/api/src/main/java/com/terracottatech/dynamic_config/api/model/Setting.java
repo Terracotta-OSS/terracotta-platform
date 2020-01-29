@@ -4,7 +4,11 @@
  */
 package com.terracottatech.dynamic_config.api.model;
 
-import com.terracottatech.struct.tuple.Tuple2;
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.MemoryUnit;
+import com.terracottatech.common.struct.TimeUnit;
+import com.terracottatech.common.struct.Tuple2;
+import com.terracottatech.common.struct.Unit;
 import org.slf4j.event.Level;
 
 import java.nio.file.Paths;
@@ -18,6 +22,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static com.terracottatech.common.struct.TimeUnit.HOURS;
+import static com.terracottatech.common.struct.TimeUnit.MILLISECONDS;
+import static com.terracottatech.common.struct.TimeUnit.MINUTES;
+import static com.terracottatech.common.struct.TimeUnit.SECONDS;
+import static com.terracottatech.common.struct.Tuple2.tuple2;
 import static com.terracottatech.dynamic_config.api.model.Operation.CONFIG;
 import static com.terracottatech.dynamic_config.api.model.Operation.GET;
 import static com.terracottatech.dynamic_config.api.model.Operation.SET;
@@ -39,11 +48,6 @@ import static com.terracottatech.dynamic_config.api.model.SettingValidator.PATH_
 import static com.terracottatech.dynamic_config.api.model.SettingValidator.PORT_VALIDATOR;
 import static com.terracottatech.dynamic_config.api.model.SettingValidator.PROPS_VALIDATOR;
 import static com.terracottatech.dynamic_config.api.model.SettingValidator.TIME_VALIDATOR;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.HOURS;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.MILLISECONDS;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.MINUTES;
-import static com.terracottatech.dynamic_config.api.model.TimeUnit.SECONDS;
-import static com.terracottatech.struct.tuple.Tuple2.tuple2;
 import static java.io.File.separator;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;

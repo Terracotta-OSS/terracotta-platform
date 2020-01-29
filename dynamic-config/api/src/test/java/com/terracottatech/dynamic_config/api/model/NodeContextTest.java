@@ -4,6 +4,7 @@
  */
 package com.terracottatech.dynamic_config.api.model;
 
+import com.terracottatech.common.struct.MemoryUnit;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;

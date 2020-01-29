@@ -4,6 +4,8 @@
  */
 package com.terracottatech.dynamic_config.api.model;
 
+import com.terracottatech.common.struct.MemoryUnit;
+import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.json.Json;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,10 +20,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static com.terracottatech.common.struct.Tuple2.tuple2;
 import static com.terracottatech.dynamic_config.api.model.FailoverPriority.availability;
 import static com.terracottatech.dynamic_config.api.model.FailoverPriority.consistency;
 import static com.terracottatech.dynamic_config.api.model.Node.newDefaultNode;
-import static com.terracottatech.struct.tuple.Tuple2.tuple2;
 import static com.terracottatech.testing.ExceptionMatcher.throwing;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;

@@ -4,7 +4,7 @@
  */
 package com.terracottatech.dynamic_config.server.migration.xml;
 
-import com.terracottatech.struct.tuple.Tuple2;
+import com.terracottatech.common.struct.Tuple2;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

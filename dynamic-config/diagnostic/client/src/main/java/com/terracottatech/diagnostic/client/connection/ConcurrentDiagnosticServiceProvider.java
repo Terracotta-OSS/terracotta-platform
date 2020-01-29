@@ -4,8 +4,8 @@
  */
 package com.terracottatech.diagnostic.client.connection;
 
+import com.terracottatech.common.struct.Tuple3;
 import com.terracottatech.diagnostic.client.DiagnosticService;
-import com.terracottatech.struct.tuple.Tuple3;
 import org.terracotta.lease.connection.TimeBudget;
 
 import java.net.InetSocketAddress;
@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static com.terracottatech.struct.tuple.Tuple3.tuple3;
+import static com.terracottatech.common.struct.Tuple3.tuple3;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;

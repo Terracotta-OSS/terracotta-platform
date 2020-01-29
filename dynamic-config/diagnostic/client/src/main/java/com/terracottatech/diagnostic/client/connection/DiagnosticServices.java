@@ -4,9 +4,9 @@
  */
 package com.terracottatech.diagnostic.client.connection;
 
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.ipv6.InetSocketAddressUtils;
-import com.terracottatech.struct.tuple.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import static com.terracottatech.struct.tuple.Tuple2.tuple2;
+import static com.terracottatech.common.struct.Tuple2.tuple2;
 import static java.util.Objects.requireNonNull;
 
 public class DiagnosticServices implements AutoCloseable {

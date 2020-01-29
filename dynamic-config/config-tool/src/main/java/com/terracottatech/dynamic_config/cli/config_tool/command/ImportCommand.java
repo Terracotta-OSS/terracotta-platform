@@ -7,12 +7,12 @@ package com.terracottatech.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
 import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.service.ClusterFactory;
 import com.terracottatech.dynamic_config.api.service.ClusterValidator;
 import com.terracottatech.dynamic_config.cli.command.Usage;
-import com.terracottatech.struct.tuple.Tuple2;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;

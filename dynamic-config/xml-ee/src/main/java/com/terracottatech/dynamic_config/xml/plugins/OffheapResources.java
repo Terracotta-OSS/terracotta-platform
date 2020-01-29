@@ -4,8 +4,8 @@
  */
 package com.terracottatech.dynamic_config.xml.plugins;
 
-import com.terracottatech.dynamic_config.api.model.Measure;
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
+import com.terracottatech.common.struct.Measure;
+import com.terracottatech.common.struct.MemoryUnit;
 import com.terracottatech.dynamic_config.xml.Utils;
 import org.terracotta.offheapresource.config.ObjectFactory;
 import org.terracotta.offheapresource.config.OffheapResourcesType;

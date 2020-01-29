@@ -4,9 +4,9 @@
  */
 package com.terracottatech.dynamic_config.server.validation;
 
+import com.terracottatech.common.struct.MemoryUnit;
 import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.model.License;
-import com.terracottatech.dynamic_config.api.model.MemoryUnit;
 
 public class LicenseValidator {
 

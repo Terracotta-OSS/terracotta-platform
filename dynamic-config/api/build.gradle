@@ -7,12 +7,14 @@ apply plugin: TcDeploy
 
 dependencies {
   compile project(':ipv6-support')
-  compile project(':tuples')
+  compile project(':common-structures')
   compile project(':nomad')
-  compile project(':json-support')
+
+  compile "com.fasterxml.jackson.core:jackson-annotations:$jacksonAnnotVersion"
 
   compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"
 
+  testCompile project(':json-support')
   testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"

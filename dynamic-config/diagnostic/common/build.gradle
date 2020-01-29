@@ -8,7 +8,7 @@ apply plugin: TcDeploy
 dependencies {
   compile project(':json-support')
 
-  testCompile project(':tuples')
+  testCompile project(':common-structures')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"
 }

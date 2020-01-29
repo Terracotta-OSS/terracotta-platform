@@ -5,6 +5,7 @@
 package com.terracottatech.dynamic_config.cli.config_tool.command;
 
 
+import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.diagnostic.client.DiagnosticService;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServiceProvider;
 import com.terracottatech.diagnostic.client.connection.DiagnosticServices;
@@ -21,7 +22,6 @@ import com.terracottatech.nomad.client.change.NomadChange;
 import com.terracottatech.nomad.client.results.ConsistencyAnalyzer;
 import com.terracottatech.nomad.client.results.NomadFailureReceiver;
 import com.terracottatech.nomad.server.ChangeRequestState;
-import com.terracottatech.struct.tuple.Tuple2;
 import com.terracottatech.tools.detailed.state.LogicalServerState;
 
 import javax.annotation.Resource;
