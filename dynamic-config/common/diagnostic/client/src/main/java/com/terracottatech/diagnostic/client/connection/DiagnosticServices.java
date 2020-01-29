@@ -6,7 +6,7 @@ package com.terracottatech.diagnostic.client.connection;
 
 import com.terracottatech.common.struct.Tuple2;
 import com.terracottatech.diagnostic.client.DiagnosticService;
-import com.terracottatech.ipv6.InetSocketAddressUtils;
+import com.terracottatech.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;

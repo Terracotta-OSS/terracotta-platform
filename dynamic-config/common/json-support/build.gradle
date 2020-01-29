@@ -6,7 +6,7 @@
 apply plugin: TcDeploy
 
 dependencies {
-  compile project(':ipv6-support')
+  compile project(':inet-support')
   compile "com.fasterxml.jackson.core:jackson-annotations:$jacksonAnnotVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
   compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion"

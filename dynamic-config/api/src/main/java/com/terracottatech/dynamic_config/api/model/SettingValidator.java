@@ -14,9 +14,9 @@ import org.slf4j.event.Level;
 import java.nio.file.Paths;
 import java.util.function.BiConsumer;
 
-import static com.terracottatech.ipv6.HostAndIpValidator.isValidHost;
-import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv4;
-import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv6;
+import static com.terracottatech.inet.HostAndIpValidator.isValidHost;
+import static com.terracottatech.inet.HostAndIpValidator.isValidIPv4;
+import static com.terracottatech.inet.HostAndIpValidator.isValidIPv6;
 import static java.util.Objects.requireNonNull;
 
 /**

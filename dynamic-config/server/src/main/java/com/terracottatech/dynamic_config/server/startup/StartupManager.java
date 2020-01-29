@@ -15,7 +15,7 @@ import com.terracottatech.dynamic_config.api.service.IParameterSubstitutor;
 import com.terracottatech.dynamic_config.api.service.PathResolver;
 import com.terracottatech.dynamic_config.server.nomad.repository.NomadRepositoryManager;
 import com.terracottatech.dynamic_config.server.service.DynamicConfigServiceImpl;
-import com.terracottatech.ipv6.InetSocketAddressUtils;
+import com.terracottatech.inet.InetSocketAddressUtils;
 import com.terracottatech.nomad.client.NomadClient;
 import com.terracottatech.nomad.client.NomadEndpoint;
 import com.terracottatech.nomad.client.results.NomadFailureReceiver;

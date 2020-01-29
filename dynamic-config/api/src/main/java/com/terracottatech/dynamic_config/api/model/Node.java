@@ -9,7 +9,7 @@ import com.terracottatech.common.struct.Measure;
 import com.terracottatech.common.struct.MemoryUnit;
 import com.terracottatech.common.struct.TimeUnit;
 import com.terracottatech.dynamic_config.api.service.IParameterSubstitutor;
-import com.terracottatech.ipv6.InetSocketAddressUtils;
+import com.terracottatech.inet.InetSocketAddressUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.event.Level;
 

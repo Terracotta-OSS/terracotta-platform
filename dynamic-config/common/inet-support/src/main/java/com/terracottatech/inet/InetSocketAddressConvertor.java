@@ -2,15 +2,15 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package com.terracottatech.ipv6;
+package com.terracottatech.inet;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.terracottatech.ipv6.HostAndIpValidator.isValidHost;
-import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv4;
-import static com.terracottatech.ipv6.HostAndIpValidator.isValidIPv6;
+import static com.terracottatech.inet.HostAndIpValidator.isValidHost;
+import static com.terracottatech.inet.HostAndIpValidator.isValidIPv4;
+import static com.terracottatech.inet.HostAndIpValidator.isValidIPv6;
 
 /**
  * Utility class to convert hostports to their InetSocketAddress representations.

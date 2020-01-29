@@ -6,7 +6,7 @@
 apply plugin: TcDeploy
 
 dependencies {
-  compile project(':ipv6-support')
+  compile project(':inet-support')
   compile project(':common-structures')
   compile project(':diagnostic-common')
   compile "org.terracotta.internal:dso-l1:$terracottaCoreVersion"

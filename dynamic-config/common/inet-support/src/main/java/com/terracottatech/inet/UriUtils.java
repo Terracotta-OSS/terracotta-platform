@@ -3,7 +3,7 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-package com.terracottatech.ipv6;
+package com.terracottatech.inet;
 
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
