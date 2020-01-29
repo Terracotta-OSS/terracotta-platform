@@ -4,7 +4,6 @@
  */
 package com.terracottatech.persistence.sanskrit.file;
 
-import com.terracottatech.persistence.sanskrit.DirectoryLock;
 import com.terracottatech.persistence.sanskrit.FileData;
 import com.terracottatech.persistence.sanskrit.FilesystemDirectory;
 import org.junit.Before;
