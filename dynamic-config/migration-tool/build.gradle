@@ -8,7 +8,7 @@ apply plugin: TcDeploy
 dependencies {
   compile project(':dynamic-config-api')
   compile project(':dynamic-config-server')
-  compile project(':dynamic-config-jcommander-support')
+  compile project(':dynamic-config-cli-support')
 
   compile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
   compile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"

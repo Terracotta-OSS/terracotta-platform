@@ -8,7 +8,7 @@ apply plugin: TcDeploy
 dependencies {
   compile project(':diagnostic-client')
   compile project(':dynamic-config-api')
-  compile project(':dynamic-config-jcommander-support')
+  compile project(':dynamic-config-cli-support')
 
   testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
