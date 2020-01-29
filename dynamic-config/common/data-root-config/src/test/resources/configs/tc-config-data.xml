@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+  Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+  -->
+
+<tc-config xmlns="http://www.terracotta.org/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:data="http://www.terracottatech.com/config/data-roots"
+           xsi:schemaLocation="http://www.terracotta.org/config terracotta.xsd
+                               http://www.terracottatech.com/config/data-roots ../../../../src/main/resources/data-roots-config.xsd">
+  <plugins>
+    <config>
+      <data:data-directories>
+        <data:directory name="data" use-for-platform="true">data</data:directory>
+        <data:directory name="other">other</data:directory>
+      </data:data-directories>
+    </config>
+  </plugins>
+  <servers>
+    <server host="localhost" name="server1">
+      <logs>some/folder</logs>
+      <tsa-port>9510</tsa-port>
+    </server>
+  </servers>
+</tc-config>
