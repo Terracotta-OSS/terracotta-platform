@@ -9,9 +9,9 @@ dependencies {
   compile project(':ipv6-support')
   compile project(':common-structures')
   compile project(':diagnostic-common')
-  compile project(':multi-stripe:enterprise-connection-api')
   compile "org.terracotta.internal:dso-l1:$terracottaCoreVersion"
   compile "org.terracotta:connection-api:$terracottaApisVersion"
+  compile "org.terracotta:lease-api:$terracottaPlatformVersion"
 
   testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"

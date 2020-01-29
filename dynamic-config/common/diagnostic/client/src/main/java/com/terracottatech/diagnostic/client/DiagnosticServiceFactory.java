@@ -5,7 +5,6 @@
 package com.terracottatech.diagnostic.client;
 
 import com.terracotta.diagnostic.Diagnostics;
-import com.terracottatech.connection.EnterpriseConnectionPropertyNames;
 import com.terracottatech.diagnostic.common.DiagnosticCodec;
 import com.terracottatech.diagnostic.common.JsonDiagnosticCodec;
 import org.terracotta.connection.Connection;
@@ -29,6 +28,8 @@ import java.util.Properties;
  * @author Mathieu Carbou
  */
 public class DiagnosticServiceFactory {
+
+  private static final String SECURITY_ROOT_DIRECTORY = "security.root.directory";
 
   public static DiagnosticService fetch(InetSocketAddress nodeAddress,
                                         String connectionName,
@@ -93,7 +94,7 @@ public class DiagnosticServiceFactory {
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, connectionName);
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, "diagnostic");
     if (securityRootDirectory != null) {
-      properties.setProperty(EnterpriseConnectionPropertyNames.SECURITY_ROOT_DIRECTORY, securityRootDirectory);
+      properties.setProperty(SECURITY_ROOT_DIRECTORY, securityRootDirectory);
     }
     return properties;
   }
