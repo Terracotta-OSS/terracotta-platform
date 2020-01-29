@@ -105,6 +105,9 @@ public class TransientTcConfig {
   }
 
   private String getDataDirectoryConfig() {
+    if (node.getNodeMetadataDir() == null) {
+      return "";
+    }
     String dataDirectoryConfig = "    <config xmlns:data=\"http://www.terracottatech.com/config/data-roots\">" + lineSeparator() +
         "    <data:data-directories>" + lineSeparator() +
         "        <data:directory name=\"data\" use-for-platform=\"true\">${DATA_DIR}</data:directory>" + lineSeparator() +
