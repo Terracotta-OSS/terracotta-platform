@@ -8,9 +8,7 @@ import com.terracottatech.dynamic_config.api.model.Cluster;
 import com.terracottatech.dynamic_config.api.model.Node;
 import com.terracottatech.dynamic_config.api.model.NodeContext;
 import com.terracottatech.dynamic_config.api.model.Stripe;
-import com.terracottatech.dynamic_config.api.service.PathResolver;
-import com.terracottatech.dynamic_config.api.service.XmlConfigMapperDiscovery;
-import com.terracottatech.dynamic_config.server.service.ParameterSubstitutor;
+import com.terracottatech.dynamic_config.api.service.XmlConfigMapper;
 import com.terracottatech.testing.TmpDir;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,8 +21,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 public class FileConfigStorageTest {
@@ -32,27 +33,45 @@ public class FileConfigStorageTest {
   @Rule
   public TmpDir temporaryFolder = new TmpDir();
 
-  private static final String NODE_NAME = "node-1";
-  private Node node = Node.newDefaultNode(NODE_NAME, "localhost");
-  private NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(node)), 1, NODE_NAME);
-
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void saveAndRetrieve() throws Exception {
     Path root = temporaryFolder.getRoot();
-    ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
-    FileConfigStorage storage = new FileConfigStorage(root, NODE_NAME, new XmlConfigMapperDiscovery(new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute)).find().get());
 
+    NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(Node.newDefaultNode("node-1", "localhost"))), 1, "node-1");
+    String xml = new String(Files.readAllBytes(Paths.get(getClass().getResource("/config.xml").toURI())), StandardCharsets.UTF_8).replace("\\", "/");
+
+    FileConfigStorage storage = new FileConfigStorage(root, "node-1", new XmlConfigMapper() {
+      @Override
+      public String toXml(NodeContext n) {
+        assertThat(n, is(equalTo(topology)));
+        return xml;
+      }
+
+      @Override
+      public NodeContext fromXml(String nodeName, String x) {
+        assertThat(nodeName, is(equalTo("node-1")));
+
+        assertThat(x, x, isSimilarTo(Input.fromString(xml))
+            .ignoreComments()
+            .ignoreWhitespace()
+            .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byNameAndText)));
+
+        return topology;
+      }
+    });
+
+    assertFalse(Files.exists(root.resolve("cluster-config.node-1.1.xml")));
     storage.saveConfig(1L, topology);
-    NodeContext loaded = storage.getConfig(1L);
-    assertThat(loaded, is(topology));
+    assertTrue(Files.exists(root.resolve("cluster-config.node-1.1.xml")));
 
-    byte[] bytes = Files.readAllBytes(root.resolve("cluster-config.node-1.1.xml"));
-    String actual = new String(bytes, StandardCharsets.UTF_8).replace("\\", "/");
+    String xmlWritten = new String(Files.readAllBytes(root.resolve("cluster-config.node-1.1.xml")), StandardCharsets.UTF_8).replace("\\", "/");
 
-    assertThat(actual, actual, isSimilarTo(Input.from(getClass().getResource("/config.xml")))
+    assertThat(xmlWritten, xmlWritten, isSimilarTo(Input.fromString(xml))
         .ignoreComments()
         .ignoreWhitespace()
         .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byNameAndText)));
+
+    NodeContext loaded = storage.getConfig(1L);
+    assertThat(loaded, is(topology));
   }
 }

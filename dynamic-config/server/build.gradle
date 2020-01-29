@@ -21,7 +21,6 @@ dependencies {
   compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
 
-  testCompile project(':dynamic-config-xml-ee')
   testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile "org.mockito:mockito-core:$mockitoVersion"
