@@ -129,11 +129,10 @@ public class Options {
   @Parameter(names = {"-h", "--help"}, help = true)
   private boolean help;
 
-  /*<--Hidden options-->*/
-  @Parameter(names = {"-N", "--" + CLUSTER_NAME}, hidden = true)
+  @Parameter(names = {"-N", "--" + CLUSTER_NAME})
   private String clusterName;
 
-  @Parameter(names = {"-l", "--" + LICENSE_FILE}, hidden = true)
+  @Parameter(names = {"-l", "--" + LICENSE_FILE})
   private String licenseFile;
 
   private Collection<String> specifiedOptions;
