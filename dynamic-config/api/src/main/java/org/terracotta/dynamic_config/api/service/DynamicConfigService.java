@@ -29,19 +29,19 @@ public interface DynamicConfigService {
   void setUpcomingCluster(Cluster cluster);
 
   /**
-   * Activates the Nomad system so that we can write a first config repository version. This requires the topology to set plus the license installed
+   * Activates the Nomad system so that we can write a first config repository version.
+   * This requires the topology to set plus eventually the license installed.
+   * <p>
+   * License can be null.
    */
   void prepareActivation(Cluster validatedTopology, String licenseContent);
 
   /**
-   * Validate and install a new license over an existing one
+   * Validate and install a new license over an existing one, or for the first time.
+   * <p>
+   * Can also remove an existing license if null is passed.
    *
    * @param licenseContent license file content
    */
   void upgradeLicense(String licenseContent);
-
-  /**
-   * Validate a cluster model against the license installed in the node
-   */
-  void validateAgainstLicense(Cluster cluster);
 }

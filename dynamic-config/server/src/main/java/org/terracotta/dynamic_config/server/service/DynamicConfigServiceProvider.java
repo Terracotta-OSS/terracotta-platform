@@ -75,7 +75,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         throw new UnsupportedOperationException("Multiple " + OffHeapResources.class.getSimpleName() + " not supported");
       }
       if (!offHeapResources.isEmpty()) {
-        ConfigChangeHandler configChangeHandler = new OffheapResourceConfigChangeHandler(offHeapResources.iterator().next());
+        ConfigChangeHandler configChangeHandler = new OffheapResourceConfigChangeHandler(topologyService, offHeapResources.iterator().next());
         addToManager(manager, configChangeHandler, OFFHEAP_RESOURCES);
       }
 

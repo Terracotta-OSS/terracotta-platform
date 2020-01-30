@@ -13,7 +13,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
-import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.client.change.MultipleNomadChanges;
 
 import java.net.InetSocketAddress;
@@ -56,7 +56,11 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     if (allOnlineNodesActivated) {
       logger.debug("Validating the new configuration change(s) against the license");
       try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-        diagnosticService.getProxy(DynamicConfigService.class).validateAgainstLicense(updatedCluster);
+        if (diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(updatedCluster)) {
+          logger.info("License validation passed: configuration change(s) can be applied");
+        } else {
+          logger.warn("License validation skipped: no license installed");
+        }
       }
     }
 

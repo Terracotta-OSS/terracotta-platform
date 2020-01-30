@@ -8,13 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
-import org.terracotta.diagnostic.server.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
-import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.offheapresource.OffHeapResource;
 import org.terracotta.offheapresource.OffHeapResourceIdentifier;
 import org.terracotta.offheapresource.OffHeapResources;
@@ -25,9 +24,11 @@ import org.terracotta.offheapresource.OffHeapResources;
 public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(OffheapResourceConfigChangeHandler.class);
 
+  private final TopologyService topologyService;
   private final OffHeapResources offHeapResources;
 
-  public OffheapResourceConfigChangeHandler(OffHeapResources offHeapResources) {
+  public OffheapResourceConfigChangeHandler(TopologyService topologyService, OffHeapResources offHeapResources) {
+    this.topologyService = topologyService;
     this.offHeapResources = offHeapResources;
   }
 
@@ -53,9 +54,7 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
       change.apply(updatedCluster);
 
       LOGGER.debug("Validating the update cluster: {} against the license", updatedCluster);
-      DiagnosticServices.findService(DynamicConfigService.class)
-          .orElseThrow(() -> new AssertionError("DynamicConfigService not found"))
-          .validateAgainstLicense(updatedCluster);
+      topologyService.validateAgainstLicense(updatedCluster);
       return updatedCluster;
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);

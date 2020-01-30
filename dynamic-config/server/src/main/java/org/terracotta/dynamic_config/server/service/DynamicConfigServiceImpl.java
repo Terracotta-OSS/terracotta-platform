@@ -276,13 +276,15 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized void validateAgainstLicense(Cluster cluster) {
+  public synchronized boolean validateAgainstLicense(Cluster cluster) {
     if (this.license == null) {
-      throw new IllegalStateException("Cannot validate against license: none has been installed first");
+      LOGGER.debug("Unable to validate cluster against license: license not installed: {}", cluster);
+      return false;
     }
     LicenseValidator licenseValidator = new LicenseValidator(cluster, license);
     licenseValidator.validate();
     LOGGER.debug("License is valid for cluster: {}", cluster);
+    return true;
   }
 
   private synchronized void validateAgainstLicense() {

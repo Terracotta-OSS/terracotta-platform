@@ -5,6 +5,7 @@
 package org.terracotta.dynamic_config.api.service;
 
 import com.tc.classloader.CommonComponent;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.server.NomadChangeInfo;
@@ -69,4 +70,14 @@ public interface TopologyService {
    * @return the append log change history
    */
   NomadChangeInfo[] getChangeHistory();
+
+  /**
+   * Validate a cluster model against the license installed in the node
+   * <p>
+   * An exception is thrown if a license is installed and cluster is invalid
+   *
+   * @return true if a license is installed and cluster is validated,
+   * false if no license installed so no validation done
+   */
+  boolean validateAgainstLicense(Cluster cluster);
 }
