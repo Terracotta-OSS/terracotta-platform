@@ -55,11 +55,6 @@ public class MainCommand extends Command {
     }
   }
 
-  @Override
-  public void validate() {
-    // Do nothing
-  }
-
   public Measure<TimeUnit> getRequestTimeout() {
     return requestTimeout;
   }
