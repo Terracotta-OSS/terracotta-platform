@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.terracotta.diagnostic.client.DiagnosticOperationExecutionException;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 
 import static java.io.File.separator;
@@ -53,15 +52,6 @@ public class SimpleSetCommandIT extends BaseStartupIT {
     exception.expect(IllegalStateException.class);
     exception.expectMessage(containsString("should be larger than the old size"));
     ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1MB");
-  }
-
-  @Test
-  public void setOffheapResource_postActivation_licenseViolation() throws Exception {
-    activateCluster();
-
-    exception.expect(DiagnosticOperationExecutionException.class);
-    exception.expectMessage(containsString("not within the license limits"));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=10TB");
   }
 
   @Test

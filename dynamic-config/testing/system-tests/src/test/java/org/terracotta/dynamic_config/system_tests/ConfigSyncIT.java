@@ -212,8 +212,7 @@ public class ConfigSyncIT extends BaseStartupIT {
     ConfigTool.start("attach", "-d", "localhost:" + ports.getPort(), "-s", "localhost:" + ports.getPorts()[2]);
     assertCommandSuccessful();
 
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    assertCommandSuccessful();
+    activateCluster();
 
     Shape shape = new Shape();
     if (nodes[0].getServerState().isPassive()) {

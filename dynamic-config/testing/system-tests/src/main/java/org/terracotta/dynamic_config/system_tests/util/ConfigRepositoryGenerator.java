@@ -10,6 +10,7 @@ import org.terracotta.dynamic_config.server.migration.RepositoryStructureBuilder
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -105,15 +106,18 @@ public class ConfigRepositoryGenerator {
       MigrationImpl migration = new MigrationImpl(resultProcessor::process);
       migration.processInput("testCluster", migrationStrings);
 
-      Path license = Paths.get(ConfigRepositoryGenerator.class.getResource("/license.xml").toURI());
-      try (Stream<Path> pathList = Files.list(root)) {
-        pathList.forEach(repoPath -> {
-          try {
-            copy(license, createDirectories(repoPath.resolve("license")).resolve(license.getFileName()));
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
-          }
-        });
+      URL licenseUrl = ConfigRepositoryGenerator.class.getResource("/license.xml");
+      if (licenseUrl != null) {
+        Path licensePath = Paths.get(licenseUrl.toURI());
+        try (Stream<Path> pathList = Files.list(root)) {
+          pathList.forEach(repoPath -> {
+            try {
+              copy(licensePath, createDirectories(repoPath.resolve("license")).resolve(licensePath.getFileName()));
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
+        }
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);

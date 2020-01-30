@@ -4,8 +4,8 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 import org.junit.Test;
+import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 
 import java.nio.file.Path;
 
@@ -29,12 +29,5 @@ public class NewServerStartupScriptIT extends BaseStartupIT {
     Path configurationRepo = generateNodeRepositoryDir(2, 1, ConfigRepositoryGenerator::generate2Stripes2Nodes);
     startNode("--node-repository-dir", configurationRepo.toString());
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-  }
-
-  @Test
-  public void testFailedStartupWithMultiNodeConfigFileAndLicense() throws Exception {
-    Path configurationFile = copyConfigProperty("/config-property-files/multi-stripe.properties");
-    startNode("-f", configurationFile.toString(), "-l", licensePath().toString(), "-s", "localhost", "-p", String.valueOf(ports.getPort()), "--node-repository-dir", "repository/stripe1/node-1");
-    waitedAssert(out::getLog, containsString("License file option can be used only with a one-node cluster config file"));
   }
 }

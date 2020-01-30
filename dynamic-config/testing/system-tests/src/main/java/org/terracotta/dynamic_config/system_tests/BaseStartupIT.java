@@ -35,6 +35,7 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -126,7 +127,7 @@ public class BaseStartupIT {
   }
 
   protected Path copyConfigProperty(String configFile) throws Exception {
-    Path src = Paths.get(BaseStartupIT.class.getResource(configFile).toURI());
+    Path src = Paths.get(getClass().getResource(configFile).toURI());
     Path dest = getBaseDir().resolve(src.getFileName());
     Properties loaded = new Properties();
     try (Reader reader = new InputStreamReader(Files.newInputStream(src), StandardCharsets.UTF_8)) {
@@ -157,8 +158,9 @@ public class BaseStartupIT {
     ));
   }
 
-  protected Path licensePath() throws Exception {
-    return Paths.get(BaseStartupIT.class.getResource("/license.xml").toURI());
+  protected String licensePath() throws Exception {
+    final URL url = getClass().getResource("/license.xml");
+    return url == null ? null : Paths.get(url.toURI()).toString();
   }
 
   protected Path getNodeRepositoryDir() {
@@ -182,7 +184,13 @@ public class BaseStartupIT {
   }
 
   protected void assertCommandSuccessful() {
+    assertCommandSuccessful(() -> {
+    });
+  }
+
+  protected void assertCommandSuccessful(Runnable verifications) {
     waitedAssert(out::getLog, containsString("Command successful"));
+    verifications.run();
     out.clearLog();
   }
 
@@ -220,8 +228,26 @@ public class BaseStartupIT {
   }
 
   protected void activateCluster() throws Exception {
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    assertCommandSuccessful();
+    activateCluster("tc-cluster");
+  }
+
+  protected void activateCluster(String name) throws Exception {
+    activateCluster(name, () -> {
+    });
+  }
+
+  protected void activateCluster(Runnable verifications) throws Exception {
+    activateCluster("tc-cluster", verifications);
+  }
+
+  protected void activateCluster(String name, Runnable verifications) throws Exception {
+    String licensePath = licensePath();
+    if (licensePath == null) {
+      ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", name);
+    } else {
+      ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", name, "-l", licensePath);
+    }
+    assertCommandSuccessful(verifications);
   }
 
   private static void copyDirectory(Path source, Path destination) throws IOException {

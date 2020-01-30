@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -27,7 +26,6 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 /**
  * @author Mathieu Carbou
  */
-@SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
 public class RepairCommandIT extends BaseStartupIT {
 
   @Before
@@ -36,10 +34,10 @@ public class RepairCommandIT extends BaseStartupIT {
 
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
 
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    out.clearLog();
+    activateCluster();
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_automatic_commit_after_commit_failure() throws Exception {
     assertThat(
@@ -65,6 +63,7 @@ public class RepairCommandIT extends BaseStartupIT {
     assertThat(getRuntimeCluster("localhost", ports.getPort()).getSingleNode().get().getTcProperties(), hasEntry("org.terracotta.dynamic-config.simulate", "recover-needed"));
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_node_starts_with_previous_config_when_not_committed_or_rollback() throws Exception {
     Cluster initialCluster = getRuntimeCluster("localhost", ports.getPort());

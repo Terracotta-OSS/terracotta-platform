@@ -255,9 +255,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public synchronized void upgradeLicense(String licenseContent) {
-    if (this.license == null) {
-      throw new IllegalStateException("Cannot upgrade license: none has been installed first");
-    }
     this.installLicense(licenseContent);
   }
 

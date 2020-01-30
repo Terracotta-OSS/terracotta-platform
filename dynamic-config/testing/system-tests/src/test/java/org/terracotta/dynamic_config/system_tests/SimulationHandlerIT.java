@@ -35,8 +35,7 @@ public class SimulationHandlerIT extends BaseStartupIT {
 
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
 
-    ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", "tc-cluster", "-l", licensePath().toString());
-    out.clearLog();
+    activateCluster();
   }
 
   @Test

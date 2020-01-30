@@ -4,9 +4,9 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 
 import java.util.Arrays;
 
@@ -43,28 +43,26 @@ public class ActivateCommandIT extends BaseStartupIT {
     ConfigTool.start("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
     assertCommandSuccessful();
 
-    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    activateCluster(() -> {
+      waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+      waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
-    waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up"));
-    assertCommandSuccessful();
+      waitedAssert(out::getLog, containsString("No license installed"));
+      waitedAssert(out::getLog, containsString("came back up"));
+    });
   }
 
   @Test
   public void testMultiNodeSingleStripeActivationWithConfigFile() throws Exception {
-    int[] ports = this.ports.getPorts();
     ConfigTool.start(
         "-r", TIMEOUT + "s",
         "activate",
-        "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString(),
-        "-l", licensePath().toString()
+        "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()
     );
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
-    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("No license installed"));
     waitedAssert(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
   }
@@ -75,30 +73,27 @@ public class ActivateCommandIT extends BaseStartupIT {
     ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
     assertCommandSuccessful();
 
-    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
-    waitedAssert(out::getLog, stringContainsInOrder(
-        Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
-    ));
-
-    waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up"));
-    assertCommandSuccessful();
+    activateCluster(() -> {
+      waitedAssert(out::getLog, containsString("No license installed"));
+      waitedAssert(out::getLog, containsString("came back up"));
+      waitedAssert(out::getLog, stringContainsInOrder(
+          Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
+      ));
+    });
   }
 
   @Test
   public void testMultiStripeActivationWithConfigFile() throws Exception {
-    int[] ports = this.ports.getPorts();
     ConfigTool.start(
         "-r", TIMEOUT + "s",
         "activate",
-        "-f", copyConfigProperty("/config-property-files/multi-stripe.properties").toString(),
-        "-l", licensePath().toString()
+        "-f", copyConfigProperty("/config-property-files/multi-stripe.properties").toString()
     );
     waitedAssert(out::getLog, stringContainsInOrder(
         Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
     ));
 
-    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("No license installed"));
     waitedAssert(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
   }

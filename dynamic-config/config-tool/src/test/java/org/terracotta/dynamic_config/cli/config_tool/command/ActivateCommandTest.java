@@ -34,7 +34,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
@@ -57,7 +56,6 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class ActivateCommandTest extends BaseTest {
 
   private Path config;
-  private Path license;
   private final Cluster cluster = new Cluster(
       "my-cluster",
       new Stripe(
@@ -74,7 +72,6 @@ public class ActivateCommandTest extends BaseTest {
   public void setUp() throws Exception {
     super.setUp();
     config = Paths.get(getClass().getResource("/my-cluster.properties").toURI());
-    license = Paths.get(getClass().getResource("/license.xml").toURI());
 
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
     when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
@@ -184,7 +181,7 @@ public class ActivateCommandTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), eq(null));
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -221,7 +218,7 @@ public class ActivateCommandTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), eq(null));
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -273,7 +270,7 @@ public class ActivateCommandTest extends BaseTest {
     command.run();
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), anyString());
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), eq(null));
       verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(nomadServerMock("localhost", port), times(2)).discover();
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
@@ -283,8 +280,7 @@ public class ActivateCommandTest extends BaseTest {
   }
 
   private ActivateCommand command() {
-    ActivateCommand command = new ActivateCommand()
-        .setLicenseFile(license);
+    ActivateCommand command = new ActivateCommand();
     inject(command, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
     return command;
   }

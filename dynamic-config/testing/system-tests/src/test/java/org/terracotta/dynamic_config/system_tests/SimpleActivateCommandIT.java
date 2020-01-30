@@ -44,46 +44,46 @@ public class SimpleActivateCommandIT extends BaseStartupIT {
   }
 
   @Test
-  public void testWrongParams_1() throws Exception {
+  public void testWrongParams_1() {
     int[] ports = this.ports.getPorts();
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(containsString("Cluster name should be provided when node is specified"));
-    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "localhost:" + ports[0]);
   }
 
   @Test
-  public void testWrongParams_2() throws Exception {
+  public void testWrongParams_2() {
     int[] ports = this.ports.getPorts();
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(containsString("Either node or config properties file should be specified, not both"));
-    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-f", "dummy.properties", "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-f", "dummy.properties");
   }
 
   @Test
-  public void testWrongParams_4() throws Exception {
+  public void testWrongParams_4() {
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(containsString("One of node or config properties file must be specified"));
-    ConfigTool.start("activate", "-l", licensePath().toString());
+    ConfigTool.start("activate");
   }
 
   @Test
   public void testSingleNodeActivation() throws Exception {
-    int[] ports = this.ports.getPorts();
-    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    activateCluster(() -> {
+      waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
-    waitedAssert(out::getLog, containsString("License installation successful"));
-    waitedAssert(out::getLog, containsString("came back up"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+      waitedAssert(out::getLog, containsString("No license installed"));
+      waitedAssert(out::getLog, containsString("came back up"));
+      waitedAssert(out::getLog, containsString("Command successful"));
+    });
   }
 
   @Test
   public void testSingleNodeActivationWithConfigFile() throws Exception {
     int[] ports = this.ports.getPorts();
-    ConfigTool.start("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-l", licensePath().toString(), "-n", "my-cluster");
+    ConfigTool.start("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-n", "my-cluster");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
-    waitedAssert(out::getLog, containsString("License installation successful"));
+    waitedAssert(out::getLog, containsString("No license installed"));
     waitedAssert(out::getLog, containsString("came back up"));
     waitedAssert(out::getLog, containsString("Command successful"));
 

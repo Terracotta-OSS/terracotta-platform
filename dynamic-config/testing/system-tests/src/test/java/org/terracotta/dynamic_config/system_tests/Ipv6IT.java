@@ -4,10 +4,10 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
+import org.junit.Test;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.system_tests.util.NodeProcess;
-import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -22,17 +22,17 @@ public class Ipv6IT extends BaseStartupIT {
   }
 
   @Test
-  public void testSingleNodeStartupFromCliParamsAndActivateCommand() throws Exception {
+  public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
     startSingleNode(1);
     waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
 
     int[] ports = this.ports.getPorts();
-    ConfigTool.start("activate", "-s", "[::1]:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "[::1]:" + ports[0], "-n", "tc-cluster");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
-  public void testMultiNodeStartupFromCliParamsAndActivateCommand() throws Exception {
+  public void testMultiNodeStartupFromCliParamsAndActivateCommand() {
     startSingleNode(1);
     startSingleNode(2);
     waitedAssert(out::getLog, stringContainsInOrder(
@@ -43,7 +43,7 @@ public class Ipv6IT extends BaseStartupIT {
     ConfigTool.start("attach", "-d", "[::1]:" + ports[0], "-s", "[::1]:" + ports[1]);
     assertCommandSuccessful();
 
-    ConfigTool.start("activate", "-s", "[::1]:" + ports[0], "-n", "tc-cluster", "-l", licensePath().toString());
+    ConfigTool.start("activate", "-s", "[::1]:" + ports[0], "-n", "tc-cluster");
     waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
   }

@@ -33,7 +33,7 @@ import java.util.Collection;
 import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) -l <license-file> [-rwt]")
+@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-rwt]")
 public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -45,7 +45,7 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(names = {"-n"}, description = "Cluster name")
   private String clusterName;
 
-  @Parameter(required = true, names = {"-l"}, description = "License file", converter = PathConverter.class)
+  @Parameter(names = {"-l"}, description = "License file", converter = PathConverter.class)
   private Path licenseFile;
 
   @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
@@ -72,7 +72,7 @@ public class ActivateCommand extends RemoteCommand {
       validateAddress(node);
     }
 
-    if (!Files.exists(licenseFile)) {
+    if (licenseFile != null && !Files.exists(licenseFile)) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
 
@@ -105,7 +105,11 @@ public class ActivateCommand extends RemoteCommand {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(service -> service.prepareActivation(cluster, read(licenseFile)));
-      logger.info("License installation successful");
+      if (licenseFile == null) {
+        logger.info("No license installed");
+      } else {
+        logger.info("License installation successful");
+      }
     }
 
     runNomadChange(new ArrayList<>(runtimePeers), new ClusterActivationNomadChange(cluster));
@@ -157,6 +161,9 @@ public class ActivateCommand extends RemoteCommand {
   }
 
   private static String read(Path path) {
+    if (path == null) {
+      return null;
+    }
     try {
       return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
     } catch (IOException e) {
