@@ -12,6 +12,7 @@ dependencies {
 
   testCompile project(':test-utilities')
   testCompile project(':json-support')
+  testCompile("org.terracotta:tc-tripwire-plugin:$tripwireVersion")
   testCompile 'org.xmlunit:xmlunit-core:2.6.0', 'org.xmlunit:xmlunit-matchers:2.6.0'
   testCompile("org.mockito:mockito-core:$mockitoVersion")
 }

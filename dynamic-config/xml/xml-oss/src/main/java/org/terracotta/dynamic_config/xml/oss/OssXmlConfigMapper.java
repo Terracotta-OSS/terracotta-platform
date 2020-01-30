@@ -121,7 +121,7 @@ public class OssXmlConfigMapper implements XmlConfigMapper {
 
   private static Node toNode(String xml, TcNode xmlNode) {
     TcConfig xmlTcConfig = xmlNode.getServerConfig().getTcConfig();
-    CustomTCConfigurationParser.applyPlatformDefaults(xmlTcConfig);
+    CustomTCConfigurationParser.applyPlatformDefaults(xmlTcConfig, null);
     Server xmlServer = xmlTcConfig.getServers().getServer()
         .stream()
         .filter(server -> server.getName().equals(xmlNode.getName()))
