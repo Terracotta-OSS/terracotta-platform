@@ -15,9 +15,9 @@ import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvide
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
-import org.terracotta.dynamic_config.cli.command.MainCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.ActivateCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.AttachCommand;
+import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.DetachCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.DiagnosticCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.ExportCommand;
@@ -40,7 +40,7 @@ import static java.lang.System.lineSeparator;
 
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
-  private static final MainCommand MAIN = new MainCommand();
+  private static final RemoteMainCommand MAIN = new RemoteMainCommand();
 
   public static void main(String... args) {
     try {

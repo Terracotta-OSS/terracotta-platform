@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
-import org.terracotta.dynamic_config.cli.command.MainCommand;
+import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
 import org.terracotta.dynamic_config.cli.migration_tool.command.MigrateCommand;
 
 import java.util.Arrays;
@@ -19,7 +19,7 @@ import static java.lang.System.lineSeparator;
 
 public class MigrationTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(MigrationTool.class);
-  private static final MainCommand MAIN = new MainCommand();
+  private static final LocalMainCommand MAIN = new LocalMainCommand();
 
   public static void main(String... args) {
     try {
