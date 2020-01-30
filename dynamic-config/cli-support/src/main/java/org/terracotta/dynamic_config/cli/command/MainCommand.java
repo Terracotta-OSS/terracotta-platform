@@ -43,8 +43,8 @@ public class MainCommand extends Command {
       Stream.of(
           "org.terracotta.dynamic_config",
           "org.terracotta.nomad",
-          "org.terracotta.migration",
-          "org.terracotta.persistence.sanskrit"
+          "org.terracotta.persistence.sanskrit",
+          "org.terracotta.diagnostic"
       ).forEach(name -> {
         Logger logger = (Logger) LoggerFactory.getLogger(name);
         logger.setLevel(Level.TRACE);
