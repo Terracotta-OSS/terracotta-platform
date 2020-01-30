@@ -60,7 +60,7 @@ public class RestartServiceTest extends BaseTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing(), Duration.ofSeconds(2));
+    restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing());
     cluster = new Cluster(
         "my-cluster",
         new Stripe(
@@ -79,7 +79,7 @@ public class RestartServiceTest extends BaseTest {
   public void test_restart() throws InterruptedException {
     mockSuccessfulServerRestart();
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
@@ -101,7 +101,7 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticOperationTimeoutException("")).when(dynamicConfigService).restart(any());
     });
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
@@ -120,7 +120,7 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticServiceProviderException("error")).when(dynamicConfigService).restart(any());
     });
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
@@ -138,7 +138,7 @@ public class RestartServiceTest extends BaseTest {
 
     when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenAnswer(sleep(SYNCHRONIZING, 60, SECONDS));
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));
@@ -162,7 +162,7 @@ public class RestartServiceTest extends BaseTest {
     when(diagnosticServiceMock("localhost", 9422).getLogicalServerState()).thenReturn(UNINITIALIZED);
     when(diagnosticServiceMock("localhost", 9423).getLogicalServerState()).thenReturn(ACTIVE_SUSPENDED);
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses());
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));

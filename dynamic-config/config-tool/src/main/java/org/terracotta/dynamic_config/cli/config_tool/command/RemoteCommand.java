@@ -152,10 +152,10 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void restartNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime) {
+  protected final void restartNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime, Duration restartDelay) {
     logger.trace("restartNodes({}, {})", addresses, maximumWaitTime);
     try {
-      RestartProgress progress = restartService.restartNodes(addresses);
+      RestartProgress progress = restartService.restartNodes(addresses, restartDelay);
       progress.getErrors().forEach((address, e) -> logger.warn("Unable to ask node: {} to restart: please restart it manually.", address));
       progress.onRestarted((address, state) -> logger.info("Node: {} has restarted in state: {}", address, state));
       Map<InetSocketAddress, LogicalServerState> restarted = progress.await(maximumWaitTime);

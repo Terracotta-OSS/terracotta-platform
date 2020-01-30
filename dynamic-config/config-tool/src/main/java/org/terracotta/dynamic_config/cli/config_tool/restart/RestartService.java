@@ -42,18 +42,17 @@ public class RestartService {
 
   private final DiagnosticServiceProvider diagnosticServiceProvider;
   private final ConcurrencySizing concurrencySizing;
-  private final Duration restartDelay;
 
-  public RestartService(DiagnosticServiceProvider diagnosticServiceProvider, ConcurrencySizing concurrencySizing, Duration restartDelay) {
+  public RestartService(DiagnosticServiceProvider diagnosticServiceProvider, ConcurrencySizing concurrencySizing) {
     this.diagnosticServiceProvider = requireNonNull(diagnosticServiceProvider);
     this.concurrencySizing = requireNonNull(concurrencySizing);
-    this.restartDelay = requireNonNull(restartDelay);
+  }
+
+  public RestartProgress restartNodes(Collection<InetSocketAddress> addresses, Duration restartDelay) {
     if (restartDelay.getSeconds() < 1) {
       throw new IllegalArgumentException("Restart delay must be at least 1 second");
     }
-  }
 
-  public RestartProgress restartNodes(Collection<InetSocketAddress> addresses) {
     LOGGER.debug("Asking all nodes: {} to restart themselves", addresses);
 
     // list of nodes that we asked for a restart

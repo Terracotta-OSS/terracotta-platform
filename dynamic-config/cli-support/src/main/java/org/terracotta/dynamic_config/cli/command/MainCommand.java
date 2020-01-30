@@ -33,9 +33,6 @@ public class MainCommand extends Command {
   @Parameter(names = {"-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
 
-  @Parameter(names = {"-rd", "--restart-delay"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
-
   @Override
   public void run() {
     if (verbose) {
@@ -69,10 +66,6 @@ public class MainCommand extends Command {
 
   public Measure<TimeUnit> getConnectionTimeout() {
     return connectionTimeout;
-  }
-
-  public Measure<TimeUnit> getRestartDelay() {
-    return restartDelay;
   }
 
   public String getSecurityRootDirectory() {

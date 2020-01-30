@@ -51,6 +51,9 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
+  @Parameter(names = {"-rd", "--restart-delay"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+
   private Cluster cluster;
   private Collection<InetSocketAddress> runtimePeers;
 
@@ -116,7 +119,10 @@ public class ActivateCommand extends RemoteCommand {
     logger.debug("Configuration repositories have been created for all nodes");
 
     logger.info("Restarting nodes: {}", toString(runtimePeers));
-    restartNodes(runtimePeers, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
+    restartNodes(
+        runtimePeers,
+        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
     logger.info("All nodes came back up");
 
     logger.info("Command successful!" + lineSeparator());
