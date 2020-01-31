@@ -152,7 +152,7 @@ public class ActivateCommandTest extends BaseTest {
           cmd.validate();
           cmd.run();
         },
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster is badly formed as it contains a mix of activated and unconfigured nodes. Activated: [localhost:9411, localhost:9421], Unconfigured: [localhost:9422]"))))
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster contains a mix of activated and unconfigured nodes (or being repaired). Activated: [localhost:9411, localhost:9421], Unconfigured: [localhost:9422]"))))
     );
   }
 
@@ -181,7 +181,7 @@ public class ActivateCommandTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), eq(null));
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).activate(eq(command.getCluster()), eq(null));
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -218,7 +218,7 @@ public class ActivateCommandTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), eq(null));
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).activate(eq(command.getCluster()), eq(null));
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -270,7 +270,7 @@ public class ActivateCommandTest extends BaseTest {
     command.run();
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).prepareActivation(eq(command.getCluster()), eq(null));
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).activate(eq(command.getCluster()), eq(null));
       verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(nomadServerMock("localhost", port), times(2)).discover();
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();

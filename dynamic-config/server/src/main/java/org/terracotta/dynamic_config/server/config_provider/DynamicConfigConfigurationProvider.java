@@ -56,6 +56,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     Path nodeRepositoryDir = null;
     Path tcConfigFile = null;
     String nodeName = null;
+    boolean diagnosticMode = false;
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
       switch (arg) {
@@ -64,6 +65,9 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
           break;
         case "--node-name":
           nodeName = args.get(++i);
+          break;
+        case "--diagnostic-mode":
+          diagnosticMode = true;
           break;
         case "--tc-config-file":
           tcConfigFile = Paths.get(args.get(++i));
@@ -84,7 +88,16 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     }
 
     LOGGER.info("Startup configuration of the node: {}{}{}", lineSeparator(), lineSeparator(), tcConfiguration);
-    configuration = new DynamicConfigConfiguration(tcConfiguration, tcConfigFile != null);
+    configuration = new DynamicConfigConfiguration(tcConfiguration, diagnosticMode || tcConfigFile != null);
+
+    if (diagnosticMode) {
+      // If diagnostic mode is ON:
+      // - the node won't be activated (Nomad 2 phase commit system won't be available)
+      // - the diagnostic port will be available for the repair command to be able to rewrite the append log
+      // - the TcConfig created will be stripped to make platform think this node is alone
+      final String serverName = nodeName;
+      configuration.getPlatformConfiguration().getServers().getServer().removeIf(server -> !server.getName().equals(serverName));
+    }
   }
 
   @Override

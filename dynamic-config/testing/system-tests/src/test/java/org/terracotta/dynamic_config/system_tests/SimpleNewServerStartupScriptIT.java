@@ -88,14 +88,14 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
   public void testFailedStartupConfigFile_invalidCliParams() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startSingleNode("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
-    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidCliParams_2() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
-    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
   @Test
@@ -165,7 +165,7 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
         "--node-port", port,
         "--node-metadata-dir", "foo"
     );
-    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
   }
 
   @Test

@@ -231,7 +231,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized void prepareActivation(Cluster maybeUpdatedCluster, String licenseContent) {
+  public synchronized void activate(Cluster maybeUpdatedCluster, String licenseContent) {
     if (isActivated()) {
       throw new IllegalStateException("Node is already activated");
     }

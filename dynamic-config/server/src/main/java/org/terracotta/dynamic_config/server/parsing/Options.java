@@ -29,6 +29,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.CLIENT_RECONNE
 import static org.terracotta.dynamic_config.api.model.SettingName.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.CONFIG_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.DATA_DIRS;
+import static org.terracotta.dynamic_config.api.model.SettingName.DIAGNOSTIC_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.SettingName.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BACKUP_DIR;
@@ -136,6 +137,9 @@ public class Options {
   @Parameter(names = {"-l", "--" + LICENSE_FILE})
   private String licenseFile;
 
+  @Parameter(names = {"--" + DIAGNOSTIC_MODE})
+  private boolean wantsDiagnosticMode;
+
   private Collection<String> specifiedOptions;
 
   public void process(CustomJCommander jCommander) {
@@ -181,6 +185,7 @@ public class Options {
           String longestName = pd.getLongestName();
           return !longestName.equals(addDashDash(LICENSE_FILE))
               && !longestName.equals(addDashDash(CONFIG_FILE))
+              && !longestName.equals(addDashDash(DIAGNOSTIC_MODE))
               && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
         })
         .collect(Collectors.toMap(pd -> Setting.fromName(stripDashDash(pd.getLongestName())), pd -> pd.getParameterized().get(this).toString()));
@@ -205,6 +210,7 @@ public class Options {
       filteredOptions.remove("-p");
       filteredOptions.remove("-r");
 
+      filteredOptions.remove(addDashDash(DIAGNOSTIC_MODE));
       filteredOptions.remove(addDashDash(CONFIG_FILE));
       filteredOptions.remove(addDashDash(LICENSE_FILE));
       filteredOptions.remove(addDashDash(CLUSTER_NAME));
@@ -215,7 +221,9 @@ public class Options {
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
             String.format(
-                "'" + addDashDash(CONFIG_FILE) + "' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
+                "'%s' parameter can only be used with '%s', '%s', '%s', '%s', '%s' and '%s' parameters",
+                addDashDash(CONFIG_FILE),
+                addDashDash(DIAGNOSTIC_MODE),
                 addDashDash(LICENSE_FILE),
                 addDashDash(CLUSTER_NAME),
                 addDashDash(NODE_HOSTNAME),
@@ -329,5 +337,9 @@ public class Options {
 
   public String getTcProperties() {
     return tcProperties;
+  }
+
+  public boolean wantsDiagnosticMode() {
+    return wantsDiagnosticMode;
   }
 }

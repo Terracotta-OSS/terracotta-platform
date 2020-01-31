@@ -70,13 +70,13 @@ public class NodeProcessorTest {
   public void testStartupWithConfigRepo_noParamsPassed_repoExists() {
     when(startupManager.getOrDefaultRepositoryDir(null)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(startupManager.findNodeName(Paths.get(NODE_REPOSITORY_DIR))).thenReturn(Optional.of(NODE_NAME));
-    doAnswer(invocation -> true).when(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME);
+    doAnswer(invocation -> true).when(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
 
     nodeProcessor.process();
 
     verify(startupManager).getOrDefaultRepositoryDir(null);
     verify(startupManager).findNodeName(Paths.get(NODE_REPOSITORY_DIR));
-    verify(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME);
+    verify(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
     verifyNoMoreInteractions(startupManager);
   }
 
@@ -85,13 +85,13 @@ public class NodeProcessorTest {
     when(options.getNodeRepositoryDir()).thenReturn(NODE_REPOSITORY_DIR);
     when(startupManager.getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(startupManager.findNodeName(Paths.get(NODE_REPOSITORY_DIR))).thenReturn(Optional.of(NODE_NAME));
-    doAnswer(invocation -> true).when(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME);
+    doAnswer(invocation -> true).when(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
 
     nodeProcessor.process();
 
     verify(startupManager).getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR);
     verify(startupManager).findNodeName(Paths.get(NODE_REPOSITORY_DIR));
-    verify(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME);
+    verify(startupManager).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
     verifyNoMoreInteractions(startupManager);
   }
 

@@ -34,7 +34,7 @@ public interface DynamicConfigService {
    * <p>
    * License can be null.
    */
-  void prepareActivation(Cluster validatedTopology, String licenseContent);
+  void activate(Cluster validatedTopology, String licenseContent);
 
   /**
    * Validate and install a new license over an existing one, or for the first time.

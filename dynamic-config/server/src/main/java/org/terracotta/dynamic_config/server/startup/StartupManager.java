@@ -37,8 +37,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.tc.util.Assert.assertNotNull;
+import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.SettingName.DIAGNOSTIC_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_REPOSITORY_DIR;
 import static org.terracotta.dynamic_config.server.nomad.NomadBootstrapper.NomadServerManager;
@@ -65,7 +67,7 @@ public class StartupManager {
     // Note: the returned resolved path is not substituted and contains placeholders from both base directory and given path.
     PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
     Path temporaryTcConfigPath = new TransientTcConfig(node, userDirResolver, parameterSubstitutor).createTempTcConfigFile();
-    return startServer(nodeRepositoryDir, nodeName, temporaryTcConfigPath);
+    return startServer(nodeRepositoryDir, nodeName, true, temporaryTcConfigPath);
   }
 
   boolean startActivated(Cluster cluster, Node node, String optionalLicenseFile, String optionalNodeRepositoryFromCLI) {
@@ -75,17 +77,30 @@ public class StartupManager {
     logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir.toAbsolutePath()));
     NomadServerManager nomadServerManager = bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node.getNodeAddress()));
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
-    dynamicConfigService.prepareActivation(cluster, optionalLicenseFile == null ? null : read(optionalLicenseFile));
+    dynamicConfigService.activate(cluster, optionalLicenseFile == null ? null : read(optionalLicenseFile));
     runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);
-    return startServer(nodeRepositoryDir, nodeName, null);
+    return startServer(nodeRepositoryDir, nodeName, false, null);
   }
 
-  boolean startUsingConfigRepo(Path nodeRepositoryDir, String nodeName) {
+  boolean startUsingConfigRepo(Path nodeRepositoryDir, String nodeName, boolean diagnosticMode) {
     logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(nodeRepositoryDir));
     NomadServerManager nomadServerManager = bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, nodeName);
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
-    dynamicConfigService.activate();
-    return startServer(nodeRepositoryDir, nodeName, null);
+    if (!diagnosticMode) {
+      dynamicConfigService.activate();
+    } else {
+      // If diagnostic mode is ON:
+      // - the node won't be activated (Nomad 2 phase commit system won't be available)
+      // - the diagnostic port will be available for the repair command to be able to rewrite the append log
+      // - the TcConfig created will be stripped to make platform think this node is alone
+      logger.warn(lineSeparator() + lineSeparator()
+          + "=================================================================================================================" + lineSeparator()
+          + "Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node.      " + lineSeparator()
+          + "No further configuration change can happen on the cluster while this node is in diagnostic mode and not repaired." + lineSeparator()
+          + "=================================================================================================================" + lineSeparator()
+      );
+    }
+    return startServer(nodeRepositoryDir, nodeName, diagnosticMode, null);
   }
 
   Node getMatchingNodeFromConfigFile(String specifiedHostName, String specifiedPort, String configFilePath, Cluster cluster) {
@@ -133,7 +148,7 @@ public class StartupManager {
     return Paths.get(repositoryDir != null ? repositoryDir : Setting.NODE_REPOSITORY_DIR.getDefaultValue());
   }
 
-  private boolean startServer(Path nodeRepositoryDir, String nodeName, Path temporaryTcConfigPath) {
+  private boolean startServer(Path nodeRepositoryDir, String nodeName, boolean diagnosticMode, Path temporaryTcConfigPath) {
     List<String> args = new ArrayList<>();
 
     // required by TCServerMain to identify the server
@@ -149,6 +164,10 @@ public class StartupManager {
     // the node name to identify the config repository file
     args.add("--" + NODE_NAME);
     args.add(nodeName);
+
+    if (diagnosticMode) {
+      args.add("--" + DIAGNOSTIC_MODE);
+    }
 
     if (temporaryTcConfigPath != null) {
       args.add("--tc-config-file");

@@ -235,8 +235,9 @@ public abstract class RemoteCommand extends Command {
         throw new IllegalArgumentException("Cluster is empty or offline");
       }
       if (activations.size() == 2) {
-        throw new IllegalStateException("Cluster is badly formed as it contains a mix of activated and unconfigured nodes. " +
-            "Activated: " + activations.get(Boolean.TRUE) + ", Unconfigured: " + activations.get(Boolean.FALSE));
+        throw new IllegalStateException("Cluster contains a mix of activated and unconfigured nodes (or being repaired). " +
+            "Activated: " + activations.get(Boolean.TRUE) + ", " +
+            "Unconfigured: " + activations.get(Boolean.FALSE));
       }
       return activations.keySet().iterator().next();
     }

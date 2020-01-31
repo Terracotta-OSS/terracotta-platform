@@ -32,7 +32,7 @@ public class ConfigRepoStarter implements NodeStarter {
     Path repositoryDir = startupManager.getOrDefaultRepositoryDir(options.getNodeRepositoryDir());
     Optional<String> nodeName = startupManager.findNodeName(repositoryDir);
     if (nodeName.isPresent()) {
-      return startupManager.startUsingConfigRepo(repositoryDir, nodeName.get());
+      return startupManager.startUsingConfigRepo(repositoryDir, nodeName.get(), options.wantsDiagnosticMode());
     }
 
     LOGGER.info("Did not find config repository at: " + parameterSubstitutor.substitute(repositoryDir));

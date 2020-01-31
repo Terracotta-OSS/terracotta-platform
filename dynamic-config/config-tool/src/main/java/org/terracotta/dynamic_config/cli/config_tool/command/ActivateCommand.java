@@ -107,7 +107,7 @@ public class ActivateCommand extends RemoteCommand {
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
-          .forEach(service -> service.prepareActivation(cluster, read(licenseFile)));
+          .forEach(service -> service.activate(cluster, read(licenseFile)));
       if (licenseFile == null) {
         logger.info("No license installed");
       } else {
