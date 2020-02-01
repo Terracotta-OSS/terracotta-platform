@@ -4,10 +4,10 @@
  */
 package org.terracotta.dynamic_config.system_tests.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.LogicalServerState;
-import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
-import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 
 import java.io.Closeable;
@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,80 +25,131 @@ import static java.util.stream.Stream.of;
  * @author Mathieu Carbou
  */
 public class NodeProcess implements Closeable {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NodeProcess.class);
 
-  private final AnyProcess process;
-  private final PidListener pidListener;
-  private final ServerStateListener serverStateListener;
+  private final int stripeId;
+  private final int nodeId;
 
-  public NodeProcess(AnyProcess process, PidListener pidListener, ServerStateListener serverStateListener) {
-    this.process = process;
-    this.pidListener = pidListener;
-    this.serverStateListener = serverStateListener;
+  private volatile AnyProcess process;
+  private volatile long pid = -1;
+  private volatile LogicalServerState state = LogicalServerState.UNKNOWN;
+
+  public NodeProcess(int stripeId, int nodeId) {
+    this.stripeId = stripeId;
+    this.nodeId = nodeId;
+  }
+
+  @Override
+  public String toString() {
+    return getID();
+  }
+
+  public String getID() {
+    return "Node[" + stripeId + "-" + nodeId + "]";
+  }
+
+  public int getStripeId() {
+    return stripeId;
+  }
+
+  public int getNodeId() {
+    return nodeId;
+  }
+
+  public long getPid() {
+    while (pid == -1 && process.isRunning()) {
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    }
+    return pid;
+  }
+
+  public LogicalServerState getServerState() {
+    while (state == LogicalServerState.UNKNOWN && process.isRunning()) {
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    }
+    return state;
   }
 
   @Override
   public void close() {
-    kill();
-    try {
-      process.waitFor();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IllegalStateException(e);
+    if (process.isRunning()) {
+      kill();
+      try {
+        process.waitFor();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(e);
+      }
     }
   }
 
   private void kill() {
-    while (pidListener.pid == -1 && process.isRunning()) {
-      try {
-        Thread.sleep(2000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    }
+    long pid = getPid();
+    LOGGER.info("{} Killing PID: {}", this, pid);
     try {
       if (Env.isWindows()) {
-        Runtime.getRuntime().exec("taskkill /F /t /pid " + pidListener.pid);
+        Runtime.getRuntime().exec("taskkill /F /t /pid " + pid);
       } else {
-        Runtime.getRuntime().exec("kill " + pidListener.pid);
+        Runtime.getRuntime().exec("kill " + pid);
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
-  public LogicalServerState getServerState() {
-    return serverStateListener.state;
-  }
-
-  public static NodeProcess startNode(Path kitInstallationPath, Path workingDir, String... cli) {
+  public static NodeProcess startNode(int stripeId, int nodeId, Path kitInstallationPath, Path workingDir, String... cli) {
     Path script = kitInstallationPath
         .resolve("server")
         .resolve("bin")
         .resolve("start-node." + (Env.isWindows() ? "bat" : "sh"));
-    return start(script, workingDir, cli);
+    return start(stripeId, nodeId, script, workingDir, cli);
   }
 
-  public static NodeProcess startTcServer(Path kitInstallationPath, Path workingDir, String... cli) {
-    Path script = kitInstallationPath
-        .resolve("server")
-        .resolve("bin")
-        .resolve("start-tc-server." + (Env.isWindows() ? "bat" : "sh"));
-    return start(script, workingDir, cli);
-  }
-
-  private static NodeProcess start(Path scriptPath, Path workingDir, String... args) {
+  private static NodeProcess start(int stripeId, int nodeId, Path scriptPath, Path workingDir, String... args) {
     if (!Files.exists(scriptPath)) {
       throw new IllegalArgumentException("Terracotta server start script does not exist: " + scriptPath);
     }
-    PidListener pidListener = new PidListener();
-    ServerStateListener serverStateListener = new ServerStateListener();
-    EventBus serverBus = new EventBus.Builder().id("server-bus").build();
-    serverBus.on("PID", pidListener);
-    serverBus.on("STATE", serverStateListener);
 
-    Map<String, String> eventMap = new HashMap<String, String>();
-    eventMap.put("PID is", "PID");
-    eventMap.put("Moved to State", "STATE");
+    NodeProcess nodeProcess = new NodeProcess(stripeId, nodeId);
+    EventBus serverBus = new EventBus.Builder().id("server-bus").build();
+
+    // event triggered when a log line contains PID
+    serverBus.on("PID is", event -> {
+      String line = event.getData(String.class);
+      Matcher m = Pattern.compile("PID is ([0-9]*)").matcher(line);
+      if (m.find()) {
+        try {
+          nodeProcess.pid = Long.parseLong(m.group(1));
+          nodeProcess.state = LogicalServerState.UNKNOWN;
+          LOGGER.info("{} Discovered PID: {}", nodeProcess, nodeProcess.pid);
+        } catch (NumberFormatException ignored) {
+        }
+      } else {
+        throw new AssertionError("please refine regex to not match: " + line);
+      }
+    });
+
+    // event triggered when server moves to a state
+    serverBus.on("Moved to State", event -> {
+      String line = event.getData(String.class);
+      Matcher m = Pattern.compile("Moved to State\\[ ([A-Z\\-_]+) \\]").matcher(line);
+      if (m.find()) {
+        nodeProcess.state = LogicalServerState.parse(m.group(1));
+        LOGGER.info("{} Discovered state: {}", nodeProcess, nodeProcess.state);
+      } else {
+        throw new AssertionError("please refine regex to not match: " + line);
+      }
+    });
 
     try {
       Files.createDirectories(workingDir);
@@ -108,43 +157,18 @@ public class NodeProcess implements Closeable {
       throw new UncheckedIOException(e);
     }
 
-    AnyProcess process = AnyProcess.newBuilder()
+    LOGGER.info("{} Starting...", nodeProcess);
+
+    nodeProcess.process = AnyProcess.newBuilder()
         .workingDir(workingDir.toFile())
         .command(concat(of(scriptPath.toString()), of(args)).toArray(String[]::new))
-        .pipeStdout(new SimpleEventingStream(serverBus, eventMap, System.out))
+        .pipeStdout(new SimpleEventingStream(System.out, 4096, serverBus,
+            "Terracotta Server instance has started up as ACTIVE node on",
+            "PID is",
+            "Moved to State"))
         .pipeStderr()
         .build();
 
-    return new NodeProcess(process, pidListener, serverStateListener);
+    return nodeProcess;
   }
-
-  private static class PidListener implements EventListener {
-    private volatile long pid = -1;
-
-    @Override
-    public void onEvent(Event event) {
-      String line = event.getData(String.class);
-      Matcher m = Pattern.compile("PID is ([0-9]*)").matcher(line);
-      if (m.find()) {
-        try {
-          PidListener.this.pid = Long.parseLong(m.group(1));
-        } catch (NumberFormatException ignored) {
-        }
-      }
-    }
-  }
-
-  private static class ServerStateListener implements EventListener {
-    private volatile LogicalServerState state = LogicalServerState.UNKNOWN;
-
-    @Override
-    public void onEvent(Event event) {
-      String line = event.getData(String.class);
-      Matcher m = Pattern.compile("Moved to State\\[ ([A-Z\\-_]+) \\]").matcher(line);
-      if (m.find()) {
-        ServerStateListener.this.state = LogicalServerState.parse(m.group(1));
-      }
-    }
-  }
-
 }

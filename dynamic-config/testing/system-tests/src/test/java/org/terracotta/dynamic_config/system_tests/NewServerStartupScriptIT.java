@@ -11,23 +11,20 @@ import java.nio.file.Path;
 
 import static org.hamcrest.Matchers.containsString;
 
-public class NewServerStartupScriptIT extends BaseStartupIT {
-
-  public NewServerStartupScriptIT() {
-    super(2, 2);
-  }
+@ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
+public class NewServerStartupScriptIT extends DynamicConfigIT {
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 2, ConfigRepositoryGenerator::generate1Stripe2Nodes);
-    startNode("--node-repository-dir", configurationRepo.toString());
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    startNode(1, 2, "--node-repository-dir", configurationRepo.toString());
+    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testStartingWithMultiStripeRepo() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(2, 1, ConfigRepositoryGenerator::generate2Stripes2Nodes);
-    startNode("--node-repository-dir", configurationRepo.toString());
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    startNode(2, 1, "--node-repository-dir", configurationRepo.toString());
+    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 }

@@ -36,4 +36,7 @@
   <logger name="org.terracotta.persistence.sanskrit" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
+  <logger name="org.terracotta.diagnostic" level="INFO" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
 </configuration>

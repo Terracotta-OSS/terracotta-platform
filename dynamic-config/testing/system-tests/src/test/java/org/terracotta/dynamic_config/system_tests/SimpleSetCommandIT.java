@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -14,35 +13,20 @@ import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 
-public class SimpleSetCommandIT extends BaseStartupIT {
+@ClusterDefinition
+public class SimpleSetCommandIT extends DynamicConfigIT {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
-  @Before
-  public void setUp() {
-    forEachNode((stripeId, nodeId, port) -> startNode(
-        "--node-name", "node-" + nodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(port),
-        "--node-group-port", String.valueOf(port + 10),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-        "--node-backup-dir", "backup/stripe" + stripeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId));
-
-    waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-  }
-
   /*<--Single Node Tests-->*/
   @Test
   public void setOffheapResource() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=512MB");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=512MB");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main");
-    waitedAssert(out::getLog, containsString("offheap-resources.main=512MB"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main");
+    waitUntil(out::getLog, containsString("offheap-resources.main=512MB"));
   }
 
   @Test
@@ -51,52 +35,52 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     exception.expect(IllegalStateException.class);
     exception.expectMessage(containsString("should be larger than the old size"));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1MB");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1MB");
   }
 
   @Test
   public void setOffheapResource_postActivation_increaseSize() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main");
-    waitedAssert(out::getLog, containsString("offheap-resources.main=1GB"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main");
+    waitUntil(out::getLog, containsString("offheap-resources.main=1GB"));
   }
 
   @Test
   public void setOffheapResource_postActivation_addResource() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=second:1GB");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=second:1GB");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.second");
-    waitedAssert(out::getLog, containsString("offheap-resources.second=1GB"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second");
+    waitUntil(out::getLog, containsString("offheap-resources.second=1GB"));
   }
 
   @Test
   public void setOffheapResources_postActivation_addResources() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.third=1GB");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.third=1GB");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.second", "-c", "offheap-resources.third");
-    waitedAssert(out::getLog, containsString("offheap-resources.second=1GB"));
-    waitedAssert(out::getLog, containsString("offheap-resources.third=1GB"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second", "-c", "offheap-resources.third");
+    waitUntil(out::getLog, containsString("offheap-resources.second=1GB"));
+    waitUntil(out::getLog, containsString("offheap-resources.third=1GB"));
   }
 
   @Test
   public void setOffheapResources_postActivation_addResource_increaseSize() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources=main:1GB,second:1GB");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=main:1GB,second:1GB");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources");
-    waitedAssert(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources");
+    waitUntil(out::getLog, containsString("offheap-resources=main:1GB,second:1GB"));
   }
 
   @Test
@@ -105,61 +89,61 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     exception.expect(IllegalStateException.class);
     exception.expectMessage(containsString("should be larger than the old size"));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.main=1MB");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.main=1MB");
   }
 
   @Test
   public void setTcProperties() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.something=value");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something=value");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.tc-properties.something");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.tc-properties.something=value"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.tc-properties.something=value"));
   }
 
   @Test
   public void setClientReconnectWindow() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window=10s");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "client-reconnect-window");
-    waitedAssert(out::getLog, containsString("client-reconnect-window=10s"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window");
+    waitUntil(out::getLog, containsString("client-reconnect-window=10s"));
   }
 
   @Test
   public void setSecurityAuthc() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "security-authc");
-    waitedAssert(out::getLog, containsString("security-authc=file"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "security-authc");
+    waitUntil(out::getLog, containsString("security-authc=file"));
   }
 
   @Test
   public void setNodeGroupPort() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-group-port=9630");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port=9630");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-group-port");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-group-port=9630"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.node-group-port=9630"));
   }
 
   @Test
   public void setSecurityWhitelist() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "security-whitelist");
-    waitedAssert(out::getLog, containsString("security-whitelist=true"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "security-whitelist");
+    waitUntil(out::getLog, containsString("security-whitelist=true"));
   }
 
   @Test
   public void setDataDir() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.data-dirs.main");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.main=user-data" + separator + "main" + separator + "stripe1-node1-data-dir"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.main=user-data" + separator + "main" + separator + "stripe1-node1-data-dir"));
   }
 
   @Test
@@ -168,7 +152,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     exception.expect(IllegalStateException.class);
     exception.expectMessage(containsString("A data directory with name: main already exists"));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.main=user-data/main/stripe1-node1-data-dir");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.main=user-data/main/stripe1-node1-data-dir");
   }
 
   @Test
@@ -177,7 +161,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     exception.expect(IllegalStateException.class);
     exception.expectMessage(containsString("overlaps with the existing data directory"));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.first=user-data/main/stripe1/node1");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.first=user-data/main/stripe1/node1");
   }
 
   @Test
@@ -186,7 +170,7 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     exception.expect(IllegalStateException.class);
     exception.expectMessage(containsString("overlaps with the existing data directory"));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-1");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-1");
   }
 
   @Test
@@ -195,154 +179,154 @@ public class SimpleSetCommandIT extends BaseStartupIT {
 
     exception.expect(IllegalStateException.class);
     exception.expectMessage(containsString("overlaps with the existing data directory"));
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-1");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-1");
   }
 
   @Test
   public void setDataDir_postActivation_addOneNonExistentDataDir() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
   }
 
   @Test
   public void setDataDir_postActivation_addMultipleNonExistentDataDirs() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-2");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-2");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
 
     out.clearLog();
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.third");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
   }
 
   @Test
   public void setDataDir_postActivation_addMultipleNonExistentDataDirs_flavor2() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-2");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-2");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.second");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
 
     out.clearLog();
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "data-dirs.third");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
   }
 
   @Test
   public void setNodeBackupDir() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-backup-dir=backup/stripe1-node1-backup");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir=backup/stripe1-node1-backup");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-backup-dir");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-backup-dir=backup" + separator + "stripe1-node1-backup"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.node-backup-dir=backup" + separator + "stripe1-node1-backup"));
   }
 
   @Test
   public void setTwoProperties() {
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main");
-    waitedAssert(out::getLog, containsString("offheap-resources.main=1GB"));
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main");
+    waitUntil(out::getLog, containsString("offheap-resources.main=1GB"));
+    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"));
   }
 
   @Test
   public void setFailover_Priority_postActivation_Consistency() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority=consistency:2");
-    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2");
+    waitUntil(out::getLog, containsString("restart of the cluster is required"));
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "failover-priority");
-    waitedAssert(out::getLog, containsString("failover-priority=consistency:2"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority");
+    waitUntil(out::getLog, containsString("failover-priority=consistency:2"));
   }
 
   @Test
   public void setNodeLogDir_postActivation() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "node-log-dir=logs/stripe1");
-    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir=logs/stripe1");
+    waitUntil(out::getLog, containsString("restart of the cluster is required"));
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-log-dir");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1"));
   }
 
   @Test
   public void setNodeBindAddress_postActivation() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "node-bind-address=127.0.0.1");
-    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address=127.0.0.1");
+    waitUntil(out::getLog, containsString("restart of the cluster is required"));
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-bind-address");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-bind-address=127.0.0.1"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.node-bind-address=127.0.0.1"));
   }
 
   @Test
   public void setNodeGroupBindAddress_postActivation() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "node-group-bind-address=127.0.0.1");
-    waitedAssert(out::getLog, containsString("restart of the cluster is required"));
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address=127.0.0.1");
+    waitUntil(out::getLog, containsString("restart of the cluster is required"));
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-group-bind-address");
-    waitedAssert(out::getLog, containsString("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address");
+    waitUntil(out::getLog, containsString("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
   }
 
   @Test
   public void testTcProperty_postActivation() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo=bar");
-    waitedAssert(out::getLog, containsString("IMPORTANT: A restart of the cluster is required to apply the changes"));
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo=bar");
+    waitUntil(out::getLog, containsString("IMPORTANT: A restart of the cluster is required to apply the changes"));
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-r", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
-    waitedAssert(out::getLog, not(containsString("tc-properties=foo:bar")));
+    ConfigTool.start("get", "-r", "-s", "localhost:" + getNodePort(), "-c", "tc-properties");
+    waitUntil(out::getLog, not(containsString("tc-properties=foo:bar")));
 
     out.clearLog();
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
-    waitedAssert(out::getLog, containsString("tc-properties=foo:bar"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties");
+    waitUntil(out::getLog, containsString("tc-properties=foo:bar"));
 
     out.clearLog();
-    ConfigTool.start("unset", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties.foo");
+    ConfigTool.start("unset", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "tc-properties");
-    waitedAssert(out::getLog, not(containsString("tc-properties=foo:bar")));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties");
+    waitUntil(out::getLog, not(containsString("tc-properties=foo:bar")));
   }
 
   @Test
   public void testSetLogger() throws Exception {
     activateCluster();
 
-    ConfigTool.start("set", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-logger-overrides=org.terracotta:TRACE,com.tc:TRACE");
+    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides=org.terracotta:TRACE,com.tc:TRACE");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-logger-overrides");
-    waitedAssert(out::getLog, containsString("node-logger-overrides=com.tc:TRACE,org.terracotta:TRACE"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides");
+    waitUntil(out::getLog, containsString("node-logger-overrides=com.tc:TRACE,org.terracotta:TRACE"));
 
-    ConfigTool.start("unset", "-s", "localhost:" + ports.getPort(), "-c", "stripe.1.node.1.node-logger-overrides.com.tc");
+    ConfigTool.start("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.com.tc");
     assertCommandSuccessful();
 
-    ConfigTool.start("get", "-s", "localhost:" + ports.getPort(), "-c", "node-logger-overrides");
-    waitedAssert(out::getLog, containsString("node-logger-overrides=org.terracotta:TRACE"));
+    ConfigTool.start("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides");
+    waitUntil(out::getLog, containsString("node-logger-overrides=org.terracotta:TRACE"));
   }
 }

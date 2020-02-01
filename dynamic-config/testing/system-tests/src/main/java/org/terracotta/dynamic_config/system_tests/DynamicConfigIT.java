@@ -8,11 +8,13 @@ import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.hamcrest.Matcher;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -43,11 +45,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -62,13 +70,14 @@ import static java.util.stream.Stream.of;
 import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
 
-public class BaseStartupIT {
-  private static final Logger LOGGER = LoggerFactory.getLogger(BaseStartupIT.class);
+public class DynamicConfigIT {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final boolean CI = System.getProperty("JOB_NAME") != null;
-  static final int TIMEOUT = CI ? 90 : 20;
   static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule
@@ -77,56 +86,134 @@ public class BaseStartupIT {
   public final SystemErrRule err = new SystemErrRule().enableLog();
   @Rule
   public final PortLockingRule ports;
-
   @Rule
   public final TmpDir tmpDir = new TmpDir();
 
-  private final int stripes;
-  private final int nodesPerStripe;
-  private final Collection<NodeProcess> nodeProcesses;
+  protected int timeout = CI ? 90 : 30;
 
-  public BaseStartupIT() {
-    this(1, 1);
+  private final int stripes;
+  private final boolean autoStart;
+  private final int nodesPerStripe;
+  private final Map<String, NodeProcess> nodeProcesses = new ConcurrentHashMap<>();
+
+  public DynamicConfigIT() {
+    ClusterDefinition clusterDefinition = getClass().getAnnotation(ClusterDefinition.class);
+    this.stripes = clusterDefinition.stripes();
+    this.nodesPerStripe = clusterDefinition.nodesPerStripe();
+    this.autoStart = clusterDefinition.autoStart();
+    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
   }
 
-  public BaseStartupIT(int nodesPerStripe, int stripes) {
-    this.nodesPerStripe = nodesPerStripe;
-    this.stripes = stripes;
-    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
-    this.nodeProcesses = new ArrayList<>(ports.getPorts().length);
+  @Before
+  public void before() throws Exception {
+    if (autoStart) {
+      startNodes();
+    }
   }
 
   @After
-  public void tearDown() {
-    nodeProcesses.forEach(NodeProcess::close);
+  public void after() throws Exception {
+    nodeProcesses.values().forEach(NodeProcess::close);
+    nodeProcesses.clear();
     ensureNodesNotAccessingExternalFiles();
   }
 
-  protected final NodeProcess startNode(String... cli) {
-    NodeProcess process = NodeProcess.startNode(Kit.getOrCreatePath(), getBaseDir(), cli);
-    nodeProcesses.add(process);
-    return process;
+  protected final void startNodes() throws Exception {
+    final int nodeCount = stripes * nodesPerStripe;
+
+    ExecutorService executorService = Executors.newFixedThreadPool(nodeCount);
+    try {
+      CompletionService<?> completionService = new ExecutorCompletionService<>(executorService);
+
+      out.clearLog();
+      nodeDefinitions().forEach(tuple -> completionService.submit(() -> startNode(tuple.t1, tuple.t2), null));
+
+      for (int i = 0; i < nodeCount; i++) {
+        completionService.take().get();
+      }
+    } finally {
+      executorService.shutdown();
+    }
+
+    String[] status = new String[nodeCount];
+    Arrays.fill(status, "Started the server in diagnostic mode");
+    waitUntil(out::getLog, stringContainsInOrder(Arrays.asList(status)));
   }
 
-  protected final NodeProcess startTcServer(String... cli) {
-    NodeProcess process = NodeProcess.startTcServer(Kit.getOrCreatePath(), getBaseDir(), cli);
-    nodeProcesses.add(process);
+  protected final NodeProcess startNode(int stripeId, int nodeId) {
+    int nodePort = getNodePort(stripeId, nodeId);
+    int groupPort = nodePort + 1;
+    return startNode(stripeId, nodeId, nodePort, groupPort);
+  }
+
+  protected NodeProcess startNode(int stripeId, int nodeId, int port, int groupPort) {
+    return startNode(
+        stripeId, nodeId,
+        "--node-name", "node-" + nodeId,
+        "--node-hostname", "localhost",
+        "--node-port", String.valueOf(port),
+        "--node-group-port", String.valueOf(groupPort),
+        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
+        "--node-backup-dir", "backup/stripe" + stripeId,
+        "--node-metadata-dir", "metadata/stripe" + stripeId,
+        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
+        "--data-dirs", "main:user-data/main/stripe" + stripeId
+    );
+  }
+
+  protected final NodeProcess startNode(int stripeId, int nodeId, String... cli) {
+    String key = stripeId + "-" + nodeId;
+    NodeProcess oldProcess = nodeProcesses.remove(key);
+    if (oldProcess != null) {
+      oldProcess.close();
+    }
+    NodeProcess newProcess = NodeProcess.startNode(stripeId, nodeId, Kit.getOrCreatePath(), getBaseDir(), cli);
+    nodeProcesses.put(key, newProcess);
+    return newProcess;
+  }
+
+  protected final NodeProcess getNodeProcess(int stripeId, int nodeId) {
+    String key = stripeId + "-" + nodeId;
+    NodeProcess process = nodeProcesses.get(key);
+    if (process == null) {
+      throw new IllegalArgumentException("No process for node " + key);
+    }
     return process;
   }
 
   protected final NodeProcess getNodeProcess() {
-    return nodeProcesses.stream().findFirst().get();
+    return getNodeProcess(1, 1);
   }
 
-  protected Path getBaseDir() {
+  protected final OptionalInt findActive(int stripeId) {
+    return IntStream.rangeClosed(1, nodesPerStripe)
+        .filter(nodeId -> getNodeProcess(stripeId, nodeId).getServerState().isActive())
+        .findFirst();
+  }
+
+  protected final int[] findPassives(int stripeId) {
+    return IntStream.rangeClosed(1, nodesPerStripe)
+        .filter(nodeId -> getNodeProcess(stripeId, nodeId).getServerState().isPassive())
+        .toArray();
+  }
+
+  protected final int getNodePort(int stripeId, int nodeId) {
+    return ports.getPorts()[2 * nodesPerStripe * (stripeId - 1) + nodesPerStripe * (nodeId - 1)];
+  }
+
+  protected final int getNodePort() {
+    return getNodePort(1, 1);
+  }
+
+  protected final Path getBaseDir() {
     return tmpDir.getRoot();
   }
 
-  protected InetSocketAddress getServerAddress() {
-    return InetSocketAddress.createUnresolved("localhost", ports.getPort());
+  protected final InetSocketAddress getServerAddress() {
+    return InetSocketAddress.createUnresolved("localhost", getNodePort());
   }
 
-  protected Path copyConfigProperty(String configFile) throws Exception {
+  protected final Path copyConfigProperty(String configFile) throws Exception {
     Path src = Paths.get(getClass().getResource(configFile).toURI());
     Path dest = getBaseDir().resolve(src.getFileName());
     Properties loaded = new Properties();
@@ -150,32 +237,24 @@ public class BaseStartupIT {
     return dest;
   }
 
-  protected void forEachNode(IntTriConsumer accept) {
-    combinations().forEach(vals -> accept.accept(
-        vals[0], // stripeId
-        vals[1], // nodeId
-        vals[2] // port
-    ));
-  }
-
   protected String licensePath() throws Exception {
     final URL url = getClass().getResource("/license.xml");
     return url == null ? null : Paths.get(url.toURI()).toString();
   }
 
-  protected Path getNodeRepositoryDir() {
+  protected final Path getNodeRepositoryDir() {
     return getNodeRepositoryDir(1, 1);
   }
 
-  protected Path getNodeRepositoryDir(int stripeId, int nodeId) {
+  protected final Path getNodeRepositoryDir(int stripeId, int nodeId) {
     return getBaseDir().resolve("repository").resolve("stripe" + stripeId).resolve("node-" + nodeId);
   }
 
-  protected void waitedAssert(Callable<String> callable, Matcher<? super String> matcher) {
-    waitedAssert(callable, matcher, TIMEOUT);
+  protected final void waitUntil(Callable<String> callable, Matcher<? super String> matcher) {
+    waitUntil(callable, matcher, timeout);
   }
 
-  protected void waitedAssert(Callable<String> callable, Matcher<? super String> matcher, int timeout) {
+  protected final void waitUntil(Callable<String> callable, Matcher<? super String> matcher, int timeout) {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
         .pollInterval(FIVE_HUNDRED_MILLISECONDS)
@@ -183,18 +262,18 @@ public class BaseStartupIT {
         .until(callable, matcher);
   }
 
-  protected void assertCommandSuccessful() {
+  protected final void assertCommandSuccessful() {
     assertCommandSuccessful(() -> {
     });
   }
 
-  protected void assertCommandSuccessful(Runnable verifications) {
-    waitedAssert(out::getLog, containsString("Command successful"));
+  protected final void assertCommandSuccessful(Runnable verifications) {
+    waitUntil(out::getLog, containsString("Command successful"));
     verifications.run();
     out.clearLog();
   }
 
-  protected Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
+  protected final Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
     Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
     Path repositoriesDir = getBaseDir().resolve("repositories");
     ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports.getPorts());
@@ -205,7 +284,7 @@ public class BaseStartupIT {
     return nodeRepositoryDir;
   }
 
-  protected Cluster getUpcomingCluster(String host, int port) throws Exception {
+  protected final Cluster getUpcomingCluster(String host, int port) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -216,7 +295,7 @@ public class BaseStartupIT {
     }
   }
 
-  protected Cluster getRuntimeCluster(String host, int port) throws Exception {
+  protected final Cluster getRuntimeCluster(String host, int port) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -227,25 +306,25 @@ public class BaseStartupIT {
     }
   }
 
-  protected void activateCluster() throws Exception {
+  protected final void activateCluster() throws Exception {
     activateCluster("tc-cluster");
   }
 
-  protected void activateCluster(String name) throws Exception {
+  protected final void activateCluster(String name) throws Exception {
     activateCluster(name, () -> {
     });
   }
 
-  protected void activateCluster(Runnable verifications) throws Exception {
+  protected final void activateCluster(Runnable verifications) throws Exception {
     activateCluster("tc-cluster", verifications);
   }
 
-  protected void activateCluster(String name, Runnable verifications) throws Exception {
+  protected final void activateCluster(String name, Runnable verifications) throws Exception {
     String licensePath = licensePath();
     if (licensePath == null) {
-      ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", name);
+      ConfigTool.start("activate", "-s", "localhost:" + getNodePort(), "-n", name);
     } else {
-      ConfigTool.start("activate", "-s", "localhost:" + ports.getPort(), "-n", name, "-l", licensePath);
+      ConfigTool.start("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath);
     }
     assertCommandSuccessful(verifications);
   }
@@ -336,31 +415,23 @@ public class BaseStartupIT {
     }
   }
 
-  private Stream<int[]> combinations() {
-    int[] ports = this.ports.getPorts();
-    return IntStream.rangeClosed(1, stripes)
-        .mapToObj(stripeId -> IntStream.rangeClosed(1, nodesPerStripe)
-            .mapToObj(nodeId -> new int[]{stripeId, nodeId, ports[stripes * (stripeId - 1) + (nodeId - 1)]}))
-        .flatMap(identity());
+  private Stream<Tuple2<Integer, Integer>> nodeDefinitions() {
+    return rangeClosed(1, stripes).mapToObj(stripeId -> rangeClosed(1, nodesPerStripe).mapToObj(nodeId -> tuple2(stripeId, nodeId))).flatMap(identity());
   }
 
   private Properties variables() {
-    return combinations().reduce(new Properties(), (props, vals) -> {
-      int stripeId = vals[0];
-      int nodeId = vals[1];
-      int port = vals[2];
+    return nodeDefinitions().reduce(new Properties(), (props, tuple) -> {
+      int stripeId = tuple.t1;
+      int nodeId = tuple.t2;
+      int nodePort = getNodePort(stripeId, nodeId);
+      int groupPort = nodePort + 1;
       String configRepoPath = getNodeRepositoryDir(stripeId, nodeId).toString();
-      props.setProperty(("PORT-" + stripeId + "-" + nodeId), String.valueOf(port));
-      props.setProperty(("GROUP-PORT-" + stripeId + "-" + nodeId), String.valueOf(port + 10));
+      props.setProperty(("PORT-" + stripeId + "-" + nodeId), String.valueOf(nodePort));
+      props.setProperty(("GROUP-PORT-" + stripeId + "-" + nodeId), String.valueOf(groupPort));
       props.setProperty(("CONFIG-REPO-" + stripeId + "-" + nodeId), configRepoPath);
       return props;
     }, (p1, p2) -> {
       throw new UnsupportedOperationException();
     });
-  }
-
-  @FunctionalInterface
-  public interface IntTriConsumer {
-    void accept(int a, int b, int c);
   }
 }

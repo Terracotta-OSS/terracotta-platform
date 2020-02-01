@@ -34,8 +34,12 @@ public class PortLockingRule extends ExternalResource {
 
   @Override
   protected void before() {
-    this.portLock = LOCKING_PORT_CHOOSER.choosePorts(count);
-    this.ports = IntStream.range(portLock.getPort(), portLock.getPort() + count).toArray();
+    if (count > 0) {
+      this.portLock = LOCKING_PORT_CHOOSER.choosePorts(count);
+      this.ports = IntStream.range(portLock.getPort(), portLock.getPort() + count).toArray();
+    } else {
+      this.ports = new int[0];
+    }
   }
 
   @Override

@@ -10,14 +10,14 @@ import org.terracotta.ipceventbus.proc.AnyProcess;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
 import static java.lang.System.lineSeparator;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * @author Mathieu Carbou
@@ -50,15 +50,19 @@ public class Kit {
 
       // copy custom logback-ext
       try {
-        Path logConfig = Paths.get(Kit.class.getResource("/logback-ext.xml").toURI());
-        if (Files.exists(logConfig)) {
-          Files.copy(logConfig, constructedKitPath.resolve("server").resolve("lib").resolve("logback-ext.xml"), REPLACE_EXISTING);
+        Path dest = constructedKitPath.resolve("server").resolve("lib").resolve("logback-ext.xml");
+        try (InputStream input = Kit.class.getResourceAsStream("/logback-ext.xml");
+             OutputStream output = Files.newOutputStream(dest)) {
+          byte[] data = new byte[4096]; // xml file will fit inside
+          int read = input.read(data, 0, data.length);
+          if (read == data.length) {
+            throw new AssertionError("Log file has become too big, please increase the buffer");
+          }
+          output.write(data, 0, read);
         }
-      } catch (URISyntaxException e) {
-        throw new AssertionError(e);
       } catch (IOException e) {
         //log an exception and continue, because not being able to copy logback-ext doesn't harm us in any way
-        LOGGER.error("Caught exception during Files::copy", e);
+        LOGGER.error("Caught exception during logback-ext.xml copy", e);
       }
 
       kitPath = constructedKitPath;

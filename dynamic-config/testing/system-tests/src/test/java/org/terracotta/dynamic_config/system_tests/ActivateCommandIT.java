@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 
@@ -13,70 +12,47 @@ import java.util.Arrays;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 
-public class ActivateCommandIT extends BaseStartupIT {
-
-  public ActivateCommandIT() {
-    super(2, 2);
-  }
-
-  @Before
-  public void setUp() {
-    forEachNode((stripeId, nodeId, port) -> startNode(
-        "--node-name", "node-" + nodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(port),
-        "--node-group-port", String.valueOf(port + 10),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-        "--node-backup-dir", "backup/stripe" + stripeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId));
-
-    waitedAssert(out::getLog, stringContainsInOrder(
-        Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
-    ));
-  }
+@ClusterDefinition(stripes = 2, nodesPerStripe = 2)
+public class ActivateCommandIT extends DynamicConfigIT {
 
   @Test
   public void testMultiNodeSingleStripeActivation() throws Exception {
-    int[] ports = this.ports.getPorts();
-    ConfigTool.start("attach", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[1]);
+    ConfigTool.start("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
     assertCommandSuccessful();
 
     activateCluster(() -> {
-      waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-      waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+      waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+      waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
-      waitedAssert(out::getLog, containsString("No license installed"));
-      waitedAssert(out::getLog, containsString("came back up"));
+      waitUntil(out::getLog, containsString("No license installed"));
+      waitUntil(out::getLog, containsString("came back up"));
     });
   }
 
   @Test
   public void testMultiNodeSingleStripeActivationWithConfigFile() throws Exception {
     ConfigTool.start(
-        "-r", TIMEOUT + "s",
+        "-r", timeout + "s",
         "activate",
         "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()
     );
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitedAssert(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
-    waitedAssert(out::getLog, containsString("No license installed"));
-    waitedAssert(out::getLog, containsString("came back up"));
+    waitUntil(out::getLog, containsString("No license installed"));
+    waitUntil(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
   }
 
   @Test
   public void testMultiStripeActivation() throws Exception {
-    int[] ports = this.ports.getPorts();
-    ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + ports[0], "-s", "localhost:" + ports[2]);
+    ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
     assertCommandSuccessful();
 
     activateCluster(() -> {
-      waitedAssert(out::getLog, containsString("No license installed"));
-      waitedAssert(out::getLog, containsString("came back up"));
-      waitedAssert(out::getLog, stringContainsInOrder(
+      waitUntil(out::getLog, containsString("No license installed"));
+      waitUntil(out::getLog, containsString("came back up"));
+      waitUntil(out::getLog, stringContainsInOrder(
           Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
       ));
     });
@@ -85,16 +61,16 @@ public class ActivateCommandIT extends BaseStartupIT {
   @Test
   public void testMultiStripeActivationWithConfigFile() throws Exception {
     ConfigTool.start(
-        "-r", TIMEOUT + "s",
+        "-r", timeout + "s",
         "activate",
         "-f", copyConfigProperty("/config-property-files/multi-stripe.properties").toString()
     );
-    waitedAssert(out::getLog, stringContainsInOrder(
+    waitUntil(out::getLog, stringContainsInOrder(
         Arrays.asList("Moved to State[ ACTIVE-COORDINATOR ]", "Moved to State[ ACTIVE-COORDINATOR ]")
     ));
 
-    waitedAssert(out::getLog, containsString("No license installed"));
-    waitedAssert(out::getLog, containsString("came back up"));
+    waitUntil(out::getLog, containsString("No license installed"));
+    waitUntil(out::getLog, containsString("came back up"));
     assertCommandSuccessful();
   }
 }

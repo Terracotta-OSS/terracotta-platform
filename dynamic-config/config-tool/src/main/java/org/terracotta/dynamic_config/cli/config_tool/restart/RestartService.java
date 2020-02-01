@@ -171,7 +171,7 @@ public class RestartService {
       // STARTING is the state when server hasn't finished its startup yet
       return state != null && (state.isPassive() || state.isActive()) ? state : null;
     } catch (DiagnosticServiceProviderException | DiagnosticException e) {
-      LOGGER.debug("Status query for node: {} failed", addr, e);
+      LOGGER.debug("Status query for node: {} failed: {}", addr, e.getMessage());
       return null;
     } catch (Exception e) {
       LOGGER.error("Unexpected error during status query for node: {}", addr, e);

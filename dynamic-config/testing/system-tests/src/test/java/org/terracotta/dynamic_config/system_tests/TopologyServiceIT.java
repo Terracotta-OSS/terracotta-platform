@@ -27,15 +27,18 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
 /**
  * @author Mathieu Carbou
  */
-public class TopologyServiceIT extends BaseStartupIT {
+@ClusterDefinition
+public class TopologyServiceIT extends DynamicConfigIT {
+
   @Before
-  public void setUp() throws Exception {
-    startNode(
+  @Override
+  public void before() throws Exception {
+    startNode(1, 1,
         "--node-repository-dir", "repository/stripe1/node-1",
         "-N", "tc-cluster",
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
-    waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
+    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
@@ -54,8 +57,8 @@ public class TopologyServiceIT extends BaseStartupIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingCluster, is(equalTo(new Cluster("tc-cluster", new Stripe(Node.newDefaultNode("node-1", "localhost", ports.getPort())
-          .setNodeGroupPort(ports.getPort() + 10)
+      assertThat(pendingCluster, is(equalTo(new Cluster("tc-cluster", new Stripe(Node.newDefaultNode("node-1", "localhost", getNodePort())
+          .setNodeGroupPort(getNodePort() + 1)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))

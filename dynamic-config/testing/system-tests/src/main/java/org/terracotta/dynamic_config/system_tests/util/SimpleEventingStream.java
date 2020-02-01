@@ -6,64 +6,47 @@ package org.terracotta.dynamic_config.system_tests.util;
 
 import org.terracotta.ipceventbus.event.EventBus;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Scans a stream, as it is produced, to produce events for an event bus (note that the events are triggered on the same
  * thread doing the stream processing).
  */
 public class SimpleEventingStream extends OutputStream {
-  private final EventBus outputBus;
-  private final Map<String, String> eventMap;
+
+  private static final byte EOL = (byte) '\n';
+
+  private final EventBus eventBus;
+  private final String[] triggers;
   private final OutputStream nextConsumer;
-  private final ByteArrayOutputStream stream;
+  private final ByteBuffer buffer;
 
-  private final boolean twoByteLineSeparator;
-  private final byte eol;
-  private final byte eolLeader;
-
-  private boolean haveLeader = false;
-
-  public SimpleEventingStream(EventBus outputBus, Map<String, String> eventMap, OutputStream nextConsumer) {
-    this.outputBus = outputBus;
-    this.eventMap = eventMap;
+  public SimpleEventingStream(OutputStream nextConsumer, int bufferSize, EventBus eventBus, String... triggers) {
+    this.eventBus = eventBus;
+    this.triggers = triggers;
     this.nextConsumer = nextConsumer;
-    this.stream = new ByteArrayOutputStream();
-
-    String lineSeparator = System.lineSeparator();
-    this.twoByteLineSeparator = lineSeparator.length() == 2;
-    this.eol = (byte) lineSeparator.charAt(lineSeparator.length() - 1);
-    this.eolLeader = (byte) (this.twoByteLineSeparator ? lineSeparator.charAt(0) : '\0');
+    this.buffer = ByteBuffer.allocate(bufferSize);
   }
 
   @Override
   public void write(int b) throws IOException {
-    if (twoByteLineSeparator && eolLeader == (byte) b) {
-      haveLeader = true;
-    } else {
-      if (eol == (byte) b) {
-        // End of line so we process the bytes to find matches and then replace it.
-        // NOTE:  This will use the platform's default encoding.
-        String oneLine = this.stream.toString("UTF-8");
-        // Determine what events to trigger by scraping the string for keys.
-        for (Map.Entry<String, String> pair : this.eventMap.entrySet()) {
-          if (oneLine.contains(pair.getKey())) {
-            this.outputBus.trigger(pair.getValue(), oneLine);
-          }
+    nextConsumer.write(b);
+    // we only continue filling the buffer if we have some space left
+    if (buffer.hasRemaining()) {
+      buffer.put((byte) b);
+    }
+    // when we reach EOL, we check the buffer
+    if (b == EOL) {
+      String line = new String(buffer.array(), 0, buffer.position(), StandardCharsets.UTF_8);
+      for (String trigger : triggers) {
+        if (line.contains(trigger)) {
+          eventBus.trigger(trigger, line);
         }
-        // Start the next line.
-        this.stream.reset();
-      } else {
-        if (haveLeader) {
-          this.stream.write(eolLeader);
-        }
-        this.stream.write(b);
       }
-      haveLeader = false;
-      this.nextConsumer.write(b);
+      buffer.clear();
     }
   }
 

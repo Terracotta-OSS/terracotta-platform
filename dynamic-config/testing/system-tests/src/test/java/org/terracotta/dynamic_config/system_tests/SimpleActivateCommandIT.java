@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -22,41 +21,24 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-public class SimpleActivateCommandIT extends BaseStartupIT {
+@ClusterDefinition
+public class SimpleActivateCommandIT extends DynamicConfigIT {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
-  @Before
-  public void setUp() {
-    forEachNode((stripeId, nodeId, port) -> startNode(
-        "--node-name", "node-" + nodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(port),
-        "--node-group-port", String.valueOf(port + 10),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-        "--node-backup-dir", "backup/stripe" + stripeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId));
-
-    waitedAssert(out::getLog, containsString("Started the server in diagnostic mode"));
-  }
-
   @Test
   public void testWrongParams_1() {
-    int[] ports = this.ports.getPorts();
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(containsString("Cluster name should be provided when node is specified"));
-    ConfigTool.start("activate", "-s", "localhost:" + ports[0]);
+    ConfigTool.start("activate", "-s", "localhost:" + getNodePort());
   }
 
   @Test
   public void testWrongParams_2() {
-    int[] ports = this.ports.getPorts();
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(containsString("Either node or config properties file should be specified, not both"));
-    ConfigTool.start("activate", "-s", "localhost:" + ports[0], "-f", "dummy.properties");
+    ConfigTool.start("activate", "-s", "localhost:" + getNodePort(), "-f", "dummy.properties");
   }
 
   @Test
@@ -69,26 +51,25 @@ public class SimpleActivateCommandIT extends BaseStartupIT {
   @Test
   public void testSingleNodeActivation() throws Exception {
     activateCluster(() -> {
-      waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+      waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
-      waitedAssert(out::getLog, containsString("No license installed"));
-      waitedAssert(out::getLog, containsString("came back up"));
-      waitedAssert(out::getLog, containsString("Command successful"));
+      waitUntil(out::getLog, containsString("No license installed"));
+      waitUntil(out::getLog, containsString("came back up"));
+      waitUntil(out::getLog, containsString("Command successful"));
     });
   }
 
   @Test
   public void testSingleNodeActivationWithConfigFile() throws Exception {
-    int[] ports = this.ports.getPorts();
     ConfigTool.start("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-n", "my-cluster");
-    waitedAssert(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
-    waitedAssert(out::getLog, containsString("No license installed"));
-    waitedAssert(out::getLog, containsString("came back up"));
-    waitedAssert(out::getLog, containsString("Command successful"));
+    waitUntil(out::getLog, containsString("No license installed"));
+    waitUntil(out::getLog, containsString("came back up"));
+    waitUntil(out::getLog, containsString("Command successful"));
 
     // TDB-4726
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(InetSocketAddress.createUnresolved("localhost", ports[0]), "diag", ofSeconds(10), ofSeconds(10), null)) {
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(InetSocketAddress.createUnresolved("localhost", getNodePort()), "diag", ofSeconds(10), ofSeconds(10), null)) {
       NodeContext runtimeNodeContext = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext();
       assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
     }
