@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import static org.terracotta.dynamic_config.api.model.SettingName.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.SettingName.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.SettingName.CLUSTER_NAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.CONFIG_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.DATA_DIRS;
 import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.SettingName.LICENSE_FILE;
@@ -120,7 +121,7 @@ public class Options {
   @Parameter(names = {"-d", "--" + DATA_DIRS})
   private String dataDirs;
 
-  @Parameter(names = {"-f", "--config-file"})
+  @Parameter(names = {"-f", "--" + CONFIG_FILE})
   private String configFile;
 
   @Parameter(names = {"-T", "--" + TC_PROPERTIES})
@@ -178,7 +179,9 @@ public class Options {
         .filter(isSpecified)
         .filter(pd -> {
           String longestName = pd.getLongestName();
-          return !longestName.equals(addDashDash(LICENSE_FILE)) && !longestName.equals("--config-file") && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
+          return !longestName.equals(addDashDash(LICENSE_FILE))
+              && !longestName.equals(addDashDash(CONFIG_FILE))
+              && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
         })
         .collect(Collectors.toMap(pd -> Setting.fromName(stripDashDash(pd.getLongestName())), pd -> pd.getParameterized().get(this).toString()));
   }
@@ -188,7 +191,7 @@ public class Options {
       // when using CLI parameters
 
       if (licenseFile != null && clusterName == null) {
-        throw new ParameterException("'--license-file' parameter must be used with '--cluster-name' parameter");
+        throw new ParameterException("'" + addDashDash(LICENSE_FILE) + "' parameter must be used with '" + addDashDash(CLUSTER_NAME) + "' parameter");
       }
 
     } else {
@@ -202,7 +205,7 @@ public class Options {
       filteredOptions.remove("-p");
       filteredOptions.remove("-r");
 
-      filteredOptions.remove("--config-file");
+      filteredOptions.remove(addDashDash(CONFIG_FILE));
       filteredOptions.remove(addDashDash(LICENSE_FILE));
       filteredOptions.remove(addDashDash(CLUSTER_NAME));
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
@@ -212,7 +215,7 @@ public class Options {
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
             String.format(
-                "'--config-file' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
+                "'" + addDashDash(CONFIG_FILE) + "' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDashDash(LICENSE_FILE),
                 addDashDash(CLUSTER_NAME),
                 addDashDash(NODE_HOSTNAME),

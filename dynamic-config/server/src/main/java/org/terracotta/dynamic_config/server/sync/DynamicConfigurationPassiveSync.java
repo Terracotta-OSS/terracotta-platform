@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.config_provider;
+package org.terracotta.dynamic_config.server.sync;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.tc.exception.TCServerRestartException;
@@ -26,14 +26,14 @@ import static java.util.Objects.requireNonNull;
 import static org.terracotta.json.Json.parse;
 import static org.terracotta.json.Json.toJson;
 
-class ConfigurationSyncManager {
+public class DynamicConfigurationPassiveSync {
   private final UpgradableNomadServer<NodeContext> nomadServer;
 
-  ConfigurationSyncManager(UpgradableNomadServer<NodeContext> nomadServer) {
+  public DynamicConfigurationPassiveSync(UpgradableNomadServer<NodeContext> nomadServer) {
     this.nomadServer = nomadServer;
   }
 
-  byte[] getSyncData() {
+  public byte[] getSyncData() {
     try {
       return Codec.encode(nomadServer.getAllNomadChanges());
     } catch (NomadException e) {
@@ -41,7 +41,7 @@ class ConfigurationSyncManager {
     }
   }
 
-  void sync(byte[] syncData) {
+  public void sync(byte[] syncData) {
     try {
       List<NomadChangeInfo> passiveNomadChanges = nomadServer.getAllNomadChanges();
       List<NomadChangeInfo> activeNomadChanges = Codec.decode(syncData);

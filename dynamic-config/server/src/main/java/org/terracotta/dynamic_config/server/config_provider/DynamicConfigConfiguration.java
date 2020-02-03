@@ -11,11 +11,11 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import java.util.List;
 
-class TcConfigurationWrapper implements Configuration {
+class DynamicConfigConfiguration implements Configuration {
   private final TcConfiguration tcConfiguration;
   private final boolean partialConfig;
 
-  TcConfigurationWrapper(TcConfiguration tcConfiguration, boolean partialConfig) {
+  DynamicConfigConfiguration(TcConfiguration tcConfiguration, boolean partialConfig) {
     this.tcConfiguration = tcConfiguration;
     this.partialConfig = partialConfig;
   }

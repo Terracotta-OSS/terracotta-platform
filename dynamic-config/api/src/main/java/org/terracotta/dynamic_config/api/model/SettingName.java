@@ -35,4 +35,5 @@ public class SettingName {
   public static final String TC_PROPERTIES = "tc-properties";
   public static final String DATA_DIRS = "data-dirs";
   public static final String LICENSE_FILE = "license-file";
+  public static final String CONFIG_FILE = "config-file";
 }

@@ -4,14 +4,14 @@
  */
 package org.terracotta.dynamic_config.server.startup;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.parsing.Options;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -37,6 +37,7 @@ public class ConsoleParamsStarter implements NodeStarter {
     this.parameterSubstitutor = parameterSubstitutor;
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public boolean startNode() {
     LOGGER.info("Starting node from command-line parameters");

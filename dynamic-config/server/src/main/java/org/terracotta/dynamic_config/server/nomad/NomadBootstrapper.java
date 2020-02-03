@@ -97,6 +97,10 @@ public class NomadBootstrapper {
       return nomadServer;
     }
 
+    public IParameterSubstitutor getParameterSubstitutor() {
+      return parameterSubstitutor;
+    }
+
     private final NomadEnvironment nomadEnvironment = new NomadEnvironment();
 
     /**

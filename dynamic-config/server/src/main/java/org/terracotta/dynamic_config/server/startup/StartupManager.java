@@ -15,6 +15,7 @@ import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChang
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.PathResolver;
+import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
 import org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.service.DynamicConfigServiceImpl;
 import org.terracotta.inet.InetSocketAddressUtils;
@@ -30,11 +31,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
+import static com.tc.util.Assert.assertNotNull;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_NAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_REPOSITORY_DIR;
 import static org.terracotta.dynamic_config.server.nomad.NomadBootstrapper.NomadServerManager;
 import static org.terracotta.dynamic_config.server.nomad.NomadBootstrapper.bootstrap;
 
@@ -58,13 +64,8 @@ public class StartupManager {
     // and this check happens after doing the substitution.
     // Note: the returned resolved path is not substituted and contains placeholders from both base directory and given path.
     PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
-    Path configPath = new TransientTcConfig(node, userDirResolver, parameterSubstitutor).createTempTcConfigFile();
-    return startServer(
-        "-r", nodeRepositoryDir.toString(),
-        "--config-consistency",
-        "--config", configPath.toAbsolutePath().toString(),
-        "--node-name", nodeName
-    );
+    Path temporaryTcConfigPath = new TransientTcConfig(node, userDirResolver, parameterSubstitutor).createTempTcConfigFile();
+    return startServer(nodeRepositoryDir, nodeName, temporaryTcConfigPath);
   }
 
   boolean startActivated(Cluster cluster, Node node, String licenseFile, String optionalNodeRepositoryFromCLI) {
@@ -76,23 +77,15 @@ public class StartupManager {
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.prepareActivation(cluster, read(licenseFile));
     runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);
-    return startServer(
-        "-r", nodeRepositoryDir.toString(),
-        "-n", nodeName,
-        "--node-name", nodeName
-    );
+    return startServer(nodeRepositoryDir, nodeName, null);
   }
 
-  boolean startUsingConfigRepo(Path repositoryDir, String nodeName) {
-    logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(repositoryDir));
-    NomadServerManager nomadServerManager = bootstrap(repositoryDir, parameterSubstitutor, changeHandlerManager, nodeName);
+  boolean startUsingConfigRepo(Path nodeRepositoryDir, String nodeName) {
+    logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(nodeRepositoryDir));
+    NomadServerManager nomadServerManager = bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, nodeName);
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.activate();
-    return startServer(
-        "-r", repositoryDir.toString(),
-        "-n", nodeName,
-        "--node-name", nodeName
-    );
+    return startServer(nodeRepositoryDir, nodeName, null);
   }
 
   Node getMatchingNodeFromConfigFile(String specifiedHostName, String specifiedPort, String configFilePath, Cluster cluster) {
@@ -140,8 +133,33 @@ public class StartupManager {
     return Paths.get(repositoryDir != null ? repositoryDir : Setting.NODE_REPOSITORY_DIR.getDefaultValue());
   }
 
-  private boolean startServer(String... args) {
-    TCServerMain.main(args);
+  private boolean startServer(Path nodeRepositoryDir, String nodeName, Path temporaryTcConfigPath) {
+    List<String> args = new ArrayList<>();
+
+    // required by TCServerMain to identify the server
+    args.add("-n");
+    args.add(nodeName);
+
+    // - the node repository directory where to create the files upon activation
+    // - or the node repository directory that has been created when auto-activating on start
+    // - or the node repository directory that already exists on disk
+    args.add("--" + NODE_REPOSITORY_DIR);
+    args.add(nodeRepositoryDir.toString());
+
+    // the node name to identify the config repository file
+    args.add("--" + NODE_NAME);
+    args.add(nodeName);
+
+    if (temporaryTcConfigPath != null) {
+      args.add("--tc-config-file");
+      args.add(temporaryTcConfigPath.toAbsolutePath().toString());
+    }
+
+    // Nomad system must have been bootstrapped BEFORE any call to TCServerMain
+    assertNotNull(NomadBootstrapper.getNomadServerManager());
+
+    TCServerMain.main(args.toArray(new String[0]));
+
     return true;
   }
 
