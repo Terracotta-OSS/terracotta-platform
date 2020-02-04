@@ -87,13 +87,13 @@ public abstract class RemoteCommand extends Command {
   }
 
   /**
-   * Returns the current consistency of teh configuration in the cluster
+   * Returns the current consistency of the configuration in the cluster
    */
   protected final ConsistencyAnalyzer<NodeContext> analyzeNomadConsistency(Map<InetSocketAddress, LogicalServerState> allNodes) {
     logger.trace("analyzeNomadConsistency({})", allNodes);
-    Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes = filterOnlineNodes(allNodes);
+    Map<InetSocketAddress, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
-    List<InetSocketAddress> orderedList = keepPassivesFirst(expectedOnlineNodes);
+    List<InetSocketAddress> orderedList = keepPassivesFirst(onlineNodes);
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = new ConsistencyAnalyzer<>(allNodes.size());
     nomadManager.runDiscovery(orderedList, consistencyAnalyzer);
     return consistencyAnalyzer;
@@ -106,8 +106,8 @@ public abstract class RemoteCommand extends Command {
   protected final void runNomadRepair(Map<InetSocketAddress, LogicalServerState> allNodes, ChangeRequestState forcedState) {
     logger.trace("runNomadRepair({})", allNodes);
     // build an ordered list of server: we send the update first to the passive nodes, then to the active nodes
-    Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes = filterOnlineNodes(allNodes);
-    List<InetSocketAddress> orderedList = keepPassivesFirst(expectedOnlineNodes);
+    Map<InetSocketAddress, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
+    List<InetSocketAddress> orderedList = keepPassivesFirst(onlineNodes);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runRecovery(orderedList, failures, allNodes.size(), forcedState);
     failures.reThrow();
@@ -223,6 +223,13 @@ public abstract class RemoteCommand extends Command {
               throw new UnsupportedOperationException();
             },
             LinkedHashMap::new));
+  }
+
+  protected final boolean isActivated(InetSocketAddress expectedOnlineNode) {
+    logger.trace("getRuntimeCluster({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+      return diagnosticService.getProxy(TopologyService.class).isActivated();
+    }
   }
 
   protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {

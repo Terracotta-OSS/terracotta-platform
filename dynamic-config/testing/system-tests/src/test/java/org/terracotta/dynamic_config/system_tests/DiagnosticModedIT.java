@@ -40,17 +40,37 @@ public class DiagnosticModedIT extends DynamicConfigIT {
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
-  public void test_diagnostic_port_acessible_but_nomad_change_impossible() throws Exception {
+  public void test_diagnostic_port_accessible_but_nomad_change_impossible() throws Exception {
     int activeNodeId = findActive(1).getAsInt();
     getNodeProcess(activeNodeId, activeNodeId).close();
 
+    out.clearLog();
     startNode(1, activeNodeId, "--diagnostic-mode", "--node-name", "node-" + activeNodeId, "--node-repository-dir", "repository/stripe1/node-" + activeNodeId);
     waitUntil(out::getLog, containsString("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
 
+    // diag port available
     Cluster cluster = getUpcomingCluster("localhost", getNodePort(1, activeNodeId));
     assertThat(cluster.getStripeCount(), is(equalTo(2)));
+
+    // log command works, both when targeting node to repair and a normal node in the cluster
+    out.clearLog();
+    ConfigTool.start("log", "-s", "localhost:" + getNodePort(1, activeNodeId));
+    waitUntil(out::getLog, containsString("Activating cluster"));
+    out.clearLog();
+    ConfigTool.start("log", "-s", "localhost:" + getNodePort(2, 1));
+    waitUntil(out::getLog, containsString("Activating cluster"));
+
+    // diag command works, both when targeting node to repair and a normal node in the cluster
+    out.clearLog();
+    ConfigTool.start("diagnostic", "-s", "localhost:" + getNodePort(1, activeNodeId));
+    waitUntil(out::getLog, containsString("Node started in diagnostic mode for initial configuration or repair: YES"));
+    out.clearLog();
+    ConfigTool.start("diagnostic", "-s", "localhost:" + getNodePort(2, 1));
+    waitUntil(out::getLog, containsString("Node started in diagnostic mode for initial configuration or repair: YES"));
+
 
     // unable to trigger a change on the cluster from the node in diagnostic mode
     assertThat(

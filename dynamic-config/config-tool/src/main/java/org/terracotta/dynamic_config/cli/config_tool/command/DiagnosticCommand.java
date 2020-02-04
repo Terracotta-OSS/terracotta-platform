@@ -17,10 +17,13 @@ import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
 import static org.terracotta.diagnostic.common.LogicalServerState.UNREACHABLE;
 
 /**
@@ -35,6 +38,7 @@ public class DiagnosticCommand extends RemoteCommand {
 
   private Map<InetSocketAddress, LogicalServerState> allNodes;
   private Map<InetSocketAddress, LogicalServerState> onlineNodes;
+  private Collection<InetSocketAddress> onlineActivatedNodes;
 
   @Override
   public void validate() {
@@ -45,19 +49,13 @@ public class DiagnosticCommand extends RemoteCommand {
     // this call can take some time and we can have some timeout
     allNodes = findRuntimePeersStatus(node);
     onlineNodes = filterOnlineNodes(allNodes);
-
-    if (!areAllNodesActivated(onlineNodes.keySet())) {
-      throw new IllegalStateException("Cannot run a diagnostic on a non activated  cluster");
-    }
+    onlineActivatedNodes = onlineNodes.keySet().stream().filter(this::isActivated).collect(Collectors.toSet());
   }
 
   @Override
   public final void run() {
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
-    printDiagnostic(consistencyAnalyzer);
-  }
 
-  private void printDiagnostic(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
     Clock clock = Clock.systemDefaultZone();
     ZoneId zoneId = clock.getZone();
     DateTimeFormatter ISO_8601 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -72,6 +70,15 @@ public class DiagnosticCommand extends RemoteCommand {
 
     sb.append("[Cluster]")
         .append(lineSeparator());
+    sb.append(" - Node count: ")
+        .append(consistencyAnalyzer.getNodeCount())
+        .append(lineSeparator());
+    sb.append(" - Online node count: ")
+        .append(onlineNodes.size())
+        .append(lineSeparator());
+    sb.append(" - Online and activated node count: ")
+        .append(onlineActivatedNodes.size())
+        .append(lineSeparator());
 
     sb.append(" - Configuration state: ")
         .append(meaningOf(consistencyAnalyzer))
@@ -83,17 +90,28 @@ public class DiagnosticCommand extends RemoteCommand {
         .append(lineSeparator());
 
     allNodes.keySet().forEach(nodeAddress -> {
+      LogicalServerState state = allNodes.getOrDefault(nodeAddress, UNREACHABLE);
 
       // header
       sb.append("[").append(nodeAddress).append("]").append(lineSeparator());
 
       // node status
       sb.append(" - Node state: ")
-          .append(allNodes.getOrDefault(nodeAddress, UNREACHABLE))
+          .append(state)
           .append(lineSeparator());
 
       // if not is online, display more information
       if (onlineNodes.containsKey(nodeAddress)) {
+        sb.append(" - Node activated: ")
+            .append(isActivated(node) ?
+                "YES" :
+                "NO")
+            .append(lineSeparator());
+        sb.append(" - Node started in diagnostic mode for initial configuration or repair: ")
+            .append(state == STARTING && !onlineActivatedNodes.contains(nodeAddress) ?
+                "YES" :
+                "NO")
+            .append(lineSeparator());
         sb.append(" - Node restart required: ")
             .append(mustBeRestarted(node) ?
                 "YES" :

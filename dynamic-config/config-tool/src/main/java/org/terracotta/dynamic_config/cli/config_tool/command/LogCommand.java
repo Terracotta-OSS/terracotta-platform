@@ -17,7 +17,6 @@ import java.time.Clock;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
@@ -37,28 +36,20 @@ public class LogCommand extends RemoteCommand {
   @Override
   public void validate() {
     validateAddress(node);
-
-    if (!areAllNodesActivated(Collections.singletonList(node))) {
-      throw new IllegalStateException("Cannot read configuration logs from a non activated node");
-    }
   }
 
   @Override
   public void run() {
     logger.info("Configuration logs from {}:", node);
 
-    final NomadChangeInfo[] logs;
-
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-      logs = diagnosticService.getProxy(TopologyService.class).getChangeHistory();
-    }
+    NomadChangeInfo[] logs = getLogs();
 
     Arrays.sort(logs, Comparator.comparing(NomadChangeInfo::getVersion));
     Clock clock = Clock.systemDefaultZone();
     ZoneId zoneId = clock.getZone();
     DateTimeFormatter ISO_8601 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-    final String formattedChanges = Stream.of(logs)
+    String formattedChanges = Stream.of(logs)
         .map(log -> padCut(String.valueOf(log.getVersion()), 4)
             + " " + log.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601)
             + " " + log.getChangeUuid().toString()
@@ -68,7 +59,17 @@ public class LogCommand extends RemoteCommand {
             + " - " + log.getNomadChange().getSummary())
         .collect(joining(lineSeparator()));
 
+    if (formattedChanges.isEmpty()) {
+      formattedChanges = "<empty>";
+    }
+
     logger.info("{}{}{}", lineSeparator(), formattedChanges, lineSeparator());
+  }
+
+  private NomadChangeInfo[] getLogs() {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+      return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
+    }
   }
 
   private static String padCut(String s, int length) {
