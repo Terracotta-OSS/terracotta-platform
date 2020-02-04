@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,18 +14,11 @@ import static org.hamcrest.Matchers.containsString;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition
+@ClusterDefinition(autoActivate = true)
 public class SimulationHandlerIT extends DynamicConfigIT {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
-
-  @Before
-  @Override
-  public void before() throws Exception {
-    super.before();
-    activateCluster();
-  }
 
   @Test
   public void test_missing_value() {

@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
@@ -12,12 +11,12 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.system_tests.util.NodeProcess;
 
 import java.nio.file.Paths;
 import java.time.Duration;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -30,21 +29,18 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
 @ClusterDefinition
 public class TopologyServiceIT extends DynamicConfigIT {
 
-  @Before
   @Override
-  public void before() throws Exception {
-    startNode(1, 1,
+  protected NodeProcess startNode(int stripeId, int nodeId, int port, int groupPort) throws Exception {
+    return startNode(1, 1,
         "--node-repository-dir", "repository/stripe1/node-1",
-        "-N", "tc-cluster",
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
-    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
   public void test_getPendingTopology() throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        getServerAddress(),
+        getNodeAddress(),
         getClass().getSimpleName(),
         Duration.ofSeconds(5),
         Duration.ofSeconds(5),
@@ -57,7 +53,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingCluster, is(equalTo(new Cluster("tc-cluster", new Stripe(Node.newDefaultNode("node-1", "localhost", getNodePort())
+      assertThat(pendingCluster, is(equalTo(new Cluster(new Stripe(Node.newDefaultNode("node-1", "localhost", getNodePort())
           .setNodeGroupPort(getNodePort() + 1)
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")

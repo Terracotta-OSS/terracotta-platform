@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.system_tests.util.NodeProcess;
@@ -12,7 +11,7 @@ import org.terracotta.dynamic_config.system_tests.util.NodeProcess;
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 
-@ClusterDefinition(stripes = 2, nodesPerStripe = 2)
+@ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoActivate = true)
 public class GetCommand2x2IT extends DynamicConfigIT {
 
   @Override
@@ -29,18 +28,6 @@ public class GetCommand2x2IT extends DynamicConfigIT {
         "--data-dirs", "main:user-data/main/stripe" + stripeId,
         "--offheap-resources", "main:512MB,foo:1GB"
     );
-  }
-
-  @Before
-  @Override
-  public void before() throws Exception {
-    super.before();
-    ConfigTool.main("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    ConfigTool.main("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1), "localhost:" + getNodePort(2, 2));
-    activateCluster(() -> {
-      waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-      waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
-    });
   }
 
   @Test

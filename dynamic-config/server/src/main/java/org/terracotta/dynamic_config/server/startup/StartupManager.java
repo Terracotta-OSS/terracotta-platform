@@ -68,14 +68,14 @@ public class StartupManager {
     return startServer(nodeRepositoryDir, nodeName, temporaryTcConfigPath);
   }
 
-  boolean startActivated(Cluster cluster, Node node, String licenseFile, String optionalNodeRepositoryFromCLI) {
+  boolean startActivated(Cluster cluster, Node node, String optionalLicenseFile, String optionalNodeRepositoryFromCLI) {
     String nodeName = node.getNodeName();
     logger.info("Starting node: {} in cluster: {}", nodeName, cluster.getName());
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
     logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir.toAbsolutePath()));
     NomadServerManager nomadServerManager = bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node.getNodeAddress()));
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
-    dynamicConfigService.prepareActivation(cluster, read(licenseFile));
+    dynamicConfigService.prepareActivation(cluster, optionalLicenseFile == null ? null : read(optionalLicenseFile));
     runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);
     return startServer(nodeRepositoryDir, nodeName, null);
   }

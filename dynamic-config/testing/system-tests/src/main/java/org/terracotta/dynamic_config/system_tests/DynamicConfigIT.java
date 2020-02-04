@@ -37,6 +37,7 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -62,6 +63,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.nio.file.Files.walkFileTree;
+import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
@@ -93,6 +95,7 @@ public class DynamicConfigIT {
 
   private final int stripes;
   private final boolean autoStart;
+  private final boolean autoActivate;
   private final int nodesPerStripe;
   private final Map<String, NodeProcess> nodeProcesses = new ConcurrentHashMap<>();
 
@@ -101,6 +104,7 @@ public class DynamicConfigIT {
     this.stripes = clusterDefinition.stripes();
     this.nodesPerStripe = clusterDefinition.nodesPerStripe();
     this.autoStart = clusterDefinition.autoStart();
+    this.autoActivate = clusterDefinition.autoActivate();
     this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
   }
 
@@ -123,10 +127,10 @@ public class DynamicConfigIT {
 
     ExecutorService executorService = Executors.newFixedThreadPool(nodeCount);
     try {
-      CompletionService<?> completionService = new ExecutorCompletionService<>(executorService);
+      CompletionService<NodeProcess> completionService = new ExecutorCompletionService<>(executorService);
 
       out.clearLog();
-      nodeDefinitions().forEach(tuple -> completionService.submit(() -> startNode(tuple.t1, tuple.t2), null));
+      nodeDefinitions().forEach(tuple -> completionService.submit(() -> startNode(tuple.t1, tuple.t2)));
 
       for (int i = 0; i < nodeCount; i++) {
         completionService.take().get();
@@ -135,30 +139,88 @@ public class DynamicConfigIT {
       executorService.shutdown();
     }
 
-    String[] status = new String[nodeCount];
-    Arrays.fill(status, "Started the server in diagnostic mode");
-    waitUntil(out::getLog, stringContainsInOrder(Arrays.asList(status)));
+    // if not 1-node cluster activation, we need the activate CLI
+    if (autoActivate && (stripes > 1 || nodesPerStripe > 1)) {
+      for (int nodeId = 2; nodeId <= nodesPerStripe; nodeId++) {
+        ConfigTool.start("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, nodeId));
+        assertCommandSuccessful();
+      }
+      for (int stripeId = 2; stripeId <= stripes; stripeId++) {
+        ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(stripeId, 1));
+        assertCommandSuccessful();
+        for (int nodeId = 2; nodeId <= nodesPerStripe; nodeId++) {
+          ConfigTool.start("attach", "-d", "localhost:" + getNodePort(stripeId, 1), "-s", "localhost:" + getNodePort(stripeId, nodeId));
+          assertCommandSuccessful();
+        }
+      }
+      activateCluster(() -> {
+        // we are waiting for activation
+        String[] actives = new String[stripes];
+        Arrays.fill(actives, "Moved to State[ ACTIVE-COORDINATOR ]");
+        waitUntil(out::getLog, stringContainsInOrder(asList(actives)));
+        String[] passives = new String[nodeCount - stripes];
+        if (passives.length > 0) {
+          Arrays.fill(passives, "Moved to State[ PASSIVE-STANDBY ]");
+          waitUntil(out::getLog, stringContainsInOrder(asList(passives)));
+        }
+      });
+    } else if (autoActivate) {
+      // stripes == 1 && nodesPerStripe == 1
+      waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    } else {
+      // we wait for diagnostic mode
+      String[] status = new String[nodeCount];
+      Arrays.fill(status, "Started the server in diagnostic mode");
+      waitUntil(out::getLog, stringContainsInOrder(asList(status)));
+    }
   }
 
-  protected final NodeProcess startNode(int stripeId, int nodeId) {
+  protected final NodeProcess startNode(int stripeId, int nodeId) throws Exception {
     int nodePort = getNodePort(stripeId, nodeId);
     int groupPort = nodePort + 1;
     return startNode(stripeId, nodeId, nodePort, groupPort);
   }
 
-  protected NodeProcess startNode(int stripeId, int nodeId, int port, int groupPort) {
-    return startNode(
-        stripeId, nodeId,
-        "--node-name", "node-" + nodeId,
-        "--node-hostname", "localhost",
-        "--node-port", String.valueOf(port),
-        "--node-group-port", String.valueOf(groupPort),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-        "--node-backup-dir", "backup/stripe" + stripeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId
-    );
+  protected NodeProcess startNode(int stripeId, int nodeId, int port, int groupPort) throws Exception {
+    String licensePath = licensePath();
+    return autoActivate && stripes == 1 && nodesPerStripe == 1 && licensePath == null ?
+        startNode(
+            stripeId, nodeId,
+            "--cluster-name", "tc-cluster",
+            "--node-name", "node-" + nodeId,
+            "--node-hostname", "localhost",
+            "--node-port", String.valueOf(port),
+            "--node-group-port", String.valueOf(groupPort),
+            "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
+            "--node-backup-dir", "backup/stripe" + stripeId,
+            "--node-metadata-dir", "metadata/stripe" + stripeId,
+            "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
+            "--data-dirs", "main:user-data/main/stripe" + stripeId) :
+        autoActivate && stripes == 1 && nodesPerStripe == 1 ?
+            startNode(
+                stripeId, nodeId,
+                "--cluster-name", "tc-cluster",
+                "--license-file", licensePath,
+                "--node-name", "node-" + nodeId,
+                "--node-hostname", "localhost",
+                "--node-port", String.valueOf(port),
+                "--node-group-port", String.valueOf(groupPort),
+                "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
+                "--node-backup-dir", "backup/stripe" + stripeId,
+                "--node-metadata-dir", "metadata/stripe" + stripeId,
+                "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
+                "--data-dirs", "main:user-data/main/stripe" + stripeId) :
+            startNode(
+                stripeId, nodeId,
+                "--node-name", "node-" + nodeId,
+                "--node-hostname", "localhost",
+                "--node-port", String.valueOf(port),
+                "--node-group-port", String.valueOf(groupPort),
+                "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
+                "--node-backup-dir", "backup/stripe" + stripeId,
+                "--node-metadata-dir", "metadata/stripe" + stripeId,
+                "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
+                "--data-dirs", "main:user-data/main/stripe" + stripeId);
   }
 
   protected final NodeProcess startNode(int stripeId, int nodeId, String... cli) {
@@ -209,7 +271,7 @@ public class DynamicConfigIT {
     return tmpDir.getRoot();
   }
 
-  protected final InetSocketAddress getServerAddress() {
+  protected final InetSocketAddress getNodeAddress() {
     return InetSocketAddress.createUnresolved("localhost", getNodePort());
   }
 
@@ -237,9 +299,13 @@ public class DynamicConfigIT {
     return dest;
   }
 
-  protected String licensePath() throws Exception {
-    final URL url = getClass().getResource("/license.xml");
-    return url == null ? null : Paths.get(url.toURI()).toString();
+  protected String licensePath() {
+    try {
+      final URL url = getClass().getResource("/license.xml");
+      return url == null ? null : Paths.get(url.toURI()).toString();
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   protected final Path getNodeRepositoryDir() {

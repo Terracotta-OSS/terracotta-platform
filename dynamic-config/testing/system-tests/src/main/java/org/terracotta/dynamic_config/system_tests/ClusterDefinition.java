@@ -20,4 +20,6 @@ public @interface ClusterDefinition {
   int nodesPerStripe() default 1;
 
   boolean autoStart() default true;
+
+  boolean autoActivate() default false;
 }

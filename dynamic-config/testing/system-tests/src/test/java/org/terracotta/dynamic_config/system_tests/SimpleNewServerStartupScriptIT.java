@@ -177,6 +177,24 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
     waitUntil(out::getLog, not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
   }
 
+  @Test
+  public void testPreventConcurrentUseOfRepository() throws Exception {
+    startSingleNode("-n", "node-1", "-r", "repository/stripe1/node-1", "-N", "tc-cluster");
+    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    startNode(1, 2,
+        "--node-name", "node-1",
+        "--node-repository-dir", "repository/stripe1/node-1",
+        "--node-hostname", "localhost",
+        "--node-log-dir", "logs/stripe1/node-1",
+        "--node-backup-dir", "backup/stripe1",
+        "--node-metadata-dir", "metadata/stripe1",
+        "--data-dirs", "main:user-data/main/stripe1"
+    );
+    waitUntil(out::getLog, containsString("Exception initializing Nomad Server: java.io.IOException: File lock already held: "
+        + getBaseDir().resolve(Paths.get("repository", "stripe1", "node-1", "sanskrit"))));
+  }
+
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(

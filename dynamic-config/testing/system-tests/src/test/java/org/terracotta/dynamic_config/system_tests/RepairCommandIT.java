@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
@@ -26,15 +25,8 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition
+@ClusterDefinition(autoActivate = true)
 public class RepairCommandIT extends DynamicConfigIT {
-
-  @Before
-  @Override
-  public void before() throws Exception {
-    super.before();
-    activateCluster(() -> waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
-  }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test

@@ -45,7 +45,9 @@ public class ConsoleParamsStarter implements NodeStarter {
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {
-      requireNonNull(options.getClusterName(), "Cluster name is required with license file");
+      requireNonNull(cluster.getName(), "Cluster name is required with license file");
+    }
+    if (cluster.getName() != null) {
       return startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
     } else {
       return startupManager.startUnconfigured(cluster, node, options.getNodeRepositoryDir());

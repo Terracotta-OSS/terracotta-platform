@@ -16,7 +16,6 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -29,7 +28,7 @@ import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskr
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 
-@ClusterDefinition(nodesPerStripe = 2)
+@ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
   private int activeNodeId;
   private int passiveNodeId;
@@ -38,14 +37,6 @@ public class ConfigSyncIT extends DynamicConfigIT {
   @Override
   public void before() throws Exception {
     super.before();
-
-    ConfigTool.start("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    assertCommandSuccessful();
-
-    activateCluster(() -> waitUntil(out::getLog,
-        both(containsString("Moved to State[ ACTIVE-COORDINATOR ]"))
-            .and(containsString("Moved to State[ PASSIVE-STANDBY ]"))));
-
     if (getNodeProcess(1, 1).getServerState().isActive()) {
       activeNodeId = 1;
       passiveNodeId = 2;

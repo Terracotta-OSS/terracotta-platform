@@ -131,7 +131,7 @@ public class NodeProcess implements Closeable {
         try {
           nodeProcess.pid = Long.parseLong(m.group(1));
           nodeProcess.state = LogicalServerState.UNKNOWN;
-          LOGGER.info("{} Discovered PID: {}", nodeProcess, nodeProcess.pid);
+          //LOGGER.info("{} Discovered PID: {}", nodeProcess, nodeProcess.pid);
         } catch (NumberFormatException ignored) {
         }
       } else {
@@ -145,7 +145,7 @@ public class NodeProcess implements Closeable {
       Matcher m = Pattern.compile("Moved to State\\[ ([A-Z\\-_]+) \\]").matcher(line);
       if (m.find()) {
         nodeProcess.state = LogicalServerState.parse(m.group(1));
-        LOGGER.info("{} Discovered state: {}", nodeProcess, nodeProcess.state);
+        //LOGGER.info("{} Discovered state: {}", nodeProcess, nodeProcess.state);
       } else {
         throw new AssertionError("please refine regex to not match: " + line);
       }
