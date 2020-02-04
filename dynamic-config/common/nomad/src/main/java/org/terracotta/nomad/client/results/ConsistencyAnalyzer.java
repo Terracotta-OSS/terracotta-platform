@@ -38,7 +38,7 @@ import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 /**
- * Can be used in conjunction with the Nomad discovery process to capture the output and analyze the state of teh cluster
+ * Can be used in conjunction with the Nomad discovery process to capture the output and analyze the state of the cluster
  *
  * @author Mathieu Carbou
  */
@@ -64,7 +64,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   }
 
   private final Map<InetSocketAddress, DiscoverResponse<T>> responses = new HashMap<>(0);
-  private final int expectedNodeCount;
+  private final int nodeCount;
 
   private volatile String discoverFailure;
   private volatile boolean discoveredInconsistentCluster;
@@ -78,8 +78,12 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   private volatile String otherClientHost;
   private volatile String otherClientUser;
 
-  public ConsistencyAnalyzer(int expectedNodeCount) {
-    this.expectedNodeCount = expectedNodeCount;
+  public ConsistencyAnalyzer(int nodeCount) {
+    this.nodeCount = nodeCount;
+  }
+
+  public int getNodeCount() {
+    return nodeCount;
   }
 
   @Override
@@ -147,7 +151,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   // others
 
   public boolean hasUnreachableNodes() {
-    return expectedNodeCount > responses.size();
+    return nodeCount > responses.size();
   }
 
   public Optional<NomadChangeInfo> getCheckpoint() {
@@ -190,13 +194,13 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     final long prepared = states.getOrDefault(PREPARED, 0L);
     final long committed = states.getOrDefault(COMMITTED, 0L);
 
-    if (uuids == 1 && rolledBack == 0 && committed == 0 && prepared > 0 && prepared >= expectedNodeCount) {
+    if (uuids == 1 && rolledBack == 0 && committed == 0 && prepared > 0 && prepared >= nodeCount) {
       // all nodes are online and prepared for the same change
       return GlobalState.PREPARED;
     }
 
     if (uuids == 1 && rolledBack == 0 && committed == 0 && prepared > 0) {
-      // all online nodes are prepared for the same change, but we do not know the state of teh offline ones
+      // all online nodes are prepared for the same change, but we do not know the state of the offline ones
       return GlobalState.MAYBE_PREPARED;
     }
 
@@ -205,7 +209,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
       return PARTIALLY_PREPARED;
     }
 
-    if (uuids == 1 && rolledBack == 0 && committed > 0 && prepared > 0 && (prepared + committed >= expectedNodeCount)) {
+    if (uuids == 1 && rolledBack == 0 && committed > 0 && prepared > 0 && (prepared + committed >= nodeCount)) {
       // all nodes are either prepared or committed for the same change
       return PARTIALLY_COMMITTED;
     }
@@ -216,7 +220,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
       return MAYBE_PARTIALLY_COMMITTED;
     }
 
-    if (uuids == 1 && rolledBack > 0 && committed == 0 && prepared > 0 && (prepared + rolledBack >= expectedNodeCount)) {
+    if (uuids == 1 && rolledBack > 0 && committed == 0 && prepared > 0 && (prepared + rolledBack >= nodeCount)) {
       // all nodes are either prepared or rolled back for the same change
       return PARTIALLY_ROLLED_BACK;
     }
@@ -227,7 +231,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
       return MAYBE_PARTIALLY_ROLLED_BACK;
     }
 
-    return responses.size() >= expectedNodeCount ?
+    return responses.size() >= nodeCount ?
         UNKNOWN : // all nodes are up, but we were not able to determine the state
         MAYBE_UNKNOWN; // some nodes are not reachable and we were not able to determine the state
   }

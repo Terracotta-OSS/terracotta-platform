@@ -283,7 +283,7 @@ public class Configuration {
         // unset is not supported at all
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " requires a value");
       } else if (!setting.allowsOperationInScope(UNSET, scope) && !setting.allowsOperationInScope(CONFIG, scope)) {
-        // unset is not supported in teh given scope
+        // unset is not supported in the given scope
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " cannot be cleared at " + scope + " level");
       }
     } else {
@@ -367,7 +367,7 @@ public class Configuration {
       // if the keys are not equals and non null, it means this is a map setting on different keys
       return false;
     }
-    // here, we have the same setting, same scope, and same nodes to apply to, and teh setting is a map
+    // here, we have the same setting, same scope, and same nodes to apply to, and the setting is a map
     if (key == null && other.key == null && Objects.equals(value, other.value)) {
       // if the keys are null, we can tell this is a duplicate if the values are the same
       return true;

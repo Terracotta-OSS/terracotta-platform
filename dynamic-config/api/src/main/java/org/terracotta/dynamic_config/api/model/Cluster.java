@@ -274,7 +274,7 @@ public class Cluster implements Cloneable {
         NodeContext nodeContext = new NodeContext(this, stripeId, nodes.get(nodeId - 1).getNodeName());
         // for each setting, create the line:
         // stripe.<ids>.node.<idx>.<setting>=<value> or stripe.<ids>.node.<idx>.<setting>.<key>=<value>
-        // depending whether we want teh expanded or non expanded form
+        // depending whether we want the expanded or non expanded form
         return settings.stream()
             .flatMap(setting -> {
               final String currentValue = setting.getProperty(nodeContext).orElse(null);

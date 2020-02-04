@@ -188,7 +188,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       return reject(BAD, "Received an alive PrepareMessage for a change that already exists: " + changeUuid);
     }
 
-    // null when preparing for teh first time, when no config is available
+    // null when preparing for the first time, when no config is available
     T existing = getCurrentCommittedChangeResult().orElse(null);
     NomadChange change = message.getChange();
 
