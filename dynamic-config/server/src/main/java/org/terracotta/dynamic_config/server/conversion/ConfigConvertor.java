@@ -37,7 +37,6 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -70,15 +69,16 @@ public class ConfigConvertor {
   private final Map<Path, Node> configFileRootNodeMap = new HashMap<>();
   private final List<String> allServers = new ArrayList<>();
   private final Map<Integer, List<String>> stripeServerNameMap = new HashMap<>();
-  private final Consumer<Map<Tuple2<Integer, String>, Node>> repositoryBuilder;
+  private final RepositoryStructureBuilder repositoryBuilder;
+  private final boolean acceptRelativePaths;
 
-  public ConfigConvertor(Consumer<Map<Tuple2<Integer, String>, Node>> nodeConfigurationHandler) {
-    this.repositoryBuilder = nodeConfigurationHandler;
+  public ConfigConvertor(RepositoryStructureBuilder resultProcessor) {
+    this(resultProcessor, false);
   }
 
-  public ConfigConvertor() {
-    this(o -> {
-    });
+  public ConfigConvertor(RepositoryStructureBuilder resultProcessor, boolean acceptRelativePaths) {
+    this.repositoryBuilder = resultProcessor;
+    this.acceptRelativePaths = acceptRelativePaths;
   }
 
   public void processInput(String clusterName, Path... tcConfigPaths) {
@@ -376,7 +376,7 @@ public class ConfigConvertor {
     clusteredConfigBuilder.createEntireCluster(clusterName);
 
     if (repositoryBuilder != null) {
-      repositoryBuilder.accept(hostConfigMapNode);
+      repositoryBuilder.process(hostConfigMapNode, acceptRelativePaths);
     }
   }
 

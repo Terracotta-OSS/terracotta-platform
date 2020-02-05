@@ -72,7 +72,7 @@ public class ConfigConvertorIT {
 
     Path outputFolderPath = tmpDir.getRoot();
     ConversionITResultProcessor resultProcessor = new ConversionITResultProcessor(outputFolderPath, serverMap);
-    ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
+    ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
 
     Path inputFilePath = Paths.get(ConfigConvertorIT.class.getResource("/conversion/tc-config-single-server.xml").toURI());
     convertor.processInput("testCluster", inputFilePath);
@@ -175,7 +175,7 @@ public class ConfigConvertorIT {
     Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     ConversionITResultProcessor resultProcessor = new ConversionITResultProcessor(outputFolderPath, serverMap);
-    ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
+    ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
 
     Path inputFilePath = Paths.get(ConfigConvertorIT.class.getResource("/conversion/tc-config-single-server.xml").toURI());
     convertor.processInput("testCluster", inputFilePath);
@@ -280,7 +280,7 @@ public class ConfigConvertorIT {
     Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     ConversionITResultProcessor resultProcessor = new ConversionITResultProcessor(outputFolderPath, serverMap);
-    ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
+    ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
 
     Path inputFilePath = Paths.get(ConfigConvertorIT.class.getResource("/conversion/tc-config-single-server-with-security.xml")
         .toURI());
@@ -385,7 +385,7 @@ public class ConfigConvertorIT {
     Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     ConversionITResultProcessor resultProcessor = new ConversionITResultProcessor(outputFolderPath, serverMap);
-    ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
+    ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
 
     Path inputFilePathStripe1 = Paths.get(ConfigConvertorIT.class.getResource("/conversion/tc-config-1.xml").toURI());
     Path inputFilePathStripe2 = Paths.get(ConfigConvertorIT.class.getResource("/conversion/tc-config-2.xml").toURI());
@@ -440,7 +440,7 @@ public class ConfigConvertorIT {
     Map<String, NomadServer<NodeContext>> serverMap = new HashMap<>();
     Path outputFolderPath = tmpDir.getRoot();
     ConversionITResultProcessor resultProcessor = new ConversionITResultProcessor(outputFolderPath, serverMap);
-    ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
+    ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
 
     Path inputFilePathStripe1 = Paths.get(ConfigConvertorIT.class.getResource("/conversion/tc-config-common-server-name-1.xml").toURI());
     Path inputFilePathStripe2 = Paths.get(ConfigConvertorIT.class.getResource("/conversion/tc-config-common-server-name-2.xml").toURI());

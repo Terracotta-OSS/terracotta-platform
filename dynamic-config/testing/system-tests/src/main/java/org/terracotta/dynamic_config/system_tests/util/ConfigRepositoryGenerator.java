@@ -94,7 +94,7 @@ public class ConfigRepositoryGenerator {
       assertFalse("Directory already exists: " + root, Files.exists(root));
       createDirectories(root);
       RepositoryStructureBuilder resultProcessor = skipCommit ? new CommitSkippingRepositoryBuilder(root) : new RepositoryStructureBuilder(root);
-      ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
+      ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
       convertor.processInput("testCluster", tcConfigPaths);
 
       URL licenseUrl = ConfigRepositoryGenerator.class.getResource("/license.xml");

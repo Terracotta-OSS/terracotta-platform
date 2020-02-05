@@ -4,6 +4,7 @@
  */
 package org.terracotta.dynamic_config.server.conversion;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.terracotta.common.struct.Tuple2;
@@ -46,9 +47,16 @@ public class ConfigConvertorTest {
   private static final String OFFHEAP_NS = "http://www.terracotta.org/config/offheap-resource";
   private static final String SECURITY_NS = "http://www.terrcotta.org/security";
 
+  private ConfigConvertor convertor;
+
+  @Before
+  public void setUp() {
+    RepositoryStructureBuilder processor = mock(RepositoryStructureBuilder.class);
+    convertor = new ConfigConvertor(processor);
+  }
+
   @Test
   public void testCreateServerConfigMapFunction() throws Exception {
-    ConfigConvertor convertor = new ConfigConvertor();
     Node rootNodeForServer1 = mock(Node.class);
     Node clonedRootNodeForServer1 = mock(Node.class);
     Node clonedRootNodeForServer2 = mock(Node.class);
@@ -96,7 +104,6 @@ public class ConfigConvertorTest {
   @Test
   public void testValidatePluginConfigurations() {
     List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
-    ConfigConvertor convertor = new ConfigConvertor();
     Path path = mock(Path.class);
     Element element = mock(Element.class);
     Map<Path, Node> param = new HashMap<>();
@@ -111,7 +118,6 @@ public class ConfigConvertorTest {
   @Test(expected = InvalidInputConfigurationContentException.class)
   public void testValidatePluginConfigurationsExceptionThrown() {
     List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
-    ConfigConvertor convertor = new ConfigConvertor();
     Path path = mock(Path.class);
     Element element = mock(Element.class);
     Map<Path, Node> param = new HashMap<>();
@@ -126,7 +132,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testValidateAllConfigurationFilesHaveSamePluginTypes() {
-    ConfigConvertor convertor = new ConfigConvertor();
     Path path1 = mock(Path.class);
     Path path2 = mock(Path.class);
     Path path3 = mock(Path.class);
@@ -158,7 +163,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testValidateAllConfigurationFilesHaveSamePluginTypesWithMissingPlugin() {
-    ConfigConvertor convertor = new ConfigConvertor();
     Path path1 = mock(Path.class);
     Path path2 = mock(Path.class);
     Path path3 = mock(Path.class);
@@ -194,8 +198,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testValidateAllConfigurationFilesHaveSamePluginTypesWithMismatchedPlugin() {
-    ConfigConvertor convertor = new ConfigConvertor();
-
     Path path1 = mock(Path.class);
     Path path2 = mock(Path.class);
     Path path3 = mock(Path.class);
@@ -234,7 +236,6 @@ public class ConfigConvertorTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testBuildConfigurationFilePluginNodeMap() throws Exception {
-    ConfigConvertor convertor = new ConfigConvertor();
     @SuppressWarnings("rawtypes")
     Optional<Map> configFileRootNodeMapOpt = ReflectionHelper.getField(Map.class, "configFileRootNodeMap", convertor);
     @SuppressWarnings("rawtypes")
@@ -412,7 +413,6 @@ public class ConfigConvertorTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testBuildConfigurationFilePluginNodeMapWithDuplicateEntries() throws Exception {
-    ConfigConvertor convertor = new ConfigConvertor();
     @SuppressWarnings("rawtypes")
     Optional<Map> configFileRootNodeMapOpt = ReflectionHelper.getField(Map.class, "configFileRootNodeMap", convertor);
     @SuppressWarnings("rawtypes")
@@ -475,8 +475,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testValidateProvidedConfigurationWithMismatchedNumbers() {
-    ConfigConvertor convertor = new ConfigConvertor();
-
     String server1 = "server1";
     String server2 = "server2";
     String server3 = "server3";
@@ -519,8 +517,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testValidateProvidedConfigurationWithDifferentServers() {
-    ConfigConvertor convertor = new ConfigConvertor();
-
     String server1 = "server1";
     String server2 = "server2";
     String server3 = "server3";
@@ -551,8 +547,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testValidateProvidedConfiguration() {
-    ConfigConvertor convertor = new ConfigConvertor();
-
     String server1 = "server1";
     String server2 = "server2";
     String server3 = "server3";
@@ -577,8 +571,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testMismatchedServers() {
-    ConfigConvertor convertor = new ConfigConvertor();
-
     String server1 = "server1";
     String server2 = "server2";
     String server3 = "server3";
@@ -601,8 +593,6 @@ public class ConfigConvertorTest {
 
   @Test
   public void testMismatchedServersNotAllMatching() {
-    ConfigConvertor convertor = new ConfigConvertor();
-
     String server1 = "server1";
     String server2 = "server2";
     String server3 = "server3";
@@ -668,7 +658,6 @@ public class ConfigConvertorTest {
     when(reconnectionWindowNode.getNamespaceURI()).thenReturn(ConfigConvertor.TERRACOTTA_CONFIG_NAMESPACE);
     when(reconnectionWindowNode.getLocalName()).thenReturn("client-reconnect-window");
 
-    ConfigConvertor convertor = new ConfigConvertor();
     ConfigConvertor spyconvertor = spy(convertor);
     doReturn("server1").when(spyconvertor).getAttributeValue(serverNode1, ConfigConvertor.NAME_NODE_NAME);
     doReturn("server2").when(spyconvertor).getAttributeValue(serverNode2, ConfigConvertor.NAME_NODE_NAME);
@@ -686,7 +675,6 @@ public class ConfigConvertorTest {
     Node platformPersistenceNode = mock(Node.class);
     Path path = mock(Path.class);
 
-    ConfigConvertor convertor = new ConfigConvertor();
     try {
       convertor.remapPlatformPersistence(dataRootNode, platformPersistenceNode, path);
       fail("Expected InvalidInputConfigurationContentException");
@@ -704,7 +692,6 @@ public class ConfigConvertorTest {
     NodeList dataRootChildList = mock(NodeList.class);
     Node platformDataRootNode = mock(Node.class);
 
-    ConfigConvertor convertor = new ConfigConvertor();
     ConfigConvertor spyconvertor = spy(convertor);
     doReturn("data-root").when(spyconvertor).getAttributeValue(platformPersistenceNode, "data-directory-id");
     when(dataRootNode.getChildNodes()).thenReturn(dataRootChildList);
@@ -728,7 +715,6 @@ public class ConfigConvertorTest {
     NodeList dataRootChildList = mock(NodeList.class);
     Node platformDataRootNode = mock(Node.class);
 
-    ConfigConvertor convertor = new ConfigConvertor();
     ConfigConvertor spyconvertor = spy(convertor);
 
     doReturn("data-root").when(spyconvertor).
@@ -770,7 +756,6 @@ public class ConfigConvertorTest {
     NodeList dataRootChildList = mock(NodeList.class);
     Node platformDataRootNode = mock(Node.class);
 
-    ConfigConvertor convertor = new ConfigConvertor();
     ConfigConvertor spyconvertor = spy(convertor);
 
     doReturn("data-root").when(spyconvertor).
@@ -812,7 +797,6 @@ public class ConfigConvertorTest {
     NodeList dataRootChildList = mock(NodeList.class);
     Node platformDataRootNode = mock(Node.class);
 
-    ConfigConvertor convertor = new ConfigConvertor();
     ConfigConvertor spyconvertor = spy(convertor);
 
     doReturn("data-root").when(spyconvertor).

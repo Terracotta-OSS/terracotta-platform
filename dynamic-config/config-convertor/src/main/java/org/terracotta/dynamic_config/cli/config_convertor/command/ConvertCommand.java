@@ -26,7 +26,7 @@ import static java.lang.System.lineSeparator;
 @Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration repository format")
 @Usage("convert -c <tc-config>,<tc-config>... -n <new-cluster-name> [-d <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
-  @Parameter(names = {"-c"}, required = true, description = "tc-config files", converter = PathConverter.class)
+  @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
 
   @Parameter(names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
@@ -57,7 +57,7 @@ public class ConvertCommand extends Command {
   @Override
   public final void run() {
     RepositoryStructureBuilder resultProcessor = new RepositoryStructureBuilder(destinationDir);
-    ConfigConvertor convertor = new ConfigConvertor(nodeNameNodeConfigMap -> resultProcessor.process(nodeNameNodeConfigMap, !force));
+    ConfigConvertor convertor = new ConfigConvertor(resultProcessor, force);
     convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
     if (licensePath != null) {
       try (Stream<Path> pathList = Files.list(destinationDir)) {
