@@ -38,4 +38,6 @@ public interface NomadServerState<T> {
   void applyStateChange(NomadStateChange<T> change) throws NomadException;
 
   Optional<T> getCurrentCommittedChangeResult() throws NomadException;
+
+  void reset() throws NomadException;
 }

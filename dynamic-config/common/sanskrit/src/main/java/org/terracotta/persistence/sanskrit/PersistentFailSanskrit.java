@@ -79,6 +79,18 @@ public class PersistentFailSanskrit implements Sanskrit {
     return underlying.newMutableSanskritObject();
   }
 
+  @Override
+  public void reset() throws SanskritException {
+    // No failCheck()
+
+    try {
+      underlying.reset();
+    } catch (Exception e) {
+      failure = e;
+      throw e;
+    }
+  }
+
   private void failCheck() throws SanskritException {
     if (failure != null) {
       throw new SanskritException("No longer operational due to earlier error", failure);

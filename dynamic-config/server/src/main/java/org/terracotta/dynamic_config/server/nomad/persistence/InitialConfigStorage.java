@@ -30,4 +30,9 @@ public class InitialConfigStorage<T> implements ConfigStorage<T> {
 
     underlying.saveConfig(version, config);
   }
+
+  @Override
+  public void reset() throws ConfigStorageException {
+    underlying.reset();
+  }
 }

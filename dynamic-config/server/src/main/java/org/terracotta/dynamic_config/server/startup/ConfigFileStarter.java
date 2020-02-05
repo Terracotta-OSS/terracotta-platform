@@ -52,8 +52,8 @@ public class ConfigFileStarter implements NodeStarter {
     Node node = startupManager.getMatchingNodeFromConfigFile(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
 
     if (cluster.getName() != null) {
-      if (cluster.getNodeCount() > 1) {
-        throw new UnsupportedOperationException("Cannot auto-activate a cluster of more than 1 node");
+      if (cluster.getStripeCount() > 1) {
+        throw new UnsupportedOperationException("Unable to start a pre-activated multi-stripe cluster");
       }
       return startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
     } else {

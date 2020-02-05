@@ -17,4 +17,6 @@ public interface FilesystemDirectory {
   FileData getFileData(String filename) throws IOException;
 
   void delete(String filename) throws IOException;
+
+  void backup(String filename) throws IOException;
 }

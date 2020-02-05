@@ -23,7 +23,7 @@ public class DiscoverResponse<T> {
   private final long currentVersion;
   private final long highestVersion;
   private final ChangeDetails<T> latestChange;
-  private final List<NomadChangeInfo> checkpoints;
+  private final List<NomadChangeInfo<T>> checkpoints;
 
   @JsonCreator
   public DiscoverResponse(@JsonProperty(value = "mode", required = true) NomadServerMode mode,
@@ -34,7 +34,7 @@ public class DiscoverResponse<T> {
                           @JsonProperty(value = "currentVersion", required = true) long currentVersion,
                           @JsonProperty(value = "highestVersion", required = true) long highestVersion,
                           @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange,
-                          @JsonProperty(value = "checkpoints") List<NomadChangeInfo> checkpoints) {
+                          @JsonProperty(value = "checkpoints") List<NomadChangeInfo<T>> checkpoints) {
     this.mode = requireNonNull(mode);
     this.mutativeMessageCount = mutativeMessageCount;
     this.lastMutationHost = lastMutationHost;
@@ -50,7 +50,7 @@ public class DiscoverResponse<T> {
     return mode;
   }
 
-  public List<NomadChangeInfo> getCheckpoints() {
+  public List<NomadChangeInfo<T>> getCheckpoints() {
     return checkpoints;
   }
 

@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface UpgradableNomadServer<T> extends NomadServer<T> {
   void setChangeApplicator(ChangeApplicator<T> changeApplicator);
 
-  List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
+  List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException;
 
   /**
    * Last change has not been committed or rolled back yet.
@@ -19,4 +19,6 @@ public interface UpgradableNomadServer<T> extends NomadServer<T> {
   boolean hasIncompleteChange();
 
   Optional<T> getCurrentCommittedChangeResult() throws NomadException;
+
+  void reset() throws NomadException;
 }

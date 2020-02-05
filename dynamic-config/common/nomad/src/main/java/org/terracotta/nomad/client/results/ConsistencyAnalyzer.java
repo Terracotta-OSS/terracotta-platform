@@ -154,7 +154,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     return nodeCount > responses.size();
   }
 
-  public Optional<NomadChangeInfo> getCheckpoint() {
+  public Optional<NomadChangeInfo<T>> getCheckpoint() {
     int nodeCount = responses.size();
     return responses.values()
         .stream()

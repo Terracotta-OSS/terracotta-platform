@@ -4,20 +4,18 @@
  */
 package org.terracotta.dynamic_config.server.nomad.persistence;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
 import org.terracotta.dynamic_config.server.nomad.repository.ClusterConfigFilename;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
@@ -47,28 +45,45 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
     }
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override
-  @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
-    File file = toFile(version);
-    file.getParentFile().mkdirs();
+    Path file = toPath(version);
     LOGGER.debug("Saving topology: {} with version: {} to file: {}", config, version, file);
-
-    try (PrintWriter writer = new PrintWriter(file, UTF_8.name())) {
-      writer.print(xmlConfigMapper.toXml(config));
-    } catch (FileNotFoundException | UnsupportedEncodingException e) {
+    try {
+      Files.createDirectories(file.getParent());
+      Files.write(file, xmlConfigMapper.toXml(config).getBytes(UTF_8));
+    } catch (IOException e) {
       throw new ConfigStorageException(e);
     }
   }
 
-  private File toFile(long version) {
-    Path filePath = toPath(version);
-    return filePath.toFile();
+  @Override
+  public void reset() throws ConfigStorageException {
+    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
+    ConfigStorageException error = new ConfigStorageException();
+    try (Stream<Path> stream = Files.list(root)) {
+      stream.filter(Files::isRegularFile).forEach(config -> {
+        String filename = config.getFileName().toString();
+        ClusterConfigFilename ccf = ClusterConfigFilename.from(filename);
+        if (ccf.getNodeName() != null && ccf.getVersion() > 0) {
+          Path backup = config.resolveSibling("backup-" + filename + "-" + time);
+          try {
+            Files.move(config, backup);
+          } catch (IOException ioe) {
+            error.addSuppressed(ioe);
+          }
+        }
+      });
+    } catch (IOException e) {
+      throw new ConfigStorageException(e);
+    }
+    if (error.getSuppressed().length > 0) {
+      throw error;
+    }
   }
 
   private Path toPath(long version) {
-    String filename = ClusterConfigFilename.with(nodeName, version).toString();
+    String filename = ClusterConfigFilename.with(nodeName, version).getFilename();
     return root.resolve(filename);
   }
 }

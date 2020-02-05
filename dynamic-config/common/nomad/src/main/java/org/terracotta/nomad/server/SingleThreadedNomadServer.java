@@ -24,6 +24,16 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
+  public void reset() throws NomadException {
+    lock.lock();
+    try {
+      underlying.reset();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public DiscoverResponse<T> discover() throws NomadException {
     lock.lock();
     try {
@@ -84,7 +94,7 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
+  public List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException {
     lock.lock();
     try {
       return underlying.getAllNomadChanges();

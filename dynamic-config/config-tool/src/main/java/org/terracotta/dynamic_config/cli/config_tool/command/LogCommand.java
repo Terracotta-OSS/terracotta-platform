@@ -42,7 +42,7 @@ public class LogCommand extends RemoteCommand {
   public void run() {
     logger.info("Configuration logs from {}:", node);
 
-    NomadChangeInfo[] logs = getLogs();
+    NomadChangeInfo<?>[] logs = getLogs();
 
     Arrays.sort(logs, Comparator.comparing(NomadChangeInfo::getVersion));
     Clock clock = Clock.systemDefaultZone();
@@ -66,7 +66,7 @@ public class LogCommand extends RemoteCommand {
     logger.info("{}{}{}", lineSeparator(), formattedChanges, lineSeparator());
   }
 
-  private NomadChangeInfo[] getLogs() {
+  private NomadChangeInfo<?>[] getLogs() {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
       return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
     }

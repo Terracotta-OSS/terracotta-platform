@@ -182,6 +182,28 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
     }
   }
 
+  @Override
+  public void reset() throws NomadException {
+    NomadException error = null;
+    try {
+      sanskrit.reset();
+    } catch (SanskritException e) {
+      error = new NomadException();
+      error.addSuppressed(e);
+    }
+    try {
+      configStorage.reset();
+    } catch (ConfigStorageException e) {
+      if (error == null) {
+        error = new NomadException();
+      }
+      error.addSuppressed(e);
+    }
+    if (error != null) {
+      throw error;
+    }
+  }
+
   private String getString(String key) {
     try {
       return sanskrit.getString(key);

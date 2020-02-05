@@ -60,4 +60,6 @@ public interface Sanskrit extends AutoCloseable {
   void applyChange(SanskritChange change) throws SanskritException;
 
   MutableSanskritObject newMutableSanskritObject();
+
+  void reset() throws SanskritException;
 }

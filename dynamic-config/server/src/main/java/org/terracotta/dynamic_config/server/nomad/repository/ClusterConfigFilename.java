@@ -4,81 +4,69 @@
  */
 package org.terracotta.dynamic_config.server.nomad.repository;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static java.util.regex.Pattern.compile;
-
 public interface ClusterConfigFilename {
 
   String getNodeName();
 
   long getVersion();
 
+  default String getFilename() {
+    return getNodeName() + "." + getVersion() + ".xml";
+  }
+
   static ClusterConfigFilename with(String nodeName, long version) {
-      return new ValidClusterConfigFilename(nodeName, version);
+    return new ClusterConfigFilename() {
+      @Override
+      public String getNodeName() {
+        return nodeName;
+      }
+
+      @Override
+      public long getVersion() {
+        return version;
+      }
+    };
   }
 
   static ClusterConfigFilename from(String fileName) {
-    try {
-      return new ValidClusterConfigFilename(fileName);
-    } catch (IllegalArgumentException e) {
-      return new InvalidClusterConfigFilename();
+    String nodeName = null;
+    long version = 0;
+    if (fileName.endsWith(".xml")) {
+      int pos_xml = fileName.lastIndexOf(".xml");
+      if (pos_xml >= 3) { // 3 because shortest filename is "a.1.xml"
+        String base = fileName.substring(0, pos_xml); // a.1
+        int pos_digits = base.lastIndexOf('.');
+        if (pos_digits >= 1) { // 0 is invalid, means no node name...
+          nodeName = base.substring(0, pos_digits).trim();
+          if (nodeName.isEmpty()) {
+            nodeName = null;
+          }
+          try {
+            version = Long.parseLong(base.substring(pos_digits + 1));
+          } catch (NumberFormatException e) {
+            version = 0;
+            nodeName = null;
+          }
+        }
+      }
     }
-  }
-
-  class ValidClusterConfigFilename implements ClusterConfigFilename {
-    private static final String CLUSTER_CONFIG = "cluster-config";
-    private static final String EXTENSION = "xml";
-
-    private static final String CLUSTER_CONFIG_FILENAME_FORMAT   = construct(".%s.%d.");
-    private static final Pattern CLUSTER_CONFIG_FILENAME_PATTERN = compile(construct("\\.(\\S+)\\.([1-9]\\d*)\\."));
-
-    private final String nodeName;
-    private final long version;
-
-    private ValidClusterConfigFilename(String nodeName, long version) {
-      this.nodeName = nodeName;
-      this.version = version;
-    }
-
-    private ValidClusterConfigFilename(String filename) {
-      Matcher matcher = CLUSTER_CONFIG_FILENAME_PATTERN.matcher(filename);
-
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException("Invalid filename: " + filename);
+    final String n = nodeName;
+    final long v = version;
+    return new ClusterConfigFilename() {
+      @Override
+      public String getNodeName() {
+        return n;
       }
 
-      this.nodeName = matcher.group(1);
-      this.version = Long.parseLong(matcher.group(2));
-    }
+      @Override
+      public long getVersion() {
+        return v;
+      }
 
-    public String getNodeName() {
-      return nodeName;
-    }
-
-    public long getVersion() {
-      return version;
-    }
-
-    public String toString() {
-      return String.format(CLUSTER_CONFIG_FILENAME_FORMAT, nodeName, version);
-    }
-
-    private static String construct(String pattern) {
-      return CLUSTER_CONFIG + pattern + EXTENSION;
-    }
-  }
-
-  class InvalidClusterConfigFilename implements ClusterConfigFilename {
-    @Override
-    public String getNodeName() {
-      return null;
-    }
-
-    @Override
-    public long getVersion() {
-      return 0L;
-    }
+      @Override
+      public String getFilename() {
+        return fileName;
+      }
+    };
   }
 }

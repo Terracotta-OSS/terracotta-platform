@@ -15,13 +15,13 @@ public class ClusterConfigFilenameTest {
   @Test
   public void testValidFilenames() {
     String[] validFilenames = {
-        "cluster-config.A.1.xml",
-        "cluster-config.1.10.xml",
-        "cluster-config.@.100.xml",
-        "cluster-config.a.9.xml",
-        "cluster-config.node-1.19.xml",
-        "cluster-config.server-1-abc_1234@@#*$.199.xml",
-        "cluster-config.A.B.1.xml"
+        "A.1.xml",
+        "1.10.xml",
+        "@.100.xml",
+        "a.9.xml",
+        "node-1.19.xml",
+        "server-1-abc_1234@@#*$.199.xml",
+        "A.B.1.xml"
     };
 
     for (String fileName : validFilenames) {
@@ -32,27 +32,27 @@ public class ClusterConfigFilenameTest {
   @Test
   public void testInvalidFilenames() {
     String[] invalidFilenames = {
-        "cluster-config.1.xml",
-        "cluster-config. .1.xml",
-        "cluster-config.09.xml",
+        "1.xml",
+        " .1.xml",
+        "09.xml",
         "cluster-configA1.xml",
         "cluster-configA1Bxml",
     };
 
     for (String fileName : invalidFilenames) {
-      assertThat(ClusterConfigFilename.from(fileName).getNodeName(), nullValue());
+      assertThat(fileName, ClusterConfigFilename.from(fileName).getNodeName(), nullValue());
     }
   }
 
   @Test
   public void testGetNodeName() {
-    assertThat(ClusterConfigFilename.from("cluster-config.node-1.19.xml").getNodeName(), is("node-1"));
-    assertThat(ClusterConfigFilename.from("cluster-config.server-1-abc_1234@@#*$.199.xml").getNodeName(), is("server-1-abc_1234@@#*$"));
+    assertThat(ClusterConfigFilename.from("node-1.19.xml").getNodeName(), is("node-1"));
+    assertThat(ClusterConfigFilename.from("server-1-abc_1234@@#*$.199.xml").getNodeName(), is("server-1-abc_1234@@#*$"));
   }
 
   @Test
   public void testGetVersion() {
-    assertThat(ClusterConfigFilename.from("cluster-config.node-1.19.xml").getVersion(), is(19L));
-    assertThat(ClusterConfigFilename.from("cluster-config.server-1-abc_1234@@#*$.199.xml").getVersion(), is(199L));
+    assertThat(ClusterConfigFilename.from("node-1.19.xml").getVersion(), is(19L));
+    assertThat(ClusterConfigFilename.from("server-1-abc_1234@@#*$.199.xml").getVersion(), is(199L));
   }
 }

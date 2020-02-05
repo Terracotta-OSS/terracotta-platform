@@ -216,22 +216,22 @@ public class NomadRepositoryManagerTest {
     Files.createDirectory(nomadRoot.resolve("sanskrit"));
     assertThat(findNodeName(nomadRoot), is(Optional.empty()));
 
-    Path configFilePath = config.resolve("cluster-config.3.node1.xml");
+    Path configFilePath = config.resolve("3.node1.xml");
     Files.createFile(configFilePath);
     assertThat(findNodeName(nomadRoot), is(Optional.empty()));
 
     Files.delete(configFilePath);
-    configFilePath = config.resolve("cluster-config.node1.3.xml");
+    configFilePath = config.resolve("node1.3.xml");
     Files.createFile(configFilePath);
     String nodeName = findNodeName(nomadRoot).get();
     assertThat(nodeName, is("node1"));
 
-    configFilePath = config.resolve("cluster-config.node1.4.xml");
+    configFilePath = config.resolve("node1.4.xml");
     Files.createFile(configFilePath);
     findNodeName(nomadRoot);
     assertThat(nodeName, is("node1"));
 
-    configFilePath = config.resolve("cluster-config.node2.4.xml");
+    configFilePath = config.resolve("node2.4.xml");
     Files.createFile(configFilePath);
     assertThat(
         () -> findNodeName(nomadRoot),
@@ -240,7 +240,7 @@ public class NomadRepositoryManagerTest {
     );
 
     Files.delete(configFilePath);
-    configFilePath = config.resolve("cluster-config.3.node1.xml");
+    configFilePath = config.resolve("3.node1.xml");
     Files.createFile(configFilePath);
     findNodeName(nomadRoot);
     assertThat(nodeName, is("node1"));

@@ -18,6 +18,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
@@ -73,5 +75,13 @@ public class FileBasedFilesystemDirectory implements FilesystemDirectory {
   public void delete(String filename) throws IOException {
     Path path = directory.resolve(filename);
     Files.deleteIfExists(path);
+  }
+
+  @Override
+  public void backup(String filename) throws IOException {
+    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
+    Path path = directory.resolve(filename);
+    Path dest = path.resolveSibling("backup-" + filename + "-" + time);
+    Files.move(path, dest);
   }
 }

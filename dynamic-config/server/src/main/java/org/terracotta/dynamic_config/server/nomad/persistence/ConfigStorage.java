@@ -8,4 +8,9 @@ public interface ConfigStorage<T> {
   T getConfig(long version) throws ConfigStorageException;
 
   void saveConfig(long version, T config) throws ConfigStorageException;
+
+  /**
+   * Clear the saved configs
+   */
+  void reset() throws ConfigStorageException;
 }

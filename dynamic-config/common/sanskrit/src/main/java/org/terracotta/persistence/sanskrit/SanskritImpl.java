@@ -35,13 +35,20 @@ public class SanskritImpl implements Sanskrit {
 
   private final FilesystemDirectory filesystemDirectory;
   private final ObjectMapper objectMapper;
-  private MutableSanskritObject data;
-  private String lastHash;
-  private String nextHashFile;
+
+  private volatile MutableSanskritObject data;
+  private volatile String lastHash;
+  private volatile String nextHashFile;
 
   public SanskritImpl(FilesystemDirectory filesystemDirectory, ObjectMapper objectMapper) throws SanskritException {
     this.filesystemDirectory = filesystemDirectory;
     this.objectMapper = objectMapper;
+    init();
+  }
+
+  private void init() throws SanskritException {
+    lastHash = null;
+    nextHashFile = null;
     this.data = newMutableSanskritObject();
 
     try {
@@ -222,6 +229,18 @@ public class SanskritImpl implements Sanskrit {
   @Override
   public MutableSanskritObject newMutableSanskritObject() {
     return new SanskritObjectImpl(objectMapper);
+  }
+
+  @Override
+  public void reset() throws SanskritException {
+    try {
+      filesystemDirectory.delete(HASH_0_FILE);
+      filesystemDirectory.delete(HASH_1_FILE);
+      filesystemDirectory.backup(APPEND_LOG_FILE);
+      init();
+    } catch (IOException e) {
+      throw new SanskritException(e);
+    }
   }
 
   private void appendChange(SanskritChange change) throws SanskritException {

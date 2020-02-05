@@ -56,4 +56,9 @@ public class LockReleasingSanskrit implements Sanskrit {
   public MutableSanskritObject newMutableSanskritObject() {
     return underlying.newMutableSanskritObject();
   }
+
+  @Override
+  public void reset() throws SanskritException {
+    underlying.reset();
+  }
 }

@@ -60,11 +60,11 @@ public class FileConfigStorageTest {
       }
     });
 
-    assertFalse(Files.exists(root.resolve("cluster-config.node-1.1.xml")));
+    assertFalse(Files.exists(root.resolve("node-1.1.xml")));
     storage.saveConfig(1L, topology);
-    assertTrue(Files.exists(root.resolve("cluster-config.node-1.1.xml")));
+    assertTrue(Files.exists(root.resolve("node-1.1.xml")));
 
-    String xmlWritten = new String(Files.readAllBytes(root.resolve("cluster-config.node-1.1.xml")), StandardCharsets.UTF_8).replace("\\", "/");
+    String xmlWritten = new String(Files.readAllBytes(root.resolve("node-1.1.xml")), StandardCharsets.UTF_8).replace("\\", "/");
 
     assertThat(xmlWritten, xmlWritten, isSimilarTo(Input.fromString(xml))
         .ignoreComments()

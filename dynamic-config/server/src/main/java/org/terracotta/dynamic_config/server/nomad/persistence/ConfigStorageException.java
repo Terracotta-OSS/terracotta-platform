@@ -7,6 +7,10 @@ package org.terracotta.dynamic_config.server.nomad.persistence;
 public class ConfigStorageException extends Exception {
   private static final long serialVersionUID = 1L;
 
+  public ConfigStorageException() {
+    super();
+  }
+
   public ConfigStorageException(Throwable cause) {
     super(cause);
   }

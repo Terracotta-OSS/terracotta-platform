@@ -147,11 +147,11 @@ public class NodeProcessorTest {
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(startupManager.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node);
-    when(cluster.getNodeCount()).thenReturn(2);
+    when(cluster.getStripeCount()).thenReturn(2);
     when(cluster.getName()).thenReturn(CLUSTER_NAME);
 
     expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Cannot auto-activate a cluster of more than 1 node");
+    expectedException.expectMessage("Unable to start a pre-activated multi-stripe cluster");
 
     nodeProcessor.process();
 

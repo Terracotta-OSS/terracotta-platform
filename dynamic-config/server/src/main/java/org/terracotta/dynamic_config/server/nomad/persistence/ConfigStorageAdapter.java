@@ -20,4 +20,9 @@ public class ConfigStorageAdapter<T> implements ConfigStorage<T> {
 
   @Override
   public void saveConfig(long version, T config) throws ConfigStorageException {delegate.saveConfig(version, config);}
+
+  @Override
+  public void reset() throws ConfigStorageException {
+    delegate.reset();
+  }
 }

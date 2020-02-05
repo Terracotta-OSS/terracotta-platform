@@ -39,19 +39,17 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   public NomadServerImpl(NomadServerState<T> state, ChangeApplicator<T> changeApplicator) throws NomadException {
     this.state = state;
     this.changeApplicator = changeApplicator;
-
-    if (!state.isInitialized()) {
-      state.applyStateChange(state.newStateChange()
-          .setMode(NomadServerMode.ACCEPTING)
-          .setCurrentVersion(0)
-          .setHighestVersion(0)
-          .setInitialized()
-      );
-    }
+    init();
   }
 
   public NomadServerImpl(NomadServerState<T> state) throws NomadException {
     this(state, null);
+  }
+
+  @Override
+  public void reset() throws NomadException {
+    state.reset();
+    init();
   }
 
   @Override
@@ -66,20 +64,21 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
-    LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
+  public List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException {
+    LinkedList<NomadChangeInfo<T>> allNomadChanges = new LinkedList<>();
     UUID changeUuid = state.getLatestChangeUuid();
     while (changeUuid != null) {
       ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
       allNomadChanges.addFirst(
-          new NomadChangeInfo(
+          new NomadChangeInfo<>(
               changeUuid,
               changeRequest.getChange(),
               changeRequest.getState(),
               changeRequest.getVersion(),
               changeRequest.getCreationHost(),
               changeRequest.getCreationUser(),
-              changeRequest.getCreationTimestamp()
+              changeRequest.getCreationTimestamp(),
+              changeRequest.getChangeResult()
           )
       );
       if (changeRequest.getPrevChangeId() != null) {
@@ -148,7 +147,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       );
     }
 
-    List<NomadChangeInfo> checkpoints = getAllNomadChanges().stream()
+    List<NomadChangeInfo<T>> checkpoints = getAllNomadChanges().stream()
         .filter(nomadChangeInfo -> nomadChangeInfo.getChangeRequestState() == COMMITTED)
         .collect(Collectors.toList());
 
@@ -309,6 +308,17 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     );
 
     return accept();
+  }
+
+  private void init() throws NomadException {
+    if (!state.isInitialized()) {
+      state.applyStateChange(state.newStateChange()
+          .setMode(NomadServerMode.ACCEPTING)
+          .setCurrentVersion(0)
+          .setHighestVersion(0)
+          .setInitialized()
+      );
+    }
   }
 
   private boolean isDead(MutativeMessage mutativeMessage) {

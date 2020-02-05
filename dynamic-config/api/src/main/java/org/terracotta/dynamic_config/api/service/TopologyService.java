@@ -69,7 +69,7 @@ public interface TopologyService {
   /**
    * @return the append log change history
    */
-  NomadChangeInfo[] getChangeHistory();
+  NomadChangeInfo<?>[] getChangeHistory();
 
   /**
    * Validate a cluster model against the license installed in the node

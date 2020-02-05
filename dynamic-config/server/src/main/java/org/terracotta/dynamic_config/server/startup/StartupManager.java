@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
 import org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.service.DynamicConfigServiceImpl;
 import org.terracotta.inet.InetSocketAddressUtils;
+import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
@@ -78,7 +79,7 @@ public class StartupManager {
     NomadServerManager nomadServerManager = bootstrap(nodeRepositoryDir, parameterSubstitutor, changeHandlerManager, new NodeContext(cluster, node.getNodeAddress()));
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.activate(cluster, optionalLicenseFile == null ? null : read(optionalLicenseFile));
-    runNomadChange(cluster, node, nomadServerManager, nodeRepositoryDir);
+    runNomadActivation(cluster, node, nomadServerManager, nodeRepositoryDir);
     return startServer(nodeRepositoryDir, nodeName, false, null);
   }
 
@@ -186,13 +187,14 @@ public class StartupManager {
     return NomadRepositoryManager.findNodeName(repositoryDir);
   }
 
-  private void runNomadChange(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
+  private void runNomadActivation(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
     requireNonNull(nodeRepositoryDir);
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), node.getNodeHostname(), "SYSTEM", Clock.systemUTC());
+    NomadEnvironment environment = new NomadEnvironment();
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrow();
-    logger.debug("Nomad change run successful");
+    logger.debug("Nomad activation run successful");
   }
 
   private String read(String path) {

@@ -7,6 +7,7 @@ package org.terracotta.nomad.server.state;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 
 import java.time.Instant;
@@ -59,6 +60,11 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
     }
 
     return Optional.ofNullable((T) state.get(Long.toString(currentVersion)));
+  }
+
+  @Override
+  public void reset() throws NomadException {
+    state.clear();
   }
 
   @Override

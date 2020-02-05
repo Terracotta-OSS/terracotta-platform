@@ -83,6 +83,11 @@ public class MemoryFilesystemDirectory implements FilesystemDirectory {
     files.remove(filename);
   }
 
+  @Override
+  public void backup(String filename) throws IOException {
+    delete(filename);
+  }
+
   private void checkFail() throws IOException {
     if (fail) {
       throw new IOException("fail");

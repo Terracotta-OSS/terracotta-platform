@@ -7,7 +7,10 @@ package org.terracotta.dynamic_config.server.sync;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
+import com.tc.exception.ZapDirtyDbServerNodeException;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.server.nomad.NomadConfigurationException;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -19,12 +22,15 @@ import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 
+import java.util.Collections;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.json.Json.parse;
 import static org.terracotta.json.Json.toJson;
+import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
+import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 
 public class DynamicConfigurationPassiveSync {
   private final UpgradableNomadServer<NodeContext> nomadServer;
@@ -43,15 +49,15 @@ public class DynamicConfigurationPassiveSync {
 
   public void sync(byte[] syncData) {
     try {
-      List<NomadChangeInfo> passiveNomadChanges = nomadServer.getAllNomadChanges();
-      List<NomadChangeInfo> activeNomadChanges = Codec.decode(syncData);
+      List<NomadChangeInfo<NodeContext>> passiveNomadChanges = nomadServer.getAllNomadChanges();
+      List<NomadChangeInfo<NodeContext>> activeNomadChanges = Codec.decode(syncData);
       applyNomadChanges(activeNomadChanges, passiveNomadChanges);
     } catch (NomadException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void applyNomadChanges(List<NomadChangeInfo> activeNomadChanges, List<NomadChangeInfo> passiveNomadChanges) throws NomadException {
+  private void applyNomadChanges(List<NomadChangeInfo<NodeContext>> activeNomadChanges, List<NomadChangeInfo<NodeContext>> passiveNomadChanges) throws NomadException {
     int activeInd = 0, passiveInd = 0;
     int activeChangesSize = activeNomadChanges.size();
     int passiveChangesSize = passiveNomadChanges.size();
@@ -61,10 +67,26 @@ public class DynamicConfigurationPassiveSync {
     }
 
     boolean restartRequired = false;
+    boolean zapDbRequired = false;
+
+    if (newPreActivatedPassiveJoins(activeNomadChanges, passiveNomadChanges)) {
+      // detect the case where we have an active server on the stripe
+      // - that has just been started pre-activated or activated from CLI
+      // - or that has been activated a while ago and its append log contains some changes
+      // And we have just started a pre-activated node, that is becoming passive.
+      // We want to include the node in the stripe, but only if it has just been activated (it is new)
+      // and its topology matches exactly the one from the active
+      nomadServer.reset();
+      passiveChangesSize = 0;
+      passiveNomadChanges = Collections.emptyList();
+
+      restartRequired = true;
+      zapDbRequired = true;
+    }
 
     for (; passiveInd < passiveChangesSize; passiveInd++, activeInd++) {
-      NomadChangeInfo passiveChange = passiveNomadChanges.get(passiveInd);
-      NomadChangeInfo activeChange = activeNomadChanges.get(activeInd);
+      NomadChangeInfo<NodeContext> passiveChange = passiveNomadChanges.get(passiveInd);
+      NomadChangeInfo<NodeContext> activeChange = activeNomadChanges.get(activeInd);
       if (!passiveChange.equals(activeChange)) {
         // if the change is not the same, we check if this is because the latest change on the passive server is PREPARED and
         // on the active server it has been rolled back or committed. If yes, we do not prevent the sync, because it will fix
@@ -82,15 +104,50 @@ public class DynamicConfigurationPassiveSync {
 
     //Apply all the remaining changes from active
     while (activeInd < activeChangesSize) {
-      restartRequired |= tryCommitingChanges(activeNomadChanges.get(activeInd++));
+      restartRequired |= tryCommittingChanges(activeNomadChanges.get(activeInd++));
     }
 
-    if (restartRequired) {
+    if (restartRequired && zapDbRequired) {
+      throw new ZapDirtyDbServerNodeException("Restarting server");
+    } else if (restartRequired) {
       throw new TCServerRestartException("Restarting server");
     }
   }
 
-  private void sendPrepare(long mutativeMessageCount, UpgradableNomadServer<NodeContext> nomadServer, NomadChangeInfo nomadChangeInfo) throws NomadException {
+  private boolean newPreActivatedPassiveJoins(List<NomadChangeInfo<NodeContext>> activeNomadChanges, List<NomadChangeInfo<NodeContext>> passiveNomadChanges) {
+    if (activeNomadChanges.isEmpty() || passiveNomadChanges.isEmpty()) {
+      throw new AssertionError();
+    }
+
+    NomadChangeInfo<NodeContext> info = passiveNomadChanges.get(0);
+    Cluster passiveTopology = info.getResult().getCluster();
+
+    if (passiveNomadChanges.size() != 1
+        || activeNomadChanges.get(0).equals(info)
+        || info.getChangeRequestState() != COMMITTED
+        || !(info.getNomadChange() instanceof ClusterActivationNomadChange)) {
+      // - if passive and active both have the exact same activated config at the append log beginning, the activation comes from the CLI
+      // - entry must be committed in case of a pre-activation
+      // - there must be 1 entry in case of a pre-activation
+      // - entry must be an activation in case of a pre-activation
+      return false;
+    }
+
+    // lookup active changes (reverse order) to find the latest change in force
+    for (int i = activeNomadChanges.size() - 1; i >= 0; i--) {
+      NomadChangeInfo<NodeContext> changeInfo = activeNomadChanges.get(i);
+      if (changeInfo.getChangeRequestState() == COMMITTED) {
+        // we have found the last topology change in the active
+        // we check if yje new passive has joined with the exact same committed config on the active
+        return changeInfo.getResult().getCluster().equals(passiveTopology);
+      }
+    }
+
+    // we were not able to find any committed changed on active... weird...
+    return false;
+  }
+
+  private void sendPrepare(long mutativeMessageCount, UpgradableNomadServer<NodeContext> nomadServer, NomadChangeInfo<NodeContext> nomadChangeInfo) throws NomadException {
     PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid(),
         nomadChangeInfo.getVersion(), nomadChangeInfo.getNomadChange());
 
@@ -100,7 +157,7 @@ public class DynamicConfigurationPassiveSync {
     }
   }
 
-  private boolean tryCommitingChanges(NomadChangeInfo nomadChangeInfo) throws NomadException {
+  private boolean tryCommittingChanges(NomadChangeInfo<NodeContext> nomadChangeInfo) throws NomadException {
     DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
     long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
 
@@ -136,10 +193,10 @@ public class DynamicConfigurationPassiveSync {
     }
   }
 
-  private boolean fixPreparedChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
+  private boolean fixPreparedChange(NomadChangeInfo<NodeContext> nomadChangeInfo) throws NomadException {
     DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
     long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
-    if (discoverResponse.getLatestChange().getState() != ChangeRequestState.PREPARED) {
+    if (discoverResponse.getLatestChange().getState() != PREPARED) {
       throw new AssertionError("Expected PREPARED state in change " + discoverResponse.getLatestChange());
     }
 
@@ -170,12 +227,12 @@ public class DynamicConfigurationPassiveSync {
   }
 
   static class Codec {
-    static byte[] encode(List<NomadChangeInfo> nomadChanges) {
+    static byte[] encode(List<NomadChangeInfo<NodeContext>> nomadChanges) {
       return toJson(requireNonNull(nomadChanges)).getBytes(UTF_8);
     }
 
-    static List<NomadChangeInfo> decode(byte[] encoded) {
-      return parse(new String(encoded, UTF_8), new TypeReference<List<NomadChangeInfo>>() {
+    static List<NomadChangeInfo<NodeContext>> decode(byte[] encoded) {
+      return parse(new String(encoded, UTF_8), new TypeReference<List<NomadChangeInfo<NodeContext>>>() {
       });
     }
   }

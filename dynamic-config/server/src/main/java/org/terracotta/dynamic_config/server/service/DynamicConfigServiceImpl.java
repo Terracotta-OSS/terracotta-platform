@@ -264,9 +264,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public NomadChangeInfo[] getChangeHistory() {
+  public NomadChangeInfo<?>[] getChangeHistory() {
     try {
-      return nomadServerManager.getNomadServer().getAllNomadChanges().toArray(new NomadChangeInfo[0]);
+      return nomadServerManager.getNomadServer().getAllNomadChanges().toArray(new NomadChangeInfo<?>[0]);
     } catch (NomadException e) {
       throw new IllegalStateException(e);
     }
