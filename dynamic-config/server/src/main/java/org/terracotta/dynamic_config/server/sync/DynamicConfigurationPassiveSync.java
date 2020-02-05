@@ -119,13 +119,13 @@ public class DynamicConfigurationPassiveSync {
       throw new AssertionError();
     }
 
-    NomadChangeInfo<NodeContext> info = passiveNomadChanges.get(0);
-    Cluster passiveTopology = info.getResult().getCluster();
+    NomadChangeInfo<NodeContext> passiveNomadChangeInfo = passiveNomadChanges.get(0);
+    Cluster passiveTopology = passiveNomadChangeInfo.getResult().getCluster();
 
     if (passiveNomadChanges.size() != 1
-        || activeNomadChanges.get(0).equals(info)
-        || info.getChangeRequestState() != COMMITTED
-        || !(info.getNomadChange() instanceof ClusterActivationNomadChange)) {
+        || activeNomadChanges.get(0).equals(passiveNomadChangeInfo)
+        || passiveNomadChangeInfo.getChangeRequestState() != COMMITTED
+        || !(passiveNomadChangeInfo.getNomadChange() instanceof ClusterActivationNomadChange)) {
       // - if passive and active both have the exact same activated config at the append log beginning, the activation comes from the CLI
       // - entry must be committed in case of a pre-activation
       // - there must be 1 entry in case of a pre-activation
@@ -138,7 +138,7 @@ public class DynamicConfigurationPassiveSync {
       NomadChangeInfo<NodeContext> changeInfo = activeNomadChanges.get(i);
       if (changeInfo.getChangeRequestState() == COMMITTED) {
         // we have found the last topology change in the active
-        // we check if yje new passive has joined with the exact same committed config on the active
+        // we check if the new passive has joined with the exact same committed config on the active
         return changeInfo.getResult().getCluster().equals(passiveTopology);
       }
     }

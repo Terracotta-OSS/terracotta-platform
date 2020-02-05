@@ -188,16 +188,16 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
     try {
       sanskrit.reset();
     } catch (SanskritException e) {
-      error = new NomadException();
-      error.addSuppressed(e);
+      error = new NomadException(e);
     }
     try {
       configStorage.reset();
     } catch (ConfigStorageException e) {
       if (error == null) {
-        error = new NomadException();
+        error = new NomadException(e);
+      } else {
+        error.addSuppressed(e);
       }
-      error.addSuppressed(e);
     }
     if (error != null) {
       throw error;

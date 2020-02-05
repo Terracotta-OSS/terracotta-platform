@@ -16,14 +16,14 @@ public class AutoActivateIT extends DynamicConfigIT {
   public void test_auto_activation_failure_for_2x1_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/2x1.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort()), "--node-repository-dir", "repository/stripe1/node-1");
-    waitUntil(out::getLog, containsString("Unable to start a pre-activated multi-stripe cluster"));
+    waitUntil(out::getLog, containsString("Cannot start a pre-activated multistripe cluster"));
   }
 
   @Test
   public void test_auto_activation_failure_for_2x2_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/2x2.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort()), "--node-repository-dir", "repository/stripe1/node-1");
-    waitUntil(out::getLog, containsString("Unable to start a pre-activated multi-stripe cluster"));
+    waitUntil(out::getLog, containsString("Cannot start a pre-activated multistripe cluster"));
   }
 
   @Test

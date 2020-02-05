@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -60,7 +61,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
   @Override
   public void reset() throws ConfigStorageException {
     String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
-    ConfigStorageException error = new ConfigStorageException();
+    AtomicReference<ConfigStorageException> error = new AtomicReference<>();
     try (Stream<Path> stream = Files.list(root)) {
       stream.filter(Files::isRegularFile).forEach(config -> {
         String filename = config.getFileName().toString();
@@ -70,15 +71,19 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
           try {
             Files.move(config, backup);
           } catch (IOException ioe) {
-            error.addSuppressed(ioe);
+            if (error.get() == null) {
+              error.set(new ConfigStorageException(ioe));
+            } else {
+              error.get().addSuppressed(ioe);
+            }
           }
         }
       });
     } catch (IOException e) {
       throw new ConfigStorageException(e);
     }
-    if (error.getSuppressed().length > 0) {
-      throw error;
+    if (error.get() != null) {
+      throw error.get();
     }
   }
 
