@@ -186,18 +186,7 @@ public class CustomTCConfigurationParser {
     if (server.getLogs() == null) {
       server.setLogs(DEFAULT_LOGS + "/%h-" + server.getTsaPort().getValue());
     }
-    // [DYNAMIC-CONFIG]
-    // We not not alow replacement because we want to keep user input during parsing
-    //server.setLogs(getAbsolutePath(ParameterSubstitutor.substitute(server.getLogs()), new File(source!= null ? source: ".")));
-  }
-
-  private static String getAbsolutePath(String substituted, File directoryLoadedFrom) {
-    File out = new File(substituted);
-    if (!out.isAbsolute()) {
-      out = new File(directoryLoadedFrom, substituted);
-    }
-
-    return out.toPath().normalize().toString();
+    // Note: Do not perform parameter-substitution because we want to keep user input during parsing
   }
 
   private static void initializeTsaGroupPort(Server server) {
@@ -227,11 +216,7 @@ public class CustomTCConfigurationParser {
       server.setName(server.getHost() + (tsaPort > 0 ? ":" + tsaPort : ""));
     }
 
-    // [DYNAMIC-CONFIG]
-    // We not not alow replacement because we want to keep user input during parsing
-    // CDV-77: add parameter expansion to the <server> attributes ('host' and 'name')
-    //server.setHost(ParameterSubstitutor.substitute(server.getHost()));
-    //server.setName(ParameterSubstitutor.substitute(server.getName()));
+    // Note: Do not perform parameter-substitution because we want to keep user input during parsing
   }
 
   private static void setDefaultBind(Server s) {

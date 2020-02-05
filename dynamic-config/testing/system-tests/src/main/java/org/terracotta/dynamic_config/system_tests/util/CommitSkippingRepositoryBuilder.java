@@ -5,7 +5,7 @@
 package org.terracotta.dynamic_config.system_tests.util;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.server.migration.RepositoryStructureBuilder;
+import org.terracotta.dynamic_config.server.conversion.RepositoryStructureBuilder;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;

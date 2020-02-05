@@ -4,8 +4,8 @@
  */
 package org.terracotta.dynamic_config.system_tests.util;
 
-import org.terracotta.dynamic_config.server.migration.MigrationImpl;
-import org.terracotta.dynamic_config.server.migration.RepositoryStructureBuilder;
+import org.terracotta.dynamic_config.server.conversion.ConfigConvertor;
+import org.terracotta.dynamic_config.server.conversion.RepositoryStructureBuilder;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -15,13 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static java.nio.file.Files.copy;
 import static java.nio.file.Files.createDirectories;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertFalse;
 
 /**
@@ -39,31 +36,26 @@ public class ConfigRepositoryGenerator {
   }
 
   public void generate2Stripes2Nodes() {
-    migrate(
-        asList(
-            "1," + substituteParams(2, "/tc-configs/stripe1-2-nodes.xml"),
-            "2," + substituteParams(2, "/tc-configs/stripe2-2-nodes.xml")
-        )
-    );
+    convert(substituteParams(2, "/tc-configs/stripe1-2-nodes.xml"), substituteParams(2, "/tc-configs/stripe2-2-nodes.xml"));
   }
 
   public void generate1Stripe2Nodes() {
-    migrate(singletonList("1," + substituteParams(2, "/tc-configs/stripe1-2-nodes.xml")));
+    convert(substituteParams(2, "/tc-configs/stripe1-2-nodes.xml"));
   }
 
   public void generate1Stripe1NodeIpv6() {
-    migrate(singletonList("1," + substituteParams(1, "/tc-configs/stripe1-1-node_ipv6.xml")));
+    convert(substituteParams(1, "/tc-configs/stripe1-1-node_ipv6.xml"));
   }
 
   public void generate1Stripe1Node() {
-    migrate(singletonList("1," + substituteParams(1, "/tc-configs/stripe1-1-node.xml")));
+    convert(substituteParams(1, "/tc-configs/stripe1-1-node.xml"));
   }
 
   public void generate1Stripe1NodeAndSkipCommit() {
-    migrate(singletonList("1," + substituteParams(1, "/tc-configs/stripe1-1-node.xml")), true);
+    convert(true, substituteParams(1, "/tc-configs/stripe1-1-node.xml"));
   }
 
-  private Path substituteParams(int nodes, String s) {
+  private Path substituteParams(int nodes, String path) {
     int portsNeeded = 2 * nodes; // one for port and group-port each
     if (ports.length - inUse < portsNeeded) {
       throw new IllegalArgumentException("Not enough ports to use. Required: " + portsNeeded + ", found: " + (ports.length - inUse));
@@ -71,7 +63,7 @@ public class ConfigRepositoryGenerator {
 
     String defaultConfig;
     try {
-      defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigRepositoryGenerator.class.getResource(s).toURI())));
+      defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigRepositoryGenerator.class.getResource(path).toURI())));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     } catch (URISyntaxException e) {
@@ -93,18 +85,17 @@ public class ConfigRepositoryGenerator {
     }
   }
 
-  private void migrate(List<String> migrationStrings) {
-    migrate(migrationStrings, false);
+  private void convert(Path... tcConfigPaths) {
+    convert(false, tcConfigPaths);
   }
 
-  private void migrate(List<String> migrationStrings, boolean skipCommit) {
+  private void convert(boolean skipCommit, Path... tcConfigPaths) {
     try {
       assertFalse("Directory already exists: " + root, Files.exists(root));
       createDirectories(root);
-      RepositoryStructureBuilder resultProcessor =
-          skipCommit ? new CommitSkippingRepositoryBuilder(root) : new RepositoryStructureBuilder(root);
-      MigrationImpl migration = new MigrationImpl(resultProcessor::process);
-      migration.processInput("testCluster", migrationStrings);
+      RepositoryStructureBuilder resultProcessor = skipCommit ? new CommitSkippingRepositoryBuilder(root) : new RepositoryStructureBuilder(root);
+      ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
+      convertor.processInput("testCluster", tcConfigPaths);
 
       URL licenseUrl = ConfigRepositoryGenerator.class.getResource("/license.xml");
       if (licenseUrl != null) {
