@@ -30,7 +30,6 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
 
-    //TODO [DYNAMIC-CONFIG]: TDB-4711 see if we can detect if a data-dir is in use
     try {
       String dataDirectoryName = change.getKey();
       String dataDirectoryPath = change.getValue();

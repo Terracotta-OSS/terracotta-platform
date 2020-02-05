@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 
@@ -138,21 +137,6 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
     );
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(PARAMETER_SUBSTITUTOR.substitute("%c")));
-  }
-
-  @Test
-  //TODO [DYNAMIC-CONFIG]: Un-ignore this test once this bug is fixed in parser
-  @Ignore("TCConfigurationParser doesn't substitute tsa-port bind value")
-  public void testSuccessfulStartupCliParamsContainingSubstitutionParamsAndLicense() throws Exception {
-    startSingleNode(
-        "--node-port", String.valueOf(getNodePort()),
-        "--node-repository-dir", getNodeRepositoryDir().toString(),
-        "--node-hostname", "%h",
-        "--node-bind-address", "%i",
-        "--cluster-name", "tc-cluster",
-        "--node-repository-dir", "%(user.dir)/repository/stripe1/node-1"
-    );
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
