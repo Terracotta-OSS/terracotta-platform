@@ -78,7 +78,6 @@ public class Kit {
     }
     try {
       Path rootPath = Env.getProjectRootPath();
-      System.out.println("Building KIT...");
       AnyProcess process = AnyProcess.newBuilder()
           .workingDir(rootPath.toFile())
           .command(rootPath.resolve(Env.isWindows() ? "gradlew.bat" : "gradlew").toString(), ":dynamic-config-system-tests:unzipKit")

@@ -11,8 +11,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.lang.reflect.Method;
-
 import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -85,9 +83,6 @@ public class TerracottaMBeanGeneratorTest {
     MyService2<String> delegate = mock(MyService2.class);
     when(delegate.say(ArgumentMatchers.any())).thenReturn("Hello you");
     Class<? extends TerracottaMBean> mBeanInterface = generator.generateMBeanInterface(MyService2.class);
-    for (Method method : mBeanInterface.getMethods()) {
-      System.out.println(method);
-    }
     TerracottaMBean mBean = generator.generateMBeanImplementation(mBeanInterface, MyService2.class, new MyServiceImpl2<>(delegate));
     assertThat(mBean, is(instanceOf(mBeanInterface)));
     verifyMBean(mBean);
