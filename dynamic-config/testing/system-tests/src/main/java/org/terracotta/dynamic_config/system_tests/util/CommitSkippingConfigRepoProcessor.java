@@ -5,7 +5,7 @@
 package org.terracotta.dynamic_config.system_tests.util;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.server.conversion.RepositoryStructureBuilder;
+import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -17,9 +17,9 @@ import org.terracotta.nomad.server.NomadServer;
 
 import java.nio.file.Path;
 
-public class CommitSkippingRepositoryBuilder extends RepositoryStructureBuilder {
+public class CommitSkippingConfigRepoProcessor extends ConfigRepoProcessor {
 
-  public CommitSkippingRepositoryBuilder(Path outputFolderPath) {
+  public CommitSkippingConfigRepoProcessor(Path outputFolderPath) {
     super(outputFolderPath);
   }
 

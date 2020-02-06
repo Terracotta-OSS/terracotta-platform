@@ -51,7 +51,7 @@ public class ConfigConvertorTest {
 
   @Before
   public void setUp() {
-    RepositoryStructureBuilder processor = mock(RepositoryStructureBuilder.class);
+    PostConversionProcessor processor = mock(ConfigRepoProcessor.class);
     convertor = new ConfigConvertor(processor);
   }
 

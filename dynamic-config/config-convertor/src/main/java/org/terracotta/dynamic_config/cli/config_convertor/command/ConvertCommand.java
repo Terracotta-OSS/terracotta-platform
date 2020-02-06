@@ -10,8 +10,11 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.config_convertor.ConversionFormat;
 import org.terracotta.dynamic_config.server.conversion.ConfigConvertor;
-import org.terracotta.dynamic_config.server.conversion.RepositoryStructureBuilder;
+import org.terracotta.dynamic_config.server.conversion.ConfigPropertiesProcessor;
+import org.terracotta.dynamic_config.server.conversion.PostConversionProcessor;
+import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -22,6 +25,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.cli.config_convertor.ConversionFormat.PROPERTIES;
+import static org.terracotta.dynamic_config.cli.config_convertor.ConversionFormat.REPOSITORY;
 
 @Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration repository format")
 @Usage("convert -c <tc-config>,<tc-config>... -n <new-cluster-name> [-d <destination-dir>] [-f]")
@@ -38,6 +43,9 @@ public class ConvertCommand extends Command {
   @Parameter(names = {"-n"}, required = true, description = "New cluster name")
   private String newClusterName;
 
+  @Parameter(names = {"-t"}, description = "Conversion type (repository|properties). Default: repository", converter = ConversionFormat.FormatConverter.class)
+  private ConversionFormat conversionFormat = REPOSITORY;
+
   @Parameter(names = {"-f"}, description = "Force a config conversion, ignoring warnings, if any. Default: false")
   private boolean force;
 
@@ -52,28 +60,42 @@ public class ConvertCommand extends Command {
     if (Files.exists(destinationDir)) {
       throw new ParameterException("Destination directory: " + destinationDir.toAbsolutePath().normalize() + " exists already. Please specify a non-existent directory");
     }
+
+    if (licensePath != null && conversionFormat == PROPERTIES) {
+      throw new ParameterException("Path to license file can only be provided for conversion to a config repository");
+    }
   }
 
   @Override
   public final void run() {
-    RepositoryStructureBuilder resultProcessor = new RepositoryStructureBuilder(destinationDir);
-    ConfigConvertor convertor = new ConfigConvertor(resultProcessor, force);
-    convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
-    if (licensePath != null) {
-      try (Stream<Path> pathList = Files.list(destinationDir)) {
-        pathList.forEach(repoPath -> {
-          try {
-            Path destLicenseDir = Files.createDirectories(repoPath.resolve("license")).resolve(licensePath.getFileName());
-            Files.copy(licensePath, destLicenseDir);
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
-          }
-        });
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
+    if (conversionFormat == REPOSITORY) {
+      PostConversionProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
+      ConfigConvertor convertor = new ConfigConvertor(resultProcessor, force);
+      convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
+      if (licensePath != null) {
+        try (Stream<Path> pathList = Files.list(destinationDir)) {
+          pathList.forEach(repoPath -> {
+            try {
+              Path destLicenseDir = Files.createDirectories(repoPath.resolve("license")).resolve(licensePath.getFileName());
+              Files.copy(licensePath, destLicenseDir);
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
       }
+      logger.info("Configuration repositories saved under: {}", destinationDir.toAbsolutePath().normalize());
+    } else if (conversionFormat == PROPERTIES){
+      PostConversionProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
+      ConfigConvertor convertor = new ConfigConvertor(resultProcessor, force);
+      convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
+      logger.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());
+    } else {
+      throw new AssertionError("Unexpected conversion format: " + conversionFormat);
     }
-    logger.info("Configuration repositories saved under: {}", destinationDir.toAbsolutePath().normalize());
+
     logger.info("Command successful!" + lineSeparator());
   }
 }

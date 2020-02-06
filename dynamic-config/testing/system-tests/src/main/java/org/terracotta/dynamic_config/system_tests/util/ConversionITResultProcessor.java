@@ -5,13 +5,13 @@
 package org.terracotta.dynamic_config.system_tests.util;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.server.conversion.RepositoryStructureBuilder;
+import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.nio.file.Path;
 import java.util.Map;
 
-public class ConversionITResultProcessor extends RepositoryStructureBuilder {
+public class ConversionITResultProcessor extends ConfigRepoProcessor {
   private final Map<String, NomadServer<NodeContext>> serverMap;
 
   public ConversionITResultProcessor(Path outputFolderPath, Map<String, NomadServer<NodeContext>> serverMap) {

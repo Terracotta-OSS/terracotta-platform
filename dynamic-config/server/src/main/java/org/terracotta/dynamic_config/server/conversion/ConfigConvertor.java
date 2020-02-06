@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
@@ -69,15 +70,15 @@ public class ConfigConvertor {
   private final Map<Path, Node> configFileRootNodeMap = new HashMap<>();
   private final List<String> allServers = new ArrayList<>();
   private final Map<Integer, List<String>> stripeServerNameMap = new HashMap<>();
-  private final RepositoryStructureBuilder repositoryBuilder;
+  private final PostConversionProcessor postConversionProcessor;
   private final boolean acceptRelativePaths;
 
-  public ConfigConvertor(RepositoryStructureBuilder resultProcessor) {
-    this(resultProcessor, false);
+  public ConfigConvertor(PostConversionProcessor conversionProcessor) {
+    this(conversionProcessor, false);
   }
 
-  public ConfigConvertor(RepositoryStructureBuilder resultProcessor, boolean acceptRelativePaths) {
-    this.repositoryBuilder = resultProcessor;
+  public ConfigConvertor(PostConversionProcessor postConversionProcessor, boolean acceptRelativePaths) {
+    this.postConversionProcessor = requireNonNull(postConversionProcessor);
     this.acceptRelativePaths = acceptRelativePaths;
   }
 
@@ -92,11 +93,11 @@ public class ConfigConvertor {
     for (Map.Entry<Integer, Path> stringPathEntry : configFilePerStripeMap.entrySet()) {
       createServerConfigMapFunction(stripeServerConfigNodeMap, stringPathEntry.getKey(), stringPathEntry.getValue());
     }
-    LOGGER.debug("Checking if deprecated platform-persistence needs to be converted to data-directory. Will convert if found.");
+    LOGGER.trace("Checking if deprecated platform-persistence needs to be converted to data-directory. Will convert if found.");
     handlePlatformPersistence(configFileRootNodeMap);
-    LOGGER.debug("Validating contents of the configuration files");
+    LOGGER.trace("Validating contents of the configuration files");
     valueValidators();
-    LOGGER.debug("Building Cluster");
+    LOGGER.trace("Building Cluster");
     buildCluster(clusterName, stripeServerConfigNodeMap);
   }
 
@@ -374,10 +375,7 @@ public class ConfigConvertor {
     validateProvidedConfiguration(hostConfigMapNode, allServers);
     ClusteredConfigBuilder clusteredConfigBuilder = new ClusteredConfigBuilder(hostConfigMapNode, stripeServerNameMap);
     clusteredConfigBuilder.createEntireCluster(clusterName);
-
-    if (repositoryBuilder != null) {
-      repositoryBuilder.process(hostConfigMapNode, acceptRelativePaths);
-    }
+    postConversionProcessor.process(hostConfigMapNode, acceptRelativePaths);
   }
 
   /*

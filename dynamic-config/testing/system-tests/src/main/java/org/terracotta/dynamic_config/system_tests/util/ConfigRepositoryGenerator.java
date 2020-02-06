@@ -5,7 +5,8 @@
 package org.terracotta.dynamic_config.system_tests.util;
 
 import org.terracotta.dynamic_config.server.conversion.ConfigConvertor;
-import org.terracotta.dynamic_config.server.conversion.RepositoryStructureBuilder;
+import org.terracotta.dynamic_config.server.conversion.PostConversionProcessor;
+import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -93,7 +94,7 @@ public class ConfigRepositoryGenerator {
     try {
       assertFalse("Directory already exists: " + root, Files.exists(root));
       createDirectories(root);
-      RepositoryStructureBuilder resultProcessor = skipCommit ? new CommitSkippingRepositoryBuilder(root) : new RepositoryStructureBuilder(root);
+      PostConversionProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
       ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
       convertor.processInput("testCluster", tcConfigPaths);
 
