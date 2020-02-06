@@ -15,6 +15,8 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
@@ -27,6 +29,8 @@ import org.terracotta.dynamic_config.api.service.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.ClusterActivationNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.nomad.processor.NodeAdditionNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.nomad.processor.NodeRemovalNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.SettingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager;
@@ -173,6 +177,8 @@ public class NomadBootstrapper {
 
       RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, listener))
+          .register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, listener))
+          .register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, listener))
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));

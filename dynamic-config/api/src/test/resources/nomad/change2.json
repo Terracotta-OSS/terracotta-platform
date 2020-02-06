@@ -1,56 +1,29 @@
 {
-  "type": "ConfigRepairNomadChange",
-  "cluster": {
-    "name": "myClusterName",
-    "stripes": [
-      {
-        "nodes": [
-          {
-            "clientLeaseDuration": {
-              "quantity": 150,
-              "unit": "SECONDS",
-              "type": "TIME"
-            },
-            "clientReconnectWindow": {
-              "quantity": 60,
-              "unit": "SECONDS",
-              "type": "TIME"
-            },
-            "dataDirs": {
-              "main": "%H/terracotta/user-data/main"
-            },
-            "failoverPriority": "availability",
-            "nodeBindAddress": "0.0.0.0",
-            "nodeGroupBindAddress": "0.0.0.0",
-            "nodeGroupPort": 9430,
-            "nodeHostname": "localhost",
-            "nodeLogDir": "%H/terracotta/logs",
-            "nodeLoggerOverrides": {},
-            "nodeMetadataDir": "%H/terracotta/metadata",
-            "nodeName": "foo",
-            "nodePort": 9410,
-            "offheapResources": {
-              "foo": {
-                "quantity": 1,
-                "unit": "GB",
-                "type": "MEMORY"
-              },
-              "main": {
-                "quantity": 512,
-                "unit": "MB",
-                "type": "MEMORY"
-              }
-            },
-            "securitySslTls": false,
-            "securityWhitelist": false,
-            "tcProperties": {}
-          }
-        ]
-      }
-    ]
-  },
-  "applicability": {
-    "scope": "CLUSTER"
-  },
-  "summary": "Repairing configuration"
+  "type": "MultipleNomadChanges",
+  "changes": [
+    {
+      "type": "SettingNomadChange",
+      "applicability": {
+        "nodeName": "node1",
+        "scope": "NODE",
+        "stripeId": 1
+      },
+      "operation": "SET",
+      "setting": "NODE_BACKUP_DIR",
+      "value": "backup",
+      "summary": "set node-backup-dir=backup (stripe ID: 1, node: node1)"
+    },
+    {
+      "type": "SettingNomadChange",
+      "applicability": {
+        "scope": "CLUSTER"
+      },
+      "name": "bar",
+      "operation": "SET",
+      "setting": "OFFHEAP_RESOURCES",
+      "value": "512MB",
+      "summary": "set offheap-resources.bar=512MB"
+    }
+  ],
+  "summary": "set node-backup-dir=backup (stripe ID: 1, node: node1) then set offheap-resources.bar=512MB"
 }

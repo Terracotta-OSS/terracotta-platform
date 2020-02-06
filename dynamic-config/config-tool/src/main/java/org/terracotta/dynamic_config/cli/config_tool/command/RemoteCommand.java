@@ -34,10 +34,12 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -49,6 +51,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.diagnostic.common.LogicalServerState.UNREACHABLE;
 
@@ -145,6 +148,15 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
+  protected final void setUpcomingCluster(Collection<InetSocketAddress> expectedOnlineNodes, Cluster cluster) {
+    logger.trace("setUpcomingCluster({})", expectedOnlineNodes);
+    for (InetSocketAddress expectedOnlineNode : expectedOnlineNodes) {
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+        diagnosticService.getProxy(DynamicConfigService.class).setUpcomingCluster(cluster);
+      }
+    }
+  }
+
   protected final Cluster getRuntimeCluster(InetSocketAddress expectedOnlineNode) {
     logger.trace("getRuntimeCluster({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
@@ -225,6 +237,47 @@ public abstract class RemoteCommand extends Command {
             LinkedHashMap::new));
   }
 
+  /**
+   * IMPORTANT NOTE:
+   * - onlineNodes comes from the runtime topology
+   * - cluster comes from the upcoming topology
+   * So this method will also validate that if a restart is needed because a hostname/port change has been done,
+   * if the hostname/port change that is pending impacts one of the active node, then we might not find the actives
+   * in the stripes.
+   */
+  protected final void ensurePassivesAreAllOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+    List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
+    List<InetSocketAddress> passives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isPassive()).map(Map.Entry::getKey).collect(toList());
+    Set<InetSocketAddress> expectedPassives = new HashSet<>(cluster.getNodeAddresses());
+    expectedPassives.removeAll(actives);
+    if (!passives.containsAll(expectedPassives)) {
+      throw new IllegalStateException("Not all cluster nodes are online: expected passive nodes " + toString(expectedPassives) + ", but only got: " + toString(passives)
+          + ". Either some nodes are shutdown, either a hostname/port change has been made and the cluster has not yet been restarted.");
+    }
+  }
+
+  protected final void ensureActivesAreAllOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+    if (onlineNodes.isEmpty()) {
+      throw new IllegalStateException("Expected 1 active per stripe, but found no online node.");
+    }
+    // actives == list of current active nodes in the runtime topology
+    List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
+    // Check for stripe count. Whether there is a pending dynamic config change or not, the stripe count is not changing.
+    // The stripe count only changes in case of a runtime topology change, which is another case.
+    if (cluster.getStripeCount() != actives.size()) {
+      throw new IllegalStateException("Expected 1 active per stripe, but only these nodes are active: " + toString(actives));
+    }
+  }
+
+  protected final void ensureNodesAreEitherActiveOrPassive(Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+    onlineNodes.forEach((addr, state) -> {
+      if (!state.isActive() && !state.isPassive()) {
+        throw new IllegalStateException("Unable to update node: " + addr + " that is currently in state: " + state
+            + ". Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update.");
+      }
+    });
+  }
+
   protected final boolean isActivated(InetSocketAddress expectedOnlineNode) {
     logger.trace("getRuntimeCluster({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
@@ -242,7 +295,7 @@ public abstract class RemoteCommand extends Command {
         throw new IllegalArgumentException("Cluster is empty or offline");
       }
       if (activations.size() == 2) {
-        throw new IllegalStateException("Cluster contains a mix of activated and unconfigured nodes (or being repaired). " +
+        throw new IllegalStateException("Detected a mix of activated and unconfigured nodes (or being repaired). " +
             "Activated: " + activations.get(Boolean.TRUE) + ", " +
             "Unconfigured: " + activations.get(Boolean.FALSE));
       }

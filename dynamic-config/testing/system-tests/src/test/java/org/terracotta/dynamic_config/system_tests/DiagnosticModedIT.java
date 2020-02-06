@@ -76,12 +76,12 @@ public class DiagnosticModedIT extends DynamicConfigIT {
     assertThat(
         () -> ConfigTool.start("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.something=value"),
         is(throwing(instanceOf(IllegalStateException.class))
-            .andMessage(containsString("Cluster contains a mix of activated and unconfigured nodes (or being repaired)."))));
+            .andMessage(containsString("Detected a mix of activated and unconfigured nodes (or being repaired)."))));
 
     // unable to trigger a change on the cluster from any other node
     assertThat(
         () -> ConfigTool.start("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "stripe.2.node.1.tc-properties.something=value"),
         is(throwing(instanceOf(IllegalStateException.class))
-            .andMessage(containsString("Cluster contains a mix of activated and unconfigured nodes (or being repaired)."))));
+            .andMessage(containsString("Detected a mix of activated and unconfigured nodes (or being repaired)."))));
   }
 }

@@ -17,10 +17,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.client.change.MultipleNomadChanges;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
@@ -101,44 +98,6 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     }
 
     logger.info("Command successful!" + lineSeparator());
-  }
-
-  /**
-   * IMPORTANT NOTE:
-   * - onlineNodes comes from the runtime topology
-   * - cluster comes from the upcoming topology
-   * So this method will also validate that if a restart is needed because a hostname/port change has been done,
-   * if the hostname/port change that is pending impacts one of the active node, then we might not find the actives
-   * in the stripes.
-   */
-  private void ensurePassivesAreAllOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
-    List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
-    List<InetSocketAddress> passives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isPassive()).map(Map.Entry::getKey).collect(toList());
-    Set<InetSocketAddress> expectedPassives = new HashSet<>(cluster.getNodeAddresses());
-    expectedPassives.removeAll(actives);
-    if (!passives.containsAll(expectedPassives)) {
-      throw new IllegalStateException("Not all cluster nodes are online: expected passive nodes " + toString(expectedPassives) + ", but only got: " + toString(passives)
-          + ". Either some nodes are shutdown, either a hostname/port change has been made and the cluster has not yet been restarted.");
-    }
-  }
-
-  private void ensureActivesAreAllOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
-    // actives == list of current active nodes in the runtime topology
-    List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
-    // Check for stripe count. Whether there is a pending dynamic config change or not, the stripe count is not changing.
-    // The stripe count only changes in case of a runtime topology change, which is another case.
-    if (cluster.getStripeCount() != actives.size()) {
-      throw new IllegalStateException("Expected 1 active per stripe, but only these nodes are active: " + toString(actives));
-    }
-  }
-
-  private void ensureNodesAreEitherActiveOrPassive(Map<InetSocketAddress, LogicalServerState> onlineNodes) {
-    onlineNodes.forEach((addr, state) -> {
-      if (!state.isActive() && !state.isPassive()) {
-        throw new IllegalStateException("Unable to update node: " + addr + " that is currently in state: " + state
-            + ". Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update.");
-      }
-    });
   }
 
   private MultipleNomadChanges getNomadChanges(Cluster cluster) {

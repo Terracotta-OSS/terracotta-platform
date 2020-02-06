@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.cli.command.Injector.inject;
-import static org.terracotta.dynamic_config.cli.config_tool.converter.AttachmentType.NODE;
+import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -28,7 +28,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   @Test
   public void test_defaults() {
     C command = newCommand();
-    assertThat(command.getAttachmentType(), is(equalTo(NODE)));
+    assertThat(command.getOperationType(), is(equalTo(NODE)));
     assertThat(command.getSources(), is(equalTo(Collections.emptyList())));
     assertThat(command.getDestination(), is(nullValue()));
     assertThat(Metadata.getName(command), is(equalTo(command.getClass().getSimpleName().toLowerCase().substring(0, 6))));
@@ -38,7 +38,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   public void test_validate_failures() {
     assertThat(
         () -> newCommand()
-            .setAttachmentType(NODE)
+            .setOperationType(NODE)
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
             .setSources(InetSocketAddress.createUnresolved("localhost", 9410), InetSocketAddress.createUnresolved("localhost", 9411))
             .validate(),
@@ -46,7 +46,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
 
     assertThat(
         () -> newCommand()
-            .setAttachmentType(null)
+            .setOperationType(null)
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
             .setSources(InetSocketAddress.createUnresolved("localhost", 9410), InetSocketAddress.createUnresolved("localhost", 9411))
             .validate(),
@@ -64,15 +64,6 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
             .setSources(InetSocketAddress.createUnresolved("localhost", 9411))
             .validate(),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Missing destination node.")))));
-  }
-
-  @Test
-  public void test_validate() {
-    newCommand()
-        .setAttachmentType(NODE)
-        .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
-        .setSources(InetSocketAddress.createUnresolved("localhost", 9411))
-        .validate();
   }
 
   protected final C newCommand() {

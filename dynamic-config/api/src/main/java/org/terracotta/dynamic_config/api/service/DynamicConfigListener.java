@@ -6,11 +6,14 @@ package org.terracotta.dynamic_config.api.service;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
+
+import java.util.Collection;
 
 /**
  * @author Mathieu Carbou
@@ -44,4 +47,27 @@ public interface DynamicConfigListener {
   default void onNomadCommit(CommitMessage message, AcceptRejectResponse response) {}
 
   default void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {}
+
+  /**
+   * Listener that will be called when some nodes have been removed from a stripe
+   * <p>
+   * The method is called with the topology equivalent to {@link TopologyService#getRuntimeNodeContext()} and the change that has been applied
+   * <p>
+   *
+   * @param nodeContext  the updated topology, without the removed nodes
+   * @param removedNodes the details about the removed nodes
+   */
+  default void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {}
+
+  /**
+   * Listener that will be called when some nodes have been added to a stripe
+   * <p>
+   * The method is called with the topology equivalent to {@link TopologyService#getRuntimeNodeContext()} and the change that has been applied
+   * <p>
+   *
+   * @param nodeContext the updated topology, with the added nodes
+   * @param stripeId    the stripe ID where the nodes have been added
+   * @param addedNodes  the details of the added nodes
+   */
+  default void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {}
 }

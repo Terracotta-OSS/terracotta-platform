@@ -6,12 +6,14 @@ package org.terracotta.dynamic_config.api.service;
 
 import com.tc.classloader.CommonComponent;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -55,6 +57,16 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
   @Override
   public void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {
     getDelegate().ifPresent(listener -> listener.onNomadRollback(message, response));
+  }
+
+  @Override
+  public void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {
+    getDelegate().ifPresent(listener -> listener.onNodeRemoval(nodeContext, removedNodes));
+  }
+
+  @Override
+  public void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {
+    getDelegate().ifPresent(listener -> listener.onNodeAddition(nodeContext, stripeId, addedNodes));
   }
 
   private Optional<DynamicConfigListener> getDelegate() {

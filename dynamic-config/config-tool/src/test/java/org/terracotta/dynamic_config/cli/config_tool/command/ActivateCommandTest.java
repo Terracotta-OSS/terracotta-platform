@@ -152,7 +152,7 @@ public class ActivateCommandTest extends BaseTest {
           cmd.validate();
           cmd.run();
         },
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster contains a mix of activated and unconfigured nodes (or being repaired). Activated: [localhost:9411, localhost:9421], Unconfigured: [localhost:9422]"))))
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Detected a mix of activated and unconfigured nodes (or being repaired). Activated: [localhost:9411, localhost:9421], Unconfigured: [localhost:9422]"))))
     );
   }
 

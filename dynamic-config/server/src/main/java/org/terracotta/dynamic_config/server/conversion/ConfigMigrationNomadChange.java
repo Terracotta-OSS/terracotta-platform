@@ -2,34 +2,34 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.api.model.nomad;
+package org.terracotta.dynamic_config.server.conversion;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.nomad.Applicability;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 
 /**
- * Nomad change that supports repairing configuration
- *
  * @author Mathieu Carbou
  */
-@JsonTypeName("ConfigRepairNomadChange")
-public class ConfigRepairNomadChange extends TopologyNomadChange {
+@JsonTypeName("ConfigMigrationNomadChange")
+public class ConfigMigrationNomadChange extends TopologyNomadChange {
 
   @JsonCreator
-  public ConfigRepairNomadChange(@JsonProperty(value = "cluster", required = true) Cluster cluster) {
+  public ConfigMigrationNomadChange(@JsonProperty(value = "cluster", required = true) Cluster cluster) {
     super(cluster, Applicability.cluster());
   }
 
   @Override
   public String getSummary() {
-    return "Repairing configuration";
+    return "Migrating configuration";
   }
 
   @Override
   public String toString() {
-    return "ConfigRepairNomadChange{" +
+    return "ConfigMigrationNomadChange{" +
         "cluster=" + getCluster() +
         ", applicability=" + getApplicability() +
         '}';

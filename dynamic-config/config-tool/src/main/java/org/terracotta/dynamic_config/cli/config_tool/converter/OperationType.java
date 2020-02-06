@@ -6,7 +6,7 @@ package org.terracotta.dynamic_config.cli.config_tool.converter;
 
 import com.beust.jcommander.converters.EnumConverter;
 
-public enum AttachmentType {
+public enum OperationType {
   NODE,
   STRIPE;
 
@@ -15,9 +15,9 @@ public enum AttachmentType {
     return name().toLowerCase();
   }
 
-  public static class TypeConverter extends EnumConverter<AttachmentType> {
+  public static class TypeConverter extends EnumConverter<OperationType> {
     public TypeConverter() {
-      super("-t", AttachmentType.class);
+      super("-t", OperationType.class);
     }
   }
 }

@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Props;
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
@@ -28,6 +29,7 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -120,7 +122,7 @@ public class DynamicConfigCommonEntity implements CommonServerEntity<EntityMessa
             data.put("reason", response.getRejectionReason().toString());
             data.put("error", response.getRejectionMessage());
           }
-          monitoringService.pushNotification(new ContextualNotification(source, "NOMAD_PREPARE", data));
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NOMAD_PREPARE", data));
         }
 
         @Override
@@ -134,7 +136,7 @@ public class DynamicConfigCommonEntity implements CommonServerEntity<EntityMessa
             data.put("reason", response.getRejectionReason().toString());
             data.put("error", response.getRejectionMessage());
           }
-          monitoringService.pushNotification(new ContextualNotification(source, "NOMAD_COMMIT", data));
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NOMAD_COMMIT", data));
         }
 
         @Override
@@ -148,7 +150,34 @@ public class DynamicConfigCommonEntity implements CommonServerEntity<EntityMessa
             data.put("reason", response.getRejectionReason().toString());
             data.put("error", response.getRejectionMessage());
           }
-          monitoringService.pushNotification(new ContextualNotification(source, "NOMAD_ROLLBACK", data));
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NOMAD_ROLLBACK", data));
+        }
+
+        @Override
+        public void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {
+          removedNodes.forEach(node -> {
+            Map<String, String> data = new TreeMap<>();
+            data.put("nodeName", node.getNodeName());
+            data.put("nodeHostname", node.getNodeHostname());
+            data.put("nodeAddress", node.getNodeAddress().toString());
+            data.put("nodeInternalAddress", node.getNodeInternalAddress().toString());
+            data.put("nodePublicAddress", node.getNodePublicAddress().toString());
+            monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
+          });
+        }
+
+        @Override
+        public void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {
+          addedNodes.forEach(node -> {
+            Map<String, String> data = new TreeMap<>();
+            data.put("stripeId", String.valueOf(stripeId));
+            data.put("nodeName", node.getNodeName());
+            data.put("nodeHostname", node.getNodeHostname());
+            data.put("nodeAddress", node.getNodeAddress().toString());
+            data.put("nodeInternalAddress", node.getNodeInternalAddress().toString());
+            data.put("nodePublicAddress", node.getNodePublicAddress().toString());
+            monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
+          });
         }
       });
 

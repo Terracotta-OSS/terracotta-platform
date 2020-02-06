@@ -51,7 +51,9 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
     Path file = toPath(version);
     LOGGER.debug("Saving topology: {} with version: {} to file: {}", config, version, file);
     try {
-      Files.createDirectories(file.getParent());
+      if (file.getParent() != null) {
+        Files.createDirectories(file.getParent());
+      }
       Files.write(file, xmlConfigMapper.toXml(config).getBytes(UTF_8));
     } catch (IOException e) {
       throw new ConfigStorageException(e);

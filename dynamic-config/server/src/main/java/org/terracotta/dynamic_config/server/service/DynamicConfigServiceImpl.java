@@ -32,17 +32,20 @@ import org.terracotta.nomad.server.NomadException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener {
 
@@ -130,6 +133,31 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     // do not fire events within a synchronized block
     NodeContext runtime = getRuntimeNodeContext();
     listeners.forEach(c -> c.onNewConfigurationAppliedAtRuntime(runtime, configuration));
+  }
+
+  @Override
+  public void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {
+    LOGGER.info("Removed nodes: {}", removedNodes.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")));
+    synchronized (this) {
+      removedNodes.forEach(node -> runtimeNodeContext.getCluster().detachNode(node.getNodeAddress()));
+    }
+    // do not fire events within a synchronized block
+    NodeContext runtime = getRuntimeNodeContext();
+    listeners.forEach(c -> c.onNodeRemoval(runtime, removedNodes));
+  }
+
+  @Override
+  public void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {
+    LOGGER.info("Added nodes:{} to stripe ID: {}",
+        addedNodes.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
+        stripeId);
+    synchronized (this) {
+      Stripe stripe = runtimeNodeContext.getCluster().getStripe(stripeId).get();
+      addedNodes.forEach(stripe::attachNode);
+    }
+    // do not fire events within a synchronized block
+    NodeContext runtime = getRuntimeNodeContext();
+    listeners.forEach(c -> c.onNodeAddition(runtime, stripeId, addedNodes));
   }
 
   @Override

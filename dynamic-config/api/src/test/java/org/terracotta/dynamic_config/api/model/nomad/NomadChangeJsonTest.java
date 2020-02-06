@@ -40,8 +40,6 @@ public class NomadChangeJsonTest {
   public void test_ser_deser() throws IOException, URISyntaxException {
     NomadChange[] changes = {
         new ClusterActivationNomadChange(cluster),
-        new ConfigMigrationNomadChange(cluster),
-        new ConfigRepairNomadChange(cluster),
         SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
         new MultipleNomadChanges(
             SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
