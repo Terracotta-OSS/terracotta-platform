@@ -5,12 +5,14 @@
 package org.terracotta.dynamic_config.server.sync;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tc.exception.TCRuntimeException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.server.nomad.NomadConfigurationException;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -24,6 +26,8 @@ import org.terracotta.nomad.server.UpgradableNomadServer;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
@@ -34,30 +38,58 @@ import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 
 public class DynamicConfigurationPassiveSync {
   private final UpgradableNomadServer<NodeContext> nomadServer;
+  private final DynamicConfigService dynamicConfigService;
+  private final Supplier<String> licenseContent;
 
-  public DynamicConfigurationPassiveSync(UpgradableNomadServer<NodeContext> nomadServer) {
+  public DynamicConfigurationPassiveSync(UpgradableNomadServer<NodeContext> nomadServer,
+                                         DynamicConfigService dynamicConfigService,
+                                         Supplier<String> licenseContent) {
     this.nomadServer = nomadServer;
+    this.dynamicConfigService = dynamicConfigService;
+    this.licenseContent = licenseContent;
   }
 
   public byte[] getSyncData() {
     try {
-      return Codec.encode(nomadServer.getAllNomadChanges());
+      return Codec.encode(new DynamicConfigSyncData(
+          nomadServer.getAllNomadChanges(),
+          licenseContent.get()));
     } catch (NomadException e) {
       throw new RuntimeException(e);
     }
   }
 
   public void sync(byte[] syncData) {
+    TCRuntimeException exception;
+    DynamicConfigSyncData data = Codec.decode(syncData);
+    List<NomadChangeInfo<NodeContext>> activeNomadChanges = data.getNomadChanges();
+
     try {
+      // sync the active append log in the passive append log
       List<NomadChangeInfo<NodeContext>> passiveNomadChanges = nomadServer.getAllNomadChanges();
-      List<NomadChangeInfo<NodeContext>> activeNomadChanges = Codec.decode(syncData);
-      applyNomadChanges(activeNomadChanges, passiveNomadChanges);
+      exception = applyNomadChanges(activeNomadChanges, passiveNomadChanges);
     } catch (NomadException e) {
-      throw new RuntimeException(e);
+      // shutdown the server because of a unrecoverable error
+      throw new TCShutdownServerException("Shutdown because of sync failure: " + e.getMessage(), e);
+    }
+
+    // sync the license from active server
+    String activeLicense = data.getLicense();
+    String thisNodeLicense = licenseContent.get();
+    if (!Objects.equals(activeLicense, thisNodeLicense)) {
+      dynamicConfigService.upgradeLicense(activeLicense);
+      if (exception == null) {
+        exception = new TCServerRestartException("Restarting server");
+      }
+    }
+
+    // if we are asking to restart the server, then do it
+    if (exception != null) {
+      throw exception;
     }
   }
 
-  private void applyNomadChanges(List<NomadChangeInfo<NodeContext>> activeNomadChanges, List<NomadChangeInfo<NodeContext>> passiveNomadChanges) throws NomadException {
+  private TCRuntimeException applyNomadChanges(List<NomadChangeInfo<NodeContext>> activeNomadChanges, List<NomadChangeInfo<NodeContext>> passiveNomadChanges) throws NomadException {
     int activeInd = 0, passiveInd = 0;
     int activeChangesSize = activeNomadChanges.size();
     int passiveChangesSize = passiveNomadChanges.size();
@@ -108,9 +140,11 @@ public class DynamicConfigurationPassiveSync {
     }
 
     if (restartRequired && zapDbRequired) {
-      throw new ZapDirtyDbServerNodeException("Restarting server");
+      return new ZapDirtyDbServerNodeException("Restarting server");
     } else if (restartRequired) {
-      throw new TCServerRestartException("Restarting server");
+      return new TCServerRestartException("Restarting server");
+    } else {
+      return null;
     }
   }
 
@@ -227,12 +261,12 @@ public class DynamicConfigurationPassiveSync {
   }
 
   static class Codec {
-    static byte[] encode(List<NomadChangeInfo<NodeContext>> nomadChanges) {
-      return toJson(requireNonNull(nomadChanges)).getBytes(UTF_8);
+    static byte[] encode(DynamicConfigSyncData data) {
+      return toJson(requireNonNull(data)).getBytes(UTF_8);
     }
 
-    static List<NomadChangeInfo<NodeContext>> decode(byte[] encoded) {
-      return parse(new String(encoded, UTF_8), new TypeReference<List<NomadChangeInfo<NodeContext>>>() {
+    static DynamicConfigSyncData decode(byte[] encoded) {
+      return parse(new String(encoded, UTF_8), new TypeReference<DynamicConfigSyncData>() {
       });
     }
   }

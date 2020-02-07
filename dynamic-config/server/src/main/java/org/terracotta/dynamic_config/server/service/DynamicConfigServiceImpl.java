@@ -91,6 +91,18 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     }
   }
 
+  // do not move this method up in the interface otherwise any client could access the license content through diagnostic port
+  public synchronized Optional<String> getLicenseContent() {
+    Path targetLicensePath = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
+    if (Files.exists(targetLicensePath)) {
+      try {
+        return Optional.of(new String(Files.readAllBytes(targetLicensePath), StandardCharsets.UTF_8));
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+    return Optional.empty();
+  }
 
   @Override
   public EventRegistration register(DynamicConfigListener listener) {

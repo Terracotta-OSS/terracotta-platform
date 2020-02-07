@@ -46,7 +46,10 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     NomadBootstrapper.NomadServerManager nomadServerManager = NomadBootstrapper.getNomadServerManager();
     assertNotNull(nomadServerManager);
 
-    this.dynamicConfigurationPassiveSync = new DynamicConfigurationPassiveSync(nomadServerManager.getNomadServer());
+    this.dynamicConfigurationPassiveSync = new DynamicConfigurationPassiveSync(
+        nomadServerManager.getNomadServer(),
+        nomadServerManager.getDynamicConfigService(),
+        () -> nomadServerManager.getDynamicConfigService().getLicenseContent().orElse(null));
 
     // we do not need a complex parer since the CLI is controlled by the StartupManager class\
     // --node-repository-dir <dir>

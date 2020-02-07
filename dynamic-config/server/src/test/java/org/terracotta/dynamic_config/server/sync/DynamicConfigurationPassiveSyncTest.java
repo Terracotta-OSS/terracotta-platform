@@ -15,6 +15,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -33,6 +34,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluster;
 import static org.terracotta.dynamic_config.server.sync.DynamicConfigurationPassiveSync.Codec.decode;
@@ -51,7 +53,7 @@ public class DynamicConfigurationPassiveSyncTest {
     nomadChanges.add(new NomadChangeInfo<>(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, nodeContext));
     nomadChanges.add(new NomadChangeInfo<>(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, nodeContext));
 
-    List<NomadChangeInfo<NodeContext>> decodedChanges = decode(encode(nomadChanges));
+    List<NomadChangeInfo<NodeContext>> decodedChanges = decode(encode(new DynamicConfigSyncData(nomadChanges, null))).getNomadChanges();
     assertThat(decodedChanges, is(nomadChanges));
   }
 
@@ -63,7 +65,7 @@ public class DynamicConfigurationPassiveSyncTest {
     activeNomadChanges.add(new NomadChangeInfo<>(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, nodeContext));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
-    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer);
+    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
     byte[] active = activeSyncManager.getSyncData();
 
@@ -74,10 +76,31 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
 
-    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer);
+    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(TCShutdownServerException.class);
     exceptionRule.expectMessage("Passive has more configuration changes");
     syncManager.sync(active);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testSyncLicense() throws NomadException {
+    List<NomadChangeInfo<NodeContext>> sameChanges = new ArrayList<>();
+    sameChanges.add(new NomadChangeInfo<>(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, nodeContext));
+
+    UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
+    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer, mock(DynamicConfigService.class), () -> "license content");
+    when(activeNomadServer.getAllNomadChanges()).thenReturn(sameChanges);
+    byte[] active = activeSyncManager.getSyncData();
+
+    UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
+    when(nomadServer.getAllNomadChanges()).thenReturn(sameChanges);
+
+    DynamicConfigService dynamicConfigService = mock(DynamicConfigService.class);
+    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer, dynamicConfigService, () -> null);
+    exceptionRule.expect(TCServerRestartException.class);
+    syncManager.sync(active);
+    verify(dynamicConfigService).upgradeLicense("license content");
   }
 
   @SuppressWarnings("unchecked")
@@ -88,7 +111,7 @@ public class DynamicConfigurationPassiveSyncTest {
     activeNomadChanges.add(new NomadChangeInfo<>(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, nodeContext));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
-    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer);
+    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
     byte[] active = activeSyncManager.getSyncData();
 
@@ -98,7 +121,7 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
 
-    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer);
+    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(TCShutdownServerException.class);
     exceptionRule.expectMessage("Passive cannot sync because the configuration change history does not match");
     syncManager.sync(active);
@@ -113,7 +136,7 @@ public class DynamicConfigurationPassiveSyncTest {
     activeNomadChanges.add(new NomadChangeInfo<>(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.PREPARED, 2L, "SYSTEM", "SYSTEM", now, nodeContext));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
-    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer);
+    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
     byte[] active = activeSyncManager.getSyncData();
 
@@ -125,7 +148,7 @@ public class DynamicConfigurationPassiveSyncTest {
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
     when(nomadServer.discover()).thenReturn(discoverResponse);
 
-    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer);
+    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(TCShutdownServerException.class);
     exceptionRule.expectMessage("Active has some PREPARED configuration changes that are not yet committed.");
     syncManager.sync(active);
@@ -140,7 +163,7 @@ public class DynamicConfigurationPassiveSyncTest {
     activeNomadChanges.add(new NomadChangeInfo<>(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, nodeContext));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
-    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer);
+    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
     byte[] active = activeSyncManager.getSyncData();
 
@@ -156,7 +179,7 @@ public class DynamicConfigurationPassiveSyncTest {
     when(nomadServer.commit(any(CommitMessage.class))).thenReturn(acceptRejectResponse);
     when(acceptRejectResponse.isAccepted()).thenReturn(true);
 
-    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer);
+    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(TCServerRestartException.class);
     exceptionRule.expectMessage("Restarting server");
     syncManager.sync(active);
@@ -172,7 +195,7 @@ public class DynamicConfigurationPassiveSyncTest {
     activeNomadChanges.add(new NomadChangeInfo<>(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, nodeContext));
 
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
-    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer);
+    DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
     byte[] active = activeSyncManager.getSyncData();
 
@@ -188,7 +211,7 @@ public class DynamicConfigurationPassiveSyncTest {
     when(nomadServer.commit(any(CommitMessage.class))).thenReturn(acceptRejectResponse);
     when(acceptRejectResponse.isAccepted()).thenReturn(true);
 
-    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer);
+    DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(nomadServer, mock(DynamicConfigService.class), () -> null);
     syncManager.sync(active);
   }
 
