@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.parsing;
+package org.terracotta.dynamic_config.server.startup;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
@@ -13,8 +13,6 @@ import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
-import org.terracotta.dynamic_config.server.startup.NodeProcessor;
-import org.terracotta.dynamic_config.server.startup.StartupManager;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,8 +49,8 @@ import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_WHITELIST;
 import static org.terracotta.dynamic_config.api.model.SettingName.TC_PROPERTIES;
-import static org.terracotta.dynamic_config.server.parsing.ConsoleParamsUtils.addDashDash;
-import static org.terracotta.dynamic_config.server.parsing.ConsoleParamsUtils.stripDashDash;
+import static org.terracotta.dynamic_config.server.startup.ConsoleParamsUtils.addDashDash;
+import static org.terracotta.dynamic_config.server.startup.ConsoleParamsUtils.stripDashDash;
 
 @Parameters(separators = "=")
 public class Options {

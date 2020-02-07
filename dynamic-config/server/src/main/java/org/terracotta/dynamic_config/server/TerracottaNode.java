@@ -4,10 +4,10 @@
  */
 package org.terracotta.dynamic_config.server;
 
-import org.terracotta.dynamic_config.server.parsing.CustomJCommander;
-import org.terracotta.dynamic_config.server.parsing.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.server.startup.CustomJCommander;
+import org.terracotta.dynamic_config.server.startup.Options;
 
 public class TerracottaNode {
   private static final Logger LOGGER = LoggerFactory.getLogger(TerracottaNode.class);

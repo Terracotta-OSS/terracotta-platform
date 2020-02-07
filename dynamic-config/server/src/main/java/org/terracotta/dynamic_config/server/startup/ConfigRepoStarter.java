@@ -7,7 +7,6 @@ package org.terracotta.dynamic_config.server.startup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.dynamic_config.server.parsing.Options;
 
 import java.nio.file.Path;
 import java.util.Optional;

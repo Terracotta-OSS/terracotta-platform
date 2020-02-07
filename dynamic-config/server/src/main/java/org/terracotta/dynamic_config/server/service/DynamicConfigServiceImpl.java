@@ -21,7 +21,6 @@ import org.terracotta.dynamic_config.api.service.EventRegistration;
 import org.terracotta.dynamic_config.api.service.LicenseParser;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
-import org.terracotta.dynamic_config.server.validation.LicenseValidator;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;

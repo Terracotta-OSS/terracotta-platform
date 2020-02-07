@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.nomad.repository;
+package org.terracotta.dynamic_config.server.nomad.persistence;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,11 +26,11 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.RepositoryDepth;
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.RepositoryDepth.FULL;
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.RepositoryDepth.NONE;
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.findNodeName;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.RepositoryDepth;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.RepositoryDepth.FULL;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.RepositoryDepth.NONE;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.findNodeName;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 public class NomadRepositoryManagerTest {

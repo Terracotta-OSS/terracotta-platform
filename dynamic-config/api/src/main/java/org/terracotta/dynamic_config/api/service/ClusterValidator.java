@@ -6,7 +6,6 @@ package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.MalformedClusterException;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 

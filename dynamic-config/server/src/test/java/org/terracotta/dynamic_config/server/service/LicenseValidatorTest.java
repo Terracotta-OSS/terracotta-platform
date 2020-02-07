@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.validation;
+package org.terracotta.dynamic_config.server.service;
 
 import org.junit.Test;
 import org.terracotta.common.struct.Measure;
@@ -16,7 +16,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.terracotta.dynamic_config.server.validation.LicenseValidator.CAPABILITY_OFFHEAP;
+import static org.terracotta.dynamic_config.server.service.LicenseValidator.CAPABILITY_OFFHEAP;
 
 public class LicenseValidatorTest {
   @Test(expected = InvalidLicenseException.class)

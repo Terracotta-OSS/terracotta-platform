@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.service.entity;
+package org.terracotta.dynamic_config.server.service.management;
 
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
@@ -13,9 +13,9 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 
 
-public class DynamicConfigActiveEntity extends DynamicConfigCommonEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {
+public class ManagementActiveEntity extends ManagementCommonEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {
 
-  DynamicConfigActiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
+  ManagementActiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
     super(managementRegistry, dynamicConfigEventService);
   }
 

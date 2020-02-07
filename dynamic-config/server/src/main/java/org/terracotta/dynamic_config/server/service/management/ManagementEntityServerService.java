@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.service.entity;
+package org.terracotta.dynamic_config.server.service.management;
 
 import com.tc.classloader.PermanentEntity;
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
@@ -22,10 +22,10 @@ import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.EntityManagementRegistryConfiguration;
 
-@PermanentEntity(type = "org.terracotta.dynamic_config.server.service.management.DynamicConfigEntityService", names = {"dynamic-config-entity"})
-public class DynamicConfigEntityService implements EntityServerService<EntityMessage, EntityResponse> {
+@PermanentEntity(type = "org.terracotta.dynamic_config.server.service.management.ManagementEntityServerService", names = {"dynamic-config-management-entity"})
+public class ManagementEntityServerService implements EntityServerService<EntityMessage, EntityResponse> {
 
-  private static final String ENTITY_TYPE = "org.terracotta.dynamic_config.server.service.management.DynamicConfigEntityService";
+  private static final String ENTITY_TYPE = ManagementEntityServerService.class.getName();
 
   @Override
   public long getVersion() {
@@ -42,7 +42,7 @@ public class DynamicConfigEntityService implements EntityServerService<EntityMes
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, true));
       DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
-      return new DynamicConfigActiveEntity(managementRegistry, dynamicConfigEventService);
+      return new ManagementActiveEntity(managementRegistry, dynamicConfigEventService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }
@@ -53,7 +53,7 @@ public class DynamicConfigEntityService implements EntityServerService<EntityMes
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, false));
       DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
-      return new DynamicConfigPassiveEntity(managementRegistry, dynamicConfigEventService);
+      return new ManagementPassiveEntity(managementRegistry, dynamicConfigEventService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }

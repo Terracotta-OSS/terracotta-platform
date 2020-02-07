@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.service.entity;
+package org.terracotta.dynamic_config.server.service.management;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +34,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
-public class DynamicConfigCommonEntity implements CommonServerEntity<EntityMessage, EntityResponse> {
+public class ManagementCommonEntity implements CommonServerEntity<EntityMessage, EntityResponse> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigCommonEntity.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ManagementCommonEntity.class);
 
   final EntityManagementRegistry managementRegistry;
   final boolean active;
@@ -44,7 +44,7 @@ public class DynamicConfigCommonEntity implements CommonServerEntity<EntityMessa
   private final DynamicConfigEventService dynamicConfigEventService;
   private volatile EventRegistration eventRegistration;
 
-  public DynamicConfigCommonEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
+  public ManagementCommonEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
     // these can be null if management is not wired or if dynamic config is not available
     this.managementRegistry = managementRegistry;
     this.dynamicConfigEventService = dynamicConfigEventService;

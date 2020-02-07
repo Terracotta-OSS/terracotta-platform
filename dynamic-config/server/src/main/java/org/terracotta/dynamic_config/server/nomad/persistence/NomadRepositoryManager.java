@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.nomad.repository;
+package org.terracotta.dynamic_config.server.nomad.persistence;
 
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
@@ -16,11 +16,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.RepositoryDepth.FULL;
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.RepositoryDepth.NONE;
-import static org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.RepositoryDepth.FULL;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.RepositoryDepth.NONE;
+import static org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
 
 public class NomadRepositoryManager {
   private static final String CONFIG = "config";

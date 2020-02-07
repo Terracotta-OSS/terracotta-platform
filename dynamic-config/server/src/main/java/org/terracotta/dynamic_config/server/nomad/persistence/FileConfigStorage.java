@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
-import org.terracotta.dynamic_config.server.nomad.repository.ClusterConfigFilename;
 
 import java.io.IOException;
 import java.nio.file.Files;

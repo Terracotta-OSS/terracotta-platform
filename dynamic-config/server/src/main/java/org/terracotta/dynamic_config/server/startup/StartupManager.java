@@ -16,7 +16,7 @@ import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.PathResolver;
 import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
-import org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager;
+import org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.service.DynamicConfigServiceImpl;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.NomadEnvironment;

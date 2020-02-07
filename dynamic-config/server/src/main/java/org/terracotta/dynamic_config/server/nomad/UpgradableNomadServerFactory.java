@@ -16,8 +16,8 @@ import org.terracotta.dynamic_config.server.nomad.persistence.ConfigStorageExcep
 import org.terracotta.dynamic_config.server.nomad.persistence.DefaultHashComputer;
 import org.terracotta.dynamic_config.server.nomad.persistence.FileConfigStorage;
 import org.terracotta.dynamic_config.server.nomad.persistence.InitialConfigStorage;
+import org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.nomad.persistence.SanskritNomadServerState;
-import org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager;
 import org.terracotta.json.Json;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;

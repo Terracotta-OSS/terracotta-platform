@@ -10,7 +10,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.dynamic_config.server.parsing.Options;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 
 import java.nio.file.Path;

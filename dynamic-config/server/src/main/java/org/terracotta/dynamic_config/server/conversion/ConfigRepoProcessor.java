@@ -8,7 +8,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.server.conversion.exception.ConfigConversionException;
 import org.terracotta.dynamic_config.server.nomad.UpgradableNomadServerFactory;
-import org.terracotta.dynamic_config.server.nomad.repository.NomadRepositoryManager;
+import org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.change.NomadChange;
