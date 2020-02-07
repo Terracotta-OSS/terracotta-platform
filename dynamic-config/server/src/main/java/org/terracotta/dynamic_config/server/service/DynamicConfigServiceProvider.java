@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.config.data_roots.DataDirectoriesConfig;
 import org.terracotta.diagnostic.server.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
@@ -26,6 +27,7 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.offheapresource.OffHeapResources;
 
 import java.util.Arrays;
@@ -147,12 +149,21 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     if (configuration.getServiceType() == TopologyService.class) {
       return configuration.getServiceType().cast(getTopologyService());
     }
+    if (configuration.getServiceType() == NomadServer.class) {
+      return configuration.getServiceType().cast(getNomadServer());
+    }
     throw new UnsupportedOperationException(configuration.getServiceType().getName());
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(IParameterSubstitutor.class, ConfigChangeHandlerManager.class, DynamicConfigEventService.class, TopologyService.class);
+    return Arrays.asList(
+        IParameterSubstitutor.class,
+        ConfigChangeHandlerManager.class,
+        DynamicConfigEventService.class,
+        TopologyService.class,
+        NomadServer.class
+    );
   }
 
   @Override
@@ -174,6 +185,11 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
   private TopologyService getTopologyService() {
     return DiagnosticServices.findService(TopologyService.class).orElse(null);
+  }
+
+  @SuppressWarnings("unchecked")
+  private NomadServer<NodeContext> getNomadServer() {
+    return DiagnosticServices.findService(NomadServer.class).orElse(null);
   }
 
   private void addToManager(ConfigChangeHandlerManager manager, ConfigChangeHandler configChangeHandler, Setting setting) {

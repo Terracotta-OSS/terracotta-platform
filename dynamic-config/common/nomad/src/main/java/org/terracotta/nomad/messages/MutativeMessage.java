@@ -6,11 +6,20 @@ package org.terracotta.nomad.messages;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.time.Instant;
 
 import static java.util.Objects.requireNonNull;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "messageType")
+@JsonSubTypes({
+    @JsonSubTypes.Type(name = "COMMIT", value = CommitMessage.class),
+    @JsonSubTypes.Type(name = "PREPARE", value = PrepareMessage.class),
+    @JsonSubTypes.Type(name = "TAKEOVER", value = TakeoverMessage.class),
+    @JsonSubTypes.Type(name = "TAKEOVER", value = TakeoverMessage.class),
+})
 public abstract class MutativeMessage {
   private final long expectedMutativeMessageCount;
   private final String mutationHost;

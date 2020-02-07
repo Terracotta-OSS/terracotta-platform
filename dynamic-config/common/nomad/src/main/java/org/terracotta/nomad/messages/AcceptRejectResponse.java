@@ -5,6 +5,7 @@
 package org.terracotta.nomad.messages;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AcceptRejectResponse {
@@ -41,6 +42,11 @@ public class AcceptRejectResponse {
 
   public boolean isAccepted() {
     return accepted;
+  }
+
+  @JsonIgnore
+  public boolean isRejected() {
+    return !accepted;
   }
 
   public RejectionReason getRejectionReason() {
