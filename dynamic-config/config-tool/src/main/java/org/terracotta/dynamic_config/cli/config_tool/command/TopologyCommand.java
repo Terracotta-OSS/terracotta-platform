@@ -62,8 +62,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
 
-    logger.info("Validation the parameters...");
-
+    logger.debug("Validating the parameters");
     validateAddress(destination);
     sources.forEach(this::validateAddress);
 
@@ -166,10 +165,10 @@ public abstract class TopologyCommand extends RemoteCommand {
     return this;
   }
 
-  protected final void validateLogOrFail(Supplier<Boolean> validator, String error) {
-    if (!validator.get()) {
+  protected final void validateLogOrFail(Supplier<Boolean> expectedCondition, String error) {
+    if (!expectedCondition.get()) {
       if (force) {
-        logger.warn("Not failing (-f) on this validation:");
+        logger.warn("Force option supplied, not failing on this validation:");
         logger.warn(error);
       } else {
         throw new IllegalStateException(error);
@@ -181,5 +180,6 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   protected abstract NomadChange buildNomadChange(Cluster result);
 
-  protected void onNomadChangeCommitted(Cluster result) {}
+  protected void onNomadChangeCommitted(Cluster result) {
+  }
 }
