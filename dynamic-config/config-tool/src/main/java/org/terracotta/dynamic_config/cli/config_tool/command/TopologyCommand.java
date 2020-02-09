@@ -39,7 +39,7 @@ public abstract class TopologyCommand extends RemoteCommand {
   @Parameter(required = true, names = {"-s"}, description = "Source nodes or stripes", variableArity = true, converter = InetSocketAddressConverter.class)
   protected List<InetSocketAddress> sources = Collections.emptyList();
 
-  @Parameter(names = {"-f"}, description = "Forces the command by disregarding some validation")
+  @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
 
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
