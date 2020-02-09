@@ -29,7 +29,7 @@ import static org.terracotta.dynamic_config.cli.config_convertor.ConversionForma
 import static org.terracotta.dynamic_config.cli.config_convertor.ConversionFormat.REPOSITORY;
 
 @Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration repository format")
-@Usage("convert -c <tc-config>,<tc-config>... -n <new-cluster-name> [-d <destination-dir>] [-f]")
+@Usage("convert -c <tc-config>,<tc-config>... -n <new-cluster-name> ( -l <license-file> [-t repository] | -t properties ) [-d <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
   @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
@@ -63,6 +63,14 @@ public class ConvertCommand extends Command {
 
     if (licensePath != null && conversionFormat == PROPERTIES) {
       throw new ParameterException("Path to license file can only be provided for conversion to a config repository");
+    }
+
+    if (licensePath == null && conversionFormat == REPOSITORY) {
+      throw new ParameterException("License file must be provided when converting to a config repository");
+    }
+
+    if (conversionFormat == REPOSITORY && !Files.exists(licensePath)) {
+      throw new ParameterException("License file: " + licensePath + " not found");
     }
   }
 
