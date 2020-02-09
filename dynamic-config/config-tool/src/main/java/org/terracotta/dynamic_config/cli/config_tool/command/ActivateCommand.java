@@ -33,7 +33,7 @@ import java.util.Collection;
 import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-rwt]")
+@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-W <wait-time>] [-D <restart-delay>]")
 public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -48,10 +48,10 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(names = {"-l"}, description = "License file", converter = PathConverter.class)
   private Path licenseFile;
 
-  @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-rd", "--restart-delay"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   private Cluster cluster;

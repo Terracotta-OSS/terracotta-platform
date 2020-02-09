@@ -16,6 +16,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.nomad.client.change.NomadChange;
 
@@ -31,13 +32,13 @@ import static java.util.stream.Collectors.toList;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "attach", commandDescription = "Attach a node to a destination stripe or attach a stripe to a destination cluster")
-@Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]>,<hostname[:port]>... [-f]")
+@Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]>,<hostname[:port]>... [-f] [-W <wait-time>] [-D <restart-delay>]")
 public class AttachCommand extends TopologyCommand {
 
-  @Parameter(names = {"-rwt", "--restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-rd", "--restart-delay"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Override
