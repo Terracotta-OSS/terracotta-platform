@@ -43,11 +43,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
       .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache1"));
 
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9412)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setDataDir("cache", Paths.get("/data/cache2"));
-
-  Cluster cluster = new Cluster(new Stripe(node0), new Stripe(node1, node2));
+  Cluster cluster = new Cluster(new Stripe(node0), new Stripe(node1));
 
   @Captor
   ArgumentCaptor<Cluster> newCluster;
@@ -64,19 +60,15 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(node1));
-    when(topologyServiceMock("localhost", 9412).getUpcomingNodeContext()).thenReturn(new NodeContext(node2));
 
     when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
     when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(node1));
-    when(topologyServiceMock("localhost", 9412).getRuntimeNodeContext()).thenReturn(new NodeContext(node2));
 
     when(topologyServiceMock("localhost", 9410).isActivated()).thenReturn(false);
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
-    when(topologyServiceMock("localhost", 9412).isActivated()).thenReturn(false);
 
     when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(STARTING);
     when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock("localhost", 9412).getLogicalServerState()).thenReturn(STARTING);
   }
 
   @Test
@@ -84,7 +76,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     TopologyCommand command = newCommand()
         .setOperationType(NODE)
         .setDestination("localhost", 9410)
-        .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412));
+        .setSource(createUnresolved("localhost", 9411));
     command.validate();
     command.run();
 
@@ -93,7 +85,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
-    assertThat(allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster3.json"), Cluster.class))));
+    assertThat(Json.toJson(allValues.get(0)), allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster3.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
@@ -106,7 +98,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     TopologyCommand command = newCommand()
         .setOperationType(STRIPE)
         .setDestination("localhost", 9410)
-        .setSources(createUnresolved("localhost", 9411));
+        .setSource(createUnresolved("localhost", 9411));
     command.validate();
     command.run();
 

@@ -51,7 +51,7 @@ Start a cluster:
     --node-hostname=localhost \
     --node-port=9410 \
     --cluster-name=my-cluster \
-    --license-file=./dynamic-config/integration-tests/src/test/resources/license.xml
+    --license-file=./dynamic-config/testing/system-tests-ee/src/test/resources/license.xml
 ```
 
 Run the small main class that uses no TMS but just the management API to get the notifications:

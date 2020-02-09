@@ -101,11 +101,11 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // add a stripe
-    ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2));
+    ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
     ConfigTool.start("export", "-s", "localhost:" + getNodePort(), "-f", "build/output.json", "-t", "json");
     cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
-    assertThat(cluster.getNodeAddresses(), hasSize(4));
+    assertThat(cluster.getNodeAddresses(), hasSize(3));
 
     // remove the previously added stripe
     ConfigTool.start("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));

@@ -44,10 +44,6 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache2"));
 
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9412)
-      .setOffheapResource("foo", 2, MemoryUnit.GB)
-      .setDataDir("cache", Paths.get("/data/cache2"));
-
   Cluster cluster = new Cluster(new Stripe(node0));
 
   @Captor ArgumentCaptor<Cluster> newCluster;
@@ -64,78 +60,67 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(node1));
-    when(topologyServiceMock("localhost", 9412).getUpcomingNodeContext()).thenReturn(new NodeContext(node2));
 
     when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
     when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(node1));
-    when(topologyServiceMock("localhost", 9412).getRuntimeNodeContext()).thenReturn(new NodeContext(node2));
 
     when(topologyServiceMock("localhost", 9410).isActivated()).thenReturn(false);
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
-    when(topologyServiceMock("localhost", 9412).isActivated()).thenReturn(false);
 
     when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(STARTING);
-    //when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(STARTING);
-    //when(diagnosticServiceMock("localhost", 9412).getLogicalServerState()).thenReturn(STARTING);
   }
 
   @Test
   public void test_attach_nodes_to_stripe() {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
-    DynamicConfigService mock12 = dynamicConfigServiceMock("localhost", 9412);
 
     TopologyCommand command = newCommand()
         .setOperationType(NODE)
         .setDestination("localhost", 9410)
-        .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412));
+        .setSource(createUnresolved("localhost", 9411));
     command.validate();
     command.run();
 
     // capture the new topology set calls
     verify(mock10).setUpcomingCluster(newCluster.capture());
     verify(mock11).setUpcomingCluster(newCluster.capture());
-    verify(mock12).setUpcomingCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
-    assertThat(allValues, hasSize(3));
+    assertThat(allValues, hasSize(2));
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
-    assertThat(allValues.get(0), is(equalTo(allValues.get(2))));
     assertThat(allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster1.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(3));
+    assertThat(cluster.getNodeAddresses(), hasSize(2));
   }
 
   @Test
   public void test_attach_stripe() {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
-    DynamicConfigService mock12 = dynamicConfigServiceMock("localhost", 9412);
 
     TopologyCommand command = newCommand()
         .setOperationType(STRIPE)
         .setDestination("localhost", 9410)
-        .setSources(createUnresolved("localhost", 9411), createUnresolved("localhost", 9412));
+        .setSource(createUnresolved("localhost", 9411));
     command.validate();
     command.run();
 
     // capture the new topology set calls
     verify(mock10).setUpcomingCluster(newCluster.capture());
     verify(mock11).setUpcomingCluster(newCluster.capture());
-    verify(mock12).setUpcomingCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
-    assertThat(allValues, hasSize(3));
+    assertThat(allValues, hasSize(2));
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
-    assertThat(allValues.get(0), is(equalTo(allValues.get(2))));
     assertThat(allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster2.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getStripes().get(0).getNodes(), hasSize(1));
-    assertThat(cluster.getStripes().get(1).getNodes(), hasSize(2));
-    assertThat(cluster.getNodeAddresses(), hasSize(3));
+    assertThat(cluster.getStripes().get(1).getNodes(), hasSize(1));
+    assertThat(cluster.getNodeAddresses(), hasSize(2));
   }
 }

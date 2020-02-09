@@ -6,20 +6,21 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
 
 /**
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a destination stripe or detach a stripe from a destination cluster")
-@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]>,<hostname[:port]>... [-f]")
+@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]")
 public class DetachCommand extends TopologyCommand {
 
   @Override
@@ -32,13 +33,8 @@ public class DetachCommand extends TopologyCommand {
       throw new IllegalStateException("Unable to detach: destination cluster only contains 1 node");
     }
 
-    Collection<InetSocketAddress> missing = sourceClusters.keySet()
-        .stream()
-        .filter(addr -> !InetSocketAddressUtils.contains(destinationPeers, addr))
-        .collect(Collectors.toList());
-
-    if (!missing.isEmpty()) {
-      throw new IllegalStateException("Source nodes: " + toString(missing) + " are not part of cluster at: " + destination);
+    if (!destinationCluster.containsNode(source)) {
+      throw new IllegalStateException("Source node: " + source + " is not part of cluster at: " + destination);
     }
   }
 
@@ -49,14 +45,15 @@ public class DetachCommand extends TopologyCommand {
     switch (operationType) {
 
       case NODE: {
-        logger.info("Detaching nodes {} from stripe {}", toString(sources), destination);
-        sources.forEach(cluster::detachNode);
+        logger.info("Detaching node: {} from stripe: {}", source, destination);
+        cluster.detachNode(source);
         break;
       }
 
       case STRIPE: {
-        logger.info("Detaching stripes containing nodes {} from cluster {}", toString(sources), destination);
-        sources.forEach(address -> cluster.getStripe(address).ifPresent(cluster::detachStripe));
+        Stripe stripe = cluster.getStripe(source).get();
+        logger.info("Detaching stripe containing nodes: {} from cluster: {}", toString(stripe.getNodeAddresses()), destination);
+        cluster.detachStripe(stripe);
         break;
       }
 
@@ -72,7 +69,7 @@ public class DetachCommand extends TopologyCommand {
   protected NomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeRemovalNomadChange(sources);
+        return new NodeRemovalNomadChange(singletonList(source));
       case STRIPE: {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }

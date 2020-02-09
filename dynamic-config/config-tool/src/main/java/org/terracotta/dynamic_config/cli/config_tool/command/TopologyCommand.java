@@ -15,16 +15,11 @@ import org.terracotta.json.Json;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.lang.System.lineSeparator;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
 /**
@@ -37,8 +32,8 @@ public abstract class TopologyCommand extends RemoteCommand {
   @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destination;
 
-  @Parameter(required = true, names = {"-s"}, description = "Source nodes or stripes", variableArity = true, converter = InetSocketAddressConverter.class)
-  protected List<InetSocketAddress> sources = Collections.emptyList();
+  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress source;
 
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
@@ -46,26 +41,26 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
-  protected Map<InetSocketAddress, Cluster> sourceClusters;
+  protected Cluster sourceCluster;
 
   @Override
   public void validate() {
-    if (sources.isEmpty()) {
-      throw new IllegalArgumentException("Missing source nodes.");
+    if (source == null) {
+      throw new IllegalArgumentException("Missing source node");
     }
     if (destination == null) {
-      throw new IllegalArgumentException("Missing destination node.");
+      throw new IllegalArgumentException("Missing destination node");
     }
     if (operationType == null) {
-      throw new IllegalArgumentException("Missing type.");
+      throw new IllegalArgumentException("Missing type");
     }
-    if (InetSocketAddressUtils.contains(sources, destination)) {
-      throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
+    if (InetSocketAddressUtils.areEqual(source, destination)) {
+      throw new IllegalArgumentException("The destination endpoint and the source endpoint must not be the same");
     }
 
     logger.debug("Validating the parameters");
     validateAddress(destination);
-    sources.forEach(this::validateAddress);
+    validateAddress(source);
 
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
     validateLogOrFail(
@@ -90,13 +85,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       }
     }
 
-    sourceClusters = sources.stream().collect(toMap(
-        identity(),
-        this::getUpcomingCluster,
-        (o1, o2) -> {
-          throw new UnsupportedOperationException();
-        },
-        LinkedHashMap::new));
+    sourceCluster = getUpcomingCluster(source);
   }
 
   @Override
@@ -123,7 +112,7 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     } else {
       setUpcomingCluster(destinationOnlineNodes.keySet(), result);
-      setUpcomingCluster(sources, result);
+      setUpcomingCluster(Collections.singletonList(source), result);
     }
 
     logger.info("Command successful!" + lineSeparator());
@@ -152,17 +141,12 @@ public abstract class TopologyCommand extends RemoteCommand {
     return setDestination(InetSocketAddress.createUnresolved(host, port));
   }
 
-  List<InetSocketAddress> getSources() {
-    return sources;
+  InetSocketAddress getSource() {
+    return source;
   }
 
-  TopologyCommand setSources(List<InetSocketAddress> sources) {
-    this.sources = sources;
-    return this;
-  }
-
-  TopologyCommand setSources(InetSocketAddress... sources) {
-    setSources(Arrays.asList(sources));
+  TopologyCommand setSource(InetSocketAddress source) {
+    this.source = source;
     return this;
   }
 

@@ -9,7 +9,6 @@ import org.terracotta.dynamic_config.cli.command.Metadata;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -29,7 +28,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   public void test_defaults() {
     C command = newCommand();
     assertThat(command.getOperationType(), is(equalTo(NODE)));
-    assertThat(command.getSources(), is(equalTo(Collections.emptyList())));
+    assertThat(command.getSource(), is(nullValue()));
     assertThat(command.getDestination(), is(nullValue()));
     assertThat(Metadata.getName(command), is(equalTo(command.getClass().getSimpleName().toLowerCase().substring(0, 6))));
   }
@@ -40,30 +39,30 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
         () -> newCommand()
             .setOperationType(NODE)
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
-            .setSources(InetSocketAddress.createUnresolved("localhost", 9410), InetSocketAddress.createUnresolved("localhost", 9411))
+            .setSource(InetSocketAddress.createUnresolved("localhost", 9410))
             .validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination endpoint must not be listed in the source endpoints.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination endpoint and the source endpoint must not be the same")))));
 
     assertThat(
         () -> newCommand()
             .setOperationType(null)
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
-            .setSources(InetSocketAddress.createUnresolved("localhost", 9410), InetSocketAddress.createUnresolved("localhost", 9411))
+            .setSource(InetSocketAddress.createUnresolved("localhost", 9411))
             .validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Missing type.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Missing type")))));
 
     assertThat(
         () -> newCommand()
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
             .validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Missing source nodes.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Missing source node")))));
 
     assertThat(
         () -> newCommand()
             .setDestination(null)
-            .setSources(InetSocketAddress.createUnresolved("localhost", 9411))
+            .setSource(InetSocketAddress.createUnresolved("localhost", 9411))
             .validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Missing destination node.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Missing destination node")))));
   }
 
   protected final C newCommand() {
