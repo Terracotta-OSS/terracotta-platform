@@ -53,11 +53,14 @@ public class AttachCommand extends TopologyCommand {
       if (isActivated(addr)) {
         throw new IllegalStateException("Source node: " + addr + " cannot be attached since it has been activated and is part of an existing cluster");
       }
-      validateLogOrFail(
-          () -> cluster.getNodeCount() == 1,
-          "Source node: " + addr + " points to a cluster with more than 1 node. " +
-              "It must be properly detached first before being attached to a new stripe. " +
-              "You can run the command with -f option to force the attachment but at the risk of breaking the cluster from where the node is taken.");
+
+      if (operationType == OperationType.NODE) {
+        validateLogOrFail(
+            () -> cluster.getNodeCount() == 1,
+            "Source node: " + addr + " points to a cluster with more than 1 node. " +
+                "It must be properly detached first before being attached to a new stripe. " +
+                "You can run the command with -f option to force the attachment but at the risk of breaking the cluster from where the node is taken.");
+      }
     });
   }
 
