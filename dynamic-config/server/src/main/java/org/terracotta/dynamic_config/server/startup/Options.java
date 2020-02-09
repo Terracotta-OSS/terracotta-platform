@@ -135,7 +135,7 @@ public class Options {
   @Parameter(names = {"-l", "--" + LICENSE_FILE})
   private String licenseFile;
 
-  @Parameter(names = {"--" + DIAGNOSTIC_MODE})
+  @Parameter(names = {"-D", "--" + DIAGNOSTIC_MODE})
   private boolean wantsDiagnosticMode;
 
   private Collection<String> specifiedOptions;
