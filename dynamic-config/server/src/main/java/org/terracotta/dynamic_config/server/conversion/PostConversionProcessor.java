@@ -38,8 +38,6 @@ public abstract class PostConversionProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigPropertiesProcessor.class);
   private final XmlConfigMapper xmlConfigMapper;
 
-  abstract void process(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap);
-
   abstract void process(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, boolean acceptRelativePaths);
 
   public PostConversionProcessor() {

@@ -31,11 +31,6 @@ public class ConfigPropertiesProcessor extends PostConversionProcessor {
   }
 
   @Override
-  public void process(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap) {
-    process(nodeNameNodeConfigMap, false);
-  }
-
-  @Override
   public void process(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, boolean acceptRelativePaths) {
     ArrayList<NodeContext> nodeContexts = validate(nodeNameNodeConfigMap, acceptRelativePaths);
     Properties properties = nodeContexts.get(0).getCluster().setName(clusterName).toProperties();
