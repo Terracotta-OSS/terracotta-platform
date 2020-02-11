@@ -30,4 +30,10 @@
   <logger name="org.terracotta.diagnostic" level="TRACE" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
+  <logger name="com.terracottatech.angela" level="DEBUG" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.terracotta.angela" level="DEBUG" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
 </configuration>
