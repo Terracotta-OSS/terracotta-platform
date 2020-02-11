@@ -10,6 +10,8 @@ dependencies {
   compile project(':dynamic-config-api')
   compile project(':dynamic-config-cli-support')
 
+  compile "org.terracotta.internal:connection-loader:$terracottaCoreVersion"
+
   testCompile project(':test-utilities')
   testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
   testCompile("org.mockito:mockito-core:$mockitoVersion")
