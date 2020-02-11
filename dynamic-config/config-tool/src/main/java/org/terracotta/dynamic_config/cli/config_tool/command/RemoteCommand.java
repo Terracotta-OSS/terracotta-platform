@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
+import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.client.results.ConsistencyAnalyzer;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
@@ -250,7 +251,7 @@ public abstract class RemoteCommand extends Command {
     List<InetSocketAddress> passives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isPassive()).map(Map.Entry::getKey).collect(toList());
     Set<InetSocketAddress> expectedPassives = new HashSet<>(cluster.getNodeAddresses());
     expectedPassives.removeAll(actives);
-    if (!passives.containsAll(expectedPassives)) {
+    if (!InetSocketAddressUtils.containsAll(passives, expectedPassives)) {
       throw new IllegalStateException("Not all cluster nodes are online: expected passive nodes " + toString(expectedPassives) + ", but only got: " + toString(passives)
           + ". Either some nodes are shutdown, either a hostname/port change has been made and the cluster has not yet been restarted.");
     }

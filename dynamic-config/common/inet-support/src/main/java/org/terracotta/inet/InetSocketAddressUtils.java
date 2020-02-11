@@ -5,6 +5,7 @@
 package org.terracotta.inet;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Objects;
 
 import static org.terracotta.inet.HostAndIpValidator.isValidIPv6;
@@ -19,5 +20,23 @@ public class InetSocketAddressUtils {
       address = InetSocketAddress.createUnresolved("[" + address.getHostName() + "]", address.getPort());
     }
     return address;
+  }
+
+  public static boolean contains(Collection<InetSocketAddress> addresses, InetSocketAddress address) {
+    for (InetSocketAddress addr : addresses) {
+      if (areEqual(addr, address)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean containsAll(Collection<InetSocketAddress> addresses, Collection<InetSocketAddress> subset) {
+    for (InetSocketAddress element : subset) {
+      if (!contains(addresses, element)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

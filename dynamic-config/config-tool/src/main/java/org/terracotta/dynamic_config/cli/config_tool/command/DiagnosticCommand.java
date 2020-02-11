@@ -10,6 +10,7 @@ import org.terracotta.diagnostic.common.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.results.ConsistencyAnalyzer;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -108,7 +109,7 @@ public class DiagnosticCommand extends RemoteCommand {
                 "NO")
             .append(lineSeparator());
         sb.append(" - Node started in diagnostic mode for initial configuration or repair: ")
-            .append(state == STARTING && !onlineActivatedNodes.contains(nodeAddress) ?
+            .append(state == STARTING && !InetSocketAddressUtils.contains(onlineActivatedNodes, nodeAddress) ?
                 "YES" :
                 "NO")
             .append(lineSeparator());

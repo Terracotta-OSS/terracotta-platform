@@ -10,6 +10,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.Json;
 import org.terracotta.nomad.client.change.NomadChange;
 
@@ -58,7 +59,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (operationType == null) {
       throw new IllegalArgumentException("Missing type.");
     }
-    if (sources.contains(destination)) {
+    if (InetSocketAddressUtils.contains(sources, destination)) {
       throw new IllegalArgumentException("The destination endpoint must not be listed in the source endpoints.");
     }
 

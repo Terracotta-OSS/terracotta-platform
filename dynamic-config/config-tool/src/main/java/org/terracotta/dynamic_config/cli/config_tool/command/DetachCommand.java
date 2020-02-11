@@ -8,6 +8,7 @@ import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.net.InetSocketAddress;
@@ -33,7 +34,7 @@ public class DetachCommand extends TopologyCommand {
 
     Collection<InetSocketAddress> missing = sourceClusters.keySet()
         .stream()
-        .filter(addr -> !destinationPeers.contains(addr))
+        .filter(addr -> !InetSocketAddressUtils.contains(destinationPeers, addr))
         .collect(Collectors.toList());
 
     if (!missing.isEmpty()) {

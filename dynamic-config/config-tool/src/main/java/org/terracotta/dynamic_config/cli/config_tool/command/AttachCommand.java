@@ -18,6 +18,7 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
+import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.net.InetSocketAddress;
@@ -47,7 +48,7 @@ public class AttachCommand extends TopologyCommand {
 
     Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();
     sourceClusters.forEach((addr, cluster) -> {
-      if (destinationPeers.contains(addr)) {
+      if (InetSocketAddressUtils.contains(destinationPeers, addr)) {
         throw new IllegalStateException("Source node: " + addr + " is already part of cluster at: " + destination);
       }
       if (isActivated(addr)) {
