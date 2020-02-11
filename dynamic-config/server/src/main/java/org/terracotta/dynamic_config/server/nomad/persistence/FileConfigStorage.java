@@ -4,6 +4,7 @@
  */
 package org.terracotta.dynamic_config.server.nomad.persistence;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -46,6 +47,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
   }
 
   @Override
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     Path file = toPath(version);
     LOGGER.debug("Saving topology: {} with version: {} to file: {}", config, version, file);

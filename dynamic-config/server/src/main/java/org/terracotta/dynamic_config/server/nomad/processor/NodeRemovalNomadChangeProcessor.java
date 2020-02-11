@@ -15,11 +15,6 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.IntrospectionException;
-import javax.management.MBeanServer;
-import javax.management.ReflectionException;
-import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -81,8 +76,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
     }
   }
 
-  private void checkMBeanOperation() throws IntrospectionException, InstanceNotFoundException, ReflectionException {
-    MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private void checkMBeanOperation() {
     boolean canCall = true;
     //TODO [DYNAMIC-CONFIG]: TDB-4835 - check if MBean can be called
 //    boolean canCall = Stream
