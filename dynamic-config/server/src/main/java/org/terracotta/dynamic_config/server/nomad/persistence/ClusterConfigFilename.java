@@ -4,6 +4,10 @@
  */
 package org.terracotta.dynamic_config.server.nomad.persistence;
 
+import java.util.Optional;
+
+import static com.tc.util.Assert.assertNotNull;
+
 public interface ClusterConfigFilename {
 
   String getNodeName();
@@ -15,6 +19,10 @@ public interface ClusterConfigFilename {
   }
 
   static ClusterConfigFilename with(String nodeName, long version) {
+    assertNotNull(nodeName);
+    if (version <= 0) {
+      throw new IllegalArgumentException("Bas version: " + version);
+    }
     return new ClusterConfigFilename() {
       @Override
       public String getNodeName() {
@@ -28,7 +36,7 @@ public interface ClusterConfigFilename {
     };
   }
 
-  static ClusterConfigFilename from(String fileName) {
+  static Optional<ClusterConfigFilename> from(String fileName) {
     String nodeName = null;
     long version = 0;
     if (fileName.endsWith(".xml")) {
@@ -39,20 +47,22 @@ public interface ClusterConfigFilename {
         if (pos_digits >= 1) { // 0 is invalid, means no node name...
           nodeName = base.substring(0, pos_digits).trim();
           if (nodeName.isEmpty()) {
-            nodeName = null;
+            return Optional.empty();
           }
           try {
             version = Long.parseLong(base.substring(pos_digits + 1));
           } catch (NumberFormatException e) {
-            version = 0;
-            nodeName = null;
+            return Optional.empty();
           }
         }
       }
     }
+    if (nodeName == null || version == 0) {
+      return Optional.empty();
+    }
     final String n = nodeName;
     final long v = version;
-    return new ClusterConfigFilename() {
+    return Optional.of(new ClusterConfigFilename() {
       @Override
       public String getNodeName() {
         return n;
@@ -67,6 +77,6 @@ public interface ClusterConfigFilename {
       public String getFilename() {
         return fileName;
       }
-    };
+    });
   }
 }

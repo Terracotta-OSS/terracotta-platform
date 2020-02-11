@@ -8,9 +8,10 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class ClusterConfigFilenameTest {
   @Test
   public void testValidFilenames() {
@@ -25,7 +26,7 @@ public class ClusterConfigFilenameTest {
     };
 
     for (String fileName : validFilenames) {
-      assertThat(ClusterConfigFilename.from(fileName).getNodeName(), notNullValue());
+      assertThat(ClusterConfigFilename.from(fileName).get().getNodeName(), notNullValue());
     }
   }
 
@@ -40,19 +41,19 @@ public class ClusterConfigFilenameTest {
     };
 
     for (String fileName : invalidFilenames) {
-      assertThat(fileName, ClusterConfigFilename.from(fileName).getNodeName(), nullValue());
+      assertFalse(fileName, ClusterConfigFilename.from(fileName).isPresent());
     }
   }
 
   @Test
   public void testGetNodeName() {
-    assertThat(ClusterConfigFilename.from("node-1.19.xml").getNodeName(), is("node-1"));
-    assertThat(ClusterConfigFilename.from("server-1-abc_1234@@#*$.199.xml").getNodeName(), is("server-1-abc_1234@@#*$"));
+    assertThat(ClusterConfigFilename.from("node-1.19.xml").get().getNodeName(), is("node-1"));
+    assertThat(ClusterConfigFilename.from("server-1-abc_1234@@#*$.199.xml").get().getNodeName(), is("server-1-abc_1234@@#*$"));
   }
 
   @Test
   public void testGetVersion() {
-    assertThat(ClusterConfigFilename.from("node-1.19.xml").getVersion(), is(19L));
-    assertThat(ClusterConfigFilename.from("server-1-abc_1234@@#*$.199.xml").getVersion(), is(199L));
+    assertThat(ClusterConfigFilename.from("node-1.19.xml").get().getVersion(), is(19L));
+    assertThat(ClusterConfigFilename.from("server-1-abc_1234@@#*$.199.xml").get().getVersion(), is(199L));
   }
 }

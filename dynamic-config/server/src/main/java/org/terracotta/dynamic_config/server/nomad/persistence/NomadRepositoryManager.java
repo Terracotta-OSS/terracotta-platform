@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -130,7 +129,7 @@ public class NomadRepositoryManager {
    * @param nomadRoot repository root
    * @return {@code Optional} containing the node name, or an empty {@code Optional} if a node name couldn't be found
    * @throws IllegalStateException if the repository is malformed
-   * @throws UncheckedIOException         if an {@code IOException} occurs while reading the configuration file
+   * @throws UncheckedIOException  if an {@code IOException} occurs while reading the configuration file
    */
   public static Optional<String> findNodeName(Path nomadRoot) {
     requireNonNull(nomadRoot);
@@ -143,8 +142,9 @@ public class NomadRepositoryManager {
             .map(Path::getFileName)
             .map(Path::toString)
             .map(ClusterConfigFilename::from)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .map(ClusterConfigFilename::getNodeName)
-            .filter(Objects::nonNull)
             .collect(toSet());
         if (nodeNames.size() > 1) {
           throw new IllegalStateException(

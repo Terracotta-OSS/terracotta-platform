@@ -68,8 +68,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
     try (Stream<Path> stream = Files.list(root)) {
       stream.filter(Files::isRegularFile).forEach(config -> {
         String filename = config.getFileName().toString();
-        ClusterConfigFilename ccf = ClusterConfigFilename.from(filename);
-        if (ccf.getNodeName() != null && ccf.getVersion() > 0) {
+        ClusterConfigFilename.from(filename).ifPresent(ccf -> {
           Path backup = config.resolveSibling("backup-" + filename + "-" + time);
           try {
             Files.move(config, backup);
@@ -80,7 +79,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
               error.get().addSuppressed(ioe);
             }
           }
-        }
+        });
       });
     } catch (IOException e) {
       throw new ConfigStorageException(e);
