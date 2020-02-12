@@ -55,7 +55,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       throw new IllegalArgumentException("Missing type");
     }
     if (InetSocketAddressUtils.areEqual(source, destination)) {
-      throw new IllegalArgumentException("The destination endpoint and the source endpoint must not be the same");
+      throw new IllegalArgumentException("The destination and the source endpoints must not be the same");
     }
 
     logger.debug("Validating the parameters");
@@ -156,7 +156,7 @@ public abstract class TopologyCommand extends RemoteCommand {
         logger.warn("Force option supplied, not failing on this validation:");
         logger.warn(error);
       } else {
-        throw new IllegalStateException(error);
+        throw new IllegalArgumentException(error);
       }
     }
   }

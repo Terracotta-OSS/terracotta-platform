@@ -20,8 +20,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static java.net.InetSocketAddress.createUnresolved;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
+import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
  * @author Mathieu Carbou
@@ -44,7 +47,10 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
       .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache2"));
 
-  Cluster cluster = new Cluster(new Stripe(node0));
+  Node node2 = Node.newDefaultNode("node2", "localhost", 9412)
+      .setOffheapResource("foo", 1, MemoryUnit.GB)
+      .setOffheapResource("bar", 1, MemoryUnit.GB)
+      .setDataDir("cache", Paths.get("/data/cache3"));
 
   @Captor ArgumentCaptor<Cluster> newCluster;
 
@@ -57,21 +63,49 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+    NodeContext nodeContext0 = new NodeContext(new Cluster(new Stripe(node0)), node0.getNodeAddress());
+    NodeContext nodeContext1 = new NodeContext(new Cluster(new Stripe(node1)), node1.getNodeAddress());
 
-    when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
-    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(node1));
+    when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(nodeContext0);
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext1);
 
-    when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
-    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(node1));
-
-    when(topologyServiceMock("localhost", 9410).isActivated()).thenReturn(false);
-    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
+    when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(nodeContext0);
+    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(nodeContext1);
 
     when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(STARTING);
   }
 
   @Test
-  public void test_attach_nodes_to_stripe() {
+  public void test_attach_node_validation_fail_src_activated() {
+    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
+
+    TopologyCommand command = newCommand()
+        .setOperationType(NODE)
+        .setDestination("localhost", 9410)
+        .setSource(createUnresolved("localhost", 9411));
+
+    assertThat(
+        command::validate,
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("cannot be attached since it is part of an existing cluster")))));
+  }
+
+  @Test
+  public void test_attach_node_validation_fail_src_multiNodeStripe() {
+    NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node1, node2)), node1.getNodeAddress());
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
+
+    TopologyCommand command = newCommand()
+        .setOperationType(NODE)
+        .setDestination("localhost", 9410)
+        .setSource(createUnresolved("localhost", 9411));
+
+    assertThat(
+        command::validate,
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("is part of a stripe containing more than 1 nodes")))));
+  }
+
+  @Test
+  public void test_attach_node_ok() {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
@@ -97,7 +131,36 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   }
 
   @Test
-  public void test_attach_stripe() {
+  public void test_attach_stripe_validation_fail_src_activated() {
+    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
+
+    TopologyCommand command = newCommand()
+        .setOperationType(STRIPE)
+        .setDestination("localhost", 9410)
+        .setSource(createUnresolved("localhost", 9411));
+
+    assertThat(
+        command::validate,
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("cannot be attached since it is part of an existing cluster")))));
+  }
+
+  @Test
+  public void test_attach_stripe_validation_fail_src_multiStripeCluster() {
+    NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node1), new Stripe(node2)), node1.getNodeAddress());
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
+
+    TopologyCommand command = newCommand()
+        .setOperationType(STRIPE)
+        .setDestination("localhost", 9410)
+        .setSource(createUnresolved("localhost", 9411));
+
+    assertThat(
+        command::validate,
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("is part of a cluster containing more than 1 stripes")))));
+  }
+
+  @Test
+  public void test_attach_stripe_ok() {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 

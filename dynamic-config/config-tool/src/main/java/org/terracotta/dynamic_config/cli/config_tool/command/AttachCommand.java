@@ -30,8 +30,8 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "attach", commandDescription = "Attach a node to a destination stripe or attach a stripe to a destination cluster")
-@Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <wait-time>] [-D <restart-delay>]")
+@Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
+@Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class AttachCommand extends TopologyCommand {
 
   @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
@@ -45,28 +45,42 @@ public class AttachCommand extends TopologyCommand {
     super.validate();
 
     Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();
-
     if (InetSocketAddressUtils.contains(destinationPeers, source)) {
-      throw new IllegalStateException("Source node: " + source + " is already part of cluster at: " + destination);
+      throw new IllegalArgumentException("Source node: " + source + " is already part of cluster at: " + destination);
     }
+
     if (isActivated(source)) {
-      throw new IllegalStateException("Source node: " + source + " cannot be attached since it has been activated and is part of an existing cluster");
+      throw new IllegalArgumentException("Source node: " + source + " cannot be attached since it is part of an existing cluster with name: " + getRuntimeCluster(source).getName());
     }
-    // We can only attach some nodes if these conditions are met:
-    // - either the source node is alone in its own cluster
-    // - either the source node is part of a 1-stripe cluster and we attach the whole stripe
-    // We should't allow the user to attach to another "cluster B" a node that is already part of a "cluster A" (containing several nodes), except
-    // if all the nodes of this "cluster A" are attached to "cluster B".
-    // The goal is to not have some leftover nodes potentially having wrong information about their topology. So if that happens, the user must
-    // first detach the nodes, then re-attach them somewhere else. The detach process will update the topology of "cluster A" so that the detached
-    // nodes won't be there anymore and can be attached somewhere else. "cluster A" could then be activated without impacting the "cluster B"
-    // used in the attach command.
-    validateLogOrFail(
-        () -> sourceCluster.containsNode(source) && operationType == NODE && sourceCluster.getNodeCount() == 1
-            || sourceCluster.containsNode(source) && operationType == STRIPE && sourceCluster.getStripeCount() == 1,
-        "Source node: " + source + " points to a cluster with more than 1 node. " +
-            "It must be properly detached first before being attached to a new stripe. " +
-            "You can run the command with -f option to force the attachment but at the risk of breaking the cluster from where the node is taken.");
+
+    /*
+     We can only attach some nodes if these conditions are met:
+     - either the source node is alone in its own cluster
+     - either the source node is part of a 1-stripe cluster and we attach the whole stripe
+
+     We should't allow the user to attach to another "cluster B" a node that is already part of a "cluster A" (containing several nodes),
+     except if all the nodes of this "cluster A" are attached to "cluster B".
+
+     The goal is to not have some leftover nodes potentially having wrong information about their topology.
+     If that happens, the user must first detach the nodes, then re-attach them somewhere else. The detach process will
+     update the topology of "cluster A" so that the detached nodes won't be there anymore and can be attached somewhere else.
+     "cluster A" could then be activated without impacting the "cluster B" used in the attach command.
+     */
+    if (operationType == NODE) {
+      validateLogOrFail(
+          () -> sourceCluster.getNodeCount() == 1,
+          "Source node: " + source + " is part of a stripe containing more than 1 nodes. " +
+              "It must be detached first before being attached to a new stripe. " +
+              "You can run the command with -f option to force the attachment at the risk of breaking the cluster from where the node is taken.");
+    }
+
+    if (operationType == STRIPE) {
+      validateLogOrFail(
+          () -> sourceCluster.getStripeCount() == 1,
+          "Source stripe from node: " + source + " is part of a cluster containing more than 1 stripes. " +
+              "It must be detached first before being attached to a new cluster. " +
+              "You can run the command with -f option to force the attachment at the risk of breaking the cluster from where the node is taken.");
+    }
   }
 
   @Override

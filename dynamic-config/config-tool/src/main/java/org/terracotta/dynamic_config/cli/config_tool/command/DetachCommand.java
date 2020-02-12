@@ -19,7 +19,7 @@ import static java.util.Collections.singletonList;
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "detach", commandDescription = "Detach a node from a destination stripe or detach a stripe from a destination cluster")
+@Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
 @Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]")
 public class DetachCommand extends TopologyCommand {
 
@@ -30,7 +30,7 @@ public class DetachCommand extends TopologyCommand {
     Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();
 
     if (destinationPeers.size() == 1) {
-      throw new IllegalStateException("Unable to detach: destination cluster only contains 1 node");
+      throw new IllegalStateException("Unable to detach since destination cluster contains only 1 node");
     }
 
     if (!destinationCluster.containsNode(source)) {

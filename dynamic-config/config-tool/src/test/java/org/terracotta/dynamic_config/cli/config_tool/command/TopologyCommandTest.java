@@ -41,7 +41,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
             .setDestination(InetSocketAddress.createUnresolved("localhost", 9410))
             .setSource(InetSocketAddress.createUnresolved("localhost", 9410))
             .validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination endpoint and the source endpoint must not be the same")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination and the source endpoints must not be the same")))));
 
     assertThat(
         () -> newCommand()

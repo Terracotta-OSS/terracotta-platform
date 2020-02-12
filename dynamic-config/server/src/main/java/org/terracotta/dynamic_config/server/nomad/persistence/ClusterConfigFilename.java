@@ -21,7 +21,7 @@ public interface ClusterConfigFilename {
   static ClusterConfigFilename with(String nodeName, long version) {
     assertNotNull(nodeName);
     if (version <= 0) {
-      throw new IllegalArgumentException("Bas version: " + version);
+      throw new IllegalArgumentException("Bad version: " + version);
     }
     return new ClusterConfigFilename() {
       @Override
