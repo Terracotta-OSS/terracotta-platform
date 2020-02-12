@@ -40,7 +40,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
     try {
       checkMBeanOperation();
       Cluster cluster = baseConfig.getCluster();
-      change.getRemovedNodes().forEach(cluster::detachNode);
+      change.getNodes().stream().map(Node::getNodeAddress).forEach(cluster::detachNode);
       new ClusterValidator(cluster).validate();
       return baseConfig;
     } catch (Exception e) {
@@ -51,7 +51,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
   @Override
   public void apply(NodeRemovalNomadChange change) throws NomadException {
     try {
-      Collection<InetSocketAddress> removedNodes = change.getRemovedNodes();
+      Collection<Node> removedNodes = change.getNodes();
 
       LOGGER.info("Removing nodes: {}", removedNodes);
 
@@ -60,9 +60,10 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
       Cluster cluster = nodeContext.getCluster();
 
       Collection<Node> removed = new ArrayList<>(removedNodes.size());
-      for (InetSocketAddress removedNode : removedNodes) {
-        cluster.getNode(removedNode).ifPresent(node -> {
-          if (cluster.detachNode(removedNode)) {
+      for (Node removedNode : removedNodes) {
+        InetSocketAddress removedNodeAddress = removedNode.getNodeAddress();
+        cluster.getNode(removedNodeAddress).ifPresent(node -> {
+          if (cluster.detachNode(removedNodeAddress)) {
             removed.add(node);
           }
         });

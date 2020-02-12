@@ -10,40 +10,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Node;
 
 import java.net.InetSocketAddress;
-import java.util.List;
+import java.util.Collection;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 /**
  * @author Mathieu Carbou
  */
 @JsonTypeName("NodeAdditionNomadChange")
-public class NodeAdditionNomadChange extends FilteredNomadChange {
+public class NodeAdditionNomadChange extends PassiveNomadChange {
 
   private final int stripeId;
-  private final List<Node> nodes;
 
   @JsonCreator
   public NodeAdditionNomadChange(@JsonProperty(value = "stripeId", required = true) int stripeId,
-                                 @JsonProperty(value = "nodes", required = true) List<Node> nodes) {
-    super(Applicability.cluster());
+                                 @JsonProperty(value = "nodes", required = true) Collection<Node> nodes) {
+    super(nodes);
     this.stripeId = stripeId;
-    this.nodes = requireNonNull(nodes);
   }
 
   public int getStripeId() {
     return stripeId;
   }
 
-  public List<Node> getNodes() {
-    return nodes;
-  }
-
   @Override
   public String getSummary() {
     return "Attaching nodes: "
-        + nodes.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", "))
+        + getNodes().stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", "))
         + " to stripe ID: "
         + stripeId;
   }
@@ -52,7 +45,7 @@ public class NodeAdditionNomadChange extends FilteredNomadChange {
   public String toString() {
     return "NodeAdditionNomadChange{" +
         "stripeId=" + stripeId +
-        "nodes=" + nodes +
+        "nodes=" + getNodes() +
         ", applicability=" + getApplicability() +
         '}';
   }

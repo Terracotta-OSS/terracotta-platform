@@ -14,7 +14,7 @@ import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.nomad.client.change.MultipleNomadChanges;
+import org.terracotta.nomad.client.change.MultiNomadChange;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -76,8 +76,8 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
       ensureActivesAreAllOnline(originalCluster, onlineNodes);
       logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
-      MultipleNomadChanges changes = getNomadChanges(updatedCluster);
-      runNomadChange(onlineNodes, changes);
+      MultiNomadChange<SettingNomadChange> changes = getNomadChanges(updatedCluster);
+      runConfigurationChange(onlineNodes, changes);
 
       // do we need to restart to apply the changes ?
       if (mustBeRestarted(node)) {
@@ -100,9 +100,9 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     logger.info("Command successful!" + lineSeparator());
   }
 
-  private MultipleNomadChanges getNomadChanges(Cluster cluster) {
-    // MultipleNomadChanges will apply to whole change set given by the user as an atomic operation
-    return new MultipleNomadChanges(configurations.stream()
+  private MultiNomadChange<SettingNomadChange> getNomadChanges(Cluster cluster) {
+    // MultiNomadChange will apply to whole change set given by the user as an atomic operation
+    return new MultiNomadChange<>(configurations.stream()
         .map(configuration -> {
           configuration.validate(operation);
           return SettingNomadChange.fromConfiguration(configuration, operation, cluster);

@@ -93,7 +93,7 @@ public class RepairCommand extends RemoteCommand {
           logger.warn("Forcing a " + forcedChangeState.name().toLowerCase() + "...");
         }
 
-        runNomadRepair(allNodes, forcedChangeState == ChangeState.COMMIT ? COMMITTED : forcedChangeState == ChangeState.ROLLBACK ? ROLLED_BACK : null);
+        runConfigurationRepair(allNodes, forcedChangeState == ChangeState.COMMIT ? COMMITTED : forcedChangeState == ChangeState.ROLLBACK ? ROLLED_BACK : null);
         logger.info("Configuration is repaired.");
 
         break;

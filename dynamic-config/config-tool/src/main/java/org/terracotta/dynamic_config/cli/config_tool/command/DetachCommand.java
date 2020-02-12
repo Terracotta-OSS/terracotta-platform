@@ -8,8 +8,8 @@ import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.PassiveNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.nomad.client.change.NomadChange;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -66,10 +66,10 @@ public class DetachCommand extends TopologyCommand {
   }
 
   @Override
-  protected NomadChange buildNomadChange(Cluster result) {
+  protected PassiveNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeRemovalNomadChange(singletonList(source));
+        return new NodeRemovalNomadChange(singletonList(sourceCluster.getNode(source).get()));
       case STRIPE: {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }

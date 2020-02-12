@@ -12,7 +12,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.json.Json;
-import org.terracotta.nomad.client.change.MultipleNomadChanges;
+import org.terracotta.nomad.client.change.MultiNomadChange;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class NomadChangeJsonTest {
     NomadChange[] changes = {
         new ClusterActivationNomadChange(cluster),
         SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
-        new MultipleNomadChanges(
+        new MultiNomadChange<>(
             SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
             SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "bar", "512MB")
         )

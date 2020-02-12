@@ -7,12 +7,12 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import org.terracotta.diagnostic.common.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.nomad.PassiveNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.Json;
-import org.terracotta.nomad.client.change.NomadChange;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -106,8 +106,8 @@ public abstract class TopologyCommand extends RemoteCommand {
     logger.info("Sending the topology change to all the nodes");
 
     if (destinationClusterActivated) {
-      NomadChange nomadChange = buildNomadChange(result);
-      runNomadChange(destinationOnlineNodes, nomadChange);
+      PassiveNomadChange nomadChange = buildNomadChange(result);
+      runPassiveChange(destinationOnlineNodes, nomadChange);
       onNomadChangeCommitted(result);
 
     } else {
@@ -163,7 +163,7 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   protected abstract Cluster updateTopology();
 
-  protected abstract NomadChange buildNomadChange(Cluster result);
+  protected abstract PassiveNomadChange buildNomadChange(Cluster result);
 
   protected void onNomadChangeCommitted(Cluster result) {
   }

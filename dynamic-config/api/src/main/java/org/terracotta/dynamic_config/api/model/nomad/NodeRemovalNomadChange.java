@@ -7,40 +7,33 @@ package org.terracotta.dynamic_config.api.model.nomad;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.terracotta.dynamic_config.api.model.Node;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 /**
  * @author Mathieu Carbou
  */
 @JsonTypeName("NodeRemovalNomadChange")
-public class NodeRemovalNomadChange extends FilteredNomadChange {
-
-  private final Collection<InetSocketAddress> removedNodes;
+public class NodeRemovalNomadChange extends PassiveNomadChange {
 
   @JsonCreator
-  public NodeRemovalNomadChange(@JsonProperty(value = "removedNodes", required = true) Collection<InetSocketAddress> removedNodes) {
-    super(Applicability.cluster());
-    this.removedNodes = requireNonNull(removedNodes);
-  }
-
-  public Collection<InetSocketAddress> getRemovedNodes() {
-    return removedNodes;
+  public NodeRemovalNomadChange(@JsonProperty(value = "removedNodes", required = true) Collection<Node> removedNodes) {
+    super(removedNodes);
   }
 
   @Override
   public String getSummary() {
-    return "Detaching nodes: " + removedNodes.stream().map(InetSocketAddress::toString).collect(joining(", "));
+    return "Detaching nodes: " + getNodes().stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", "));
   }
 
   @Override
   public String toString() {
     return "NodeRemovalNomadChange{" +
-        "removedNodes=" + getRemovedNodes() +
+        "removedNodes=" + getNodes() +
         ", applicability=" + getApplicability() +
         '}';
   }

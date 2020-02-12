@@ -17,7 +17,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 
 import java.net.InetSocketAddress;
-import java.util.List;
+import java.util.Collection;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
@@ -53,7 +53,7 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
   @Override
   public void apply(NodeAdditionNomadChange change) throws NomadException {
     try {
-      List<Node> newNodes = change.getNodes();
+      Collection<Node> newNodes = change.getNodes();
       int stripeId = change.getStripeId();
 
       LOGGER.info("Adding nodes: {} to stripe ID: {}",

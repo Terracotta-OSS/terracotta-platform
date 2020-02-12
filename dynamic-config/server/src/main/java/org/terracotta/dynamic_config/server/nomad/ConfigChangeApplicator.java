@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.server.nomad.processor.NomadChangeProcessor;
-import org.terracotta.nomad.client.change.MultipleNomadChanges;
+import org.terracotta.nomad.client.change.MultiNomadChange;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
@@ -32,7 +32,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
   @Override
   public PotentialApplicationResult<NodeContext> tryApply(NodeContext baseConfig, NomadChange change) {
     // supports multiple changes
-    List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
+    List<NomadChange> changes = getChanges(change);
 
     for (NomadChange c : changes) {
       try {
@@ -55,11 +55,15 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
   @Override
   public void apply(NomadChange change) throws NomadException {
     // supports multiple changes
-    List<NomadChange> changes = change instanceof MultipleNomadChanges ? ((MultipleNomadChanges) change).getChanges() : Collections.singletonList(change);
+    List<NomadChange> changes = getChanges(change);
 
     for (NomadChange c : changes) {
       commandProcessor.apply(c);
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private static List<NomadChange> getChanges(NomadChange change) {
+    return change instanceof MultiNomadChange ? ((MultiNomadChange<NomadChange>) change).getChanges() : Collections.singletonList(change);
+  }
 }

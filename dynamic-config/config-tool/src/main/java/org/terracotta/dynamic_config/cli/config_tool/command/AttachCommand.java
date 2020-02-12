@@ -13,16 +13,14 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.PassiveNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
-import org.terracotta.nomad.client.change.NomadChange;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collection;
 
 import static java.util.Collections.singletonList;
@@ -102,7 +100,7 @@ public class AttachCommand extends TopologyCommand {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
-  protected NomadChange buildNomadChange(Cluster result) {
+  protected PassiveNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
         return new NodeAdditionNomadChange(
@@ -132,7 +130,7 @@ public class AttachCommand extends TopologyCommand {
           .forEach(service -> service.activate(result, null));
     }
 
-    runNomadChange(new ArrayList<>(toActivate), new ClusterActivationNomadChange(result));
+    runClusterActivation(toActivate, result);
     logger.debug("Configuration repositories have been created for nodes: {}", toString(toActivate));
 
     logger.info("Restarting nodes: {}", toString(toActivate));

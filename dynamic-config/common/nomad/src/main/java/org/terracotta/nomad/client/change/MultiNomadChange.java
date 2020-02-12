@@ -21,22 +21,23 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-@JsonTypeName("MultipleNomadChanges")
-public class MultipleNomadChanges implements NomadChange {
+@JsonTypeName("MultiNomadChange")
+public class MultiNomadChange<T extends NomadChange> implements NomadChange {
 
   // keep this as a list, because the ordering to apply the changes might be important
-  private final List<NomadChange> changes;
+  private final List<T> changes;
 
   @JsonCreator
-  public MultipleNomadChanges(@JsonProperty(value = "changes", required = true) List<? extends NomadChange> changes) {
+  public MultiNomadChange(@JsonProperty(value = "changes", required = true) List<? extends T> changes) {
     this.changes = new ArrayList<>(requireNonNull(changes));
   }
 
-  public MultipleNomadChanges(NomadChange... changes) {
+  @SuppressWarnings("unchecked")
+  public MultiNomadChange(T... changes) {
     this(Arrays.asList(changes));
   }
 
-  public List<NomadChange> getChanges() {
+  public List<T> getChanges() {
     return changes;
   }
 
@@ -48,8 +49,8 @@ public class MultipleNomadChanges implements NomadChange {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MultipleNomadChanges)) return false;
-    MultipleNomadChanges that = (MultipleNomadChanges) o;
+    if (!(o instanceof MultiNomadChange)) return false;
+    MultiNomadChange<?> that = (MultiNomadChange<?>) o;
     return getChanges().equals(that.getChanges());
   }
 

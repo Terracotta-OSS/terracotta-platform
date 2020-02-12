@@ -13,7 +13,6 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
@@ -27,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collection;
 
 import static java.lang.System.lineSeparator;
@@ -115,7 +113,7 @@ public class ActivateCommand extends RemoteCommand {
       }
     }
 
-    runNomadChange(new ArrayList<>(runtimePeers), new ClusterActivationNomadChange(cluster));
+    runClusterActivation(runtimePeers, cluster);
     logger.debug("Configuration repositories have been created for all nodes");
 
     logger.info("Restarting nodes: {}", toString(runtimePeers));
