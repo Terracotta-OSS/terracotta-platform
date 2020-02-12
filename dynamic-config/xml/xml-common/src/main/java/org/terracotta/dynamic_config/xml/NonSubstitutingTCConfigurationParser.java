@@ -18,7 +18,6 @@ import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.config.util.ParameterSubstitutor;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.w3c.dom.Element;
 import org.xml.sax.ErrorHandler;
@@ -53,18 +52,14 @@ import java.util.ServiceLoader;
 
 import static java.lang.System.lineSeparator;
 
-/**
- * This is a copy of the TCConfigurationParser class in platform but this one is not doing any substitution
- */
-public class CustomTCConfigurationParser {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(CustomTCConfigurationParser.class);
+public class NonSubstitutingTCConfigurationParser {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NonSubstitutingTCConfigurationParser.class);
   private static final SchemaFactory XSD_SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-  public static final URL TERRACOTTA_XML_SCHEMA = TCConfigurationParser.class.getResource("/terracotta.xsd");
+  private static final URL TERRACOTTA_XML_SCHEMA = TCConfigurationParser.class.getResource("/terracotta.xsd");
   private static final String WILDCARD_IP = "0.0.0.0";
-  public static final int MIN_PORTNUMBER = 0x0FFF;
-  public static final int MAX_PORTNUMBER = 0xFFFF;
-  public static final String DEFAULT_LOGS = "logs";
+  private static final int MIN_PORTNUMBER = 0x0FFF;
+  private static final int MAX_PORTNUMBER = 0xFFFF;
+  private static final String DEFAULT_LOGS = "logs";
 
   private static TcConfiguration parseStream(InputStream in, String source, ClassLoader loader) throws IOException, SAXException {
     Collection<Source> schemaSources = new ArrayList<>();
@@ -123,10 +118,7 @@ public class CustomTCConfigurationParser {
       if (tcConfig.getServers().getServer().isEmpty()) {
         tcConfig.getServers().getServer().add(new Server());
       }
-      // [DYNAMIC-CONFIG]
-      // We not not alow replacement because we want to keep user input during parsing
-      //DefaultSubstitutor.applyDefaults(tcConfig);
-      applyPlatformDefaults(tcConfig, source);
+      applyPlatformDefaults(tcConfig);
 
       List<ServiceProviderConfiguration> serviceConfigurations = new ArrayList<>();
       List<Object> configObjects = new ArrayList<>();
@@ -161,13 +153,13 @@ public class CustomTCConfigurationParser {
     }
   }
 
-  public static void applyPlatformDefaults(TcConfig tcConfig, String source) {
+  public static void applyPlatformDefaults(TcConfig tcConfig) {
     for (Server server : tcConfig.getServers().getServer()) {
       setDefaultBind(server);
       initializeTsaPort(server);
       initializeTsaGroupPort(server);
       initializeNameAndHost(server);
-      initializeLogsDirectory(server, source);
+      initializeLogsDirectory(server);
     }
   }
 
@@ -182,11 +174,10 @@ public class CustomTCConfigurationParser {
     }
   }
 
-  private static void initializeLogsDirectory(Server server, String source) {
+  private static void initializeLogsDirectory(Server server) {
     if (server.getLogs() == null) {
       server.setLogs(DEFAULT_LOGS + "/%h-" + server.getTsaPort().getValue());
     }
-    // Note: Do not perform parameter-substitution because we want to keep user input during parsing
   }
 
   private static void initializeTsaGroupPort(Server server) {
@@ -215,15 +206,13 @@ public class CustomTCConfigurationParser {
       int tsaPort = server.getTsaPort().getValue();
       server.setName(server.getHost() + (tsaPort > 0 ? ":" + tsaPort : ""));
     }
-
-    // Note: Do not perform parameter-substitution because we want to keep user input during parsing
   }
 
   private static void setDefaultBind(Server s) {
     if (s.getBind() == null || s.getBind().trim().length() == 0) {
       s.setBind(WILDCARD_IP);
     }
-    s.setBind(ParameterSubstitutor.substitute(s.getBind()));
+    s.setBind(s.getBind());
   }
 
   private static TcConfiguration convert(InputStream in, String path, ClassLoader loader) throws IOException, SAXException {
@@ -269,11 +258,11 @@ public class CustomTCConfigurationParser {
     return convert(url.openStream(), url.getPath(), loader);
   }
 
-  public static TcConfiguration parse(InputStream in, Collection<SAXParseException> errors, String source) throws IOException, SAXException {
-    return parse(in, errors, source, Thread.currentThread().getContextClassLoader());
+  public static TcConfiguration parse(InputStream in, String source) throws IOException, SAXException {
+    return parse(in, source, Thread.currentThread().getContextClassLoader());
   }
 
-  public static TcConfiguration parse(InputStream in, Collection<SAXParseException> errors, String source, ClassLoader loader) throws IOException, SAXException {
+  public static TcConfiguration parse(InputStream in, String source, ClassLoader loader) throws IOException, SAXException {
     return parseStream(in, source, loader);
   }
 
@@ -282,17 +271,17 @@ public class CustomTCConfigurationParser {
     private final List<SAXParseException> errors = new ArrayList<>();
 
     @Override
-    public void error(SAXParseException exception) throws SAXException {
+    public void error(SAXParseException exception) {
       errors.add(exception);
     }
 
     @Override
-    public void fatalError(SAXParseException exception) throws SAXException {
+    public void fatalError(SAXParseException exception) {
       errors.add(exception);
     }
 
     @Override
-    public void warning(SAXParseException exception) throws SAXException {
+    public void warning(SAXParseException exception) {
       LOGGER.warn(exception.getLocalizedMessage());
     }
 

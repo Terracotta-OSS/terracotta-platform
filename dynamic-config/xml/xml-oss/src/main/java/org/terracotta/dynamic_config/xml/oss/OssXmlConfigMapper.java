@@ -25,7 +25,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.PathResolver;
 import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
-import org.terracotta.dynamic_config.xml.CustomTCConfigurationParser;
+import org.terracotta.dynamic_config.xml.NonSubstitutingTCConfigurationParser;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.Logger;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcNode;
@@ -98,7 +98,7 @@ public class OssXmlConfigMapper implements XmlConfigMapper {
   @Override
   public NodeContext fromXml(String nodeName, String xml) {
     try {
-      TcConfiguration xmlTcConfiguration = CustomTCConfigurationParser.parse(xml);
+      TcConfiguration xmlTcConfiguration = NonSubstitutingTCConfigurationParser.parse(xml);
       TcConfig platformConfiguration = xmlTcConfiguration.getPlatformConfiguration();
       Map<Class<?>, List<Object>> xmlPlugins = parsePlugins(xml, platformConfiguration);
       TcCluster xmlCluster = (TcCluster) xmlPlugins.get(TcCluster.class).get(0);
@@ -121,7 +121,7 @@ public class OssXmlConfigMapper implements XmlConfigMapper {
 
   private static Node toNode(String xml, TcNode xmlNode) {
     TcConfig xmlTcConfig = xmlNode.getServerConfig().getTcConfig();
-    CustomTCConfigurationParser.applyPlatformDefaults(xmlTcConfig, null);
+    NonSubstitutingTCConfigurationParser.applyPlatformDefaults(xmlTcConfig);
     Server xmlServer = xmlTcConfig.getServers().getServer()
         .stream()
         .filter(server -> server.getName().equals(xmlNode.getName()))
@@ -230,7 +230,6 @@ public class OssXmlConfigMapper implements XmlConfigMapper {
         .collect(groupingBy(Object::getClass));
   }
 
-  @SuppressWarnings("unchecked")
   private static Stream<?> parsePlugin(String xml, Object o) {
     if (o instanceof Config) {
       Element element = ((Config) o).getConfigContent();

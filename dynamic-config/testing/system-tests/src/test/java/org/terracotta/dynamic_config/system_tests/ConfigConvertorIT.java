@@ -23,7 +23,7 @@ import org.terracotta.dynamic_config.api.service.XmlConfigMapperDiscovery;
 import org.terracotta.dynamic_config.server.conversion.ConfigConvertor;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.system_tests.util.ConversionITResultProcessor;
-import org.terracotta.dynamic_config.xml.CustomTCConfigurationParser;
+import org.terracotta.dynamic_config.xml.NonSubstitutingTCConfigurationParser;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
@@ -100,7 +100,7 @@ public class ConfigConvertorIT {
     // convert it back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
     String convertedConfigContent = xmlConfigMapper.toXml(topology);
-    TcConfiguration configuration = CustomTCConfigurationParser.parse(convertedConfigContent);
+    TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
     List<TcCluster> clusterList = configuration.getExtendedConfiguration(TcCluster.class);
@@ -203,7 +203,7 @@ public class ConfigConvertorIT {
     // convert it back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
     String convertedConfigContent = xmlConfigMapper.toXml(topology);
-    TcConfiguration configuration = CustomTCConfigurationParser.parse(convertedConfigContent);
+    TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
     List<TcCluster> clusterList = configuration.getExtendedConfiguration(TcCluster.class);
@@ -309,7 +309,7 @@ public class ConfigConvertorIT {
     // convert it back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
     String convertedConfigContent = xmlConfigMapper.toXml(topology);
-    TcConfiguration configuration = CustomTCConfigurationParser.parse(convertedConfigContent);
+    TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
     List<TcCluster> clusterList = configuration.getExtendedConfiguration(TcCluster.class);
@@ -492,7 +492,7 @@ public class ConfigConvertorIT {
 
   private void validateMultiStripeSingleFileForStripeInsideClusterResult(String serverName, NodeContext topology) throws Exception {
     String convertedConfigContent1 = xmlConfigMapper.toXml(topology);
-    TcConfiguration configuration = CustomTCConfigurationParser.parse(convertedConfigContent1);
+    TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
     TcConfig tcConfig = configuration.getPlatformConfiguration();
@@ -619,7 +619,7 @@ public class ConfigConvertorIT {
     // convert back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
     String convertedConfigContent1 = xmlConfigMapper.toXml(topology);
-    TcConfiguration configuration = CustomTCConfigurationParser.parse(convertedConfigContent1);
+    TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
     TcConfig tcConfig = configuration.getPlatformConfiguration();
