@@ -16,7 +16,7 @@ import org.terracotta.nomad.server.ChangeRequestState;
 import java.time.Clock;
 import java.util.List;
 
-public class NomadClient<T> {
+public class NomadClient<T> implements AutoCloseable {
   private final List<NomadEndpoint<T>> servers;
   private final String host;
   private final String user;
@@ -51,5 +51,24 @@ public class NomadClient<T> {
   public void tryDiscovery(DiscoverResultsReceiver<T> results) {
     DiscoveryProcess<T> discoveryProcess = new DiscoveryProcess<>(servers, host, user, clock);
     discoveryProcess.discover(results);
+  }
+
+  @Override
+  public void close() {
+    RuntimeException error = null;
+    for (NomadEndpoint<T> server : servers) {
+      try {
+        server.close();
+      } catch (RuntimeException e) {
+        if (error == null) {
+          error = e;
+        } else {
+          error.addSuppressed(e);
+        }
+      }
+    }
+    if (error != null) {
+      throw error;
+    }
   }
 }

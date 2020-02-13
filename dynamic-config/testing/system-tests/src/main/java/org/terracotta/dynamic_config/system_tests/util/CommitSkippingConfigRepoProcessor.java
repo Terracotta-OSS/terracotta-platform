@@ -51,6 +51,11 @@ public class CommitSkippingConfigRepoProcessor extends ConfigRepoProcessor {
       public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
         return nomadServer.takeover(message);
       }
+
+      @Override
+      public void close() {
+        nomadServer.close();
+      }
     };
   }
 }

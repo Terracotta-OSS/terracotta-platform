@@ -53,6 +53,10 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
+  public void close() {
+  }
+
+  @Override
   public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {
     if (changeApplicator == null) {
       throw new NullPointerException("Can not set NULL changeApplicator");

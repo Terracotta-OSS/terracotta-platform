@@ -58,4 +58,7 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   public void reset() throws NomadException {
     delegate.reset();
   }
+
+  @Override
+  public void close() {delegate.close();}
 }

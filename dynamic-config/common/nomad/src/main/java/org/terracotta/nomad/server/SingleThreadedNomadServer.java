@@ -34,6 +34,16 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
+  public void close() {
+    lock.lock();
+    try {
+      underlying.close();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public DiscoverResponse<T> discover() throws NomadException {
     lock.lock();
     try {

@@ -349,5 +349,10 @@ public class NomadIT {
     public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
       return underlying.takeover(message);
     }
+
+    @Override
+    public void close() {
+      underlying.close();
+    }
   }
 }

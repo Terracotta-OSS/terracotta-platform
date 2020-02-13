@@ -56,6 +56,9 @@ public class NomadEndpoint<T> implements NomadServer<T> {
   }
 
   @Override
+  public void close() {server.close();}
+
+  @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("NomadEndpoint{");
     sb.append("address=").append(address);

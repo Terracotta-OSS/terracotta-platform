@@ -11,7 +11,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 
-public interface NomadServer<T> {
+public interface NomadServer<T> extends AutoCloseable {
   DiscoverResponse<T> discover() throws NomadException;
 
   AcceptRejectResponse prepare(PrepareMessage message) throws NomadException;
@@ -21,4 +21,7 @@ public interface NomadServer<T> {
   AcceptRejectResponse rollback(RollbackMessage message) throws NomadException;
 
   AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException;
+
+  @Override
+  void close();
 }
