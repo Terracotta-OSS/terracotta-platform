@@ -24,7 +24,7 @@ public interface MultiDiagnosticServiceProvider {
    */
   default DiagnosticServices fetchOnlineDiagnosticServices(Collection<InetSocketAddress> expectedOnlineNodes) throws DiagnosticServiceProviderException {
     DiagnosticServices diagnosticServices = fetchDiagnosticServices(expectedOnlineNodes);
-    final Collection<InetSocketAddress> offlineEndpoints = diagnosticServices.getOfflineEndpoints();
+    Collection<InetSocketAddress> offlineEndpoints = diagnosticServices.getOfflineEndpoints();
     if (!offlineEndpoints.isEmpty()) {
       DiagnosticServiceProviderException exception = new DiagnosticServiceProviderException("Diagnostic connection to: " + offlineEndpoints + " failed");
       // add all errors
@@ -32,6 +32,11 @@ public interface MultiDiagnosticServiceProvider {
           .map(address -> diagnosticServices.getError(address).orElse(null))
           .filter(Objects::nonNull)
           .forEach(exception::addSuppressed);
+      try {
+        diagnosticServices.close();
+      } catch (RuntimeException e) {
+        exception.addSuppressed(e);
+      }
       throw exception;
     }
     return diagnosticServices;
