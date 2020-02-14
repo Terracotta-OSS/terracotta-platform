@@ -28,7 +28,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
       throw new NomadException("Existing config must be null. Found: " + baseConfig);
     }
 
-    // This check verifies that TopologyService#prepareActivation() has been previously called before running any Nomad change
+    // This check verifies that DynamicConfigService#activate() has been previously called before running any Nomad change
     // to install the topology and license on the node
     if (!expectedCluster.equals(change.getCluster())) {
       throw new NomadException("Wrong cluster: got " + change.getCluster() + ", but was expecting: " + expectedCluster);
