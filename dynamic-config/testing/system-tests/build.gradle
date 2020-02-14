@@ -14,6 +14,9 @@ dependencies {
   compile project(':port-locking')
   compile project(':test-utilities')
 
+  // TODO [DYNAMIC-CONFIG]: We need to use angela-ee currently because 10.x distribution is considered EE.
+  // We can move to angela OSS when we change the distribution to ehcache 3.x
+  compile "com.terracottatech:angela-ee:$angelaVersion"
   compile "org.terracotta:ipc-eventbus:$ipcEventbusVersion"
   compile "org.terracotta.management.dist:mnm-nms-agent:$terracottaPlatformVersion"
   compile "org.terracotta.management.dist:mnm-nms:$terracottaPlatformVersion"
@@ -40,10 +43,14 @@ dependencies {
 
 apply plugin: TcDistribute
 
-task unzipKit(type: Copy) {
-  dependsOn project(':terracotta').distZip
-  into('build/tc-db-kit')
-  from zipTree(project(':terracotta').distZip.archivePath)
+task copyAndUntar(type: Copy) {
+  dependsOn project(':terracotta').distTar
+
+  from (file(project(':terracotta').distTar.archivePath))
+  into("build/angela/kits/$project.version")
+
+  from tarTree(project(':terracotta').distTar.archivePath)
+  into("build/angela/kits/$project.version")
 
   dependsOn project(':dynamic-config-test-support').jar
   into("terracotta-$project.version/server/plugins/lib") {
@@ -52,9 +59,10 @@ task unzipKit(type: Copy) {
 }
 
 test {
-  dependsOn unzipKit
+  dependsOn copyAndUntar
 
-  maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+  // TODO: TDB-4788: Angela tests from the same module can't run concurrently
+  // maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
 
 // Server-side
   def serverJvm = Jvm.current()
@@ -63,9 +71,10 @@ test {
     environment 'JAVA_OPTS', '--add-modules java.xml.bind'
   }
 
-//If this directory does not exist, tests will fail with a cryptic assert failure
-  systemProperty 'kitInstallationPath', "$unzipKit.destinationDir/${project(':terracotta').archivesBaseName}-$project.version"
-//systemProperty 'serverDebugStartPort', "5005"
+  // Angela properties
+  systemProperty 'angela.rootDir', file('build/angela').absolutePath
+  systemProperty 'angela.skipUninstall', 'true'
+  systemProperty 'angela.tsa.fullLogging', 'true'
 
   testLogging {
     events 'started'

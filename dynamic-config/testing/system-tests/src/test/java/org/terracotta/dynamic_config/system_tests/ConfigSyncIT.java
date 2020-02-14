@@ -6,17 +6,20 @@ package org.terracotta.dynamic_config.system_tests;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
+import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.system_tests.util.AppendLogCapturer;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritObject;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -27,6 +30,7 @@ import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskr
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MODE;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
@@ -35,9 +39,9 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
   @Before
   @Override
-  public void before() throws Exception {
+  public void before() {
     super.before();
-    if (getNodeProcess(1, 1).getServerState().isActive()) {
+    if (tsa.getActive() == getNode(1, 1)) {
       activeNodeId = 1;
       passiveNodeId = 2;
     } else {
@@ -48,38 +52,59 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
   @Test
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
-    getNodeProcess(1, passiveNodeId).close();
-
+    tsa.stop(getNode(1, passiveNodeId));
+    assertThat(tsa.getStopped().size(), is(1));
     out.clearLog();
-    ConfigTool.start("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB");
+
+    configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB");
     assertCommandSuccessful();
+
+    //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
+    // Passive is already stopped, so only shutdown and restart the active
+    tsa.stop(getNode(1, activeNodeId));
+    assertThat(tsa.getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 3);
+    tsa.start(getNode(1, activeNodeId));
+    assertThat(tsa.getActives().size(), is(1));
 
     out.clearLog();
-    startNode(1, passiveNodeId);
+    tsa.start(getNode(1, passiveNodeId));
     waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+
+    //TODO TDB-4842: The stop is needed to prevent IOException on Windows
+    tsa.stopAll();
     assertContentsBeforeOrAfterSync(5, 5);
   }
 
   @Test
   public void testPassiveZapsWhenActiveHasSomeUnCommittedChanges() throws Exception {
-    getNodeProcess(1, passiveNodeId).close();
+    tsa.stop(getNode(1, passiveNodeId));
+    assertThat(tsa.getStopped().size(), is(1));
 
     // trigger commit failure on active
     // the passive should zap when restarting
-    try {
-      out.clearLog();
-      ConfigTool.start("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=commit-failure");
-      fail("Expected to throw exception");
-    } catch (IllegalStateException e) {
-      e.printStackTrace(System.out);
-    }
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=commit-failure"),
+        not(hasExitStatus(0)));
 
+    //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
+    // Passive is already stopped, so only shutdown and restart the active
+    tsa.stop(getNode(1, activeNodeId));
+    assertThat(tsa.getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(4, 3);
+    tsa.start(getNode(1, activeNodeId));
+    assertThat(tsa.getActives().size(), is(1));
 
     out.clearLog();
-    startNode(1, passiveNodeId);
-    waitUntil(out::getLog, containsString("Active has some PREPARED configuration changes that are not yet committed."));
+    try {
+      tsa.start(getNode(1, passiveNodeId));
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("Active has some PREPARED configuration changes that are not yet committed."));
+    }
+
+    //TODO TDB-4842: The stop is needed to prevent IOException on Windows
+    tsa.stopAll();
     assertContentsBeforeOrAfterSync(4, 3);
   }
 
@@ -88,20 +113,29 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // trigger commit failure on active
     // but passive is fine
     // when passive restarts, its history is greater and not equal to the active, so it zaps
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=commit-failure"),
+        not(hasExitStatus(0)));
+
+    //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
+    tsa.stop(getNode(1, passiveNodeId));
+    tsa.stop(getNode(1, activeNodeId));
+    assertThat(tsa.getStopped().size(), is(2));
+    assertContentsBeforeOrAfterSync(4, 5);
+    // Start only the former active for now (the passive startup would be done later, and should fail)
+    tsa.start(getNode(1, activeNodeId));
+    assertThat(tsa.getActives().size(), is(1));
+    out.clearLog();
+
     try {
-      ConfigTool.start("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=commit-failure");
-      fail("Expected to throw exception");
-    } catch (IllegalStateException e) {
-      e.printStackTrace(System.out);
+      tsa.start(getNode(1, passiveNodeId));
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
     }
 
-    assertContentsBeforeOrAfterSync(4, 5);
-
-    getNodeProcess(1, passiveNodeId).close();
-
-    out.clearLog();
-    startNode(1, passiveNodeId);
-    waitUntil(out::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
+    //TODO TDB-4842: The stop is needed to prevent IOException on Windows
+    tsa.stopAll();
     assertContentsBeforeOrAfterSync(4, 5);
   }
 
@@ -110,26 +144,36 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // run a non committed configuration change on the passive
     // the active is OK
     // the passive should restart fine
-    try {
-      ConfigTool.start("set", "-s", "localhost:" + getNodePort(1, passiveNodeId), "-c", "stripe.1.node." + passiveNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=recover-needed");
-      fail("Expected to throw exception");
-    } catch (IllegalStateException e) {
-      e.printStackTrace(System.out);
-    }
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, passiveNodeId), "-c", "stripe.1.node." + passiveNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=recover-needed"),
+        not(hasExitStatus(0)));
 
+    //TODO TDB-4842: The stop is needed to prevent IOException on Windows
+    tsa.stop(getNode(1, passiveNodeId));
+    tsa.stop(getNode(1, activeNodeId));
+    assertThat(tsa.getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 4);
+    tsa.start(getNode(1, activeNodeId));
 
-    getNodeProcess(1, passiveNodeId).close();
-
-    out.clearLog();
-    startNode(1, passiveNodeId);
+    tsa.start(getNode(1, passiveNodeId));
     waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+
+    //TODO TDB-4842: The stop is needed to prevent IOException on Windows
+    tsa.stopAll();
     assertContentsBeforeOrAfterSync(5, 5);
   }
 
-  private void assertContentsBeforeOrAfterSync(int activeChangesSize, int passiveChangesSize) throws SanskritException {
-    Path activePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + activeNodeId + "/sanskrit");
-    Path passivePath = Paths.get(getBaseDir() + "/repository/stripe1/node-" + passiveNodeId + "/sanskrit");
+  private void assertContentsBeforeOrAfterSync(int activeChangesSize, int passiveChangesSize) throws SanskritException, IOException {
+    TerracottaServer active = getNode(1, activeNodeId);
+    TerracottaServer passive = getNode(1, passiveNodeId);
+
+    Path activePath = getBaseDir().resolve("activeRepo");
+    Path passivePath = getBaseDir().resolve("passiveRepo");
+    Files.createDirectories(activePath);
+    Files.createDirectories(passivePath);
+
+    tsa.browse(active, Paths.get(active.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(activePath.toFile());
+    tsa.browse(passive, Paths.get(passive.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(passivePath.toFile());
 
     List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
     List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);

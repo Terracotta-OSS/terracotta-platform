@@ -11,7 +11,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.system_tests.util.NodeProcess;
 
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -30,9 +29,9 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
 public class TopologyServiceIT extends DynamicConfigIT {
 
   @Override
-  protected NodeProcess startNode(int stripeId, int nodeId, int port, int groupPort) throws Exception {
-    return startNode(1, 1,
-        "--node-repository-dir", "repository/stripe1/node-1",
+  protected void startNode(int stripeId, int nodeId) {
+    startNode(1, 1,
+        "--node-repository-dir", "terracotta" + combine(stripeId, nodeId) + "/repository",
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
   }
@@ -53,12 +52,12 @@ public class TopologyServiceIT extends DynamicConfigIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingCluster, is(equalTo(new Cluster(new Stripe(Node.newDefaultNode("node-1", "localhost", getNodePort())
-          .setNodeGroupPort(getNodePort() + 1)
+      assertThat(pendingCluster, is(equalTo(new Cluster(new Stripe(Node.newDefaultNode("node1-1", "localhost", getNodePort())
+          .setNodeGroupPort(getNodeGroupPort())
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
-          .setNodeLogDir(Paths.get("logs", "stripe1", "node-1"))
+          .setNodeLogDir(Paths.get("logs", "stripe1", "node1-1"))
           .setNodeBackupDir(Paths.get("backup", "stripe1"))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)

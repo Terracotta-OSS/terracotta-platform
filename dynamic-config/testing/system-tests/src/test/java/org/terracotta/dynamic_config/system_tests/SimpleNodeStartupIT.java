@@ -19,9 +19,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 @ClusterDefinition(autoStart = false)
-public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
+public class SimpleNodeStartupIT extends DynamicConfigIT {
 
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
@@ -37,14 +38,14 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testStartingWithSingleNodeConfigFile() throws Exception {
+  public void testStartingWithSingleNodeConfigFile() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
   @Test
-  public void testStartingWithSingleNodeConfigFileWithHostPort() throws Exception {
+  public void testStartingWithSingleNodeConfigFileWithHostPort() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--node-repository-dir", "repository/stripe1/node-1");
@@ -63,62 +64,98 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupConfigFile_nonExistentFile() {
     Path configurationFile = Paths.get(".").resolve("blah");
-    startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
-    waitUntil(out::getLog, containsString("Failed to read config file"));
+    try {
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("Failed to read config file"));
+    }
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidPort() throws Exception {
+  public void testFailedStartupConfigFile_invalidPort() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid1.properties");
-    startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
-    waitUntil(out::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
+    try {
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
+    }
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidSecurity() throws Exception {
+  public void testFailedStartupConfigFile_invalidSecurity() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid2.properties");
-    startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
-    waitUntil(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
+    try {
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
+    }
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidCliParams() throws Exception {
+  public void testFailedStartupConfigFile_invalidCliParams() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startSingleNode("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
-    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    try {
+      startSingleNode("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    }
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidCliParams_2() throws Exception {
+  public void testFailedStartupConfigFile_invalidCliParams_2() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
-    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    try {
+      startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    }
   }
 
   @Test
   public void testFailedStartupCliParams_invalidAuthc() {
-    startSingleNode("--security-authc=blah", "-r", getNodeRepositoryDir().toString());
-    waitUntil(out::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
+    try {
+      startSingleNode("--security-authc=blah", "-r", getNodeRepositoryDir().toString());
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
+    }
   }
 
   @Test
   public void testFailedStartupCliParams_invalidHostname() {
-    startNode(1, 1, "--node-hostname=:::", "-r", getNodeRepositoryDir().toString());
-    waitUntil(out::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
+    try {
+      startNode(1, 1, "--node-hostname=:::", "-r", getNodeRepositoryDir().toString());
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
+    }
   }
 
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() {
-    startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
-    waitUntil(out::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)"));
+    try {
+      startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)"));
+    }
   }
 
   @Test
   public void testFailedStartupCliParams_invalidSecurity() {
-    startSingleNode("--security-audit-log-dir", "audit-dir", "-r", getNodeRepositoryDir().toString());
-    waitUntil(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
+    try {
+      startSingleNode("--security-audit-log-dir", "audit-dir", "-r", getNodeRepositoryDir().toString());
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("security-dir is mandatory for any of the security configuration"));
+    }
   }
 
   @Test
@@ -131,7 +168,7 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
   public void testSuccessfulStartupCliParamsContainingSubstitutionParams() throws Exception {
     startSingleNode(
         "--node-port", String.valueOf(getNodePort()),
-        "--node-group-port", String.valueOf(getNodePort() + 1),
+        "--node-group-port", String.valueOf(getNodeGroupPort()),
         "--node-repository-dir", getNodeRepositoryDir().toString(),
         "--node-hostname", "%c"
     );
@@ -140,59 +177,49 @@ public class SimpleNewServerStartupScriptIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParamsWithConfigFileAndRepositoryDir() throws Exception {
+  public void testFailedStartupCliParamsWithConfigFileAndRepositoryDir() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startNode(1, 1,
-        "--config-file", configurationFile.toString(),
-        "--node-hostname", "localhost",
-        "--node-port", port,
-        "--node-metadata-dir", "foo"
-    );
-    waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    try {
+      startNode(1, 1,
+          "--config-file", configurationFile.toString(),
+          "--node-hostname", "localhost",
+          "--node-port", port,
+          "--node-metadata-dir", "foo"
+      );
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+    }
   }
 
   @Test
   public void testStartingNodeWhenMigrationDidNotCommit() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeAndSkipCommit);
-    startSingleNode("--node-repository-dir", configurationRepo.toString());
-    waitUntil(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
-    waitUntil(out::getLog, containsString("java.lang.IllegalStateException: Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
-    waitUntil(out::getLog, not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
-  }
-
-  @Test
-  public void testPreventConcurrentUseOfRepository() throws Exception {
-    startSingleNode("-n", "node-1", "-r", "repository/stripe1/node-1", "-N", "tc-cluster");
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-
-    startNode(1, 2,
-        "--node-name", "node-1",
-        "--node-repository-dir", "repository/stripe1/node-1",
-        "--node-hostname", "localhost",
-        "--node-log-dir", "logs/stripe1/node-1",
-        "--node-backup-dir", "backup/stripe1",
-        "--node-metadata-dir", "metadata/stripe1",
-        "--data-dirs", "main:user-data/main/stripe1"
-    );
-    waitUntil(out::getLog, containsString("Exception initializing Nomad Server: java.io.IOException: File lock already held: "
-        + getBaseDir().resolve(Paths.get("repository", "stripe1", "node-1", "sanskrit"))));
+    try {
+      startSingleNode("--node-repository-dir", configurationRepo.toString());
+      fail();
+    } catch (Exception e) {
+      waitUntil(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
+      waitUntil(out::getLog, containsString("java.lang.IllegalStateException: Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
+      waitUntil(out::getLog, not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
+    }
   }
 
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
-        "--node-name", "node-1",
+        "--node-name", "node1-1",
         "--node-hostname", "localhost",
-        "--node-log-dir", "logs/stripe1/node-1",
-        "--node-backup-dir", "backup/stripe1",
-        "--node-metadata-dir", "metadata/stripe1",
-        "--data-dirs", "main:user-data/main/stripe1"
+        "--node-log-dir", "terracotta1-1/logs",
+        "--node-backup-dir", "terracotta1-1/backup",
+        "--node-metadata-dir", "terracotta1-1/metadata",
+        "--data-dirs", "main:terracotta1-1/data-dir"
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n") || provided.contains("--node-name")) {
       defaultArgs.remove("--node-name");
-      defaultArgs.remove("node-" + 1);
+      defaultArgs.remove("node1-1");
     }
     if (provided.contains("-s") || provided.contains("--node-hostname")) {
       defaultArgs.remove("--node-hostname");

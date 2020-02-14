@@ -4,8 +4,8 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.terracotta.dynamic_config.system_tests.util.PropertyResolver;
 import org.junit.Test;
+import org.terracotta.dynamic_config.system_tests.util.PropertyResolver;
 
 import java.util.Properties;
 

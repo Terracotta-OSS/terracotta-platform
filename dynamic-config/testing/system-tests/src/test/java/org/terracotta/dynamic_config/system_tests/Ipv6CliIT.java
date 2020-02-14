@@ -5,8 +5,6 @@
 package org.terracotta.dynamic_config.system_tests;
 
 import org.junit.Test;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
-import org.terracotta.dynamic_config.system_tests.util.NodeProcess;
 
 import java.util.Arrays;
 
@@ -17,19 +15,20 @@ import static org.hamcrest.Matchers.stringContainsInOrder;
 public class Ipv6CliIT extends DynamicConfigIT {
 
   @Override
-  protected NodeProcess startNode(int stripeId, int nodeId, int port, int groupPort) {
-    return startNode(stripeId, nodeId,
-        "--node-name", "node-" + nodeId,
+  protected void startNode(int stripeId, int nodeId) {
+    String uniqueId = combine(stripeId, nodeId);
+    startNode(stripeId, nodeId,
+        "--node-name", "node" + uniqueId,
         "--node-hostname", "::1",
         "--node-bind-address", "::",
         "--node-group-bind-address", "::",
-        "--node-port", String.valueOf(port),
-        "--node-group-port", String.valueOf(groupPort),
-        "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-        "--node-backup-dir", "backup/stripe" + stripeId,
-        "--node-metadata-dir", "metadata/stripe" + stripeId,
-        "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-        "--data-dirs", "main:user-data/main/stripe" + stripeId
+        "--node-port", String.valueOf(getNodePort(stripeId, nodeId)),
+        "--node-group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
+        "--node-log-dir", "terracotta" + uniqueId + "/logs",
+        "--node-backup-dir", "terracotta" + uniqueId + "/backup",
+        "--node-metadata-dir", "terracotta" + uniqueId + "/metadata",
+        "--node-repository-dir", "terracotta" + uniqueId + "/repository",
+        "--data-dirs", "main:terracotta" + uniqueId + "/data-dir"
     );
   }
 
@@ -37,7 +36,7 @@ public class Ipv6CliIT extends DynamicConfigIT {
   public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
 
-    ConfigTool.start("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -47,10 +46,10 @@ public class Ipv6CliIT extends DynamicConfigIT {
         Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
     ));
 
-    ConfigTool.start("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2));
+    configToolInvocation("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2));
     assertCommandSuccessful();
 
-    ConfigTool.start("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
   }

@@ -6,21 +6,19 @@ package org.terracotta.dynamic_config.system_tests;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 
 import java.util.Arrays;
 
 import static java.util.Collections.emptyMap;
-import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.testing.ExceptionMatcher.throwing;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
@@ -32,24 +30,24 @@ public class RepairCommandIT extends DynamicConfigIT {
   @Test
   public void test_automatic_commit_after_commit_failure() throws Exception {
     assertThat(
-        () -> ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=recover-needed"),
-        is(throwing(instanceOf(IllegalStateException.class))
-            .andMessage(both(
-                containsString("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
-                .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=recover-needed"),
+        allOf(
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node1-1)': Simulate commit failure"),
+            containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties(), hasEntry("org.terracotta.dynamic-config.simulate", "recover-needed"));
 
     assertThat(
-        () -> ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=recover-needed"),
-        is(throwing(instanceOf(IllegalStateException.class))
-            .andMessage(stringContainsInOrder(Arrays.asList("Another change (with UUID ", " is already underway on ", ". It was started by ", " on ")))));
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=recover-needed").toString(),
+        stringContainsInOrder(Arrays.asList("Another change (with UUID ", " is already underway on ", ". It was started by ", " on ")));
 
     out.clearLog();
-    ConfigTool.start("repair", "-s", "localhost:" + getNodePort());
-    waitUntil(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
-    waitUntil(out::getLog, containsString("Configuration is repaired"));
+    assertThat(
+        configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
+        allOf(
+            containsOutput("Attempting an automatic repair of the configuration..."),
+            containsOutput("Configuration is repaired")));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties(), hasEntry("org.terracotta.dynamic-config.simulate", "recover-needed"));
   }
@@ -62,17 +60,17 @@ public class RepairCommandIT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
 
     assertThat(
-        () -> ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=recover-needed"),
-        is(throwing(instanceOf(IllegalStateException.class))
-            .andMessage(both(
-                containsString("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
-                .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=recover-needed"),
+        allOf(
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node1-1)': Simulate commit failure"),
+            containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(equalTo(initialCluster)));
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties(), hasEntry("org.terracotta.dynamic-config.simulate", "recover-needed"));
 
     // close the server when the last change is not committed or rolled back
-    getNodeProcess().close();
+    tsa.stop(getNode(1, 1));
+    assertThat(tsa.getStopped().size(), is(1));
 
     // ensure the server can still start if the configuration is not committed
     out.clearLog();
@@ -87,18 +85,19 @@ public class RepairCommandIT extends DynamicConfigIT {
     // repair the newly started server once (the simulated handler needs to repair after a restart - first one will fail)
     out.clearLog();
     assertThat(
-        () -> ConfigTool.start("repair", "-s", "localhost:" + getNodePort()),
-        is(throwing(instanceOf(IllegalStateException.class))
-            .andMessage(both(
-                containsString("Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node-1)': Simulate commit failure"))
-                .and(containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
-    waitUntil(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
-    waitUntil(out::getLog, not(containsString("Configuration is repaired.")));
+        configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
+        allOf(
+            containsOutput("Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=recover-needed (stripe ID: 1, node: node1-1)': Simulate commit failure"),
+            containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command."),
+            containsOutput("Attempting an automatic repair of the configuration..."),
+            not(containsOutput("Configuration is repaired."))));
 
     out.clearLog();
-    ConfigTool.start("repair", "-s", "localhost:" + getNodePort());
-    waitUntil(out::getLog, containsString("Attempting an automatic repair of the configuration..."));
-    waitUntil(out::getLog, containsString("Configuration is repaired"));
+    assertThat(
+        configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
+        allOf(
+            containsOutput("Attempting an automatic repair of the configuration..."),
+            containsOutput("Configuration is repaired")));
 
     // ensure that the server has started with the last committed config
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(not(equalTo(initialCluster))));

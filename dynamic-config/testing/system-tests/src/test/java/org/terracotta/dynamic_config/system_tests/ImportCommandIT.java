@@ -6,7 +6,6 @@ package org.terracotta.dynamic_config.system_tests;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Props;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 
 import java.nio.file.Path;
 import java.util.TreeMap;
@@ -15,6 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 
 @ClusterDefinition(stripes = 2)
 public class ImportCommandIT extends DynamicConfigIT {
@@ -22,8 +22,9 @@ public class ImportCommandIT extends DynamicConfigIT {
   public void test_import() throws Exception {
     TreeMap<Object, Object> before = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties());
     Path path = copyConfigProperty("/config-property-files/import.properties");
-    ConfigTool.start("import", "-f", path.toString());
-    assertCommandSuccessful();
+    assertThat(
+        configToolInvocation("import", "-f", path.toString()),
+        containsOutput("Command successful"));
     TreeMap<Object, Object> after = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties());
     TreeMap<Object, Object> expected = new TreeMap<>(Props.load(path));
     assertThat(after, is(equalTo(expected)));

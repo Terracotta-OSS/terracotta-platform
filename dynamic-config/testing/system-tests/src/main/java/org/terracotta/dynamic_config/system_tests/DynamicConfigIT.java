@@ -14,20 +14,25 @@ import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.angela.client.ClusterFactory;
+import org.terracotta.angela.client.Tsa;
+import org.terracotta.angela.client.config.custom.CustomConfigurationContext;
+import org.terracotta.angela.client.config.custom.CustomTsaConfigurationContext;
+import org.terracotta.angela.common.ConfigToolExecutionResult;
+import org.terracotta.angela.common.dynamic_cluster.Stripe;
+import org.terracotta.angela.common.tcconfig.License;
+import org.terracotta.angela.common.tcconfig.TerracottaServer;
+import org.terracotta.angela.common.topology.Topology;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.system_tests.util.Env;
-import org.terracotta.dynamic_config.system_tests.util.Kit;
-import org.terracotta.dynamic_config.system_tests.util.NodeProcess;
 import org.terracotta.dynamic_config.system_tests.util.PropertyResolver;
-import org.terracotta.port_locking.PortLockingRule;
+import org.terracotta.port_locking.LockingPortChoosers;
 import org.terracotta.testing.TmpDir;
 
 import java.io.IOException;
@@ -46,36 +51,33 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.nio.file.Files.walkFileTree;
-import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
-import static java.util.stream.Stream.concat;
-import static java.util.stream.Stream.of;
 import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.stringContainsInOrder;
-import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
+import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
+import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
+import static org.terracotta.angela.common.distribution.Distribution.distribution;
+import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
+import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
+import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
+import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA;
+import static org.terracotta.angela.common.topology.PackageType.KIT;
+import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
-import static org.terracotta.config.util.ParameterSubstitutor.getIpAddress;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
@@ -86,185 +88,108 @@ public class DynamicConfigIT {
   public final SystemOutRule out = new SystemOutRule().enableLog();
   @Rule
   public final SystemErrRule err = new SystemErrRule().enableLog();
-  @Rule
-  public final PortLockingRule ports;
+
   @Rule
   public final TmpDir tmpDir = new TmpDir();
 
-  protected int timeout = CI ? 90 : 30;
+  protected int timeout = CI ? 90 : 60;
 
+  final ClusterFactory clusterFactory;
+  final Tsa tsa;
   private final int stripes;
   private final boolean autoStart;
-  private final boolean autoActivate;
   private final int nodesPerStripe;
-  private final Map<String, NodeProcess> nodeProcesses = new ConcurrentHashMap<>();
+  private final boolean autoActivate;
+  private final Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
+  private final int[] ports;
 
   public DynamicConfigIT() {
-    ClusterDefinition clusterDefinition = getClass().getAnnotation(ClusterDefinition.class);
-    this.stripes = clusterDefinition.stripes();
-    this.nodesPerStripe = clusterDefinition.nodesPerStripe();
-    this.autoStart = clusterDefinition.autoStart();
-    this.autoActivate = clusterDefinition.autoActivate();
-    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
+    ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
+    this.stripes = clusterDef.stripes();
+    this.autoStart = clusterDef.autoStart();
+    this.autoActivate = clusterDef.autoActivate();
+    this.nodesPerStripe = clusterDef.nodesPerStripe();
+    this.ports = allocatePorts(clusterDef.stripes(), clusterDef.nodesPerStripe());
+    this.clusterFactory = new ClusterFactory(UUID.randomUUID().toString(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
+    this.tsa = clusterFactory.tsa();
+  }
+
+  private static int[] allocatePorts(int stripes, int nodesPerStripe) {
+    int startPort = LockingPortChoosers.getFileLockingPortChooser().choosePorts(2 * stripes * nodesPerStripe).getPort();
+    return rangeClosed(startPort, startPort + 2 * stripes * nodesPerStripe).toArray();
   }
 
   @Before
-  public void before() throws Exception {
+  public void before() {
     if (autoStart) {
       startNodes();
+      if (autoActivate) {
+        tsa.attachAll();
+        tsa.activateAll();
+      }
     }
   }
 
   @After
   public void after() throws Exception {
-    nodeProcesses.values().forEach(NodeProcess::close);
-    nodeProcesses.clear();
-    ensureNodesNotAccessingExternalFiles();
+    clusterFactory.close();
   }
 
-  protected final void startNodes() throws Exception {
-    final int nodeCount = stripes * nodesPerStripe;
-
-    ExecutorService executorService = Executors.newFixedThreadPool(nodeCount);
-    try {
-      CompletionService<NodeProcess> completionService = new ExecutorCompletionService<>(executorService);
-
-      out.clearLog();
-      nodeDefinitions().forEach(tuple -> completionService.submit(() -> startNode(tuple.t1, tuple.t2)));
-
-      for (int i = 0; i < nodeCount; i++) {
-        completionService.take().get();
+  protected final void startNodes() {
+    for (int stripeId = 1; stripeId <= stripes; stripeId++) {
+      for (int nodeId = 1; nodeId <= nodesPerStripe; nodeId++) {
+        startNode(stripeId, nodeId);
       }
-    } finally {
-      executorService.shutdown();
-    }
-
-    // if not 1-node cluster activation, we need the activate CLI
-    if (autoActivate && (stripes > 1 || nodesPerStripe > 1)) {
-      for (int nodeId = 2; nodeId <= nodesPerStripe; nodeId++) {
-        ConfigTool.start("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, nodeId));
-        assertCommandSuccessful();
-      }
-      for (int stripeId = 2; stripeId <= stripes; stripeId++) {
-        ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(stripeId, 1));
-        assertCommandSuccessful();
-        for (int nodeId = 2; nodeId <= nodesPerStripe; nodeId++) {
-          ConfigTool.start("attach", "-d", "localhost:" + getNodePort(stripeId, 1), "-s", "localhost:" + getNodePort(stripeId, nodeId));
-          assertCommandSuccessful();
-        }
-      }
-      activateCluster(() -> {
-        // we are waiting for activation
-        String[] actives = new String[stripes];
-        Arrays.fill(actives, "Moved to State[ ACTIVE-COORDINATOR ]");
-        waitUntil(out::getLog, stringContainsInOrder(asList(actives)));
-        String[] passives = new String[nodeCount - stripes];
-        if (passives.length > 0) {
-          Arrays.fill(passives, "Moved to State[ PASSIVE-STANDBY ]");
-          waitUntil(out::getLog, stringContainsInOrder(asList(passives)));
-        }
-      });
-    } else if (autoActivate) {
-      // stripes == 1 && nodesPerStripe == 1
-      waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    } else {
-      // we wait for diagnostic mode
-      String[] status = new String[nodeCount];
-      Arrays.fill(status, "Started the server in diagnostic mode");
-      waitUntil(out::getLog, stringContainsInOrder(asList(status)));
     }
   }
 
-  protected final NodeProcess startNode(int stripeId, int nodeId) throws Exception {
-    int nodePort = getNodePort(stripeId, nodeId);
-    int groupPort = nodePort + 1;
-    return startNode(stripeId, nodeId, nodePort, groupPort);
+  protected void startNode(int stripeId, int nodeId) {
+    startNode(getNode(stripeId, nodeId));
   }
 
-  protected NodeProcess startNode(int stripeId, int nodeId, int port, int groupPort) throws Exception {
-    String licensePath = licensePath();
-    return autoActivate && stripes == 1 && nodesPerStripe == 1 && licensePath == null ?
-        startNode(
-            stripeId, nodeId,
-            "--cluster-name", "tc-cluster",
-            "--node-name", "node-" + nodeId,
-            "--node-hostname", "localhost",
-            "--node-port", String.valueOf(port),
-            "--node-group-port", String.valueOf(groupPort),
-            "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-            "--node-backup-dir", "backup/stripe" + stripeId,
-            "--node-metadata-dir", "metadata/stripe" + stripeId,
-            "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-            "--data-dirs", "main:user-data/main/stripe" + stripeId) :
-        autoActivate && stripes == 1 && nodesPerStripe == 1 ?
-            startNode(
-                stripeId, nodeId,
-                "--cluster-name", "tc-cluster",
-                "--license-file", licensePath,
-                "--node-name", "node-" + nodeId,
-                "--node-hostname", "localhost",
-                "--node-port", String.valueOf(port),
-                "--node-group-port", String.valueOf(groupPort),
-                "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-                "--node-backup-dir", "backup/stripe" + stripeId,
-                "--node-metadata-dir", "metadata/stripe" + stripeId,
-                "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-                "--data-dirs", "main:user-data/main/stripe" + stripeId) :
-            startNode(
-                stripeId, nodeId,
-                "--node-name", "node-" + nodeId,
-                "--node-hostname", "localhost",
-                "--node-port", String.valueOf(port),
-                "--node-group-port", String.valueOf(groupPort),
-                "--node-log-dir", "logs/stripe" + stripeId + "/node-" + nodeId,
-                "--node-backup-dir", "backup/stripe" + stripeId,
-                "--node-metadata-dir", "metadata/stripe" + stripeId,
-                "--node-repository-dir", "repository/stripe" + stripeId + "/node-" + nodeId,
-                "--data-dirs", "main:user-data/main/stripe" + stripeId);
+  protected final void startNode(int stripeId, int nodeId, String... cli) {
+    startNode(getNode(stripeId, nodeId), cli);
   }
 
-  protected final NodeProcess startNode(int stripeId, int nodeId, String... cli) {
-    String key = stripeId + "-" + nodeId;
-    NodeProcess oldProcess = nodeProcesses.remove(key);
-    if (oldProcess != null) {
-      oldProcess.close();
+  protected final void startNode(TerracottaServer node, String... cli) {
+    tsa.start(node, cli);
+  }
+
+  protected final TerracottaServer getNode(int stripeId, int nodeId) {
+    String key = combine(stripeId, nodeId);
+    TerracottaServer server = nodes.get(key);
+    if (server == null) {
+      throw new IllegalArgumentException("No server for node " + key);
     }
-    NodeProcess newProcess = NodeProcess.startNode(stripeId, nodeId, Kit.getOrCreatePath(), getBaseDir(), cli);
-    nodeProcesses.put(key, newProcess);
-    return newProcess;
+    return server;
   }
 
-  protected final NodeProcess getNodeProcess(int stripeId, int nodeId) {
-    String key = stripeId + "-" + nodeId;
-    NodeProcess process = nodeProcesses.get(key);
-    if (process == null) {
-      throw new IllegalArgumentException("No process for node " + key);
-    }
-    return process;
+  protected final int getNodePort(int stripeId, int nodeId) {
+    return ports[2 * nodesPerStripe * (stripeId - 1) + nodesPerStripe * (nodeId - 1)];
   }
 
-  protected final NodeProcess getNodeProcess() {
-    return getNodeProcess(1, 1);
+  protected final int getNodeGroupPort(int stripeId, int nodeId) {
+    return getNodePort(stripeId, nodeId) + 1;
   }
 
   protected final OptionalInt findActive(int stripeId) {
     return IntStream.rangeClosed(1, nodesPerStripe)
-        .filter(nodeId -> getNodeProcess(stripeId, nodeId).getServerState().isActive())
+        .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_ACTIVE)
         .findFirst();
   }
 
   protected final int[] findPassives(int stripeId) {
     return IntStream.rangeClosed(1, nodesPerStripe)
-        .filter(nodeId -> getNodeProcess(stripeId, nodeId).getServerState().isPassive())
+        .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_PASSIVE)
         .toArray();
-  }
-
-  protected final int getNodePort(int stripeId, int nodeId) {
-    return ports.getPorts()[2 * nodesPerStripe * (stripeId - 1) + nodesPerStripe * (nodeId - 1)];
   }
 
   protected final int getNodePort() {
     return getNodePort(1, 1);
+  }
+
+  protected final int getNodeGroupPort() {
+    return getNodePort(1, 1) + 1;
   }
 
   protected final Path getBaseDir() {
@@ -275,37 +200,50 @@ public class DynamicConfigIT {
     return InetSocketAddress.createUnresolved("localhost", getNodePort());
   }
 
-  protected final Path copyConfigProperty(String configFile) throws Exception {
-    Path src = Paths.get(getClass().getResource(configFile).toURI());
+  protected final Path copyConfigProperty(String configFile) {
+    Path src;
+    try {
+      src = Paths.get(getClass().getResource(configFile).toURI());
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+
     Path dest = getBaseDir().resolve(src.getFileName());
     Properties loaded = new Properties();
-    try (Reader reader = new InputStreamReader(Files.newInputStream(src), StandardCharsets.UTF_8)) {
-      loaded.load(reader);
-    }
-    Properties variables = variables();
-    Properties resolved = new PropertyResolver(variables).resolveAll(loaded);
-    if (Env.isWindows()) {
-      // Convert all / to \\ for Windows.
-      // This assumes we only use / and \\ for paths in property values
-      resolved.stringPropertyNames()
-          .stream()
-          .filter(key -> resolved.getProperty(key).contains("/"))
-          .forEach(key -> resolved.setProperty(key, resolved.getProperty(key).replace("/", "\\")));
-    }
-    Files.createDirectories(getBaseDir());
-    try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
-      resolved.store(writer, "");
+    try {
+      try (Reader reader = new InputStreamReader(Files.newInputStream(src), StandardCharsets.UTF_8)) {
+        loaded.load(reader);
+      }
+      Properties variables = variables();
+      Properties resolved = new PropertyResolver(variables).resolveAll(loaded);
+      if (isWindows()) {
+        // Convert all / to \\ for Windows.
+        // This assumes we only use / and \\ for paths in property values
+        resolved.stringPropertyNames()
+            .stream()
+            .filter(key -> resolved.getProperty(key).contains("/"))
+            .forEach(key -> resolved.setProperty(key, resolved.getProperty(key).replace("/", "\\")));
+      }
+      Files.createDirectories(getBaseDir());
+      try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
+        resolved.store(writer, "");
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
     return dest;
   }
 
   protected String licensePath() {
     try {
-      final URL url = getClass().getResource("/license.xml");
-      return url == null ? null : Paths.get(url.toURI()).toString();
+      return licenseUrl() == null ? null : Paths.get(licenseUrl().toURI()).toString();
     } catch (URISyntaxException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  private URL licenseUrl() {
+    return getClass().getResource("/license.xml");
   }
 
   protected final Path getNodeRepositoryDir() {
@@ -342,7 +280,7 @@ public class DynamicConfigIT {
   protected final Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
     Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
     Path repositoriesDir = getBaseDir().resolve("repositories");
-    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports.getPorts());
+    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports);
     LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
     fn.accept(clusterGenerator);
     copyDirectory(repositoriesDir.resolve("stripe" + stripeId + "_node-" + nodeId), nodeRepositoryDir);
@@ -372,25 +310,25 @@ public class DynamicConfigIT {
     }
   }
 
-  protected final void activateCluster() throws Exception {
+  protected final void activateCluster() {
     activateCluster("tc-cluster");
   }
 
-  protected final void activateCluster(String name) throws Exception {
+  protected final void activateCluster(String name) {
     activateCluster(name, () -> {
     });
   }
 
-  protected final void activateCluster(Runnable verifications) throws Exception {
+  protected final void activateCluster(Runnable verifications) {
     activateCluster("tc-cluster", verifications);
   }
 
-  protected final void activateCluster(String name, Runnable verifications) throws Exception {
+  protected final void activateCluster(String name, Runnable verifications) {
     String licensePath = licensePath();
     if (licensePath == null) {
-      ConfigTool.start("activate", "-s", "localhost:" + getNodePort(), "-n", name);
+      configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name);
     } else {
-      ConfigTool.start("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath);
+      configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath);
     }
     assertCommandSuccessful(verifications);
   }
@@ -412,75 +350,6 @@ public class DynamicConfigIT {
     });
   }
 
-  /**
-   * Verify that all the configured path for the nodes are all enclosed and relative to the working
-   * directory (user.dir) which is set for the tests to be inside build/test-data.
-   * <p>
-   * This ensures that the nodes will read and write files in an isolated manner and will not impact
-   * other processes
-   * <p>
-   * All the path on the nodes should be relative to the working directory and also configured
-   * accordingly to support the different stripes / node IDs.
-   */
-  private void ensureNodesNotAccessingExternalFiles() {
-    Stream<Path> s1 = of(
-        getBaseDir(),
-        Paths.get("backup"),
-        Paths.get("logs"),
-        Paths.get("metadata"),
-        Paths.get("repository"),
-        Paths.get("user-data"),
-        Paths.get("user-data", "main"),
-        Paths.get("repositories")
-    );
-    // Do not call `getIpAddress()` sevral times because on MacOs each call can last up to 5 sec
-    String ipAddress = getIpAddress();
-    // we use STRIPES * NODES_PER_STRIPE because we could support 1 stripe of 4 nodes
-    Stream<Path> s2 = rangeClosed(1, stripes).mapToObj(stripeId -> rangeClosed(1, stripes * nodesPerStripe).mapToObj(nodeId -> of(
-        Paths.get("metadata", "stripe" + stripeId),
-        Paths.get("backup", "stripe" + stripeId),
-        Paths.get("logs", "stripe" + stripeId),
-        Paths.get("logs", "stripe" + stripeId, "node-" + nodeId),
-        Paths.get("logs", "stripe" + stripeId, ipAddress),
-        Paths.get("user-data", "main", "stripe" + stripeId),
-        Paths.get("user-data", "main", "stripe" + stripeId, "node-" + nodeId),
-        Paths.get("user-data", "main", "stripe" + stripeId + "-node" + nodeId + "-data-dir-1"),
-        Paths.get("user-data", "main", "stripe" + stripeId + "-node" + nodeId + "-data-dir-2"),
-        Paths.get("user-data", "main", "stripe" + stripeId, ipAddress),
-        Paths.get("metadata", "stripe" + stripeId),
-        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId),
-        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data"),
-        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data", "entityData"),
-        Paths.get("metadata", "stripe" + stripeId, "node-" + nodeId, "platform-data", "transactionsData"),
-        Paths.get("metadata", "stripe" + stripeId, ipAddress),
-        Paths.get("metadata", "stripe" + stripeId, ipAddress, "platform-data"),
-        Paths.get("metadata", "stripe" + stripeId, ipAddress, "platform-data", "entityData"),
-        Paths.get("metadata", "stripe" + stripeId, ipAddress, "platform-data", "transactionsData"),
-        Paths.get("repository", "stripe" + stripeId),
-        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId),
-        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "config"),
-        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "license"),
-        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit"),
-        Paths.get("repository", "stripe" + stripeId, "node-" + nodeId, "sanskrit", "tmp"),
-        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId),
-        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "config"),
-        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "license"),
-        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "sanskrit"),
-        Paths.get("repositories", "stripe" + stripeId + "_node-" + nodeId, "sanskrit", "tmp")
-    )).flatMap(identity())).flatMap(identity());
-
-    List<Path> expected = concat(s1, s2).collect(toList());
-    try (Stream<Path> stream = Files.walk(getBaseDir())) {
-      List<Path> unexpected = stream.filter(p -> Files.isDirectory(p))
-          .filter(p -> !p.toString().contains("backup-platform-data-"))
-          .filter(p -> expected.stream().noneMatch(p::endsWith))
-          .collect(toList());
-      assertThat(unexpected.toString(), unexpected, hasSize(0));
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
   private Stream<Tuple2<Integer, Integer>> nodeDefinitions() {
     return rangeClosed(1, stripes).mapToObj(stripeId -> rangeClosed(1, nodesPerStripe).mapToObj(nodeId -> tuple2(stripeId, nodeId))).flatMap(identity());
   }
@@ -499,5 +368,53 @@ public class DynamicConfigIT {
     }, (p1, p2) -> {
       throw new UnsupportedOperationException();
     });
+  }
+
+  TerracottaServer createNode(int stripeId, int nodesId) {
+    String uniqueId = combine(stripeId, nodesId);
+    return server("node" + uniqueId, "localhost")
+        .tsaPort(getNodePort(stripeId, nodesId))
+        .tsaGroupPort(getNodeGroupPort(stripeId, nodesId))
+        .configRepo("terracotta" + uniqueId + "/repository")
+        .logs("terracotta" + uniqueId + "/logs")
+        .dataDir("main:terracotta" + uniqueId + "/data-dir")
+        .offheap("main:512MB,foo:1GB")
+        .metaData("terracotta" + uniqueId + "/metadata");
+  }
+
+  String combine(int stripeId, int nodesId) {
+    return stripeId + "-" + nodesId;
+  }
+
+  CustomConfigurationContext createConfigContext(int stripeCount, int nodesPerStripe) {
+    Stripe[] stripes = new Stripe[stripeCount];
+    for (int stripeIndex = 0; stripeIndex < stripeCount; stripeIndex++) {
+      TerracottaServer[] servers = new TerracottaServer[nodesPerStripe];
+      for (int serverIndex = 0; serverIndex < nodesPerStripe; serverIndex++) {
+        String key = combine(stripeIndex + 1, serverIndex + 1);
+        TerracottaServer node = createNode(stripeIndex + 1, serverIndex + 1);
+        nodes.put(key, node);
+        servers[serverIndex] = node;
+      }
+      stripes[stripeIndex] = stripe(servers);
+    }
+
+    return customConfigurationContext()
+        .tsa(tsa -> {
+          CustomTsaConfigurationContext topology = tsa
+              .clusterName("tc-cluster")
+              .topology(new Topology(distribution(version("10.7.0-SNAPSHOT"), KIT, TERRACOTTA), dynamicCluster(stripes)));
+          if (licenseUrl() != null) {
+            topology.license(new License(licenseUrl()));
+          }
+        });
+  }
+
+  protected final ConfigToolExecutionResult configToolInvocation(String... cli) {
+    return tsa.configTool(getNode(1, 1)).executeCommand(cli);
+  }
+
+  private static boolean isWindows() {
+    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 }

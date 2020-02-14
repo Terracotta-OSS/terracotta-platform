@@ -7,9 +7,9 @@ package org.terracotta.dynamic_config.system_tests;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.json.Json;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.containsString;
@@ -25,6 +25,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
 public class AttachDetachCommandIT extends DynamicConfigIT {
+  private static final String OUTPUT_JSON_FILE = "attach-detach-output.json";
 
   //TODO [DYNAMIC-CONFIG]: TDB-4835
   @Test
@@ -42,7 +43,7 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort()).getNodeCount(), is(equalTo(1)));
 
     // try forcing the attach
-    ConfigTool.start("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2));
+    configToolInvocation("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2));
     assertCommandSuccessful(() -> {
       waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
     });
@@ -65,7 +66,7 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
     activateCluster();
 
     // do a change requiring a restart
-    ConfigTool.start("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar");
+    configToolInvocation("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar");
     waitUntil(out::getLog, containsString("IMPORTANT: A restart of the cluster is required to apply the changes"));
 
     // start a second node
@@ -73,52 +74,68 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
 
     // try to  attach this node to the cluster
     assertThat(
-        () -> ConfigTool.start("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)),
+        () -> configToolInvocation("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)),
         is(throwing(instanceOf(IllegalStateException.class))
             .andMessage(containsString("Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes."))));
 
     // try forcing the attach
-    ConfigTool.start("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2));
-    assertCommandSuccessful(() -> {
-      waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
-    });
+    configToolInvocation("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2));
+    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
   }
 
   @Test
   public void test_attach_detach_with_unconfigured_nodes() throws Exception {
     startNodes();
 
-    ConfigTool.start("export", "-s", "localhost:" + getNodePort(), "-f", "build/output.json", "-t", "json");
-    Cluster cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
+    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    downloadToLocal();
+
+    Cluster cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
 
     // add a node
-    ConfigTool.start("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    ConfigTool.start("export", "-s", "localhost:" + getNodePort(), "-f", "build/output.json", "-t", "json");
-    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
+    configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
+    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    downloadToLocal();
+
+    cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // add a stripe
-    ConfigTool.start("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
-    ConfigTool.start("export", "-s", "localhost:" + getNodePort(), "-f", "build/output.json", "-t", "json");
-    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
+    configToolInvocation("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
+    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    downloadToLocal();
+
+    cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getNodeAddresses(), hasSize(3));
 
     // remove the previously added stripe
-    ConfigTool.start("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
-    ConfigTool.start("export", "-s", "localhost:" + getNodePort(), "-f", "build/output.json", "-t", "json");
-    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
+    configToolInvocation("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
+    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    downloadToLocal();
+
+    cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // remove the previously added node
-    ConfigTool.start("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    ConfigTool.start("export", "-s", "localhost:" + getNodePort(), "-f", "build/output.json", "-t", "json");
-    cluster = Json.parse(Paths.get("build", "output.json"), Cluster.class);
+    configToolInvocation("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
+    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    downloadToLocal();
+
+    cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
+  }
+
+  private void downloadToLocal() throws IOException {
+    tsa.browse(getNode(1, 1), ".").list().stream()
+        .filter(remoteFile -> remoteFile.getName().equals(OUTPUT_JSON_FILE))
+        .findFirst()
+        .get()
+        .downloadTo(Paths.get("build").resolve(OUTPUT_JSON_FILE).toFile());
   }
 }

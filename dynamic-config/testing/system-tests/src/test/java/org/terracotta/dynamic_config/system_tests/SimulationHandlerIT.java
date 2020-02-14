@@ -4,46 +4,52 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.not;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
 
 /**
  * @author Mathieu Carbou
  */
 @ClusterDefinition(autoActivate = true)
 public class SimulationHandlerIT extends DynamicConfigIT {
-
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
-
   @Test
   public void test_missing_value() {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage(containsString("Invalid input: 'stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate='. Reason: Operation set requires a value"));
-    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=");
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate="),
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Invalid input: 'stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate='. Reason: Operation set requires a value")));
   }
 
   @Test
   public void test_prepare_fails() {
-    exception.expect(IllegalStateException.class);
-    exception.expectMessage(containsString("Prepare rejected for node localhost:" + getNodePort() + ". Reason: Error when trying to apply setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=prepare-failure (stripe ID: 1, node: node-1)': Simulate prepare failure"));
-    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=prepare-failure");
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=prepare-failure"),
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Prepare rejected for node localhost:" + getNodePort() + ". Reason: Error when trying to apply setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=prepare-failure (stripe ID: 1, node: node1-1)': Simulate prepare failure")));
   }
 
   @Test
   public void test_commit_fails() {
-    exception.expect(IllegalStateException.class);
-    exception.expectMessage(containsString("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=commit-failure (stripe ID: 1, node: node-1)': Simulate commit failure"));
-    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=commit-failure");
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=commit-failure"),
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=commit-failure (stripe ID: 1, node: node1-1)': Simulate commit failure")));
   }
 
   @Test
   public void test_requires_restart() {
-    ConfigTool.start("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=restart-required");
-    waitUntil(out::getLog, containsString("IMPORTANT: A restart of the cluster is required to apply the changes"));
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=restart-required"),
+        allOf(
+            hasExitStatus(0),
+            containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
   }
 }
