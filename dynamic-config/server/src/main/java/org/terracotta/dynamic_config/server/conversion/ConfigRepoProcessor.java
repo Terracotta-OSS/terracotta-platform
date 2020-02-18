@@ -61,7 +61,7 @@ public class ConfigRepoProcessor extends PostConversionProcessor {
             nextVersionNumber, new ConfigMigrationNomadChange(nodeContext.getCluster()));
         AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
         if (!response.isAccepted()) {
-          throw new ConfigConversionException(UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE, "Response code from nomad:" + response.getRejectionReason());
+          throw new ConfigConversionException(UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE, response.toString());
         }
 
         long nextMutativeMessageCount = mutativeMessageCount + 1;

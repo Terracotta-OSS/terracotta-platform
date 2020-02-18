@@ -13,7 +13,6 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -60,13 +59,13 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
   }
 
   @Override
-  public void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {
-    getDelegate().ifPresent(listener -> listener.onNodeRemoval(nodeContext, removedNodes));
+  public void onNodeRemoval(int stripeId, Node removedNode) {
+    getDelegate().ifPresent(listener -> listener.onNodeRemoval(stripeId, removedNode));
   }
 
   @Override
-  public void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {
-    getDelegate().ifPresent(listener -> listener.onNodeAddition(nodeContext, stripeId, addedNodes));
+  public void onNodeAddition(int stripeId, Node addedNode) {
+    getDelegate().ifPresent(listener -> listener.onNodeAddition(stripeId, addedNode));
   }
 
   private Optional<DynamicConfigListener> getDelegate() {

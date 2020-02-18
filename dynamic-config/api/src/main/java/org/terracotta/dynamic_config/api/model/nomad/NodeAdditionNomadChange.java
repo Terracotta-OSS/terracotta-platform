@@ -5,47 +5,63 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Stripe;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
-
-import static java.util.stream.Collectors.joining;
 
 /**
  * @author Mathieu Carbou
  */
 @JsonTypeName("NodeAdditionNomadChange")
-public class NodeAdditionNomadChange extends PassiveNomadChange {
+public class NodeAdditionNomadChange extends NodeNomadChange {
 
   private final int stripeId;
+  private final InetSocketAddress address;
 
   @JsonCreator
-  public NodeAdditionNomadChange(@JsonProperty(value = "stripeId", required = true) int stripeId,
-                                 @JsonProperty(value = "nodes", required = true) Collection<Node> nodes) {
-    super(nodes);
+  public NodeAdditionNomadChange(@JsonProperty(value = "cluster", required = true) Cluster cluster,
+                                 @JsonProperty(value = "stripeId", required = true) int stripeId,
+                                 @JsonProperty(value = "address", required = true) InetSocketAddress address) {
+    super(cluster);
     this.stripeId = stripeId;
+    this.address = address;
+
+    Stripe stripe = cluster.getStripe(stripeId)
+        .orElseThrow(() -> new IllegalArgumentException("Invalid stripe ID " + stripeId + " in cluster " + cluster));
+    stripe.getNode(address)
+        .orElseThrow(() -> new IllegalArgumentException("Node " + address + " is not part of stripe ID " + stripe + " in cluster " + cluster));
   }
 
   public int getStripeId() {
     return stripeId;
   }
 
+  public InetSocketAddress getAddress() {
+    return address;
+  }
+
+  @Override
+  @JsonIgnore
+  public Node getNode() {
+    return getCluster().getStripe(stripeId).flatMap(stripe -> stripe.getNode(address)).orElse(null);
+  }
+
   @Override
   public String getSummary() {
-    return "Attaching nodes: "
-        + getNodes().stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", "))
-        + " to stripe ID: "
-        + stripeId;
+    return "Attaching node: " + address + " to stripe ID: " + stripeId;
   }
 
   @Override
   public String toString() {
     return "NodeAdditionNomadChange{" +
         "stripeId=" + stripeId +
-        "nodes=" + getNodes() +
+        ", address=" + address +
+        ", cluster=" + getCluster() +
         ", applicability=" + getApplicability() +
         '}';
   }

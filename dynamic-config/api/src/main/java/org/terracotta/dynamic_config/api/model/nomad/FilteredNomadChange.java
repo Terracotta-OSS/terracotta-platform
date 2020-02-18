@@ -15,7 +15,7 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class FilteredNomadChange implements NomadChange {
 
-  protected final Applicability applicability;
+  private final Applicability applicability;
 
   protected FilteredNomadChange(Applicability applicability) {
     this.applicability = requireNonNull(applicability);

@@ -12,6 +12,7 @@ import com.tc.exception.ZapDirtyDbServerNodeException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -153,7 +154,6 @@ public class DynamicConfigurationPassiveSync {
     }
 
     NomadChangeInfo<NodeContext> passiveNomadChangeInfo = passiveNomadChanges.get(0);
-    Cluster passiveTopology = passiveNomadChangeInfo.getResult().getCluster();
 
     if (passiveNomadChanges.size() != 1
         || activeNomadChanges.get(0).equals(passiveNomadChangeInfo)
@@ -166,13 +166,15 @@ public class DynamicConfigurationPassiveSync {
       return false;
     }
 
+    Cluster passiveTopology = ((ClusterActivationNomadChange) passiveNomadChangeInfo.getNomadChange()).getCluster();
+
     // lookup active changes (reverse order) to find the latest change in force
     for (int i = activeNomadChanges.size() - 1; i >= 0; i--) {
       NomadChangeInfo<NodeContext> changeInfo = activeNomadChanges.get(i);
-      if (changeInfo.getChangeRequestState() == COMMITTED) {
+      if (changeInfo.getChangeRequestState() == COMMITTED && changeInfo.getNomadChange() instanceof TopologyNomadChange) {
         // we have found the last topology change in the active
         // we check if the new passive has joined with the exact same committed config on the active
-        return changeInfo.getResult().getCluster().equals(passiveTopology);
+        return ((TopologyNomadChange) changeInfo.getNomadChange()).getCluster().equals(passiveTopology);
       }
     }
 

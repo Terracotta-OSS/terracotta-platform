@@ -4,25 +4,19 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
-
-import java.util.Collection;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * @author Mathieu Carbou
  */
-public abstract class PassiveNomadChange extends FilteredNomadChange {
+public abstract class NodeNomadChange extends TopologyNomadChange {
 
-  private final Collection<Node> nodes;
-
-  public PassiveNomadChange(Collection<Node> nodes) {
-    super(Applicability.cluster());
-    this.nodes = requireNonNull(nodes);
+  public NodeNomadChange(Cluster updated) {
+    super(updated, Applicability.cluster());
   }
 
-  public Collection<Node> getNodes() {
-    return nodes;
-  }
+  @JsonIgnore
+  public abstract Node getNode();
 }

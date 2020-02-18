@@ -58,4 +58,9 @@ public class AcceptRejectResponse {
   public String getLastMutationUser() {
     return lastMutationUser;
   }
+
+  @Override
+  public String toString() {
+    return accepted ? "accepted" : (rejectionReason.name().toLowerCase() + (rejectionMessage == null ? "" : (" ( " + rejectionMessage + ")")));
+  }
 }

@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.DiagnosticConstants;
 import org.terracotta.diagnostic.server.DiagnosticServices;
 import org.terracotta.diagnostic.server.DiagnosticServicesRegistration;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -163,13 +162,10 @@ public class NomadBootstrapper {
     /**
      * Makes Nomad server capable of write operations.
      *
-     * @param stripeId        ID of the stripe where the node belongs, should be greater than 1
-     * @param nodeName        Name of the running node, non-null
-     * @param expectedCluster The cluster coming from the topology entity, when upgrading Nomad to start it.
-     *                        This cluster will be also sent next in a ActivationNomadChange, that will make
-     *                        sure it receives the expected cluster that has been lastly set in the topology service
+     * @param stripeId ID of the stripe where the node belongs, should be greater than 1
+     * @param nodeName Name of the running node, non-null
      */
-    public void upgradeForWrite(int stripeId, String nodeName, Cluster expectedCluster) {
+    public void upgradeForWrite(int stripeId, String nodeName) {
       requireNonNull(nodeName);
       if (stripeId < 1) {
         throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
@@ -177,9 +173,9 @@ public class NomadBootstrapper {
 
       RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, listener))
-          .register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, listener))
-          .register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, listener))
-          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName, expectedCluster));
+          .register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, stripeId, nodeName, listener))
+          .register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, stripeId, nodeName, listener))
+          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(dynamicConfigService, stripeId, nodeName));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));
       LOGGER.debug("Successfully completed upgradeForWrite procedure");
@@ -212,14 +208,6 @@ public class NomadBootstrapper {
 
     private NomadRepositoryManager createNomadRepositoryManager(Path repositoryPath, IParameterSubstitutor parameterSubstitutor) {
       return new NomadRepositoryManager(repositoryPath, parameterSubstitutor);
-    }
-
-    private String getHost() {
-      return nomadEnvironment.getHost();
-    }
-
-    private String getUser() {
-      return nomadEnvironment.getUser();
     }
 
     public DynamicConfigServiceImpl getDynamicConfigService() {

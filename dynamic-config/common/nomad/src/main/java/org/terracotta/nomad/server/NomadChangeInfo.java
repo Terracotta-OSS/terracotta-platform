@@ -20,7 +20,6 @@ public class NomadChangeInfo<T> {
   private final String creationHost;
   private final String creationUser;
   private final Instant creationTimestamp;
-  private final T result;
 
   @JsonCreator
   public NomadChangeInfo(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
@@ -29,8 +28,7 @@ public class NomadChangeInfo<T> {
                          @JsonProperty(value = "version", required = true) long version,
                          @JsonProperty(value = "creationHost", required = true) String creationHost,
                          @JsonProperty(value = "creationUser", required = true) String creationUser,
-                         @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp,
-                         @JsonProperty(value = "result", required = true) T result) {
+                         @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
     this.changeUuid = changeUuid;
     this.nomadChange = nomadChange;
     this.changeRequestState = changeRequestState;
@@ -38,11 +36,6 @@ public class NomadChangeInfo<T> {
     this.creationHost = creationHost;
     this.creationUser = creationUser;
     this.creationTimestamp = creationTimestamp;
-    this.result = result;
-  }
-
-  public T getResult() {
-    return result;
   }
 
   public Instant getCreationTimestamp() {
@@ -98,12 +91,12 @@ public class NomadChangeInfo<T> {
   public String toString() {
     return "NomadChangeInfo{" +
         "changeUuid=" + changeUuid +
-        ", nomadChange=" + nomadChange +
         ", changeRequestState=" + changeRequestState +
         ", version=" + version +
         ", creationHost=" + creationHost +
         ", creationUser=" + creationUser +
         ", creationTimestamp=" + creationTimestamp +
+        ", nomadChange=" + nomadChange.getSummary() +
         '}';
   }
 }

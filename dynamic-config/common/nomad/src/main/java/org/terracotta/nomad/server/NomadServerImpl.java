@@ -81,8 +81,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
               changeRequest.getVersion(),
               changeRequest.getCreationHost(),
               changeRequest.getCreationUser(),
-              changeRequest.getCreationTimestamp(),
-              changeRequest.getChangeResult()
+              changeRequest.getCreationTimestamp()
           )
       );
       if (changeRequest.getPrevChangeId() != null) {

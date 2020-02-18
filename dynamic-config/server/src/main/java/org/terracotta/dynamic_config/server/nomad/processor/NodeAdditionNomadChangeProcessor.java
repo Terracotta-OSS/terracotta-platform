@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -16,62 +15,60 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 
-import java.net.InetSocketAddress;
-import java.util.Collection;
-
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 
 /**
  * @author Mathieu Carbou
  */
-public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<NodeAdditionNomadChange> {
+public class NodeAdditionNomadChangeProcessor extends TopologyNomadChangeProcessor<NodeAdditionNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeAdditionNomadChangeProcessor.class);
 
-  private final TopologyService topologyService;
   private final DynamicConfigListener listener;
 
-  public NodeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
-    this.topologyService = requireNonNull(topologyService);
+  public NodeAdditionNomadChangeProcessor(TopologyService topologyService, int stripeId, String nodeName, DynamicConfigListener listener) {
+    super(topologyService, stripeId, nodeName);
     this.listener = requireNonNull(listener);
   }
 
   @Override
-  public NodeContext tryApply(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
+  protected Cluster tryUpdateTopology(Cluster existing, NodeAdditionNomadChange change) throws NomadException {
     try {
       checkMBeanOperation();
-      Cluster cluster = baseConfig.getCluster();
-      Stripe stripe = cluster.getStripe(change.getStripeId()).get();
-      change.getNodes().forEach(stripe::attachNode);
-      new ClusterValidator(cluster).validate();
-      return baseConfig;
+
+      // apply the change
+      Stripe stripe = existing.getStripe(change.getStripeId()).get();
+      stripe.attachNode(change.getNode());
+
+      // validate
+      new ClusterValidator(existing).validate();
+      if (!change.getCluster().equals(existing)) {
+        throw new IllegalStateException("Expected: " + change.getCluster() + ", computed: " + existing);
+      }
+
+      return existing;
     } catch (Exception e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
 
   @Override
-  public void apply(NodeAdditionNomadChange change) throws NomadException {
+  public void applyAtRuntime(Cluster cluster, NodeAdditionNomadChange change) throws NomadException {
+    if (cluster.containsNode(change.getAddress())) {
+      return;
+    }
+
     try {
-      Collection<Node> newNodes = change.getNodes();
+      Node newNode = change.getNode();
       int stripeId = change.getStripeId();
 
-      LOGGER.info("Adding nodes: {} to stripe ID: {}",
-          newNodes.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-          stripeId);
+      LOGGER.info("Adding node: {} to stripe ID: {}", newNode.getNodeAddress(), stripeId);
 
-      // try to apply the change on the runtime configuration
-      NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-      Cluster cluster = nodeContext.getCluster();
-      Stripe stripe = cluster.getStripe(stripeId).orElse(null);
+      // apply the change on the runtime configuration
+      cluster.getStripe(stripeId).get().attachNode(newNode);
 
-      if (stripe != null) { // should not be null in theory, but the apply method should NEVER fail (COMMIT).
-        newNodes.forEach(stripe::attachNode);
+      //TODO [DYNAMIC-CONFIG]: TDB-4835 - call MBean
 
-        //TODO [DYNAMIC-CONFIG]: TDB-4835 - call MBean
-
-        listener.onNodeAddition(nodeContext, stripeId, newNodes);
-      }
+      listener.onNodeAddition(stripeId, newNode);
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

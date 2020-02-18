@@ -14,7 +14,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.PassiveNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
@@ -114,12 +114,10 @@ public class AttachCommand extends TopologyCommand {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
-  protected PassiveNomadChange buildNomadChange(Cluster result) {
+  protected NodeNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeAdditionNomadChange(
-            result.getStripeId(destination).getAsInt(),
-            singletonList(result.getNode(source).get()));
+        return new NodeAdditionNomadChange(result, result.getStripeId(destination).getAsInt(), source);
       case STRIPE: {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }
@@ -131,25 +129,27 @@ public class AttachCommand extends TopologyCommand {
 
   @Override
   protected void onNomadChangeCommitted(Cluster result) {
-    Collection<InetSocketAddress> toActivate = operationType == NODE ?
+    Collection<InetSocketAddress> newNodes = operationType == NODE ?
         singletonList(source) :
         sourceCluster.getStripe(source).get().getNodeAddresses();
 
-    logger.info("Activating nodes: {}", toString(toActivate));
+    logger.info("Activating nodes: {}", toString(newNodes));
 
     // we activate the passive node without any license: the license will be synced from active and installed
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(toActivate)) {
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
+      // we are preparing the Nomad system only on the new nodes
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(service -> service.activate(result, null));
     }
 
-    runClusterActivation(toActivate, result);
-    logger.debug("Configuration repositories have been created for nodes: {}", toString(toActivate));
+    // we are running a cluster activation only on the new nodes
+    runClusterActivation(newNodes, result);
+    logger.debug("Configuration repositories have been created for nodes: {}", toString(newNodes));
 
-    logger.info("Restarting nodes: {}", toString(toActivate));
+    logger.info("Restarting nodes: {}", toString(newNodes));
     restartNodes(
-        toActivate,
+        newNodes,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
         Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
     logger.info("All nodes came back up");

@@ -29,7 +29,6 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -154,30 +153,27 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         }
 
         @Override
-        public void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {
-          removedNodes.forEach(node -> {
-            Map<String, String> data = new TreeMap<>();
-            data.put("nodeName", node.getNodeName());
-            data.put("nodeHostname", node.getNodeHostname());
-            data.put("nodeAddress", node.getNodeAddress().toString());
-            data.put("nodeInternalAddress", node.getNodeInternalAddress().toString());
-            data.put("nodePublicAddress", node.getNodePublicAddress().toString());
-            monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
-          });
+        public void onNodeRemoval(int stripeId, Node removedNode) {
+          Map<String, String> data = new TreeMap<>();
+          data.put("stripeId", String.valueOf(stripeId));
+          data.put("nodeName", removedNode.getNodeName());
+          data.put("nodeHostname", removedNode.getNodeHostname());
+          data.put("nodeAddress", removedNode.getNodeAddress().toString());
+          data.put("nodeInternalAddress", removedNode.getNodeInternalAddress().toString());
+          data.put("nodePublicAddress", removedNode.getNodePublicAddress().toString());
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
         }
 
         @Override
-        public void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {
-          addedNodes.forEach(node -> {
-            Map<String, String> data = new TreeMap<>();
-            data.put("stripeId", String.valueOf(stripeId));
-            data.put("nodeName", node.getNodeName());
-            data.put("nodeHostname", node.getNodeHostname());
-            data.put("nodeAddress", node.getNodeAddress().toString());
-            data.put("nodeInternalAddress", node.getNodeInternalAddress().toString());
-            data.put("nodePublicAddress", node.getNodePublicAddress().toString());
-            monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
-          });
+        public void onNodeAddition(int stripeId, Node addedNode) {
+          Map<String, String> data = new TreeMap<>();
+          data.put("stripeId", String.valueOf(stripeId));
+          data.put("nodeName", addedNode.getNodeName());
+          data.put("nodeHostname", addedNode.getNodeHostname());
+          data.put("nodeAddress", addedNode.getNodeAddress().toString());
+          data.put("nodeInternalAddress", addedNode.getNodeInternalAddress().toString());
+          data.put("nodePublicAddress", addedNode.getNodePublicAddress().toString());
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
         }
       });
 

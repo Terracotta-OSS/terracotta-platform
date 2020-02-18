@@ -37,14 +37,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener {
 
@@ -78,7 +76,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       throw new AssertionError("Already activated");
     }
     LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster());
-    nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName(), upcomingNodeContext.getCluster());
+    nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName());
     LOGGER.debug("Setting nomad writable successful");
 
     clusterActivated = true;
@@ -135,28 +133,24 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {
-    LOGGER.info("Removed nodes: {}", removedNodes.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")));
+  public void onNodeRemoval(int stripeId, Node removedNode) {
+    InetSocketAddress addr = removedNode.getNodeAddress();
+    LOGGER.info("Removed node: {}", addr);
     synchronized (this) {
-      removedNodes.forEach(node -> runtimeNodeContext.getCluster().detachNode(node.getNodeAddress()));
+      runtimeNodeContext.getCluster().detachNode(addr);
     }
     // do not fire events within a synchronized block
-    NodeContext runtime = getRuntimeNodeContext();
-    listeners.forEach(c -> c.onNodeRemoval(runtime, removedNodes));
+    listeners.forEach(c -> c.onNodeRemoval(stripeId, removedNode));
   }
 
   @Override
-  public void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {
-    LOGGER.info("Added nodes:{} to stripe ID: {}",
-        addedNodes.stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(joining(", ")),
-        stripeId);
+  public void onNodeAddition(int stripeId, Node addedNode) {
+    LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getNodeAddress(), stripeId);
     synchronized (this) {
-      Stripe stripe = runtimeNodeContext.getCluster().getStripe(stripeId).get();
-      addedNodes.forEach(stripe::attachNode);
+      runtimeNodeContext.getCluster().getStripe(stripeId).get().attachNode(addedNode);
     }
     // do not fire events within a synchronized block
-    NodeContext runtime = getRuntimeNodeContext();
-    listeners.forEach(c -> c.onNodeAddition(runtime, stripeId, addedNodes));
+    listeners.forEach(c -> c.onNodeAddition(stripeId, addedNode));
   }
 
   @Override
@@ -172,7 +166,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (response.isAccepted()) {
       LOGGER.info("Nomad change {} prepared: {}", message.getChangeUuid(), message.getChange().getSummary());
     } else {
-      LOGGER.warn("Nomad change {} failed to prepare:. Reason: {}: {}", message.getChangeUuid(), response.getRejectionReason(), response.getRejectionMessage());
+      LOGGER.warn("Nomad change {} failed to prepare: {}", message.getChangeUuid(), response);
     }
   }
 
@@ -181,7 +175,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (response.isAccepted()) {
       LOGGER.info("Nomad change {} committed", message.getChangeUuid());
     } else {
-      LOGGER.warn("Nomad change {} failed to commit. Reason: {}: {}", message.getChangeUuid(), response.getRejectionReason(), response.getRejectionMessage());
+      LOGGER.warn("Nomad change {} failed to commit: {}", message.getChangeUuid(), response);
     }
   }
 
@@ -190,7 +184,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (response.isAccepted()) {
       LOGGER.info("Nomad change {} rolled back", message.getChangeUuid());
     } else {
-      LOGGER.warn("Nomad change {} failed to rollback. Reason: {}: {}", message.getChangeUuid(), response.getRejectionReason(), response.getRejectionMessage());
+      LOGGER.warn("Nomad change {} failed to rollback: {}", message.getChangeUuid(), response);
     }
   }
 

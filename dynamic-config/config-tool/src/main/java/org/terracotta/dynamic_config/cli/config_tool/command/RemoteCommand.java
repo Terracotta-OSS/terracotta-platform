@@ -13,7 +13,7 @@ import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvide
 import org.terracotta.diagnostic.common.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.nomad.PassiveNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -125,7 +125,7 @@ public abstract class RemoteCommand extends Command {
     failures.reThrow();
   }
 
-  protected final void runPassiveChange(Map<InetSocketAddress, LogicalServerState> nodes, PassiveNomadChange change) {
+  protected final void runPassiveChange(Map<InetSocketAddress, LogicalServerState> nodes, NodeNomadChange change) {
     logger.trace("runPassiveChange({}, {})", nodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runPassiveChange(nodes, change, failures);

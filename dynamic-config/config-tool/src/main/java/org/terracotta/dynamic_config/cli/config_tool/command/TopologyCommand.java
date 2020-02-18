@@ -7,7 +7,7 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import org.terracotta.diagnostic.common.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.nomad.PassiveNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
@@ -106,13 +106,14 @@ public abstract class TopologyCommand extends RemoteCommand {
     logger.info("Sending the topology change to all the nodes");
 
     if (destinationClusterActivated) {
-      PassiveNomadChange nomadChange = buildNomadChange(result);
+      setUpcomingCluster(Collections.singletonList(source), result);
+      NodeNomadChange nomadChange = buildNomadChange(result);
       runPassiveChange(destinationOnlineNodes, nomadChange);
       onNomadChangeCommitted(result);
 
     } else {
-      setUpcomingCluster(destinationOnlineNodes.keySet(), result);
       setUpcomingCluster(Collections.singletonList(source), result);
+      setUpcomingCluster(destinationOnlineNodes.keySet(), result);
     }
 
     logger.info("Command successful!" + lineSeparator());
@@ -163,7 +164,7 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   protected abstract Cluster updateTopology();
 
-  protected abstract PassiveNomadChange buildNomadChange(Cluster result);
+  protected abstract NodeNomadChange buildNomadChange(Cluster result);
 
   protected void onNomadChangeCommitted(Cluster result) {
   }

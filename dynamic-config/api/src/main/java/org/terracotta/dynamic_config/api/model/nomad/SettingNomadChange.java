@@ -48,11 +48,11 @@ public class SettingNomadChange extends FilteredNomadChange {
     String s = operation == Operation.SET ?
         name == null ? (operation + " " + setting + "=" + value) : (operation + " " + setting + "." + name + "=" + value) :
         name == null ? (operation + " " + setting) : (operation + " " + setting + "." + name);
-    switch (applicability.getScope()) {
+    switch (getApplicability().getScope()) {
       case STRIPE:
-        return s + " (stripe ID: " + applicability.getStripeId().getAsInt() + ")";
+        return s + " (stripe ID: " + getApplicability().getStripeId().getAsInt() + ")";
       case NODE:
-        return s + " (stripe ID: " + applicability.getStripeId().getAsInt() + ", node: " + applicability.getNodeName() + ")";
+        return s + " (stripe ID: " + getApplicability().getStripeId().getAsInt() + ", node: " + getApplicability().getNodeName() + ")";
       default:
         return s;
     }
@@ -98,7 +98,7 @@ public class SettingNomadChange extends FilteredNomadChange {
         ", setting=" + setting +
         ", name='" + name + '\'' +
         ", value='" + value + '\'' +
-        ", applicability=" + applicability +
+        ", applicability=" + getApplicability() +
         '}';
   }
 
@@ -119,11 +119,11 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   private String namespace(Cluster cluster) {
-    switch (applicability.getScope()) {
+    switch (getApplicability().getScope()) {
       case CLUSTER:
         return "";
       case STRIPE: {
-        int stripeId = applicability.getStripeId().getAsInt();
+        int stripeId = getApplicability().getStripeId().getAsInt();
         if (stripeId < 1) {
           throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
         }
@@ -133,14 +133,14 @@ public class SettingNomadChange extends FilteredNomadChange {
         return "stripe." + stripeId + ".";
       }
       case NODE: {
-        int stripeId = applicability.getStripeId().getAsInt();
-        String nodeName = applicability.getNodeName();
+        int stripeId = getApplicability().getStripeId().getAsInt();
+        String nodeName = getApplicability().getNodeName();
         int nodeId = cluster.getNodeId(stripeId, nodeName)
             .orElseThrow(() -> new IllegalArgumentException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + cluster));
         return "stripe." + stripeId + ".node." + nodeId + ".";
       }
       default:
-        throw new AssertionError(applicability.getScope());
+        throw new AssertionError(getApplicability().getScope());
     }
   }
 

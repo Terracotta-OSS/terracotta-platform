@@ -13,8 +13,6 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 
-import java.util.Collection;
-
 /**
  * @author Mathieu Carbou
  */
@@ -54,10 +52,9 @@ public interface DynamicConfigListener {
    * The method is called with the topology equivalent to {@link TopologyService#getRuntimeNodeContext()} and the change that has been applied
    * <p>
    *
-   * @param nodeContext  the updated topology, without the removed nodes
-   * @param removedNodes the details about the removed nodes
+   * @param removedNode the details about the removed node
    */
-  default void onNodeRemoval(NodeContext nodeContext, Collection<Node> removedNodes) {}
+  default void onNodeRemoval(int stripeId, Node removedNode) {}
 
   /**
    * Listener that will be called when some nodes have been added to a stripe
@@ -65,9 +62,8 @@ public interface DynamicConfigListener {
    * The method is called with the topology equivalent to {@link TopologyService#getRuntimeNodeContext()} and the change that has been applied
    * <p>
    *
-   * @param nodeContext the updated topology, with the added nodes
-   * @param stripeId    the stripe ID where the nodes have been added
-   * @param addedNodes  the details of the added nodes
+   * @param stripeId  the stripe ID where the nodes have been added
+   * @param addedNode the details of the added node
    */
-  default void onNodeAddition(NodeContext nodeContext, int stripeId, Collection<Node> addedNodes) {}
+  default void onNodeAddition(int stripeId, Node addedNode) {}
 }

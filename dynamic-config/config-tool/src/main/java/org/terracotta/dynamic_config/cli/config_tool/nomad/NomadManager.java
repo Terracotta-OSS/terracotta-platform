@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.PassiveNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
 import org.terracotta.nomad.client.change.MultiNomadChange;
@@ -83,7 +83,7 @@ public class NomadManager<T> {
     }
   }
 
-  public void runPassiveChange(Map<InetSocketAddress, LogicalServerState> nodes, PassiveNomadChange change, ChangeResultReceiver<T> results) {
+  public void runPassiveChange(Map<InetSocketAddress, LogicalServerState> nodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to add or remove a node: {} on cluster {}", change, nodes);
     checkServerStates(nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
