@@ -46,7 +46,7 @@ apply plugin: TcDistribute
 task copyAndUntar(type: Copy) {
   dependsOn project(':terracotta').distTar
 
-  from (file(project(':terracotta').distTar.archivePath))
+  from(file(project(':terracotta').distTar.archivePath))
   into("build/angela/kits/$project.version")
 
   from tarTree(project(':terracotta').distTar.archivePath)
@@ -75,6 +75,7 @@ test {
   systemProperty 'angela.rootDir', file('build/angela').absolutePath
   systemProperty 'angela.skipUninstall', 'true'
   systemProperty 'angela.tsa.fullLogging', 'true'
+  systemProperty 'angela.kit.version', "$project.version"
 
   testLogging {
     events 'started'

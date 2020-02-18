@@ -403,7 +403,7 @@ public class DynamicConfigIT {
         .tsa(tsa -> {
           CustomTsaConfigurationContext topology = tsa
               .clusterName("tc-cluster")
-              .topology(new Topology(distribution(version("10.7.0-SNAPSHOT"), KIT, TERRACOTTA), dynamicCluster(stripes)));
+              .topology(new Topology(distribution(version(System.getProperty("angela.kit.version")), KIT, TERRACOTTA), dynamicCluster(stripes)));
           if (licenseUrl() != null) {
             topology.license(new License(licenseUrl()));
           }
