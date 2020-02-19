@@ -10,14 +10,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -32,15 +30,12 @@ public class ClusterActivationNomadChangeProcessorTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  @Mock
-  public TopologyService topologyService;
-
   private ClusterActivationNomadChangeProcessor processor;
   private NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(Node.newDefaultNode("foo", "localhost"))), 1, "foo");
 
   @Before
   public void setUp() {
-    processor = new ClusterActivationNomadChangeProcessor(topologyService, 1, "foo");
+    processor = new ClusterActivationNomadChangeProcessor(1, "foo");
   }
 
   @Test
@@ -58,7 +53,7 @@ public class ClusterActivationNomadChangeProcessorTest {
     NodeContext topology = new NodeContext(new Cluster(new Stripe(Node.newDefaultNode("foo", "localhost"))), 1, "foo");
 
     expectedException.expect(NomadException.class);
-    expectedException.expectMessage("Existing config must be null. Found: " + topology.getCluster());
+    expectedException.expectMessage("Existing config must be null. Found: " + topology);
 
     processor.tryApply(topology, change);
   }

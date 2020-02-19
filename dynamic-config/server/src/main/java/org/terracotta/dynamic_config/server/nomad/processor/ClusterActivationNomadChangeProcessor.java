@@ -4,18 +4,31 @@
  */
 package org.terracotta.dynamic_config.server.nomad.processor;
 
-import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 
-public class ClusterActivationNomadChangeProcessor extends TopologyNomadChangeProcessor<ClusterActivationNomadChange> {
-  public ClusterActivationNomadChangeProcessor(TopologyService topologyService, int stripeId, String nodeName) {
-    super(topologyService, stripeId, nodeName);
+import static java.util.Objects.requireNonNull;
+
+public class ClusterActivationNomadChangeProcessor implements NomadChangeProcessor<ClusterActivationNomadChange> {
+  private final int stripeId;
+  private final String nodeName;
+
+  public ClusterActivationNomadChangeProcessor(int stripeId, String nodeName) {
+    this.stripeId = stripeId;
+    this.nodeName = requireNonNull(nodeName);
   }
 
   @Override
-  protected Cluster tryUpdateTopology(Cluster existing, ClusterActivationNomadChange change) throws NomadException {
-    throw new NomadException("Existing config must be null. Found: " + existing);
+  public NodeContext tryApply(NodeContext baseConfig, ClusterActivationNomadChange change) throws NomadException {
+    if (baseConfig != null) {
+      throw new NomadException("Existing config must be null. Found: " + baseConfig);
+    }
+    return new NodeContext(change.getCluster(), stripeId, nodeName);
+  }
+
+  @Override
+  public void apply(ClusterActivationNomadChange change) {
+    // no-op
   }
 }

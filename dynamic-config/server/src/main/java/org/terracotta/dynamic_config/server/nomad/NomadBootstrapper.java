@@ -175,7 +175,7 @@ public class NomadBootstrapper {
           .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, listener))
           .register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, stripeId, nodeName, listener))
           .register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, stripeId, nodeName, listener))
-          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(dynamicConfigService, stripeId, nodeName));
+          .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
 
       nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));
       LOGGER.debug("Successfully completed upgradeForWrite procedure");

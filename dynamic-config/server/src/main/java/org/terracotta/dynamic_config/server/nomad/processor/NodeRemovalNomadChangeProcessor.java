@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
@@ -21,38 +22,50 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-public class NodeRemovalNomadChangeProcessor extends TopologyNomadChangeProcessor<NodeRemovalNomadChange> {
+public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<NodeRemovalNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeRemovalNomadChangeProcessor.class);
 
+  private final TopologyService topologyService;
+  private final int stripeId;
+  private final String nodeName;
   private final DynamicConfigListener listener;
 
   public NodeRemovalNomadChangeProcessor(TopologyService topologyService, int stripeId, String nodeName, DynamicConfigListener listener) {
-    super(topologyService, stripeId, nodeName);
+    this.topologyService = requireNonNull(topologyService);
+    this.stripeId = stripeId;
+    this.nodeName = requireNonNull(nodeName);
     this.listener = requireNonNull(listener);
   }
 
   @Override
-  protected Cluster tryUpdateTopology(Cluster existing, NodeRemovalNomadChange change) throws NomadException {
+  public NodeContext tryApply(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
+    if (baseConfig == null) {
+      throw new NomadException("Existing config must not be null");
+    }
+
     try {
       checkMBeanOperation();
 
       // apply the change
+      Cluster existing = baseConfig.clone().getCluster();
       existing.detachNode(change.getNode().getNodeAddress());
 
       // validate
       new ClusterValidator(existing).validate();
       if (!change.getCluster().equals(existing)) {
-        throw new IllegalStateException("Expected: " + change.getCluster() + ", computed: " + existing);
+        throw new NomadException("Expected: " + change.getCluster() + ", computed: " + existing);
       }
 
-      return existing;
-    } catch (Exception e) {
+      return new NodeContext(existing, stripeId, nodeName);
+    } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
 
   @Override
-  public void applyAtRuntime(Cluster cluster, NodeRemovalNomadChange change) throws NomadException {
+  public final void apply(NodeRemovalNomadChange change) throws NomadException {
+    Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+
     if (!cluster.containsNode(change.getNode().getNodeAddress())) {
       return;
     }
