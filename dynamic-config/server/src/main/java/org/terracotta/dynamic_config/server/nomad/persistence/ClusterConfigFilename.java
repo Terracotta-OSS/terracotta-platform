@@ -6,7 +6,7 @@ package org.terracotta.dynamic_config.server.nomad.persistence;
 
 import java.util.Optional;
 
-import static com.tc.util.Assert.assertNotNull;
+import static java.util.Objects.requireNonNull;
 
 public interface ClusterConfigFilename {
 
@@ -19,7 +19,7 @@ public interface ClusterConfigFilename {
   }
 
   static ClusterConfigFilename with(String nodeName, long version) {
-    assertNotNull(nodeName);
+    requireNonNull(nodeName);
     if (version <= 0) {
       throw new IllegalArgumentException("Bad version: " + version);
     }
