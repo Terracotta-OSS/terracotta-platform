@@ -45,7 +45,7 @@ public class RepairCommand extends RemoteCommand {
     allNodes = findRuntimePeersStatus(node);
 
     if (!areAllNodesActivated(filterOnlineNodes(allNodes).keySet())) {
-      throw new IllegalStateException("Cannot run a repair on a non activated  cluster");
+      throw new IllegalStateException("Cannot run repair command on a non activated cluster");
     }
   }
 
