@@ -13,7 +13,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
-import org.terracotta.dynamic_config.server.nomad.NomadConfigurationException;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -187,7 +186,7 @@ public class DynamicConfigurationPassiveSync {
 
     AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
     if (!response.isAccepted()) {
-      throw new NomadConfigurationException("Prepare message is rejected by Nomad. Reason for rejection is " + response.getRejectionReason().name() + ": " + nomadChangeInfo.toString());
+      throw new NomadException("Prepare message is rejected by Nomad. Reason for rejection is " + response.getRejectionReason().name() + ": " + nomadChangeInfo.toString());
     }
   }
 
@@ -205,7 +204,7 @@ public class DynamicConfigurationPassiveSync {
 
         AcceptRejectResponse commitResponse = nomadServer.commit(commitMessage);
         if (!commitResponse.isAccepted()) {
-          throw new NomadConfigurationException("Unexpected commit failure. " +
+          throw new NomadException("Unexpected commit failure. " +
               "Reason for failure is " + commitResponse.getRejectionReason() + ": " + commitResponse.getRejectionMessage() + ". " +
               "Change:" + nomadChangeInfo.toString());
         }
@@ -217,7 +216,7 @@ public class DynamicConfigurationPassiveSync {
 
         AcceptRejectResponse rollbackResponse = nomadServer.rollback(rollbackMessage);
         if (!rollbackResponse.isAccepted()) {
-          throw new NomadConfigurationException("Unexpected rollback failure. " +
+          throw new NomadException("Unexpected rollback failure. " +
               "Reason for failure is " + rollbackResponse.getRejectionReason() + ": " + rollbackResponse.getRejectionMessage() + ". " +
               "Change:" + nomadChangeInfo.toString());
         }
@@ -239,7 +238,7 @@ public class DynamicConfigurationPassiveSync {
         CommitMessage message = new CommitMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
         AcceptRejectResponse response = nomadServer.commit(message);
         if (!response.isAccepted()) {
-          throw new NomadConfigurationException("Unexpected commit failure. " +
+          throw new NomadException("Unexpected commit failure. " +
               "Reason for failure is " + response.getRejectionReason() + ": " + response.getRejectionMessage() + ". " +
               "Change:" + nomadChangeInfo.toString());
         }
@@ -249,7 +248,7 @@ public class DynamicConfigurationPassiveSync {
         RollbackMessage message = new RollbackMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
         AcceptRejectResponse response = nomadServer.rollback(message);
         if (!response.isAccepted()) {
-          throw new NomadConfigurationException("Unexpected rollback failure. " +
+          throw new NomadException("Unexpected rollback failure. " +
               "Reason for failure is " + response.getRejectionReason() + ": " + response.getRejectionMessage() + ". " +
               "Change:" + nomadChangeInfo.toString());
         }

@@ -113,9 +113,9 @@ public class NomadBootstrapper {
      * @param repositoryPath       Configuration repository root
      * @param parameterSubstitutor parameter substitutor
      * @param nodeName             Node name
-     * @throws NomadConfigurationException if initialization of underlying server fails.
+     * @throws UncheckedNomadException if initialization of underlying server fails.
      */
-    private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, String nodeName) throws NomadConfigurationException {
+    private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, String nodeName) throws UncheckedNomadException {
       // Case where Nomad is bootstrapped from the EnterpriseConfigurationProvider using the old startup script with --node-name and -r.
       // We only know the node name, the the node will start in diagnostic mode
       // So we create an empty cluster / node topology
@@ -125,11 +125,11 @@ public class NomadBootstrapper {
               () -> new NodeContext(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue())))));
     }
 
-    private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, NodeContext nodeContext) throws NomadConfigurationException {
+    private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, NodeContext nodeContext) throws UncheckedNomadException {
       init(repositoryPath, parameterSubstitutor, manager, nodeContext::getNodeName, () -> nodeContext);
     }
 
-    private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws NomadConfigurationException {
+    private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
       this.parameterSubstitutor = parameterSubstitutor;
       this.configChangeHandlerManager = manager;
       this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
@@ -189,13 +189,13 @@ public class NomadBootstrapper {
      * Used for getting the configuration string from Nomad
      *
      * @return Stored configuration as a String
-     * @throws NomadConfigurationException if configuration is unavailable or corrupted
+     * @throws UncheckedNomadException if configuration is unavailable or corrupted
      */
-    public Optional<NodeContext> getConfiguration() throws NomadConfigurationException {
+    public Optional<NodeContext> getConfiguration() throws UncheckedNomadException {
       try {
         return nomadServer.getCurrentCommittedChangeResult();
       } catch (NomadException e) {
-        throw new NomadConfigurationException("Exception while making discover call to Nomad", e);
+        throw new UncheckedNomadException("Exception while making discover call to Nomad", e);
       }
     }
 
@@ -206,7 +206,7 @@ public class NomadBootstrapper {
       try {
         return UpgradableNomadServerFactory.createServer(repositoryManager, null, nodeName, parameterSubstitutor, listener);
       } catch (SanskritException | NomadException e) {
-        throw new NomadConfigurationException("Exception initializing Nomad Server: " + e.getMessage(), e);
+        throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
       }
     }
 

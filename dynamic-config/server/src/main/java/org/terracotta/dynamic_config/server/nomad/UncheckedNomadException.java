@@ -4,15 +4,11 @@
  */
 package org.terracotta.dynamic_config.server.nomad;
 
-public class NomadConfigurationException extends RuntimeException {
+public class UncheckedNomadException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  public NomadConfigurationException(String message) {
-    super(message);
-  }
-
-  public NomadConfigurationException(String message, Throwable cause) {
+  public UncheckedNomadException(String message, Throwable cause) {
     super(message, cause);
   }
 }
