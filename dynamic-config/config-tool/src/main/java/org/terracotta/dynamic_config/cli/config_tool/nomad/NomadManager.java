@@ -25,6 +25,7 @@ import org.terracotta.nomad.server.ChangeRequestState;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -32,9 +33,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE;
+import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_RECONNECTING;
+import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
 
 public class NomadManager<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);
+  private static final EnumSet<LogicalServerState> ALLOWED = EnumSet.of(
+      ACTIVE,
+      PASSIVE,
+      ACTIVE_RECONNECTING,
+      STARTING // this mode is when a server is forced to start in diagnostic mode for repair
+  );
 
   private final NomadClientFactory<T> clientFactory;
 
@@ -44,6 +55,7 @@ public class NomadManager<T> {
 
   public void runConfigurationDiscovery(Map<InetSocketAddress, LogicalServerState> nodes, DiscoverResultsReceiver<T> results) {
     LOGGER.debug("Attempting to discover nodes: {}", nodes);
+    checkServerStates(nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
     try (CloseableNomadClient<T> client = clientFactory.createClient(orderedList)) {
       client.tryDiscovery(new MultiDiscoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)));
@@ -57,12 +69,14 @@ public class NomadManager<T> {
 
   public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> nodes, MultiNomadChange<SettingNomadChange> changes, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, nodes);
+    checkServerStates(nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
     runChange(orderedList, changes, results);
   }
 
   public void runConfigurationRepair(Map<InetSocketAddress, LogicalServerState> nodes, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
     LOGGER.debug("Attempting to repair configuration on nodes: {}", nodes);
+    checkServerStates(nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
     try (CloseableNomadClient<T> client = clientFactory.createClient(orderedList)) {
       client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), nodes.size(), forcedState);
@@ -71,13 +85,12 @@ public class NomadManager<T> {
 
   public void runPassiveChange(Map<InetSocketAddress, LogicalServerState> nodes, PassiveNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to add or remove a node: {} on cluster {}", change, nodes);
+    checkServerStates(nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
     runChange(orderedList, change, results);
   }
 
   private void runChange(List<InetSocketAddress> expectedOnlineNodes, NomadChange change, ChangeResultReceiver<T> results) {
-
-
     try (CloseableNomadClient<T> client = clientFactory.createClient(expectedOnlineNodes)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), change);
     }
@@ -93,5 +106,14 @@ public class NomadManager<T> {
         expectedOnlineNodes.entrySet().stream().filter(online.and(actives.negate())),
         expectedOnlineNodes.entrySet().stream().filter(online.and(actives))
     ).map(Map.Entry::getKey).collect(Collectors.toList());
+  }
+
+  private static void checkServerStates(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
+    // find any illegal state that should prevent any Nomad access
+    for (Map.Entry<InetSocketAddress, LogicalServerState> entry : expectedOnlineNodes.entrySet()) {
+      if (!ALLOWED.contains(entry.getValue())) {
+        throw new IllegalStateException("Nomad system is currently not accessible. Node: " + entry.getKey() + " is in state: " + entry.getValue());
+      }
+    }
   }
 }
