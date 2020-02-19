@@ -151,7 +151,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
       // in case ConsistencyManager is not there
     }
 
-    return LogicalServerState.from(state, false, blocked);
+    return LogicalServerState.from(state, isReconnectWindow(), blocked);
   }
 
   // DiagnosticsHandler

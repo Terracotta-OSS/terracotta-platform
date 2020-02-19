@@ -170,6 +170,7 @@ public class DiagnosticServiceImplTest {
                   .map(blockedCall -> tuple3(mainCall, stateCall, blockedCall))))
           .forEach(input -> {
             reset(diagnostics);
+            when(diagnostics.invoke("Server", "isReconnectWindow")).thenReturn("false");
             when(diagnostics.invoke("DetailedServerState", "getDetailedServerState")).thenReturn(input.t1);
             when(diagnostics.getState()).thenReturn(input.t2);
             when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn(input.t3);
@@ -182,6 +183,7 @@ public class DiagnosticServiceImplTest {
     {
       Stream.of(MESSAGE_UNKNOWN_COMMAND, MESSAGE_INVALID_JMX).forEach(mainCall -> {
         reset(diagnostics);
+        when(diagnostics.invoke("Server", "isReconnectWindow")).thenReturn("false");
         when(diagnostics.invoke("DetailedServerState", "getDetailedServerState")).thenReturn(mainCall);
         when(diagnostics.getState()).thenReturn("ACTIVE");
         when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn("true");
@@ -203,6 +205,7 @@ public class DiagnosticServiceImplTest {
     when(diagnostics.getState()).thenReturn("PASSIVE");
 
     when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn(MESSAGE_INVALID_JMX);
+    when(diagnostics.invoke("Server", "isReconnectWindow")).thenReturn("false");
     assertThat(service.getLogicalServerState(), equalTo(PASSIVE));
 
     when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn("true");

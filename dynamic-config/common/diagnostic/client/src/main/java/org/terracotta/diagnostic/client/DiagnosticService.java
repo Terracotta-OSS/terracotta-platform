@@ -135,6 +135,11 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
     return invoke(MBEAN_SERVER, "getEnvironment");
   }
 
+  default boolean isReconnectWindow() {
+    return Boolean.parseBoolean(invoke(MBEAN_SERVER, "isReconnectWindow"));
+  }
+
+
   // DetailedServerState
   LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException;
 
