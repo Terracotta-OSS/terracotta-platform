@@ -35,7 +35,7 @@ public class DiagnosticServiceFactory {
                                         String connectionName,
                                         Duration connectTimeout,
                                         Duration diagnosticInvokeTimeout,
-                                        String securityRootDirectory) throws ConnectionException, EntityNotFoundException, EntityNotProvidedException, EntityVersionMismatchException {
+                                        String securityRootDirectory) throws ConnectionException {
     Properties properties = buildProperties(connectionName, connectTimeout, securityRootDirectory);
     Connection connection = ConnectionFactory.connect(Collections.singletonList(nodeAddress), properties);
     try {
@@ -45,7 +45,9 @@ public class DiagnosticServiceFactory {
         connection.close();
       } catch (IOException ignored) {
       }
-      throw e;
+      // we decide to consider any entity exception as connection exception because the diagnostic entity should always be there and
+      // the caller anyway has no way to properly react to these catch exception. Only ConnectionException is relevant.
+      throw new ConnectionException(e);
     }
   }
 
@@ -54,7 +56,7 @@ public class DiagnosticServiceFactory {
                                         String connectionName,
                                         Duration connectionTimeout,
                                         Duration diagnosticInvokeTimeout,
-                                        String securityRootDirectory) throws ConnectionException, EntityNotFoundException, EntityNotProvidedException, EntityVersionMismatchException {
+                                        String securityRootDirectory) throws ConnectionException {
     Properties properties = buildProperties(connectionName, connectionTimeout, securityRootDirectory);
     Connection connection = connectionService.connect(Collections.singletonList(nodeAddress), properties);
     try {
@@ -64,7 +66,9 @@ public class DiagnosticServiceFactory {
         connection.close();
       } catch (IOException ignored) {
       }
-      throw e;
+      // we decide to consider any entity exception as connection exception because the diagnostic entity should always be there and
+      // the caller anyway has no way to properly react to these catch exception. Only ConnectionException is relevant.
+      throw new ConnectionException(e);
     }
 
   }

@@ -81,10 +81,10 @@ public class DiagnosticServiceFactoryTest {
   }
 
   @Test
-  public void test_connection_closed_on_ref_failure() throws ConnectionException, EntityVersionMismatchException, EntityNotProvidedException, EntityNotFoundException, IOException {
+  public void test_connection_closed_on_ref_failure() throws ConnectionException, EntityNotProvidedException, IOException {
     when(connection.<Diagnostics, Object, Properties>getEntityRef(eq(Diagnostics.class), eq(1L), eq("root"))).thenThrow(new EntityNotProvidedException("", ""));
 
-    exception.expect(EntityNotProvidedException.class);
+    exception.expect(ConnectionException.class);
 
     DiagnosticServiceFactory.fetch(
         connectionService,
@@ -102,7 +102,7 @@ public class DiagnosticServiceFactoryTest {
     when(connection.<Diagnostics, Object, Properties>getEntityRef(eq(Diagnostics.class), eq(1L), eq("root"))).thenReturn(entityRef);
     when(entityRef.fetchEntity(any(Properties.class))).thenThrow(new EntityNotFoundException("", ""));
 
-    exception.expect(EntityNotFoundException.class);
+    exception.expect(ConnectionException.class);
 
     DiagnosticServiceFactory.fetch(
         connectionService,

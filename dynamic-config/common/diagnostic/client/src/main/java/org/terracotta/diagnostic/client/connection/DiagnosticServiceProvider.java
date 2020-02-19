@@ -7,9 +7,6 @@ package org.terracotta.diagnostic.client.connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
-import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityVersionMismatchException;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -40,7 +37,7 @@ public class DiagnosticServiceProvider {
   public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration connectTimeout) throws DiagnosticServiceProviderException {
     try {
       return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory);
-    } catch (EntityNotFoundException | EntityNotProvidedException | EntityVersionMismatchException | ConnectionException e) {
+    } catch (ConnectionException e) {
       throw new DiagnosticServiceProviderException(e);
     }
   }
