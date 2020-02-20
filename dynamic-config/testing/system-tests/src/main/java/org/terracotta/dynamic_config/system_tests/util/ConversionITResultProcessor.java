@@ -20,7 +20,7 @@ public class ConversionITResultProcessor extends ConfigRepoProcessor {
   }
 
   @Override
-  protected NomadServer<NodeContext> getNomadServer(final int stripeId, final String nodeName) throws Exception {
+  protected NomadServer<NodeContext> getNomadServer(final int stripeId, final String nodeName) {
     NomadServer<NodeContext> nomadServer = super.getNomadServer(stripeId, nodeName);
     serverMap.put("stripe" + stripeId + "_" + nodeName, nomadServer);
     return nomadServer;

@@ -24,7 +24,7 @@ public class CommitSkippingConfigRepoProcessor extends ConfigRepoProcessor {
   }
 
   @Override
-  protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) throws Exception {
+  protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) {
     NomadServer<NodeContext> nomadServer = super.getNomadServer(stripeId, nodeName);
     return new NomadServer<NodeContext>() {
       @Override

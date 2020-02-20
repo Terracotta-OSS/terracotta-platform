@@ -5,17 +5,17 @@
 package org.terracotta.dynamic_config.server.conversion;
 
 import org.terracotta.common.struct.Tuple2;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.server.conversion.exception.ConfigConversionException;
+import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.server.nomad.UpgradableNomadServerFactory;
 import org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.nomad.NomadEnvironment;
+import org.terracotta.nomad.client.NomadClient;
+import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.change.NomadChange;
-import org.terracotta.nomad.messages.AcceptRejectResponse;
-import org.terracotta.nomad.messages.CommitMessage;
-import org.terracotta.nomad.messages.DiscoverResponse;
-import org.terracotta.nomad.messages.PrepareMessage;
+import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
@@ -24,21 +24,18 @@ import org.terracotta.persistence.sanskrit.SanskritException;
 import org.w3c.dom.Node;
 
 import java.nio.file.Path;
-import java.time.Instant;
+import java.time.Clock;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE;
+import java.util.stream.Collectors;
 
 public class ConfigRepoProcessor extends PostConversionProcessor {
   private final Path outputFolderPath;
-  private final UUID nomadRequestId;
   private final NomadEnvironment nomadEnvironment;
 
   public ConfigRepoProcessor(Path outputFolderPath) {
     this.outputFolderPath = outputFolderPath;
-    this.nomadRequestId = UUID.randomUUID();
     this.nomadEnvironment = new NomadEnvironment();
   }
 
@@ -49,38 +46,25 @@ public class ConfigRepoProcessor extends PostConversionProcessor {
   }
 
   private void saveToNomad(ArrayList<NodeContext> nodeContexts) {
-    for (NodeContext nodeContext : nodeContexts) {
-      try {
-        // save the topology model into Nomad
-        NomadServer<NodeContext> nomadServer = getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName());
-        DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
-        long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
-        long nextVersionNumber = discoverResponse.getCurrentVersion() + 1;
+    Cluster cluster = nodeContexts.get(0).getCluster();
 
-        PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, getHost(), getUser(), Instant.now(), nomadRequestId,
-            nextVersionNumber, new ConfigMigrationNomadChange(nodeContext.getCluster()));
-        AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
-        if (!response.isAccepted()) {
-          throw new ConfigConversionException(UNEXPECTED_ERROR_FROM_NOMAD_PREPARE_PHASE, response.toString());
-        }
+    List<NomadEndpoint<NodeContext>> endpoints = nodeContexts.stream()
+        .map(nodeContext -> new NomadEndpoint<>(nodeContext.getNode().getNodeAddress(), getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName())))
+        .collect(Collectors.toList());
 
-        long nextMutativeMessageCount = mutativeMessageCount + 1;
-        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, getHost(), getUser(), Instant.now(), nomadRequestId);
-        nomadServer.commit(commitMessage);
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
+    NomadEnvironment environment = new NomadEnvironment();
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+    nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
+    failureRecorder.reThrow();
   }
 
-  protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) throws Exception {
+  protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) {
     Path repositoryPath = outputFolderPath.resolve("stripe" + stripeId + "_" + nodeName);
     return createServer(repositoryPath, stripeId, nodeName);
   }
 
-  private NomadServer<NodeContext> createServer(Path repositoryPath, int stripeId, String nodeName) throws SanskritException, NomadException {
+  private NomadServer<NodeContext> createServer(Path repositoryPath, int stripeId, String nodeName) {
     ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
     NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(repositoryPath, parameterSubstitutor);
     nomadRepositoryManager.createDirectories();
@@ -89,7 +73,7 @@ public class ConfigRepoProcessor extends PostConversionProcessor {
       @Override
       public PotentialApplicationResult<NodeContext> tryApply(final NodeContext existing, final NomadChange change) {
         return PotentialApplicationResult.allow(new NodeContext(
-            ((ConfigMigrationNomadChange) change).getCluster(),
+            ((ClusterActivationNomadChange) change).getCluster(),
             stripeId,
             nodeName
         ));
@@ -100,7 +84,11 @@ public class ConfigRepoProcessor extends PostConversionProcessor {
       }
     };
 
-    return UpgradableNomadServerFactory.createServer(nomadRepositoryManager, changeApplicator, nodeName, parameterSubstitutor);
+    try {
+      return UpgradableNomadServerFactory.createServer(nomadRepositoryManager, changeApplicator, nodeName, parameterSubstitutor);
+    } catch (SanskritException | NomadException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected String getUser() {
