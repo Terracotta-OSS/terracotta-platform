@@ -8,7 +8,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,12 +26,12 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
 
   private final Path root;
   private final String nodeName;
-  private final XmlConfigMapper xmlConfigMapper;
+  private final ConfigRepositoryMapper configRepositoryMapper;
 
-  public FileConfigStorage(Path root, String nodeName, XmlConfigMapper xmlConfigMapper) {
+  public FileConfigStorage(Path root, String nodeName, ConfigRepositoryMapper configRepositoryMapper) {
     this.root = requireNonNull(root);
     this.nodeName = requireNonNull(nodeName);
-    this.xmlConfigMapper = requireNonNull(xmlConfigMapper);
+    this.configRepositoryMapper = requireNonNull(configRepositoryMapper);
   }
 
   @Override
@@ -40,7 +40,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
     LOGGER.debug("Loading version: {} from file: {}", version, file);
 
     try {
-      return xmlConfigMapper.fromXml(nodeName, new String(Files.readAllBytes(file), UTF_8));
+      return configRepositoryMapper.fromXml(nodeName, new String(Files.readAllBytes(file), UTF_8));
     } catch (IOException e) {
       throw new ConfigStorageException(e);
     }
@@ -55,7 +55,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());
       }
-      Files.write(file, xmlConfigMapper.toXml(config).getBytes(UTF_8));
+      Files.write(file, configRepositoryMapper.toXml(config).getBytes(UTF_8));
     } catch (IOException e) {
       throw new ConfigStorageException(e);
     }

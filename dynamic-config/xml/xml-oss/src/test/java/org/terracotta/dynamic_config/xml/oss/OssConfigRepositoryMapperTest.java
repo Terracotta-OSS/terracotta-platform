@@ -31,21 +31,21 @@ import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 /**
  * @author Mathieu Carbou
  */
-public class OssXmlConfigMapperTest {
+public class OssConfigRepositoryMapperTest {
 
   @Rule
   public TmpDir temporaryFolder = new TmpDir();
 
   private NodeContext nodeContext1, nodeContext2;
   private String xml1, xml2;
-  private OssXmlConfigMapper xmlConfig;
+  private OssConfigRepositoryMapper xmlConfig;
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
     PathResolver pathResolver = new PathResolver(
         Paths.get("%(user.dir)"),
         path -> path == null ? null : Paths.get(ParameterSubstitutor.substitute(path.toString())));
-    xmlConfig = new OssXmlConfigMapper();
+    xmlConfig = new OssConfigRepositoryMapper();
     xmlConfig.init(pathResolver);
     nodeContext1 = Json.parse(getClass().getResource("/topology1.json"), NodeContext.class);
     xml1 = new String(Files.readAllBytes(Paths.get(getClass().getResource("/topology1.xml").toURI())), StandardCharsets.UTF_8);

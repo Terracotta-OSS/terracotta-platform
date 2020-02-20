@@ -16,10 +16,10 @@ import org.terracotta.config.Services;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapper;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapperDiscovery;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.PathResolver;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapperDiscovery;
 import org.terracotta.dynamic_config.server.conversion.ConfigConvertor;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.system_tests.util.ConversionITResultProcessor;
@@ -56,14 +56,14 @@ public class ConfigConvertorIT {
   @Rule
   public TmpDir tmpDir = new TmpDir();
 
-  private XmlConfigMapper xmlConfigMapper;
+  private ConfigRepositoryMapper configRepositoryMapper;
   private final IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Before
   public void setUp() {
     PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
-    xmlConfigMapper = new XmlConfigMapperDiscovery(userDirResolver).find().get();
+    configRepositoryMapper = new ConfigRepositoryMapperDiscovery(userDirResolver).find().get();
   }
 
   @Test
@@ -99,7 +99,7 @@ public class ConfigConvertorIT {
     NodeContext topology = discoverResponse.getLatestChange().getResult();
     // convert it back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
-    String convertedConfigContent = xmlConfigMapper.toXml(topology);
+    String convertedConfigContent = configRepositoryMapper.toXml(topology);
     TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
@@ -202,7 +202,7 @@ public class ConfigConvertorIT {
     NodeContext topology = discoverResponse.getLatestChange().getResult();
     // convert it back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
-    String convertedConfigContent = xmlConfigMapper.toXml(topology);
+    String convertedConfigContent = configRepositoryMapper.toXml(topology);
     TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
@@ -308,7 +308,7 @@ public class ConfigConvertorIT {
     NodeContext topology = discoverResponse.getLatestChange().getResult();
     // convert it back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
-    String convertedConfigContent = xmlConfigMapper.toXml(topology);
+    String convertedConfigContent = configRepositoryMapper.toXml(topology);
     TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent);
     assertThat(configuration, notNullValue());
 
@@ -491,7 +491,7 @@ public class ConfigConvertorIT {
   }
 
   private void validateMultiStripeSingleFileForStripeInsideClusterResult(String serverName, NodeContext topology) throws Exception {
-    String convertedConfigContent1 = xmlConfigMapper.toXml(topology);
+    String convertedConfigContent1 = configRepositoryMapper.toXml(topology);
     TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 
@@ -618,7 +618,7 @@ public class ConfigConvertorIT {
       String serverName, NodeContext topology) throws Exception {
     // convert back to XML the same way the FileConfigStorage is doing
     // because the following assertions are done over the parses TC Configuration
-    String convertedConfigContent1 = xmlConfigMapper.toXml(topology);
+    String convertedConfigContent1 = configRepositoryMapper.toXml(topology);
     TcConfiguration configuration = NonSubstitutingTCConfigurationParser.parse(convertedConfigContent1);
     assertThat(configuration, notNullValue());
 

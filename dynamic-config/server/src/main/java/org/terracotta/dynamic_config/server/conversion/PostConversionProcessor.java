@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.SettingName;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapper;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapperDiscovery;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.PathResolver;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapperDiscovery;
 import org.terracotta.dynamic_config.server.conversion.xml.XmlUtility;
 import org.w3c.dom.Node;
 
@@ -36,14 +36,14 @@ import static org.terracotta.dynamic_config.api.service.IParameterSubstitutor.co
 
 public abstract class PostConversionProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigPropertiesProcessor.class);
-  private final XmlConfigMapper xmlConfigMapper;
+  private final ConfigRepositoryMapper configRepositoryMapper;
 
   abstract void process(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, boolean acceptRelativePaths);
 
   public PostConversionProcessor() {
-    this.xmlConfigMapper = new XmlConfigMapperDiscovery(PathResolver.NOOP)
+    this.configRepositoryMapper = new ConfigRepositoryMapperDiscovery(PathResolver.NOOP)
         .find()
-        .orElseThrow(() -> new AssertionError("No " + XmlConfigMapper.class.getName() + " service implementation found on classpath"));
+        .orElseThrow(() -> new AssertionError("No " + ConfigRepositoryMapper.class.getName() + " service implementation found on classpath"));
   }
 
   protected ArrayList<NodeContext> validate(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, boolean acceptRelativePaths) {
@@ -56,7 +56,7 @@ public abstract class PostConversionProcessor {
         // create the XML from the manipulated DOM elements
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
         // convert back the XML to a topology model
-        NodeContext nodeContext = xmlConfigMapper.fromXml(stripeIdServerName.t2, xml);
+        NodeContext nodeContext = configRepositoryMapper.fromXml(stripeIdServerName.t2, xml);
         nodeContexts.add(nodeContext);
         if (!acceptRelativePaths) {
           org.terracotta.dynamic_config.api.model.Node node = nodeContext.getNode();

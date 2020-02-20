@@ -13,10 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapper;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapperDiscovery;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.PathResolver;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapperDiscovery;
 import org.terracotta.dynamic_config.server.TerracottaNode;
 import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
 import org.terracotta.dynamic_config.server.sync.DynamicConfigurationPassiveSync;
@@ -150,9 +150,9 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // the config repository: repository/config.
       // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
       // That is why we need to force the resolving within the XML relatively to the user directory.
-      XmlConfigMapper xmlConfigMapper = new XmlConfigMapperDiscovery(userDirResolver).find()
-          .orElseThrow(() -> new AssertionError("No " + XmlConfigMapper.class.getName() + " service implementation found on classpath"));
-      String xml = xmlConfigMapper.toXml(nodeContext);
+      ConfigRepositoryMapper configRepositoryMapper = new ConfigRepositoryMapperDiscovery(userDirResolver).find()
+          .orElseThrow(() -> new AssertionError("No " + ConfigRepositoryMapper.class.getName() + " service implementation found on classpath"));
+      String xml = configRepositoryMapper.toXml(nodeContext);
       // TCConfigurationParser substitutes values for platform parameters, so anything known to platform needn't be substituted before this
       tcConfiguration = TCConfigurationParser.parse(xml);
     }

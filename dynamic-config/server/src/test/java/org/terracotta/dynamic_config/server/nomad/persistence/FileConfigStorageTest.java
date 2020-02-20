@@ -10,7 +10,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapper;
 import org.terracotta.testing.TmpDir;
 import org.xmlunit.builder.Input;
 import org.xmlunit.diff.DefaultNodeMatcher;
@@ -40,7 +40,7 @@ public class FileConfigStorageTest {
     NodeContext topology = new NodeContext(new Cluster("bar", new Stripe(Node.newDefaultNode("node-1", "localhost"))), 1, "node-1");
     String xml = new String(Files.readAllBytes(Paths.get(getClass().getResource("/config.xml").toURI())), StandardCharsets.UTF_8).replace("\\", "/");
 
-    FileConfigStorage storage = new FileConfigStorage(root, "node-1", new XmlConfigMapper() {
+    FileConfigStorage storage = new FileConfigStorage(root, "node-1", new ConfigRepositoryMapper() {
       @Override
       public String toXml(NodeContext n) {
         assertThat(n, is(equalTo(topology)));

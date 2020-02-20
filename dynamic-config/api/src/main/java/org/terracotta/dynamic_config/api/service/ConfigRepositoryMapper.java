@@ -9,7 +9,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 /**
  * @author Mathieu Carbou
  */
-public interface XmlConfigMapper {
+public interface ConfigRepositoryMapper {
 
   default void init(PathResolver pathResolver) {}
 

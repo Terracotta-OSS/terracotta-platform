@@ -23,8 +23,8 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapper;
 import org.terracotta.dynamic_config.api.service.PathResolver;
-import org.terracotta.dynamic_config.api.service.XmlConfigMapper;
 import org.terracotta.dynamic_config.xml.NonSubstitutingTCConfigurationParser;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.Logger;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcCluster;
@@ -60,17 +60,17 @@ import static java.util.stream.Collectors.toMap;
 /**
  * @author Mathieu Carbou
  */
-public class OssXmlConfigMapper implements XmlConfigMapper {
+public class OssConfigRepositoryMapper implements ConfigRepositoryMapper {
 
   private static final String WILDCARD_IP = "0.0.0.0";
   private static Map<String, ExtendedConfigParser> CONFIG_PARSERS = new HashMap<>();
   private static Map<String, ServiceConfigParser> SERVICE_PARSERS = new HashMap<>();
 
   static {
-    for (ExtendedConfigParser parser : ServiceLoader.load(ExtendedConfigParser.class, OssXmlConfigMapper.class.getClassLoader())) {
+    for (ExtendedConfigParser parser : ServiceLoader.load(ExtendedConfigParser.class, OssConfigRepositoryMapper.class.getClassLoader())) {
       CONFIG_PARSERS.put(parser.getNamespace().toString(), parser);
     }
-    for (ServiceConfigParser parser : ServiceLoader.load(ServiceConfigParser.class, OssXmlConfigMapper.class.getClassLoader())) {
+    for (ServiceConfigParser parser : ServiceLoader.load(ServiceConfigParser.class, OssConfigRepositoryMapper.class.getClassLoader())) {
       SERVICE_PARSERS.put(parser.getNamespace().toString(), parser);
     }
   }
@@ -105,7 +105,7 @@ public class OssXmlConfigMapper implements XmlConfigMapper {
       int stripeId = xmlCluster.getCurrentStripeId();
       Cluster cluster = new Cluster(
           xmlCluster.getName(),
-          xmlCluster.getStripes().stream().map(tcStripe -> OssXmlConfigMapper.toStripe(xml, tcStripe)).collect(toList()));
+          xmlCluster.getStripes().stream().map(tcStripe -> OssConfigRepositoryMapper.toStripe(xml, tcStripe)).collect(toList()));
       return new NodeContext(cluster, stripeId, nodeName);
     } catch (IOException e) {
       // should never occur since we parse a string
@@ -116,7 +116,7 @@ public class OssXmlConfigMapper implements XmlConfigMapper {
   }
 
   private static Stripe toStripe(String xml, TcStripe xmlStripe) {
-    return new Stripe(xmlStripe.getNodes().stream().map(tcNode -> OssXmlConfigMapper.toNode(xml, tcNode)).collect(toList()));
+    return new Stripe(xmlStripe.getNodes().stream().map(tcNode -> OssConfigRepositoryMapper.toNode(xml, tcNode)).collect(toList()));
   }
 
   private static Node toNode(String xml, TcNode xmlNode) {
@@ -226,7 +226,7 @@ public class OssXmlConfigMapper implements XmlConfigMapper {
         .getPlugins()
         .getConfigOrService()
         .stream()
-        .flatMap(o -> OssXmlConfigMapper.parsePlugin(xml, o))
+        .flatMap(o -> OssConfigRepositoryMapper.parsePlugin(xml, o))
         .collect(groupingBy(Object::getClass));
   }
 

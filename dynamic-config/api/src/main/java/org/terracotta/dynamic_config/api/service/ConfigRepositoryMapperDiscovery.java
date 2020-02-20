@@ -13,30 +13,30 @@ import java.util.stream.StreamSupport;
 /**
  * @author Mathieu Carbou
  */
-public class XmlConfigMapperDiscovery {
+public class ConfigRepositoryMapperDiscovery {
 
   private final PathResolver pathResolver;
   private final ClassLoader classLoader;
 
-  public XmlConfigMapperDiscovery(PathResolver pathResolver) {
-    this(pathResolver, XmlConfigMapperDiscovery.class.getClassLoader());
+  public ConfigRepositoryMapperDiscovery(PathResolver pathResolver) {
+    this(pathResolver, ConfigRepositoryMapperDiscovery.class.getClassLoader());
   }
 
-  public XmlConfigMapperDiscovery(PathResolver pathResolver, ClassLoader classLoader) {
+  public ConfigRepositoryMapperDiscovery(PathResolver pathResolver, ClassLoader classLoader) {
     this.pathResolver = pathResolver;
     this.classLoader = classLoader;
   }
 
-  public Optional<XmlConfigMapper> find() {
-    List<XmlConfigMapper> services = StreamSupport.stream(ServiceLoader.load(XmlConfigMapper.class, classLoader).spliterator(), false).collect(Collectors.toList());
+  public Optional<ConfigRepositoryMapper> find() {
+    List<ConfigRepositoryMapper> services = StreamSupport.stream(ServiceLoader.load(ConfigRepositoryMapper.class, classLoader).spliterator(), false).collect(Collectors.toList());
     if (services.isEmpty()) {
       return Optional.empty();
     }
     if (services.size() == 1) {
-      XmlConfigMapper service = services.get(0);
+      ConfigRepositoryMapper service = services.get(0);
       service.init(pathResolver);
       return Optional.of(service);
     }
-    throw new IllegalStateException("Found several implementations of " + XmlConfigMapper.class.getName() + " on classpath");
+    throw new IllegalStateException("Found several implementations of " + ConfigRepositoryMapper.class.getName() + " on classpath");
   }
 }
