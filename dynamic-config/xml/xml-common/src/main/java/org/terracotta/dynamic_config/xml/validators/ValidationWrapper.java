@@ -2,10 +2,10 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.conversion.validators;
+package org.terracotta.dynamic_config.xml.validators;
 
-import org.terracotta.dynamic_config.server.conversion.exception.ErrorCodeMapper;
-import org.terracotta.dynamic_config.server.conversion.exception.InvalidInputConfigurationContentException;
+import org.terracotta.dynamic_config.xml.exception.ErrorCodeMapper;
+import org.terracotta.dynamic_config.xml.exception.InvalidInputConfigurationContentException;
 import org.terracotta.config.service.ConfigValidator;
 import org.terracotta.config.service.ValidationException;
 import org.w3c.dom.Element;
@@ -27,16 +27,16 @@ public class ValidationWrapper {
     AtomicReference<Node> previousNodes = new AtomicReference<>();
     AtomicReference<Path> previousPathRef = new AtomicReference<>();
     fileNodeMap.forEach((path, node) -> {
-        validate(validator, (Element) node, path);
-        if (previousNodes.get() != null) {
-          compare(validator, (Element) node, (Element) previousNodes.get(), path, previousPathRef.get());
-        }
+      validate(validator, (Element) node, path);
+      if (previousNodes.get() != null) {
+        compare(validator, (Element) node, (Element) previousNodes.get(), path, previousPathRef.get());
+      }
       previousNodes.set(node);
       previousPathRef.set(path);
     });
   }
 
-  void validate(ConfigValidator validator, Element element, Path path) {
+  public void validate(ConfigValidator validator, Element element, Path path) {
     try {
       if (validator != null) {
         validator.validate(element);

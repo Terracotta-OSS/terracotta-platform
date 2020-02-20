@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.server.conversion;
 
-import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
@@ -21,16 +20,13 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.PotentialApplicationResult;
 import org.terracotta.persistence.sanskrit.SanskritException;
-import org.w3c.dom.Node;
 
 import java.nio.file.Path;
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ConfigRepoProcessor extends PostConversionProcessor {
+public class ConfigRepoProcessor implements PostConversionProcessor {
   private final Path outputFolderPath;
   private final NomadEnvironment nomadEnvironment;
 
@@ -40,15 +36,13 @@ public class ConfigRepoProcessor extends PostConversionProcessor {
   }
 
   @Override
-  public void process(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, boolean acceptRelativePaths) {
-    ArrayList<NodeContext> nodeContexts = validate(nodeNameNodeConfigMap, acceptRelativePaths);
-    saveToNomad(nodeContexts);
+  public void process(Cluster cluster) {
+    saveToNomad(cluster);
   }
 
-  private void saveToNomad(ArrayList<NodeContext> nodeContexts) {
-    Cluster cluster = nodeContexts.get(0).getCluster();
+  private void saveToNomad(Cluster cluster) {
 
-    List<NomadEndpoint<NodeContext>> endpoints = nodeContexts.stream()
+    List<NomadEndpoint<NodeContext>> endpoints = cluster.nodeContexts()
         .map(nodeContext -> new NomadEndpoint<>(nodeContext.getNode().getNodeAddress(), getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName())))
         .collect(Collectors.toList());
 

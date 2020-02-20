@@ -4,24 +4,20 @@
  */
 package org.terracotta.dynamic_config.server.conversion;
 
-import org.terracotta.common.struct.Tuple2;
-import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Props;
-import org.w3c.dom.Node;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.Properties;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE;
 
-public class ConfigPropertiesProcessor extends PostConversionProcessor {
+public class ConfigPropertiesProcessor implements PostConversionProcessor {
   private final Path outputDir;
   private final String clusterName;
 
@@ -31,9 +27,8 @@ public class ConfigPropertiesProcessor extends PostConversionProcessor {
   }
 
   @Override
-  public void process(Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, boolean acceptRelativePaths) {
-    ArrayList<NodeContext> nodeContexts = validate(nodeNameNodeConfigMap, acceptRelativePaths);
-    Properties properties = nodeContexts.get(0).getCluster().setName(clusterName).toProperties();
+  public void process(Cluster cluster) {
+    Properties properties = cluster.toProperties();
     try (StringWriter out = new StringWriter()) {
       Props.store(out, properties, "Converted cluster configuration:");
       Files.createDirectories(outputDir);

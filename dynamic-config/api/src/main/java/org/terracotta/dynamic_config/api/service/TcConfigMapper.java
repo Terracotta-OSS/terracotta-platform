@@ -4,14 +4,17 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
+
+import java.nio.file.Path;
 
 /**
  * @author Mathieu Carbou
  */
 public interface TcConfigMapper {
   /**
-   * Reads a tc configuration xml file and output the Stripe object matching the XML
+   * Reads list of tc configuration xml file and output the Cluster object.
    */
-  Stripe fromXml(String xml);
+  Cluster parseConfig(String clusterName, Path... tcConfigPaths);
 }

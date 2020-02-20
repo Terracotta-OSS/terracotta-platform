@@ -2,13 +2,14 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.conversion.validators;
+package org.terracotta.dynamic_config.xml.conversion.validators;
 
-import org.terracotta.dynamic_config.server.conversion.exception.InvalidInputConfigurationContentException;
+import org.terracotta.dynamic_config.xml.exception.InvalidInputConfigurationContentException;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.terracotta.config.service.ConfigValidator;
 import org.terracotta.config.service.ValidationException;
+import org.terracotta.dynamic_config.xml.validators.ValidationWrapper;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 

@@ -2,22 +2,14 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.server.conversion.exception;
+package org.terracotta.dynamic_config.xml.conversion.exception;
 
 import org.junit.Test;
+import org.terracotta.dynamic_config.xml.exception.ErrorCodeMapper;
 
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.BOTH_WHITELIST_AND_DEPR_WHITELIST_PRESENT;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.MISMATCHED_CLIENT_LEASE_DURATION;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.MISMATCHED_DATA_DIRS;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.MISMATCHED_DATA_DIR_NUMBERS;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.MISMATCHED_OFFHEAP_RESOURCES;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.MISMATCHED_OFFHEAP_RESOURCE_NUMBERS;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.MISMATCHED_SECURITY_CONFIGURATION;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.MULTIPLE_PLATFORM_DATA_DIRS;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.NON_UNIQUE_PLATFORM_DATA_DIR_NAME;
-import static org.terracotta.dynamic_config.server.conversion.exception.ErrorCode.PLATFORM_DATA_DIR_MISSING_IN_SOME_CONFIG_FILES;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.terracotta.dynamic_config.xml.exception.ErrorCode.*;
 
 public class ErrorCodeMapperTest {
 

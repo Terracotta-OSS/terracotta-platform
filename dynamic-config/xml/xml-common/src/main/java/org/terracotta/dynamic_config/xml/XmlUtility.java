@@ -3,9 +3,8 @@
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
 
-package org.terracotta.dynamic_config.server.conversion.xml;
+package org.terracotta.dynamic_config.xml;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -32,16 +31,6 @@ public class XmlUtility {
       }
     }
     return retValue == null ? Optional.empty() : Optional.of(retValue);
-  }
-
-  public static Node createSimpleTextNode(Node documentRoot, String nameSpace, String nodeName, String nodeText) {
-    Element element = ((Document) documentRoot).createElementNS(nameSpace, nodeName);
-    element.setTextContent(nodeText);
-    return element;
-  }
-
-  public static Element createNode(Node documentRoot, String nameSpace, String nodeName) {
-    return ((Document) documentRoot).createElementNS(nameSpace, nodeName);
   }
 
   public static Node getClonedParentDocFromRootNode(Node rootNode) {

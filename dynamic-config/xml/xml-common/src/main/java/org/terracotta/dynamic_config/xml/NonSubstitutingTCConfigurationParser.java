@@ -6,16 +6,16 @@ package org.terracotta.dynamic_config.xml;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.BindPort;
-import org.terracotta.config.Config;
+import org.terracotta.config.TcConfig;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.Service;
-import org.terracotta.config.TCConfigDefaults;
+import org.terracotta.config.Config;
+import org.terracotta.config.BindPort;
 import org.terracotta.config.TCConfigurationParser;
-import org.terracotta.config.TCConfigurationSetupException;
-import org.terracotta.config.TcConfig;
+import org.terracotta.config.TCConfigDefaults;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.config.TCConfigurationSetupException;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -62,6 +62,7 @@ public class NonSubstitutingTCConfigurationParser {
   private static final String DEFAULT_LOGS = "logs";
 
   private static TcConfiguration parseStream(InputStream in, String source, ClassLoader loader) throws IOException, SAXException {
+
     Collection<Source> schemaSources = new ArrayList<>();
 
     Map<URI, ServiceConfigParser> serviceParsers = new HashMap<>();
@@ -151,6 +152,52 @@ public class NonSubstitutingTCConfigurationParser {
     } catch (JAXBException e) {
       throw new TCConfigurationSetupException(e);
     }
+  }
+
+  public static Element getRootElement(InputStream in, ClassLoader loader) throws IOException, SAXException {
+    Collection<Source> schemaSources = new ArrayList<>();
+
+    Map<URI, ServiceConfigParser> serviceParsers = new HashMap<>();
+    Map<URI, ExtendedConfigParser> configParsers = new HashMap<>();
+
+    schemaSources.add(new StreamSource(TERRACOTTA_XML_SCHEMA.openStream()));
+
+    for (ServiceConfigParser parser : loadServiceConfigurationParserClasses(loader)) {
+      schemaSources.add(parser.getXmlSchema());
+      serviceParsers.put(parser.getNamespace(), parser);
+    }
+    for (ExtendedConfigParser parser : loadConfigurationParserClasses(loader)) {
+      schemaSources.add(parser.getXmlSchema());
+      configParsers.put(parser.getNamespace(), parser);
+    }
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    factory.setIgnoringComments(true);
+    factory.setIgnoringElementContentWhitespace(true);
+    factory.setSchema(XSD_SCHEMA_FACTORY.newSchema(schemaSources.toArray(new Source[0])));
+
+    final DocumentBuilder domBuilder;
+    try {
+      domBuilder = factory.newDocumentBuilder();
+    } catch (ParserConfigurationException e) {
+      throw new AssertionError(e);
+    }
+    CollectingErrorHandler errorHandler = new CollectingErrorHandler();
+    domBuilder.setErrorHandler(errorHandler);
+    final Element config = domBuilder.parse(in).getDocumentElement();
+
+    Collection<SAXParseException> parseErrors = errorHandler.getErrors();
+    if (parseErrors.size() != 0) {
+      StringBuilder buf = new StringBuilder("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s)." + lineSeparator());
+      int i = 1;
+      for (SAXParseException parseError : parseErrors) {
+        buf.append(" [").append(i).append("] Line ").append(parseError.getLineNumber()).append(", column ").append(parseError.getColumnNumber()).append(": ").append(parseError.getMessage()).append(lineSeparator());
+        i++;
+      }
+      throw new TCConfigurationSetupException(buf.toString());
+    }
+    return config;
   }
 
   public static void applyPlatformDefaults(TcConfig tcConfig) {
