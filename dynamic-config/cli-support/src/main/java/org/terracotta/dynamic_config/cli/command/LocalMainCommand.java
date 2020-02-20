@@ -42,4 +42,8 @@ public class LocalMainCommand extends Command {
       });
     }
   }
+
+  public boolean isVerbose() {
+    return verbose;
+  }
 }
