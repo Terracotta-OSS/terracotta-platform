@@ -24,6 +24,10 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
 
   private final Supplier<DynamicConfigListener> supplier;
 
+  public DynamicConfigListenerAdapter() {
+    this(() -> null);
+  }
+
   public DynamicConfigListenerAdapter(Supplier<DynamicConfigListener> supplier) {
     this.supplier = supplier;
   }

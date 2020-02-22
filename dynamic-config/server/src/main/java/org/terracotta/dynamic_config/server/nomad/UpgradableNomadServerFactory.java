@@ -9,6 +9,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapper;
 import org.terracotta.dynamic_config.api.service.ConfigRepositoryMapperDiscovery;
 import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
+import org.terracotta.dynamic_config.api.service.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.PathResolver;
 import org.terracotta.dynamic_config.server.nomad.persistence.ConfigStorageAdapter;
@@ -40,7 +41,7 @@ public class UpgradableNomadServerFactory {
                                                                 ChangeApplicator<NodeContext> changeApplicator,
                                                                 String nodeName,
                                                                 IParameterSubstitutor parameterSubstitutor) throws SanskritException, NomadException {
-    return createServer(repositoryManager, changeApplicator, nodeName, parameterSubstitutor, new DynamicConfigListener() {});
+    return createServer(repositoryManager, changeApplicator, nodeName, parameterSubstitutor, new DynamicConfigListenerAdapter());
   }
 
   public static UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
