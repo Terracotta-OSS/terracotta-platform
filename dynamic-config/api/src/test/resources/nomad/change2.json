@@ -1,5 +1,5 @@
 {
-  "type": "MultiNomadChange",
+  "type": "MultiSettingNomadChange",
   "changes": [
     {
       "type": "SettingNomadChange",

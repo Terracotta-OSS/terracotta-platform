@@ -40,7 +40,7 @@ public class NomadChangeJsonTest {
     NomadChange[] changes = {
         new ClusterActivationNomadChange(cluster),
         SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
-        new MultiNomadChange<>(
+        new MultiSettingNomadChange(
             SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
             SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "bar", "512MB")
         )

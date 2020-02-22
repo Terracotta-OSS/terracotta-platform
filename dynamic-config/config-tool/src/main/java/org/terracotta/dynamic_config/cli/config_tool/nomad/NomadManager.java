@@ -9,9 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.MultiNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
@@ -67,7 +66,7 @@ public class NomadManager<T> {
     runChange(new ArrayList<>(nodes), new ClusterActivationNomadChange(cluster), results);
   }
 
-  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> nodes, MultiNomadChange<SettingNomadChange> changes, ChangeResultReceiver<T> results) {
+  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> nodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, nodes);
     checkServerStates(nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);

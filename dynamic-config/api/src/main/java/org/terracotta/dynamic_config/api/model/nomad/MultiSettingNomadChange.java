@@ -23,23 +23,22 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-@JsonTypeName("MultiNomadChange")
-public class MultiNomadChange<T extends DynamicConfigNomadChange> implements DynamicConfigNomadChange {
+@JsonTypeName("MultiSettingNomadChange")
+public class MultiSettingNomadChange implements DynamicConfigNomadChange {
 
   // keep this as a list, because the ordering to apply the changes might be important
-  private final List<T> changes;
+  private final List<SettingNomadChange> changes;
 
   @JsonCreator
-  public MultiNomadChange(@JsonProperty(value = "changes", required = true) List<? extends T> changes) {
+  public MultiSettingNomadChange(@JsonProperty(value = "changes", required = true) List<SettingNomadChange> changes) {
     this.changes = new ArrayList<>(requireNonNull(changes));
   }
 
-  @SuppressWarnings("unchecked")
-  public MultiNomadChange(T... changes) {
+  public MultiSettingNomadChange(SettingNomadChange... changes) {
     this(Arrays.asList(changes));
   }
 
-  public List<T> getChanges() {
+  public List<SettingNomadChange> getChanges() {
     return changes;
   }
 
@@ -59,8 +58,8 @@ public class MultiNomadChange<T extends DynamicConfigNomadChange> implements Dyn
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MultiNomadChange)) return false;
-    MultiNomadChange<?> that = (MultiNomadChange<?>) o;
+    if (!(o instanceof MultiSettingNomadChange)) return false;
+    MultiSettingNomadChange that = (MultiSettingNomadChange) o;
     return getChanges().equals(that.getChanges());
   }
 

@@ -7,8 +7,7 @@ package org.terracotta.dynamic_config.server.nomad;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.MultiNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.server.nomad.processor.NomadChangeProcessor;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeApplicator;
@@ -65,6 +64,6 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
 
   @SuppressWarnings("unchecked")
   private static List<? extends NomadChange> getChanges(NomadChange change) {
-    return change instanceof MultiNomadChange ? ((MultiNomadChange<DynamicConfigNomadChange>) change).getChanges() : Collections.singletonList(change);
+    return change instanceof MultiSettingNomadChange ? ((MultiSettingNomadChange) change).getChanges() : Collections.singletonList(change);
   }
 }

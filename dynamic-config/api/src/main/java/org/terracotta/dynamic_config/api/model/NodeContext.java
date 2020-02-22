@@ -130,4 +130,19 @@ public class NodeContext implements Cloneable {
   public int hashCode() {
     return Objects.hash(getCluster(), getStripeId(), getNodeId(), getNodeName());
   }
+
+  public NodeContext update(Cluster updated) {
+    requireNonNull(updated);
+
+    // The base config comes from a loaded config xml file.
+    // The config xml file must be for this node.
+    // This is a programming issue otherwise
+    if (updated.containsNode(stripeId, nodeName)) {
+      return new NodeContext(updated, stripeId, nodeName);
+    }
+
+    // If the updated topology does not contain the node anymore (removal ?) and a base config was there (topology change)
+    // then we isolate the node in its own cluster
+    return new NodeContext(new Cluster(getCluster().getName(), new Stripe(getNode())), stripeId, nodeName);
+  }
 }
