@@ -349,7 +349,7 @@ public enum Setting {
       extractor(Node::getSecurityAuditLogDir),
       setter((node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
       of(GET, SET, UNSET, CONFIG),
-      of(ALL_NODES_ONLINE),
+      of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
