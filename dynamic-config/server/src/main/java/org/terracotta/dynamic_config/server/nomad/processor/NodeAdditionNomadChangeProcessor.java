@@ -66,7 +66,7 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
   public final void apply(NodeAdditionNomadChange change) throws NomadException {
     Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
 
-    if (cluster.containsNode(change.getAddress())) {
+    if (cluster.containsNode(change.getNodeAddress())) {
       return;
     }
 

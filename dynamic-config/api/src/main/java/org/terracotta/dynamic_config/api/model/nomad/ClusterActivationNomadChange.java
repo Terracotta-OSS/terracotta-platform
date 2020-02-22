@@ -31,6 +31,11 @@ public class ClusterActivationNomadChange extends TopologyNomadChange {
   }
 
   @Override
+  public Cluster apply(Cluster original) {
+    return getCluster();
+  }
+
+  @Override
   public String toString() {
     return "ClusterActivationNomadChange{" +
         "cluster=" + getCluster() +

@@ -10,35 +10,45 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @author Mathieu Carbou
  */
 @JsonTypeName("NodeRemovalNomadChange")
 public class NodeRemovalNomadChange extends NodeNomadChange {
 
-  private final Node removedNode;
-
   @JsonCreator
   public NodeRemovalNomadChange(@JsonProperty(value = "cluster", required = true) Cluster cluster,
-                                @JsonProperty(value = "removedNode", required = true) Node removedNode) {
-    super(cluster);
-    this.removedNode = removedNode;
+                                @JsonProperty(value = "stripeId", required = true) int stripeId,
+                                @JsonProperty(value = "node", required = true) Node node) {
+    super(cluster, stripeId, node);
   }
 
   @Override
-  public Node getNode() {
-    return removedNode;
+  public Cluster apply(Cluster original) {
+    requireNonNull(original);
+    if (!original.containsNode(getStripeId(), getNode().getNodeName())) {
+      throw new IllegalArgumentException("Node name: " + getNode().getNodeName() + " is not in stripe ID: " + getStripeId() + " in cluster: " + original);
+    }
+    if (!original.containsNode(getNodeAddress())) {
+      throw new IllegalArgumentException("Node with address: " + getNodeAddress() + " is not in cluster: " + original);
+    }
+    Cluster updated = original.clone();
+    updated.detachNode(getNodeAddress());
+    return updated;
   }
 
   @Override
   public String getSummary() {
-    return "Detaching node: " + removedNode.getNodeAddress();
+    return "Detaching node: " + getNodeAddress() + " from stripe ID: " + getStripeId();
   }
 
   @Override
   public String toString() {
-    return "NodeRemovalNomadChange{" + "removedNode=" + removedNode +
-        ", applicability=" + getApplicability() +
+    return "NodeRemovalNomadChange{" + "" +
+        "removedNode=" + getNodeAddress() +
+        ", node=" + getNodeAddress() +
         ", cluster=" + getCluster() +
         '}';
   }

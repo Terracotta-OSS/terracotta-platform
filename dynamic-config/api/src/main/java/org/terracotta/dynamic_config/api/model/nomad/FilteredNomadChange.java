@@ -4,8 +4,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import org.terracotta.nomad.client.change.NomadChange;
-
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
@@ -13,7 +11,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-public abstract class FilteredNomadChange implements NomadChange {
+public abstract class FilteredNomadChange implements DynamicConfigNomadChange {
 
   private final Applicability applicability;
 

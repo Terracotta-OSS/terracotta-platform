@@ -12,7 +12,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.json.Json;
-import org.terracotta.nomad.client.change.MultiNomadChange;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.io.IOException;

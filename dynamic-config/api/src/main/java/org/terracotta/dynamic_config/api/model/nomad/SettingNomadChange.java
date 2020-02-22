@@ -58,6 +58,15 @@ public class SettingNomadChange extends FilteredNomadChange {
     }
   }
 
+  @Override
+  public Cluster apply(Cluster original) {
+    Cluster updated = original.clone();
+    Configuration configuration = toConfiguration(updated);
+    configuration.validate(getOperation());
+    configuration.apply(updated);
+    return updated;
+  }
+
   public String getName() {
     return name;
   }

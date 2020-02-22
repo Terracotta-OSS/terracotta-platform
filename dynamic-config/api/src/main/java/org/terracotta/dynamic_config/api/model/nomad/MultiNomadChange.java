@@ -2,11 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.nomad.client.change;
+package org.terracotta.dynamic_config.api.model.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.nomad.client.change.NomadChange;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,7 +24,7 @@ import static java.util.Objects.requireNonNull;
  * @author Mathieu Carbou
  */
 @JsonTypeName("MultiNomadChange")
-public class MultiNomadChange<T extends NomadChange> implements NomadChange {
+public class MultiNomadChange<T extends DynamicConfigNomadChange> implements DynamicConfigNomadChange {
 
   // keep this as a list, because the ordering to apply the changes might be important
   private final List<T> changes;
@@ -44,6 +46,14 @@ public class MultiNomadChange<T extends NomadChange> implements NomadChange {
   @Override
   public String getSummary() {
     return changes.stream().map(NomadChange::getSummary).collect(Collectors.joining(" then "));
+  }
+
+  @Override
+  public Cluster apply(Cluster original) {
+    for (DynamicConfigNomadChange change : changes) {
+      original = change.apply(original);
+    }
+    return original;
   }
 
   @Override

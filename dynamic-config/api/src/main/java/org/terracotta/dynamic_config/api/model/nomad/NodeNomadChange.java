@@ -8,15 +8,32 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 
+import java.net.InetSocketAddress;
+
 /**
  * @author Mathieu Carbou
  */
 public abstract class NodeNomadChange extends TopologyNomadChange {
 
-  public NodeNomadChange(Cluster updated) {
-    super(updated, Applicability.cluster());
+  private final int stripeId;
+  private final Node node;
+
+  public NodeNomadChange(Cluster updated, int stripeId, Node node) {
+    super(updated, Applicability.stripe(stripeId));
+    this.stripeId = stripeId;
+    this.node = node;
+  }
+
+  public int getStripeId() {
+    return stripeId;
   }
 
   @JsonIgnore
-  public abstract Node getNode();
+  public InetSocketAddress getNodeAddress() {
+    return getNode().getNodeAddress();
+  }
+
+  public Node getNode() {
+    return node;
+  }
 }

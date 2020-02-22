@@ -13,6 +13,7 @@ import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvide
 import org.terracotta.diagnostic.common.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.nomad.MultiNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
@@ -22,7 +23,6 @@ import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.inet.InetSocketAddressUtils;
-import org.terracotta.nomad.client.change.MultiNomadChange;
 import org.terracotta.nomad.client.results.ConsistencyAnalyzer;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;

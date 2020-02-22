@@ -67,7 +67,7 @@ public class DetachCommand extends TopologyCommand {
   protected NodeNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeRemovalNomadChange(result, sourceCluster.getNode(source).get());
+        return new NodeRemovalNomadChange(result, sourceCluster.getStripeId(source).getAsInt(), sourceCluster.getNode(source).get());
       case STRIPE: {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }

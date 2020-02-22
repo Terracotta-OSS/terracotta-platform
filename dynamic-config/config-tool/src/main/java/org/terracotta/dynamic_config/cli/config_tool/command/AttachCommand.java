@@ -117,7 +117,7 @@ public class AttachCommand extends TopologyCommand {
   protected NodeNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeAdditionNomadChange(result, result.getStripeId(destination).getAsInt(), source);
+        return new NodeAdditionNomadChange(result, result.getStripeId(destination).getAsInt(), result.getNode(source).get());
       case STRIPE: {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }
