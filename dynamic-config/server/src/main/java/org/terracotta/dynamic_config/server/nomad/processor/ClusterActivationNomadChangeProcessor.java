@@ -4,6 +4,8 @@
  */
 package org.terracotta.dynamic_config.server.nomad.processor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.nomad.server.NomadException;
@@ -11,6 +13,8 @@ import org.terracotta.nomad.server.NomadException;
 import static java.util.Objects.requireNonNull;
 
 public class ClusterActivationNomadChangeProcessor implements NomadChangeProcessor<ClusterActivationNomadChange> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterActivationNomadChangeProcessor.class);
+
   private final int stripeId;
   private final String nodeName;
 
@@ -21,6 +25,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
 
   @Override
   public void validate(NodeContext baseConfig, ClusterActivationNomadChange change) throws NomadException {
+    LOGGER.info("Validating change: {}", change.getSummary());
     if (baseConfig != null) {
       throw new NomadException("Existing config must be null. Found: " + baseConfig);
     }

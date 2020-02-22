@@ -134,7 +134,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public void onNodeRemoval(int stripeId, Node removedNode) {
     InetSocketAddress addr = removedNode.getNodeAddress();
-    LOGGER.info("Removed node: {}", addr);
+    LOGGER.info("Removed node: {} from stripe ID: {}", addr, stripeId);
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onNodeRemoval(stripeId, removedNode));
   }

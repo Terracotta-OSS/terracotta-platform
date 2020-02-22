@@ -32,6 +32,7 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
 
   @Override
   public void validate(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
+    LOGGER.info("Validating change: {}", change.getSummary());
     if (baseConfig == null) {
       throw new NomadException("Existing config must not be null");
     }

@@ -10,6 +10,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
@@ -41,7 +42,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public void validate(NodeContext baseConfig, SettingNomadChange change) throws NomadException {
     try {
-      LOGGER.debug("NodeContext before tryApply(): {}", baseConfig);
+      LOGGER.info("Validating change: {}", change.getSummary());
 
       Cluster original = baseConfig.getCluster();
       Configuration configuration = change.toConfiguration(original);
@@ -51,13 +52,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
       configChangeHandler.validate(baseConfig, configuration);
 
       Cluster updated = change.apply(original);
-      baseConfig.withCluster(updated);
-
-      if (updated.equals(original)) {
-        LOGGER.debug("Cluster not updated for change: {} in config change handler: {}", change, configChangeHandler.getClass().getSimpleName());
-      } else {
-        LOGGER.info("Cluster updated to: {} for change: {} in: {}", updated, change, configChangeHandler.getClass().getSimpleName());
-      }
+      new ClusterValidator(updated).validate();
     } catch (InvalidConfigChangeException | RuntimeException e) {
       throw new NomadException("Error when trying to apply setting change '" + change.getSummary() + "': " + e.getMessage(), e);
     }

@@ -54,9 +54,8 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
 
       return allow(newConfiguration(baseConfig, updated));
     } catch (RuntimeException | NomadException e) {
-      String msg = "Nomad change: " + change.getSummary() + " rejected with error: " + e.getMessage();
-      LOGGER.warn(msg, e);
-      return reject(msg);
+      LOGGER.warn("Nomad change: {} rejected with error: {}", change.getSummary(), e.getMessage(), e);
+      return reject(e.getMessage());
     }
   }
 
