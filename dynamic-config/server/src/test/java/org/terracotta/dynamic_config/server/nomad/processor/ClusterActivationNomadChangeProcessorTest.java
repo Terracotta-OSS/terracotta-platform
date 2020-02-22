@@ -42,9 +42,9 @@ public class ClusterActivationNomadChangeProcessorTest {
   public void testGetConfigWithChange() throws Exception {
     ClusterActivationNomadChange change = new ClusterActivationNomadChange(topology.getCluster());
 
-    NodeContext configWithChange = processor.tryApply(null, change);
+    processor.validate(null, change);
 
-    assertThat(configWithChange, notNullValue());
+    assertThat(change.apply(null), notNullValue());
   }
 
   @Test
@@ -55,6 +55,6 @@ public class ClusterActivationNomadChangeProcessorTest {
     expectedException.expect(NomadException.class);
     expectedException.expectMessage("Existing config must be null. Found: " + topology);
 
-    processor.tryApply(topology, change);
+    processor.validate(topology, change);
   }
 }

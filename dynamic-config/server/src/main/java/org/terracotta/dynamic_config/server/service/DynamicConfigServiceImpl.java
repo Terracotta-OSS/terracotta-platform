@@ -39,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -114,14 +113,14 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void onConfigurationChange(SettingNomadChange change, Cluster updated) {
+  public void onSettingChanged(SettingNomadChange change, Cluster updated) {
     if (change.canApplyAtRuntime()) {
       LOGGER.info("Configuration change: {} applied at runtime", change.getSummary());
     } else {
       LOGGER.info("Configuration change: {} will be applied after restart", change.getSummary());
     }
     // do not fire events within a synchronized block
-    listeners.forEach(c -> c.onConfigurationChange(change, updated));
+    listeners.forEach(c -> c.onSettingChanged(change, updated));
   }
 
   @Override
@@ -136,9 +135,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   public void onNodeRemoval(int stripeId, Node removedNode) {
     InetSocketAddress addr = removedNode.getNodeAddress();
     LOGGER.info("Removed node: {}", addr);
-    synchronized (this) {
-      runtimeNodeContext.getCluster().detachNode(addr);
-    }
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onNodeRemoval(stripeId, removedNode));
   }
@@ -146,9 +142,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public void onNodeAddition(int stripeId, Node addedNode) {
     LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getNodeAddress(), stripeId);
-    synchronized (this) {
-      runtimeNodeContext.getCluster().getStripe(stripeId).get().attachNode(addedNode);
-    }
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onNodeAddition(stripeId, addedNode));
   }
@@ -169,7 +162,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       LOGGER.info("Nomad change {} committed: {}", message.getChangeUuid(), dynamicConfigNomadChange.getSummary());
 
       // extract the changes since there can be multiple settings change
-      List<? extends DynamicConfigNomadChange> nomadChanges = extractChanges(dynamicConfigNomadChange);
+      List<? extends DynamicConfigNomadChange> nomadChanges = MultiSettingNomadChange.extractChanges(dynamicConfigNomadChange);
 
       // the following code will be executed on all the nodes, regardless of the applicability
       // level to update the config
@@ -177,12 +170,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
         for (DynamicConfigNomadChange nomadChange : nomadChanges) {
           // first we update the upcoming one
           Cluster upcomingCluster = nomadChange.apply(upcomingNodeContext.getCluster());
-          upcomingNodeContext = upcomingNodeContext.update(upcomingCluster);
+          upcomingNodeContext = upcomingNodeContext.withCluster(upcomingCluster);
           // if the change can be applied at runtime, it was previously done in the config change handler.
           // so update also the runtime topology there
           if (nomadChange.canApplyAtRuntime()) {
             Cluster runtimeCluster = nomadChange.apply(runtimeNodeContext.getCluster());
-            runtimeNodeContext = runtimeNodeContext.update(runtimeCluster);
+            runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster);
           }
         }
       }
@@ -414,9 +407,5 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     return updatedCluster.getNode(me.getNodeInternalAddress()) // important to use the internal address
         .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())
             .orElse(null));
-  }
-
-  private static List<? extends DynamicConfigNomadChange> extractChanges(DynamicConfigNomadChange change) {
-    return change instanceof MultiSettingNomadChange ? ((MultiSettingNomadChange) change).getChanges() : Collections.singletonList(change);
   }
 }

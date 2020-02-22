@@ -6,64 +6,74 @@ package org.terracotta.dynamic_config.server.nomad;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.server.nomad.processor.NomadChangeProcessor;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.PotentialApplicationResult;
 
-import java.util.Collections;
-import java.util.List;
-
+import static java.util.Objects.requireNonNull;
 import static org.terracotta.nomad.server.PotentialApplicationResult.allow;
 import static org.terracotta.nomad.server.PotentialApplicationResult.reject;
 
 public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeApplicator.class);
 
-  private final NomadChangeProcessor<NomadChange> commandProcessor;
+  private final int stripeId;
+  private final String nodeName;
+  private final NomadChangeProcessor<DynamicConfigNomadChange> processor;
 
-  public ConfigChangeApplicator(NomadChangeProcessor<NomadChange> commandProcessor) {
-    this.commandProcessor = commandProcessor;
+  public ConfigChangeApplicator(int stripeId, String nodeName, NomadChangeProcessor<DynamicConfigNomadChange> processor) {
+    this.stripeId = stripeId;
+    this.nodeName = nodeName;
+    this.processor = processor;
   }
 
   @Override
   public PotentialApplicationResult<NodeContext> tryApply(NodeContext baseConfig, NomadChange change) {
-    // supports multiple changes
-    List<? extends NomadChange> changes = getChanges(change);
-
-    for (NomadChange c : changes) {
-      try {
-        baseConfig = commandProcessor.tryApply(baseConfig, c);
-        // If one handler rejects the chanche by returning null, immediately reject!
-        // If we were continuing the loop, then the "null" baseConfig would be pass to the next handlers
-        // which would create a NPE
-        if (baseConfig == null) {
-          return reject("Change rejected: " + change);
-        }
-      } catch (NomadException e) {
-        LOGGER.warn("Error:", e);
-        return reject(e.getMessage());
-      }
+    if (!(change instanceof DynamicConfigNomadChange)) {
+      return reject("Not a " + DynamicConfigNomadChange.class.getSimpleName() + ": " + change.getClass().getName());
     }
 
-    return allow(baseConfig);
+    DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) change;
+
+    try {
+      // validate the change thanks to external processors
+      processor.validate(baseConfig, dynamicConfigNomadChange);
+
+      // if the change is valid, we apply it on the topology, for all the nodes,
+      // to generate a config repository that is the same everywhere
+      Cluster original = baseConfig == null ? null : baseConfig.getCluster();
+      Cluster updated = dynamicConfigNomadChange.apply(original);
+      if (updated == null) {
+        throw new AssertionError();
+      }
+
+      return allow(newConfiguration(baseConfig, updated));
+    } catch (RuntimeException | NomadException e) {
+      String msg = "Nomad change: " + change.getSummary() + " rejected with error: " + e.getMessage();
+      LOGGER.warn(msg, e);
+      return reject(msg);
+    }
   }
 
   @Override
   public void apply(NomadChange change) throws NomadException {
-    // supports multiple changes
-    List<? extends NomadChange> changes = getChanges(change);
-
-    for (NomadChange c : changes) {
-      commandProcessor.apply(c);
+    if (!(change instanceof DynamicConfigNomadChange)) {
+      throw new NomadException("Not a " + DynamicConfigNomadChange.class.getSimpleName() + ": " + change);
     }
+    DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) change;
+    processor.apply(dynamicConfigNomadChange);
   }
 
-  @SuppressWarnings("unchecked")
-  private static List<? extends NomadChange> getChanges(NomadChange change) {
-    return change instanceof MultiSettingNomadChange ? ((MultiSettingNomadChange) change).getChanges() : Collections.singletonList(change);
+  private NodeContext newConfiguration(NodeContext baseConfig, Cluster updated) {
+    requireNonNull(updated);
+    // - If we are activating this node, there is not yet any existing configuration, so we create one.
+    // - If we have updated the topology and our current node is still there, then return a context to be written on disk for the node.
+    // - If the updated topology does not contain the node anymore (removal ?) and a base config was there (topology change) then we isolate the node in its own cluster
+    return baseConfig == null ? new NodeContext(updated, stripeId, nodeName) : baseConfig.withCluster(updated);
   }
 }

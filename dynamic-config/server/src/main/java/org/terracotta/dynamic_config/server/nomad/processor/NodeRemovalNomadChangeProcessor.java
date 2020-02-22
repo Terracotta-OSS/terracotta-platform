@@ -7,15 +7,12 @@ package org.terracotta.dynamic_config.server.nomad.processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
-
-import java.net.InetSocketAddress;
 
 import static java.util.Objects.requireNonNull;
 
@@ -26,37 +23,22 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeRemovalNomadChangeProcessor.class);
 
   private final TopologyService topologyService;
-  private final int stripeId;
-  private final String nodeName;
   private final DynamicConfigListener listener;
 
-  public NodeRemovalNomadChangeProcessor(TopologyService topologyService, int stripeId, String nodeName, DynamicConfigListener listener) {
+  public NodeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
     this.topologyService = requireNonNull(topologyService);
-    this.stripeId = stripeId;
-    this.nodeName = requireNonNull(nodeName);
     this.listener = requireNonNull(listener);
   }
 
   @Override
-  public NodeContext tryApply(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
+  public void validate(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
     if (baseConfig == null) {
       throw new NomadException("Existing config must not be null");
     }
-
     try {
       checkMBeanOperation();
-
-      // apply the change
-      Cluster existing = baseConfig.clone().getCluster();
-      existing.detachNode(change.getNode().getNodeAddress());
-
-      // validate
-      new ClusterValidator(existing).validate();
-      if (!change.getCluster().equals(existing)) {
-        throw new NomadException("Expected: " + change.getCluster() + ", computed: " + existing);
-      }
-
-      return new NodeContext(existing, stripeId, nodeName);
+      Cluster updated = change.apply(baseConfig.getCluster());
+      new ClusterValidator(updated).validate();
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
@@ -64,25 +46,17 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
 
   @Override
   public final void apply(NodeRemovalNomadChange change) throws NomadException {
-    Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
-
-    if (!cluster.containsNode(change.getNode().getNodeAddress())) {
+    Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
+    if (!runtime.containsNode(change.getNode().getNodeAddress())) {
       return;
     }
 
     try {
-      Node removedNode = change.getNode();
-      InetSocketAddress address = removedNode.getNodeAddress();
-      int stripeId = cluster.getStripeId(address).getAsInt();
-
-      LOGGER.info("Removing node: {}", address);
-
-      // try to apply the change on the runtime configuration
-      cluster.detachNode(address);
+      LOGGER.info("Removing node: {} from stripe ID: {}", change.getNodeAddress(), change.getStripeId());
 
       //TODO [DYNAMIC-CONFIG]: TDB-4835 - call MBean
 
-      listener.onNodeRemoval(stripeId, removedNode);
+      listener.onNodeRemoval(change.getStripeId(), change.getNode());
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

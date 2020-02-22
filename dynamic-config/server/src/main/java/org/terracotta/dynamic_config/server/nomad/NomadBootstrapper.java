@@ -29,6 +29,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.ClusterActivationNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.nomad.processor.MultiSettingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.NodeAdditionNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.NodeRemovalNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.RoutingNomadChangeProcessor;
@@ -173,11 +174,14 @@ public class NomadBootstrapper {
 
       RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
           .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, listener))
-          .register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, stripeId, nodeName, listener))
-          .register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, stripeId, nodeName, listener))
+          .register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, listener))
+          .register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, listener))
           .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
 
-      nomadServer.setChangeApplicator(new ConfigChangeApplicator(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)));
+      nomadServer.setChangeApplicator(
+          new ConfigChangeApplicator(stripeId, nodeName,  // receives the change and return the allow() or reject() result depending on processors, with the config to write on disk
+              new MultiSettingNomadChangeProcessor( // unwrap a MultiNomadChange and call underlying processors for each one
+                  new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)))); // filter the nomad change validation and applicability
       LOGGER.debug("Successfully completed upgradeForWrite procedure");
     }
 

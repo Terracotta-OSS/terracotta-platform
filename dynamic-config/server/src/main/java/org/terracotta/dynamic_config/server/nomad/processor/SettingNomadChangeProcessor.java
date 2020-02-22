@@ -39,27 +39,25 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   }
 
   @Override
-  public NodeContext tryApply(NodeContext baseConfig, SettingNomadChange change) throws NomadException {
+  public void validate(NodeContext baseConfig, SettingNomadChange change) throws NomadException {
     try {
-      // ensure we can build the change
+      LOGGER.debug("NodeContext before tryApply(): {}", baseConfig);
+
       Cluster original = baseConfig.getCluster();
       Configuration configuration = change.toConfiguration(original);
 
       // validate through external handlers
       ConfigChangeHandler configChangeHandler = getConfigChangeHandlerManager(change);
-      LOGGER.debug("NodeContext before tryApply(): {}", baseConfig);
-
       configChangeHandler.validate(baseConfig, configuration);
 
       Cluster updated = change.apply(original);
+      baseConfig.withCluster(updated);
 
       if (updated.equals(original)) {
         LOGGER.debug("Cluster not updated for change: {} in config change handler: {}", change, configChangeHandler.getClass().getSimpleName());
       } else {
         LOGGER.info("Cluster updated to: {} for change: {} in: {}", updated, change, configChangeHandler.getClass().getSimpleName());
       }
-
-      return new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
     } catch (InvalidConfigChangeException | RuntimeException e) {
       throw new NomadException("Error when trying to apply setting change '" + change.getSummary() + "': " + e.getMessage(), e);
     }
@@ -74,17 +72,19 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
         Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
         Configuration configuration = change.toConfiguration(runtime);
 
+        // calling handler to apply at runtime
         getConfigChangeHandlerManager(change).apply(configuration);
 
-        listener.onConfigurationChange(change, runtime);
+        runtime = change.apply(runtime);
+        listener.onSettingChanged(change, runtime);
 
       } else {
         LOGGER.debug("Change will be applied after restart: {}", change.getSummary());
 
         Cluster upcoming = topologyService.getUpcomingNodeContext().getCluster();
-        Configuration configuration = change.toConfiguration(upcoming);
 
-        listener.onConfigurationChange(change, upcoming);
+        upcoming = change.apply(upcoming);
+        listener.onSettingChanged(change, upcoming);
       }
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying setting change '" + change.getSummary() + "': " + e.getMessage(), e);

@@ -20,11 +20,13 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
   }
 
   @Override
-  public NodeContext tryApply(NodeContext baseConfig, ClusterActivationNomadChange change) throws NomadException {
+  public void validate(NodeContext baseConfig, ClusterActivationNomadChange change) throws NomadException {
     if (baseConfig != null) {
       throw new NomadException("Existing config must be null. Found: " + baseConfig);
     }
-    return new NodeContext(change.getCluster(), stripeId, nodeName);
+    if (!change.getCluster().containsNode(stripeId, nodeName)) {
+      throw new NomadException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + change.getCluster());
+    }
   }
 
   @Override

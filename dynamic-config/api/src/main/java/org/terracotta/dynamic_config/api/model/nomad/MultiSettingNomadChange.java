@@ -12,6 +12,7 @@ import org.terracotta.nomad.client.change.NomadChange;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -76,5 +77,9 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   @Override
   public String toString() {
     return getSummary();
+  }
+
+  public static List<? extends DynamicConfigNomadChange> extractChanges(DynamicConfigNomadChange change) {
+    return change instanceof MultiSettingNomadChange ? ((MultiSettingNomadChange) change).getChanges() : Collections.singletonList(change);
   }
 }

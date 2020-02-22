@@ -5,11 +5,11 @@
 package org.terracotta.dynamic_config.server.nomad.processor;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.nomad.client.change.NomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.nomad.server.NomadException;
 
-public interface NomadChangeProcessor<T extends NomadChange> {
-  NodeContext tryApply(NodeContext baseConfig, T change) throws NomadException;
+public interface NomadChangeProcessor<T extends DynamicConfigNomadChange> {
+  void validate(NodeContext baseConfig, T change) throws NomadException;
 
   void apply(T change) throws NomadException;
 }

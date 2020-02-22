@@ -39,19 +39,14 @@ public interface DynamicConfigListener {
    * <p>
    * Only the nodes targeted by the applicability filter will be called through this listener after the {@link ConfigChangeHandler} is called
    */
-  void onConfigurationChange(SettingNomadChange change, Cluster updated);
-
-  void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response);
-
-  void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo);
-
-  void onNomadRollback(RollbackMessage message, AcceptRejectResponse response);
+  void onSettingChanged(SettingNomadChange change, Cluster updated);
 
   /**
    * Listener that will be called when some nodes have been removed from a stripe
    * <p>
    * The method is called with the topology equivalent to {@link TopologyService#getRuntimeNodeContext()} and the change that has been applied
    * <p>
+   * Only the nodes targeted by the applicability filter will be called through this listener after the {@link ConfigChangeHandler} is called
    *
    * @param removedNode the details about the removed node
    */
@@ -62,9 +57,16 @@ public interface DynamicConfigListener {
    * <p>
    * The method is called with the topology equivalent to {@link TopologyService#getRuntimeNodeContext()} and the change that has been applied
    * <p>
+   * Only the nodes targeted by the applicability filter will be called through this listener after the {@link ConfigChangeHandler} is called
    *
    * @param stripeId  the stripe ID where the nodes have been added
    * @param addedNode the details of the added node
    */
   void onNodeAddition(int stripeId, Node addedNode);
+
+  void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response);
+
+  void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo);
+
+  void onNomadRollback(RollbackMessage message, AcceptRejectResponse response);
 }

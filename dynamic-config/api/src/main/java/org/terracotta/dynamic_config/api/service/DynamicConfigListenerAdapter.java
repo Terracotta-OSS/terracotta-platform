@@ -35,8 +35,8 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
   }
 
   @Override
-  public void onConfigurationChange(SettingNomadChange change, Cluster updated) {
-    getDelegate().ifPresent(listener -> listener.onConfigurationChange(change, updated));
+  public void onSettingChanged(SettingNomadChange change, Cluster updated) {
+    getDelegate().ifPresent(listener -> listener.onSettingChanged(change, updated));
   }
 
   @Override

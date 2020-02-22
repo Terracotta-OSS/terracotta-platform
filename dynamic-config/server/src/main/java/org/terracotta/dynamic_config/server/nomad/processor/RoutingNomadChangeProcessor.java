@@ -5,6 +5,7 @@
 package org.terracotta.dynamic_config.server.nomad.processor;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.NomadException;
 
@@ -14,30 +15,30 @@ import java.util.Map;
 /**
  * Routes the incoming Nomad change to the right processor based on the Nomad change type
  */
-public class RoutingNomadChangeProcessor implements NomadChangeProcessor<NomadChange> {
+public class RoutingNomadChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange> {
 
-  private final Map<Class<? extends NomadChange>, NomadChangeProcessor<NomadChange>> processors = new HashMap<>();
+  private final Map<Class<? extends NomadChange>, NomadChangeProcessor<DynamicConfigNomadChange>> processors = new HashMap<>();
 
   @SuppressWarnings("unchecked")
-  public <T extends NomadChange> RoutingNomadChangeProcessor register(Class<? extends T> changeType, NomadChangeProcessor<T> processor) {
-    this.processors.put(changeType, (NomadChangeProcessor<NomadChange>) processor);
+  public <T extends DynamicConfigNomadChange> RoutingNomadChangeProcessor register(Class<? extends T> changeType, NomadChangeProcessor<T> processor) {
+    this.processors.put(changeType, (NomadChangeProcessor<DynamicConfigNomadChange>) processor);
     return this;
   }
 
   @Override
-  public NodeContext tryApply(NodeContext baseConfig, NomadChange change) throws NomadException {
-    NomadChangeProcessor<NomadChange> processor = getProcessor(change);
-    return processor.tryApply(baseConfig, change);
+  public void validate(NodeContext baseConfig, DynamicConfigNomadChange change) throws NomadException {
+    NomadChangeProcessor<DynamicConfigNomadChange> processor = getProcessor(change);
+    processor.validate(baseConfig, change);
   }
 
   @Override
-  public void apply(NomadChange change) throws NomadException {
-    NomadChangeProcessor<NomadChange> processor = getProcessor(change);
+  public void apply(DynamicConfigNomadChange change) throws NomadException {
+    NomadChangeProcessor<DynamicConfigNomadChange> processor = getProcessor(change);
     processor.apply(change);
   }
 
-  private NomadChangeProcessor<NomadChange> getProcessor(NomadChange change) throws NomadException {
-    NomadChangeProcessor<NomadChange> processor = processors.get(change.getClass());
+  private NomadChangeProcessor<DynamicConfigNomadChange> getProcessor(NomadChange change) throws NomadException {
+    NomadChangeProcessor<DynamicConfigNomadChange> processor = processors.get(change.getClass());
 
     if (processor == null) {
       throw new NomadException("Unknown change: " + change.getClass().getName());
