@@ -36,13 +36,24 @@ import static org.terracotta.dynamic_config.api.model.Setting.DATA_DIRS;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.api.service.ConfigChangeHandler.accept;
+import static org.terracotta.dynamic_config.api.service.ConfigChangeHandler.reject;
 
 @BuiltinService
 public class DynamicConfigServiceProvider implements ServiceProvider {
@@ -88,8 +99,14 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       addToManager(manager, serverAttributeConfigChangeHandler, NODE_BIND_ADDRESS);
       addToManager(manager, serverAttributeConfigChangeHandler, NODE_GROUP_BIND_ADDRESS);
 
-      // failover-priority
+      // settings applied directly without any config handler but which require a restart
       addToManager(manager, accept(), FAILOVER_PRIORITY);
+      addToManager(manager, accept(), NODE_GROUP_PORT);
+      addToManager(manager, accept(), SECURITY_DIR);
+      addToManager(manager, accept(), SECURITY_AUDIT_LOG_DIR);
+      addToManager(manager, accept(), SECURITY_AUTHC);
+      addToManager(manager, accept(), SECURITY_SSL_TLS);
+      addToManager(manager, accept(), SECURITY_WHITELIST);
 
       // public hostname/port
       addToManager(manager, accept(), NODE_PUBLIC_HOSTNAME);
@@ -103,6 +120,12 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
           .selector(Configuration::getKey)
           .fallback(accept()));
+
+      // ensure to reject these changes
+      addToManager(manager, reject(), NODE_METADATA_DIR);
+      addToManager(manager, reject(), NODE_NAME);
+      addToManager(manager, reject(), NODE_HOSTNAME);
+      addToManager(manager, reject(), NODE_PORT);
 
       // initialize the config handlers that need do to something at startup
       loggerOverrideConfigChangeHandler.init();
